@@ -1,0 +1,18 @@
+{
+  "name": "babylonjs",
+  "version": "1.0.0",
+  "description": "babylonjs - hosted on Windows Azure Mobile Services",
+  "main": "server.js",
+  "engines": {
+    "node": ">= 0.8.19"
+  },
+  "dependencies": {
+    "azure": "^0.10.0",
+    "uuid": "^2.0.1"
+  },
+  "devDependencies": {},
+  "scripts": {},
+  "author": "unknown",
+  "licenses": [],
+  "keywords": []
+}

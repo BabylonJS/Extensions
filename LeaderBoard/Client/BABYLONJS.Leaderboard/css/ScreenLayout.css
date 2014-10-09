@@ -1,0 +1,360 @@
+@import url(http://fonts.googleapis.com/css?family=Audiowide);
+
+html, body, canvas {
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    background-color: #000000;
+    
+}
+
+.font-game {
+    font-family: 'Audiowide', cursive;
+    color: #888888;
+    font-weight: bold;
+}
+
+.font-xs {
+    font-size: 0.6em;
+}
+
+.font-sm {
+    font-size: 0.8em;
+}
+
+.font-lg {
+    font-size: 3em;
+}
+
+.font-xl {
+    font-size: 5em;
+}
+
+
+ .gauge {
+        width: 200px;
+        height: 40px;
+        padding: 5px;
+        opacity: 0.5;
+        border: 2px solid #888888;
+        border-radius: 5px;
+    }
+
+    .statusGaugeInside {
+        background-color: red;
+        height: 25px;
+    }
+
+    .largeGauge {
+        width: 600px;
+        height: 40px;
+        padding: 5px;
+        opacity: 0.5;
+        border: 2px solid #888888;
+        border-radius: 5px;
+        margin: 0 auto 0 auto;
+    }
+
+.bottom-middle {
+    bottom: 5px;
+    left: auto;
+    right: auto;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
+@media all and (max-width: 1200px) { /* screen size until 1200px */
+    body {
+        font-size: 1.5em; /* 1.5x default size */
+    }
+
+    .gauge {
+        width: 200px;
+        height: 40px;
+        padding: 5px;
+        opacity: 0.5;
+        border: 2px solid #888888;
+        border-radius: 5px;
+    }
+
+    .statusGaugeInside {
+        background-color: red;
+        height: 25px;
+    }
+
+    .largeGauge {
+        width: 600px;
+        height: 40px;
+        padding: 5px;
+        opacity: 0.5;
+        border: 2px solid #888888;
+        border-radius: 5px;
+        margin: 0 auto 0 auto;
+    }
+}
+
+@media all and (max-width: 1000px) { /* screen size until 1000px */
+    body {
+        font-size: 1.2em; /* 1.2x default size */
+    }
+
+    .gauge {
+        width: 150px;
+        height: 30px;
+        padding: 2px;
+        opacity: 0.5;
+        border: 1px solid #888888;
+        border-radius: 3px;
+    }
+
+    .statusGaugeInside {
+        background-color: red;
+        height: 20px;
+    }
+
+    .largeGauge {
+        width: 400px;
+        height: 30px;
+        padding: 2px;
+        opacity: 0.5;
+        border: 1px solid #888888;
+        border-radius: 3px;
+        margin: 0 auto 0 auto;
+    }
+}
+
+@media all and (max-width: 500px) { /* screen size until 500px */
+    body {
+        font-size: 0.8em; /* 0.8x default size */
+    }
+
+    .gauge {
+        width: 80px;
+        height: 10px;
+        padding: 1px;
+        opacity: 0.5;
+        border: 1px solid #888888;
+        border-radius: 1px;
+    }
+
+    .statusGaugeInside {
+        background-color: red;
+        height: 5px;
+    }
+
+    .largeGauge {
+        width: 200px;
+        height: 10px;
+        padding: 1px;
+        opacity: 0.5;
+        border: 1px solid #888888;
+        border-radius: 1px;
+        margin: 0 auto 0 auto;
+    }
+}
+
+
+
+/*.container-fluid {
+     height:100%;
+     width:100%;
+     margin:0;
+     padding-left:-15px;
+     padding-right:-15px;
+}
+
+ .alert{
+	 color:red;
+	    font-size:20px;
+ }
+
+.dir{
+   background-color: #ffffff;
+   position: absolute;
+   font-family:"Times New Roman";
+   font-size:12px;
+   font-weight:bold;
+   min-width:200px;
+   text-align:center;
+   right: 55px;
+   top: 5px;
+   opacity:0.5;
+   text-align:center;
+ 	border:2px solid #888888;
+ 	border-radius:5px;
+	display:none;
+}
+
+.mainFont{
+	font-family: 'Audiowide', cursive;
+   font-size:20px;
+   font-weight:bold;
+   color:#888888;
+}
+.mainFontLarge{
+	font-family: 'Audiowide', cursive;
+   font-size:100px;
+   font-weight:bold;
+   color:#888888;
+}
+
+.mainFontSmallMid{
+	font-family: 'Audiowide', cursive;
+   font-size:15px;
+   font-weight:bold;
+   color:#888888;
+}
+
+.mainFontSmall{
+	font-family: 'Audiowide', cursive;
+   font-size:12px;
+   font-weight:bold;
+   color:#888888;
+}
+
+.bottomMiddle{
+	position:fixed;
+	bottom:5px; 
+	left:50%;
+	margin-left:-300px;
+	padding:5px;
+	text-align:center;
+}
+
+.bottomRight{
+	position:fixed;
+	bottom:5px; 
+	right:10px;
+	padding:1px;
+}
+
+.bottomLeft{
+	position:fixed;
+	bottom:5px; 
+	left:10px;
+	padding:1px;
+}
+
+.topLeft{
+	position:fixed;
+	top:10px; 
+	left:10px;
+	padding:1px;
+}
+
+.center{
+	position:absolute;
+	top:50%;
+	left:50%;
+	text-align:center;
+}
+
+.titlecenter{
+	position:absolute;
+	top:50%;
+	left:50%;
+    margin-left:-300px;
+    margin-top:-200px;
+}
+
+#TitleScreen{
+	position:absolute;
+	width:100%;
+	height:100%;
+	background-color:#000000;
+	text-align:center;
+    z-index:5;
+	color:white;
+}
+
+
+#LevelUp{
+	opacity:.0;
+}
+#gameStart{
+	display:none;
+}
+
+.topMiddle{
+	position:fixed;
+	top:10px; 
+	left:50%;
+	margin-left:-100px;
+	padding:1px;
+   text-align:center;
+}
+
+#lightSpeedReminder{
+	position:fixed;
+	top:48px; 
+	left:50%;
+	margin-left:-65px;
+	padding:1px;
+   text-align:center;
+   display: none;
+}
+.topUnderMiddle{
+	position:fixed;
+	top:100px; 
+	left:50%;
+	margin-left:-190px;
+	padding:1px;
+   text-align:center;
+}
+#lightSpeedReady{
+	position:fixed;
+	top:100px; 
+	left:50%;
+	margin-left:-500px;
+	padding:1px;
+   text-align:center;
+   opacity:.0;
+}
+.gauge{
+    width:200px;
+    height:40px;
+    	padding:5px;
+    opacity:0.5;
+  border:2px solid #888888;
+  border-radius:5px;
+}
+
+.statusGaugeInside{
+	background-color:red;
+	height:25px;
+}
+
+.largeGauge{
+    width:600px;
+    height:40px;
+    padding:5px;
+    opacity:0.5;
+  	border:2px solid #888888;
+ 	border-radius:5px;
+}
+
+.statusScreen{
+    width:800px;
+    height:600px;
+    padding:5px;
+  	opacity:0.8;
+  	border:2px solid #888888;
+  	border-radius:5px;
+	color:#ffffff;
+   	background-color: #000000;
+  	margin-left:-400px;
+	margin-top:-300px;
+  	display:none;
+}
+
+#pauseScreen{
+    margin-left:-210px;
+margin-top:-100px;
+   display:none;
+color:yellow;
+
+}*/
+

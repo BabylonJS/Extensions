@@ -1,0 +1,6 @@
+C:\Projects\BABYLONJS\LightSpeed\BABYLONJS.Leaderboard.Playground\bin\BABYLONJS.Leaderboard.Playground.dll.config
+C:\Projects\BABYLONJS\LightSpeed\BABYLONJS.Leaderboard.Playground\bin\BABYLONJS.Leaderboard.Playground.dll
+C:\Projects\BABYLONJS\LightSpeed\BABYLONJS.Leaderboard.Playground\bin\BABYLONJS.Leaderboard.Playground.pdb
+C:\Projects\BABYLONJS\LightSpeed\BABYLONJS.Leaderboard.Playground\obj\Debug\BABYLONJS.Leaderboard.Playground.dll
+C:\Projects\BABYLONJS\LightSpeed\BABYLONJS.Leaderboard.Playground\obj\Debug\BABYLONJS.Leaderboard.Playground.pdb
+C:\Projects\BABYLONJS\LightSpeed\BABYLONJS.Leaderboard.Playground\obj\Debug\BABYLONJS.Leaderboard.Playground.csprojResolveAssemblyReference.cache

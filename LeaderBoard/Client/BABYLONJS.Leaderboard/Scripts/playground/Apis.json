@@ -1,0 +1,784 @@
+﻿[
+    {
+
+        "name": "setup",
+        "methods": [
+            {
+                "name": "dropDatabase",
+                "script": "setup.dropDatabase(function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+            },
+            {
+                "name": "getGames",
+                "script": "setup.getGames(function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+            },
+            {
+                "name": "updateGame",
+                "params": [
+                    { "name": "id", "description": "Game id", "isRequired": true, "isType": "number", "group": 0 },
+                    { "name": "name", "description": "Game name", "isRequired": true, "isType": "text", "group": 0 },
+                    { "name": "shortdescription", "description": "Game short description", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "longdescription", "description": "Game long description", "isRequired": false, "isType": "longtext", "group": 0 },
+                    { "name": "levelsCount", "description": "Number of levels", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "platform", "description": "Platform of your game (mobile, html, desktop ...)", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "gameUrl", "description": "Download game url", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "websiteUrl", "description": "Website game url", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "playersCount", "description": "Actual players count", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "status", "description": "Game status : (1) Enabled. (0) Disabled", "isRequired": true, "isType": "boolean", "group": 0 }
+                ],
+                "script": "setup.updateGame({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+            },
+            {
+                "name": "deleteGames",
+                "script": "setup.deleteGames(function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+            },
+            {
+                "name": "deleteGame",
+                "script": "setup.deleteGame({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});",
+                "params": [
+                    { "name": "gameId", "description": "Game id", "isRequired": true, "isType": "number" }
+                ]
+            },
+            {
+                "name": "getGame",
+                "script": "setup.getGame({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});",
+                "params": [
+                    { "name": "gameId", "description": "Game id", "isRequired": true, "isType": "number" }
+                ]
+            },
+            {
+                "name": "getCors",
+                "script": "setup.getCors({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});",
+                "params": [
+                    { "name": "gameId", "description": "Game id", "isRequired": true, "isType": "number" }
+                ]
+            },
+            {
+                "name": "setCors",
+                "script": "setup.setCors({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});",
+                "params": [
+                    { "name": "gameId", "description": "Game id", "isRequired": true, "isType": "number" }
+                ]
+            },
+            {
+                "name": "getTableCharacter",
+                "script": "setup.getTableCharacter(function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+            },
+            {
+                "name": "insertTableCharacter",
+                "script": "setup.insertTableCharacter({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});",
+                "params": [
+                    { "name": "id", "description": "Character id (null if new)", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "gameId", "description": "Game id", "isRequired": true, "isType": "number", "group": 0 },
+                    { "name": "name", "description": "Character name", "isRequired": true, "isType": "text", "group": 0 },
+                    { "name": "email", "description": "Character email", "isRequired": true, "isType": "text", "group": 0 },
+                    { "name": "firstName", "description": "Character firstname", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "lastName", "description": "Character lastname", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "facebookId", "description": "Character facebookId", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "twitterId", "description": "Character twitterId", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "googleId", "description": "Character googleId", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "liveId", "description": "Character liveId", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "imageUrl", "description": "Character imageUrl", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "achievementPoints", "description": "Character achievementPoints", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "kills", "description": "Character number of kills", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "lives", "description": "Character lives", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "rank", "description": "Character rank", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "timePlayed", "description": "Character played time", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "inventory", "description": "Character inventory", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "lastLevel", "description": "Character lastLevel", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "currentLevel", "description": "Character current Level", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "currentTime", "description": "Character current time", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "currentBonus", "description": "Character current bonus", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "currentKills", "description": "Character current kills", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "currentGolds", "description": "Character current golds", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "currentLives", "description": "Character current lives", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "experience", "description": "Character xp", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "latitude", "description": "Character latitude position", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "longitude", "description": "Character longitude position", "isRequired": false, "isType": "number", "group": 0 }
+                ]
+            },
+            {
+                "name": "updateTableCharacter",
+                "script": "setup.updateTableCharacter({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});",
+                "params": [
+                    { "name": "id", "description": "Character id", "isRequired": true, "isType": "number", "group": 0 },
+                    { "name": "gameId", "description": "Game id", "isRequired": true, "isType": "number", "group": 0 },
+                    { "name": "name", "description": "Character name", "isRequired": true, "isType": "text", "group": 0 },
+                    { "name": "email", "description": "Character email", "isRequired": true, "isType": "text", "group": 0 },
+                    { "name": "firstName", "description": "Character firstname", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "lastName", "description": "Character lastname", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "facebookId", "description": "Character facebookId", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "twitterId", "description": "Character twitterId", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "googleId", "description": "Character googleId", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "liveId", "description": "Character liveId", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "imageUrl", "description": "Character imageUrl", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "achievementPoints", "description": "Character achievementPoints", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "kills", "description": "Character number of kills", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "lives", "description": "Character lives", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "rank", "description": "Character rank", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "timePlayed", "description": "Character played time", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "inventory", "description": "Character inventory", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "lastLevel", "description": "Character lastLevel", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "currentLevel", "description": "Character current Level", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "currentTime", "description": "Character current time", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "currentBonus", "description": "Character current bonus", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "currentKills", "description": "Character current kills", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "currentGolds", "description": "Character current golds", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "currentLives", "description": "Character current lives", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "experience", "description": "Character xp", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "latitude", "description": "Character latitude position", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "longitude", "description": "Character longitude position", "isRequired": false, "isType": "number", "group": 0 }
+                ]
+            },
+            {
+                "name": "deleteTableCharacter",
+                "script": "setup.deleteTableCharacter({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});",
+                "params": [
+                    { "name": "id", "description": "Character id", "isRequired": false }
+                ]
+            },
+            {
+                "name": "getTableAchievement",
+                "script": "setup.getTableAchievement(function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+            },
+            {
+                "name": "insertTableAchievement",
+                "script": "setup.insertTableAchievement({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});",
+                "params": [
+                    { "name": "id", "description": "Achievement id (null if new)", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "gameId", "description": "Game Id", "isRequired": true, "isType": "number", "group": 0 },
+                    { "name": "name", "description": "Achievement name", "isRequired": true, "isType": "text", "group": 0 },
+                    { "name": "shortdescription", "description": "Achievement short description", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "longdescription", "description": "Achievement long description", "isRequired": false, "isType": "longtext", "group": 0 },
+                    { "name": "createdDate", "description": "Created date", "isRequired": false, "isType": "date", "group": 0 },
+                    { "name": "updatedDate", "description": "Updating date", "isRequired": false, "isType": "date", "group": 0 },
+                    { "name": "points", "description": "Achievement points needed", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "iconFile", "description": "Achievement icone file", "isRequired": false, "isType": "number", "group": 0 }
+
+                ]
+            },
+            {
+                "name": "updateTableAchievement",
+                "script": "setup.updateTableAchievement({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});",
+                "params": [
+                    { "name": "id", "description": "Achievement id", "isRequired": true, "isType": "number", "group": 0 },
+                    { "name": "gameId", "description": "Game Id", "isRequired": true, "isType": "number", "group": 0 },
+                    { "name": "name", "description": "Achievement name", "isRequired": true, "isType": "text", "group": 0 },
+                    { "name": "shortdescription", "description": "Achievement short description", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "longdescription", "description": "Achievement long description", "isRequired": false, "isType": "longtext", "group": 0 },
+                    { "name": "createdDate", "description": "Created date", "isRequired": false, "isType": "date", "group": 0 },
+                    { "name": "updatedDate", "description": "Updating date", "isRequired": false, "isType": "date", "group": 0 },
+                    { "name": "points", "description": "Achievement points needed", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "iconFile", "description": "Achievement icone file", "isRequired": false, "isType": "number", "group": 0 }
+
+                ]
+            },
+            {
+                "name": "deleteTableAchievement",
+                "script": "setup.deleteTableAchievement({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});",
+                "params": [
+                    { "name": "id", "description": "Achievement id", "isRequired": false }
+                ]
+            },
+            {
+                "name": "getTableCharacterReward",
+                "script": "setup.getTableCharacterReward(function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+            },
+            {
+                "name": "insertTableCharacterReward",
+                "script": "setup.insertTableCharacterReward({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});",
+                "params": [
+                    { "name": "id", "description": "Character reward id (null if new)", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "gameId", "description": "Game Id", "isRequired": true, "isType": "number", "group": 0 },
+                    { "name": "characterId", "description": "Character id", "isRequired": true, "isType": "number", "group": 0 },
+                    { "name": "rewardId", "description": "Reward Id", "isRequired": true, "isType": "number", "group": 0 },
+                    { "name": "points", "description": "Current character reward points", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "createdDate", "description": "Created date", "isRequired": false, "isType": "date", "group": 0 },
+                    { "name": "updatedDate", "description": "Updating date", "isRequired": false, "isType": "date", "group": 0 },
+                    { "name": "obtentionDate", "description": "Obtention Date", "isRequired": false, "isType": "date", "group": 0 }
+
+                ]
+            },
+            {
+                "name": "deleteTableCharacterReward",
+                "script": "setup.deleteTableCharacterReward({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});",
+                "params": [
+                    { "name": "id", "description": "Character reward id", "isRequired": true }
+                ]
+            },
+            {
+                "name": "updateTableCharacterReward",
+                "script": "setup.updateTableCharacterReward({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});",
+                "params": [
+                    { "name": "id", "description": "Character reward id", "isRequired": true, "isType": "number", "group": 0 },
+                    { "name": "gameId", "description": "Game Id", "isRequired": true, "isType": "number", "group": 0 },
+                    { "name": "characterId", "description": "Character id", "isRequired": true, "isType": "number", "group": 0 },
+                    { "name": "rewardId", "description": "Reward Id", "isRequired": true, "isType": "number", "group": 0 },
+                    { "name": "points", "description": "Current character reward points", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "createdDate", "description": "Created date", "isRequired": false, "isType": "date", "group": 0 },
+                    { "name": "updatedDate", "description": "Updating date", "isRequired": false, "isType": "date", "group": 0 },
+                    { "name": "obtentionDate", "description": "Obtention Date", "isRequired": false, "isType": "date", "group": 0 }
+                ]
+            },
+            {
+                "name": "getTableCharacterScore",
+                "script": "setup.getTableCharacterScore(function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+            },
+            {
+                "name": "insertTableCharacterScore",
+                "script": "setup.insertTableCharacterScore({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});",
+                "params": [
+                    { "name": "id", "description": "Character score id (null if new)", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "gameId", "description": "Game Id", "isRequired": true, "isType": "number", "group": 0 },
+                    { "name": "characterId", "description": "Character id", "isRequired": true, "isType": "number", "group": 0 },
+                    { "name": "createdDate", "description": "Created date", "isRequired": false, "isType": "date", "group": 0 },
+                    { "name": "updatedDate", "description": "Updating date", "isRequired": false, "isType": "date", "group": 0 },
+                    { "name": "score", "description": "Score", "isRequired": false, "isType": "number", "group": 0 }
+                ]
+            },
+            {
+                "name": "updateTableCharacterScore",
+                "script": "setup.updateTableCharacterScore({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});",
+                "params": [
+                    { "name": "id", "description": "Character score id", "isRequired": true, "isType": "number", "group": 0 },
+                    { "name": "gameId", "description": "Game Id", "isRequired": true, "isType": "number", "group": 0 },
+                    { "name": "characterId", "description": "Character id", "isRequired": true, "isType": "number", "group": 0 },
+                    { "name": "createdDate", "description": "Created date", "isRequired": false, "isType": "date", "group": 0 },
+                    { "name": "updatedDate", "description": "Updating date", "isRequired": false, "isType": "date", "group": 0 },
+                    { "name": "score", "description": "Score", "isRequired": false, "isType": "number", "group": 0 }
+                ]
+            },
+            {
+                "name": "deleteTableCharacterScore",
+                "script": "setup.deleteTableCharacterScore({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});",
+                "params": [
+                    { "name": "id", "description": "Character score id", "isRequired": true, "isType": "number" }
+                ]
+            },
+            {
+                "name": "getTableGame",
+                "script": "setup.getTableGame(function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+            },
+            {
+                "name": "insertTableGame",
+                "script": "setup.insertTableGame({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});",
+                "params": [
+                    { "name": "id", "description": "Game id (null if new)", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "name", "description": "Game name", "isRequired": true, "isType": "number", "group": 0 },
+                    { "name": "shortdescription", "description": "Game short description", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "longdescription", "description": "Game long description", "isRequired": false, "isType": "longtext", "group": 0 },
+                    { "name": "blobAccountName", "description": "Blob account name", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "blobAccountKey", "description": "Blob account key", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "blobContainerName", "description": "Blob container name", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "sendgridSmtpServer", "description": "Sendgrid smtp server", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "sendgridPassword", "description": "Sendgrid password", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "sendgridUsername", "description": "Sendgrid username", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "createdDate", "description": "Created date", "isRequired": false, "isType": "date", "group": 0 },
+                    { "name": "updatedDate", "description": "Updating date", "isRequired": false, "isType": "date", "group": 0 },
+                    { "name": "levelsCount", "description": "Levels count", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "platform", "description": "Platform (Mobile, Desktop, Html ...)", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "gameUrl", "description": "Game download url", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "websiteUrl", "description": "Website url", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "playersCount", "description": "Players count", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "status", "description": "Status", "isRequired": true, "isType": "boolean", "group": 0 },
+                    { "name": "iconFile", "description": "Icon file", "isRequired": false, "isType": "text", "group": 0 }
+                ]
+            },
+            {
+                "name": "updateTableGame",
+                "script": "setup.updateTableGame({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});",
+                "params": [
+                    { "name": "id", "description": "Game id", "isRequired": true, "isType": "number", "group": 0 },
+                    { "name": "name", "description": "Game name", "isRequired": true, "isType": "number", "group": 0 },
+                    { "name": "shortdescription", "description": "Game short description", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "longdescription", "description": "Game long description", "isRequired": false, "isType": "longtext", "group": 0 },
+                    { "name": "blobAccountName", "description": "Blob account name", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "blobAccountKey", "description": "Blob account key", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "blobContainerName", "description": "Blob container name", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "sendgridSmtpServer", "description": "Sendgrid smtp server", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "sendgridPassword", "description": "Sendgrid password", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "sendgridUsername", "description": "Sendgrid username", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "createdDate", "description": "Created date", "isRequired": false, "isType": "date", "group": 0 },
+                    { "name": "updatedDate", "description": "Updating date", "isRequired": false, "isType": "date", "group": 0 },
+                    { "name": "levelsCount", "description": "Levels count", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "platform", "description": "Platform (Mobile, Desktop, Html ...)", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "gameUrl", "description": "Game download url", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "websiteUrl", "description": "Website url", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "playersCount", "description": "Players count", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "status", "description": "Status", "isRequired": true, "isType": "boolean", "group": 0 },
+                    { "name": "iconFile", "description": "Icon file", "isRequired": false, "isType": "text", "group": 0 }
+                ]
+            },
+            {
+                "name": "deleteTableGame",
+                "script": "setup.deleteTableGame({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});",
+                "params": [
+                    { "name": "id", "description": "Game id", "isRequired": true, "isType": "number" }
+                ]
+            },
+            {
+                "name": "getTableImage",
+                "script": "setup.getTableImage(function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+            },
+            {
+                "name": "insertTableImage",
+                "script": "setup.insertTableImage({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});",
+                "params": [
+                    { "name": "id", "description": "Image id (null if new)", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "gameId", "description": "Game Id", "isRequired": true, "isType": "number", "group": 0 },
+                    { "name": "createdDate", "description": "Created date", "isRequired": false, "isType": "date", "group": 0 },
+                    { "name": "updatedDate", "description": "Updating date", "isRequired": false, "isType": "date", "group": 0 },
+                    { "name": "name", "description": "Image name", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "imageFormat", "description": "Image format", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "length", "description": "Image length", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "imageBlob", "description": "Image base64 data", "isRequired": false, "isType": "longtext", "group": 0 }
+                ]
+            },
+            {
+                "name": "updateTableImage",
+                "script": "setup.updateTableImage({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});",
+                "params": [
+                    { "name": "id", "description": "Image id ", "isRequired": true, "isType": "number", "group": 0 },
+                    { "name": "gameId", "description": "Game Id", "isRequired": true, "isType": "number", "group": 0 },
+                    { "name": "createdDate", "description": "Created date", "isRequired": false, "isType": "date", "group": 0 },
+                    { "name": "updatedDate", "description": "Updating date", "isRequired": false, "isType": "date", "group": 0 },
+                    { "name": "name", "description": "Image name", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "imageFormat", "description": "Image format", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "length", "description": "Image length", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "imageBlob", "description": "Image base64 data", "isRequired": false, "isType": "longtext", "group": 0 }
+                ]
+            },
+            {
+                "name": "deleteTableImage",
+                "script": "setup.deleteTableImage({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});",
+                "params": [
+                    { "name": "id", "description": "Image id", "isRequired": true }
+                ]
+            },
+            {
+                "name": "getTableReward",
+                "script": "setup.getTableReward(function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+            },
+            {
+                "name": "insertTableReward",
+                "script": "setup.insertTableReward({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});",
+                "params": [
+                    { "name": "id", "description": "Reward id (null if new)", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "gameId", "description": "Game Id", "isRequired": true, "isType": "number", "group": 0 },
+                    { "name": "name", "description": "Reward name", "isRequired": true, "isType": "text", "group": 0 },
+                    { "name": "points", "description": "Reward points", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "shortdescription", "description": "Achievement short description", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "longdescription", "description": "Achievement long description", "isRequired": false, "isType": "longtext", "group": 0 },
+                    { "name": "createdDate", "description": "Created date", "isRequired": false, "isType": "date", "group": 0 },
+                    { "name": "updatedDate", "description": "Updating date", "isRequired": false, "isType": "date", "group": 0 }
+                ]
+            },
+            {
+                "name": "updateTableReward",
+                "script": "setup.updateTableReward({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});",
+                "params": [
+                    { "name": "id", "description": "Reward id", "isRequired": true, "isType": "number", "group": 0 },
+                    { "name": "gameId", "description": "Game Id", "isRequired": true, "isType": "number", "group": 0 },
+                    { "name": "name", "description": "Reward name", "isRequired": true, "isType": "text", "group": 0 },
+                    { "name": "points", "description": "Reward points", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "shortdescription", "description": "Achievement short description", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "longdescription", "description": "Achievement long description", "isRequired": false, "isType": "longtext", "group": 0 },
+                    { "name": "createdDate", "description": "Created date", "isRequired": false, "isType": "date", "group": 0 },
+                    { "name": "updatedDate", "description": "Updating date", "isRequired": false, "isType": "date", "group": 0 }
+                ]
+            },
+            {
+                "name": "deleteTableReward",
+                "script": "setup.deleteTableReward({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});",
+                "params": [
+                    { "name": "id", "description": "Reward id", "isRequired": true, "isType": "number" }
+                ]
+            },
+            {
+                "name": "createSampleDatas",
+                "script": "setup.createSampleDatas({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});",
+                "params": [
+                    { "name": "gameId", "description": "Game id", "isRequired": true, "isType": "number" }
+                ]
+            },
+            {
+                "name": "createGame",
+                "params": [
+                    { "name": "name", "description": "Game name", "isRequired": true, "isType": "text", "group": 0 },
+                    { "name": "shortdescription", "description": "Game short description", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "name", "description": "Your character name", "isRequired": true, "isType": "text", "group": 1 },
+                    { "name": "email", "description": "Your character email", "isRequired": true, "isType": "text", "group": 1 },
+                    { "name": "blobAccountName", "description": "Blob account name", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "blobAccountKey", "description": "Blob account key", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "blobContainerName", "description": "Blob container name", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "sendgridSmtpServer", "description": "Sendgrid smtpserver", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "sendgridUsername", "description": "Sendgrid Username", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "sendgridPassword", "description": "Sendgrid Password", "isRequired": false, "isType": "text", "group": 0 }
+                ],
+                "script": "setup.createGame({0},{1}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+
+            },
+            {
+                "name": "setBlobAccount",
+                "params": [
+                    { "name": "gameId", "description": "Game id", "isRequired": true, "isType": "number" },
+                    { "name": "blobAccountName", "description": "Blob account name", "isRequired": true, "isType": "text" },
+                    { "name": "blobAccountKey", "description": "Blob account key", "isRequired": true, "isType": "text" },
+                    { "name": "blobContainerName", "description": "Blob container name", "isRequired": true, "isType": "text" }
+                ],
+                "script": "setup.setBlobAccount({0},{1},{2},{3}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+
+            },
+            {
+                "name": "setSendgridAccount",
+                "params": [
+                    { "name": "gameId", "description": "Game id", "isRequired": true, "isType": "number" },
+                    { "name": "sendgridSmtpServer", "description": "Sendgrid smtpserver", "isRequired": true, "isType": "text" },
+                    { "name": "sendgridUsername", "description": "Sendgrid Username", "isRequired": true, "isType": "text" },
+                    { "name": "sendgridPassword", "description": "Sendgrid Password", "isRequired": true, "isType": "text" }
+                ],
+                "script": "setup.setSendgridAccount({0},{1},{2},{3}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+
+            }
+        ],
+        "script": "var setup = new BABYLON.LeaderBoard.Setup({0}, {1},{2});",
+        "params": [
+            { "name": "masterKey", "description": "Master Key for Administrator rights", "isRequired": true, "isType": "text" }
+        ]
+
+
+    },
+    {
+        "name": "client",
+        "methods": [
+            {
+                "name": "getGame",
+                "script": "client.getGame(function(game){\n console.log(game); \n}, function(error) {\n  console.error(error);\n});"
+
+            },
+             
+            {
+                "name": "getCurrentUser",
+                "script": "console.log(client.getCurrentUser());"
+
+            },
+            {
+                "name": "getLoginProvider",
+                "script": "console.log(client.getLoginProvider());"
+
+            },
+            {
+                "name": "loginWithFacebook",
+                "script": "client.loginWithFacebook(function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+
+            },
+            {
+                "name": "loginWithMicrosoft",
+                "script": "client.loginWithMicrosoft(function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+
+            },
+
+            {
+                "name": "loginWithGoogle",
+                "script": "client.loginWithGoogle(function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+
+            },
+            {
+                "name": "logout",
+                "script": "console.log(client.logout());"
+
+            },
+            {
+                "name": "deleteCharacter",
+                "params": [
+                    { "name": "id", "description": "Character id", "isRequired": true, "isType": "number", "group": 0 },
+                    { "name": "name", "description": "Character name", "isRequired": true, "isType": "text", "group": 0 }
+                ],
+                "script": "client.deleteCharacter({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+
+            },
+            {
+                "name": "getNewBlobUrl",
+                "params": [
+                    { "name": "blobName", "description": "blob fileName", "isRequired": true, "isType": "text"}
+                ],
+                "script": "client.getNewBlobUrl({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+            },
+            {
+                "name": "uploadBlob",
+                "params": [
+                    { "name": "file", "description": "Blob file", "isRequired": true, "isType": "file" }
+                ],
+                "script": "var blobFile = document.getElementById('sfile');\n\nif (blobFile.files !== null && blobFile.files.length >= 0){\n  client.uploadBlob(blobFile.files[0], function(r){\n    console.log(r);\n  }, function(error) {\n    console.error(error);\n  });\n}"
+            },
+            {
+                "name": "uploadImage",
+                "params": [
+                    { "name": "file", "description": "Image file", "isRequired": true, "isType": "file" }
+                ],
+                "script": "var imgFile = document.getElementById('sfile');\n\nif (imgFile.files !== null && imgFile.files.length >= 0){\n  client.uploadImage(imgFile.files[0], function(r){\n    console.log(r);\n  }, function(error) {\n    console.error(error);\n  });\n}"
+            },
+            {
+                "name": "addOrUpdateCharacter",
+                "params": [
+                    { "name": "id", "description": "Character id (null if new)", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "name", "description": "Character name", "isRequired": true, "isType": "text", "group": 0 },
+                    { "name": "email", "description": "Character email", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "firstName", "description": "Character firstname", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "lastName", "description": "Character lastname", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "facebookId", "description": "Character facebookId", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "twitterId", "description": "Character twitterId", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "googleId", "description": "Character googleId", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "liveId", "description": "Character liveId", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "imageUrl", "description": "Character imageUrl", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "achievementPoints", "description": "Character achievementPoints", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "kills", "description": "Character number of kills", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "lives", "description": "Character lives", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "rank", "description": "Character rank", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "timePlayed", "description": "Character played time", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "inventory", "description": "Character inventory", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "lastLevel", "description": "Character lastLevel", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "currentLevel", "description": "Character current Level", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "currentTime", "description": "Character current time", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "currentBonus", "description": "Character current bonus", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "currentKills", "description": "Character current kills", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "currentGolds", "description": "Character current golds", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "currentLives", "description": "Character current lives", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "experience", "description": "Character xp", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "latitude", "description": "Character latitude position", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "longitude", "description": "Character longitude position", "isRequired": false, "isType": "number", "group": 0 }
+                ],
+                "script": "client.addOrUpdateCharacter({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+            },
+
+            {
+                "name": "getCharactersCount",
+                "script": "client.getCharactersCount(function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+
+            },
+            {
+                "name": "getCharacters",
+                "params": [
+                    { "name": "order", "description": "Json object for ordering", "isRequired": false, "isType": "longtext", "value": "{order:'asc',orderby:'name',count:10,page:1}", "group": 0 },
+                    { "name": "where", "description": "Json object for filter", "isRequired": false, "isType": "longtext", "group": 0 },
+                    { "name": "fields", "description": "Columns you want, separted with ',' null is all", "isRequired": false, "isType": "text", "group": 0 }
+                ],
+                "script": "client.getCharacters({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+
+            },
+            {
+                "name": "getCharacter",
+                "params": [
+                    { "name": "name", "description": "Character name", "isRequired": true, "isType": "text" },
+                    { "name": "fields", "description": "Columns you want, separted with ',' null is all", "isRequired": false, "isType": "text", "group": 1 }
+                ],
+                "script": "client.getCharacter({0}, {1}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+
+            },
+            {
+                "name": "getCharacterFromProfile",
+                "params": [
+                    { "name": "source", "description": "could be facebook, google, microsoft", "isRequired": true, "isType": "text" }
+                ],
+                "script": "client.getCharacterFromProfile({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+
+            },
+            {
+                "name": "getFacebookProfile",
+                "script": "client.getFacebookProfile(function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+
+            },
+            {
+                "name": "getMicrosoftProfile",
+                "script": "client.getMicrosoftProfile(function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+
+            },
+            {
+                "name": "getGoogleProfile",
+                "script": "client.getGoogleProfile(function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+
+            },
+
+            {
+                "name": "getBlobAccount",
+                "script": "client.getBlobAccount(function(game){\n console.log(game); \n}, function(error) {\n  console.error(error);\n});"
+
+            },
+            {
+                "name": "getReward",
+                "params": [
+                    { "name": "rewardName", "description": "Reward name", "isRequired": true, "isType": "text" }
+
+                ],
+                "script": "client.getReward({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+
+            },
+            {
+                "name": "deleteReward",
+                "params": [
+                    { "name": "id", "description": "Reward id", "isRequired": true, "isType": "number", "group": 0 },
+                    { "name": "name", "description": "Reward name", "isRequired": true, "isType": "text", "group": 0 }
+                ],
+                "script": "client.deleteReward({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+
+            },
+
+            {
+                "name": "addOrUpdateReward",
+                "params": [
+                    { "name": "id", "description": "Reward id (null if new)", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "name", "description": "Reward name", "isRequired": true, "isType": "text", "group": 0 },
+                    { "name": "shortdescription", "description": "Reward short description", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "longdescription", "description": "Reward long description", "isRequired": false, "isType": "longtext", "group": 0 },
+                    { "name": "points", "description": "Reward points needed", "isRequired": false, "isType": "number", "group": 0 }
+                ],
+                "script": "client.addOrUpdateReward({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+
+            },
+            {
+                "name": "getRewards",
+                "params": [
+                    { "name": "order", "description": "Json object for ordering", "isRequired": false, "isType": "longtext", "value": "{order:'asc',orderby:'name',count:10,page:1}", "group": 0 },
+                    { "name": "where", "description": "Json object for filter", "isRequired": false, "isType": "longtext", "group": 0 },
+                    { "name": "fields", "description": "Columns you want, separted with ',' null is all", "isRequired": false, "isType": "text", "group": 0 }
+                ],
+                "script": "client.getRewards({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+
+            },
+
+            {
+                "name": "getRewardsCount",
+                "script": "client.getRewardsCount(function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+
+            },
+            {
+                "name": "getCharacterRewards",
+                "params": [
+                    { "name": "name", "description": "Character name", "isRequired": true, "isType": "text" }
+
+                ],
+                "script": "client.getCharacterRewards({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+
+            },
+
+            {
+                "name": "addOrUpdateCharacterReward",
+                "params": [
+                    { "name": "id", "description": "CharacterReward id (null if new)", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "name", "description": "Character name", "isRequired": true, "isType": "text", "group": 0 },
+                    { "name": "rewardId", "description": "Reward id", "isRequired": true, "isType": "number", "group": 0 },
+                    { "name": "points", "description": "Current points", "isRequired": false, "isType": "number", "group": 0 }
+                ],
+                "script": "client.addOrUpdateCharacterReward({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+
+            },
+
+            {
+                "name": "deleteCharacterReward",
+                "params": [
+                    { "name": "id", "description": "CharacterReward id ", "isRequired": true, "isType": "number", "group": 0 },
+                    { "name": "name", "description": "Character name", "isRequired": true, "isType": "text", "group": 0 },
+                    { "name": "rewardId", "description": "Reward id", "isRequired": true, "isType": "number", "group": 0 }
+                ],
+                "script": "client.deleteCharacterReward({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+
+            },
+            {
+                "name": "getAchievement",
+                "params": [
+                    { "name": "achievementName", "description": "Achievement name", "isRequired": true, "isType": "text" }
+
+                ],
+                "script": "client.getAchievement({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+
+            },
+            {
+                "name": "deleteAchievement",
+                "params": [
+                    { "name": "id", "description": "Achievement id", "isRequired": true, "isType": "number", "group": 0 },
+                    { "name": "name", "description": "Achievement name", "isRequired": true, "isType": "text", "group": 0 }
+                ],
+                "script": "client.deleteAchievement({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+
+            },
+
+            {
+                "name": "addOrUpdateAchievement",
+                "params": [
+                    { "name": "id", "description": "Achievement id (null if new)", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "name", "description": "Achievement name", "isRequired": true, "isType": "text", "group": 0 },
+                    { "name": "shortdescription", "description": "Achievement short description", "isRequired": false, "isType": "text", "group": 0 },
+                    { "name": "longdescription", "description": "Achievement long description", "isRequired": false, "isType": "longtext", "group": 0 },
+                    { "name": "points", "description": "Achievement points needed", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "iconFile", "description": "Achievement icone file", "isRequired": false, "isType": "text", "group": 0 }
+                ],
+                "script": "client.addOrUpdateAchievement({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+
+            },
+            {
+                "name": "getAchievements",
+                "params": [
+                    { "name": "order", "description": "Json object for ordering", "isRequired": false, "isType": "longtext", "value": "{order:'asc',orderby:'name',count:10,page:1}", "group": 0 },
+                    { "name": "where", "description": "Json object for filter", "isRequired": false, "isType": "longtext", "group": 0 },
+                    { "name": "fields", "description": "Columns you want, separted with ',' null is all", "isRequired": false, "isType": "text", "group": 0 }
+                ],
+                "script": "client.getAchievements({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+
+            },
+            {
+                "name": "getAchievementsCount",
+                "script": "client.getAchievementsCount(function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+
+            },
+            {
+                "name": "getCharacterScores",
+                "params": [
+                    { "name": "name", "description": "Character name", "isRequired": true, "isType": "text" }
+
+                ],
+                "script": "client.getCharacterScores({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+
+            },
+
+            {
+                "name": "addOrUpdateCharacterScore",
+                "params": [
+                    { "name": "id", "description": "Character score id (null if new)", "isRequired": false, "isType": "number", "group": 0 },
+                    { "name": "name", "description": "Character name", "isRequired": true, "isType": "text", "group": 0 },
+                    { "name": "score", "description": "Current points", "isRequired": false, "isType": "number", "group": 0 }
+                ],
+                "script": "client.addOrUpdateCharacterScore({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+
+            },
+
+            {
+                "name": "deleteCharacterScore",
+                "params": [
+                    { "name": "id", "description": "Character score id ", "isRequired": true, "isType": "number", "group": 0 },
+                    { "name": "name", "description": "Character name", "isRequired": true, "isType": "text", "group": 0 }
+                ],
+                "script": "client.deleteCharacterScore({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+
+            },
+
+            {
+                "name": "sendEmail",
+                "params": [
+                    { "name": "to", "description": "email to (separated with ',' for multiple users", "isRequired": true, "isType": "text", "group": 0 },
+                    { "name": "from", "description": "email from", "isRequired": true, "isType": "text", "group": 0 },
+                    { "name": "subject", "description": "email subject", "isRequired": true, "isType": "text", "group": 0 },
+                    { "name": "text", "description": "email body", "isRequired": true, "isType": "longtext", "group": 0 }
+                ],
+                "script": "client.sendEmail({0}, function(r){\n console.log(r); \n}, function(error) {\n  console.error(error);\n});"
+
+            }
+
+        ],
+        "script": "var client = new BABYLON.LeaderBoard.Client({0}, {1}, {2});",
+        "params": [
+            { "name": "gameId", "description": "Game Identification", "isRequired": true, "isType": "number" }
+        ]
+
+
+    }
+
+]

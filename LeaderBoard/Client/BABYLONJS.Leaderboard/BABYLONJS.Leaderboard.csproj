@@ -1,0 +1,483 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.Default.props" Condition="Exists('$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.Default.props')" />
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>
+    </ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{D51FBBB3-6E17-4A53-9DB6-07378A4D0AF7}</ProjectGuid>
+    <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>BABYLONJS.Leaderboard</RootNamespace>
+    <AssemblyName>BABYLONJS.Leaderboard</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <UseIISExpress>true</UseIISExpress>
+    <IISExpressSSLPort />
+    <IISExpressAnonymousAuthentication />
+    <IISExpressWindowsAuthentication />
+    <IISExpressUseClassicPipelineMode />
+    <TypeScriptToolsVersion>1.0</TypeScriptToolsVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Web.DynamicData" />
+    <Reference Include="System.Web.Entity" />
+    <Reference Include="System.Web.ApplicationServices" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Web.Services" />
+    <Reference Include="System.EnterpriseServices" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="assets\a5.babylon" />
+    <Content Include="assets\a6.babylon" />
+    <Content Include="assets\mine1-2.babylon" />
+    <Content Include="css\bootstrap-theme.css.map" />
+    <Content Include="css\bootstrap.css" />
+    <Content Include="css\bootstrap.css.map" />
+    <None Include="js\_references.js" />
+    <Content Include="assets\explosion.wav" />
+    <Content Include="assets\hit.wav" />
+    <Content Include="assets\lasershoot.wav" />
+    <Content Include="assets\lightspeed.wav" />
+    <Content Include="assets\lightspeedstart.wav" />
+    <Content Include="assets\shoot.wav" />
+    <Content Include="assets\shoot2.wav" />
+    <Content Include="assets\shoot3.wav" />
+    <Content Include="css\bootstrap-theme.css" />
+    <Content Include="css\bootstrap-theme.min.css" />
+    <Content Include="css\bootstrap2.css" />
+    <Content Include="css\bootstrap.min.css" />
+    <Content Include="css\font-awesome.css" />
+    <Content Include="css\font-awesome.min.css" />
+    <Content Include="images\background.png" />
+    <Content Include="images\bunker_galvanized.jpg" />
+    <Content Include="images\concrete01_norm.jpg" />
+    <Content Include="images\ExplosionAnimationClear 2.png" />
+    <Content Include="images\ExplosionAnimationClear.png" />
+    <Content Include="images\ExplosionAnimationClear2.png" />
+    <Content Include="images\Flare copy.png" />
+    <Content Include="images\Flare.png" />
+    <Content Include="images\grate0_normal.png" />
+    <Content Include="images\laser.png" />
+    <Content Include="images\laserred.png" />
+    <Content Include="images\marble.jpg" />
+    <Content Include="images\Micro.png" />
+    <Content Include="images\radarcircle.png" />
+    <Content Include="images\Rocknormal.jpg" />
+    <Content Include="images\starb.png" />
+    <Content Include="images\title.png" />
+    <Content Include="js\babylon.1.13.js" />
+    <Content Include="js\bootstrap.js" />
+    <Content Include="js\bootstrap.min.js" />
+    <None Include="js\jquery-1.9.0.intellisense.js" />
+    <Content Include="js\jquery-1.9.0.js" />
+    <Content Include="js\jquery-1.9.0.min.js" />
+    <Content Include="js\MobileServices.Web.js" />
+    <Content Include="0.png" />
+    <Content Include="favicon.ico" />
+    <Content Include="lightspeed.html" />
+    <Content Include="Scripts\playground\Apis.json" />
+    <Content Include="Scripts\lightspeed\sound.js" />
+    <Content Include="Spaceship.babylon" />
+    <None Include="Web.Debug.config">
+      <DependentUpon>Web.config</DependentUpon>
+    </None>
+    <None Include="Web.Release.config">
+      <DependentUpon>Web.config</DependentUpon>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="css\Styles.css" />
+    <Content Include="default.htm" />
+    <Content Include="fonts\fontawesome-webfont.svg" />
+    <Content Include="fonts\glyphicons-halflings-regular.svg" />
+    <Content Include="packages.config" />
+    <Content Include="fonts\glyphicons-halflings-regular.woff" />
+    <Content Include="fonts\glyphicons-halflings-regular.ttf" />
+    <Content Include="fonts\glyphicons-halflings-regular.eot" />
+    <Content Include="fonts\fontawesome-webfont.eot" />
+    <Content Include="fonts\fontawesome-webfont.ttf" />
+    <Content Include="fonts\fontawesome-webfont.woff" />
+    <Content Include="fonts\FontAwesome.otf" />
+    <Content Include="js\ace\ace.js" />
+    <Content Include="js\ace\ext-beautify.js" />
+    <Content Include="js\ace\ext-chromevox.js" />
+    <Content Include="js\ace\ext-elastic_tabstops_lite.js" />
+    <Content Include="js\ace\ext-emmet.js" />
+    <Content Include="js\ace\ext-error_marker.js" />
+    <Content Include="js\ace\ext-keybinding_menu.js" />
+    <Content Include="js\ace\ext-language_tools.js" />
+    <Content Include="js\ace\ext-linking.js" />
+    <Content Include="js\ace\ext-modelist.js" />
+    <Content Include="js\ace\ext-old_ie.js" />
+    <Content Include="js\ace\ext-searchbox.js" />
+    <Content Include="js\ace\ext-settings_menu.js" />
+    <Content Include="js\ace\ext-spellcheck.js" />
+    <Content Include="js\ace\ext-split.js" />
+    <Content Include="js\ace\ext-static_highlight.js" />
+    <Content Include="js\ace\ext-statusbar.js" />
+    <Content Include="js\ace\ext-textarea.js" />
+    <Content Include="js\ace\ext-themelist.js" />
+    <Content Include="js\ace\ext-whitespace.js" />
+    <Content Include="js\ace\keybinding-emacs.js" />
+    <Content Include="js\ace\keybinding-vim.js" />
+    <Content Include="js\ace\mode-abap.js" />
+    <Content Include="js\ace\mode-actionscript.js" />
+    <Content Include="js\ace\mode-ada.js" />
+    <Content Include="js\ace\mode-apache_conf.js" />
+    <Content Include="js\ace\mode-applescript.js" />
+    <Content Include="js\ace\mode-asciidoc.js" />
+    <Content Include="js\ace\mode-assembly_x86.js" />
+    <Content Include="js\ace\mode-autohotkey.js" />
+    <Content Include="js\ace\mode-batchfile.js" />
+    <Content Include="js\ace\mode-c9search.js" />
+    <Content Include="js\ace\mode-cirru.js" />
+    <Content Include="js\ace\mode-clojure.js" />
+    <Content Include="js\ace\mode-cobol.js" />
+    <Content Include="js\ace\mode-coffee.js" />
+    <Content Include="js\ace\mode-coldfusion.js" />
+    <Content Include="js\ace\mode-csharp.js" />
+    <Content Include="js\ace\mode-css.js" />
+    <Content Include="js\ace\mode-curly.js" />
+    <Content Include="js\ace\mode-c_cpp.js" />
+    <Content Include="js\ace\mode-d.js" />
+    <Content Include="js\ace\mode-dart.js" />
+    <Content Include="js\ace\mode-diff.js" />
+    <Content Include="js\ace\mode-django.js" />
+    <Content Include="js\ace\mode-dockerfile.js" />
+    <Content Include="js\ace\mode-dot.js" />
+    <Content Include="js\ace\mode-eiffel.js" />
+    <Content Include="js\ace\mode-ejs.js" />
+    <Content Include="js\ace\mode-erlang.js" />
+    <Content Include="js\ace\mode-forth.js" />
+    <Content Include="js\ace\mode-ftl.js" />
+    <Content Include="js\ace\mode-gcode.js" />
+    <Content Include="js\ace\mode-gherkin.js" />
+    <Content Include="js\ace\mode-gitignore.js" />
+    <Content Include="js\ace\mode-glsl.js" />
+    <Content Include="js\ace\mode-golang.js" />
+    <Content Include="js\ace\mode-groovy.js" />
+    <Content Include="js\ace\mode-haml.js" />
+    <Content Include="js\ace\mode-handlebars.js" />
+    <Content Include="js\ace\mode-haskell.js" />
+    <Content Include="js\ace\mode-haxe.js" />
+    <Content Include="js\ace\mode-html.js" />
+    <Content Include="js\ace\mode-html_ruby.js" />
+    <Content Include="js\ace\mode-ini.js" />
+    <Content Include="js\ace\mode-jack.js" />
+    <Content Include="js\ace\mode-jade.js" />
+    <Content Include="js\ace\mode-java.js" />
+    <Content Include="js\ace\mode-javascript.js" />
+    <Content Include="js\ace\mode-json.js" />
+    <Content Include="js\ace\mode-jsoniq.js" />
+    <Content Include="js\ace\mode-jsp.js" />
+    <Content Include="js\ace\mode-jsx.js" />
+    <Content Include="js\ace\mode-julia.js" />
+    <Content Include="js\ace\mode-latex.js" />
+    <Content Include="js\ace\mode-less.js" />
+    <Content Include="js\ace\mode-liquid.js" />
+    <Content Include="js\ace\mode-lisp.js" />
+    <Content Include="js\ace\mode-livescript.js" />
+    <Content Include="js\ace\mode-logiql.js" />
+    <Content Include="js\ace\mode-lsl.js" />
+    <Content Include="js\ace\mode-lua.js" />
+    <Content Include="js\ace\mode-luapage.js" />
+    <Content Include="js\ace\mode-lucene.js" />
+    <Content Include="js\ace\mode-makefile.js" />
+    <Content Include="js\ace\mode-markdown.js" />
+    <Content Include="js\ace\mode-matlab.js" />
+    <Content Include="js\ace\mode-mel.js" />
+    <Content Include="js\ace\mode-mushcode.js" />
+    <Content Include="js\ace\mode-mysql.js" />
+    <Content Include="js\ace\mode-nix.js" />
+    <Content Include="js\ace\mode-objectivec.js" />
+    <Content Include="js\ace\mode-ocaml.js" />
+    <Content Include="js\ace\mode-pascal.js" />
+    <Content Include="js\ace\mode-perl.js" />
+    <Content Include="js\ace\mode-pgsql.js" />
+    <Content Include="js\ace\mode-php.js" />
+    <Content Include="js\ace\mode-plain_text.js" />
+    <Content Include="js\ace\mode-powershell.js" />
+    <Content Include="js\ace\mode-praat.js" />
+    <Content Include="js\ace\mode-prolog.js" />
+    <Content Include="js\ace\mode-properties.js" />
+    <Content Include="js\ace\mode-protobuf.js" />
+    <Content Include="js\ace\mode-python.js" />
+    <Content Include="js\ace\mode-r.js" />
+    <Content Include="js\ace\mode-rdoc.js" />
+    <Content Include="js\ace\mode-rhtml.js" />
+    <Content Include="js\ace\mode-ruby.js" />
+    <Content Include="js\ace\mode-rust.js" />
+    <Content Include="js\ace\mode-sass.js" />
+    <Content Include="js\ace\mode-scad.js" />
+    <Content Include="js\ace\mode-scala.js" />
+    <Content Include="js\ace\mode-scheme.js" />
+    <Content Include="js\ace\mode-scss.js" />
+    <Content Include="js\ace\mode-sh.js" />
+    <Content Include="js\ace\mode-sjs.js" />
+    <Content Include="js\ace\mode-smarty.js" />
+    <Content Include="js\ace\mode-snippets.js" />
+    <Content Include="js\ace\mode-soy_template.js" />
+    <Content Include="js\ace\mode-space.js" />
+    <Content Include="js\ace\mode-sql.js" />
+    <Content Include="js\ace\mode-stylus.js" />
+    <Content Include="js\ace\mode-svg.js" />
+    <Content Include="js\ace\mode-tcl.js" />
+    <Content Include="js\ace\mode-tex.js" />
+    <Content Include="js\ace\mode-text.js" />
+    <Content Include="js\ace\mode-textile.js" />
+    <Content Include="js\ace\mode-toml.js" />
+    <Content Include="js\ace\mode-twig.js" />
+    <Content Include="js\ace\mode-typescript.js" />
+    <Content Include="js\ace\mode-vala.js" />
+    <Content Include="js\ace\mode-vbscript.js" />
+    <Content Include="js\ace\mode-velocity.js" />
+    <Content Include="js\ace\mode-verilog.js" />
+    <Content Include="js\ace\mode-vhdl.js" />
+    <Content Include="js\ace\mode-xml.js" />
+    <Content Include="js\ace\mode-xquery.js" />
+    <Content Include="js\ace\mode-yaml.js" />
+    <Content Include="js\ace\snippets\abap.js" />
+    <Content Include="js\ace\snippets\actionscript.js" />
+    <Content Include="js\ace\snippets\ada.js" />
+    <Content Include="js\ace\snippets\apache_conf.js" />
+    <Content Include="js\ace\snippets\applescript.js" />
+    <Content Include="js\ace\snippets\asciidoc.js" />
+    <Content Include="js\ace\snippets\assembly_x86.js" />
+    <Content Include="js\ace\snippets\autohotkey.js" />
+    <Content Include="js\ace\snippets\batchfile.js" />
+    <Content Include="js\ace\snippets\c9search.js" />
+    <Content Include="js\ace\snippets\cirru.js" />
+    <Content Include="js\ace\snippets\clojure.js" />
+    <Content Include="js\ace\snippets\cobol.js" />
+    <Content Include="js\ace\snippets\coffee.js" />
+    <Content Include="js\ace\snippets\coldfusion.js" />
+    <Content Include="js\ace\snippets\csharp.js" />
+    <Content Include="js\ace\snippets\css.js" />
+    <Content Include="js\ace\snippets\curly.js" />
+    <Content Include="js\ace\snippets\c_cpp.js" />
+    <Content Include="js\ace\snippets\d.js" />
+    <Content Include="js\ace\snippets\dart.js" />
+    <Content Include="js\ace\snippets\diff.js" />
+    <Content Include="js\ace\snippets\django.js" />
+    <Content Include="js\ace\snippets\dockerfile.js" />
+    <Content Include="js\ace\snippets\dot.js" />
+    <Content Include="js\ace\snippets\eiffel.js" />
+    <Content Include="js\ace\snippets\ejs.js" />
+    <Content Include="js\ace\snippets\erlang.js" />
+    <Content Include="js\ace\snippets\forth.js" />
+    <Content Include="js\ace\snippets\ftl.js" />
+    <Content Include="js\ace\snippets\gcode.js" />
+    <Content Include="js\ace\snippets\gherkin.js" />
+    <Content Include="js\ace\snippets\gitignore.js" />
+    <Content Include="js\ace\snippets\glsl.js" />
+    <Content Include="js\ace\snippets\golang.js" />
+    <Content Include="js\ace\snippets\groovy.js" />
+    <Content Include="js\ace\snippets\haml.js" />
+    <Content Include="js\ace\snippets\handlebars.js" />
+    <Content Include="js\ace\snippets\haskell.js" />
+    <Content Include="js\ace\snippets\haxe.js" />
+    <Content Include="js\ace\snippets\html.js" />
+    <Content Include="js\ace\snippets\html_ruby.js" />
+    <Content Include="js\ace\snippets\ini.js" />
+    <Content Include="js\ace\snippets\jack.js" />
+    <Content Include="js\ace\snippets\jade.js" />
+    <Content Include="js\ace\snippets\java.js" />
+    <Content Include="js\ace\snippets\javascript.js" />
+    <Content Include="js\ace\snippets\json.js" />
+    <Content Include="js\ace\snippets\jsoniq.js" />
+    <Content Include="js\ace\snippets\jsp.js" />
+    <Content Include="js\ace\snippets\jsx.js" />
+    <Content Include="js\ace\snippets\julia.js" />
+    <Content Include="js\ace\snippets\latex.js" />
+    <Content Include="js\ace\snippets\less.js" />
+    <Content Include="js\ace\snippets\liquid.js" />
+    <Content Include="js\ace\snippets\lisp.js" />
+    <Content Include="js\ace\snippets\livescript.js" />
+    <Content Include="js\ace\snippets\logiql.js" />
+    <Content Include="js\ace\snippets\lsl.js" />
+    <Content Include="js\ace\snippets\lua.js" />
+    <Content Include="js\ace\snippets\luapage.js" />
+    <Content Include="js\ace\snippets\lucene.js" />
+    <Content Include="js\ace\snippets\makefile.js" />
+    <Content Include="js\ace\snippets\markdown.js" />
+    <Content Include="js\ace\snippets\matlab.js" />
+    <Content Include="js\ace\snippets\mel.js" />
+    <Content Include="js\ace\snippets\mushcode.js" />
+    <Content Include="js\ace\snippets\mysql.js" />
+    <Content Include="js\ace\snippets\nix.js" />
+    <Content Include="js\ace\snippets\objectivec.js" />
+    <Content Include="js\ace\snippets\ocaml.js" />
+    <Content Include="js\ace\snippets\pascal.js" />
+    <Content Include="js\ace\snippets\perl.js" />
+    <Content Include="js\ace\snippets\pgsql.js" />
+    <Content Include="js\ace\snippets\php.js" />
+    <Content Include="js\ace\snippets\plain_text.js" />
+    <Content Include="js\ace\snippets\powershell.js" />
+    <Content Include="js\ace\snippets\praat.js" />
+    <Content Include="js\ace\snippets\prolog.js" />
+    <Content Include="js\ace\snippets\properties.js" />
+    <Content Include="js\ace\snippets\protobuf.js" />
+    <Content Include="js\ace\snippets\python.js" />
+    <Content Include="js\ace\snippets\r.js" />
+    <Content Include="js\ace\snippets\rdoc.js" />
+    <Content Include="js\ace\snippets\rhtml.js" />
+    <Content Include="js\ace\snippets\ruby.js" />
+    <Content Include="js\ace\snippets\rust.js" />
+    <Content Include="js\ace\snippets\sass.js" />
+    <Content Include="js\ace\snippets\scad.js" />
+    <Content Include="js\ace\snippets\scala.js" />
+    <Content Include="js\ace\snippets\scheme.js" />
+    <Content Include="js\ace\snippets\scss.js" />
+    <Content Include="js\ace\snippets\sh.js" />
+    <Content Include="js\ace\snippets\sjs.js" />
+    <Content Include="js\ace\snippets\smarty.js" />
+    <Content Include="js\ace\snippets\snippets.js" />
+    <Content Include="js\ace\snippets\soy_template.js" />
+    <Content Include="js\ace\snippets\space.js" />
+    <Content Include="js\ace\snippets\sql.js" />
+    <Content Include="js\ace\snippets\stylus.js" />
+    <Content Include="js\ace\snippets\svg.js" />
+    <Content Include="js\ace\snippets\tcl.js" />
+    <Content Include="js\ace\snippets\tex.js" />
+    <Content Include="js\ace\snippets\text.js" />
+    <Content Include="js\ace\snippets\textile.js" />
+    <Content Include="js\ace\snippets\toml.js" />
+    <Content Include="js\ace\snippets\twig.js" />
+    <Content Include="js\ace\snippets\typescript.js" />
+    <Content Include="js\ace\snippets\vala.js" />
+    <Content Include="js\ace\snippets\vbscript.js" />
+    <Content Include="js\ace\snippets\velocity.js" />
+    <Content Include="js\ace\snippets\verilog.js" />
+    <Content Include="js\ace\snippets\vhdl.js" />
+    <Content Include="js\ace\snippets\xml.js" />
+    <Content Include="js\ace\snippets\xquery.js" />
+    <Content Include="js\ace\snippets\yaml.js" />
+    <Content Include="js\ace\theme-ambiance.js" />
+    <Content Include="js\ace\theme-chaos.js" />
+    <Content Include="js\ace\theme-chrome.js" />
+    <Content Include="js\ace\theme-clouds.js" />
+    <Content Include="js\ace\theme-clouds_midnight.js" />
+    <Content Include="js\ace\theme-cobalt.js" />
+    <Content Include="js\ace\theme-crimson_editor.js" />
+    <Content Include="js\ace\theme-dawn.js" />
+    <Content Include="js\ace\theme-dreamweaver.js" />
+    <Content Include="js\ace\theme-eclipse.js" />
+    <Content Include="js\ace\theme-github.js" />
+    <Content Include="js\ace\theme-idle_fingers.js" />
+    <Content Include="js\ace\theme-katzenmilch.js" />
+    <Content Include="js\ace\theme-kr.js" />
+    <Content Include="js\ace\theme-kr_theme.js" />
+    <Content Include="js\ace\theme-kuroir.js" />
+    <Content Include="js\ace\theme-merbivore.js" />
+    <Content Include="js\ace\theme-merbivore_soft.js" />
+    <Content Include="js\ace\theme-monokai.js" />
+    <Content Include="js\ace\theme-mono_industrial.js" />
+    <Content Include="js\ace\theme-pastel_on_dark.js" />
+    <Content Include="js\ace\theme-solarized_dark.js" />
+    <Content Include="js\ace\theme-solarized_light.js" />
+    <Content Include="js\ace\theme-terminal.js" />
+    <Content Include="js\ace\theme-textmate.js" />
+    <Content Include="js\ace\theme-tomorrow.js" />
+    <Content Include="js\ace\theme-tomorrow_night.js" />
+    <Content Include="js\ace\theme-tomorrow_night_blue.js" />
+    <Content Include="js\ace\theme-tomorrow_night_bright.js" />
+    <Content Include="js\ace\theme-tomorrow_night_eighties.js" />
+    <Content Include="js\ace\theme-twilight.js" />
+    <Content Include="js\ace\theme-vibrant_ink.js" />
+    <Content Include="js\ace\theme-xcode.js" />
+    <Content Include="js\ace\worker-coffee.js" />
+    <Content Include="js\ace\worker-css.js" />
+    <Content Include="js\ace\worker-html.js" />
+    <Content Include="js\ace\worker-javascript.js" />
+    <Content Include="js\ace\worker-json.js" />
+    <Content Include="js\ace\worker-lua.js" />
+    <Content Include="js\ace\worker-php.js" />
+    <Content Include="js\ace\worker-xquery.js" />
+    <Content Include="css\ScreenLayout.css" />
+    <Content Include="Web.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <TypeScriptCompile Include="Scripts\babylonclient.ts" />
+    <TypeScriptCompile Include="Scripts\lightspeed\Enemy.ts" />
+    <TypeScriptCompile Include="Scripts\lightspeed\index.ts" />
+    <TypeScriptCompile Include="Scripts\lightspeed\laser.ts" />
+    <TypeScriptCompile Include="Scripts\lightspeed\levelingDefs.ts" />
+    <TypeScriptCompile Include="Scripts\lightspeed\Loader.ts" />
+    <TypeScriptCompile Include="Scripts\lightspeed\Player.ts" />
+    <TypeScriptCompile Include="Scripts\playground\index.ts" />
+    <TypeScriptCompile Include="Scripts\typings\ace\ace.d.ts" />
+    <TypeScriptCompile Include="Scripts\typings\azure-mobile-services-client\AzureMobileServicesClient.d.ts" />
+    <TypeScriptCompile Include="Scripts\typings\babylon\babylon.d.ts" />
+    <TypeScriptCompile Include="Scripts\typings\bootstrap\bootstrap.d.ts" />
+    <TypeScriptCompile Include="Scripts\typings\jquery\jquery.d.ts" />
+  </ItemGroup>
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
+    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+  </PropertyGroup>
+  <Import Project="..\BABYLONJS.Shared\BABYLONJS.Shared.Shared.projitems" Label="Shared" Condition="Exists('..\BABYLONJS.Shared\BABYLONJS.Shared.Shared.projitems')" />
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets" Condition="Exists('$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets')" />
+  <Import Project="$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets" Condition="'$(VSToolsPath)' != ''" />
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.targets" Condition="false" />
+  <ProjectExtensions>
+    <VisualStudio>
+      <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}">
+        <WebProjectProperties>
+          <UseIIS>True</UseIIS>
+          <AutoAssignPort>True</AutoAssignPort>
+          <DevelopmentServerPort>39945</DevelopmentServerPort>
+          <DevelopmentServerVPath>/</DevelopmentServerVPath>
+          <IISUrl>http://localhost:62046/</IISUrl>
+          <NTLMAuthentication>False</NTLMAuthentication>
+          <UseCustomServer>False</UseCustomServer>
+          <CustomServerUrl>
+          </CustomServerUrl>
+          <SaveServerSettingsInUserFile>False</SaveServerSettingsInUserFile>
+        </WebProjectProperties>
+      </FlavorProperties>
+    </VisualStudio>
+  </ProjectExtensions>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

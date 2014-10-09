@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>-Light Speed Ready-</title>
+
+    <link href='http://fonts.googleapis.com/css?family=Audiowide' rel='stylesheet' type='text/css'>
+    <link href="css/bootstrap.css" rel="stylesheet" />
+    <link href="css/bootstrap-theme.css" rel="stylesheet" />
+    <link href="css/font-awesome.css" rel="stylesheet" />
+    <link href="css/ScreenLayout.css" rel="stylesheet" type="text/css">
+    <link href="css/Styles.css" rel="stylesheet" />
+
+    <link rel='shortcut icon' type='image/x-icon' href='favicon.ico' />
+</head>
+<body>
+
+    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#">BABYLON Leaderboard</a>
+            </div>
+            <div class="collapse navbar-collapse">
+                <ul class="nav navbar-nav">
+                    <li><a href="default.htm">Playground</a></li>
+                    <li class="active"><a href="#">Lightspeed demo</a></li>
+                    <li><a href="#doc">Github</a></li>
+                    <li><a href="#About">About</a></li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="#"><i class="fa fa-facebook fa-2x"></i></a></li>
+                    <li><a href="#"><i class="fa fa-twitter fa-2x"></i></a></li>
+                </ul>
+            </div><!--/.nav-collapse -->
+        </div>
+    </div>
+
+    <div class="container" id="gameViewport" style="width:100%;height:100%;position:absolute;top:0;left:0">
+
+
+        <canvas id="viewport" style="width:100%;height:100%;position:absolute;top:0;left:0"></canvas>
+
+        <div class="row" style="padding-top:80px;">
+            <div class="col-sm-5">
+
+                <div class="media">
+                    <a href="#" class="pull-left">
+                        <img class="media-object" id="imgChar" style="max-width:50px;max-height:50px" alt="player image" />
+                    </a>
+                    <div class="media-body text-left">
+                        <h4 class="media-heading text-left font-game">Sébastien Pertus</h4>
+                        <p>
+                            <div class="text-left font-game font-sm" id="gamePoints">Points : 1056</div>
+                            <div class="text-left font-game font-sm" id="levelPoints">Points : 1056</div>
+                            <div class="text-left font-game font-sm" id="shipLevel">Current Ship Level : 1</div>
+                            <div class="text-left font-game font-sm" id="gameLevel">Current Game Level : 3</div>
+                            <div class="text-left font-game font-sm" id="characterHighScore">High Score : 1500</div>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="col-sm-5">
+                <span class="font-game font-sm" style="margin-left:30px;">light speed gauge</span>
+                <div class="gauge">
+                    <div class="statusGaugeInside" id="lightSpeedGauge">
+                        <div id="lightSpeedReminder" class="font-game font-xs text-center"> Press (R)</div>
+                    </div>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+        <!-- level up message -->
+        <div id="levelUp" style="display:none;">
+            <div class="row">
+                <div class="col-xs-12 text-center">
+                    <div class="font-game font-lg"> Congratulations! You Leveled Up! </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Light speed ready for going to next level -->
+        <div id="lightSpeedReady" style="display:none;">
+            <div class="row">
+                <div class="col-xs-12 text-center font-game font-lg">
+                    Light Speed Ready!
+                    <div class="mainFont"> Press (R) for the next level </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dead screen -->
+        <div id="deadScreen" style="display:none;">
+            <div class="row">
+                <div class="col-xs-12 text-center">
+                    <span class="font-game font-xl">You're DEAD</span>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-xs-12 text-center">
+                    <button class="btn btn-primary btn-sm" onmouseup="startGame();">
+                        Start new game
+                    </button>
+                     <button class="btn btn-primary btn-sm" onmouseup="startGame();">
+                        Go to Menu
+                    </button>
+                    <button class="btn btn-warning btn-sm" onmouseup="disconnect();">
+                        Logout
+                    </button>
+                </div>
+
+
+            </div>
+        </div>
+
+        <!-- Health Gauge -->
+        <div class="row">
+            <div class="col-xs-12" style="position:absolute;bottom:2px;">
+                <div class="font-game font-lg text-center">Health</div>
+                <div class="largeGauge">
+                    <div class="statusGaugeInside" id="healthGauge"></div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="container" id="container">
+
+        <div id="starter">
+
+            <div class="row">
+                <div class="col-sm-12 text-center">
+                    <div class="font-game font-sm">Powered by <a href="http://www.babylonjs.com/">BabylonJS</a></div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-xs-12 text-center">
+                    <img src="images/title.png" class="img-responsive center-block" alt=" title">
+                </div>
+            </div>
+            <div id="loged" class="hidden">
+                <div class="row">
+                    <div class="col-xs-12 text-center col-sm-8 col-sm-offset-4">
+                        <div class="media">
+                            <a href="#" class="pull-left">
+                                <img class="media-object" style="max-width:80px;max-height:80px" id="sImgChar" alt="player image" />
+                            </a>
+                            <div class="media-body text-left">
+                                <h4 class="media-heading">
+                                    Sébastien Pertus
+                                    <small>
+                                        &nbsp;
+                                        <i><span class="font-game font-sm" id="sLastPlayedTime">Last Played</span></i>
+                                    </small>
+                                </h4>
+                                <p>
+                                    <div class="font-game font-sm" id="sLastSessionLevel">Last Session Level</div>
+                                    <div class="font-game font-sm" id="sCharacterHighScore">High Score</div>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">&nbsp;</div>
+                <div class="row">
+                    <div class="col-xs-12 text-center col-sm-2 col-sm-offset-4">
+                        <button id='btnStartNewGame'
+                                class="btn btn-primary btn-sm">
+                            Start new game
+                        </button>
+                    </div>
+                    <div class="col-xs-12 text-center col-sm-2 col-sm-offset-0">
+                        <button id='btnLogout' class="btn btn-warning btn-sm">
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div id="login" class="hidden">
+                <div class="row">
+                    <div class="col-xs-12 text-center">
+                        <button id='modal-launcher'
+                                class="btn btn-primary btn-sm"
+                                data-toggle="modal" data-target="#login-modal">
+                            Please sign In
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-xs-5 text-left "  style="position:absolute;bottom:2px;padding:10px;">
+                    <br>Developed by <a href="http://twitter.com/xanmia">@Xanmia</a>
+                    <br>Rework for TypeScript and Leaderboard by <a href="http://twitter.com/sebastienpertus">@sebastienpertus</a>
+                    <br>Asteroid models by Seraphz.
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="login-modal" tabindex="-1" role="dialog"
+             aria-labelledby="myModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="text-center">Login</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-xs-3">
+                                <a href="#" class="btn btn-lg btn-block" id="btnFacebook" style="background:#3b5998;color:#fff;">
+                                    <i class="fa fa-facebook"></i>
+                                    <span class="hidden-xs">Facebook</span>
+                                </a>
+                            </div>
+                            <div class="col-xs-3">
+                                <a href="#" class="btn btn-lg btn-block disabled" id="btnTwitter" style="background:#00aced;color:#fff;">
+                                    <i class="fa fa-twitter"></i>
+                                    <span class="hidden-xs">Twitter</span>
+                                </a>
+                            </div>
+                            <div class="col-xs-3">
+                                <a href="#" class="btn btn-lg btn-block" id="btnGoogle" style="background:#c32f10;color:#fff;">
+                                    <i class="fa fa-google-plus"></i>
+                                    <span class="hidden-xs">Google+</span>
+                                </a>
+                            </div>
+                            <div class="col-xs-3">
+                                <a href="#" class="btn btn-lg btn-block" id="btnMicrosoft" style="background:#2672EC;color:#fff;">
+                                    <i class="fa fa-windows"></i>
+                                    <span class="hidden-xs">Microsoft</span>
+                                </a>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="js/jquery-1.9.0.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/MobileServices.Web.js" type="text/javascript"></script>
+    <script src="js/babylon.1.13.js"></script>
+
+    <script src="Scripts/babylonclient.js" type="text/javascript"></script>
+    <script src="Scripts/lightspeed/sound.js" type="text/javascript"></script>
+    <script src="Scripts/lightspeed/Laser.js" type="text/javascript"></script>
+    <script src="Scripts/lightspeed/Player.js" type="text/javascript"></script>
+    <script src="Scripts/lightspeed/Enemy.js" type="text/javascript"></script>
+    <script src="Scripts/lightspeed/levelingDefs.js" type="text/javascript"></script>
+    <script src="Scripts/lightspeed/Loader.js" type="text/javascript"></script>
+    <script src="Scripts/lightspeed/index.js" type="text/javascript"></script>
+</body>
+</html>
