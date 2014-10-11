@@ -10,6 +10,7 @@ exports.register = function (api) {
 
 
 exports.test = function (request, response) {
+    var format = request.params.format || 'json';
   
     _.response(response, format, 'hello');
 };

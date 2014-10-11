@@ -201,7 +201,7 @@ exports.setCors = function (request, response) {
     });
 };
 
-exports._setCors = function(containerName, accountName, accountKey, callback){
+exports._setCors = function (containerName, accountName, accountKey, callback) {
 
 
     var reqParams = getSignedRequest(accountName, accountKey, 'GET', '', '0');
@@ -209,8 +209,8 @@ exports._setCors = function(containerName, accountName, accountKey, callback){
     req.get(reqParams, function (e, res, body) {
 
         if (e || res.statusCode != 200) {
-            return callback(body, null );
-            
+            return callback(body, null);
+
         }
         var spJs = body;
 
@@ -287,15 +287,15 @@ exports._setCors = function(containerName, accountName, accountKey, callback){
                 }
 
                 var s = doc.doc().toString();
-                
+
                 var reqParams = getSignedRequest(accountName, accountKey, 'PUT', '', Buffer.byteLength(s).toString());
 
                 reqParams.body = s;
                 reqParams.method = 'PUT';
                 reqParams.headers['Host'] = accountName + '.blob.core.windows.net';
-                 reqParams.headers['Content-Length'] = Buffer.byteLength(s);
+                reqParams.headers['Content-Length'] = Buffer.byteLength(s);
 
-         
+
                 req.put(reqParams, function (e, res, body) {
 
                     if (res.statusCode == 202) {
@@ -350,7 +350,7 @@ exports.getCors = function (request, response) {
                 if (e || res.statusCode != 200) {
                     return _.responseError(response, format, body);
                 }
-           
+
                 var xml2jsSettings = xml2js.defaults['0.2'];
                 // these determine what happens if the xml contains attributes
                 xml2jsSettings.attrkey = '$';

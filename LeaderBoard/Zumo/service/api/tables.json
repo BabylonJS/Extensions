@@ -2,19 +2,19 @@
   "routes": {
     "*": {
       "get": {
-        "permission": "public"
+        "permission": "application"
       },
       "post": {
-        "permission": "public"
+        "permission": "application"
       },
       "put": {
-        "permission": "public"
+        "permission": "application"
       },
       "patch": {
-        "permission": "public"
+        "permission": "application"
       },
       "delete": {
-        "permission": "public"
+        "permission": "application"
       }
     }
   }

@@ -1,1 +1,18 @@
-{"routes":{"/":{"insert":{"permission":"application"},"read":{"permission":"application"},"update":{"permission":"application"},"delete":{"permission":"application"}}}}
+{
+  "routes": {
+    "/": {
+      "insert": {
+        "permission": "application"
+      },
+      "read": {
+        "permission": "application"
+      },
+      "update": {
+        "permission": "application"
+      },
+      "delete": {
+        "permission": "application"
+      }
+    }
+  }
+}

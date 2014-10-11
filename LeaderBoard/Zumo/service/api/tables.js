@@ -114,8 +114,8 @@ exports.getTable = function (tableName) {
         createdDate: { type: typeof (Date), isNullable: false },
         updatedDate: { type: typeof (Date), isNullable: true },
         name: { type: typeof (string), isNullable: true },
-        imageFormat: { type: typeof (string), isNullable: true},
-        length: { type: typeof (numeric), isNullable: true},
+        imageFormat: { type: typeof (string), isNullable: true },
+        length: { type: typeof (numeric), isNullable: true },
         imageBlob: { type: typeof (string), isNullable: true },
     }
 

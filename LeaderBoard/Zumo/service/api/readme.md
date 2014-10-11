@@ -1,4 +1,4 @@
-# Custom APIs
+﻿# Custom APIs
 
 The 'api' folder in your repository contains custom APIs that can be invoked with HTTP requests to `http://<servicename>.azure-mobile.net/api/<apiname>`. 
 

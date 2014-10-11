@@ -1,1 +1,21 @@
-{"routes":{"*":{"get":{"permission":"public"},"post":{"permission":"public"},"put":{"permission":"application"},"patch":{"permission":"application"},"delete":{"permission":"application"}}}}
+{
+  "routes": {
+    "*": {
+      "get": {
+        "permission": "application"
+      },
+      "post": {
+        "permission": "application"
+      },
+      "put": {
+        "permission": "application"
+      },
+      "patch": {
+        "permission": "application"
+      },
+      "delete": {
+        "permission": "application"
+      }
+    }
+  }
+}

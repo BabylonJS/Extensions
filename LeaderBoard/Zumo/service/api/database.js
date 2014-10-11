@@ -91,7 +91,7 @@ exports.deleteRow = function (request, tableName, id, callback) {
 
     tableToDel.del(id, {
         success: function () {
-            var s = {result:'row deleted'};
+            var s = { result: 'row deleted' };
             callback.success([s]);
         },
         error: function (err) {
@@ -210,7 +210,7 @@ exports.getRows = function (request, tableName, where, fields, order, callback) 
     }
     if (_.isNull(callback) && (typeof fields === 'object' && fields.success != undefined)) {
         callback = fields;
-        order= null;
+        order = null;
         fields = null;
     }
 
@@ -235,7 +235,7 @@ exports.getRows = function (request, tableName, where, fields, order, callback) 
     if (!_.isNull(fields)) {
         var selectColumns = '';
         var columns = tablesDef.getTable(tableName);
-        
+
         fields = fields.split(',');
 
         for (var i in fields) {
@@ -253,7 +253,7 @@ exports.getRows = function (request, tableName, where, fields, order, callback) 
         else
             selectColumns = selectColumns.substring(0, selectColumns.length - 1);
 
-        
+
         query = tbl.select(selectColumns)
     } else {
         // it's a * columns, so we need to include f fields
@@ -262,7 +262,7 @@ exports.getRows = function (request, tableName, where, fields, order, callback) 
     }
 
     if (!_.isNull(order)) {
-        if (!_.isNull(order.order) &&  !_.isNull(order.orderBy)) {
+        if (!_.isNull(order.order) && !_.isNull(order.orderBy)) {
             if (order.order == 'asc') {
                 query = query.orderBy(order.orderBy)
             } else if (order.order == 'desc') {

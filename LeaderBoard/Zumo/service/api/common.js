@@ -1,5 +1,3 @@
-//var data2xml = require("../shared/node_modules/data2xml");
-//var convert  = data2xml();
 
 exports.responder = function(response, format){
 
