@@ -15,8 +15,8 @@ You will have access to APIs which can :
 4. Connecting with social authentication like **Google**, **Facebook**, **Twiter** and **Microsoft**  
 5. **Send emails** to all your players  
 6. **Upload images** and blob files  
-7. Add c**ustom fields**  
-8. **Send notifications** to mobiles like **Windows Phone**, **IOS** or** Android**  
+7. Add **custom fields**  
+8. **Send notifications** to mobiles like **Windows Phone**, **IOS** or **Android**  
 
 And more to come ...
 
