@@ -330,7 +330,7 @@ exports.create = function (request, response) {
 	 'FOREIGN KEY (gameId) REFERENCES [game] (id);';
 
     var sqlForeignKeycharacterRewardcharacter = 'If not EXISTS (SELECT * FROM sys.foreign_keys WHERE name = \'FK_characterReward_character\') ' +
-	 'ALTER TABLE [characterReward] ADD CONSTRAINT FK_characterReward_charactere ' +
+	 'ALTER TABLE [characterReward] ADD CONSTRAINT FK_characterReward_character ' +
 	 'FOREIGN KEY (characterId) REFERENCES [character] (id);';
 
     var sqlForeignKeycharacterRewardreward = 'If not EXISTS (SELECT * FROM sys.foreign_keys WHERE name = \'FK_characterReward_reward\') ' +
