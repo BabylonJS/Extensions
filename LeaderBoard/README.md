@@ -1,10 +1,8 @@
 BABYLONJS Leaderboard extension
 ==============================
 
-The BABYLONJS Leaderboard extension is composed with a server side extension and a javascript client SDK, to beable to create, for you, a full backend for your game.
+The Babylon.js Leaderboard extension is composed of a server side extension and a javascript client SDK, that allow you to create a full backend for your game.
   
-It **doesn't require BABYLONJS core engine** to work.  
-
 This extension is standalone and have no dependencies.  
 It works within [Windows Azure Mobiles Services](http://azure.microsoft.com/en-us/services/mobile-services/ "Windows Azure Mobile Services").   
 
