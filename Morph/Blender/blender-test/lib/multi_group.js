@@ -1,5 +1,5 @@
 /**
- *  central location for multi_group script, called by multi_group_JSON.html & multi_group_inline.html 
+ *  called by multi_group.html 
  */
 
 var plane;
@@ -24,12 +24,12 @@ function prep(scene){
 	rightGrp.addDerivedKey("BASIS", "BUMP",  .2);	
 
 	// testing of AutomatonEventSeriesAction, trigger on a pick
-	var reset = [new BABYLON.ReferenceDeformation("LEFT"   ,"BUMP", "BASIS",  1, 0, 1),
-	             new BABYLON.ReferenceDeformation("RIGHT"  ,"BUMP", "BASIS",  1, 0, 1),
-	             new BABYLON.ReferenceDeformation("MIDDLE" ,"BUMP", "BASIS",  1, 0, 1),
+	var reset = [new MORPH.ReferenceDeformation("LEFT"   ,"BUMP", "BASIS",  1, 0, 1),
+	             new MORPH.ReferenceDeformation("RIGHT"  ,"BUMP", "BASIS",  1, 0, 1),
+	             new MORPH.ReferenceDeformation("MIDDLE" ,"BUMP", "BASIS",  1, 0, 1),
 	             ];
-	var resetSeries = new BABYLON.AutomatonEventSeries(reset);
-	var resetAction = new BABYLON.AutomatonEventSeriesAction(BABYLON.ActionManager.OnPickTrigger, plane, resetSeries);
+	var resetSeries = new MORPH.EventSeries(reset);
+	var resetAction = new MORPH.EventSeriesAction(BABYLON.ActionManager.OnPickTrigger, plane, resetSeries);
 	
 	plane.actionManager = new BABYLON.ActionManager(scene);
 	plane.actionManager.registerAction(resetAction);
@@ -51,7 +51,7 @@ function right() {
 function boing(group){
     /**
      * sub-class of ReferenceDeformation, where the referenceStateName is Fixed to "BASIS"
-     * @param {string} shapeKeyGroupName -  Used by Automaton to place in the correct ShapeKeyGroup queue(s).
+     * @param {string} shapeKeyGroupName -  Used by MORPH.Mesh to place in the correct ShapeKeyGroup queue(s).
      * @param {string} endStateName - Name of state key to deform to
      * @param {number} milliDuration - The number of milli seconds the deformation is to be completed in
      * @param {number} millisBefore - Fixed wait period, once a syncPartner (if any) is also ready (default 0)
@@ -65,35 +65,35 @@ function boing(group){
     //                                          Shape                               end-                                  flip back
     //                                          Key                     dur-        state                                 twirl clockwise
     //                                          Group          State    ation  wait ratio  right-up-forward               tilt right               pace
-    var stretch      = [new BABYLON.Deformation(group        ,"BUMP" ,  750,    0,   1.0), 
-                        new BABYLON.Deformation(group        ,"BUMP" ,  150,  100,   -.2)
+    var stretch      = [new MORPH.Deformation(group        ,"BUMP" ,  750,    0,   1.0), 
+                        new MORPH.Deformation(group        ,"BUMP" ,  150,  100,   -.2)
                        ];
     
-    var vibrate      = [new BABYLON.Deformation(group        ,"BUMP" ,   75,    0,    .2), 
-                        new BABYLON.Deformation(group        ,"BUMP" ,   75,    0,   -.2),
+    var vibrate      = [new MORPH.Deformation(group        ,"BUMP" ,   75,    0,    .2), 
+                        new MORPH.Deformation(group        ,"BUMP" ,   75,    0,   -.2),
                        ];
                      
-	var reset        = [new BABYLON.ReferenceDeformation(group  ,"BUMP", "BASIS",  50, 0, 1),
+	var reset        = [new MORPH.ReferenceDeformation(group  ,"BUMP", "BASIS",  50, 0, 1),
                        ];
 	
-    plane.queueEventSeries(new BABYLON.AutomatonEventSeries(stretch));
-    plane.queueEventSeries(new BABYLON.AutomatonEventSeries(vibrate, 3, 0.8));
-    plane.queueEventSeries(new BABYLON.AutomatonEventSeries(reset));
+    plane.queueEventSeries(new MORPH.EventSeries(stretch));
+    plane.queueEventSeries(new MORPH.EventSeries(vibrate, 3, 0.8));
+    plane.queueEventSeries(new MORPH.EventSeries(reset));
 }
 
 function drumming() {
 	var dur = 75;
 	
 	// note right "BUMP" is in the opposite direction of left "BUMP", so down is > 0
-	var rightDown       = new BABYLON.ReferenceDeformation("RIGHT", "BASIS", "BUMP",  dur, 300,  .2); // starts too fast, & each subsequent down also needs to wait
-   	var rightLastDown   = new BABYLON.ReferenceDeformation("RIGHT", "BASIS", "BUMP",  dur, 300,  .2); // in sync with left, but delay for it after both are started
-	var rightUp         = new BABYLON.ReferenceDeformation("RIGHT", "BASIS", "BUMP",  dur,   0, -.2);
-	var rightHorizontal = new BABYLON.ReferenceDeformation("RIGHT", "BUMP", "BASIS",  dur,   0,   1);
-	var rightStall      = new BABYLON.ReferenceDeformation("RIGHT", "BUMP", "BASIS",    1, 150,   1); // same as rightHorizontal, so nothing happens (less CPU to wait)
+	var rightDown       = new MORPH.ReferenceDeformation("RIGHT", "BASIS", "BUMP",  dur, 300,  .2); // starts too fast, & each subsequent down also needs to wait
+   	var rightLastDown   = new MORPH.ReferenceDeformation("RIGHT", "BASIS", "BUMP",  dur, 300,  .2); // in sync with left, but delay for it after both are started
+	var rightUp         = new MORPH.ReferenceDeformation("RIGHT", "BASIS", "BUMP",  dur,   0, -.2);
+	var rightHorizontal = new MORPH.ReferenceDeformation("RIGHT", "BUMP", "BASIS",  dur,   0,   1);
+	var rightStall      = new MORPH.ReferenceDeformation("RIGHT", "BUMP", "BASIS",    1, 200,   1); // same as rightHorizontal, so nothing happens (less CPU to wait)
 	
-   	var leftDown        = new BABYLON.ReferenceDeformation("LEFT" , "BASIS", "BUMP",  dur,   0, -.2);
-   	var leftUp          = new BABYLON.ReferenceDeformation("LEFT" , "BASIS", "BUMP",  dur,   0,  .2);
-	var leftHorizontal  = new BABYLON.ReferenceDeformation("LEFT" , "BUMP", "BASIS",  dur,   0,   1);
+   	var leftDown        = new MORPH.ReferenceDeformation("LEFT" , "BASIS", "BUMP",  dur,   0, -.2);
+   	var leftUp          = new MORPH.ReferenceDeformation("LEFT" , "BASIS", "BUMP",  dur,   0,  .2);
+	var leftHorizontal  = new MORPH.ReferenceDeformation("LEFT" , "BUMP", "BASIS",  dur,   0,   1);
    	
    	// make last down beats a sync pair
    	leftDown     .setSyncPartner(rightLastDown);
@@ -109,26 +109,26 @@ function drumming() {
                   rightLastDown, rightUp, rightHorizontal, rightStall
    	             ];
    	
-    plane.queueEventSeries(new BABYLON.AutomatonEventSeries(series, 3));
+    plane.queueEventSeries(new MORPH.EventSeries(series, 3));
 }
 
 function conflict() {	
 	              // all three start at the same time, use delays for demo
-   	var series = [new BABYLON.Deformation("MIDDLE", "BUMP",  500, 1600,  1.0),
-   	              new BABYLON.Deformation("RIGHT" , "BUMP",  500,    0,  1.0),
-   	              new BABYLON.Deformation("LEFT"  , "BUMP",  500,    0,  1.0),
+   	var series = [new MORPH.Deformation("MIDDLE", "BUMP",  500, 1600,  1.0),
+   	              new MORPH.Deformation("RIGHT" , "BUMP",  500,    0,  1.0),
+   	              new MORPH.Deformation("LEFT"  , "BUMP",  500,    0,  1.0),
    	              // functions and Actions run on the queue of the first series, in this case 'MIDDLE'
                   function(){
                       window.alert("Overlapping Shape Key Groups can exist, but it is up to the application programmer to manage, unlike here.\n\nAction test:  Pick mesh to reset");
                   } 
    	             ];
 
-    plane.queueEventSeries(new BABYLON.AutomatonEventSeries(series));
+    plane.queueEventSeries(new MORPH.EventSeries(series));
 }
 
 function pausePlay() {
-	console.log("Requesting " + (BABYLON.Automaton.isSystemPaused() ? "resume" : "pause"));
+	console.log("Requesting " + (MORPH.Mesh.isSystemPaused() ? "resume" : "pause"));
 	// test Automation system wide pause-play
-	if (BABYLON.Automaton.isSystemPaused()) BABYLON.Automaton.resumeSystem();
-   	else BABYLON.Automaton.pauseSystem();
+	if (MORPH.Mesh.isSystemPaused()) MORPH.Mesh.resumeSystem();
+   	else MORPH.Mesh.pauseSystem();
 }

@@ -1,10 +1,12 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>mesh_parent</title>
-    <!-- edit path - name of babylon library as required -->
+    <title>multi_group</title>
+    <!-- edit path - name of babylon & morph libraries as required -->
     <script src="./lib/babylon.js"></script>
-    <script src="./lib/mesh_parent_common.js"></script>
+    <script src="./lib/morph.js"></script>
+    <script src="./TOB-out/multi_group.js"></script>
+    <script src="./lib/multi_group.js"></script>
     <style>
          html, body   { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; } 
          #renderCanvas{ width: 100%; height: 100%; } 
@@ -21,7 +23,11 @@
 <body>
 	<div id="buttonbar" style="background-color: Darkorange;">
 		<span id="button" onclick="pausePlay()"> Pause - Play </span>
-		<span id="button" onclick="orphanConceive()"> Orhpan - Conceive </span>
+		<span id="button" onclick="left()"> Left </span>
+		<span id="button" onclick="middle()"> Middle </span>
+		<span id="button" onclick="right()"> Right </span>
+		<span id="button" onclick="drumming()"> Drumming </span>
+		<span id="button" onclick="conflict()"> Conflict </span>
 	</div>
 <canvas id="renderCanvas"></canvas>
 <script>
@@ -29,25 +35,16 @@
         var canvas = document.getElementById("renderCanvas");
         var engine = new BABYLON.Engine(canvas, true);
         console.log("Babylon version:  " + BABYLON.Engine.Version);
+        console.log("Morph version:  "   + MORPH.Mesh.Version);
 
-        var url = "./TOB-out/"; // edit when .babylon / texture files in a different dir than html
-        BABYLON.SceneLoader.Load(url, "mesh_parent.babylon", engine, 
-            function (newScene) {
-                newScene.executeWhenReady(function () {
-                    // Attach camera to canvas inputs
-                    newScene.activeCamera.attachControl(canvas);
-                   
-                    // Once the scene is loaded, register a render loop
-                    engine.runRenderLoop(function() {
-                    	animate(newScene);
-                        newScene.render();
-                    });
-                });
-            },
-            function (progress) {
-                // To do: give progress feedback to user
-            }
-        );
+        var scene = new BABYLON.Scene(engine);
+        materialsRootDir = "."; // edit when texture files in a different dir than html
+        multi_group.initScene(scene, materialsRootDir);
+        prep(scene);
+        scene.activeCamera.attachControl(canvas);
+        engine.runRenderLoop(function () {
+            scene.render();
+        });
     }else{
         alert("WebGL not supported in this browser.\n\n" + 
               "If in Safari browser, check 'Show Develop menu in menu bar' on the Advanced tab of Preferences.  " +

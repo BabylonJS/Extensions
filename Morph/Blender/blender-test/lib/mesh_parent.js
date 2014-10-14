@@ -1,5 +1,5 @@
 /**
- *  central location for mesh_parent script, called by mesh_parent_JSON.html & mesh_parent_inline.html 
+ *  called by mesh_parent.html 
  */
 var breadMan;
 var ground;

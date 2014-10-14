@@ -1,10 +1,10 @@
 bl_info = {
     'name': 'Tower of Babel',
     'author': 'David Catuhe, Jeff Palmer',
-    'version': (1, 1, 0),
-    'blender': (2, 72, 0),
-    "location": "File > Export > Babylon.js (.babylon)",
-    "description": "Export Babylon.js scenes (.babylon)",
+    'version': (1, 2, 0),
+    'blender': (2, 69, 0),
+    'location': 'File > Export > Tower of Babel [.js + .ts + .html(s)]',
+    'description': 'Translate to inline JavaScript & TypeScript modules',
     'warning': "Holy crap batman!  You've been warned!",
     'wiki_url': 'https://github.com/BabylonJS/Babylon.js/wiki/13-Blender',
     'tracker_url': '',
@@ -21,7 +21,7 @@ import sys, traceback # for writing errors to log file
 #===============================================================================
 # Registration the calling of the INFO_MT_file_export file selector
 def menu_func(self, context):
-    self.layout.operator(TowerOfBabel.bl_idname, text = 'Tower of Babel [.babylon + .js + .ts + .html(s)]')
+    self.layout.operator(TowerOfBabel.bl_idname, text = 'Tower of Babel [.js + .ts + .html(s)]')
 
 # store keymaps here to access after registration (commented out for now)
 #addon_keymaps = []
@@ -151,12 +151,6 @@ class TowerOfBabel(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         default = False,
         )
     
-    export_json = bpy.props.BoolProperty(
-        name="Export JSON (.babylon) File",
-        description="Produce a JSON (xxx.babylon) File",
-        default = True,
-        )
-    
     export_html = bpy.props.BoolProperty(
         name="Export applicable .html File(s)",
         description="Produce a xxx_JSON.html and/or xxx_inline.html as required by other selections",
@@ -169,7 +163,6 @@ class TowerOfBabel(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         layout.prop(self, 'export_onlyCurrentLayer') 
         layout.prop(self, "export_javaScript")
         layout.prop(self, "export_typeScript")
-        layout.prop(self, "export_json")
         layout.prop(self, "export_html")
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
     nWarnings = 0      
@@ -309,7 +302,6 @@ class TowerOfBabel(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             bpy.context.scene.frame_set(currentFrame)
 
             # 3 passes of output files
-            if (self.export_json      ): self.to_scene_file   ()
             if (self.export_typeScript): self.core_script_file(True)
             if (self.export_javaScript): self.core_script_file(False)
             if (self.export_html):
@@ -336,110 +328,6 @@ class TowerOfBabel(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                 self.report({'WARNING'}, 'Processing completed, but ' + str(TowerOfBabel.nWarnings) + ' WARNINGS were raised,  see log file.')
         
         return {'FINISHED'}
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -                
-    def to_scene_file(self):
-        TowerOfBabel.log('========= Writing of scene file started =========', 0)
-        # Open file
-        file_handler = open(self.filepathMinusExtension + '.babylon', 'w')  
-        file_handler.write('{')
-        self.world.to_scene_file(file_handler)
-        
-        # Materials
-        file_handler.write(',\n"materials":[')
-        first = True
-        for material in TowerOfBabel.materials:
-            if first != True:
-                file_handler.write(',')
-
-            first = False
-            material.to_scene_file(file_handler)
-        file_handler.write(']')
-        
-        # Multi-materials
-        file_handler.write(',\n"multiMaterials":[')
-        first = True
-        for multimaterial in self.multiMaterials:
-            if first != True:
-                file_handler.write(',')
-
-            first = False
-            multimaterial.to_scene_file(file_handler)
-        file_handler.write(']')
-                
-        # Armatures/Bones
-        file_handler.write(',\n"skeletons":[')
-        first = True
-        for skeleton in self.skeletons:
-            if first != True:
-                file_handler.write(',')
-
-            first = False
-            skeleton.to_scene_file(file_handler)
-        file_handler.write(']')     
-
-        # Meshes
-        file_handler.write(',\n"meshes":[')
-        first = True
-        for m in range(0, len(self.meshesAndNodes)):
-            mesh = self.meshesAndNodes[m]
-            
-            # skip if mesh already written by that name, since this one is an instance
-            skip = False
-            for n in range(0, m):
-                skip |= mesh.dataName == self.meshesAndNodes[n].dataName # nodes have no dataname, so no need to check for
-             
-            if skip: continue
-                
-            if first != True:
-                file_handler.write(',')
-
-            first = False
-            mesh.to_scene_file(file_handler, self.meshesAndNodes)
-        file_handler.write(']')
-        
-        # Cameras
-        file_handler.write(',\n"cameras":[')
-        first = True
-        for camera in self.cameras:
-            if hasattr(camera, 'fatalProblem'): continue
-            if first != True:
-                file_handler.write(',')
-
-            first = False
-            camera.update_for_target_attributes(self.meshesAndNodes)
-            camera.to_scene_file(file_handler)
-        file_handler.write(']')
-                        
-        # Active camera
-        if hasattr(self, 'activeCamera'):
-            write_string(file_handler, 'activeCamera', self.activeCamera)
-            
-        # Lights
-        file_handler.write(',\n"lights":[')
-        first = True
-        for light in self.lights:
-            if first != True:
-                file_handler.write(',')
-
-            first = False
-            light.to_scene_file(file_handler)
-        file_handler.write(']')
-        
-        # Shadow generators
-        file_handler.write(',\n"shadowGenerators":[')
-        first = True
-        for shadowGen in self.shadowGenerators:
-            if first != True:
-                file_handler.write(',')
-
-            first = False
-            shadowGen.to_scene_file(file_handler)
-        file_handler.write(']')
-        
-        # Closing
-        file_handler.write('}')
-        file_handler.close()        
-        TowerOfBabel.log('========= Writing of scene file completed =========', 0)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -                
     def core_script_file(self, is_typescript): 
         indent1 = '    '
@@ -637,19 +525,6 @@ class World:
     
         TowerOfBabel.log('Python World class constructor completed')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -                
-    def to_scene_file(self, file_handler): 
-        write_bool(file_handler, 'autoClear', self.autoClear, True)
-        write_color(file_handler, 'clearColor', self.world_ambient)
-        write_color(file_handler, 'ambientColor', self.world_ambient)
-        write_vector(file_handler, 'gravity', self.gravity)
-        
-        if hasattr(self, 'fogMode'):
-            write_int(file_handler, 'fogMode', self.fogMode)
-            write_color(file_handler, 'fogColor', self.fogColor)
-            write_float(file_handler, 'fogStart', self.fogStart)
-            write_float(file_handler, 'fogEnd', self.fogEnd)
-            write_float(file_handler, 'fogDensity', self.fogDensity)
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -                
     def to_javascript(self, file_handler, meshes): 
         file_handler.write('"use strict";\n')
         file_handler.write('var __extends = this.__extends || function (d, b) {\n')
@@ -735,22 +610,6 @@ class FCurveAnimatable:
                 if self.autoAnimateTo < animation.get_last_frame():
                     self.autoAnimateTo = animation.get_last_frame()
             self.autoAnimateLoop = True
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -                
-    def to_scene_file(self, file_handler):     
-        if (self.animationsPresent):
-            file_handler.write('\n,"animations":[')
-            first = True
-            for animation in self.animations:
-                if first == False:
-                    file_handler.write(',')
-                animation.to_scene_file(file_handler)
-                first = False
-            file_handler.write(']')
-            
-            write_bool(file_handler, 'autoAnimate', self.autoAnimate)
-            write_int(file_handler, 'autoAnimateFrom', self.autoAnimateFrom)
-            write_int(file_handler, 'autoAnimateTo', self.autoAnimateTo)
-            write_bool(file_handler, 'autoAnimateLoop', self.autoAnimateLoop)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -        
     def core_script(self, file_handler, jsVarName, indent, is_typescript): 
         if (self.animationsPresent):
@@ -1138,7 +997,7 @@ class Mesh(FCurveAnimatable):
         return legal_js_identifier(self.name)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
     def get_base_class(self):
-        return 'BABYLON.Automaton' if hasattr(self, 'shapeKeyGroups') else 'BABYLON.Mesh'
+        return 'MORPH.Mesh' if hasattr(self, 'shapeKeyGroups') else 'BABYLON.Mesh'
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -      
     @staticmethod
     def mesh_triangulate(mesh):
@@ -1152,98 +1011,6 @@ class Mesh(FCurveAnimatable):
             bm.free()
         except:
             pass
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -      
-    def to_scene_file(self, file_handler, meshesAndNodes): 
-        file_handler.write('{')        
-        write_string(file_handler, 'name', self.name, True)        
-        write_string(file_handler, 'id', self.name) 
-        if hasattr(self, 'parentId'): write_string(file_handler, 'parentId', self.parentId)
-
-        if hasattr(self, 'materialId'): write_string(file_handler, 'materialId', self.materialId)        
-        write_int(file_handler, 'billboardMode', self.billboardMode)
-        write_vector(file_handler, 'position', self.position)
-        write_vector(file_handler, 'rotation', self.rotation)
-        write_vector(file_handler, 'scaling', self.scaling)
-        write_bool(file_handler, 'isVisible', self.isVisible)
-        write_bool(file_handler, 'isEnabled', self.isEnabled)
-        write_bool(file_handler, 'useFlatShading', self.useFlatShading)
-        write_bool(file_handler, 'checkCollisions', self.checkCollisions)
-        write_bool(file_handler, 'receiveShadows', self.receiveShadows)
-
-        if hasattr(self, 'physicsImpostor'):
-            write_int(file_handler, 'physicsImpostor', self.physicsImpostor)
-            write_float(file_handler, 'physicsMass', self.physicsMass)
-            write_float(file_handler, 'physicsFriction', self.physicsFriction)
-            write_float(file_handler, 'physicsRestitution', self.physicsRestitution)
-
-        # Geometry
-        if hasattr(self, 'skeletonId'): write_int(file_handler, 'skeletonId', self.skeletonId)
-        write_vector_array(file_handler, 'positions', self.positions)
-        write_vector_array(file_handler, 'normals'  , self.normals  )
-
-        if len(self.uvs) > 0:
-            write_array(file_handler, 'uvs', self.uvs)
-
-        if len(self.uvs2) > 0:
-            write_array(file_handler, 'uvs2', self.uvs2)
-
-        if len(self.colors) > 0:
-            write_array(file_handler, 'colors', self.colors)
-
-        if hasattr(self, 'skeletonWeights'):
-            write_array(file_handler, 'matricesWeights', self.skeletonWeights)
-            write_array(file_handler, 'matricesIndices', self.skeletonIndicesCompressed)
-
-        write_array(file_handler, 'indices', self.indices)
-
-        # Sub meshes
-        file_handler.write('\n,"subMeshes":[')
-        first = True
-        for subMesh in self.subMeshes:
-            if first == False:
-                file_handler.write(',')
-            subMesh.to_scene_file(file_handler)
-            first = False
-        file_handler.write(']')
-
-        super().to_scene_file(file_handler) # Animations
-                
-        # Instances
-        first = True
-        file_handler.write('\n,"instances":[')
-        for mesh in meshesAndNodes:
-            if mesh.dataName == self.dataName and mesh != self:  # nodes have no dataname, so no need to check for
-                if first == False:
-                    file_handler.write(',')
-                file_handler.write('{')
-
-                write_string(file_handler, 'name', mesh.name, True)        
-                write_vector(file_handler, 'position', mesh.position)
-                write_vector(file_handler, 'rotation', mesh.rotation)
-                write_vector(file_handler, 'scaling', mesh.scaling)
-
-                file_handler.write('}')
-                first = False
-        file_handler.write(']')
-
-        # Shape Key Groups
-        isAutomaton = hasattr(self, 'shapeKeyGroups')
-        write_bool(file_handler, 'isAutomaton', isAutomaton)
-        if (isAutomaton):
-            first = True
-            file_handler.write('\n,"shapeKeyGroups":[')
-            for shapeKeyGroup in self.shapeKeyGroups:
-                file_handler.write('\n')
-                if first == False:
-                    file_handler.write(',')
-
-                shapeKeyGroup.to_scene_file(file_handler)
-                first = False
-            file_handler.write(']')
-
-        # Close mesh
-        file_handler.write('}\n')
-        self.alreadyExported = True
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -        
     def core_script(self, file_handler, kids, indent, is_typescript): 
         properName = self.get_proper_name()
@@ -1385,7 +1152,7 @@ class Mesh(FCurveAnimatable):
             file_handler.write(indent2 + '}\n') 
         
         if (isAutomaton):
-            file_handler.write(indent2 + 'var shapeKeyGroup' + (' : BABYLON.ShapeKeyGroup;\n' if is_typescript else ';\n') )
+            file_handler.write(indent2 + 'var shapeKeyGroup' + (' : MORPH.ShapeKeyGroup;\n' if is_typescript else ';\n') )
             for shapeKeyGroup in self.shapeKeyGroups:
                 shapeKeyGroup.core_script(file_handler, var, indent2) # assigns the previously declared js variable 'shapeKeyGroup'
                 file_handler.write(indent2 + 'this.addShapeKeyGroup(shapeKeyGroup);\n')
@@ -1427,21 +1194,6 @@ class Node:
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def get_proper_name(self):
         return legal_js_identifier(self.name)
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    def to_scene_file(self, file_handler, ignored):
-        file_handler.write('{')
-        write_string(file_handler, 'name', self.name, True)        
-        write_string(file_handler, 'id', self.name)        
-        if hasattr(self, 'parentId'): write_string(file_handler, 'parentId', self.parentId)
-                   
-        write_vector(file_handler, 'position', self.position)
-        write_vector(file_handler, 'rotation', self.rotation)
-        write_vector(file_handler, 'scaling', self.scaling)
-        write_bool(file_handler, 'isVisible', self.isVisible)
-        write_bool(file_handler, 'checkCollisions', self.checkCollisions)
-        write_int(file_handler, 'billboardMode', self.billboardMode)
-        write_bool(file_handler, 'receiveShadows', self.receiveShadows)      
-        file_handler.write('}')    
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -        
     def core_script(self, file_handler, kids, indent, is_typescript): 
         properName = self.get_proper_name()
@@ -1518,15 +1270,6 @@ class SubMesh:
         self.indexStart = indexStart
         self.verticesCount = verticesCount
         self.indexCount = indexCount
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -                
-    def to_scene_file(self, file_handler):       
-        file_handler.write('{')
-        write_int(file_handler, 'materialIndex', self.materialIndex, True)
-        write_int(file_handler, 'verticesStart', self.verticesStart)
-        write_int(file_handler, 'verticesCount', self.verticesCount)
-        write_int(file_handler, 'indexStart'   , self.indexStart)
-        write_int(file_handler, 'indexCount'   , self.indexCount)
-        file_handler.write('}')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
     def core_script(self, file_handler, jsMeshVar, indent):
         file_handler.write(indent + 'new BABYLON.SubMesh(' + 
@@ -1603,29 +1346,9 @@ class ShapeKeyGroup:
             self.stateNames.append(key.state)
             self.stateVertices.append(affectedVertices)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -        
-    def to_scene_file(self, file_handler):
-        file_handler.write('{')
-        write_string(file_handler, 'group', self.group, True)
-        write_array(file_handler, 'affectedIndices', self.affectedIndices)
-        write_vector_array(file_handler, 'basisState', self.basisState)
-        
-        file_handler.write('\n,"states":[')
-        first = True
-        for state_idx in range(len(self.stateVertices)):
-            if first != True:
-                file_handler.write(',')
-            first = False
-            file_handler.write('\n{')
-            write_string(file_handler, 'stateName', self.stateNames[state_idx], True)
-            write_vector_array(file_handler, 'state', self.stateVertices[state_idx])
-            file_handler.write('\n}')
-
-        file_handler.write(']')   # close states
-        file_handler.write('}')
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -        
     def core_script(self, file_handler, var, indent):
         indent2 = indent + '    '
-        file_handler.write(indent  + 'shapeKeyGroup = new BABYLON.ShapeKeyGroup(' + var + ', "' + self.group + '",[\n')
+        file_handler.write(indent  + 'shapeKeyGroup = new MORPH.ShapeKeyGroup(' + var + ', "' + self.group + '",[\n')
         file_handler.write(indent2 + format_array(self.affectedIndices, VERTEX_OUTPUT_PER_LINE, indent2) + '\n')
         file_handler.write(indent  + '],[\n')
         file_handler.write(indent2 + format_vector_array(self.basisState, VERTEX_OUTPUT_PER_LINE, indent2) + '\n')
@@ -1683,20 +1406,6 @@ class Bone:
             return (SystemMatrix * matrix_world * bone.parent.matrix).inverted() * (SystemMatrix * matrix_world * bone.matrix)
         else:
             return SystemMatrix * matrix_world * bone.matrix
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -                
-    def to_scene_file(self, file_handler):     
-        file_handler.write('\n{')
-        write_string(file_handler, 'name', self.name, True)
-        write_int(file_handler, 'index', self.index)
-        write_matrix4(file_handler, 'matrix', self.matrix)
-        write_int(file_handler, 'parentBoneIndex', self.parentBoneIndex)
-
-        #animation
-        if hasattr(self, 'animation'): 
-            file_handler.write(',"animation":')
-            self.animation.to_scene_file(file_handler)
-            
-        file_handler.write('}') 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -        
     # assume the following JS variables have already been declared: skeleton, bone, animation
     def core_script(self, file_handler, indent): 
@@ -1722,23 +1431,6 @@ class Skeleton:
             j = j + 1
             
         TowerOfBabel.log('processing complete of skeleton:  ' + skeleton.name)
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -                
-    def to_scene_file(self, file_handler):
-        file_handler.write('{')
-        write_string(file_handler, 'name', self.name, True)
-        write_int(file_handler, 'id', self.id)  # keep int for legacy of original exporter
-        
-        file_handler.write(',"bones":[')
-        first = True
-        for bone in self.bones:
-            if first != True:
-                file_handler.write(',')
-            first = False
-
-            bone.to_scene_file(file_handler)
-
-        file_handler.write(']')
-        file_handler.write('}') 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -        
     # assume the following JS variables have already been declared: scene, skeleton, bone, animation
     def core_script(self, file_handler, indent): 
@@ -1810,45 +1502,6 @@ class Camera(FCurveAnimatable):
             self.arcRotAlpha  = alpha
             self.arcRotBeta   = beta 
             self.arcRotRadius = distance3D
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -                
-    def to_scene_file(self, file_handler):     
-        file_handler.write('{')
-        write_string(file_handler, 'name', self.name, True)        
-        write_string(file_handler, 'id', self.name)
-        write_vector(file_handler, 'position', self.position)
-        write_vector(file_handler, 'rotation', self.rotation)
-        write_float(file_handler, 'fov', self.fov)
-        write_float(file_handler, 'minZ', self.minZ)
-        write_float(file_handler, 'maxZ', self.maxZ)
-        write_float(file_handler, 'speed', self.speed)
-        write_float(file_handler, 'inertia', self.inertia)
-        write_bool(file_handler, 'checkCollisions', self.checkCollisions)
-        write_bool(file_handler, 'applyGravity', self.applyGravity)
-        write_array3(file_handler, 'ellipsoid', self.ellipsoid)
-        
-        write_string(file_handler, 'type', self.CameraType)
-        
-        if self.CameraType == FOLLOW_CAM:
-            write_float(file_handler, 'heightOffset',  self.followHeight)
-            write_float(file_handler, 'radius',  self.followDistance)
-            write_float(file_handler, 'rotationOffset',  self.followRotation)
-            
-        elif self.CameraType == ANAGLYPH_ARC_CAM or self.CameraType == ARC_ROTATE_CAM:
-            write_float(file_handler, 'alpha', self.arcRotAlpha)
-            write_float(file_handler, 'beta', self.arcRotBeta)
-            write_float(file_handler, 'radius',  self.arcRotRadius)
-            
-            if self.CameraType ==  ANAGLYPH_ARC_CAM:
-                write_float(file_handler, 'eye_space',  self.anaglyphEyeSpace)
-            
-        elif self.CameraType == ANAGLYPH_FREE_CAM:
-            write_float(file_handler, 'eye_space',  self.anaglyphEyeSpace)
-            
-        if hasattr(self, 'lockedTargetId'):
-            write_string(file_handler, 'lockedTargetId', self.lockedTargetId)
-
-        super().to_scene_file(file_handler) # Animations
-        file_handler.write('}')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -        
     def core_script(self, file_handler, indent, is_typescript): 
         # constructor args are not the same for each camera type
@@ -1929,26 +1582,6 @@ class Light(FCurveAnimatable):
         self.intensity = light.data.energy        
         self.diffuse   = light.data.color if light.data.use_diffuse  else mathutils.Color((0, 0, 0))
         self.specular  = light.data.color if light.data.use_specular else mathutils.Color((0, 0, 0))
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -                
-    def to_scene_file(self, file_handler):     
-        file_handler.write('{')
-        write_string(file_handler, 'name', self.name, True)        
-        write_string(file_handler, 'id', self.name)        
-        write_float(file_handler, 'type', self.light_type)
-        
-        if hasattr(self, 'position'   ): write_vector(file_handler, 'position'   , self.position   )
-        if hasattr(self, 'direction'  ): write_vector(file_handler, 'direction'  , self.direction  )
-        if hasattr(self, 'angle'      ): write_float (file_handler, 'angle'      , self.angle      )
-        if hasattr(self, 'exponent'   ): write_float (file_handler, 'exponent'   , self.exponent   )
-        if hasattr(self, 'groundColor'): write_color (file_handler, 'groundColor', self.groundColor)
-        if hasattr(self, 'range'      ): write_float (file_handler, 'range'      , self.range      )
-            
-        write_float(file_handler, 'intensity', self.intensity)
-        write_color(file_handler, 'diffuse', self.diffuse)
-        write_color(file_handler, 'specular', self.specular)
-            
-        super().to_scene_file(file_handler) # Animations
-        file_handler.write('}')     
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -        
     def core_script(self, file_handler, indent, is_typescript): 
         if self.light_type == POINT_LIGHT:
@@ -1991,24 +1624,6 @@ class ShadowGenerator:
         for object in [object for object in scene.objects]:
             if (object.type == 'MESH' and object.data.castShadows):
                 self.shadowCasters.append(object.name)
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -                
-    def to_scene_file(self, file_handler):
-        file_handler.write('{')
-        write_bool(file_handler, 'useVarianceShadowMap', self.useVarianceShadowMap, True)    
-        write_int(file_handler, 'mapSize', self.mapSize)  
-        write_string(file_handler, 'lightId', self.lightId)     
-        
-        file_handler.write(',"renderList":[')
-        first = True
-        for caster in self.shadowCasters:
-            if first != True:
-                file_handler.write(',')
-            first = False
-            
-            file_handler.write('"' + caster + '"')
-            
-        file_handler.write(']')         
-        file_handler.write('}') 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -        
     def core_script(self, file_handler, indent): 
         file_handler.write(indent + 'light = scene.getLightByID("' + self.lightId + '");\n')
@@ -2026,21 +1641,6 @@ class MultiMaterial:
 
         for mat in material_slots:
             self.materials.append(TowerOfBabel.nameSpace + '.' + mat.name)
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -                
-    def to_scene_file(self, file_handler):       
-        file_handler.write('{')
-        write_string(file_handler, 'name', self.name, True)
-        write_string(file_handler, 'id', self.name)
-        
-        file_handler.write(',"materials":[')
-        first = True
-        for materialName in self.materials:
-            if first != True:
-                file_handler.write(',')
-            file_handler.write('"' + materialName +'"')
-            first = False
-        file_handler.write(']')
-        file_handler.write('}')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -        
     def core_script(self, file_handler, indent): 
         file_handler.write(indent + 'multiMaterial = new BABYLON.MultiMaterial("' + self.name + '", scene);\n')
@@ -2105,24 +1705,6 @@ class Texture:
             self.wrapU = CLAMP_ADDRESSMODE
             
         self.coordinatesIndex = 0
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -                
-    def to_scene_file(self, file_handler):       
-        file_handler.write(',"' + self.slot + '":{')
-        write_string(file_handler, 'name', self.name, True)
-        write_float(file_handler, 'level', self.level)
-        write_float(file_handler, 'hasAlpha', self.hasAlpha)       
-        write_int(file_handler, 'coordinatesMode', self.coordinatesMode)
-        write_float(file_handler, 'uOffset', self.uOffset)
-        write_float(file_handler, 'vOffset', self.vOffset)
-        write_float(file_handler, 'uScale', self.uScale)
-        write_float(file_handler, 'vScale', self.vScale)
-        write_float(file_handler, 'uAng', self.uAng)
-        write_float(file_handler, 'vAng', self.vAng)     
-        write_float(file_handler, 'wAng', self.wAng)
-        write_int(file_handler, 'wrapU', self.wrapU)     
-        write_int(file_handler, 'wrapV', self.wrapV)
-        write_int(file_handler, 'coordinatesIndex', self.coordinatesIndex)    
-        file_handler.write('}') 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -        
     def core_script(self, file_handler, indent): 
         file_handler.write(indent + 'texture = new BABYLON.Texture(' + MATERIALS_PATH_VAR + ' + "' + self.name + '", scene);\n')
@@ -2188,26 +1770,6 @@ class Material:
 #                glsl_handler.write('\n//#############################################################################\n')                      
 #                glsl_handler.write(shader['fragment'])
 #                glsl_handler.close()
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -                
-    def to_scene_file(self, file_handler):       
-        file_handler.write('{')
-        write_string(file_handler, 'name', self.name, True)      
-        write_string(file_handler, 'id', self.name)
-        write_color(file_handler, 'ambient', self.ambient)
-        write_color(file_handler, 'diffuse', self.diffuse)
-        write_color(file_handler, 'specular', self.specular)
-        write_color(file_handler, 'emissive', self.emissive)        
-        write_float(file_handler, 'specularPower', self.specularPower)
-        write_float(file_handler, 'alpha', self.alpha)
-        write_bool(file_handler, 'backFaceCulling', self.backFaceCulling)
-        first = True
-        for texSlot in self.textures:
-            if first != True:
-                file_handler.write(',')
-            first = False
-            texSlot.to_scene_file(file_handler)
-            
-        file_handler.write('}') 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -        
     def core_script(self, file_handler, indent):       
         file_handler.write(indent + 'material = new BABYLON.StandardMaterial("' + self.name + '", scene);\n')
@@ -2241,34 +1803,6 @@ class Animation:
     # for auto animate
     def get_last_frame(self): 
         return self.frames[len(self.frames) - 1] if len(self.frames) > 0 else -1
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -                
-    def to_scene_file(self, file_handler): 
-        file_handler.write('{')
-        write_int(file_handler, 'dataType', self.dataType, True)
-        write_int(file_handler, 'framePerSecond', self.framePerSecond)
-        
-        file_handler.write(',"keys":[')
-        first = True
-        for frame_idx in range(len(self.frames)):
-            if first != True:
-                file_handler.write(',')
-            first = False
-            file_handler.write('{')
-            write_int(file_handler, 'frame', self.frames[frame_idx], True)
-            if self.dataType == ANIMATIONTYPE_MATRIX:
-                write_matrix4(file_handler, 'values', self.values[frame_idx])
-            else:
-                write_vector(file_handler, 'values', self.values[frame_idx])
-            file_handler.write('}')
-
-        file_handler.write(']')   # close keys
-        
-        # put this at the end to make less crazy looking ]}]]]}}}}}}}]]]], 
-        # since animation is also at the end of the bone, mesh, camera, or light
-        write_int(file_handler, 'loopBehavior', self.loopBehavior)
-        write_string(file_handler, 'name', self.name)
-        write_string(file_handler, 'property', self.propertyInBabylon)
-        file_handler.write('}')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
     # assigns the var 'animation', which the caller has already defined
     # .babylon writes 'values', but the babylonFileLoader reads it, changing it to 'value'
@@ -2424,47 +1958,6 @@ def scale_vector(vector, mult, xOffset = 0):
            
 def same_vertex(vertA, vertB):
     return vertA.x == vertB.x and vertA.y == vertB.y and vertA.z == vertB.z
-#===============================================================================
-# module level methods for writing JSON (.babylon) files
-#===============================================================================
-def write_matrix4(file_handler, name, matrix):
-    file_handler.write(',"' + name + '":[' + format_matrix4(matrix) + ']')
-
-def write_array(file_handler, name, array):
-    file_handler.write('\n,"' + name + '":[' + format_array(array) + ']')
-
-def write_array3(file_handler, name, array):
-    file_handler.write(',"' + name + '":[' + format_array3(array) + ']')     
-
-def write_color(file_handler, name, color):
-    file_handler.write(',"' + name + '":[' + format_color(color) + ']')
-
-def write_vector(file_handler, name, vector):
-    file_handler.write(',"' + name + '":[' + format_vector(vector) + ']')
-
-def write_vector_array(file_handler, name, vectorArray):
-    file_handler.write('\n,"' + name + '":[' + format_vector_array(vectorArray) + ']')
-
-def write_quaternion(file_handler, name, quaternion):
-    file_handler.write(',"' + name  +'":[' + format_quaternion(quaternion) + ']')
-
-def write_string(file_handler, name, string, noComma = False):
-    if noComma == False:
-        file_handler.write(',')
-    file_handler.write('"' + name + '":"' + string + '"')
-
-def write_float(file_handler, name, float):
-    file_handler.write(',"' + name + '":' + format_f(float))
-
-def write_int(file_handler, name, int, noComma = False):
-    if noComma == False:
-        file_handler.write(',')
-    file_handler.write('"' + name + '":' + format_int(int))
-
-def write_bool(file_handler, name, bool, noComma = False):    
-    if noComma == False:
-        file_handler.write(',') 
-    file_handler.write('"' + name + '":' + format_bool(bool))
 #===============================================================================
 # custom properties definition and display 
 #===============================================================================

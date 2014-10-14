@@ -1,11 +1,12 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>multi_group</title>
-    <!-- edit path - name of babylon library as required -->
+    <title>automaton</title>
+    <!-- edit path - name of babylon & morph libraries as required -->
     <script src="./lib/babylon.js"></script>
-    <script src="./TOB-out/multi_group.js"></script>
-    <script src="./lib/multi_group_common.js"></script>
+    <script src="./lib/morph.js"></script>
+    <script src="./TOB-out/shape_key.js"></script>
+    <script src="./lib/shape_key.js"></script>
     <style>
          html, body   { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; } 
          #renderCanvas{ width: 100%; height: 100%; } 
@@ -22,11 +23,7 @@
 <body>
 	<div id="buttonbar" style="background-color: Darkorange;">
 		<span id="button" onclick="pausePlay()"> Pause - Play </span>
-		<span id="button" onclick="left()"> Left </span>
-		<span id="button" onclick="middle()"> Middle </span>
-		<span id="button" onclick="right()"> Right </span>
-		<span id="button" onclick="drumming()"> Drumming </span>
-		<span id="button" onclick="conflict()"> Conflict </span>
+		<span id="button" onclick="queueAnimation()"> Go Again </span>
 	</div>
 <canvas id="renderCanvas"></canvas>
 <script>
@@ -34,11 +31,14 @@
         var canvas = document.getElementById("renderCanvas");
         var engine = new BABYLON.Engine(canvas, true);
         console.log("Babylon version:  " + BABYLON.Engine.Version);
+        console.log("Morph version:  "   + MORPH.Mesh.Version);
 
         var scene = new BABYLON.Scene(engine);
-        materialsRootDir = "."; // edit when texture files in a different dir than html
-        multi_group.initScene(scene, materialsRootDir);
-        prep(scene);
+        materialsRootDir = "./TOB-out"; // edit when texture files in a different dir than html
+        shape_key.initScene(scene, materialsRootDir);
+    	prep(scene);
+    	queueAnimation();
+    	
         scene.activeCamera.attachControl(canvas);
         engine.runRenderLoop(function () {
             scene.render();
