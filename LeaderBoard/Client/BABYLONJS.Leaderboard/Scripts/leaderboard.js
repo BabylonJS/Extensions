@@ -1,11 +1,5 @@
 ﻿var BABYLON;
 (function (BABYLON) {
-    // master key : tiWpkSanvzZlnELRpmhytpqXLUmYfj74
-    // smtp pass : c5fFb7NGjUKwOH6
-    // smtp user : azure_905b65ac871de83aecc963733e80813b@azure.com
-    // blob account : portalvhdsg8bc0x95lgq8p
-    // blob key : ylmBsijxpT5iDmJd0fcH1y3hL0NB2SMOk5WA4E3kgV2Ed8kfCwqapfqkB/gpdXZej69DUFM/rj+oiDp8p+90pw==
-    // blob container name : lightspeed
     (function (LeaderBoard) {
         var Client = (function () {
             function Client(applicationUrl, applicationKey, gameId, masterKey) {
@@ -1057,7 +1051,7 @@
             };
 
             Setup.prototype.setSendgridAccount = function (gameId, sendgridSmtpServer, sendgridUsername, sendgridPassword, done, error) {
-                var req = 'setgame/' + gameId + '.json';
+                var req = 'games/' + gameId + '/set.json';
 
                 if (!gameId)
                     throw new Error("The game id is required");
@@ -1324,4 +1318,4 @@
     })(BABYLON.LeaderBoard || (BABYLON.LeaderBoard = {}));
     var LeaderBoard = BABYLON.LeaderBoard;
 })(BABYLON || (BABYLON = {}));
-//# sourceMappingURL=babylonclient.js.map
+//# sourceMappingURL=leaderboard.js.map

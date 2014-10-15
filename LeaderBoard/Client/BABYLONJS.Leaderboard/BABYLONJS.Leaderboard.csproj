@@ -432,7 +432,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <TypeScriptCompile Include="Scripts\babylonclient.ts" />
+    <TypeScriptCompile Include="Scripts\leaderboard.ts" />
     <TypeScriptCompile Include="Scripts\lightspeed\Enemy.ts" />
     <TypeScriptCompile Include="Scripts\lightspeed\index.ts" />
     <TypeScriptCompile Include="Scripts\lightspeed\laser.ts" />

@@ -1,13 +1,5 @@
 ﻿module BABYLON {
 
-    // master key : tiWpkSanvzZlnELRpmhytpqXLUmYfj74
-    // smtp pass : c5fFb7NGjUKwOH6
-    // smtp user : azure_905b65ac871de83aecc963733e80813b@azure.com
-    // blob account : portalvhdsg8bc0x95lgq8p
-    // blob key : ylmBsijxpT5iDmJd0fcH1y3hL0NB2SMOk5WA4E3kgV2Ed8kfCwqapfqkB/gpdXZej69DUFM/rj+oiDp8p+90pw==
-    // blob container name : lightspeed
-
-
     export module LeaderBoard {
 
         export class Client {
@@ -1127,7 +1119,7 @@
             }
 
             public setSendgridAccount(gameId: number, sendgridSmtpServer: string, sendgridUsername: string, sendgridPassword: string, done: (blob: any) => void, error?: (e: any) => void) {
-                var req = 'setgame/' + gameId + '.json';
+                var req = 'games/' + gameId + '/set.json';
 
                 if (!gameId)
                     throw new Error("The game id is required");
