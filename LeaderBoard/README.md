@@ -10,7 +10,7 @@ The Babylon.js Leaderboard extension is composed of a server side extension and 
 3. [ManagingEntities.md](ManagingEntities.md) : How to manage entities.
 4. [ManagingImagesAndFiles.md](ManagingImagesAndFiles.md) : How to manage images and files.
 5. [Authentification.md](Authentification.md) : How to authenticate your players with social networks, like Google, Facebook, Twitter and MicrosoftAccount.
-6. [LightSpeedSample.md](LightSpeedSample.md) : LightSpeed sample game using the Leaderboard SDK.
+6. [UsingLeaderboadInAGame](UsingLeaderboadInAGame) : LightSpeed sample game using the Leaderboard SDK.
 
 ## Presentation  ##
   

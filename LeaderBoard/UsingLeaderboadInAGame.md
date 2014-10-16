@@ -18,7 +18,7 @@ All the leaderboard javascript code is located in the **/Scripts/lightspeed/inde
 Here is my leaderboard setup
 
 	var applicationUrl = "https://babylonjs.azure-mobile.net/";
-	var applicationKey = "dHfEVuqRtCczLCvSdtmAdfVlrWpgfU55";
+	var applicationKey = "dHfEVuqRtCczLC......";
 	var gameId = 1;
 	var leaderBoard = new BABYLON.LeaderBoard.Client(applicationUrl, applicationKey, gameId);
 	var player;
@@ -42,33 +42,29 @@ Then the **getCharacterFromProfile()** will retrieve the full profile form the L
 	
 	// if already logged
 	if (u != null && u.userId != null) {
-	
 	    divLoged.removeClass('hidden');
 	
 	    var profile = leaderBoard.getLoginProvider();
 	
-	    leaderBoard.getCharacterFromProfile(profile.source,
-	        (chars) => {
-	            if (chars && chars.length > 0) {
-	                player = <LightSpeed.Player>chars[0];
+	    leaderBoard.getCharacterFromProfile(profile.source, function (chars) {
+	        if (chars && chars.length > 0) {
+	            player = chars[0];
 	
-	                initStartScreen();
+	            initStartScreen();
 	
-	                divLoged.show();
-	                modal.modal('hide')
-	            }
-	        },
-	        (error) => {
-	            console.error(error);
-	        });
+	            divLoged.show();
+	            modal.modal('hide');
+	        }
+	    }, function (error) {
+	        console.error(error);
+	    });
 	} else {
 	    divLogin.removeClass('hidden');
-	
 	}
 
 
 
-If my user wasn't logged (or if he logout), I can log with three different providers :
+If my user is not logged (or if he logout), I can log him with three different providers :
 
 	// Login action
 	btnFacebook.click(function () {
@@ -87,7 +83,7 @@ If my user wasn't logged (or if he logout), I can log with three different provi
 	    });
 	});
 
-And here is the code for login into the game
+And here is the code from my login method (where I log, set custome fields and save my character) :
 
 
 	var login = function (provider, callback) {
