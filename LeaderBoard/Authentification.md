@@ -10,18 +10,23 @@ First of all, you need to configure your Azure Mobile Services backend to be abl
 Here is my Facebook application setup process :
 
 **Creating an application :**
+
 ![](http://www.dotmim.com/sitefiles/leaderboard/createfacebookapp.JPG)
 
 **Configuring the basic settings, and copy the App Id and App Secret :**
+
 ![](http://www.dotmim.com/sitefiles/leaderboard/facebooksettingsbasics.JPG)
 
 **Configuring the advanced settings :**
+
 ![](http://www.dotmim.com/sitefiles/leaderboard/facebooksettingsadvanced.JPG)
 
 **Activating the facebook application :**
+
 ![](http://www.dotmim.com/sitefiles/leaderboard/facebookstatus.JPG)
 
 **Configuring Azure Mobile Services backend :**
+
 ![](http://www.dotmim.com/sitefiles/leaderboard/zumoidentityfacebook.JPG)
 
 Here are the documentations for configuring :   
