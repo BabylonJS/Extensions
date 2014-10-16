@@ -3,7 +3,6 @@ var playingBoardSize = 500;
 var height = playingBoardSize + 200;
 var width = playingBoardSize + (200 * (window.innerWidth / window.innerHeight));// additional for camera extend - fullsize of board
 
-
 var canvas = <HTMLCanvasElement>document.getElementById("viewport");
 
 var ResourcesText = <HTMLElement>document.getElementById('Resources');
