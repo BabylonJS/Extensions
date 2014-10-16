@@ -86,8 +86,8 @@ exports.updateGame = function (request, response) {
 
     var fields;
     if (!_.isNull(options.fields)) {
-        fields = options.fields.split(",");
-        delete options.fields;
+        fields = options.fields;
+		delete options.fields;
     }
 
 

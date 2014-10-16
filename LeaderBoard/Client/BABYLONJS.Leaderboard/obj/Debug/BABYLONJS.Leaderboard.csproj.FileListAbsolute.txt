@@ -1,0 +1,6 @@
+C:\Projects\BABYLONJS\Extensions\LeaderBoard\Client\BABYLONJS.Leaderboard\bin\BABYLONJS.Leaderboard.dll.config
+C:\Projects\BABYLONJS\Extensions\LeaderBoard\Client\BABYLONJS.Leaderboard\bin\BABYLONJS.Leaderboard.dll
+C:\Projects\BABYLONJS\Extensions\LeaderBoard\Client\BABYLONJS.Leaderboard\bin\BABYLONJS.Leaderboard.pdb
+C:\Projects\BABYLONJS\Extensions\LeaderBoard\Client\BABYLONJS.Leaderboard\obj\Debug\BABYLONJS.Leaderboard.csprojResolveAssemblyReference.cache
+C:\Projects\BABYLONJS\Extensions\LeaderBoard\Client\BABYLONJS.Leaderboard\obj\Debug\BABYLONJS.Leaderboard.dll
+C:\Projects\BABYLONJS\Extensions\LeaderBoard\Client\BABYLONJS.Leaderboard\obj\Debug\BABYLONJS.Leaderboard.pdb

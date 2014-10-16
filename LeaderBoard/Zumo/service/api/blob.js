@@ -7,6 +7,7 @@ var crypto = require('crypto');
 var req = require('request');
 var xmlbuilder = require('xmlbuilder');
 var xml2js = require('xml2js');
+var blob = require('./blob')
 
 
 exports.register = function (api) {
@@ -186,7 +187,7 @@ exports.setCors = function (request, response) {
             var accountName = game.blobAccountName;
             var accountKey = game.blobAccountKey;
 
-            _setCors(containerName, accountName, accountKey, function (err, res) {
+            blob._setCors(containerName, accountName, accountKey, function (err, res) {
                 if (!_.isNullOrEmpty(err)) {
                     return _.responseError(response, format, err);
                 }
