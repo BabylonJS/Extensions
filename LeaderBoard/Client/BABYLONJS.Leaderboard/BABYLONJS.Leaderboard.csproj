@@ -107,7 +107,7 @@
     <Content Include="0.png" />
     <Content Include="favicon.ico" />
     <Content Include="lightspeed.html" />
-    <Content Include="Scripts\playground\Apis.json" />
+    <Content Include="Scripts\playground\Apis.txt" />
     <Content Include="Scripts\lightspeed\sound.js" />
     <Content Include="Spaceship.babylon" />
     <None Include="Web.Debug.config">

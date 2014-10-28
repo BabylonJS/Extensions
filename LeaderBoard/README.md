@@ -3,6 +3,8 @@ BABYLONJS Leaderboard extension
 
 The Babylon.js Leaderboard extension is composed of a server side extension and a javascript client SDK, that allow you to create a full backend for your game.
 
+**New** : You can now test the leaderboard online : [http://babylonjs.com/leaderboard/](http://babylonjs.com/leaderboard/)
+
 ## Summary: ##
 
 1. [Readme.md](https://github.com/BabylonJS/Extensions/tree/master/LeaderBoard) : Presentation and Server installation

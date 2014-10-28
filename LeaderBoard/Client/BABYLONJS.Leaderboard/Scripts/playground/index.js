@@ -121,7 +121,7 @@
             Js.prototype.initializeScripts = function (callback) {
                 //this.methods = new Array<Playground.Api>();
                 var _this = this;
-                var jqxhr = $.getJSON("/Scripts/playground/Apis.json", function (json) {
+                var jqxhr = $.getJSON("Scripts/playground/Apis.txt", function (json) {
                     _this.apis = json;
                     _this.apis.sort(function (a, b) {
                         return a.name.localeCompare(b.name);
@@ -400,12 +400,12 @@
                     }
                 }
 
-                var req = p.isRequired ? "<span class='text-danger'>*</span>" : "";
+                var req = "";
 
-                var div = '<div class="form-group" > ' + '  <label class="control-label" for= "' + id + '">' + p.description + '</label> ' + req + '  <input type="text" value="' + val + '" class="form-control" id = "' + id + '" placeholder = "' + p.name + '" > ' + '  </input> ' + '</div> ';
+                var div = '<div class="input-group"> ' + '  <label class="input-group-addon" style="min-width:200px;" for= "' + id + '">' + p.description + '</label> ' + req + '  <input type="text" value="' + val + '" class="form-control" id = "' + id + '" placeholder = "' + p.name + '" > ' + '  </input> ' + '</div>';
 
                 if (p.isType && p.isType == "file") {
-                    div = '<div class="form-group" > ' + '  <label class="control-label" for= "' + id + '">' + p.description + '</label> ' + req + '<span class="btn btn-default btn-block btn-file pull-right" > ' + 'Browse <input type="file" id="sfile" /></span> ' + '</div> ';
+                    div = '<div class="input-group"> ' + '  <label class="input-group-addon" for= "' + id + '">' + p.description + '</label> ' + req + '<span class="btn btn-default btn-block btn-file pull-right" > ' + 'Browse <input type="file" id="sfile" /></span> ' + '</div>';
                 }
                 if (p.isType && p.isType == "longtext") {
                     div = '<div class="form-group" > ' + '  <label class="control-label" for= "' + id + '">' + p.description + '</label> ' + req + '  <textarea rows="5" value="' + val + '" class="form-control" id = "' + id + '" ></textarea> ' + '</div> ';

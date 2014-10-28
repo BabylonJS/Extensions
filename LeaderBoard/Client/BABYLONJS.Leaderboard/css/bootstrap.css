@@ -17,6 +17,24 @@ html {
 body {
   margin: 0;
 }
+
+
+.navbar-primary .navbar { background:#3c3c3c; border-bottom:none; }
+.navbar-primary .navbar .nav > li > a {color: #777777;}
+.navbar-primary .navbar .nav > li > a:hover {color: #fff; background-color: #3c3c3c;}
+.navbar-primary .navbar .nav .active > a,.navbar .nav .active > a:hover {color: #fff; background-color: #501762;}
+.navbar-primary .navbar .nav li > a .caret, .tnav .navbar .nav li > a:hover .caret {border-top-color: #fff;border-bottom-color: #fff;}
+.navbar-primary .navbar .nav > li.dropdown.open.active > a:hover {}
+.navbar-primary .navbar .nav > li.dropdown.open > a {color: #fff;background-color: #3c3c3c;border-color: #fff;}
+.navbar-primary .navbar .nav > li.dropdown.open.active > a:hover .caret, .tnav .navbar .nav > li.dropdown.open > a .caret {border-top-color: #fff;}
+.navbar-primary .navbar .navbar-brand {color:#777777;}
+.navbar-primary .navbar .nav.pull-right {margin-left: 10px; margin-right: 0;}
+.navbar-xs .navbar-primary .navbar { min-height:28px; height: 28px; }
+.navbar-xs .navbar-primary .navbar .navbar-brand{ padding: 0px 12px;font-size: 16px;line-height: 28px; }
+.navbar-xs .navbar-primary .navbar .navbar-nav > li > a {  padding-top: 0px; padding-bottom: 0px; line-height: 28px; }
+.navbar-sm .navbar-primary .navbar { min-height:40px; height: 40px; }
+.navbar-sm .navbar-primary .navbar .navbar-brand{ padding: 0px 12px;font-size: 16px;line-height: 40px; }
+.navbar-sm .navbar-primary .navbar .navbar-nav > li > a {  padding-top: 0px; padding-bottom: 0px; line-height: 40px; }
 article,
 aside,
 details,
@@ -3437,7 +3455,7 @@ tbody.collapse.in {
   padding: 5px 8px;
   font-size: 15px;
   line-height: 1.33;
-  border-radius: 6px;
+  border-radius: 1px;
 }
 select.input-group-lg > .form-control,
 select.input-group-lg > .input-group-addon,
@@ -3498,10 +3516,12 @@ select[multiple].input-group-sm > .input-group-btn > .btn {
   font-weight: normal;
   line-height: 1;
   color: #555555;
-  text-align: center;
+  text-align: left;
   background-color: #eeeeee;
   border: 1px solid #cccccc;
-  border-radius: 4px;
+  
+  min-width:100px;
+
 }
 .input-group-addon.input-sm {
   padding: 2px 5px;
@@ -3872,7 +3892,7 @@ select[multiple].input-group-sm > .input-group-btn > .btn {
   padding: 18px 15px;
   font-size: 15px;
   line-height: 14px;
-  height: 50px;
+  
 }
 .navbar-brand:hover,
 .navbar-brand:focus {
