@@ -99,10 +99,10 @@ public class Arpabet {
         
         writer.append("            switch (includeStress){\n");
         writer.append("                case ARPABET.NO_STRESS: \n");
-        writer.append("                    ret[j] = ret[j].replace(/2/g, '');\n");
-        writer.append("                    ret[j] = ret[j].replace(/3/g, '');\n");
-        writer.append("                case ARPABET.LIMITED_STRESS: \n");
         writer.append("                    ret[j] = ret[j].replace(/1/g, '');\n");
+        writer.append("                    ret[j] = ret[j].replace(/2/g, '');\n");
+        writer.append("                case ARPABET.LIMITED_STRESS: \n");
+        writer.append("                    ret[j] = ret[j].replace(/0/g, '');\n");
         writer.append("            }\n");
         writer.append("        }\n");
         writer.append("        return ret;\n");
