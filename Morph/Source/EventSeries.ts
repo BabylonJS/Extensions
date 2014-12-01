@@ -1,3 +1,5 @@
+/// <reference path="./Mesh.ts"/>
+/// <reference path="./ReferenceDeformation.ts"/>
 module MORPH {
     /** Internal helper class used by EventSeries to support a multi-shape group EventSeries */
     class ParticipatingGroup{
@@ -41,7 +43,7 @@ module MORPH {
          * @param {string} _debug - Write progress messages to console when true (Default false)
          */
         constructor(private _eventSeries : Array<any>, private _nRepeats = 1, private _initialWallclockProrating = 1.0, private _debug = false) {
-            this._nEvents = _eventSeries.length;
+            this._nEvents = this._eventSeries.length;
 
             // go through each event in series, building up the unique set shape key groups participating, this._groups
             for (var i = 0; i < this._nEvents; i++){
