@@ -11,7 +11,7 @@
     </style>
 </head>
 <body>
-<p>This directory is for regression testing of the Tower of Babel.  It is assumed that the add-in has already been installed & enabled in Blender.</p>
+<p>This directory is for regression testing of the Tower of Babel exporter.  It is assumed that the add-in has already been installed in Blender.</p>
 
 <p>Place the versions of babylon.js  & morph.js you wish to use in the 'lib' directory.  The earliest supported is 1.14.  All of the html files reference it as 'babylon.js' to avoid having to edit them.  FYI, the htmls write a message into the browser console, listing the version, in-case you forget.  This is also for any scripts which should keep the .html's as clean / fewest commits as possible.</p>
 
@@ -25,39 +25,45 @@
 <table class="my-tbl">
         <tr>
             <th class="my-tbl">.blend</th>
-            <th class="my-tbl"></th>
+            <th class="my-tbl">Scene</th>
             <th class="my-tbl">Camera</th>
             <th class="my-tbl">Secondary features, notes</th>
         </tr>
         <tr>
-            <td class="my-tbl" >armature</td>
-            <td class="my-tbl" align="center"><a href="armature.html" ><img src="armature.png"   alt=""></img></a></td>
+            <td class="my-tbl" >Armature</td>
+            <td class="my-tbl" align="center"><a href="armature.html"><img src="armature.png"   alt=""></img></a></td>
             <td class="my-tbl" >Device Orientation</td>
             <td class="my-tbl">skeletal animation</td>
         </tr>
         <tr>
-            <td class="my-tbl" >automaton</td>
-            <td class="my-tbl" align="center"><a href="shape_key.html" ><img src="shape_key.png"   alt=""></img></a></td>
+            <td class="my-tbl" >Shape Key</td>
+            <td class="my-tbl" align="center"><a href="shape_key.html"><img src="shape_key.png" alt=""></img></a></td>
             <td class="my-tbl" >Free, Locked Target</td>
             <td class="my-tbl">Single ShapeKeyGroup, function() part of a Event Series, back-face culling, instance level pause / resume</td>
         </tr>
         <tr>
-            <td class="my-tbl" >camera_anim</td>
-            <td class="my-tbl" align="center"><a href="camera_anim.html" ><img src="camera_anim.png"   alt=""></img></a></td>
+            <td class="my-tbl" >Camera Animation</td>
+            <td class="my-tbl" align="center"><a href="camera_anim.html"><img src="camera_anim.png" alt=""></img></a></td>
             <td class="my-tbl" >Free</td>
             <td class="my-tbl">Multi-materials, textures</td>
         </tr>
         <tr>
-            <td class="my-tbl" >mesh_parent</td>
-            <td class="my-tbl" align="center"><a href="mesh_parent.html" ><img src="mesh_parent.png"   alt=""></img></a></td>
+            <td class="my-tbl" >Mesh Parenting</td>
+            <td class="my-tbl" align="center"><a href="mesh_parent.html"><img src="mesh_parent.png" alt=""></img></a></td>
             <td class="my-tbl" >Game Pad</td>
             <td class="my-tbl">Shadows, animation to prove parenthood</td>
         </tr>
         <tr>
-            <td class="my-tbl" >multi_group</td>
-            <td class="my-tbl" align="center"><a href="multi_group.html" ><img src="multi_group.png"   alt=""></img></a></td>
+            <td class="my-tbl" >Multiple Shape Key Groups</td>
+            <td class="my-tbl" align="center"><a href="multi_group.html"><img src="multi_group.png" alt=""></img></a></td>
             <td class="my-tbl" >Arc Rotation</td>
             <td class="my-tbl">Multiple ShapeKeyGroup, independent & multi-group Event Series, EventSeriesAction triggered through pick, normals, Group Conflicts, back-face culling, system wide pause / resume</td>
+        </tr>
+        <tr>
+            <td class="my-tbl" >Voice Sync Developer</td>
+            <td class="my-tbl" align="center"><a href="voice_sync.html"><img src="voice_sync.png" alt=""></img></a></td>
+            <td class="my-tbl" >Free</td>
+            <td class="my-tbl">Additive Shape Keys, Audio Recorder, Arpabet++</td>
         </tr>
     </table>
 </body>
