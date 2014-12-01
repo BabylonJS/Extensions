@@ -19,15 +19,16 @@ module MORPH {
          */
         constructor(public completionRatios : Array<number>, public durationRatios : Array<number>) {
             // argument validations for JavaScript
-            if (!(completionRatios instanceof Array) || !(durationRatios instanceof Array)) throw "Pace: ratios not arrays";
-            if (completionRatios.length !== durationRatios.length) throw "Pace: ratio arrays not of equal length";
-
-            if (completionRatios.length === 0) throw "Pace: ratio arrays cannot be empty";
+            if (!(this.completionRatios instanceof Array) || !(this.durationRatios instanceof Array)) throw "Pace: ratios not arrays";
+            if (this.completionRatios.length !== this.durationRatios.length) throw "Pace: ratio arrays not of equal length";
+        
+            this.steps = this.completionRatios.length;        
+            if (this.steps === 0) throw "Pace: ratio arrays cannot be empty";
         
             var cRatio : number, dRatio : number, prevD : number = -1;
-            for (var i = 0; i < completionRatios.length; i++){
-                cRatio = completionRatios[i];
-                dRatio = durationRatios  [i];
+            for (var i = 0; i < this.steps; i++){
+                cRatio = this.completionRatios[i];
+                dRatio = this.durationRatios  [i];
                 if (cRatio <= 0 || dRatio <= 0) throw "Pace: ratios must be > 0";
                 if (cRatio >  1 || dRatio >  1) throw "Pace: ratios must be <= 1";
                 if (prevD >= dRatio) throw "Pace: durationRatios must be in increasing order";
@@ -35,14 +36,11 @@ module MORPH {
             }
             if (cRatio !== 1 || dRatio !== 1) throw "Pace: final ratios must be 1";
         
-            // public member assignment for all, since immutable
-            this.steps = completionRatios.length;        
-        
-            this.incremetalCompletionBetweenSteps = [completionRatios[0]]; // elements can be negative for 'hicups'
-            this.incremetalDurationBetweenSteps   = [durationRatios  [0]];
+            this.incremetalCompletionBetweenSteps = [this.completionRatios[0]]; // elements can be negative for 'hicups'
+            this.incremetalDurationBetweenSteps   = [this.durationRatios  [0]];
             for (var i = 1; i < this.steps; i++){
-                this.incremetalCompletionBetweenSteps.push(completionRatios[i] - completionRatios[i - 1]);
-                this.incremetalDurationBetweenSteps  .push(durationRatios  [i] - durationRatios  [i - 1]);
+                this.incremetalCompletionBetweenSteps.push(this.completionRatios[i] - this.completionRatios[i - 1]);
+                this.incremetalDurationBetweenSteps  .push(this.durationRatios  [i] - this.durationRatios  [i - 1]);
             }       
             Object.freeze(this);  // make immutable
         }
