@@ -1,3 +1,5 @@
+/// <reference path="./Mesh.ts"/>
+/// <reference path="./Pace.ts"/>
 module MORPH{
    /**
     * Class to store Deformation info & evaluate how complete it should be.
@@ -15,11 +17,11 @@ module MORPH{
 
         /**
          * @param {string} shapeKeyGroupName -  Used by MORPH.Mesh to place in the correct ShapeKeyGroup queue(s).
-         * @param {string} referenceStateName - Name of state key to be used as a reference, so that a endStateRatio can be used
-         * @param {string} endStateName - Name of state key to deform to
+         * @param {string} referenceStateName - Names of state key to be used as a reference, so that a endStateRatio can be used
+         * @param {Array} endStateNames - Names of state keys to deform to
          * @param {number} milliDuration - The number of milli seconds the deformation is to be completed in
          * @param {number} millisBefore - Fixed wait period, once a syncPartner (if any) is also ready (default 0)
-         * @param {number} endStateRatio - ratio of the end state to be obtained from reference state: -1 (mirror) to 1 (default 1)
+         * @param {Array} endStateRatios - ratios of the end state to be obtained from reference state: -1 (mirror) to 1 (default 1's)
          * @param {Vector3} movePOV - Mesh movement relative to its current position/rotation to be performed at the same time (default null)
          *                  right-up-forward
          * @param {Vector3} rotatePOV - Incremental Mesh rotation to be performed at the same time (default null)
@@ -29,24 +31,34 @@ module MORPH{
         constructor(
             public  shapeKeyGroupName   : string, 
             private _referenceStateName : string, 
-            private _endStateName       : string, 
+            private _endStateNames      : Array<string>, 
             private _milliDuration      : number, 
             private _millisBefore       : number = 0, 
-            private _endStateRatio      : number = 1, 
+            private _endStateRatios     : Array<number> = null, 
             public  movePOV             : BABYLON.Vector3 = null, 
             public  rotatePOV           : BABYLON.Vector3 = null,  
             private _pace               : Pace = Pace.LINEAR)
         {
             // argument validations
-            if (this._referenceStateName === this._endStateName) throw "Deformation: reference state cannot be the same as the end state";
-            if (this._milliDuration <= 0) throw "Deformation: milliDuration must > 0";
-            if (this._millisBefore < 0) throw "Deformation: millisBefore cannot be negative";
-            if (this._endStateRatio < -1 || this._endStateRatio > 1) throw "Deformation: endStateRatio range  > -1 and < 1";
+            if (this._milliDuration <= 0) throw "ReferenceDeformation: milliDuration must > 0";
+            if (this._millisBefore < 0) throw "ReferenceDeformation: millisBefore cannot be negative";
+            if (!(this._endStateNames instanceof Array) || (this._endStateRatios !== null && !(this._endStateRatios instanceof Array))) throw "ReferenceDeformation: end states / ratios not an array";
 
+            var nEndStates = this._endStateNames.length;
+            if (this._endStateRatios !== null){
+                if (this._endStateRatios.length !== nEndStates) throw "ReferenceDeformation: end states / ratios not same length";
+                
+            }
+                        
             // mixed case group & state names not supported
             this.shapeKeyGroupName   = this.shapeKeyGroupName  .toUpperCase(); 
             this._referenceStateName = this._referenceStateName.toUpperCase();
-            this._endStateName       = this._endStateName      .toUpperCase();
+            
+            for (var i = 0; i < nEndStates; i++){
+                this._endStateNames[i] = this._endStateNames[i].toUpperCase();
+                if (this._referenceStateName === this._endStateNames[i]) throw "ReferenceDeformation: reference state cannot be the same as the end state";
+                if (this._endStateRatios !== null && (this._endStateRatios[i] < -1 || this._endStateRatios[i] > 1) ) throw "ReferenceDeformation: endStateRatio range  > -1 and < 1";
+            }
             
             this.setProratedWallClocks(1); // ensure values actually used for timings are initialized
         }
@@ -130,10 +142,12 @@ module MORPH{
         public isComplete() : boolean { return this._currentDurationRatio === ReferenceDeformation._COMPLETE; }
        
         public getReferenceStateName() : string { return this._referenceStateName; }     
-        public getEndStateName() : string { return this._endStateName; }     
+        public getEndStateName(idx : number) : string { return this._endStateNames[idx]; }     
+        public getEndStateNames() : Array<string> { return this._endStateNames; }     
         public getMilliDuration() : number { return this._milliDuration; }      
         public getMillisBefore() : number { return this._millisBefore; }     
-        public getEndStateRatio() :number {return this._endStateRatio; }
+        public getEndStateRatio(idx : number) :number {return this._endStateRatios[idx]; }
+        public getEndStateRatios() : Array<number> {return this._endStateRatios; }
         public getPace() : Pace {return this._pace; }
         public getSyncPartner() : ReferenceDeformation{return this._syncPartner; }
        
@@ -156,5 +170,46 @@ module MORPH{
         public static get WAITING (): number { return ReferenceDeformation._WAITING ; }
         public static get READY   (): number { return ReferenceDeformation._READY   ; }
         public static get COMPLETE(): number { return ReferenceDeformation._COMPLETE; }
+    }
+    //================================================================================================
+    //================================================================================================
+    /**
+     * sub-class of ReferenceDeformation, where the referenceStateName is Fixed to "BASIS"
+     */ 
+    export class Deformation extends ReferenceDeformation{
+        /**
+         * @param {string} shapeKeyGroupName -  Used by MORPH.Mesh to place in the correct ShapeKeyGroup queue(s).
+         * @param {string} endStateName - Name of state key to deform to
+         * @param {number} milliDuration - The number of milli seconds the deformation is to be completed in
+         * @param {number} millisBefore - Fixed wait period, once a syncPartner (if any) is also ready (default 0)
+         * @param {number} endStateRatio - ratio of the end state to be obtained from reference state: -1 (mirror) to 1 (default 1)
+         * @param {Vector3} movePOV - Mesh movement relative to its current position/rotation to be performed at the same time  (default null)
+         *                  right-up-forward
+         * @param {Vector3} rotatePOV - Incremental Mesh rotation to be performed at the same time  (default null)
+         *                  flipBack-twirlClockwise-tiltRight
+         * @param {Pace} pace - Any Object with the function: getCompletionMilestone(currentDurationRatio) (default Pace.LINEAR)
+         */
+        constructor(shapeKeyGroupName : string, endStateName : string, milliDuration : number, millisBefore : number, endStateRatio : number, movePOV : BABYLON.Vector3, rotatePOV : BABYLON.Vector3, pace : Pace){
+            super(shapeKeyGroupName, "BASIS", [endStateName], milliDuration, millisBefore, [endStateRatio], movePOV, rotatePOV, pace);
+        }   
+    }
+    //================================================================================================
+    //================================================================================================
+    /**
+     * sub-class of ReferenceDeformation, where defaulting to null for endStateRatios, thus signalling no deforming
+     * POV movement & rotation still possible though
+     */ 
+    export class DeformStall extends ReferenceDeformation{
+        /**
+         * @param {string} shapeKeyGroupName -  Used by MORPH.Mesh to place in the correct ShapeKeyGroup queue(s).
+         * @param {number} milliDuration - The number of milli seconds the stall is to be completed in
+         * @param {Vector3} movePOV - Mesh movement relative to its current position/rotation to be performed at the same time  (default null)
+         *                  right-up-forward
+         * @param {Vector3} rotatePOV - Incremental Mesh rotation to be performed at the same time  (default null)
+         *                  flipBack-twirlClockwise-tiltRight
+         */
+        constructor(shapeKeyGroupName : string, milliDuration : number, movePOV : BABYLON.Vector3, rotatePOV : BABYLON.Vector3){
+            super(shapeKeyGroupName, "BASIS", [], milliDuration, 0,  null,  movePOV, rotatePOV);
+        }   
     }
 }
