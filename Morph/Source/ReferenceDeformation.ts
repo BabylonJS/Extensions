@@ -17,16 +17,16 @@ module MORPH{
 
         /**
          * @param {string} shapeKeyGroupName -  Used by MORPH.Mesh to place in the correct ShapeKeyGroup queue(s).
-         * @param {string} referenceStateName - Names of state key to be used as a reference, so that a endStateRatio can be used
-         * @param {Array} endStateNames - Names of state keys to deform to
-         * @param {number} milliDuration - The number of milli seconds the deformation is to be completed in
-         * @param {number} millisBefore - Fixed wait period, once a syncPartner (if any) is also ready (default 0)
-         * @param {Array} endStateRatios - ratios of the end state to be obtained from reference state: -1 (mirror) to 1 (default 1's)
+         * @param {string} _referenceStateName - Names of state key to be used as a reference, so that a endStateRatio can be used
+         * @param {Array} _endStateNames - Names of state keys to deform to
+         * @param {number} _milliDuration - The number of milli seconds the deformation is to be completed in
+         * @param {number} _millisBefore - Fixed wait period, once a syncPartner (if any) is also ready (default 0)
+         * @param {Array} _endStateRatios - ratios of the end state to be obtained from reference state: -1 (mirror) to 1 (default 1's)
          * @param {Vector3} movePOV - Mesh movement relative to its current position/rotation to be performed at the same time (default null)
          *                  right-up-forward
          * @param {Vector3} rotatePOV - Incremental Mesh rotation to be performed at the same time (default null)
          *                  flipBack-twirlClockwise-tiltRight
-         * @param {Pace} pace - Any Object with the function: getCompletionMilestone(currentDurationRatio) (default Pace.LINEAR)
+         * @param {Pace} _pace - Any Object with the function: getCompletionMilestone(currentDurationRatio) (default Pace.LINEAR)
          */
         constructor(
             public  shapeKeyGroupName   : string, 
@@ -189,7 +189,7 @@ module MORPH{
          *                  flipBack-twirlClockwise-tiltRight
          * @param {Pace} pace - Any Object with the function: getCompletionMilestone(currentDurationRatio) (default Pace.LINEAR)
          */
-        constructor(shapeKeyGroupName : string, endStateName : string, milliDuration : number, millisBefore : number, endStateRatio : number, movePOV : BABYLON.Vector3, rotatePOV : BABYLON.Vector3, pace : Pace){
+        constructor(shapeKeyGroupName : string, endStateName : string, milliDuration : number, millisBefore : number, endStateRatio : number, movePOV : BABYLON.Vector3 = null, rotatePOV : BABYLON.Vector3 = null, pace = Pace.LINEAR){
             super(shapeKeyGroupName, "BASIS", [endStateName], milliDuration, millisBefore, [endStateRatio], movePOV, rotatePOV, pace);
         }   
     }
@@ -208,7 +208,7 @@ module MORPH{
          * @param {Vector3} rotatePOV - Incremental Mesh rotation to be performed at the same time  (default null)
          *                  flipBack-twirlClockwise-tiltRight
          */
-        constructor(shapeKeyGroupName : string, milliDuration : number, movePOV : BABYLON.Vector3, rotatePOV : BABYLON.Vector3){
+        constructor(shapeKeyGroupName : string, milliDuration : number, movePOV : BABYLON.Vector3 = null, rotatePOV : BABYLON.Vector3 = null){
             super(shapeKeyGroupName, "BASIS", [], milliDuration, 0,  null,  movePOV, rotatePOV);
         }   
     }
