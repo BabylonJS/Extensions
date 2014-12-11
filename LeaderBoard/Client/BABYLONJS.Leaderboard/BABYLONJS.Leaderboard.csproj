@@ -107,7 +107,7 @@
     <Content Include="0.png" />
     <Content Include="favicon.ico" />
     <Content Include="lightspeed.html" />
-    <Content Include="Scripts\playground\Apis.json" />
+    <Content Include="Scripts\playground\Apis.txt" />
     <Content Include="Scripts\lightspeed\sound.js" />
     <Content Include="Spaceship.babylon" />
     <None Include="Web.Debug.config">
@@ -432,7 +432,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <TypeScriptCompile Include="Scripts\babylonclient.ts" />
+    <TypeScriptCompile Include="Scripts\leaderboard.ts" />
     <TypeScriptCompile Include="Scripts\lightspeed\Enemy.ts" />
     <TypeScriptCompile Include="Scripts\lightspeed\index.ts" />
     <TypeScriptCompile Include="Scripts\lightspeed\laser.ts" />

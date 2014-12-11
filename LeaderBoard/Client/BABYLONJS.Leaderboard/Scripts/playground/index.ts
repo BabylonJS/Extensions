@@ -138,7 +138,7 @@
 
                 //this.methods = new Array<Playground.Api>();
 
-                var jqxhr = $.getJSON("/Scripts/playground/Apis.json", (json: any) => {
+                var jqxhr = $.getJSON("Scripts/playground/Apis.txt", (json: any) => {
 
                     this.apis = <Array<Playground.Api>>json;
                     this.apis.sort((a, b) => a.name.localeCompare(b.name));
@@ -445,23 +445,23 @@
                     }
                 }
 
-                var req = p.isRequired ? "<span class='text-danger'>*</span>" : "";
+                var req = "";  //p.isRequired ? "<span class='text-danger'>*</span>" : "";
 
 
-                var div = '<div class="form-group" > ' +
-                    '  <label class="control-label" for= "' + id + '">' + p.description + '</label> ' +
+                var div = '<div class="input-group"> ' +
+                    '  <label class="input-group-addon" style="min-width:200px;" for= "' + id + '">' + p.description + '</label> ' +
                     req +
                     '  <input type="text" value="' + val + '" class="form-control" id = "' + id + '" placeholder = "' + p.name + '" > ' +
                     '  </input> ' +
-                    '</div> ';
+                    '</div>';
 
                 if (p.isType && p.isType == "file") {
-                    div = '<div class="form-group" > ' +
-                    '  <label class="control-label" for= "' + id + '">' + p.description + '</label> ' +
+                    div = '<div class="input-group"> ' +
+                    '  <label class="input-group-addon" for= "' + id + '">' + p.description + '</label> ' +
                     req +
                     '<span class="btn btn-default btn-block btn-file pull-right" > ' +
                     'Browse <input type="file" id="sfile" /></span> ' +
-                    '</div> ';
+                    '</div>';
 
                 }
                 if (p.isType && p.isType == "longtext") {

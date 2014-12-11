@@ -2,6 +2,19 @@ BABYLONJS Leaderboard extension
 ==============================
 
 The Babylon.js Leaderboard extension is composed of a server side extension and a javascript client SDK, that allow you to create a full backend for your game.
+
+**New** : You can now test the leaderboard online : [http://babylonjs.com/leaderboard/](http://babylonjs.com/leaderboard/)
+
+## Summary: ##
+
+1. [Readme.md](https://github.com/BabylonJS/Extensions/tree/master/LeaderBoard) : Presentation and Server installation
+2. [CreateGame.md](CreateGame.md) : How to create a game within the Leaderboard client SDK
+3. [ManagingEntities.md](ManagingEntities.md) : How to manage entities.
+4. [ManagingImagesAndFiles.md](ManagingImagesAndFiles.md) : How to manage images and files.
+5. [Authentification.md](Authentification.md) : How to authenticate your players with social networks, like Google, Facebook, Twitter and MicrosoftAccount.
+6. [UsingLeaderboadInAGame.md](UsingLeaderboadInAGame.md) : LightSpeed sample game using the Leaderboard SDK.
+
+## Presentation  ##
   
 This extension is standalone and have no dependencies.  
 It works within [Windows Azure Mobiles Services](http://azure.microsoft.com/en-us/services/mobile-services/ "Windows Azure Mobile Services").   
