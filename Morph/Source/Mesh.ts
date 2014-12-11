@@ -1,9 +1,13 @@
+/// <reference path="./EventSeries.ts"/>
+/// <reference path="./ReferenceDeformation.ts"/>
+/// <reference path="./ShapeKeyGroup.ts"/>
 module MORPH {
     export class Mesh extends BABYLON.Mesh {
         public  debug = false;
         private _engine: BABYLON.Engine;
         private _positions32F : Float32Array;
         private _normals32F   : Float32Array;
+        public  originalPositions: number[];
         private _shapeKeyGroups = new Array<ShapeKeyGroup>();
         
         // for normal processing
@@ -108,14 +112,12 @@ module MORPH {
         public setVerticesData(kind: any, data: any, updatable?: boolean) : void {
             super.setVerticesData(kind, data, updatable || kind === BABYLON.VertexBuffer.PositionKind || kind === BABYLON.VertexBuffer.NormalKind);
             
-            var babylonVertexBuffer : BABYLON.VertexBuffer;
             if (kind === BABYLON.VertexBuffer.PositionKind){
-                babylonVertexBuffer = this.getVertexBuffer(BABYLON.VertexBuffer.PositionKind);            
-                this._positions32F = new Float32Array(babylonVertexBuffer.getData());
+                this.originalPositions = data;
+                this._positions32F = new Float32Array(data);
             }
             else if (kind === BABYLON.VertexBuffer.NormalKind){
-                babylonVertexBuffer = this.getVertexBuffer(BABYLON.VertexBuffer.NormalKind);
-                this._normals32F = new Float32Array(babylonVertexBuffer.getData());
+                this._normals32F = new Float32Array(data);
             }
         }
         
@@ -243,6 +245,10 @@ module MORPH {
             this._shapeKeyGroups.push(shapeKeyGroup);
         }
             
+        public queueSingleEvent(event : ReferenceDeformation) : void {
+            this.queueEventSeries(new EventSeries([event]));
+        }
+        
         public queueEventSeries(eSeries : EventSeries) : void {
             var groupFound = false;  
             for (var g = this._shapeKeyGroups.length - 1; g >= 0; g--){
@@ -358,7 +364,7 @@ module MORPH {
         }
         
         public static get Version(): string {
-            return "1.0.0";
+            return "1.1.0";
         }
     }
 }
