@@ -1,7 +1,7 @@
 bl_info = {
     'name': 'Tower of Babel',
     'author': 'David Catuhe, Jeff Palmer',
-    'version': (1, 2, 0),
+    'version': (1, 3, 0),
     'blender': (2, 69, 0),
     'location': 'File > Export > Tower of Babel [.js + .ts + .html(s)]',
     'description': 'Translate to inline JavaScript & TypeScript modules',
@@ -54,7 +54,6 @@ MAX_VERTEX_ELEMENTS = 65535
 VERTEX_OUTPUT_PER_LINE = 1000
 MAX_FLOAT_PRECISION = '%.4f'
 MAX_INFLUENCERS_PER_VERTEX = 4
-INTERNAL_NS_VAR = 'internal'
 MATERIALS_PATH_VAR = 'materialsRootDir'
 
 # used in World constructor, defined in BABYLON.Scene
@@ -131,7 +130,7 @@ class TowerOfBabel(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     filepath = bpy.props.StringProperty(subtype = 'FILE_PATH') # assigned once the file selector returns
     log_handler = None  # assigned in execute
     nameSpace   = None  # assigned in execute
-    versionCheckCode = 'if (typeof(BABYLON.Engine.Version) === "undefined" || Number(BABYLON.Engine.Version.substr(0, 4)) < 1.14) throw "Babylon version too old";\n'
+    versionCheckCode = 'if (typeof BABYLON.Engine.Version === "undefined" || Number(BABYLON.Engine.Version.substr(0, 4)) < 1.14) throw "Babylon version too old";\n'
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -                
     export_onlyCurrentLayer = bpy.props.BoolProperty(
         name="Export only current layer",
@@ -186,9 +185,12 @@ class TowerOfBabel(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             if len(optionalArg) > 0 : ret += ', ' + optionalArg + ' : ' + optionalTsType + " = " + optionalDefault
             ret += ') : void {\n';
         else:
-            ret = '\n    ' + INTERNAL_NS_VAR + '.' + name + ' = function(scene';
-            if len(optionalArg) > 0 : ret += ', ' + optionalArg + " = " + optionalDefault
-            ret += '){\n';
+            ret = '\n    function ' + name + '(scene';
+            if len(optionalArg) > 0 : 
+                ret += ', ' + optionalArg + ') {\n'
+                ret += '        if (typeof ' + optionalArg + ' === "undefined") { ' + optionalArg + ' = ' + optionalDefault + '; }\n'
+            else:
+                ret += ') {\n';
             
         ret += '        ' + TowerOfBabel.versionCheckCode
         if len(loadCheckVar) > 0 : ret += '        if (' + loadCheckVar + ') return;\n'
@@ -214,7 +216,7 @@ class TowerOfBabel(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             else:
                 TowerOfBabel.nameSpace = legal_js_identifier(self.filepathMinusExtension.rpartition('/')[2])
 
-            TowerOfBabel.nWarnings = 0 # explicitly reset, incase there was an earlier export this session
+            TowerOfBabel.nWarnings = 0 # explicitly reset, in case there was an earlier export this session
             TowerOfBabel.log_handler = open(self.filepathMinusExtension + '.log', 'w')
             TOB_version = bl_info['version']
             TowerOfBabel.log('Tower of Babel version: ' + str(TOB_version[0]) + '.' + str(TOB_version[1]) +  '.' + str(TOB_version[2]) + 
@@ -306,8 +308,8 @@ class TowerOfBabel(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             if (self.export_javaScript): self.core_script_file(False)
             if (self.export_html):
                 TowerOfBabel.log('========= Writing of html files started =========', 0)
-                if (self.export_javaScript): self.writeHtmls(True)
-                if (self.export_json      ): TowerOfBabel.writeHtmls(self, False)
+                self.writeHtmls(True )
+                self.writeHtmls(False)
                 TowerOfBabel.log('========= Writing of html files completed =========', 0)
             
         except:# catch *all* exceptions
@@ -332,7 +334,6 @@ class TowerOfBabel(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     def core_script_file(self, is_typescript): 
         indent1 = '    '
         indent2 = '        '
-        ns      = ''           if is_typescript else INTERNAL_NS_VAR + '.' 
         close   = '}\n'        if is_typescript else '};\n' 
         name    = 'typescript' if is_typescript else 'javascript'
         ext     = '.ts'        if is_typescript else '.js'
@@ -355,16 +356,18 @@ class TowerOfBabel(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         file_handler.write(indent2 + 'var texture'  + (' : BABYLON.Texture;\n'          if is_typescript else ';\n') )           
         for material in TowerOfBabel.materials:
             material.core_script(file_handler, indent2)
-        file_handler.write(indent2 + ns + 'defineMultiMaterials(scene);\n')
+        file_handler.write(indent2 + 'defineMultiMaterials(scene);\n')
         file_handler.write(indent2 + 'matLoaded = true;\n')
-        file_handler.write(indent1 + close)
+        file_handler.write(indent1 + '}\n')
+        if not is_typescript: file_handler.write(indent1 + TowerOfBabel.nameSpace + '.defineMaterials = defineMaterials;\n')
         
         # Multi-materials - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         file_handler.write(TowerOfBabel.define_static_method('defineMultiMaterials', is_typescript))
         file_handler.write(indent2 + 'var multiMaterial' + (' : BABYLON.MultiMaterial;\n' if is_typescript else ';\n') )           
         for multimaterial in self.multiMaterials: 
             multimaterial.core_script(file_handler, indent2)
-        file_handler.write(indent1 + close)
+        file_handler.write(indent1 + '}\n')
+        if not is_typescript: file_handler.write(indent1 + TowerOfBabel.nameSpace + '.defineMultiMaterials = defineMultiMaterials;\n')
 
         # Armatures/Bones - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         file_handler.write('\n' + indent1 + 'var bonesLoaded = false;')
@@ -375,7 +378,8 @@ class TowerOfBabel(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         for skeleton in self.skeletons:
             skeleton.core_script(file_handler, indent2)
         file_handler.write(indent2 + 'bonesLoaded = true;\n')
-        file_handler.write(indent1 + close)
+        file_handler.write(indent1 + '}\n')
+        if not is_typescript: file_handler.write(indent1 + TowerOfBabel.nameSpace + '.defineSkeletons = defineSkeletons;\n')
 
         # Meshes and Nodes - - - - - - - - - - - - - - - - - - - - - - - - - - -
         for mesh in self.meshesAndNodes:
@@ -391,14 +395,16 @@ class TowerOfBabel(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             
         if hasattr(self, 'activeCamera'):
             file_handler.write(indent2 + 'scene.setActiveCameraByID("' + self.activeCamera + '");\n')
-        file_handler.write(indent1 + close)
+        file_handler.write(indent1 + '}\n')
+        if not is_typescript: file_handler.write(indent1 + TowerOfBabel.nameSpace + '.defineCameras = defineCameras;\n')
         
         # Lights - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         file_handler.write(TowerOfBabel.define_static_method('defineLights', is_typescript))
         file_handler.write(indent2 + 'var light;\n') # intensionally vague, since sub-classes instances & different specifc propeties set          
         for light in self.lights:
             light.core_script(file_handler, indent2, is_typescript)
-        file_handler.write(indent1 + close)
+        file_handler.write(indent1 + '}\n')
+        if not is_typescript: file_handler.write(indent1 + TowerOfBabel.nameSpace + '.defineLights = defineLights;\n')
                                     
         # Shadow generators - - - - - - - - - - - - - - - - - - - - - - - - - - -
         file_handler.write(TowerOfBabel.define_static_method('defineShadowGen', is_typescript))
@@ -407,92 +413,106 @@ class TowerOfBabel(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         file_handler.write(indent2 + 'var renderList'      + (' : Array<BABYLON.AbstractMesh>;\n'     if is_typescript else ';\n') )           
         for shadowGen in self.shadowGenerators:
             shadowGen.core_script(file_handler, indent2)
-        file_handler.write(indent1 + close)
+        file_handler.write(indent1 + '}\n')
+        if not is_typescript: file_handler.write(indent1 + TowerOfBabel.nameSpace + '.defineShadowGen = defineShadowGen;\n')
 
         # Module closing - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         if is_typescript:
             file_handler.write('\n}')
         else:
-            file_handler.write('    return ' + INTERNAL_NS_VAR + ';\n')
-            file_handler.write('\n}());')
+            file_handler.write('})(' + TowerOfBabel.nameSpace + ' || ('  + TowerOfBabel.nameSpace + ' = {}));')
             
         file_handler.close()        
         TowerOfBabel.log('========= Writing of ' + name + ' file completed =========', 0)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-    def writeHtmls(self, is_javascript): 
+    def writeHtmls(self, is_cocoonJS): 
         header =  '<head>\n'
         header += '    <meta charset="UTF-8">\n'
         header += '    <title>' + TowerOfBabel.nameSpace + '</title>\n' 
-        header += '    <!-- edit path - name of babylon library as required -->\n' 
+        header += '    <!-- edit path - name of babylon & morph libraries as required -->\n'
         header += '    <script src="./babylon.js"></script>\n' 
-        if is_javascript: 
-            header += '    <script src="./' + TowerOfBabel.nameSpace + '.js"></script>\n' 
-        header += '    <style>\n' 
-        header += '         html, body   { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; } \n' 
-        header += '         #renderCanvas{ width: 100%; height: 100%; } \n' 
-        header += '    </style>\n' 
+        header += '    <script src="./morph.js"></script>\n' 
+        header += '    <script src="./' + TowerOfBabel.nameSpace + '.js"></script>\n' 
+        if is_cocoonJS:
+            header += '    <script src="./cocoon.js"></script>\n' 
+            header += '    <meta name="viewport" \n'
+            header += '          content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi">\n'
+        else:
+            header += '    <style>\n' 
+            header += '         html, body   { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; } \n' 
+            header += '         #renderCanvas{ width: 100%; height: 100%; } \n' 
+            header += '    </style>\n' 
+            
         header += '</head>\n'
         
         body   =  '<body>\n<canvas id="renderCanvas"></canvas>\n'
-        
-        scriptStart =  '<script>\n'
-        scriptStart += '    if (BABYLON.Engine.isSupported()) {\n'
-        scriptStart += '        var canvas = document.getElementById("renderCanvas");\n'
-        scriptStart += '        var engine = new BABYLON.Engine(canvas, true);\n'
-        scriptStart += '        console.log("Babylon version:  " + BABYLON.Engine.Version);\n\n'
 
-        JSON        =  '        var url = "."; // edit when .babylon / texture files in a different dir than html\n'
-        JSON        += '        BABYLON.SceneLoader.Load(url, "' + TowerOfBabel.nameSpace + '.babylon", engine, \n'
-        JSON        += '            function (newScene) {\n'
-        JSON        += '                newScene.executeWhenReady(function () {\n'
-        JSON        += '                    // Attach camera to canvas inputs\n'
-        JSON        += '                    newScene.activeCamera.attachControl(canvas);\n\n'
-                                        
-        JSON        += '                    // Once the scene is loaded, register a render loop\n'
-        JSON        +=  '                   engine.runRenderLoop(function () {\n'
-        JSON        += '                        newScene.render();\n'
-        JSON        += '                    });\n'
-        JSON        += '                });\n'
-        JSON        += '            },\n'
-        JSON        += '            function (progress) {\n'
-        JSON        += '                // To do: give progress feedback to user\n'
-        JSON        += '            }\n'
-        JSON        += '        );\n'
+        supported     = '    if (BABYLON.Engine.isSupported()) {\n'
         
-        inline      =  '        var scene = new BABYLON.Scene(engine);\n'
-        inline      += '        materialsRootDir = "."; // edit when texture files in a different dir than html\n'
-        inline      += '        ' + TowerOfBabel.nameSpace + '.initScene(scene, materialsRootDir);\n'
-        inline      += '        scene.activeCamera.attachControl(canvas);\n'
-        inline      += '        engine.runRenderLoop(function () {\n'
-        inline      += '            scene.render();\n'
-        inline      += '        });\n'
-        
-        noWebGL     =  '    }else{\n'
-        noWebGL     += '        alert("WebGL not supported in this browser.\\n\\n" + \n'
-        noWebGL     += '              "If in Safari browser, check \'Show Develop menu in menu bar\' on the Advanced tab of Preferences.  " +\n'
-        noWebGL     += '              "On the \'Develop\' menu, check the \'Enable WebGL\' menu item.");\n'
-        noWebGL     += '    }\n\n'
+        scriptBody   =  '        var canvas = document.getElementById("renderCanvas");\n'
+        if is_cocoonJS:
+            scriptBody   += '        canvas.screencanvas = true;\n'
+            scriptBody   += '        var width  = window.devicePixelRatio * window.innerWidth;\n'
+            scriptBody   += '        var height = window.devicePixelRatio * window.innerHeight;\n'
+            scriptBody   += '        canvas.width = width;\n'
+            scriptBody   += '        canvas.height = height;\n'
+            scriptBody   += '        canvas.getContext("webgl"); // preemptively create a device sized, webgl context; only 1 is ever created \n\n'
 
-        scriptEnd   =  '    //Resize\n'
-        scriptEnd   += '    window.addEventListener("resize", function () {\n'
-        scriptEnd   += '        engine.resize();\n'
-        scriptEnd   += '    });\n'
-        scriptEnd   += '</script>\n'
+        scriptBody   += '        var engine = new BABYLON.Engine(canvas, true);\n'
+        scriptBody   += '        console.log("Babylon version:  " + BABYLON.Engine.Version);\n'
+        scriptBody   += '        if (typeof(MORPH) !== "undefined") console.log("Morph version:  " + MORPH.Mesh.Version);\n'
+        if is_cocoonJS:
+            scriptBody   += '        engine.setSize(width, height);\n'
+            scriptBody   += '        console.log("Cocoon version:  " + Cocoon.version);\n'
+
+        scriptBody   += '\n'
+        scriptBody   += '        var scene = new BABYLON.Scene(engine);\n'
+        scriptBody   += '        materialsRootDir = "."; // edit when texture files in a different dir than html\n'
+        scriptBody   += '        ' + TowerOfBabel.nameSpace + '.initScene(scene, materialsRootDir);\n'
+        scriptBody   += '        scene.activeCamera.attachControl(canvas);\n'
+        scriptBody   += '        engine.runRenderLoop(function () {\n'
+        scriptBody   += '            scene.render();\n'
+        scriptBody   += '        });\n'
+        
+        noWebGL      =  '    }else{\n'
+        noWebGL      += '        alert("WebGL not supported in this browser.\\n\\n" + \n'
+        noWebGL      += '              "If in Safari browser, check \'Show Develop menu in menu bar\' on the Advanced tab of Preferences.  " +\n'
+        noWebGL      += '              "On the \'Develop\' menu, check the \'Enable WebGL\' menu item.");\n'
+        noWebGL      += '    }\n\n'
+
+        resize       =  '    //Resize\n'
+        resize       += '    window.addEventListener("resize", function () {\n'
+        resize       += '        engine.resize();\n'
+        resize       += '    });\n'
+        
+        appEvents     = '        //app activation\n'
+        appEvents    += '        Cocoon.App.on("activated", function(){\n'
+        appEvents    += '            if (typeof(MORPH) !== "undefined")  MORPH.Mesh.resumeSystem();\n'
+        appEvents    += '        });\n\n'
+        
+        appEvents    += '        //app Resume\n'
+        appEvents    += '        Cocoon.App.on("suspending", function () {\n'
+        appEvents    += '            if (typeof(MORPH) !== "undefined")  MORPH.Mesh.pauseSystem();\n'
+        appEvents    += '        });\n\n'
         
         filename =  self.filepathMinusExtension;
-        filename += '_inline.html' if is_javascript else '_JSON.html'
+        filename += '_cocoon.html' if is_cocoonJS else '.html'
         file_handler = open(filename, 'w') 
         file_handler.write('<html>\n')
         file_handler.write(header)
         file_handler.write(body)
-        file_handler.write(scriptStart)
-        if is_javascript:
-            file_handler.write(inline)
+        file_handler.write('<script>\n')
+        if is_cocoonJS:
+            file_handler.write(scriptBody)
+            file_handler.write(appEvents)
         else:
-            file_handler.write(JSON)
-        file_handler.write(noWebGL)
-        file_handler.write(scriptEnd)
-        file_handler.write('</body>\n</html>')
+            file_handler.write(supported)
+            file_handler.write(scriptBody)
+            file_handler.write(noWebGL)
+            file_handler.write(resize)
+        file_handler.write('</script>\n')
+        file_handler.write('</body>\n')
+        file_handler.write('</html>\n')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -                
     def isInSelectedLayer(self, obj, scene):
         return not self.export_onlyCurrentLayer or obj.layers[scene.active_layer]
@@ -526,27 +546,25 @@ class World:
         TowerOfBabel.log('Python World class constructor completed')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -                
     def to_javascript(self, file_handler, meshes): 
-        file_handler.write('"use strict";\n')
         file_handler.write('var __extends = this.__extends || function (d, b) {\n')
         file_handler.write('    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];\n')
         file_handler.write('    function __() { this.constructor = d; }\n')
         file_handler.write('    __.prototype = b.prototype;\n')
         file_handler.write('    d.prototype = new __();\n')
         file_handler.write('};\n')
-        file_handler.write('var '+ TowerOfBabel.nameSpace + ' = (function(){\n')
-        file_handler.write('    var ' + INTERNAL_NS_VAR + ' = {};\n')
-        file_handler.write('    ' + INTERNAL_NS_VAR + '.initScene = function(scene, ' + MATERIALS_PATH_VAR + ' = "./"){\n')
+        file_handler.write('var ' + TowerOfBabel.nameSpace + ';\n')
+        file_handler.write('(function (' + TowerOfBabel.nameSpace + ') {\n')
+        file_handler.write('    function initScene(scene, ' + MATERIALS_PATH_VAR + ') {\n')
+        file_handler.write('        if (typeof ' + MATERIALS_PATH_VAR + ' === "undefined") { ' + MATERIALS_PATH_VAR + ' = "./"; }\n')
         self.core_script(file_handler, meshes, '        ', False)
-        file_handler.write('    };\n')
+        file_handler.write('    ' + TowerOfBabel.nameSpace + '.initScene = initScene;\n')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -        
     def to_typescript(self, file_handler, meshes): 
         file_handler.write('module ' + TowerOfBabel.nameSpace + '{\n\n')
         file_handler.write('    export function initScene(scene : BABYLON.Scene, ' + MATERIALS_PATH_VAR + ' : string = "./") : void {\n')
         self.core_script(file_handler, meshes, '        ', True)
-        file_handler.write('    }\n')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -        
     def core_script(self, file_handler, meshes, indent, is_typescript): 
-        ns = '' if is_typescript else INTERNAL_NS_VAR + '.' 
         file_handler.write(indent + TowerOfBabel.versionCheckCode)
         file_handler.write(indent + 'scene.autoClear = ' + format_bool(self.autoClear) + ';\n')
         file_handler.write(indent + 'scene.clearColor    = new BABYLON.Color3(' + format_color(self.world_ambient) + ');\n')
@@ -561,21 +579,22 @@ class World:
             file_handler.write(indent + 'scene.fogDensity = ' + self.fogDensity + ';\n')
             
         file_handler.write('\n' + indent + '// define materials & skeletons before meshes\n')
-        file_handler.write(indent + ns + 'defineMaterials(scene, ' + MATERIALS_PATH_VAR + ');\n')
-        file_handler.write(indent + ns + 'defineSkeletons(scene);\n')
+        file_handler.write(indent + 'defineMaterials(scene, ' + MATERIALS_PATH_VAR + ');\n')
+        file_handler.write(indent + 'defineSkeletons(scene);\n')
     
         file_handler.write('\n' + indent + '// instance all root meshes\n')
         for mesh in meshes:
             if not hasattr(mesh, 'parentId'):
                 properName = legal_js_identifier(mesh.name)
-                file_handler.write(indent + 'new ' + ns + properName + '("' + mesh.name + '", scene);\n')
+                file_handler.write(indent + 'new ' + properName + '("' + mesh.name + '", scene);\n')
         
         file_handler.write('\n' + indent + '// define cameras after meshes, incase LockedTarget is in use\n')
-        file_handler.write(indent + ns + 'defineCameras  (scene);\n')
+        file_handler.write(indent +'defineCameras(scene);\n')
         
         file_handler.write('\n' + indent + '// cannot call Shadow Gen prior to all lights & meshes being instanced\n')
-        file_handler.write(indent + ns + 'defineLights   (scene);\n')
-        file_handler.write(indent + ns + 'defineShadowGen(scene);\n') 
+        file_handler.write(indent + 'defineLights(scene);\n')
+        file_handler.write(indent + 'defineShadowGen(scene);\n') 
+        file_handler.write('    }\n')
 #===============================================================================
 class FCurveAnimatable:
     def __init__(self, object, supportsRotation, supportsPosition, supportsScaling, xOffsetForRotation = 0):  
@@ -601,15 +620,17 @@ class FCurveAnimatable:
                     self.animations.append(VectorAnimation(object, 'scale', 'scaling', 1))
                     scaAnim = True
             #Set Animations
-            self.autoAnimate = True
-            self.autoAnimateFrom = bpy.context.scene.frame_end
-            self.autoAnimateTo =  0
-            for animation in self.animations:
-                if self.autoAnimateFrom > animation.get_first_frame():
-                    self.autoAnimateFrom = animation.get_first_frame()
-                if self.autoAnimateTo < animation.get_last_frame():
-                    self.autoAnimateTo = animation.get_last_frame()
-            self.autoAnimateLoop = True
+
+            if (hasattr(object.data, "autoAnimate") and object.data.autoAnimate):
+                self.autoAnimate = True
+                self.autoAnimateFrom = bpy.context.scene.frame_end
+                self.autoAnimateTo =  0
+                for animation in self.animations:
+                    if self.autoAnimateFrom > animation.get_first_frame():
+                        self.autoAnimateFrom = animation.get_first_frame()
+                    if self.autoAnimateTo < animation.get_last_frame():
+                        self.autoAnimateTo = animation.get_last_frame()
+                self.autoAnimateLoop = True
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -        
     def core_script(self, file_handler, jsVarName, indent, is_typescript): 
         if (self.animationsPresent):
@@ -618,7 +639,7 @@ class FCurveAnimatable:
                 animation.core_script(file_handler, indent) # assigns the previously declared js variable 'animation'
                 file_handler.write(indent + jsVarName + '.animations.push(animation);\n')
 
-            if self.autoAnimate:
+            if (hasattr(self, "autoAnimate") and self.autoAnimate):
                 file_handler.write(indent + 'scene.beginAnimation(' + jsVarName + ', ' + 
                                              format_int(self.autoAnimateFrom) + ',' + 
                                              format_int(self.autoAnimateTo) + ',' + 
@@ -628,7 +649,7 @@ class Mesh(FCurveAnimatable):
     def __init__(self, object, scene, multiMaterials, startFace, forcedParent, nameID):
         super().__init__(object, True, True, True)  #Should animations be done when foredParent
         
-        self.name = object.name + nameID
+        self.name = object.name + str(nameID)
         TowerOfBabel.log('processing begun of mesh:  ' + self.name)
         self.isVisible = not object.hide_render
         self.isEnabled = True
@@ -664,8 +685,8 @@ class Mesh(FCurveAnimatable):
             self.physicsFriction = object.rigid_body.friction
             self.physicsRestitution = object.rigid_body.restitution
         
-        # Geometry, awkward, maybe nuke hasSkeleton test; can there only be one?
-        hasSkeleton = True if object.parent and object.parent.type == 'ARMATURE' and len(object.vertex_groups) > 0 else False
+        # hasSkeleton detection & skeletonID determination
+        hasSkeleton = True if object.parent and object.parent.type == 'ARMATURE' and object.parent.is_visible(scene) and len(object.vertex_groups) > 0 else False
         if hasSkeleton:
             # determine the skeleton ID by iterating thru objects counting armatures until parent is found
             i = 0
@@ -676,7 +697,7 @@ class Mesh(FCurveAnimatable):
                         break;
                     else:
                         i += 1
-         
+                        
         # detect if any textures in the material slots, which would mean UV mapping is required                         
         uvRequired = False
         for slot in object.material_slots:
@@ -740,9 +761,8 @@ class Mesh(FCurveAnimatable):
         if hasSkeleton:
             self.skeletonWeights = []
             self.skeletonIndices = []
-            self.skeletonIndicesCompressed = []
     
-        # used tracking of vertices as they are recieved     
+        # used tracking of vertices as they are received     
         alreadySavedVertices = []
         vertices_UVs = []
         vertices_UV2s = []
@@ -798,7 +818,6 @@ class Mesh(FCurveAnimatable):
                         matricesIndices.append(0.0)
                         matricesIndices.append(0.0)
                         matricesIndices.append(0.0)
-                        matricesIndicesCompressed = 0
 
                         # Getting influences
                         i = 0
@@ -814,7 +833,6 @@ class Mesh(FCurveAnimatable):
                                         break
                                     matricesWeights[i] = weight
                                     matricesIndices[i] = boneIndex
-                                    matricesIndicesCompressed += boneIndex << offset
                                     offset = offset + 8
 
                                     i = i + 1                                    
@@ -884,6 +902,7 @@ class Mesh(FCurveAnimatable):
                             self.colors.append(vertex_Color.r)
                             self.colors.append(vertex_Color.g)
                             self.colors.append(vertex_Color.b)
+                            self.colors.append(1.0)
                         if hasSkeleton:
                             self.skeletonWeights.append(matricesWeights[0])
                             self.skeletonWeights.append(matricesWeights[1])
@@ -893,7 +912,6 @@ class Mesh(FCurveAnimatable):
                             self.skeletonIndices.append(matricesIndices[1])
                             self.skeletonIndices.append(matricesIndices[2])
                             self.skeletonIndices.append(matricesIndices[3])
-                            self.skeletonIndicesCompressed.append(matricesIndicesCompressed)
 
                         vertices_indices[vertex_index].append(index)
                         
@@ -950,7 +968,7 @@ class Mesh(FCurveAnimatable):
                         TowerOfBabel.warn('WARNING: Key shape not in group-state format, changed to:  ' + keyName, 2)
                     
                     temp = keyName.upper().partition('-')
-                    rawShapeKeys.append(RawShapeKey(block, temp[0], temp[2], keyOrderMap))
+                    rawShapeKeys.append(RawShapeKey(block, temp[0], temp[2], keyOrderMap, self.positions))
                 
                     # check for a new group, add to groupNames if so
                     newGroup = True
@@ -979,18 +997,21 @@ class Mesh(FCurveAnimatable):
             if same_vertex(p1, p2) or same_vertex(p1, p3) or same_vertex(p2, p3): nZeroAreaFaces += 1
            
         return nZeroAreaFaces       
-        
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # - map is an array of 2 element arrays, element 1 is the index in the key, element 2 index into positions
     def get_key_order_map(self, basisKey):
         basisData = basisKey.data
         keySz =len(basisData)
         
         ret = []
         positionsSz = len(self.positions)
-        for posIdx in range(0, positionsSz):
-            for keyIdx in range(0, keySz):
+        for keyIdx in range(0, keySz):
+            for posIdx in range(0, positionsSz):
                 if same_vertex(basisData[keyIdx].co, self.positions[posIdx]): 
-                    ret.append(keyIdx)
-                    break
+#                    TowerOfBabel.log('keyIdx:  ' + str(keyIdx) + ', posIdx:  ' +  str(posIdx), 2)
+                    ret.append([keyIdx, posIdx])
+                
+        TowerOfBabel.log('Order of Basis Key mapped to Babylon.Mesh order;  num vertices matched:  ' + str(len(ret)) + ', keySz:  ' + str(keySz), 2)
         return ret
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def get_proper_name(self):
@@ -1017,7 +1038,6 @@ class Mesh(FCurveAnimatable):
         isRootMesh = not hasattr(self, 'parentId')
         isAutomaton = hasattr(self, 'shapeKeyGroups')
         baseClass = self.get_base_class()
-        ns = '' if is_typescript else INTERNAL_NS_VAR + '.' 
         var = ''
         indent2 = ''
         if isRootMesh:
@@ -1031,20 +1051,22 @@ class Mesh(FCurveAnimatable):
                 
                 file_handler.write(indent + '    constructor(name: string, scene: BABYLON.Scene, ' + MATERIALS_PATH_VAR + ': string = "./") {\n')
                 file_handler.write(indent2 + 'super(name, scene);\n\n')
-                file_handler.write(indent2 + TowerOfBabel.nameSpace + '.defineMaterials(scene, ' + MATERIALS_PATH_VAR + '); //embedded version check\n')
             else:
-                file_handler.write('\n' + indent + INTERNAL_NS_VAR + '.' + properName + ' = (function (_super) {\n')
+                file_handler.write('\n' + indent + 'var ' + properName + ' = (function (_super) {\n')
                 file_handler.write(indent + '    __extends(' + properName + ', _super);\n')
-                file_handler.write(indent + '    function ' + properName + '(name, scene, ' + MATERIALS_PATH_VAR + ' = "./"){\n')
+                file_handler.write(indent + '    function ' + properName + '(name, scene, ' + MATERIALS_PATH_VAR + ') {\n')
+                file_handler.write(indent2 + 'if (typeof ' + MATERIALS_PATH_VAR + ' === "undefined") { ' + MATERIALS_PATH_VAR + ' = "./"; }\n')
                 file_handler.write(indent2 + '_super.call(this, name, scene);\n\n')
-                file_handler.write(indent2 + INTERNAL_NS_VAR + '.defineMaterials(scene, ' + MATERIALS_PATH_VAR + '); //embedded version check\n')
+                
+            file_handler.write(indent2 + TowerOfBabel.nameSpace + '.defineMaterials(scene, ' + MATERIALS_PATH_VAR + '); //embedded version check\n')
+            
         else:
             var = 'ret'
             indent2 = indent + '    '
             if is_typescript:
                 file_handler.write('\n' + indent + 'function child_' + properName + '(scene : BABYLON.Scene, parent : any) : ' + baseClass + ' {\n')
             else:
-                file_handler.write('\n' + indent + INTERNAL_NS_VAR + '.child_' + properName + ' = function(scene, parent){\n')
+                file_handler.write('\n' + indent + 'function child_' + properName + '(scene, parent){\n')
                 
             file_handler.write(indent2 + TowerOfBabel.versionCheckCode)
             file_handler.write(indent2 + 'var ' + var + ' = new ' + baseClass + '("' + properName + '_" + parent.name, scene);\n')
@@ -1054,7 +1076,7 @@ class Mesh(FCurveAnimatable):
         
         # not part of root mesh test to allow for nested parenting
         for kid in kids:
-            file_handler.write(indent2 + var + '.' + kid.get_proper_name() + ' = ' + ns + 'child_' + kid.get_proper_name() + '(scene, this);\n')    
+            file_handler.write(indent2 + var + '.' + kid.get_proper_name() + ' = child_' + kid.get_proper_name() + '(scene, this);\n')    
         file_handler.write('\n')
 
         if hasattr(self, 'materialId'): file_handler.write(indent2 + var + '.setMaterialByID("' + self.materialId + '");\n')
@@ -1084,10 +1106,7 @@ class Mesh(FCurveAnimatable):
 
         # Geometry
         if hasattr(self, 'skeletonId'):
-            if is_typescript:
-                file_handler.write(indent2 + TowerOfBabel.nameSpace + '.defineSkeletons(scene);\n')
-            else:
-                file_handler.write('\n' + indent2 + INTERNAL_NS_VAR + '.defineSkeletons(scene);\n')
+            file_handler.write('\n' + indent2 + TowerOfBabel.nameSpace + '.defineSkeletons(scene);\n')
             file_handler.write(indent2 + var + '.skeleton = scene.getLastSkeletonByID("' + format_int(self.skeletonId) + '");\n\n')
         
         indent3 = indent2 + '    '
@@ -1166,6 +1185,7 @@ class Mesh(FCurveAnimatable):
             else:
                 file_handler.write(indent + '    return ' + properName + ';\n')
                 file_handler.write(indent + '})(' + baseClass + ');\n')      
+                file_handler.write(indent + TowerOfBabel.nameSpace + '.' + properName + ' = ' + properName + ';\n')
         else:
             file_handler.write(indent + '    return ret;\n')             
             file_handler.write(indent + '}\n') 
@@ -1279,16 +1299,30 @@ class SubMesh:
                           format_int(self.indexStart)    + ', ' + 
                           format_int(self.indexCount)    + ', ' + jsMeshVar + ');\n')
 #===============================================================================   
-# extract data in Mesh order, no optimization from group analyse yet
+# extract data in Mesh order, no optimization from group analyse yet; mapped into a copy of position
 class RawShapeKey:
-    def __init__(self, keyBlock, group, state, keyOrderMap):
+    def __init__(self, keyBlock, group, state, keyOrderMap, positions):
         self.group = group
         self.state = state
         self.vertices = []   
+#        previousValue = keyBlock.value
+#        keyBlock.value = keyBlock.slider_max
+        
+        # populate vertices with copy of positions, so keys can be smaller than positions
+        nSize = len(positions)
+        for i in range(0, nSize):
+            self.vertices.append(positions[i])
 
         retSz = len(keyOrderMap)
-        for idx in range(0, retSz):
-            self.vertices.append(keyBlock.data[keyOrderMap[idx]].co)
+        nReplaced = 0
+        for i in range(0, retSz):
+            pair = keyOrderMap[i]
+            if not same_vertex(self.vertices[pair[1]],  keyBlock.data[pair[0]].co):
+                self.vertices[pair[1]] = keyBlock.data[pair[0]].co
+                nReplaced += 1
+                
+ #       keyBlock.value = previousValue    
+        TowerOfBabel.log('shape key "' + group + '-' + state + '" key size:  ' + str(len(keyBlock.data)) + ', n diff from basis: ' + str(nReplaced), 2)
 #===============================================================================
 class ShapeKeyGroup:
     def __init__(self, group, rawShapeKeys, positions):
@@ -1364,7 +1398,7 @@ class Bone:
         TowerOfBabel.log('processing begun of bone:  ' + bone.name + ', index:  '+ str(index))
         self.name = bone.name
         self.index = index
-
+        
         matrix_world = skeleton.matrix_world
         self.matrix = Bone.get_matrix(bone, matrix_world)
 
@@ -1445,8 +1479,9 @@ class Camera(FCurveAnimatable):
     def __init__(self, camera):         
         super().__init__(camera, True, True, False, math.pi / 2)
         
+        self.CameraType = camera.data.CameraType  
         self.name = camera.name        
-        TowerOfBabel.log('processing begun of camera:  ' + self.name)
+        TowerOfBabel.log('processing begun of camera (' + self.CameraType + '):  ' + self.name)
         self.position = camera.location
         self.rotation = mathutils.Vector((-camera.rotation_euler[0] + math.pi / 2, camera.rotation_euler[1], -camera.rotation_euler[2])) # extra parens needed
         self.fov = camera.data.angle
@@ -1462,9 +1497,7 @@ class Camera(FCurveAnimatable):
             if constraint.type == 'TRACK_TO':
                 self.lockedTargetId = constraint.target.name
                 break
-            
-        self.CameraType = camera.data.CameraType  
-                   
+                               
         if self.CameraType == ANAGLYPH_ARC_CAM or self.CameraType == ANAGLYPH_FREE_CAM:
             self.anaglyphEyeSpace = camera.data.anaglyphEyeSpace
         
@@ -1552,7 +1585,7 @@ class Light(FCurveAnimatable):
         super().__init__(light, False, True, False)
         
         self.name = light.name        
-        TowerOfBabel.log('processing begun of light:  ' + self.name)
+        TowerOfBabel.log('processing begun of light (' + light.data.type + '):  ' + self.name)
         light_type_items = {'POINT': POINT_LIGHT, 'SUN': DIRECTIONAL_LIGHT, 'SPOT': SPOT_LIGHT, 'HEMI': HEMI_LIGHT, 'AREA': 0}
         self.light_type = light_type_items[light.data.type]
         
@@ -1574,9 +1607,10 @@ class Light(FCurveAnimatable):
                 self.range = light.data.distance            
             
         else:
+            # Hemi & Area
             matrix_world = light.matrix_world.copy()
             matrix_world.translation = mathutils.Vector((0, 0, 0))
-            self.direction = -(mathutils.Vector((0, 0, -1)) * matrix_world)
+            self.direction = mathutils.Vector((0, 0, -1)) * matrix_world
             self.groundColor = mathutils.Color((0, 0, 0))
             
         self.intensity = light.data.energy        
@@ -1607,7 +1641,7 @@ class Light(FCurveAnimatable):
 
         file_handler.write(indent + 'light.diffuse = new BABYLON.Color3(' + format_color(self.diffuse) + ');\n')
         file_handler.write(indent + 'light.specular = new BABYLON.Color3(' + format_color(self.specular) + ');\n')
-        super().core_script(file_handler, 'camera', indent, is_typescript) # Animations
+        super().core_script(file_handler, 'light', indent, is_typescript) # Animations
 
     @staticmethod
     def get_direction(matrix):
@@ -1667,7 +1701,7 @@ class Texture:
         except:
             ex = sys.exc_info()
             TowerOfBabel.log_handler.write('Error encountered processing image file:  ' + imageFilepath + ', Error:  '+ str(ex[1]) + '\n')
-            pass
+            #pass
         
         # Export
         self.slot = slot
@@ -1746,22 +1780,28 @@ class Material:
                 if mtex.texture.image:
                     if (mtex.use_map_color_diffuse and (mtex.texture_coords != 'REFLECTION')):
                         # Diffuse
+                        TowerOfBabel.log('Diffuse texture found');
                         self.textures.append(Texture('diffuseTexture', mtex.diffuse_color_factor, mtex, filepath))
                     if mtex.use_map_ambient:
                         # Ambient
+                        TowerOfBabel.log('Ambient texture found');
                         self.textures.append(Texture('ambientTexture', mtex.ambient_factor, mtex, filepath))
                     if mtex.use_map_alpha:
                         # Opacity
+                        TowerOfBabel.log('Opacity texture found');
                         self.textures.append(Texture('opacityTexture', mtex.alpha_factor, mtex, filepath))
                     if mtex.use_map_color_diffuse and (mtex.texture_coords == 'REFLECTION'):
                         # Reflection
+                        TowerOfBabel.log('Reflection texture found');
                         self.textures.append(Texture('reflectionTexture', mtex.diffuse_color_factor, mtex, filepath))
                     if mtex.use_map_emit:
                         # Emissive
+                        TowerOfBabel.log('Emissive texture found');
                         self.textures.append(Texture('emissiveTexture', mtex.emit_factor, mtex, filepath))     
                     if mtex.use_map_normal:
                         # Bump
-                        self.textures.append(Texture('bumpTexture', mtex.emit_factor, mtex, filepath))  
+                        TowerOfBabel.log('Bump texture found');
+                        self.textures.append(Texture('bumpTexture', mtex.normal_factor, mtex, filepath))  
                         
             else: #type ==  'STUCCI' or 'NOISE'
                  TowerOfBabel.warn('WARNING texture type not currently supported:  ' + mtex.texture.type + ', ignored.')
@@ -1982,6 +2022,11 @@ bpy.types.Mesh.receiveShadows = bpy.props.BoolProperty(
     default = False
 )
 #===============================================================================
+bpy.types.Camera.autoAnimate = bpy.props.BoolProperty(
+    name='Automatically launch animations', 
+    description='',
+    default = False
+)
 bpy.types.Camera.CameraType = bpy.props.EnumProperty(
     name='Camera Type', 
     description='',
@@ -1994,7 +2039,7 @@ bpy.types.Camera.CameraType = bpy.props.EnumProperty(
              (FOLLOW_CAM       , 'Follow'             , 'Use Follow Camera'),
              (DEV_ORIENT_CAM   , 'Device Orientation' , 'Use Device Orientation Camera'),
              (ARC_ROTATE_CAM   , 'Arc Rotate'         , 'Use Arc Rotate Camera'),
-             (ANAGLYPH_FREE_CAM, 'Anaglyph Free'       , 'Use Anaglyph Free Camera'), 
+             (ANAGLYPH_FREE_CAM, 'Anaglyph Free'      , 'Use Anaglyph Free Camera'), 
              (ANAGLYPH_ARC_CAM , 'Anaglyph Arc Rotate', 'Use Anaglyph Arc Rotate Camera') 
             ),
     default = FREE_CAM
@@ -2020,6 +2065,11 @@ bpy.types.Camera.anaglyphEyeSpace = bpy.props.IntProperty(
     default = 1
 )    
 #===============================================================================
+bpy.types.Lamp.autoAnimate = bpy.props.BoolProperty(
+    name='Automatically launch animations', 
+    description='',
+    default = False
+)
 bpy.types.Lamp.shadowMap = bpy.props.EnumProperty(
     name='Shadow Map Type', 
     description='',
@@ -2052,7 +2102,11 @@ class ObjectPanel(bpy.types.Panel):
             layout.prop(ob.data, 'checkCollisions')     
             layout.prop(ob.data, 'castShadows')     
             layout.prop(ob.data, 'receiveShadows')   
-            
+
+            layout.separator()
+
+            layout.prop(ob.data, 'autoAnimate')   
+                        
         elif isCamera:
             layout.prop(ob.data, 'CameraType')
             layout.prop(ob.data, 'checkCollisions')
@@ -2062,7 +2116,15 @@ class ObjectPanel(bpy.types.Panel):
             layout.separator()
             
             layout.prop(ob.data, 'anaglyphEyeSpace')
-            
+
+            layout.separator()
+
+            layout.prop(ob.data, 'autoAnimate')   
+                        
         elif isLight:
             layout.prop(ob.data, 'shadowMap')
-            layout.prop(ob.data, 'shadowMapSize')        
+            layout.prop(ob.data, 'shadowMapSize') 
+       
+            layout.separator()
+
+            layout.prop(ob.data, 'autoAnimate')   
