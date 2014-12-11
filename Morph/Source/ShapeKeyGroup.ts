@@ -1,3 +1,6 @@
+/// <reference path="./EventSeries.ts"/>
+/// <reference path="./Mesh.ts"/>
+/// <reference path="./ReferenceDeformation.ts"/>
 module MORPH {
     export class ShapeKeyGroup {
         // position elements converted to typed array
@@ -24,6 +27,7 @@ module MORPH {
         private _priorFinalPositionVals : Float32Array;
         private _currFinalNormalVals    : Float32Array;
         private _priorFinalNormalVals   : Float32Array;
+        private _stalling : boolean;
         
         // typed arrays are more expense to create, pre-allocate pairs for reuse
         private _reusablePositionFinals = new Array<Float32Array>();  
@@ -100,32 +104,54 @@ module MORPH {
             this._currFinalNormalVals    = this._normals[0];   
         }
         // =============================== Shape-Key adding & deriving ===============================
-        private getDerivedName(referenceIdx : number, endStateIdx : number, endStateRatio : number) : string{
-            return referenceIdx + "-" + endStateIdx + "@" + endStateRatio;
+        private getDerivedName(referenceIdx : number, endStateIdxs : Array<number>, endStateRatios : Array<number>) : string{
+            return referenceIdx + "-[" + endStateIdxs + "]@[" + endStateRatios + "]";
         }
         /**
-         * add a derived key from the data contained in a deformation; wrapper for addDerivedKey()
+         * add a derived key from the data contained in a deformation; wrapper for addComboDerivedKey().
          * @param {ReferenceDeformation} deformation - mined for its reference & end state names, and end state ratio
          */
         public addDerivedKeyFromDeformation(deformation : ReferenceDeformation) : void{
-            this.addDerivedKey(deformation.getReferenceStateName(), deformation.getEndStateName(), deformation.getEndStateRatio());
+            this.addComboDerivedKey(deformation.getReferenceStateName(), deformation.getEndStateNames(), deformation.getEndStateRatios());
         }
         
         /**
-         * add a derived key from the arguments
+         * add a derived key using a single end state from the arguments;  wrapper for addComboDerivedKey().
          * @param {string} referenceStateName - Name of the reference state to be based on
          * @param {string} endStateName - Name of the end state to be based on
          * @param {number} endStateRatio - Unvalidated, but if -1 < or > 1, then can never be called, since Deformation validates
          */
         public addDerivedKey(referenceStateName : string, endStateName : string, endStateRatio : number) : void{
+            if (endStateRatio === 1){
+                BABYLON.Tools.Warn("ShapeKeyGroup: deriving a shape key where the endStateRatio is 1 is pointless, ignored");
+                return;
+            }
+            this.addComboDerivedKey(referenceStateName, [endStateName], [endStateRatio]);
+        }
+        
+        /**
+         * add a derived key from the arguments
+         * @param {string} referenceStateName - Name of the reference state to be based on
+         * @param {Array} endStateNames - Names of the end state to be based on
+         * @param {Array} endStateRatios - Unvalidated, but if -1 < or > 1, then can never be called, since Deformation validates
+         */
+        public addComboDerivedKey(referenceStateName : string, endStateNames : Array<string>, endStateRatios : Array<number>) : void{
             var referenceIdx = this.getIdxForState(referenceStateName.toUpperCase());
-            var endStateIdx  = this.getIdxForState(endStateName      .toUpperCase());
-            if (referenceIdx === -1 || endStateIdx === -1) throw "ShapeKeyGroup: invalid source state name(s)";
-            if (endStateRatio === 1) throw "ShapeKeyGroup: deriving a shape key where the endStateRatio is 1 is pointless";
+            if (referenceIdx === -1) throw "ShapeKeyGroup: invalid reference state";
             
-            var stateName = this.getDerivedName(referenceIdx, endStateIdx, endStateRatio);
+            var endStateIdxs = new Array<number>();
+            var endStateIdx : number;
+            for (var i = 0; i < endStateNames.length; i++){
+                endStateIdx = this.getIdxForState(endStateNames[i].toUpperCase() );
+                if (endStateIdx === -1) throw "ShapeKeyGroup: invalid end state name: " + endStateNames[i].toUpperCase();
+                
+                endStateIdxs.push(endStateIdx);
+            }
+            
+            var stateName = this.getDerivedName(referenceIdx, endStateIdxs, endStateRatios);
             var stateKey  = new Float32Array(this._nPosElements);
-            this.buildPosEndPoint(stateKey, referenceIdx, endStateIdx, endStateRatio);
+            
+            this.buildPosEndPoint(stateKey, referenceIdx, endStateIdxs, endStateRatios);
             this.addShapeKeyInternal(stateName, stateKey);
         }
         
@@ -138,7 +164,10 @@ module MORPH {
         /** worker method for both the addShapeKey() & addDerivedKey() methods */
         private addShapeKeyInternal(stateName : string, stateKey : Float32Array) : void {
             if (typeof stateName !== 'string' || stateName.length === 0) throw "ShapeKeyGroup: invalid stateName arg";
-            if (this.getIdxForState(stateName) !== -1) throw "ShapeKeyGroup: stateName " + stateName + " is a duplicate";
+            if (this.getIdxForState(stateName) !== -1){
+                BABYLON.Tools.Warn("ShapeKeyGroup: stateName " + stateName + " is a duplicate, ignored");
+                return;
+            }
 
             this._states.push(stateKey);
             this._stateNames.push(stateName);
@@ -180,24 +209,26 @@ module MORPH {
             // have a deformation to process
             var ratioComplete = this._currentStepInSeries.getCompletionMilestone();
             if (ratioComplete < 0) return false; // Deformation.BLOCKED or Deformation.WAITING
-        
-            // update the positions
-            for (var i = 0; i < this._nPosElements; i++){
-                positions[this._affectedPositionElements[i]] = this._priorFinalPositionVals[i] + ((this._currFinalPositionVals[i] - this._priorFinalPositionVals[i]) * ratioComplete);
-            }
             
-            // update the normals
-            var mIdx : number, kIdx : number;
-            for (var i = 0; i < this._nVertices; i++){
-                mIdx = 3 * this._affectedVertices[i] // offset for this vertex in the entire mesh
-                kIdx = 3 * i;                        // offset for this vertex in the shape key group
-                normals[mIdx    ] = this._priorFinalNormalVals[kIdx    ] + ((this._currFinalNormalVals[kIdx    ] - this._priorFinalNormalVals[kIdx    ]) * ratioComplete);
-                normals[mIdx + 1] = this._priorFinalNormalVals[kIdx + 1] + ((this._currFinalNormalVals[kIdx + 1] - this._priorFinalNormalVals[kIdx + 1]) * ratioComplete);
-                normals[mIdx + 2] = this._priorFinalNormalVals[kIdx + 2] + ((this._currFinalNormalVals[kIdx + 2] - this._priorFinalNormalVals[kIdx + 2]) * ratioComplete);
-            }
+            if (!this._stalling){        
+                // update the positions
+                for (var i = 0; i < this._nPosElements; i++){
+                    positions[this._affectedPositionElements[i]] = this._priorFinalPositionVals[i] + ((this._currFinalPositionVals[i] - this._priorFinalPositionVals[i]) * ratioComplete);
+                }
             
-            if (this._doingRotation){
-                this._mesh.rotation = BABYLON.Vector3.Lerp(this._rotationStartVec, this._rotationEndVec, ratioComplete);
+                // update the normals
+                var mIdx : number, kIdx : number;
+                for (var i = 0; i < this._nVertices; i++){
+                    mIdx = 3 * this._affectedVertices[i] // offset for this vertex in the entire mesh
+                    kIdx = 3 * i;                        // offset for this vertex in the shape key group
+                    normals[mIdx    ] = this._priorFinalNormalVals[kIdx    ] + ((this._currFinalNormalVals[kIdx    ] - this._priorFinalNormalVals[kIdx    ]) * ratioComplete);
+                    normals[mIdx + 1] = this._priorFinalNormalVals[kIdx + 1] + ((this._currFinalNormalVals[kIdx + 1] - this._priorFinalNormalVals[kIdx + 1]) * ratioComplete);
+                    normals[mIdx + 2] = this._priorFinalNormalVals[kIdx + 2] + ((this._currFinalNormalVals[kIdx + 2] - this._priorFinalNormalVals[kIdx + 2]) * ratioComplete);
+                }
+            
+                if (this._doingRotation){
+                    this._mesh.rotation = BABYLON.Vector3.Lerp(this._rotationStartVec, this._rotationEndVec, ratioComplete);
+                }
             }
             
             if (this._doingMovePOV === true){
@@ -219,7 +250,7 @@ module MORPH {
                 if (this._activeLockedCamera !== null) this._activeLockedCamera._getViewMatrix();
             }
             this._endOfLastFrameTs = Mesh.now();       
-            return true;
+            return !this._stalling;
         }
        
         public resumePlay() : void {
@@ -249,33 +280,47 @@ module MORPH {
             this._priorFinalNormalVals   = this._currFinalNormalVals  ;
             
             var referenceIdx = this.getIdxForState(deformation.getReferenceStateName() );
-            var endStateIdx  = this.getIdxForState(deformation.getEndStateName      () );
-            if (referenceIdx === -1 || endStateIdx === -1) throw "ShapeKeyGroup " + this._name + ": invalid deformation, source state name(s) not found";
+            if (referenceIdx === -1) throw "ShapeKeyGroup: invalid reference state";
+            
+            var endStateNames  = deformation.getEndStateNames();
+            var endStateRatios = deformation.getEndStateRatios();
+            this._stalling = endStateRatios === null;
+            
+            if (!this._stalling){
+                var endStateIdxs = new Array<number>();
+                var endStateIdx : number;
+                var allZeros : boolean = true;
+                for (var i = 0; i < endStateNames.length; i++){
+                   endStateIdx = this.getIdxForState(endStateNames[i].toUpperCase());
+                   if (endStateIdx === -1) throw "ShapeKeyGroup: invalid end state name: " + endStateNames[i].toUpperCase();              
+                   endStateIdxs.push(endStateIdx);
 
-            var endStateRatio = deformation.getEndStateRatio();
-            if (endStateRatio < 0 && this._mirrorAxis === -1) throw "ShapeKeyGroup " + this._name + ": invalid deformation, negative end state ratios when not mirroring";
+                    if (endStateRatios[i] < 0 && this._mirrorAxis === -1) throw "ShapeKeyGroup " + this._name + ": invalid deformation, negative end state ratios when not mirroring";
+                    allZeros = allZeros && endStateRatios[i] === 0;
+                }
            
-            // when endStateRatio is 1 or 0, just assign _currFinalVals directly from _states
-            if (endStateRatio === 1 || endStateRatio === 0){
-                 if (endStateRatio === 0) endStateIdx = referenceIdx; // really just the reference when 0
-                 this._currFinalPositionVals = this._states [endStateIdx];
-                 this._currFinalNormalVals   = this._normals[endStateIdx];
-            }else{
-                // check there was not a pre-built derived key to assign
-                var derivedIdx = this.getIdxForState(this.getDerivedName(referenceIdx, endStateIdx, endStateRatio) );
-                if (derivedIdx !== -1){
-                    this._currFinalPositionVals = this._states [derivedIdx];
-                    this._currFinalNormalVals   = this._normals[derivedIdx];
-                } else{
-                    // need to build _currFinalVals, toggling the _lastReusableUsed
-                    this._lastReusablePosUsed = (this._lastReusablePosUsed === 1) ? 0 : 1;
-                    this.buildPosEndPoint(this._reusablePositionFinals[this._lastReusablePosUsed], referenceIdx, endStateIdx, endStateRatio, this._mesh.debug);
-                    this._currFinalPositionVals = this._reusablePositionFinals[this._lastReusablePosUsed];
+                // when a single end state key, & endStateRatio is 1 or 0, just assign _currFinalVals directly from _states
+                if (allZeros || (endStateRatios.length === 1 && (endStateRatios[0] === 1 || endStateRatios[0] === 0)) ){
+                     var idx = (allZeros || endStateRatios[0] === 0)? referenceIdx : endStateIdxs[0]; // really just the reference when 0
+                     this._currFinalPositionVals = this._states [idx];
+                     this._currFinalNormalVals   = this._normals[idx];
+                }else{
+                    // check there was not a pre-built derived key to assign
+                    var derivedIdx = this.getIdxForState(this.getDerivedName(referenceIdx, endStateIdxs, endStateRatios) );
+                    if (derivedIdx !== -1){
+                        this._currFinalPositionVals = this._states [derivedIdx];
+                        this._currFinalNormalVals   = this._normals[derivedIdx];
+                    } else{
+                        // need to build _currFinalVals, toggling the _lastReusablePosUsed
+                        this._lastReusablePosUsed = (this._lastReusablePosUsed === 1) ? 0 : 1;
+                        this.buildPosEndPoint(this._reusablePositionFinals[this._lastReusablePosUsed], referenceIdx, endStateIdxs, endStateRatios, this._mesh.debug);
+                        this._currFinalPositionVals = this._reusablePositionFinals[this._lastReusablePosUsed];
                     
-                    // need to build _currFinalNormalVals, toggling the _lastReusableUsed
-                    this._lastReusableNormUsed = (this._lastReusableNormUsed === 1) ? 0 : 1;
-                    this.buildNormEndPoint(this._reusableNormalFinals[this._lastReusableNormUsed], this._currFinalPositionVals);
-                    this._currFinalNormalVals = this._reusableNormalFinals[this._lastReusableNormUsed];
+                        // need to build _currFinalNormalVals, toggling the _lastReusableNormUsed
+                        this._lastReusableNormUsed = (this._lastReusableNormUsed === 1) ? 0 : 1;
+                        this.buildNormEndPoint(this._reusableNormalFinals[this._lastReusableNormUsed], this._currFinalPositionVals);
+                        this._currFinalNormalVals = this._reusableNormalFinals[this._lastReusableNormUsed];
+                    }
                 }
             }
 
@@ -313,27 +358,33 @@ module MORPH {
          * Called by addShapeKeyInternal() & _nextDeformation() to build the positions for an end point
          * @param {Float32Array} targetArray - location of output. One of the _reusablePositionFinals for _nextDeformation().  Bound for: _states[], if addShapeKeyInternal().
          * @param {number} referenceIdx - the index into _states[] to use as a reference
-         * @param {number} endStateIdx - the index into _states[] to use as a target
-         * @param {number} endStateRatio - the ratio of the target state to achive, relative to the reference state
+         * @param {Array<number>} endStateIdxs - the indexes into _states[] to use as a target
+         * @param {Array<number>} endStateRatios - the ratios of the target state to achive, relative to the reference state
          * @param {boolean} log - write console message of action, when true (Default false)
          * 
          */
-        private buildPosEndPoint(targetArray : Float32Array, referenceIdx: number, endStateIdx : number, endStateRatio : number, log = false) : void {            
+        private buildPosEndPoint(targetArray : Float32Array, referenceIdx: number, endStateIdxs : Array<number>, endStateRatios : Array<number>, log = false) : void {            
             var refEndState = this._states[referenceIdx];
-            var newEndState = this._states[endStateIdx];
+            var nEndStates = endStateIdxs.length;
             
             // compute each of the new final values of positions
             var deltaToRefState : number;
+            var stepDelta : number;
+            var j;
             for (var i = 0; i < this._nPosElements; i++){
-                deltaToRefState = (newEndState[i] - refEndState[i]) * endStateRatio;
-                
-                // reverse sign on appropriate elements of referenceDelta when ratio neg & mirroring
-                if (endStateRatio < 0 && this._mirrorAxis !== (i + 1) % 3){
-                    deltaToRefState *= -1;
-                }            
+                deltaToRefState = 0;
+                for(j = 0; j < nEndStates; j++){
+                    stepDelta = (this._states[endStateIdxs[j]][i] - refEndState[i]) * endStateRatios[j];
+                    
+                    // reverse sign on appropriate elements of referenceDelta when ratio neg & mirroring
+                    if (endStateRatios[j] < 0 && this._mirrorAxis !== (i + 1) % 3){
+                        stepDelta *= -1;
+                    }
+                    deltaToRefState += stepDelta;            
+                }
                 targetArray[i] = refEndState[i] + deltaToRefState;            
             }
-            if (log) console.log(this._name + " end Point built for referenceIdx: " + referenceIdx + ",  endStateIdx: " + endStateIdx + ", endStateRatio: " + endStateRatio);
+            if (log) console.log(this._name + " end Point built for referenceIdx: " + referenceIdx + ",  endStateIdxs: " + endStateIdxs + ", endStateRatios: " + endStateRatios);
         }
         
         /**
@@ -343,7 +394,7 @@ module MORPH {
          */
         private buildNormEndPoint(targetArray : Float32Array, endStatePos : Float32Array) : void {
             // build a full, mesh sized, set of positions & populate with the left-over initial data 
-            var futurePos = new Float32Array(this._mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind));
+            var futurePos = new Float32Array(this._mesh.originalPositions);
             
             // populate the changes that this state has
             for (var i = 0; i < this._nPosElements; i++){
