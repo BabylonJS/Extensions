@@ -1,7 +1,7 @@
 bl_info = {
     'name': 'Tower of Babel',
     'author': 'David Catuhe, Jeff Palmer',
-    'version': (1, 3, 0),
+    'version': (1, 3, 1),
     'blender': (2, 69, 0),
     'location': 'File > Export > Tower of Babel [.js + .ts + .html(s)]',
     'description': 'Translate to inline JavaScript & TypeScript modules',
@@ -1736,7 +1736,7 @@ class Texture:
                 self.wrapV = WRAP_ADDRESSMODE
         else:
             self.wrapU = CLAMP_ADDRESSMODE     
-            self.wrapU = CLAMP_ADDRESSMODE
+            self.wrapV = CLAMP_ADDRESSMODE
             
         self.coordinatesIndex = 0
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -        
