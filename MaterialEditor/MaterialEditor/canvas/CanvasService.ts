@@ -183,8 +183,8 @@
                 this._scene.getEngine().hideLoadingUI();
         }
 
-        public appendMaterial(materialId: string, successCallback, errorCallback) {
-            BABYLON.SceneLoader.Append(MaterialController.ServerUrl+"/materials/", materialId+".babylon", this._scene, successCallback, () => { }, errorCallback);
+        public appendMaterial(materialId: string, successCallback, progressCallback, errorCallback) {
+            BABYLON.SceneLoader.Append(MaterialController.ServerUrl+"/materials/", materialId+".babylon", this._scene, successCallback, progressCallback, errorCallback);
         }
 
         public getMaterial(materialId: string) {

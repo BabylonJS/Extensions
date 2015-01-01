@@ -74,6 +74,8 @@
                     </script>
 
                     <div class="col-md-12">
+                        <alert ng-repeat="alert in materialController.alerts" type="{{alert.type}}" close="materialController.closeAlert($index)">{{alert.msg}}</alert>
+                        <div class="col-sm-12" ng-show="materialController.progress.enabled"><progressbar class="progress-striped active" value="materialController.progress.value"><i>{{materialController.progress.text}}</i></progressbar></div>
                         <form class="form-inline alphaDiv">
                             <div class="form-group">
                                 <button class="btn btn-default" ng-click="materialController.exportMaterial()">Export to JavaScript</button>

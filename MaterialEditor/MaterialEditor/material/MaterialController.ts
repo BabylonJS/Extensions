@@ -31,7 +31,8 @@
         public isMultiMaterial: boolean;
 
         public materialId: string;
-        public errorMessage: string;
+        public alerts = [];
+        public progress;
 
         private _object: BABYLON.AbstractMesh;
 
@@ -48,6 +49,11 @@
             this.isMultiMaterial = false;
             this.multiMaterialPosition = 0;
             this.numberOfMaterials = 0;
+            this.progress = {
+                enabled: false,
+                value: 0,
+                text:""
+            }
             $scope.updateTexture = (type) => {
                 $scope.$apply(() => {
                     $scope.materialDefinition.materialSections[type].texture.canvasUpdated();
@@ -99,75 +105,128 @@
             });
         }
 
+        public updateProgress(enabled: boolean, text?: string, value?: number) {
+            this.progress.enabled = enabled;
+            this.progress.text = text;
+            this.progress.value = value;
+        }
+
         public saveMaterial() {
             //todo get ID from server
+            this.updateProgress(true, "Saving...", 20);
             this.$http.get(MaterialController.ServerUrl + "/getNextId").success((idObject) => {
                 var id = idObject['id'];
                 var material = this.materialService.exportAsBabylonScene(id, this.$scope.materialDefinition);
                 //upload material object
+                this.updateProgress(true, "Received ID...", 40);
                 this.$http.post(MaterialController.ServerUrl + "/materials", material).success((worked) => {
                     if (!worked['success']) {
-                        this.errorMessage = "error uploading the material";
+                        this.alerts.push({ type: 'danger', msg: 'Error uploading to server.' });
+                        this.updateProgress(false);
+                        return;
                     }
-                    //upload binaries
+                    //how many textures should be uploaded?
+                    var textureSections = [];
                     this.$scope.materialDefinition.sectionNames.forEach((sectionName) => {
                         if (this.$scope.materialDefinition.materialSections[sectionName].hasTexture && this.$scope.materialDefinition.materialSections[sectionName].texture.enabled()) {
                             var textureDefinition = this.$scope.materialDefinition.materialSections[sectionName].texture;
-                            textureDefinition.getCanvasImageUrls((urls) => {
-                                if (urls.length == 1) {
-                                    //textures will be uploaded async. The user should be notified about it!
-                                    var obj = {}
-                                    obj[id + '_' + textureDefinition.name + textureDefinition.getExtension()] = urls[0];
-                                    this.$http.post(MaterialController.ServerUrl + "/textures", obj).success((worked) => {
-                                        if (!worked['success']) {
-                                            this.errorMessage = "error uploading the textures";
-                                        }
-                                    });
-                                }
-                            });
+                            if (textureDefinition.babylonTextureType == BabylonTextureType.NORMAL) {
+                                textureSections.push(sectionName);
+                            }
                         }
                     });
-                    //update the UI
-                    this.materialId = id;
+                    if (textureSections.length == 0) {
+                        this.updateProgress(false);
+                        this.alerts.push({ type: 'success', msg: "Material stored. " });
+                        this.$timeout(() => {
+                            this.alerts.pop();
+                        }, 5000);
+                        //update the UI
+                        this.materialId = id;
+                    } else {
+                        var texturesUploaded = 0;
+                        this.updateProgress(true, "Uploading textures...", 50);
+                        textureSections.forEach((sectionName) => {
+                            if (this.$scope.materialDefinition.materialSections[sectionName].hasTexture && this.$scope.materialDefinition.materialSections[sectionName].texture.enabled()) {
+                                var textureDefinition = this.$scope.materialDefinition.materialSections[sectionName].texture;
+                                if (textureDefinition.babylonTextureType == BabylonTextureType.NORMAL) {
+                                    textureDefinition.getCanvasImageUrls((urls) => {
+                                        //if (urls.length == 1) {
+                                            //textures will be uploaded async. The user should be notified about it!
+                                            var obj = {};
+                                            obj[id + '_' + textureDefinition.name + textureDefinition.getExtension()] = urls[0];
+                                            this.$http.post(MaterialController.ServerUrl + "/textures", obj).success((worked) => {
+                                                if (!worked['success']) {
+                                                    this.alerts.push({ type: 'danger', msg: "error uploading the texture " + textureDefinition.name });
+                                                    this.updateProgress(false);
+                                                }
+
+                                                texturesUploaded++;
+                                                this.updateProgress(true, "Uploading textures...", 50 + (texturesUploaded * 10));
+                                                if (texturesUploaded == textureSections.length) {
+                                                    this.updateProgress(false);
+                                                    this.alerts.push({ type: 'success', msg: "Material stored." });
+                                                    this.$timeout(() => {
+                                                        this.alerts.pop();
+                                                    }, 5000);
+                                                    this.materialId = id;
+                                                }
+                                            });
+                                        //}
+                                    });
+                                }
+                            }
+                        });
+                    }
                 });
-                
-                
             });
-            
         }
 
         public loadMaterial() {
             if (!this.materialId) {
-                this.errorMessage = "please enter material id!";
+                this.alerts.push({ type: 'warning', msg: "Please enter an ID" });
                 return;
             }
-            this.errorMessage = null;
-            this.canvasService.appendMaterial(this.materialId, () => {
-                var material: BABYLON.Material = this.canvasService.getMaterial(this.materialId);
-                //250 ms delay of material loading and scope apply so that the image can be loaded.
-                //This can be avoided wit using callbacks all the way from the texture object (which will require quite a lot of changes).
-                //I assume 250ms is enough to load a local image to the canvas.
-                this.$timeout(() => {
-                    //this.$scope.$apply(() => {
-                    if (this.isMultiMaterial) {
-                        (<BABYLON.MultiMaterial> this._object.material).subMaterials[this.multiMaterialPosition] = material;
-                        this.initMaterial(true, () => { this.$scope.$apply() }, this.multiMaterialPosition);
-                    } else {
-                        this._object.material = material;
-                        this.initMaterial(true, () => { this.$scope.$apply() });
+            this.updateProgress(true, "Loading material...", 30);
+            //babylon doesn't check for 404 for some reason, doing it on my own. File will be loaded twice! TODO fix it in BABYLON!
+            this.$http.get(MaterialController.ServerUrl + "/materials/" + this.materialId + ".babylon").error(() => {
+                this.alerts.push({ type: 'danger', msg: "Material could not be loaded. Check the ID." });
+                this.updateProgress(false);
+            }).success(() => {
+                this.canvasService.appendMaterial(this.materialId, () => {
+                    var material: BABYLON.Material = this.canvasService.getMaterial(this.materialId);
+                    var success = () => {
+                        if (this.alerts.length < 1)
+                            this.alerts.push({ type: 'success', msg: "Material loaded." });
+                        this.$timeout(() => {
+                            this.alerts.pop();
+                        }, 5000);
+                        this.updateProgress(false);
+                        this.$scope.$apply();
                     }
-                    //});   
-                    //this.$scope.$apply(() => {
-                    //    this.$scope.materialDefinition.sectionNames.forEach((section) => {
-                    //        if (this.$scope.materialDefinition.materialSections[section].texture)
-                    //            console.log(this.$scope.materialDefinition.materialSections[section].texture.enabled());
-                    //    });
-                    //});   
-                });
-                          
-            }, () => {
-                this.errorMessage = "error loading material, make sure the ID is correct";
+                this.$timeout(() => {
+                        if (this.isMultiMaterial) {
+                            (<BABYLON.MultiMaterial> this._object.material).subMaterials[this.multiMaterialPosition] = material;
+                            this.initMaterial(true, success, this.multiMaterialPosition);
+                        } else {
+                            this._object.material = material;
+                            this.initMaterial(true, success);
+                        }
+                    });
+
+                }, (progress) => {
+                        this.updateProgress(true, "Loading material...", 60);
+                    }, (error) => {
+                        console.log(error);
+                        this.alerts.push({ type: 'danger', msg: "Material could not be loaded. Check the ID." });
+                        this.updateProgress(false);
+                    });
             });
+            
+        }
+
+        public closeAlert(index) {
+            this.alerts.splice(index, 1);
         }
 
         //for ng-repeat

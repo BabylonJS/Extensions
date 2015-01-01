@@ -590,9 +590,8 @@ var RW;
                     this._scene.getEngine().hideLoadingUI();
             };
 
-            CanvasService.prototype.appendMaterial = function (materialId, successCallback, errorCallback) {
-                BABYLON.SceneLoader.Append(TextureEditor.MaterialController.ServerUrl + "/materials/", materialId + ".babylon", this._scene, successCallback, function () {
-                }, errorCallback);
+            CanvasService.prototype.appendMaterial = function (materialId, successCallback, progressCallback, errorCallback) {
+                BABYLON.SceneLoader.Append(TextureEditor.MaterialController.ServerUrl + "/materials/", materialId + ".babylon", this._scene, successCallback, progressCallback, errorCallback);
             };
 
             CanvasService.prototype.getMaterial = function (materialId) {
@@ -766,6 +765,7 @@ var RW;
                 this.$timeout = $timeout;
                 this.canvasService = canvasService;
                 this.materialService = materialService;
+                this.alerts = [];
                 this.afterObjectChanged = function (event, object) {
                     //if object has no submeshes, do nothing. It is a null parent object. Who needs it?...
                     if (object.subMeshes == null)
@@ -798,6 +798,11 @@ var RW;
                 this.isMultiMaterial = false;
                 this.multiMaterialPosition = 0;
                 this.numberOfMaterials = 0;
+                this.progress = {
+                    enabled: false,
+                    value: 0,
+                    text: ""
+                };
                 $scope.updateTexture = function (type) {
                     $scope.$apply(function () {
                         $scope.materialDefinition.materialSections[type].texture.canvasUpdated();
@@ -829,40 +834,83 @@ var RW;
                 });
             };
 
+            MaterialController.prototype.updateProgress = function (enabled, text, value) {
+                this.progress.enabled = enabled;
+                this.progress.text = text;
+                this.progress.value = value;
+            };
+
             MaterialController.prototype.saveMaterial = function () {
                 var _this = this;
                 //todo get ID from server
+                this.updateProgress(true, "Saving...", 20);
                 this.$http.get(MaterialController.ServerUrl + "/getNextId").success(function (idObject) {
                     var id = idObject['id'];
                     var material = _this.materialService.exportAsBabylonScene(id, _this.$scope.materialDefinition);
 
                     //upload material object
+                    _this.updateProgress(true, "Received ID...", 40);
                     _this.$http.post(MaterialController.ServerUrl + "/materials", material).success(function (worked) {
                         if (!worked['success']) {
-                            _this.errorMessage = "error uploading the material";
+                            _this.alerts.push({ type: 'danger', msg: 'Error uploading to server.' });
+                            _this.updateProgress(false);
+                            return;
                         }
 
-                        //upload binaries
+                        //how many textures should be uploaded?
+                        var textureSections = [];
                         _this.$scope.materialDefinition.sectionNames.forEach(function (sectionName) {
                             if (_this.$scope.materialDefinition.materialSections[sectionName].hasTexture && _this.$scope.materialDefinition.materialSections[sectionName].texture.enabled()) {
                                 var textureDefinition = _this.$scope.materialDefinition.materialSections[sectionName].texture;
-                                textureDefinition.getCanvasImageUrls(function (urls) {
-                                    if (urls.length == 1) {
-                                        //textures will be uploaded async. The user should be notified about it!
-                                        var obj = {};
-                                        obj[id + '_' + textureDefinition.name + textureDefinition.getExtension()] = urls[0];
-                                        _this.$http.post(MaterialController.ServerUrl + "/textures", obj).success(function (worked) {
-                                            if (!worked['success']) {
-                                                _this.errorMessage = "error uploading the textures";
-                                            }
-                                        });
-                                    }
-                                });
+                                if (textureDefinition.babylonTextureType == 1 /* NORMAL */) {
+                                    textureSections.push(sectionName);
+                                }
                             }
                         });
+                        if (textureSections.length == 0) {
+                            _this.updateProgress(false);
+                            _this.alerts.push({ type: 'success', msg: "Material stored. " });
+                            _this.$timeout(function () {
+                                _this.alerts.pop();
+                            }, 5000);
 
-                        //update the UI
-                        _this.materialId = id;
+                            //update the UI
+                            _this.materialId = id;
+                        } else {
+                            var texturesUploaded = 0;
+                            _this.updateProgress(true, "Uploading textures...", 50);
+                            textureSections.forEach(function (sectionName) {
+                                if (_this.$scope.materialDefinition.materialSections[sectionName].hasTexture && _this.$scope.materialDefinition.materialSections[sectionName].texture.enabled()) {
+                                    var textureDefinition = _this.$scope.materialDefinition.materialSections[sectionName].texture;
+                                    if (textureDefinition.babylonTextureType == 1 /* NORMAL */) {
+                                        textureDefinition.getCanvasImageUrls(function (urls) {
+                                            //if (urls.length == 1) {
+                                            //textures will be uploaded async. The user should be notified about it!
+                                            var obj = {};
+                                            obj[id + '_' + textureDefinition.name + textureDefinition.getExtension()] = urls[0];
+                                            _this.$http.post(MaterialController.ServerUrl + "/textures", obj).success(function (worked) {
+                                                if (!worked['success']) {
+                                                    _this.alerts.push({ type: 'danger', msg: "error uploading the texture " + textureDefinition.name });
+                                                    _this.updateProgress(false);
+                                                }
+
+                                                texturesUploaded++;
+                                                _this.updateProgress(true, "Uploading textures...", 50 + (texturesUploaded * 10));
+                                                if (texturesUploaded == textureSections.length) {
+                                                    _this.updateProgress(false);
+                                                    _this.alerts.push({ type: 'success', msg: "Material stored." });
+                                                    _this.$timeout(function () {
+                                                        _this.alerts.pop();
+                                                    }, 5000);
+                                                    _this.materialId = id;
+                                                }
+                                            });
+                                            //}
+                                        });
+                                    }
+                                }
+                            });
+                        }
                     });
                 });
             };
@@ -870,40 +918,48 @@ var RW;
             MaterialController.prototype.loadMaterial = function () {
                 var _this = this;
                 if (!this.materialId) {
-                    this.errorMessage = "please enter material id!";
+                    this.alerts.push({ type: 'warning', msg: "Please enter an ID" });
                     return;
                 }
-                this.errorMessage = null;
-                this.canvasService.appendMaterial(this.materialId, function () {
-                    var material = _this.canvasService.getMaterial(_this.materialId);
+                this.updateProgress(true, "Loading material...", 30);
 
-                    //250 ms delay of material loading and scope apply so that the image can be loaded.
-                    //This can be avoided wit using callbacks all the way from the texture object (which will require quite a lot of changes).
-                    //I assume 250ms is enough to load a local image to the canvas.
-                    _this.$timeout(function () {
-                        //this.$scope.$apply(() => {
-                        if (_this.isMultiMaterial) {
-                            _this._object.material.subMaterials[_this.multiMaterialPosition] = material;
-                            _this.initMaterial(true, function () {
-                                _this.$scope.$apply();
-                            }, _this.multiMaterialPosition);
-                        } else {
-                            _this._object.material = material;
-                            _this.initMaterial(true, function () {
-                                _this.$scope.$apply();
-                            });
-                        }
-                        //});
-                        //this.$scope.$apply(() => {
-                        //    this.$scope.materialDefinition.sectionNames.forEach((section) => {
-                        //        if (this.$scope.materialDefinition.materialSections[section].texture)
-                        //            console.log(this.$scope.materialDefinition.materialSections[section].texture.enabled());
-                        //    });
-                        //});
+                //babylon doesn't check for 404 for some reason, doing it on my own. File will be loaded twice! TODO fix it in BABYLON!
+                this.$http.get(MaterialController.ServerUrl + "/materials/" + this.materialId + ".babylon").error(function () {
+                    _this.alerts.push({ type: 'danger', msg: "Material could not be loaded. Check the ID." });
+                    _this.updateProgress(false);
+                }).success(function () {
+                    _this.canvasService.appendMaterial(_this.materialId, function () {
+                        var material = _this.canvasService.getMaterial(_this.materialId);
+                        var success = function () {
+                            if (_this.alerts.length < 1)
+                                _this.alerts.push({ type: 'success', msg: "Material loaded." });
+                            _this.$timeout(function () {
+                                _this.alerts.pop();
+                            }, 5000);
+                            _this.updateProgress(false);
+                            _this.$scope.$apply();
+                        };
+                        _this.$timeout(function () {
+                            if (_this.isMultiMaterial) {
+                                _this._object.material.subMaterials[_this.multiMaterialPosition] = material;
+                                _this.initMaterial(true, success, _this.multiMaterialPosition);
+                            } else {
+                                _this._object.material = material;
+                                _this.initMaterial(true, success);
+                            }
+                        });
+                    }, function (progress) {
+                        _this.updateProgress(true, "Loading material...", 60);
+                    }, function (error) {
+                        console.log(error);
+                        _this.alerts.push({ type: 'danger', msg: "Material could not be loaded. Check the ID." });
+                        _this.updateProgress(false);
                     });
-                }, function () {
-                    _this.errorMessage = "error loading material, make sure the ID is correct";
                 });
+            };
+
+            MaterialController.prototype.closeAlert = function (index) {
+                this.alerts.splice(index, 1);
             };
             MaterialController.$inject = [
                 '$scope',
