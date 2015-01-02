@@ -630,13 +630,16 @@ var RW;
 (function (RW) {
     (function (TextureEditor) {
         var ObjectSubMeshesController = (function () {
-            function ObjectSubMeshesController($scope, $modalInstance, object) {
+            function ObjectSubMeshesController($scope, $timeout, $modalInstance, object) {
                 var _this = this;
                 this.$scope = $scope;
+                this.$timeout = $timeout;
                 this.$modalInstance = $modalInstance;
                 this.object = object;
                 $scope.object = object;
                 $scope.totalNumberOfIndices = object.getTotalIndices();
+
+                $scope.division = 2;
 
                 $scope.close = function () {
                     $scope.updateObject(true);
@@ -690,10 +693,20 @@ var RW;
                     object.subMeshes.splice(index, 1);
                     $scope.updateObject(false);
                 };
+
+                $scope.divideObject = function () {
+                    if ($scope.division * 3 > $scope.totalNumberOfIndices) {
+                        $scope.division = ~~($scope.totalNumberOfIndices / 3);
+                    }
+                    object.subdivide($scope.division);
+                    $scope.updateObject(false);
+                };
+
                 $scope.updateObject(false);
             }
             ObjectSubMeshesController.$inject = [
                 '$scope',
+                '$timeout',
                 '$modalInstance',
                 'object'
             ];

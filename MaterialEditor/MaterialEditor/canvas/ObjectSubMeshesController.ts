@@ -5,23 +5,28 @@
         totalNumberOfIndices: number;
         indicesLeft: number;
         close: () => void;
-        updateObject: (closeObject:boolean) => void;
+        updateObject: (closeObject: boolean) => void;
         addSubMesh: () => void;
-        removeSubMesh: (index:number) => void;
+        removeSubMesh: (index: number) => void;
+        division: number;
+        divideObject: () => void;
     }
 
     export class ObjectSubMeshesController {
 
         public static $inject = [
             '$scope',
+            '$timeout',
             '$modalInstance',
             'object'
         ];
 
-        constructor(private $scope: ObjectSubMeshesScope, private $modalInstance: any, private object: BABYLON.Mesh) {
+        constructor(private $scope: ObjectSubMeshesScope, private $timeout:ng.ITimeoutService, private $modalInstance: any, private object: BABYLON.Mesh) {
 
             $scope.object = object;
             $scope.totalNumberOfIndices = object.getTotalIndices();
+
+            $scope.division = 2;
 
             $scope.close = () => {
                 $scope.updateObject(true);
@@ -71,7 +76,17 @@
                 object.subMeshes.splice(index, 1);
                 $scope.updateObject(false);
             }
+
+            $scope.divideObject = () => {
+                if ($scope.division * 3 > $scope.totalNumberOfIndices) {
+                    $scope.division = ~~($scope.totalNumberOfIndices / 3);
+                }
+                object.subdivide($scope.division);
+                $scope.updateObject(false);
+            }
+
             $scope.updateObject(false);
+
         }
 
     }

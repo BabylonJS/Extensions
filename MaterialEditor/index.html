@@ -1,5 +1,4 @@
 ﻿<!DOCTYPE html>
-
 <html lang="en" data-framework="typescript">
 <head>
     <meta charset="utf-8" />
@@ -9,6 +8,9 @@
     <link rel="stylesheet" href="vendor/ui-color-picker.css" type="text/css" />
     <link rel="stylesheet" href="vendor/slider.css" type="text/css" />
     <link rel="stylesheet" href="css/main.css" type="text/css" />
+    <meta name="description" content="A Material editor for babylonjs meshes.">
+    <meta name="keywords" content="WebGL, BabylonJS, Material editor, 3D, diffuse, bump, reflection, textures, specular">
+    <meta name="author" content="Raanan Weber">
     <script src="vendor/babylonjs-2.0.0-alpha-debug.js"></script>
     <script src="https://code.jquery.com/jquery-2.1.3.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.8/angular.min.js"></script>
@@ -17,7 +19,7 @@
     <script src="vendor/ui-bootstrap.js"></script>
     <script src="vendor/ui-color-picker.js"></script>
     <script src="vendor/slider.js"></script>
-    <script src="application.js"></script>
+    <script src="application.min.js"></script>
 </head>
 <body>
     <nav class="navbar navbar-default navbar-fixed-top">
@@ -84,7 +86,7 @@
                             <div class="form-group">
                                 <input type="text" class="form-control" placeholder="Material ID" ng-model="materialController.materialId" style="width:140px;">
                             </div>
-                            <div class="checkbox">
+                            <div class="form-group">
                                 <button class="btn btn-default" ng-click="materialController.loadMaterial()">Load Material</button>
                             </div>
                         </form>
@@ -95,7 +97,7 @@
                         </div>
                         <div class="col-md-6 alphaDiv">
                             <div class="btn-group" ng-repeat="i in materialController.getMaterialIndices() track by $index">
-                                <label class="btn btn-primary" ng-model="materialController.multiMaterialPosition" ng-click="materialController.initMaterial(false, $index)" btn-radio="{{$index}}">{{$index}}</label>
+                                <label class="btn btn-primary" ng-model="materialController.multiMaterialPosition" ng-click="materialController.initMaterial(false, null, $index)" btn-radio="{{$index}}">{{$index}}</label>
                             </div>
                         </div>
                     </div>
@@ -331,6 +333,7 @@
                     </div>
                     <div class="modal-body">
                         <p><span>Total Indices : {{totalNumberOfIndices}}</span> <span>Indices left : {{indicesLeft}}</span></p>
+                        
                         <table class="table">
                             <thead>
                                 <tr>
@@ -346,12 +349,27 @@
                                     <td>{{$index}}</td>
                                     <td>{{subMesh.materialIndex}}<!--<div class="col-xs-5"><input type="number" class="form-control" placeholder="MatIdx" ng-model="subMesh.materialIndex" ng-change="updateObject()"></div>--></td>
                                     <td>{{subMesh.indexStart}}<!--<div class="col-xs-5"><input type="number" step="3" class="form-control" placeholder="IndexStart" ng-model="subMesh.indexStart" ng-change="updateObject()"></div>--></td>
-                                    <td><div class="col-xs-5"><input type="number" step="3" class="form-control" placeholder="IndexCount" ng-model="subMesh.indexCount" ng-change="updateObject()"></div></td>
+                                    <td><div class="col-xs-5"><input type="number" step="3" class="form-control" placeholder="IndexCount" ng-model="subMesh.indexCount" ng-blur="updateObject()"></div></td>
                                     <td><button class="btn btn-primary" ng-click="removeSubMesh($index)">Remove</button></td>
                                 </tr>
                             </tbody>
                         </table>
                         <button class="btn btn-primary" ng-click="addSubMesh()">Add new SubMesh</button>
+
+                        <div class="form-inline alphaDiv">
+                            <div class="form-group">
+                                <p>Divide the object to</p>
+                            </div>
+                            <div class="form-group">
+                                <input type="text" class="form-control" placeholder="" ng-model="division" style="width:140px;">
+                            </div>
+                            <div class="form-group">
+                                <p>equal submeshes.</p>
+                            </div>
+                            <div class="form-group">
+                                <button class="btn btn-primary" ng-click="divideObject()">Go</button></p>
+                            </div>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button class="btn btn-primary" ng-click="close()">Done</button>
@@ -425,5 +443,17 @@
             <p class="text-muted">Created by Raanan Weber (<a href="https://github.com/raananw/">https://github.com/raananw/</a>), 2014.</p>
         </div>
     </footer>
+    <script>
+    (function (i, s, o, g, r, a, m) {
+        i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+            (i[r].q = i[r].q || []).push(arguments)
+        }, i[r].l = 1 * new Date(); a = s.createElement(o),
+        m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+    })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+
+    ga('create', 'UA-58143781-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
 </body>
 </html>
