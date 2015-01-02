@@ -19,7 +19,7 @@
     <script src="vendor/ui-bootstrap.js"></script>
     <script src="vendor/ui-color-picker.js"></script>
     <script src="vendor/slider.js"></script>
-    <script src="application.min.js"></script>
+    <script src="application.js"></script>
 </head>
 <body>
     <nav class="navbar navbar-default navbar-fixed-top">
@@ -213,7 +213,7 @@
                                         </div>
                                         <div class="col-md-6">
                                             <button type="button" class="btn pull-right" disable-enable-button ng-model="materialDefinition.materialSections[section].texture.enabled" ng-model-options="{ getterSetter: true }" btn-checkbox btn-checkbox-true="true" btn-checkbox-false="false"></button>
-                                            <button type="button" class="btn" ng-show="section=='reflection'" disable-enable-button extra-text="Mirror" ng-model="materialDefinition.materialSections[section].texture.mirrorEnabled" ng-model-options="{ getterSetter: true }" btn-checkbox btn-checkbox-true="true" btn-checkbox-false="false"></button>
+                                            <button type="button" class="btn" ng-show="section=='reflection'" disable-enable-button extra-text="Mirror" ng-model="materialDefinition.materialSections[section].texture.mirrorEnabled" ng-model-options="{ getterSetter: true }" btn-checkbox btn-checkbox-true="true" btn-checkbox-false="false" ng-mouseup="materialController.setPlaneForMirror()"></button>
                                         </div>
                                         <div class="col-md-12" ng-show="materialDefinition.materialSections[section].texture._isEnabled">
                                             <div class="row">

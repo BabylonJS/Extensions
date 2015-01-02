@@ -833,6 +833,27 @@ var RW;
                 }
             };
 
+            MaterialController.prototype.setPlaneForMirror = function () {
+                console.log("setPlane");
+                var pointsArray = [];
+
+                //TODO maybe find a different way of computing the plane? trying to avoid getting the object in the constructor.
+                var meshWorldMatrix = this._object.computeWorldMatrix();
+                var verticesPosition = this._object.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+
+                //handle submeshes
+                var offset = 0;
+                if (this.isMultiMaterial) {
+                    offset = this._object.subMeshes[this.multiMaterialPosition].indexStart;
+                }
+                for (var i = 0; i < 3; i++) {
+                    var v = this._object.getIndices()[offset + i];
+                    pointsArray.push(BABYLON.Vector3.TransformCoordinates(BABYLON.Vector3.FromArray(verticesPosition, v * 3), meshWorldMatrix));
+                }
+                var plane = BABYLON.Plane.FromPoints(pointsArray[0], pointsArray[1], pointsArray[2]);
+                this.$scope.materialDefinition.materialSections["reflection"].texture.setMirrorPlane(plane);
+            };
+
             MaterialController.prototype.exportMaterial = function () {
                 var _this = this;
                 var modalInstance = this.$modal.open({
@@ -1066,20 +1087,20 @@ var RW;
 (function (RW) {
     (function (TextureEditor) {
         var MaterialDefinition = (function () {
-            function MaterialDefinition(object, material, onSuccess) {
+            function MaterialDefinition(material, onSuccess) {
                 this.sectionNames = ["diffuse", "emissive", "ambient", "opacity", "specular", "reflection", "bump"];
-                this.initFromObject(object, material, onSuccess);
+                this.initFromMaterial(material, onSuccess);
             }
-            MaterialDefinition.prototype.initFromObject = function (object, material, onSuccess) {
+            MaterialDefinition.prototype.initFromMaterial = function (material, onSuccess) {
                 this.material = material;
                 this.materialSections = {};
-                this.materialSections["diffuse"] = new TextureEditor.MaterialDefinitionSection("diffuse", object, true, true, true, material, onSuccess);
-                this.materialSections["emissive"] = new TextureEditor.MaterialDefinitionSection("emissive", object, true, true, true, material, onSuccess);
-                this.materialSections["ambient"] = new TextureEditor.MaterialDefinitionSection("ambient", object, true, true, false, material, onSuccess);
-                this.materialSections["opacity"] = new TextureEditor.MaterialDefinitionSection("opacity", object, false, true, true, material, onSuccess);
-                this.materialSections["specular"] = new TextureEditor.MaterialDefinitionSection("specular", object, true, true, false, material, onSuccess);
-                this.materialSections["reflection"] = new TextureEditor.MaterialDefinitionSection("reflection", object, false, true, true, material, onSuccess);
-                this.materialSections["bump"] = new TextureEditor.MaterialDefinitionSection("bump", object, false, true, false, material, onSuccess);
+                this.materialSections["diffuse"] = new TextureEditor.MaterialDefinitionSection("diffuse", true, true, true, material, onSuccess);
+                this.materialSections["emissive"] = new TextureEditor.MaterialDefinitionSection("emissive", true, true, true, material, onSuccess);
+                this.materialSections["ambient"] = new TextureEditor.MaterialDefinitionSection("ambient", true, true, false, material, onSuccess);
+                this.materialSections["opacity"] = new TextureEditor.MaterialDefinitionSection("opacity", false, true, true, material, onSuccess);
+                this.materialSections["specular"] = new TextureEditor.MaterialDefinitionSection("specular", true, true, false, material, onSuccess);
+                this.materialSections["reflection"] = new TextureEditor.MaterialDefinitionSection("reflection", false, true, true, material, onSuccess);
+                this.materialSections["bump"] = new TextureEditor.MaterialDefinitionSection("bump", false, true, false, material, onSuccess);
             };
 
             MaterialDefinition.prototype.getMaterialSectionsArray = function () {
@@ -1158,7 +1179,7 @@ var RW;
                     material = object.material;
                 }
 
-                return new MaterialDefinition(object, material, onSuccess);
+                return new MaterialDefinition(material, onSuccess);
             };
 
             MaterialService.prototype.exportAsBabylonScene = function (materialId, materialDefinition) {
@@ -1280,9 +1301,8 @@ var RW;
 (function (RW) {
     (function (TextureEditor) {
         var MaterialDefinitionSection = (function () {
-            function MaterialDefinitionSection(name, _object, hasColor, hasTexture, hasFresnel, material, onSuccess) {
+            function MaterialDefinitionSection(name, hasColor, hasTexture, hasFresnel, material, onSuccess) {
                 this.name = name;
-                this._object = _object;
                 this.hasColor = hasColor;
                 this.hasTexture = hasTexture;
                 this.hasFresnel = hasFresnel;
@@ -1297,7 +1317,7 @@ var RW;
                     this.color = new TextureEditor.HexToBabylon(name, material);
                 }
                 if (hasTexture) {
-                    this.texture = new TextureEditor.TextureDefinition(name, material, _object, onSuccess);
+                    this.texture = new TextureEditor.TextureDefinition(name, material, onSuccess);
                 }
                 if (hasFresnel) {
                     this.fresnel = new TextureEditor.FresnelDefinition(name, material);
@@ -1457,11 +1477,10 @@ var RW;
 (function (RW) {
     (function (TextureEditor) {
         var TextureDefinition = (function () {
-            function TextureDefinition(name, _material, _connectedMesh, onSuccess) {
+            function TextureDefinition(name, _material, onSuccess) {
                 var _this = this;
                 this.name = name;
                 this._material = _material;
-                this._connectedMesh = _connectedMesh;
                 //for ng-repeat
                 this.getCanvasNumber = function () {
                     return new Array(_this.numberOfImages);
@@ -1469,6 +1488,7 @@ var RW;
                 this.propertyInMaterial = this.name.toLowerCase() + "Texture";
                 this.canvasId = this.name + "Canvas";
                 this.numberOfImages = 1;
+                this._mirrorPlane = new BABYLON.Plane(0, 0, 0, 0);
                 if (this._material[this.propertyInMaterial]) {
                     if (this._material[this.propertyInMaterial] instanceof BABYLON.MirrorTexture) {
                         this.babylonTextureType = 4 /* MIRROR */;
@@ -1553,6 +1573,13 @@ var RW;
                 }
             };
 
+            TextureDefinition.prototype.setMirrorPlane = function (plane) {
+                //if (this.babylonTextureType == BabylonTextureType.MIRROR) {
+                this._mirrorPlane.normal = plane.normal;
+                this._mirrorPlane.d = plane.d;
+                //}
+            };
+
             TextureDefinition.prototype.mirrorEnabled = function (enabled) {
                 if (angular.isDefined(enabled)) {
                     if (enabled) {
@@ -1564,17 +1591,7 @@ var RW;
                         //create the mirror
                         this.textureVariable = new BABYLON.MirrorTexture("mirrorTex", 512, this._material.getScene());
                         this.textureVariable['renderList'] = this._material.getScene().meshes;
-
-                        //calculate plane
-                        var pointsArray = [];
-
-                        //TODO maybe find a different way of computing the plane? trying to avoid getting the object in the constructor.
-                        var meshWorldMatrix = this._connectedMesh.computeWorldMatrix();
-                        var verticesPos = this._connectedMesh.getVerticesData(BABYLON.VertexBuffer.PositionKind);
-                        for (var i = 0; i < 3; i++) {
-                            pointsArray.push(BABYLON.Vector3.TransformCoordinates(BABYLON.Vector3.FromArray(verticesPos, i * 3), meshWorldMatrix));
-                        }
-                        this.textureVariable['mirrorPlane'] = BABYLON.Plane.FromPoints(pointsArray[0], pointsArray[1], pointsArray[2]);
+                        this.textureVariable['mirrorPlane'] = this._mirrorPlane;
                         this.init = true;
 
                         //if (!this._isEnabled) {

@@ -6,21 +6,21 @@
         public sectionNames: Array<string>;
 
         
-        constructor(object: BABYLON.AbstractMesh, material: BABYLON.Material, onSuccess?: () => void) {
+        constructor(material: BABYLON.Material, onSuccess?: () => void) {
             this.sectionNames = ["diffuse", "emissive", "ambient", "opacity", "specular", "reflection", "bump"]
-            this.initFromObject(object, material, onSuccess);
+            this.initFromMaterial(material, onSuccess);
         }
 
-        public initFromObject(object: BABYLON.AbstractMesh, material: BABYLON.Material, onSuccess?: () => void) {
+        public initFromMaterial(material: BABYLON.Material, onSuccess?: () => void) {
             this.material = material;
             this.materialSections = {};
-            this.materialSections["diffuse"] = new MaterialDefinitionSection("diffuse", object, true, true, true, material, onSuccess);
-            this.materialSections["emissive"] = new MaterialDefinitionSection("emissive", object, true, true, true, material, onSuccess);
-            this.materialSections["ambient"] = new MaterialDefinitionSection("ambient", object, true, true, false, material, onSuccess);
-            this.materialSections["opacity"] = new MaterialDefinitionSection("opacity", object, false, true, true, material, onSuccess);
-            this.materialSections["specular"] = new MaterialDefinitionSection("specular", object, true, true, false, material, onSuccess);
-            this.materialSections["reflection"] = new MaterialDefinitionSection("reflection", object, false, true, true, material, onSuccess);
-            this.materialSections["bump"] = new MaterialDefinitionSection("bump", object, false, true, false, material, onSuccess);
+            this.materialSections["diffuse"] = new MaterialDefinitionSection("diffuse", true, true, true, material, onSuccess);
+            this.materialSections["emissive"] = new MaterialDefinitionSection("emissive", true, true, true, material, onSuccess);
+            this.materialSections["ambient"] = new MaterialDefinitionSection("ambient", true, true, false, material, onSuccess);
+            this.materialSections["opacity"] = new MaterialDefinitionSection("opacity", false, true, true, material, onSuccess);
+            this.materialSections["specular"] = new MaterialDefinitionSection("specular", true, true, false, material, onSuccess);
+            this.materialSections["reflection"] = new MaterialDefinitionSection("reflection", false, true, true, material, onSuccess);
+            this.materialSections["bump"] = new MaterialDefinitionSection("bump", false, true, false, material, onSuccess);
         }
 
         public getMaterialSectionsArray(): string[] {
@@ -109,7 +109,7 @@
                 material = object.material;
             }
 
-            return new MaterialDefinition(object, material, onSuccess);
+            return new MaterialDefinition(material, onSuccess);
         }
 
         public exportAsBabylonScene(materialId: string, materialDefinition: MaterialDefinition) {

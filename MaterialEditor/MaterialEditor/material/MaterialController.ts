@@ -92,6 +92,25 @@
             }
         }
 
+        public setPlaneForMirror() {
+            console.log("setPlane");
+            var pointsArray: Array<BABYLON.Vector3> = [];
+            //TODO maybe find a different way of computing the plane? trying to avoid getting the object in the constructor.
+            var meshWorldMatrix = this._object.computeWorldMatrix();
+            var verticesPosition = this._object.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+            //handle submeshes
+            var offset = 0;
+            if (this.isMultiMaterial) {
+                offset = this._object.subMeshes[this.multiMaterialPosition].indexStart
+            } 
+            for (var i = 0; i < 3; i++) {
+                var v = this._object.getIndices()[offset + i];
+                pointsArray.push(BABYLON.Vector3.TransformCoordinates(BABYLON.Vector3.FromArray(verticesPosition, v*3), meshWorldMatrix));
+            }
+            var plane = BABYLON.Plane.FromPoints(pointsArray[0], pointsArray[1], pointsArray[2]);
+            this.$scope.materialDefinition.materialSections["reflection"].texture.setMirrorPlane(plane);
+        }
+
         public exportMaterial() {
             var modalInstance = this.$modal.open({
                 templateUrl: 'materialExport.html',

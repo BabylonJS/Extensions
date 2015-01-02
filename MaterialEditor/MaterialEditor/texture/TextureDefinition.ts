@@ -11,12 +11,15 @@ module RW.TextureEditor {
 
         private _isMirror: boolean;
 
+        private _mirrorPlane: BABYLON.Plane;
+
         public textureVariable: BABYLON.BaseTexture;
 
-        constructor(public name: string, private _material: BABYLON.Material, private _connectedMesh: BABYLON.AbstractMesh, onSuccess?: () => void) {
+        constructor(public name: string, private _material: BABYLON.Material, onSuccess?: () => void) {
             this.propertyInMaterial = this.name.toLowerCase() + "Texture";
             this.canvasId = this.name + "Canvas";
             this.numberOfImages = 1;
+            this._mirrorPlane = new BABYLON.Plane(0, 0, 0, 0);
             if (this._material[this.propertyInMaterial]) {
                 if (this._material[this.propertyInMaterial] instanceof BABYLON.MirrorTexture) {
                     this.babylonTextureType = BabylonTextureType.MIRROR;
@@ -101,6 +104,13 @@ module RW.TextureEditor {
             }
         }
 
+        public setMirrorPlane(plane: BABYLON.Plane) {
+            //if (this.babylonTextureType == BabylonTextureType.MIRROR) {
+            this._mirrorPlane.normal = plane.normal;
+            this._mirrorPlane.d = plane.d;
+            //}
+        }
+
         public mirrorEnabled(enabled: boolean) {
             if (angular.isDefined(enabled)) {
                 if (enabled) {
@@ -111,15 +121,7 @@ module RW.TextureEditor {
                     //create the mirror
                     this.textureVariable = new BABYLON.MirrorTexture("mirrorTex", 512, this._material.getScene());
                     this.textureVariable['renderList'] = this._material.getScene().meshes;
-                    //calculate plane
-                    var pointsArray: Array<BABYLON.Vector3> = [];
-                    //TODO maybe find a different way of computing the plane? trying to avoid getting the object in the constructor.
-                    var meshWorldMatrix = this._connectedMesh.computeWorldMatrix();
-                    var verticesPos = this._connectedMesh.getVerticesData(BABYLON.VertexBuffer.PositionKind);
-                    for (var i = 0; i < 3; i++) {
-                        pointsArray.push(BABYLON.Vector3.TransformCoordinates(BABYLON.Vector3.FromArray(verticesPos, i * 3), meshWorldMatrix));
-                    }
-                    this.textureVariable['mirrorPlane'] = BABYLON.Plane.FromPoints(pointsArray[0], pointsArray[1], pointsArray[2]);
+                    this.textureVariable['mirrorPlane'] = this._mirrorPlane;
                     this.init = true;
                     //if (!this._isEnabled) {
                         this.enabled(true);
