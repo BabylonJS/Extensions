@@ -1417,9 +1417,6 @@ var RW;
                             reader.readAsDataURL(src);
                         }
 
-                        //preparing for 6 images.
-                        //for (var i = 0; i < 6; i++) {
-                        //var pos = i;
                         element.on("dragover", ".texture-canvas-drop", function (e) {
                             e.preventDefault();
                         });
@@ -1430,7 +1427,6 @@ var RW;
                             e.preventDefault();
                             loadImage(e.originalEvent.dataTransfer.files[0], $(this).find("canvas")[0]);
                         });
-                        //}
                     }
                 };
             }];

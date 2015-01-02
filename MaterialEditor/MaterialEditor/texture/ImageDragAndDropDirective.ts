@@ -1,6 +1,6 @@
 ﻿module RW.TextureEditor {
 
-    export var textureImage = ["$parse", function ($parse:ng.IParseService) {
+    export var textureImage = ["$parse", function ($parse: ng.IParseService) {
         return {
             restrict: 'E',
             templateUrl: function (elem, attr) {
@@ -12,7 +12,7 @@
                 tex: '=',
                 updateTexture: '&onUpdateTexture'
             },
-            transclude:true,
+            transclude: true,
             link: function (scope, element, attr) {
                 var texture = <TextureDefinition> scope.tex;
 
@@ -32,7 +32,7 @@
                             image.height *= width / image.width;
                             image.width = width;
                         }
-                        
+
                         canvas.width = max;
                         canvas.height = max;
                         ctx.drawImage(image, 0, 0, max, max);
@@ -61,22 +61,17 @@
                     };
                     reader.readAsDataURL(src);
                 }
-                //preparing for 6 images.
-                //for (var i = 0; i < 6; i++) {
 
-                    //var pos = i;
-                    element.on("dragover", ".texture-canvas-drop", function (e) {
-                        e.preventDefault();
-                    });
-                    element.on("dragleave", ".texture-canvas-drop", function (e) {
-                        e.preventDefault();
-                    });
-                    element.on("drop", ".texture-canvas-drop", function (e) {
-                        e.preventDefault();
-                        loadImage(e.originalEvent.dataTransfer.files[0], <HTMLCanvasElement> $(this).find("canvas")[0]);
-                    });
-                //}
-                
+                element.on("dragover", ".texture-canvas-drop", function (e) {
+                    e.preventDefault();
+                });
+                element.on("dragleave", ".texture-canvas-drop", function (e) {
+                    e.preventDefault();
+                });
+                element.on("drop", ".texture-canvas-drop", function (e) {
+                    e.preventDefault();
+                    loadImage(e.originalEvent.dataTransfer.files[0], <HTMLCanvasElement> $(this).find("canvas")[0]);
+                });
             }
         }
     }]
