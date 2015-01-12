@@ -1,0 +1,5 @@
+﻿<div class="well texture-canvas-drop" ng-attr-id="canvas-drop-{{$index}}" ng-class="tex.numberOfImages > 1 ? 'col-md-4' : 'col-md-12'" ng-repeat="i in tex.getCanvasNumber() track by $index">
+    <span>Drop {{tex.numberOfImages==1 ? "Image" : (($index < 3 ? "Pos " : "Neg ") + ($index % 3 == 0 ? "X" : ($index % 3 == 1 ? "Y" : "Z")))}}  Here</span>
+    <canvas ng-attr-id="{{tex.canvasId}}-{{$index}}" class="texture-canvas"></canvas>
+</div>
+    
