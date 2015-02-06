@@ -1,0 +1,138 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>POV Tester</title>
+    <!-- edit path - name of babylon library as required -->
+    <script src="../../Babylon.js/babylon.2.0-beta.js"></script>
+    <script src="./POV.1.0.-debug.js"></script>
+    <style>
+         html, body   { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; } 
+         #renderCanvas{ width: 100%; height: 100%; } 
+         #button      {
+			color: white; background-color: Dimgray;
+			font-size: 14pt; font-weight: bold;
+			padding-left:4pt; padding-right:4pt;
+			
+			border: black outset 2pt; line-height: 2em;
+			cursor: pointer;
+		}     
+    </style>
+</head>
+<body>
+	<div id="buttonbar" style="background-color: Darkorange;">
+		<span id="button" onclick="instancePausePlay()"> Instance Pause - Play </span>
+		<span id="button" onclick="systemPausePlay()"> System Pause - Play </span>
+	</div>
+<canvas id="renderCanvas"></canvas>
+<script>
+var duration = 750;
+var nClones = 49;
+var size = 1;
+
+var delayBetween = -1 * duration / (nClones + 1);  //1 for original
+var initialRenderer;
+var upFrstMat;
+
+// comment out these for playground
+var canvas = document.getElementById("renderCanvas");
+var engine = new BABYLON.Engine(canvas, true);
+
+var createScene = function () {
+    var scene = new BABYLON.Scene(engine);
+    var camera = new BABYLON.FreeCamera("Camera", new BABYLON.Vector3(11.4355,9.7413,-12.2473), scene);
+    camera.id = "Camera";
+    camera.rotation = new BABYLON.Vector3(0.4615,-0.8149,0.0981);
+    camera.fov = 0.8576;
+    camera.minZ = 0.1;
+    camera.maxZ = 100;
+    camera.speed = 1;
+    camera.inertia = 0.9;
+    camera.checkCollisions = false;
+    camera.applyGravity = false;
+    camera.ellipsoid = new BABYLON.Vector3(0.2,0.9,0.2);
+    scene.setActiveCameraByID("Camera");        
+
+    // This attaches the camera to the canvas
+    camera.attachControl(canvas, true);
+
+    var light = new BABYLON.DirectionalLight("Lamp", new BABYLON.Vector3(0.0009,-0.3458,0.9383), scene);
+    light.position = new BABYLON.Vector3(-0.0294,11.2822,-30.6172);
+    light.id = "Lamp";
+    light.intensity = 1;
+    light.diffuse = new BABYLON.Color3(1,1,0.9);
+    light.specular = new BABYLON.Color3(1,1,0.9);
+
+    upFrstMat = new BABYLON.StandardMaterial("color for up first cubes", scene);
+    upFrstMat.ambientColor  = new BABYLON.Color3(0.6,0.1,0.1);
+    upFrstMat.diffuseColor  = new BABYLON.Color3(0.72,0,0);
+    upFrstMat.specularColor = new BABYLON.Color3(0.5,0.5,0.5);
+    upFrstMat.emissiveColor = new BABYLON.Color3(0,0,0);
+    upFrstMat.specularPower = 50;
+    upFrstMat.alpha =  1;
+    upFrstMat.backFaceCulling = true;
+    
+    var initialInstance = BABYLON.Mesh.CreateBox('first_box', size, scene);
+    initialRenderer = assignPOV(initialInstance, 0, true); 
+    
+    // change material of initialInstance 
+    var initMat = new BABYLON.StandardMaterial("color for original", scene);
+    initMat.ambientColor  = new BABYLON.Color3(0.6,0.1,0.3);
+    initMat.diffuseColor  = new BABYLON.Color3(0.0,0.8,0.4);
+    initMat.specularColor = new BABYLON.Color3(0.5,0.5,0.5);
+    initMat.emissiveColor = new BABYLON.Color3(0,0,0);
+    initMat.specularPower = 50;
+    initMat.alpha =  1;
+    initMat.backFaceCulling = true;
+    initialInstance.material = initMat
+    
+    // add some additional boxes with a delay to animation start
+    for (var i = 1; i <= nClones; i++){
+        assignPOV(BABYLON.Mesh.CreateBox('after first', size, scene), delayBetween * i, i % 2 === 0); 
+    }        
+
+    return scene;
+};
+
+function assignPOV(mesh, initialDelay, upFirst){
+	var c = Math.PI * 2;
+ 	var up     = new POV.MotionEvent(duration,   upFirst  ? initialDelay : 0, new BABYLON.Vector3(0,  0, 25), new BABYLON.Vector3(c, 0, c));
+   	var around = new POV.MotionEvent(duration, (!upFirst) ? initialDelay : 0, new BABYLON.Vector3(0,  0, 25), new BABYLON.Vector3(0, c, c));
+	    var event;
+	    if (upFirst) event  = [ up, around, function(){ mesh.scaling.scaleInPlace(.8);} ];
+	    else         event  = [ around, up, function(){ mesh.scaling.scaleInPlace(.8);} ];
+	    
+	    if (upFirst) mesh.material = upFrstMat;
+	    
+	    var series  = new POV.EventSeries(event, 10, 1.8);
+	    var renderer = new POV.BeforeRenderer(mesh);
+   	renderer.queueEventSeries(series);
+   	return renderer;
+}
+    
+function instancePausePlay() {
+ 	console.log("Requesting " + (initialRenderer.isPaused() ? "resume" : "pause"));
+   	// test instance pause-play
+   	if (initialRenderer.isPaused()) initialRenderer.resumePlay();
+   	else initialRenderer.pausePlay();
+}
+    
+function systemPausePlay() {
+   	console.log("Requesting " + (POV.BeforeRenderer.isSystemPaused() ? "resume" : "pause"));
+   	// test system wide pause-play
+   	if (POV.BeforeRenderer.isSystemPaused()) POV.BeforeRenderer.resumeSystem();
+   	else POV.BeforeRenderer.pauseSystem();
+}
+     
+// delete rest for playground
+var scene = createScene();
+engine.runRenderLoop(function () {
+	scene.render();
+});
+
+//Resize
+window.addEventListener("resize", function () {
+    engine.resize();
+});    
+</script>
+</body>
+</html>
