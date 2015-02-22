@@ -26,6 +26,8 @@ movePOV(amountRight: number, amountUp: number, amountForward: number): void;
  * @param {number} amountRight
  * @param {number} amountUp
  * @param {number} amountForward
+ * @return {Vector3} - This value is actually the delta between current & future position.
+ * Use position.addInPlace(delta) to affect.
  */
 calcMovePOV(amountRight: number, amountUp: number, amountForward: number): BABYLON.Vector3;
 ```
@@ -58,23 +60,24 @@ rotatePOV(flipBack: number, twirlClockwise: number, tiltRight: number): void;
  * @param {number} flipBack
  * @param {number} twirlClockwise
  * @param {number} tiltRight
+ * @return {Vector3} - This value is actually the delta between current & future rotation.
+ * Use rotation.addinPlace(delta) to affect.
  */
 calcRotatePOV(flipBack: number, twirlClockwise: number, tiltRight: number): BABYLON.Vector3;
 ```
-
 #POV Before Render Extension 
 ![](https://raw.githubusercontent.com/BabylonJS/Extensions/master/POV/doc-assist/POV-System.png)
 ##Introduction##
-The functions inside of `AbstractMesh` are just raw material, so that they could be called under any circumstance.  A queue based, POV before render animation system uses these methods to achieve coordinated, stepwise, movement & rotation.  It can be found in the [Extensions](https://github.com/BabylonJS/Extensions/tree/master/POV) repository.
+The functions inside of `AbstractMesh` are just raw material for the POV extension.  They are there so that they could be called under any circumstance.  A queue based, POV before render animation system uses these methods to achieve coordinated, stepwise, movement & rotation.  It can be found in the [Extensions](https://github.com/BabylonJS/Extensions/tree/master/POV) repository.
 
 This enables meshes to move more like they do in the real world.  Most people and vehicles turn (twirl) at the same time as moving forward, not behave as if they are marching. Babylon's animation system can perform concurrent animations, but since animations are independent, it would just move in a single direction while twirling.
 
 It is also crucial that "Forward" be redefined every frame, or stepwise.  Even if a POV move was made for Babylon's animation system, without a rewrite, "Forward" and the final position based on it would be defined only once at the beginning. 
 
-POV was developed for MORPH.  Conveniently, MORPH already was using a before renderer, so adding on inside the render fit like a glove.  This made the overall system quite large though, and harder to document.  Meshes which perform no morphing also could not use it.  It has now been made standalone, and MORPH now subclasses it.
-
-##Motion Event##
-A `MotionEvent` is the base unit of the system.  It holds the directions to perform an animation.  They can be made in advance and reused, but it is not a good idea to share them across meshes.  This is because they manage state when they are the event currently being performed.
+POV was developed for MORPH.  Conveniently, MORPH already was using a before renderer, so adding on inside the render fit like a glove.  This made the overall system quite large though, and to hard to document and take-in at once.  Meshes which performed no morphing also could not use it.  It has now been made standalone.  MORPH now subclasses it.
+##Main Components##
+###Motion Event###
+A `MotionEvent` is the base unit of the system.  It holds the directions to perform an animation.  They can be made in advance and also reusable since all directions are expressed in relative terms.  It is not a good idea to share them across meshes though, because they manage state when they are the event currently being performed.
 ```typescript
 /**
  * Take in all the motion event info.  Movement & rotation are both optional, but both being null is usually for sub-classing.
@@ -96,8 +99,8 @@ constructor(
     private _pace          : Pace = Pace.LINEAR)
 ```
 
-##Event Series#
-An `EventSeries`, consisting of an array of 'MotionEvent's, is the unit placed in the render queue.
+###Event Series##
+An `EventSeries' consists of an array of `MotionEvent`s, `BABYLON.Action`s, and functions().  The class also holds , is the unit placed in the render queue.
 ```typescript
 /**
  * Validate each of the events passed.
@@ -109,15 +112,26 @@ An `EventSeries`, consisting of an array of 'MotionEvent's, is the unit placed i
  */
 constructor(public _eventSeries : Array<any>, public _nRepeats = 1, public _initialWallclockProrating = 1.0)
 ```
-##Series Queue##
+###Series Queue###
 
 ##Attaching to Mesh##
 
-##Playground Example##
-
+##Example##
+Testing of hosting of actual scenes, completely on GitHub
+[example](https://raw.githubusercontent.com/BabylonJS/Extensions/master/POV/tester.html)
 
 ##Advanced Features##
 ###Action System Integration###
+Separate from placing a `BABYLON.Action` inside of an `EventSeries`, you can also have a wrapper `Action` for an `EventSeries`.  `SeriesAction` could then be registered with an `ActionManager`.
+```typescript
+/**
+ * @param {any} triggerOptions - passed to super, same as any other Action
+ * @param {SeriesTargetable} _target - The object containing the event queue.  Using an interface for MORPH sub-classing.
+ * @param {EventSeries} _eSeries - The event series that the action is to submit to the queue.
+ * @param {boolean} condition - passed to super, same as any other Action
+ */
+constructor(triggerOptions: any, private _target: SeriesTargetable, private _eSeries : EventSeries, condition?: BABYLON.Condition);
+```
 ###Synchronized movement between meshes###
 Different meshes can move in coordination with each other.  A `MotionEvent` of each is said to be a sync partner of the other.  Using this can cause hangs unless the `EventSeries` of each is queued on each mesh at the same time.
 
@@ -133,4 +147,4 @@ public setSyncPartner(syncPartner : MotionEvent) : void{
 ##Up Coming Features for Version 1.1##
 The first new feature is a method to clear what the mesh is currently doing and or clear what is queued to do next.  
 
-The second is to integrate optional sound to start playing at the beginning of a `MotionEvent`.  Timing of audio to motion is very often important to make things believable.  The Sound object is passed in the `MotionEvent` constructor.  When the `MotionEvent` is activated by the before-renderer,  the sound will be checked if it is ready to play.  If not, the event will enter a wait state until the frame that the sound indicates ready.  Should a sound be part of an event that is stopped, the playing will also be stopped.
+The second is to integrate optional `BABYLON.Sound` to start playing at the beginning of a `MotionEvent`.  Timing of audio to motion is very often important to make things believable.  The `BABYLON.Sound` object is passed in the `MotionEvent` constructor.  When the `MotionEvent` is activated by the before-renderer,  the sound will be checked if it is ready to play.  If not, the event will enter a wait state until the frame that the sound indicates ready.  Should a sound be part of an event that is stopped, the playing will also be stopped.
