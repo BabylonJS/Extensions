@@ -1,0 +1,5 @@
+# Ignore everything in this directory, but specific .js files
+**
+!mesh_parent_common.js
+!multi_group_common.js
+!shape_key_common.js
