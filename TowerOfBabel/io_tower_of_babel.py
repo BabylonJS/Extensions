@@ -515,8 +515,8 @@ class TowerOfBabel(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         header =  '<head>\n'
         header += '    <meta charset="UTF-8">\n'
         header += '    <title>' + TowerOfBabel.nameSpace + '</title>\n' 
-        header += '    <!-- edit path - name of babylon & morph libraries as required -->\n'
-        header += '    <script src="./babylon.js"></script>\n'
+        header += '    <!-- edit path - name of babylon & other libraries as required -->\n'
+        header += '    <script src="http://cdn.babylonjs.com/2-0/babylon.js"></script>\n'
         if hasShapeKeys:
             header += '    <script src="./POV.js"></script>\n' 
             header += '    <script src="./morph.js"></script>\n' 
