@@ -854,7 +854,6 @@ module DIALOG{
                 titlePanel.horizontalAlignment = Panel.ALIGN_HCENTER;
                 if (titleMaterial && titleMaterial !== null){
                     titlePanel.setLetterMaterial(titleMaterial);
-                    console.log("FUCK");
                 }
                 ret.addSubPanel(titlePanel);
             }
@@ -912,7 +911,6 @@ module DIALOG{
             return ret;
         }
         
-        /** 
         public static ExtractMax(mesh : BABYLON.Mesh): BABYLON.Vector3 {
             var positions = mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind);
             var maximum = new BABYLON.Vector3(-Number.MAX_VALUE, -Number.MAX_VALUE, -Number.MAX_VALUE);
