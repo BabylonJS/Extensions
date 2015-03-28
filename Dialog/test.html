@@ -1,0 +1,396 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Dialog System Demo</title>
+    <script src="../../Babylon.js/babylon.2.1-alpha.js"></script>
+    <script src="../POV/POV.1.0.js"></script>
+    <script src="../TowerOfBabel/TOB-runtime.js"></script>
+    <script src="./dialog.1.0.-debug.js"></script>
+<!--   <script src="./fonts/Font3D.js"></script> -->   
+    <script src="./fonts/Font2D.js"></script>
+    <script src="./fonts/Font2D_EXT.js"></script>
+
+    <meta name="viewport" 
+          content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi">
+</head>
+<body>
+<canvas id="renderCanvas"></canvas>
+<script>
+
+// comment out these for playground
+var canvas = document.getElementById("renderCanvas");
+canvas.screencanvas = true;
+var width  = window.devicePixelRatio * window.innerWidth;
+var height = window.devicePixelRatio * window.innerHeight;
+canvas.width = width;
+canvas.height = height;
+canvas.getContext("webgl"); // preemptively create a device sized, webgl context; only 1 is ever created 
+
+var engine = new BABYLON.Engine(canvas);
+engine.setSize(width, height);
+
+var createScene = function () {
+    var scene = new BABYLON.Scene(engine, true);
+    scene.clearColor = new BABYLON.Color3(1, 1, .5);
+
+    DIALOG.DialogSys.initialize(scene);
+//    DIALOG.Label.DEFAULT_FONT_MODULE = 'Font3D';
+    DIALOG.DialogSys.CURRENT_FONT_MAT_ARRAY = DIALOG.DialogSys.BLACK;
+     
+    var details;
+    var mainPanel = createMainPanel();
+         
+    var camera = new BABYLON.ArcRotateCamera("Camera", -3.14 / 2, 3.14 / 2, 22, mainPanel, scene);
+    camera.fov = 0.8576;
+    camera.minZ = 0.1;
+    camera.maxZ = 100;
+    camera.speed = 1;
+    camera.inertia = 0.7;
+    camera.checkCollisions = false;
+    camera.applyGravity = false;
+    camera.ellipsoid = new BABYLON.Vector3(0.2,0.9,0.2);
+    camera.wheelPrecision = 10;
+    scene.setActiveCameraByName("Camera");
+
+    // This attaches the camera to the canvas
+    camera.attachControl(canvas, true);
+
+    var lightPosition = new BABYLON.Vector3(-20, 50, -100)
+    var light = new BABYLON.PointLight("Lamp", lightPosition, scene);
+    light.intensity = 1;
+                
+    return scene;
+};
+
+var createMainPanel = function () {
+    var topLevel = new DIALOG.Panel("Top", DIALOG.Panel.LAYOUT_VERTICAL, true);
+    	 
+    var title = new DIALOG.Panel("title", DIALOG.Panel.LAYOUT_HORIZONTAL);
+    title.stretchHorizontal = true;
+         
+    var bordersCheck = new DIALOG.CheckBox("Show All Borders");
+    bordersCheck.setFontSize(.5);
+    bordersCheck.verticalAlignment = DIALOG.Panel.ALIGN_VCENTER;
+    bordersCheck.assignCallback(function(){ 
+        showBorders(topLevel, bordersCheck.isSelected() );
+    });
+    title.addSubPanel(bordersCheck);
+         
+    var t = new DIALOG.Label("Dialog System");
+    t.setFontSize(1.5);
+    t.setLetterMaterial(DIALOG.DialogSys.BLUE);
+    t.horizontalAlignment = DIALOG.Panel.ALIGN_HCENTER;
+    title.addSubPanel(t);
+    
+    var debugChk = new DIALOG.CheckBox("Debug Mode");
+    debugChk.setFontSize(.5);
+    debugChk.horizontalAlignment = DIALOG.Panel.ALIGN_RIGHT;
+    debugChk.verticalAlignment = DIALOG.Panel.ALIGN_VCENTER;
+    debugChk.assignCallback(function(){ 
+    	if (debugChk.isSelected())
+            DIALOG.DialogSys._scene.debugLayer.show();
+    	else
+            DIALOG.DialogSys._scene.debugLayer.hide();
+    });
+    title.addSubPanel(debugChk);
+
+    topLevel.addSubPanel(title);
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -   	 
+    
+    var menuAndDetails = new DIALOG.Panel("multiCenter", DIALOG.Panel.LAYOUT_HORIZONTAL);
+    menuAndDetails.stretchHorizontal = true;
+    menuAndDetails.stretchVertical   = true;
+    	 
+    var menu = new DIALOG.Menu("Menu", ["Layout", "Fonts", "Panels", "LCD", "Limitations", "Modal Stack", "Look & Feel"]);
+    menu.stretchVertical   = true;
+    menu.assignMenuCallback(0, showLayoutDetails     );
+    menu.assignMenuCallback(1, showFontDetails       );
+    menu.assignMenuCallback(2, showPanelsDetails     );
+    menu.assignMenuCallback(3, showLCDDetails        );
+    menu.assignMenuCallback(4, showLimitationsDetails);
+    menu.assignMenuCallback(5, showModalStackDetails );
+    menu.assignMenuCallback(6, showLAFDetails        );
+    menuAndDetails.addSubPanel(menu);
+    	 
+    details = new DIALOG.Panel("details", DIALOG.Panel.LAYOUT_HORIZONTAL);
+    details.stretchHorizontal = true;
+    details.stretchVertical   = true;
+    details.setBorderVisible(true);
+	
+    menuAndDetails.addSubPanel(details);
+    	     	 
+    topLevel.addSubPanel(menuAndDetails);
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    
+    var buttons = new DIALOG.Panel("buttons", DIALOG.Panel.LAYOUT_HORIZONTAL);
+    buttons.horizontalAlignment =  DIALOG.Panel.ALIGN_RIGHT;
+    
+    var back = new DIALOG.Button("Back");
+    back.setEnabled(false);
+    buttons.addSubPanel(back);
+    
+    var next = new DIALOG.Button("Next");
+    next.assignCallback(function(){ 
+    	console.log("next callback");
+    });
+    buttons.addSubPanel(next);
+        
+    topLevel.addSubPanel(buttons);
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -    	 
+    return topLevel;
+};
+//==============================================================================
+var assignDetailsPanel = function(panel){
+	panel.stretchHorizontal = true;
+	panel.stretchVertical   = true;
+	details.removeAll();
+	details.addSubPanel(panel);
+	details.setSubsFaceSize(0.45, true);
+
+//    var stats = Font3D.getStats()
+//    console.log("clone count: " + stats[0]);
+//    console.log("originalVerts: " + stats[1]);
+//    console.log("clonedVerts: " + stats[2]); 
+};
+//==============================================================================     
+var showLayoutDetails = function () {
+    var panel = new DIALOG.Panel("LayoutDetails", DIALOG.Panel.LAYOUT_VERTICAL);
+
+    var title = new DIALOG.Label("Layout");
+    title.setFontSize(1.5);
+    title.horizontalAlignment = DIALOG.Panel.ALIGN_HCENTER;
+    panel.addSubPanel(title);
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    
+    var leftCenterRight = new DIALOG.Panel("lcr", DIALOG.Panel.LAYOUT_HORIZONTAL);
+    leftCenterRight.stretchHorizontal = true;
+         
+    var left = new DIALOG.Label("left-top");
+    left.horizontalAlignment = DIALOG.Panel.ALIGN_LEFT;
+    left.verticalAlignment   = DIALOG.Panel.ALIGN_TOP;
+    left.setFontSize(.80);
+    leftCenterRight.addSubPanel(left);
+         
+    var multiCenter = new DIALOG.Panel("multiCenter", DIALOG.Panel.LAYOUT_HORIZONTAL);    	 
+    multiCenter.addSubPanel(new DIALOG.Label("Center 1") );
+    multiCenter.addSubPanel(new DIALOG.Label("Center 2") );
+    multiCenter.horizontalAlignment = DIALOG.Panel.ALIGN_HCENTER;
+    	 
+    leftCenterRight.addSubPanel(multiCenter);
+    	    	 
+    var right = new DIALOG.Label("right-vcenter");
+    right.setFontSize(.80);
+    right.horizontalAlignment = DIALOG.Panel.ALIGN_RIGHT;
+    right.verticalAlignment   = DIALOG.Panel.ALIGN_VCENTER;
+    leftCenterRight.addSubPanel(right);
+         
+    panel.addSubPanel(leftCenterRight);
+    
+    panel.addSubPanel(null);
+    panel.addSubPanel(new DIALOG.Label("There is no formal assignment of Layout, since there is only one.") );
+    panel.addSubPanel(new DIALOG.Label("It is an ordered list oriented vertically or horizontally.  Nesting") );
+    panel.addSubPanel(new DIALOG.Label("along with alignment, margins, & stretching make it very powerful.") );
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    assignDetailsPanel(panel);
+};
+//==============================================================================     
+var showFontDetails = function () {
+    var panel = new DIALOG.Panel("FontDetails", DIALOG.Panel.LAYOUT_VERTICAL);
+    var fileNmMat  = DIALOG.DialogSys.BLUE;
+    var codeMat    = DIALOG.DialogSys.GREEN;
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    panel.addSubPanel(new DIALOG.Label("Stock font modules in repo:  Font2D.js & Font3D.js.  For").setLetterMaterial(fileNmMat, "Font2D.js").setLetterMaterial(fileNmMat, "Font3D.js") );
+    panel.addSubPanel(new DIALOG.Label("non-english letters (áöøûæÇÑß), add Font*_EXT.js module too.").setLetterMaterial(fileNmMat, "Font*_EXT.js") );
+    panel.addSubPanel(new DIALOG.Label("2D is default font, if both 2D & 3D included.") );
+    
+    panel.addSubPanel(null); // small amount of vertical spacing
+    panel.addSubPanel(new DIALOG.Label("Each duplicate letter is a clone.  Need Tower of Babel runtime,") );
+    panel.addSubPanel(new DIALOG.Label("TOB-runtime.js, to dynamically call a module's mesh factory.").setLetterMaterial(fileNmMat, "TOB-runtime.js") );
+    
+    panel.addSubPanel(null); // small amount of vertical spacing
+    panel.addSubPanel(new DIALOG.Label("Custom fonts can built using fontgen.blend. Include meshFactory").setLetterMaterial(fileNmMat, "fontgen.blend") );
+    panel.addSubPanel(new DIALOG.Label("on TOB export.  Letters with character codes > 128 must be in a")  );
+    panel.addSubPanel(new DIALOG.Label("matching xxx_EXT.js.  3D needed in module name, if 3D.").setLetterMaterial(fileNmMat, "xxx_EXT.js") );
+    
+    panel.addSubPanel(null); // small amount of vertical spacing
+    panel.addSubPanel(new DIALOG.Label("Custom fonts must be intialized: (_EXT only if required)") );
+    
+    panel.addSubPanel(null); // small amount of vertical spacing
+    panel.addSubPanel(new DIALOG.Label("TOWER_OF_BABEL.MeshFactory.MODULES.push(new xxx3D.MeshFactory(scene));")    .setFontSize(.70).setLetterMaterial(codeMat) );
+    panel.addSubPanel(new DIALOG.Label("TOWER_OF_BABEL.MeshFactory.MODULES.push(new xxx3D_EXT.MeshFactory(scene));").setFontSize(.70).setLetterMaterial(codeMat) );
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    assignDetailsPanel(panel);
+};
+//==============================================================================     
+var showPanelsDetails = function () {
+    var panel = new DIALOG.Panel("PanelDetails", DIALOG.Panel.LAYOUT_VERTICAL);
+    var twoFer = new DIALOG.Panel("twoFerPanels", DIALOG.Panel.LAYOUT_HORIZONTAL);   
+    var color = DIALOG.DialogSys.GREEN;
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    var left = new DIALOG.Panel("PanelLeft", DIALOG.Panel.LAYOUT_VERTICAL);
+
+    left.addSubPanel(new DIALOG.Label("The root GUI class is BasePanel.  A") );
+    left.addSubPanel(new DIALOG.Label("top level panel has a back, and has") );
+    left.addSubPanel(new DIALOG.Label("a before renderer for processing") );
+    left.addSubPanel(new DIALOG.Label("changes to the layout.") );
+
+    left.addSubPanel(null); // small amount of vertical spacing
+    left.addSubPanel(new DIALOG.Label("A BasePanel is list of sub-panels,") );
+    left.addSubPanel(new DIALOG.Label("which can be shown horizontally or,") );
+    left.addSubPanel(new DIALOG.Label("vertically.") );
+
+    left.addSubPanel(null); // small amount of vertical spacing
+    left.addSubPanel(new DIALOG.Label("Attributes in both directions: ") );
+    left.addSubPanel(new DIALOG.Label("   - alignment (left, center, right)").setFontSize(.70).setLetterMaterial(color) );
+    left.addSubPanel(new DIALOG.Label("   - stretch"                        ).setFontSize(.70).setLetterMaterial(color) );
+    left.addSubPanel(new DIALOG.Label("   - margins"                        ).setFontSize(.70).setLetterMaterial(color) );
+    
+    twoFer.addSubPanel(left);
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    var rite = new DIALOG.Panel("PanelLeft", DIALOG.Panel.LAYOUT_VERTICAL);
+    var panels = [];
+    panels.push(new DIALOG.Label("- Panel") );
+    panels.push(DIALOG.Panel.makeList("- Label", ["CheckBox", "Button"], DIALOG.Panel.LAYOUT_VERTICAL, .5) );
+    panels.push(new DIALOG.Label("- Menu") );
+    panels.push(DIALOG.Panel.makeList("- Letter*", ["A, B, C, ...  Built from Blender"], DIALOG.Panel.LAYOUT_VERTICAL, .5) );
+    panels.push(DIALOG.Panel.makeList("- MeshWrapperPanel*", ["DigitWtLogic"], DIALOG.Panel.LAYOUT_VERTICAL, .5) );
+    panels.push(new DIALOG.Label("- LCD") );
+    panels.push(new DIALOG.Label("- NumberScroller") );
+
+    rite.addSubPanel(DIALOG.Panel.nestPanels("BasePanel", panels, DIALOG.Panel.LAYOUT_VERTICAL, true).stretch(true, false) );
+    
+    rite.addSubPanel(new DIALOG.Label("* - Content / Donor Panel").setFontSize(.5) );
+    twoFer.addSubPanel(rite);
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    panel.addSubPanel(twoFer);
+    assignDetailsPanel(panel);
+};
+//==============================================================================     
+var showLCDDetails = function () {
+    var panel = new DIALOG.Panel("Top", DIALOG.Panel._LAYOUT_VERTICAL);
+    	 
+    var display = new DIALOG.LCD('display', 8);
+    display.value = 5318008;
+    panel.addSubPanel(display);
+         
+    var flipCheck = new DIALOG.CheckBox("(o)  (o)");
+    flipCheck.setFontSize(.9);
+    flipCheck.assignCallback(function(){ 
+    	display.rotation.z = flipCheck.isSelected() ? 3.14 : 0;
+    });
+    panel.addSubPanel(flipCheck);
+    
+    var scroller = new DIALOG.NumberScroller('# of Players:', 2, 1, 10, 1);
+    scroller.setBorderVisible(true);
+    panel.addSubPanel(scroller);
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    assignDetailsPanel(panel);
+};
+//==============================================================================     
+var showLimitationsDetails = function () {
+    var panel = new DIALOG.Panel("LimitationsDetails", DIALOG.Panel.LAYOUT_VERTICAL);
+
+    var title = new DIALOG.Label("Limitations");
+    title.setFontSize(1.5);
+    title.horizontalAlignment = DIALOG.Panel.ALIGN_HCENTER;
+    panel.addSubPanel(title);
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    panel.addSubPanel(new DIALOG.Label("- Text input fields not really possible.") );
+    panel.addSubPanel(new DIALOG.Label("- Only one sub-panel can have center alignment.") );
+    panel.addSubPanel(new DIALOG.Label("- Issues for version 2.0 :  No modal stack, button pick area.") );
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    assignDetailsPanel(panel);
+};
+//==============================================================================     
+var showModalStackDetails = function () {
+    var panel = new DIALOG.Panel("ModalStackDetails", DIALOG.Panel.LAYOUT_VERTICAL);
+
+    var title = new DIALOG.Label("Modal Stack");
+    title.setFontSize(1.5);
+    title.horizontalAlignment = DIALOG.Panel.ALIGN_HCENTER;
+    panel.addSubPanel(title);
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    panel.addSubPanel(new DIALOG.Label("Not yet implemented") );
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    assignDetailsPanel(panel);
+};
+//==============================================================================     
+var showLAFDetails = function () {
+    var panel = new DIALOG.Panel("LAFDetails", DIALOG.Panel.LAYOUT_VERTICAL);
+    var color = DIALOG.DialogSys.GREEN;
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    panel.addSubPanel(new DIALOG.Label("The following can change how subsequent meshes look:") );
+    var panels = [];
+    var twoFer = new DIALOG.Panel("twoFerLAF", DIALOG.Panel.LAYOUT_HORIZONTAL);
+    var faceScale = 0.6;
+
+    panels.push(DIALOG.Panel.makeList("DialogSys",
+            ["CURRENT_FONT_MAT_ARRAY : Array<StandardMaterial>", "USE_CULLING_MAT_FOR_2D = true", "DEPTH_SCALING_3D = .05"], DIALOG.Panel.LAYOUT_VERTICAL, faceScale, color) );
+    panels.push(DIALOG.Panel.makeList("Panel", ["BORDER_MAT : StandardMaterial", "TOP_LEVEL_BORDER_MAT : MultiMaterial"], DIALOG.Panel.LAYOUT_VERTICAL, faceScale, color) );
+    var left = DIALOG.Panel.nestPanels(null, panels, DIALOG.Panel.LAYOUT_VERTICAL);
+    left.stretchVertical = true;
+    twoFer.addSubPanel(left);
+    
+    panels = [];
+    panels.push(DIALOG.Panel.makeList("LCD", ["MAT : StandardMaterial"], DIALOG.Panel.LAYOUT_VERTICAL, faceScale, color) );    
+    panels.push(DIALOG.Panel.makeList("Label", ["DEFAULT_FONT_MODULE_NM : string"], DIALOG.Panel.LAYOUT_VERTICAL, faceScale, color) );
+    panels.push(DIALOG.Panel.makeList("Button/NumberScroller", ["MAT : MultiMaterial", "SELECTED_MAT : MultiMaterial"], DIALOG.Panel.LAYOUT_VERTICAL, faceScale, color) );
+    var rite = DIALOG.Panel.nestPanels(null, panels, DIALOG.Panel.LAYOUT_VERTICAL);
+    rite.stretchVertical = true;
+    twoFer.addSubPanel(rite);
+        
+    panel.addSubPanel(twoFer);
+
+    panel.addSubPanel(new DIALOG.Label("Instance level Look & Feel (setters available):") );
+    panels = [];
+    twoFer = new DIALOG.Panel("twoFerB", DIALOG.Panel.LAYOUT_HORIZONTAL);    
+    left = DIALOG.Panel.makeList(null, 
+    		["horizontalMargin = 0.1",
+    		 "horizontalAlignment = Panel.ALIGN_LEFT",
+    		 "stretchHorizontal = false",
+    		 "placeHolderWidth = 0.3",
+    		 "borderInsideVert = 0.05"],
+             DIALOG.Panel.LAYOUT_VERTICAL, faceScale);
+    left.stretchVertical = true;
+    twoFer.addSubPanel(left);
+            
+    rite = DIALOG.Panel.makeList(null, 
+            ["verticalMargin = 0.1",
+             "verticalAlignment = Panel.ALIGN_TOP",
+             "stretchVertical = false",
+             "placeHolderHeight = 0.5",
+             "borderDepth : DialogSys.DEPTH_SCALING_3D"],
+             DIALOG.Panel.LAYOUT_VERTICAL, faceScale);
+    rite.stretchVertical = true;
+    twoFer.addSubPanel(rite);
+        
+    panel.addSubPanel(twoFer);
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    assignDetailsPanel(panel);
+};
+//==============================================================================     
+var showBorders = function(panel, show) {
+ 	if (panel instanceof DIALOG.Letter || panel instanceof DIALOG.Button) return;
+    	 
+    panel.visibility = (show || panel.isBorderVisible()) ? 1 : 0;
+    var subs = panel.getSubPanels();
+    for (var i = 0; i < subs.length; i++){
+        if (subs[i] && subs[i] !== null){
+            showBorders(subs[i], show);
+        }
+    }
+};
+//==============================================================================     
+  var scene = createScene();
+  engine.runRenderLoop(function () {
+  	scene.render();
+  });
+
+  //Resize
+  window.addEventListener("resize", function () {
+      engine.resize();
+  });    
+</script>
+</body>
+</html>

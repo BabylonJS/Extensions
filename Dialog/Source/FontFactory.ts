@@ -20,6 +20,16 @@ module DIALOG{
                Label.DEFAULT_FONT_MODULE = 'Font2D'; 
                 BABYLON.Tools.Log('Font2D loaded');
             }
+            
+            // see if an extensions is found
+            if (typeof (Font3D_EXT) !== 'undefined'){
+                TOWER_OF_BABEL.MeshFactory.MODULES.push(new Font3D_EXT.MeshFactory(scene));
+                BABYLON.Tools.Log('Font3D_EXT loaded');
+            }
+            if (typeof (Font2D_EXT) !== 'undefined'){ 
+               TOWER_OF_BABEL.MeshFactory.MODULES.push(new Font2D_EXT.MeshFactory(scene));
+                BABYLON.Tools.Log('Font2D_EXT loaded');
+            }
         }
                 
         /**
@@ -32,16 +42,19 @@ module DIALOG{
         public static getLetters(letters : string, typeface : string, customMaterial? : BABYLON.Material) : Array<Letter> {
             var ret = new Array<Letter>(letters.length);
             var isTypeface3D = typeface.indexOf("3D") > -1;
+            var fullTypeface : string;
 
             for (var i = letters.length - 1; i >= 0; i--){
+                fullTypeface = typeface + ((letters[i].charCodeAt(0) > 128) ? "_EXT" : "");
+                
                 // no lookup for space, since it would generate an error, since not an actual mesh
-                var letter =  <Letter> ((letters[i] !== ' ') ? TOWER_OF_BABEL.MeshFactory.instance(typeface, letters[i]) : null);
+                var letter =  <Letter> ((letters[i] !== ' ') ? TOWER_OF_BABEL.MeshFactory.instance(fullTypeface, letters[i]) : null);
                 
                 // check if typeface was loaded
                 if (letter){
                     // check if character found in typeface
                     if (letter !== null){
-                        letter.material = customMaterial ? customMaterial : DialogSys.CURRENT_FONT_MAT_ARRAY[isTypeface3D ? 0 : 1];
+                        letter.material = customMaterial ? customMaterial : DialogSys.CURRENT_FONT_MAT_ARRAY[(isTypeface3D || DialogSys.USE_CULLING_MAT_FOR_2D) ? 0 : 1];
                         if (isTypeface3D){
                             letter.scaling.z = DialogSys.DEPTH_SCALING_3D;
                         }

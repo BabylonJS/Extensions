@@ -1,10 +1,12 @@
-// File generated with Tower of Babel version: 2.0.0 on 03/15/15
+// File generated with Tower of Babel version: 2.0.0 on 03/24/15
 
 module CheckBoxFont{
 
     var meshLib = new Array<Array<BABYLON.Mesh>>(4);
     var cloneCount = 1;
 
+    var originalVerts = 0;
+    var clonedVerts = 0;
     export class MeshFactory implements TOWER_OF_BABEL.FactoryModule {
         constructor(private _scene : BABYLON.Scene, materialsRootDir: string = "./") {
             CheckBoxFont.defineMaterials(_scene, materialsRootDir); //embedded version check
@@ -20,29 +22,45 @@ module CheckBoxFont{
                     src = getViable(0);
                     if (src === null){
                         ret = new unchecked2D("unchecked2D", this._scene);
+                        originalVerts += ret.getTotalVertices();
                         meshLib[0].push(ret);
-                    }else ret = new unchecked2D("unchecked2D" + "_" + cloneCount++, this._scene, null, <unchecked2D> src);
+                    }else{
+                        ret = new unchecked2D("unchecked2D" + "_" + cloneCount++, this._scene, null, <unchecked2D> src);
+                        clonedVerts += ret.getTotalVertices();
+                    }
                     break;
                 case "checked2D":
                     src = getViable(1);
                     if (src === null){
                         ret = new checked2D("checked2D", this._scene);
+                        originalVerts += ret.getTotalVertices();
                         meshLib[1].push(ret);
-                    }else ret = new checked2D("checked2D" + "_" + cloneCount++, this._scene, null, <checked2D> src);
+                    }else{
+                        ret = new checked2D("checked2D" + "_" + cloneCount++, this._scene, null, <checked2D> src);
+                        clonedVerts += ret.getTotalVertices();
+                    }
                     break;
                 case "checked3D":
                     src = getViable(2);
                     if (src === null){
                         ret = new checked3D("checked3D", this._scene);
+                        originalVerts += ret.getTotalVertices();
                         meshLib[2].push(ret);
-                    }else ret = new checked3D("checked3D" + "_" + cloneCount++, this._scene, null, <checked3D> src);
+                    }else{
+                        ret = new checked3D("checked3D" + "_" + cloneCount++, this._scene, null, <checked3D> src);
+                        clonedVerts += ret.getTotalVertices();
+                    }
                     break;
                 case "unchecked3D":
                     src = getViable(3);
                     if (src === null){
                         ret = new unchecked3D("unchecked3D", this._scene);
+                        originalVerts += ret.getTotalVertices();
                         meshLib[3].push(ret);
-                    }else ret = new unchecked3D("unchecked3D" + "_" + cloneCount++, this._scene, null, <unchecked3D> src);
+                    }else{
+                        ret = new unchecked3D("unchecked3D" + "_" + cloneCount++, this._scene, null, <unchecked3D> src);
+                        clonedVerts += ret.getTotalVertices();
+                    }
                     break;
             }
             if (ret !== null){
@@ -55,7 +73,7 @@ module CheckBoxFont{
             return ret;
         }
     }
-    function getViable(libIdx : number) : BABYLON.Mesh {
+    function getViable(libIdx : number, isNode? : boolean) : BABYLON.Mesh {
         var meshes = meshLib[libIdx];
         if (!meshes || meshes === null){
             if (!meshes) meshLib[libIdx] = new Array<BABYLON.Mesh>();
@@ -63,7 +81,7 @@ module CheckBoxFont{
         }
 
         for (var i = meshes.length - 1; i >= 0; i--){
-            if (meshes[i].geometry) return meshes[i];
+            if (meshes[i].geometry || isNode) return meshes[i];
         }
         return null;
     }
@@ -80,12 +98,13 @@ module CheckBoxFont{
         if (!stillViable) meshLib[libIdx] = null;
     }
 
+    export function getStats() : [number] { return [cloneCount, originalVerts, clonedVerts]; }
+
 
     var matLoaded = false;
     export function defineMaterials(scene : BABYLON.Scene, materialsRootDir : string = "./") : void {
         if (!BABYLON.Engine.Version || Number(BABYLON.Engine.Version.substr(0, BABYLON.Engine.Version.lastIndexOf("."))) < 2.0) throw "Babylon version too old";
         if (matLoaded) return;
-        BABYLON.Tools.Log('In CheckBoxFont.defineMaterials');
         if (materialsRootDir.lastIndexOf("/") + 1  !== materialsRootDir.length) { materialsRootDir  += "/"; }
         var material : BABYLON.StandardMaterial;
         var texture : BABYLON.Texture;
@@ -98,7 +117,6 @@ module CheckBoxFont{
 
             CheckBoxFont.defineMaterials(scene, materialsRootDir); //embedded version check
             var cloning = source && source !== null;
-            BABYLON.Tools.Log('defining mesh: ' + this.name + (cloning ? ' (cloned)' : ''));
 
             this.id = this.name;
             this.billboardMode  = 0;
@@ -112,9 +130,10 @@ module CheckBoxFont{
             this.scaling.y   = 1;
             this.scaling.z   = 1;
             this.isVisible       = true;
+            this.setEnabled(true);
             this.checkCollisions = false;
             this.receiveShadows  = false;
-            this["castShadows"]  = false; // typescript safe way to specify a property not part of Mesh
+            this["castShadows"]  = false; // typescript safe
             if (!cloning){
                 this.setVerticesData(BABYLON.VertexBuffer.PositionKind, [
                     -0.6,0,0,-0.05,0,0,-0.05,0.05,0,-0.6,0,0,-0.6,0.65,0,-0.65,0.65,0,-0.6,0.6,0,-0.05,0.6,0,-0.05,0.65,0,0,0,0,0,0.65,0,-0.05,0.65,0,-0.6,0.05,0,-0.65,0,0,-0.6,0.65,0,-0.05,0,0
@@ -148,7 +167,6 @@ module CheckBoxFont{
 
             CheckBoxFont.defineMaterials(scene, materialsRootDir); //embedded version check
             var cloning = source && source !== null;
-            BABYLON.Tools.Log('defining mesh: ' + this.name + (cloning ? ' (cloned)' : ''));
 
             this.id = this.name;
             this.billboardMode  = 0;
@@ -162,9 +180,10 @@ module CheckBoxFont{
             this.scaling.y   = 1;
             this.scaling.z   = 1;
             this.isVisible       = true;
+            this.setEnabled(true);
             this.checkCollisions = false;
             this.receiveShadows  = false;
-            this["castShadows"]  = false; // typescript safe way to specify a property not part of Mesh
+            this["castShadows"]  = false; // typescript safe
             if (!cloning){
                 this.setVerticesData(BABYLON.VertexBuffer.PositionKind, [
                     -0.1305,0.1659,0,-0.4841,0.5195,0,-0.5195,0.4841,0,-0.4841,0.1305,0,-0.1305,0.4841,0,-0.1659,0.5195,0,-0.6,0,0,-0.05,0,0,-0.05,0.05,0,-0.6,0,0,-0.6,0.65,0,-0.65,0.65,0,-0.6,0.6,0,-0.05,0.6,0,-0.05,0.65,0,0,0,0,0,0.65,0,-0.05,0.65,0,-0.1659,0.1305,0,-0.5195,0.1659,0,-0.6,0.05,0,-0.65,0,0,-0.6,0.65,0,-0.05,0,0
@@ -198,7 +217,6 @@ module CheckBoxFont{
 
             CheckBoxFont.defineMaterials(scene, materialsRootDir); //embedded version check
             var cloning = source && source !== null;
-            BABYLON.Tools.Log('defining mesh: ' + this.name + (cloning ? ' (cloned)' : ''));
 
             this.id = this.name;
             this.billboardMode  = 0;
@@ -212,9 +230,10 @@ module CheckBoxFont{
             this.scaling.y   = 1;
             this.scaling.z   = 1;
             this.isVisible       = true;
+            this.setEnabled(true);
             this.checkCollisions = false;
             this.receiveShadows  = false;
-            this["castShadows"]  = false; // typescript safe way to specify a property not part of Mesh
+            this["castShadows"]  = false; // typescript safe
             if (!cloning){
                 this.setVerticesData(BABYLON.VertexBuffer.PositionKind, [
                     -0.1305,0.1659,0,-0.4841,0.5195,0,-0.5195,0.4841,0,-0.1659,0.1305,0,-0.1659,0.1305,1,-0.4841,0.5195,1,-0.5195,0.4841,1,-0.4841,0.1305,0,-0.1305,0.4841,0,-0.1659,0.5195,0,-0.5195,0.1659,0,-0.5195,0.1659,1,-0.4841,0.1305,1,-0.1305,0.4841,1,-0.1659,0.5195,1,-0.6,0,0,-0.05,0,0,-0.05,0.05,0,-0.6,0.05,0,-0.6,0.05,1,-0.6,0,1,-0.05,0,1,-0.05,0.05,1,-0.6,0,0,-0.6,0.65,0,-0.65,0.65,0,-0.6,0,1,-0.65,0,0,-0.6,0.65,1,-0.65,0.65,1,-0.6,0.6,0,-0.05,0.6,0,-0.05,0.65,0,-0.6,0.6,1,-0.6,0.65,0,-0.05,0.65,1,0,0,0,0,0.65,0,-0.05,0.65,0,0,0,1,-0.05,0,0,0,0.65,1,-0.05,0.65,1,-0.1305,0.1659,1,-0.65,0,1,-0.6,0.65,1,-0.05,0.6,1,-0.05,0,1
@@ -248,7 +267,6 @@ module CheckBoxFont{
 
             CheckBoxFont.defineMaterials(scene, materialsRootDir); //embedded version check
             var cloning = source && source !== null;
-            BABYLON.Tools.Log('defining mesh: ' + this.name + (cloning ? ' (cloned)' : ''));
 
             this.id = this.name;
             this.billboardMode  = 0;
@@ -262,9 +280,10 @@ module CheckBoxFont{
             this.scaling.y   = 1;
             this.scaling.z   = 1;
             this.isVisible       = true;
+            this.setEnabled(true);
             this.checkCollisions = false;
             this.receiveShadows  = false;
-            this["castShadows"]  = false; // typescript safe way to specify a property not part of Mesh
+            this["castShadows"]  = false; // typescript safe
             if (!cloning){
                 this.setVerticesData(BABYLON.VertexBuffer.PositionKind, [
                     -0.6,0,0,-0.05,0,0,-0.05,0.05,0,-0.6,0.05,0,-0.6,0.05,1,-0.6,0,1,-0.05,0,1,-0.05,0.05,1,-0.6,0,0,-0.6,0.65,0,-0.65,0.65,0,-0.6,0,1,-0.65,0,0,-0.6,0.65,1,-0.65,0.65,1,-0.6,0.6,0,-0.05,0.6,0,-0.05,0.65,0,-0.6,0.6,1,-0.6,0.65,0,-0.05,0.65,1,0,0,0,0,0.65,0,-0.05,0.65,0,0,0,1,-0.05,0,0,0,0.65,1,-0.05,0.65,1,-0.65,0,1,-0.6,0.65,1,-0.05,0.6,1,-0.05,0,1

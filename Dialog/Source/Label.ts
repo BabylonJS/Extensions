@@ -1,15 +1,9 @@
 /// <reference path="./Panel.ts"/>
 /// <reference path="./Letter.ts"/>
 module DIALOG{
-    export class Label extends BasePanel{
-        private static FULL_SCALE_PLACEHOLDER_WIDTH  = 0.3;
-        private static FULL_SCALE_PLACEHOLDER_HEIGHT = 0.5;
-        private static BOLD_MULT = 1.4;
-        
+    export class Label extends BasePanel{        
         public static DEFAULT_FONT_MODULE : string;
         
-        private _fontSize = 1;
-        private _bold = false;
         public  _isTypeface3D :boolean; // public for CheckBox sub-class
         /**
          * Sub-class of BasePanel containing a set of Letter subPanels.
@@ -31,13 +25,10 @@ module DIALOG{
             }
             // align in Z dim, so 3D letters, re scaled by factory, are positioned at 0 in Z.  No effect in 2D.
             this.setUniformZ(0);
-             
-            // spaces are null, override values for placeholder
-            this.placeHolderWidth  = Label.FULL_SCALE_PLACEHOLDER_WIDTH;
-            this.placeHolderHeight = Label.FULL_SCALE_PLACEHOLDER_HEIGHT;
             
             if (! _button){
                 this.material = DialogSys.ORANGE[1];
+                this.verticalMargin = 0.02;
             }    
         }
         // =================================== Appearance Methods ====================================
@@ -45,60 +36,45 @@ module DIALOG{
          * Change the scaling.x & scaling.y of each letter mesh.
          * @param {number} size - This is the new scaling to use.
          * @param {boolean} relative - When true, the size is multiplied by the previous value.
+         * @return {Label} For convenience of stringing methods together
          */
-        public setFontSize(size : number, relative? : boolean){
-            if (relative){
-                this._fontSize *= size;
-            }else{
-                this._fontSize = size;
-            }
-            this._scaleLetters();
+        public setFontSize(size : number, relative? : boolean) : BasePanel{
+            return this.setSubsFaceSize(size, relative);
         }
-        
-        /**
-         * Change the scaling.x of each letter, based on the bold setting
-         * @param {boolean} bold - when true make wider in scaling.x than in scaling.y
-         */
-        public setBold(bold : boolean){
-            this._bold = bold;
-            this._scaleLetters();
-        }
-        
-        /**
-         * Change the scaling.x & scaling.y of each letter mesh.
-         * @param {number} x - Value for the X dimension
-         * @param {number} y - Value for the Y dimension
-         */
-        private _scaleLetters(){
-            var x = this._bold ? this._fontSize * Label.BOLD_MULT : this._fontSize;
-            var letters = this.getSubPanels();
-            for (var i = letters.length - 1; i >= 0; i--){
-                if (letters[i] !== null){
-                    letters[i].scaling.x = x;
-                    letters[i].scaling.y = this._fontSize;
-                }
-            }
-            this.placeHolderWidth = Label.FULL_SCALE_PLACEHOLDER_WIDTH   * x;
-            this.placeHolderHeight = Label.FULL_SCALE_PLACEHOLDER_HEIGHT * this._fontSize;
-            this.invalidateLayout();
-        }
+
         /**
          * Set the material of each letter.
          * @param {Array<BABYLON.StandardMaterial>} matArray - An array of materials to choose from based on geometry
          *    [0] - Version when building from a 3D font
          *    [1] - Version when building from a 2D font; backface culling disabled
+         * @return {Label} For convenience of stringing methods together
          */
-        public setLetterMaterial(matArray : Array<BABYLON.StandardMaterial>){
-            var mat = matArray[this._isTypeface3D ? 0 : 1];
-            
+        public setLetterMaterial(matArray : Array<BABYLON.StandardMaterial>, selectedText? : string) : Label{
+            var mat = matArray[(this._isTypeface3D || DialogSys.USE_CULLING_MAT_FOR_2D) ? 0 : 1];
             var letters = this.getSubPanels();
-            for (var i = letters.length - 1; i >= 0; i--){
+            
+            var startIdx = -1;
+            var endIdx   : number;            
+            if (selectedText){
+                startIdx = this.name.indexOf(selectedText);
+                endIdx = startIdx + selectedText.length;    
+            }
+            
+            if (startIdx === -1){
+                startIdx = 0;
+                endIdx = letters.length - 1;
+            }
+            
+            for (var i = startIdx; i <= endIdx; i++){
                 if (letters[i] !== null){
                     letters[i].material = mat;
                 }
             }
+            return this;
         }
         // ======================================== Overrides ========================================
+        /** @override */ public getFullScalePlaceholderWidth () : number { return 0.15; }
+        
         /**
          * @override
          * Restrict adds of only Letters.

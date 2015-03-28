@@ -2,6 +2,10 @@
 module DIALOG{
     export class Letter extends BasePanel{
         
+        // values for max above & min below; defaults good for most; Fontfactory overrides for extended letters
+        public maxAboveY =  0.682; // H, T, I, etc
+        public minBelowY = -0.23;  // g is the lowest   
+        
         // These are similar to those generated in BoundingBox, except they are done without regard to scaling.
         // They are only done ONCE.
         private _minWorld : BABYLON.Vector3;
@@ -15,8 +19,8 @@ module DIALOG{
             super(name, scene, parent, source, doNotCloneChildren); 
             
             // remove inner margins
-            this.horizontal_margin = 0;
-            this.vertical_margin   = 0;
+            this.horizontalMargin = 0;
+            this.verticalMargin   = 0;
             
             // initially not visible.  Changed in first call to _calcRequiredSize.  Elliminates messy
             // first appearance, when dynamically adding panels after the first layout of top level panel.
@@ -36,6 +40,9 @@ module DIALOG{
          * No actual layout of subs.  Need to set the _actual members, as super does though. 
          */
         public _layout(widthConstraint : number, heightConstraint : number): void {
+            if (!this._actualAboveOriginX){
+                this.visibility = 1;                
+            }
             this._actualAboveOriginX = this._maxAboveOrigin.x;
             this._actualAboveOriginY = this._maxAboveOrigin.y;
             this._actualBelowOriginX = this._minBelowOrigin.x;
@@ -53,25 +60,27 @@ module DIALOG{
                 var extend = BABYLON.Tools.ExtractMinAndMax(this.getVerticesData(BABYLON.VertexBuffer.PositionKind), 0, this.getTotalVertices());
                 this._minWorld = extend.minimum;
                 this._maxWorld = extend.maximum;
-                
-                this.visibility = 1;
             }
             
             this._maxAboveOrigin.x = this._maxWorld.x * this.scaling.x;
-            this._maxAboveOrigin.y = .682             * this.scaling.y; // H, T, I, etc
+            this._maxAboveOrigin.y = this.maxAboveY   * this.scaling.y;
             this._maxAboveOrigin.z = this._maxWorld.z * this.scaling.z;
             
             this._minBelowOrigin.x = this._minWorld.x * this.scaling.x;
-            this._minBelowOrigin.y = -0.23            * this.scaling.y; // g is the lowest
+            this._minBelowOrigin.y = this.minBelowY   * this.scaling.y;
             this._minBelowOrigin.z = this._minWorld.z * this.scaling.z;
          }
         
+        /**
+         * @override
+         * No meaning for letters
+         */
         public addSubPanel(sub : Panel, index? :number) : void{
             BABYLON.Tools.Error("Letters can have no sub-panels");
         }
         
-        public getSubPanel() : Array<Panel>{ return <Array<Panel>> null; }
-        public removeAt(index : number, doNotDispose? : boolean) : void{}
-        public removeAll(doNotDispose? : boolean) : void{}
+        /** @override */ public getSubPanel() : Array<Panel>{ return <Array<Panel>> null; }
+        /** @override */ public removeAt(index : number, doNotDispose? : boolean) : void{}
+        /** @override */ public removeAll(doNotDispose? : boolean) : void{}
      }
 }

@@ -7,7 +7,7 @@ module DIALOG{
         private static factory : CheckBoxFont.MeshFactory;
         
         constructor(letters: string, typeFace = Label.DEFAULT_FONT_MODULE){
-            super('   ' + letters, typeFace, null, true); // add space for box to replace later
+            super('  ' + letters, typeFace, null, true); // add space for box to replace later
             
             if (!CheckBox.factory){
                 CheckBox.factory = new CheckBoxFont.MeshFactory(DialogSys._scene);
@@ -50,6 +50,7 @@ module DIALOG{
             
             // mini layout for mesh, which does not cause overall layout due to Letter overrides
             subs[0]._calcRequiredSize();
+            subs[0].visibility = 1; 
             
             if(previousPosition) subs[0].position = previousPosition;
         }
