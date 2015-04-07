@@ -43,9 +43,10 @@ module DIALOG{
             while (subs[found] === null){
                 found++;
             }
-            subs[0].material = subs[found].material;
+            subs[0].material  = subs[found].material;
             subs[0].scaling.x = subs[found].scaling.x;
             subs[0].scaling.y = subs[found].scaling.y;
+            subs[0].layerMask = subs[found].layerMask;
             subs[0].parent = this;
             
             // mini layout for mesh, which does not cause overall layout due to Letter overrides
