@@ -143,6 +143,12 @@ class TowerOfBabel(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         default = False,
         )
     
+    export_noVertexOpt = bpy.props.BoolProperty(
+        name="No vertex sharing",
+        description="Turns off an optimization which reduces vertices",
+        default = False,
+        )
+    
     export_javaScript = bpy.props.BoolProperty(
         name="Export Javascript (.js) File",
         description="Produce an inline JavaScript (xxx.js) File",
@@ -156,8 +162,8 @@ class TowerOfBabel(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         )
     
     export_html = bpy.props.BoolProperty(
-        name="Export applicable .html File(s)",
-        description="Produce a xxx_JSON.html and/or xxx_inline.html as required by other selections",
+        name="Build .html File",
+        description="Produce xxx.html which loads the file as a .js",
         default = False,
         )
    
@@ -183,6 +189,7 @@ class TowerOfBabel(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         layout = self.layout
 
         layout.prop(self, 'export_onlyCurrentLayer') 
+        layout.prop(self, "export_noVertexOpt")
         layout.prop(self, "export_javaScript")
         layout.prop(self, "export_typeScript")
         layout.prop(self, "export_html")
@@ -313,7 +320,7 @@ class TowerOfBabel(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                     nextStartFace = 0
 
                     while True and self.isInSelectedLayer(object, scene):
-                        mesh = Mesh(object, scene, self.multiMaterials, nextStartFace, forcedParent, nameID, self.includeMeshFactory)
+                        mesh = Mesh(object, scene, self.multiMaterials, nextStartFace, forcedParent, nameID, self.export_noVertexOpt, self.includeMeshFactory)
                         self.meshesAndNodes.append(mesh)
                         self.hasShapeKeys = self.hasShapeKeys or hasattr(mesh, 'shapeKeyGroups')
                         nextStartFace = mesh.offsetFace
@@ -516,24 +523,18 @@ class TowerOfBabel(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         header += '    <meta charset="UTF-8">\n'
         header += '    <title>' + TowerOfBabel.nameSpace + '</title>\n' 
         header += '    <!-- edit path - name of babylon & other libraries as required -->\n'
-        header += '    <script src="http://cdn.babylonjs.com/2-0/babylon.js"></script>\n'
+        header += '    <script src="http://cdn.babylonjs.com/2-1/babylon.js"></script>\n'
         if hasShapeKeys:
             header += '    <script src="./POV.js"></script>\n' 
             header += '    <script src="./morph.js"></script>\n' 
         if useFactory:
             header += '    <script src="./TOB-runtime.js"></script>\n' 
-        if is_cocoonJS:
-            header += '    <script src="./cocoon.js"></script>\n' 
-        header += '    <script src="./' + TowerOfBabel.nameSpace + '.js"></script>\n' 
+        header += '    <script src="./' + TowerOfBabel.nameSpace + '.js"></script>\n\n' 
         
-        if is_cocoonJS:
-            header += '    <meta name="viewport" \n'
-            header += '          content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi">\n'
-        else:
-            header += '    <style>\n' 
-            header += '         html, body   { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; } \n' 
-            header += '         #renderCanvas{ width: 100%; height: 100%; } \n' 
-            header += '    </style>\n' 
+        header += '    <style>\n' 
+        header += '         html, body   { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; } \n' 
+        header += '         #renderCanvas{ width: 100%; height: 100%; } \n' 
+        header += '    </style>\n' 
             
         header += '</head>\n'
         
@@ -542,19 +543,7 @@ class TowerOfBabel(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         supported     = '    if (BABYLON.Engine.isSupported()) {\n'
         
         scriptBody   =  '        var canvas = document.getElementById("renderCanvas");\n'
-        if is_cocoonJS:
-            scriptBody   += '        canvas.screencanvas = true;\n'
-            scriptBody   += '        var width  = window.devicePixelRatio * window.innerWidth;\n'
-            scriptBody   += '        var height = window.devicePixelRatio * window.innerHeight;\n'
-            scriptBody   += '        canvas.width = width;\n'
-            scriptBody   += '        canvas.height = height;\n'
-            scriptBody   += '        canvas.getContext("webgl"); // preemptively create a device sized, webgl context; only 1 is ever created \n\n'
-
         scriptBody   += '        var engine = new BABYLON.Engine(canvas, true);\n'
-        if is_cocoonJS:
-            scriptBody   += '        engine.setSize(width, height);\n'
-            if TowerOfBabel.logInConsole: scriptBody   += '        BABYLON.Tools.Log("Cocoon version:  " + Cocoon.version);\n'
-
         scriptBody   += '\n'
         scriptBody   += '        var scene = new BABYLON.Scene(engine);\n'
         scriptBody   += '        materialsRootDir = "."; // edit when texture files in a different dir than html\n'
@@ -575,32 +564,16 @@ class TowerOfBabel(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         resize       += '        engine.resize();\n'
         resize       += '    });\n'
         
-        appEvents     = '        //app activation\n'
-        appEvents    += '        Cocoon.App.on("activated", function(){\n'
-        appEvents    += '            POV.BeforeRenderer.resumeSystem();\n'
-        appEvents    += '        });\n\n'
-        
-        appEvents    += '        //app Resume\n'
-        appEvents    += '        Cocoon.App.on("suspending", function () {\n'
-        appEvents    += '            POV.BeforeRenderer.pauseSystem();\n'
-        appEvents    += '        });\n\n'
-        
-        filename =  self.filepathMinusExtension;
-        filename += '_cocoon.html' if is_cocoonJS else '.html'
+        filename =  self.filepathMinusExtension + '.html'
         file_handler = io.open(filename, 'w', encoding='utf8') 
         file_handler.write('<html>\n')
         file_handler.write(header)
         file_handler.write(body)
         file_handler.write('<script>\n')
-        if is_cocoonJS:
-            file_handler.write(scriptBody)
-            if hasShapeKeys:
-                file_handler.write(appEvents)
-        else:
-            file_handler.write(supported)
-            file_handler.write(scriptBody)
-            file_handler.write(noWebGL)
-            file_handler.write(resize)
+        file_handler.write(supported)
+        file_handler.write(scriptBody)
+        file_handler.write(noWebGL)
+        file_handler.write(resize)
         file_handler.write('</script>\n')
         file_handler.write('</body>\n')
         file_handler.write('</html>\n')
@@ -852,7 +825,7 @@ class FCurveAnimatable:
                                              format_bool(self.autoAnimateLoop) + ', 1.0);\n')
 #===============================================================================
 class Mesh(FCurveAnimatable):
-    def __init__(self, object, scene, multiMaterials, startFace, forcedParent, nameID, includeMeshFactory):
+    def __init__(self, object, scene, multiMaterials, startFace, forcedParent, nameID, noVertexOpt, includeMeshFactory):
         super().__init__(object, True, True, True)  #Should animations be done when foredParent
         
         self.name = object.name + str(nameID)
@@ -1069,7 +1042,7 @@ class Mesh(FCurveAnimatable):
                             vertex_Color = Colormap[face.index].color3
                         
                     # Check if the current vertex is already saved                  
-                    alreadySaved = alreadySavedVertices[vertex_index] and not hasSkeleton
+                    alreadySaved = alreadySavedVertices[vertex_index] and not (hasSkeleton or noVertexOpt)
                     if alreadySaved:
                         alreadySaved = False                      
                     
