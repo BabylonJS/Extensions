@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="POV combine">
+    <description>combine separate .js and .d.ts files </description>
+	
+	<property name="version" value="1.1"/>
+	
+	<!-- assumes Babylon.js & Extensions respositories are mounted just below here -->
+	<property name="mountPoint" value="/js-dev"/>
+	<property name="gulp"       value="${mountPoint}/Babylon.js/Tools/Gulp"/>
+	<property name="TOB"        value="${mountPoint}/Extensions/TowerOfBabel/testing/lib"/>
+	<property name="project"    value="${mountPoint}/Extensions/POV"/>
+    <!-- ===================== Combine Section ============================ -->
+    <target name="combine">    	
+    	<concat destfile="${project}/POV.${version}.-debug.js" fixlastline="true">
+        	<filelist dir="${project}/out"
+        	    files="Pace.js, MotionEvent.js, EventSeries.js, BeforeRenderer.js"/>         
+    	</concat>
+    		
+    	<concat destfile="${project}/POV.${version}.d.ts" fixlastline="true">
+        	<filelist dir="${project}/out"
+        	    files="Pace.d.ts, MotionEvent.d.ts, EventSeries.d.ts, BeforeRenderer.d.ts"/>         
+    	</concat>
+		
+        <copy file="${project}/POV.${version}.-debug.js" tofile="${TOB}/POV.js"/>
+        <copy file="${project}/POV.${version}.d.ts"      toDir="${mountPoint}/Extensions/Morph/References"/>
+    		
+    </target>
+    <!-- ===================== Minify Section ============================ -->
+    <target name="minify" depends="combine">
+    	<exec dir="${gulp}" executable="gulp" failonerror="true" >
+	    	<arg line="makeUgly --path ${project} --fileIn POV.${version}.-debug.js"/>
+    	</exec>
+	    <move file="${project}/POV.${version}.-debug.min.js" tofile="${project}/POV.${version}.js"/> 
+        <copy file="${project}/POV.${version}.js" tofile="${TOB}/POV.js"/>
+    </target>
+	
+</project>
