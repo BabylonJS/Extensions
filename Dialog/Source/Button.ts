@@ -9,11 +9,8 @@ module DIALOG{
         // group for when this is a radio button
         private _group : RadioGroup;
         
-        // beforeRender & items for it
-        private _btnBRenderer : () => void;
-        public static MILLIS_DELAY = 1000 / 60;
-        private _startTime : number;
-        private _start = false;
+        // afterRender items
+        private _chngInProgress = false;
         
         /**
          * @param {string} label - The text to display on the button.
@@ -42,10 +39,10 @@ module DIALOG{
             this.horizontalMargin *= 1.5;
             this.verticalMargin   *= 1.5;
             this.setFontSize(0.65);
-            this.setSelected(false, true); // assigns the multi material too
-            this.setEnabled(true);         // assigns the material of the letters too
+            this.setSelected(false); // assigns the multi material too
+            this.enableButton(true);   // assigns the material of the letters too
             
-            var ref = this; // need for both the pick func & beforeRenderer
+            var ref = this;
             this.registerPickAction(
                 function () {
                     if (!ref._panelEnabled) return;               
@@ -53,24 +50,23 @@ module DIALOG{
                 }
             );
             
-            //register beforeRenderer, when Button.ACTION_BUTTON
+            //register after Renderer, when Button.ACTION_BUTTON
             if (this._button_type === Button.ACTION_BUTTON){
-                this._btnBRenderer = function(){ref._delayedStart();}
-                super.registerBeforeRender(this._btnBRenderer);  
+                super.registerAfterRender(Button._delayedStart);
             }
         }
          /**
-         * delayedStart() registered only for Button.ACTION_BUTTON types
+         * _delayedStart() registered only for Button.ACTION_BUTTON types
          */
-        private _delayedStart() : void {
-            if (this._start){
-                this._start = false;
-                this._startTime = BABYLON.Tools.Now;
-            }  
-            else if (this._startTime > 0  && BABYLON.Tools.Now - this._startTime >= Button.MILLIS_DELAY){  
-                if (this._callback) this._callback(this);
-                this.setSelected(false, true);  // after delay change back to un-selected, without callbacks           
-                this._startTime = 0;
+        private static _delayedStart(mesh: BABYLON.AbstractMesh) : void {
+            var asButton = <Button> mesh;
+            if (asButton._chngInProgress){
+                asButton._chngInProgress = false;
+                asButton.setSelected(false);  // after delay change back to un-selected           
+                if (asButton._callback) asButton._callback(asButton);
+            
+            }else if (asButton.material !== Button.MAT){
+                asButton._chngInProgress = true;
             }
         }
         // =============================== Selection / Action Methods ================================
@@ -79,17 +75,13 @@ module DIALOG{
          * Visibly changes out the material to indicate button is selected or not.
          * @param {boolean} selected - new value to set to
          * @param {boolean} noCallbacks - when true, do nothing in addition but change material.
-         * Used in constructor and by before render to unselect after click.
+         * Used in constructor and by after renderer to unselect after click.
          */
         public setSelected(selected : boolean, noCallbacks? :boolean) {
             this._selected = selected;
             this.material = selected ? Button.SELECTED_MAT : Button.MAT;
             if (!noCallbacks){
-                if (this._group) this._group.reportSelected(this);
-                
-                if (this._button_type === Button.ACTION_BUTTON){
-                    this._start = true;
-                }
+                if (this._group) this._group.reportSelected(this);               
             }
         }
         
@@ -99,7 +91,7 @@ module DIALOG{
          * DO NOT change to 'set Enabled' due to that.
          * @param {boolean} enabled - New value to assign
          */
-        public setEnabled(enabled : boolean) {
+        public enableButton(enabled : boolean) {
             this._panelEnabled = enabled;
             this.setLetterMaterial(enabled ? DialogSys.BLACK : DialogSys.LT_GREY);
         }
@@ -117,12 +109,12 @@ module DIALOG{
         // ======================================== Overrides ========================================       
         /**
          * @override
-         * disposes of before renderer too
+         * disposes of after renderer too
          * @param {boolean} doNotRecurse - ignored
          */
         public dispose(doNotRecurse?: boolean): void {
             super.dispose(false);
-            this.unregisterBeforeRender(this._btnBRenderer);
+            this.unregisterAfterRender(Button._delayedStart);
         }
         // ========================================== Enums  =========================================    
         private static _ACTION_BUTTON = 0; 

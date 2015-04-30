@@ -4,7 +4,7 @@
 module DIALOG{
     export class Menu extends BasePanel implements RadioGroup{
         private _menu : BasePanel;
-        private _selectedIndex : boolean;
+        private _selectedIndex : number;
         private _callbacks = new Array<(button: Button) => void>();
         /**
          * @param {string} title - Optional mesh to display above the menu buttons
@@ -38,7 +38,7 @@ module DIALOG{
         // ===================================== RadioGroup Impl =====================================
         /**
          * called by Buttons that have a RadioGroup (this) assigned to them
-         * @param {BasePanel} reporter - This is the button report in that ithas been clicked
+         * @param {BasePanel} reporter - This is the button report in that it has been clicked
          */
         public reportSelected(reporter : BasePanel) : void{
             var subs = this._menu.getSubPanels();
@@ -47,9 +47,15 @@ module DIALOG{
                 if (sub != reporter){
                     (sub).setSelected(false, true);
                     
-                } else if (this._callbacks[i] && this._callbacks[i] !== null) this._callbacks[i](sub);
+                } else {
+                    this._selectedIndex = i;
+                    if (this._callbacks[i] && this._callbacks[i] !== null) this._callbacks[i](sub);
+                } 
             }
-
+        }
+        public get selectedIndex(): number { return this._selectedIndex; }
+        public set selectedIndex(index : number) {
+            (<Button> this._menu.getSubPanels()[index]).setSelected(true);
         }
         // ======================================== Overrides ========================================
         /**

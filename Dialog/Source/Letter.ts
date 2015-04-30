@@ -11,6 +11,9 @@ module DIALOG{
         private _minWorld : BABYLON.Vector3;
         private _maxWorld : BABYLON.Vector3; 
         
+        // indicate this letter is really a result of merged meshes
+        public _consolidated = false;
+        
         /**
          * Full BABYLON.Mesh parameter to support cloning.  Defaulting on BasePanel parameter additions.
          */
@@ -62,12 +65,12 @@ module DIALOG{
                 this._maxWorld = extend.maximum;
             }
             
-            this._maxAboveOrigin.x = this._maxWorld.x * this.scaling.x;
-            this._maxAboveOrigin.y = this.maxAboveY   * this.scaling.y;
+            this._maxAboveOrigin.x = this._maxWorld.x * (this._consolidated ? 1             : this.scaling.x);
+            this._maxAboveOrigin.y = this.maxAboveY   * (this._consolidated ? this._xyScale : this.scaling.y);
             this._maxAboveOrigin.z = this._maxWorld.z * this.scaling.z;
             
-            this._minBelowOrigin.x = this._minWorld.x * this.scaling.x;
-            this._minBelowOrigin.y = this.minBelowY   * this.scaling.y;
+            this._minBelowOrigin.x = this._minWorld.x * (this._consolidated ? 1             : this.scaling.x);
+            this._minBelowOrigin.y = this.minBelowY   * (this._consolidated ? this._xyScale : this.scaling.y);
             this._minBelowOrigin.z = this._minWorld.z * this.scaling.z;
          }
         

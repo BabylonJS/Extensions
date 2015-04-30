@@ -6,13 +6,12 @@ module DIALOG{
         // store factory of the 4 check meshes here, rather than TOB runtine
         private static factory : CheckBoxFont.MeshFactory;
         
-        constructor(letters: string, typeFace = Label.DEFAULT_FONT_MODULE){
-            super('  ' + letters, typeFace, null, true); // add space for box to replace later
+        constructor(letters: string, typeFace = Label.DEFAULT_FONT_MODULE, _prohibitMerging? : boolean){
+            super(letters, typeFace, null, true, _prohibitMerging); // add space for box to replace later
             
             if (!CheckBox.factory){
                 CheckBox.factory = new CheckBoxFont.MeshFactory(DialogSys._scene);
             }
-            this._assignCheckMesh();
             
             var ref = this;
             this.registerPickAction(
@@ -39,13 +38,13 @@ module DIALOG{
             }else{
                 subs[0] = <Letter> CheckBox.factory.instance(this._selected ? "checked2D" : "unchecked2D");
             }
-            var found = 1;
+            var found = subs.length - 1;
             while (subs[found] === null){
-                found++;
+                found--;
             }
             subs[0].material  = subs[found].material;
-            subs[0].scaling.x = subs[found].scaling.x;
-            subs[0].scaling.y = subs[found].scaling.y;
+            subs[0].scaling.x = subs[found]._xyScale;
+            subs[0].scaling.y = subs[found]._xyScale;
             subs[0].layerMask = subs[found].layerMask;
             subs[0].parent = this;
             
@@ -63,9 +62,31 @@ module DIALOG{
             if (this._callback) this._callback(this);
         }
                 
-        public setEnabled(enabled : boolean) {
+        public enableButton(enabled : boolean) {
             this._panelEnabled = enabled;
             this.setLetterMaterial(enabled ? DialogSys.CURRENT_FONT_MAT_ARRAY : DialogSys.LT_GREY);
+        }
+        
+        /**
+         * @override
+         */
+        public _calcRequiredSize(): void {
+            // call label's _calcRequiredSize, which merges meshes
+            super._calcRequiredSize();
+            var subs = this.getSubPanels();
+            
+            // add space for the check letter, when the first Letter not 1 of the 4 possible 
+            if (!(subs[0] instanceof CheckBoxFont.unchecked2D) &&
+                !(subs[0] instanceof CheckBoxFont.checked2D  ) &&
+                !(subs[0] instanceof CheckBoxFont.unchecked3D) &&
+                !(subs[0] instanceof CheckBoxFont.checked3D  )){
+                
+                this.addSubPanel(<BasePanel> null, 0);
+                this.addSubPanel(<BasePanel> null, 0);
+                this._assignCheckMesh();
+                
+                super._calcRequiredSize();
+            }
         }
     }
 }

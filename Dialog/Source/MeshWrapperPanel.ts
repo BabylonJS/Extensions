@@ -72,6 +72,23 @@ module DIALOG{
             }
          }
 
+        /** 
+         * @override 
+         * Change layermask of this._inside and any children
+         */
+        public setLayerMask(maskId :number){
+            var insideKids = this._inside.getChildren();
+            for (var i = insideKids.length - 1; i >= 0; i--){
+                (<BABYLON.AbstractMesh> insideKids[i]).layerMask = maskId;
+                (<BABYLON.AbstractMesh> insideKids[i]).setEnabled(maskId !== DialogSys.SUSPENDED_DIALOG_LAYER);
+            }
+            this._inside.layerMask = maskId;
+            this._inside.setEnabled(maskId !== DialogSys.SUSPENDED_DIALOG_LAYER);
+            
+            this.layerMask = maskId;
+            this.setEnabled(maskId !== DialogSys.SUSPENDED_DIALOG_LAYER);
+        }
+        
         /** @override */
         public addSubPanel(sub : BasePanel, index? :number) : void{
             BABYLON.Tools.Error("wrappers can have no sub-panels");

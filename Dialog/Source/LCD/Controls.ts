@@ -45,7 +45,7 @@ module DIALOG{
             geo.bottom .visibility = ('E235689'  .indexOf(val) !== -1 || visible0) ? 1 : DigitWtLogic._minVisibility;
             geo.botRite.visibility = ('13456789' .indexOf(val) !== -1 || visible0) ? 1 : DigitWtLogic._minVisibility;
             geo.topRite.visibility = ('1234789'  .indexOf(val) !== -1 || visible0) ? 1 : DigitWtLogic._minVisibility;
-            geo.center .visibility = ('E2345689-'.indexOf(val) !== -1         ) ? 1 : DigitWtLogic._minVisibility;
+            geo.center .visibility = ('E2345689-'.indexOf(val) !== -1            ) ? 1 : DigitWtLogic._minVisibility;
             geo.dot    .visibility = showDot ? 1 : DigitWtLogic._minVisibility;
         }        
         // ======================================== Overrides ========================================
@@ -65,7 +65,7 @@ module DIALOG{
          * Do not want _innerMesh static to disposed of, for future cloning duty
          */
         public dispose(doNotRecurse? : boolean) : void{
-            super.dispose(true);
+            super.dispose();
         }
     }
     //================================================================================================
@@ -79,7 +79,7 @@ module DIALOG{
          * Sub-class of BasePanel containing a set of DigitWtLogic subPanels.
          * @param {number} _nDigits - The # of digits to use.  
          */
-        constructor(name : string, private _nDigits : number, private _alwaysDot? :boolean){
+        constructor(name : string, private _nDigits : number, private _alwaysDot? :boolean, private _fixed? : number){
             super(name, DialogSys._scene);
             this.name = name;
              
@@ -98,7 +98,8 @@ module DIALOG{
         public set value(value : number){
             this._value = value;
             
-            var asString = value + '';
+            
+            var asString = this._fixed ? value.toFixed(this._fixed) : value.toString();
             var nDigits = asString.length;
 
             // reduce nDigits if none of them is a '.', otherwise put a '.' at the end
@@ -112,9 +113,7 @@ module DIALOG{
             var subs = this.getSubPanels();
             
             // check for and response to a number too big to display
-            if (nDigits > this._nDigits){
-                BABYLON.Tools.Error('Maximum # of digits exceeded');
-                
+            if (nDigits > this._nDigits){                
                 (<DigitWtLogic> subs[0]).setDigit('E');
                 for (var i = 1; i < this._nDigits; i++){
                     (<DigitWtLogic> subs[i]).setDigit('0', false);
@@ -152,10 +151,8 @@ module DIALOG{
         private _downButton : Letter;
         private _upButton   : Letter;
                 
-        // beforeRender & items for it
-        private _btnBRenderer : () => void;
-        private _startTime : number;
-        private _start = false;
+        // after Renderer items
+        private _chngInProgress = false;
         
         /**
          * Sub-class of BasePanel containing a set of DigitWtLogic subPanels.
@@ -215,21 +212,18 @@ module DIALOG{
             this.addSubPanel(this._display);
             this.addSubPanel(this._upButton   = this._getButton('Up') );
             
-            //register beforeRenderer
-            var ref = this;
-            this._btnBRenderer = function(){ref._normalMaterials();}
-            super.registerBeforeRender(this._btnBRenderer);  
-
-        } 
+            super.registerAfterRender(NumberScroller._normalMaterials);
+            this.setBorderVisible(true); // nothing shown, needed for after renderer to always fire
+        }  
         // ======================================== Overrides ========================================       
         /**
          * @override
-         * disposes of before renderer too
+         * disposes of after renderer too
          * @param {boolean} doNotRecurse - ignored
          */
         public dispose(doNotRecurse?: boolean): void {
             super.dispose(false);
-            this.unregisterBeforeRender(this._btnBRenderer);
+            this.unregisterAfterRender(NumberScroller._normalMaterials);
         }
         // =============================== Selection / Action Methods ================================
         private _getButton(className : string) : Letter{
@@ -240,12 +234,11 @@ module DIALOG{
             ret.minBelowY = -halfHeight;
             ret.material = NumberScroller.MAT;
             
-            var ref = this; // need for both the pick func & beforeRenderer
+            var ref = this;
             ret.registerPickAction(
                 function () {
                     if (!ret._panelEnabled) return;
                     ret.material = NumberScroller.SELECTED_MAT;
-                    ref._start = true;  
                                       
                     if (className === 'Down') ref._decrement(); 
                     else ref._increment(); 
@@ -253,16 +246,18 @@ module DIALOG{
             );
             return ret;
         }
-        
-        private _normalMaterials() : void {
-            if (this._start){
-                this._start = false;
-                this._startTime = BABYLON.Tools.Now;
-            }  
-            else if (this._startTime > 0 && BABYLON.Tools.Now - this._startTime >= Button.MILLIS_DELAY){  
-                this._downButton.material = NumberScroller.MAT;
-                this._upButton  .material = NumberScroller.MAT;
-                this._startTime = 0;
+        /**
+         * After renderer
+         */
+        private static _normalMaterials(mesh: BABYLON.AbstractMesh) : void {
+            var asScroller = <NumberScroller> mesh;
+            if (asScroller._chngInProgress){
+                asScroller._chngInProgress = false;
+                asScroller._downButton.material = NumberScroller.MAT;
+                asScroller._upButton  .material = NumberScroller.MAT;
+            
+            }else if (asScroller._downButton.material !== NumberScroller.MAT || asScroller._upButton.material !== NumberScroller.MAT){
+                asScroller._chngInProgress = true;
             }
         }
         // ============================== value getter/setters Methods ===============================

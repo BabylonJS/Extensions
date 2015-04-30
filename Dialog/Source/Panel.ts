@@ -4,49 +4,65 @@ module DIALOG{
     }
     
     export class BasePanel extends BABYLON.Mesh{   
-        // Instance level Look & Feel (must call invalidateLayout() once visible)
+        // Instance level Look & Feel (must call invalidateLayout() or use setter once visible)
         public horizontalMargin = 0.1; 
         public verticalMargin   = 0.1; 
                  
-        public horizontalAlignment =  Panel.ALIGN_LEFT;
-        public verticalAlignment   =  Panel.ALIGN_TOP;
+        public horizontalAlignment =  Panel.ALIGN_LEFT; // setter available
+        public verticalAlignment   =  Panel.ALIGN_TOP ; // setter available
         
         // used to control the width of the border in the XY dimension
         public borderInsideVert = 0.05;
         public borderDepth = DialogSys.DEPTH_SCALING_3D;
         
-        public stretchHorizontal = false;
-        public stretchVertical   = false;
+        public stretchHorizontal = false; // setter available
+        public stretchVertical   = false; // setter available
         
         private static BOLD_MULT = 1.4;
         private _bold = false;
         
         public placeHolderWidth  : number;
         public placeHolderHeight : number;
+              
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+        // members for top level panels to hold settings when on the dialog modal stack
+        public maxViewportWidth  = 1;
+        public maxViewportHeight = 1;
+        
+        private _fitToWindow = false;
+        
+        // prior to fitting to window, to keep re-doing (do to resizing) based on original
+        // only public for DialogSys._adjustCameraForPanel
+        public _originalReqdWidth  : number;  
+        public _originalReqdHeight : number;
         
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - 
         // members to hold the result of the required size calc
-        // any that are public are only so for sub-classing
+        // are public only for sub-classing
         public _maxAboveOrigin    = BABYLON.Vector3.Zero();
         public _minBelowOrigin    = BABYLON.Vector3.Zero(); // expressed as either 0, or a negative number of the smallest vertex in each dimension
         
         // used by parent panel to assign position when stretched
+        // are public only for sub-classing
         public _actualAboveOriginX : number;
         public _actualAboveOriginY : number;
         public _actualBelowOriginX : number;
         public _actualBelowOriginY : number;
                 
         private _nStretchers = [0,0];
-        public  _xyScale = 1; // only publix for MeshWrapperPanel
+        public  _xyScale = 1; 
         private _dirty = true;
         private _visibleBorder = false;
-        private _bRenderer : () => void;
         
         // common members used by various buttons, public for sub-classing
         public _pickFunc : () => void; // only public for access in PickAction
         public _callback : (control: BasePanel) => void;
         public _panelEnabled  = true;
         public _selected = false;
+        
+        // member to hold the result of a stack pop
+        public modalReturnedValue : any;
+        public modalReturnCallBack : () => void;
         
         // statics for borders
         private static _NORMALS = [
@@ -106,10 +122,7 @@ module DIALOG{
             }
             
             if (this._topLevel){
-                // tricky registering a prototype as a callback in constructor; cannot say 'this.beforeRender()' & must be wrappered
-                var ref = this;
-                this._bRenderer = function(){ref._beforeRender();}
-                super.registerBeforeRender(this._bRenderer);
+                super.registerBeforeRender(BasePanel._beforeRender);
             }
             this.placeHolderWidth  = this.getFullScalePlaceholderWidth ();
             this.placeHolderHeight = this.getFullScalePlaceholderHeight();
@@ -189,13 +202,16 @@ module DIALOG{
                 ret.push.apply(ret, back);
             }
             return ret;    
-         }
+        }
+        
          /**
          * beforeRender() registered only for toplevel Panels
          */
-        private _beforeRender() : void {
-            if (this._dirty){  
-                this.layout();
+        private static _beforeRender(mesh: BABYLON.AbstractMesh) : void {
+            var asPanel = <BasePanel> mesh;
+            if (asPanel._dirty){  
+                asPanel.layout();
+                DialogSys._adjustCameraForPanel();
             }
         }
         
@@ -230,6 +246,29 @@ module DIALOG{
         public isSelected() : boolean { return this._selected; }
         public isPanelEnabled() : boolean { return this._panelEnabled; }
          // ===================================== Layout Methods ======================================
+        public get fitToWindow() : boolean { return this._fitToWindow; }
+        /**
+         * Assign whether Top Level Panel to conform to window dimensions.
+         */
+        public set fitToWindow(fitToWindow : boolean){
+            if (!this._topLevel) return;
+            
+            this._fitToWindow = fitToWindow;
+            
+            // record original reqd sizes
+            if (!this._originalReqdWidth){
+                this._originalReqdWidth  = this.getReqdWidth ();
+                this._originalReqdHeight = this.getReqdHeight();
+            } 
+            
+            // only need to do a layout here when not fitting, since _adjustCameraForPanel will for fitToWindow
+            if (!fitToWindow){
+                this.layout();
+            }
+            // does not actual do anything till on stack                    
+            DialogSys._adjustCameraForPanel();
+        }
+        
         /**
          * signal to the beforeRenderer of the top level Panel, to re-layout on next call
          */
@@ -242,14 +281,16 @@ module DIALOG{
         public layout() : void{
             this._calcRequiredSize(); // determine what the requirements are for the entire heirarchy 
             this._layout(this.getReqdWidth(), this.getReqdHeight() );
+            this.freezeWorldMatrix();
+            this._dirty = false;
         }
          
         /**
          * Layout the positions of this panel's sub-panels, based on this panel's layoutDir.
          * Only public for recursive calling across the instance hierarchy.
          * 
-         * @param {number} widthConstraint  - Will always be >= getWidth()
-         * @param {number} heightConstraint - Will always be >= getHeight()
+         * @param {number} widthConstraint  - Will always be >= getReqdWidth ()
+         * @param {number} heightConstraint - Will always be >= getReqdHeight()
          */
         public _layout(widthConstraint : number, heightConstraint : number): void { 
             if (!this._validateAlignmnent(this._layoutDir === Panel.LAYOUT_HORIZONTAL) ) return;
@@ -278,7 +319,6 @@ module DIALOG{
             this._actualBelowOriginY = -heightConstraint / 2;
                        
             this._adjustLayoutForOrigin();
-            this._dirty = false;
         }
         
         /**
@@ -622,14 +662,11 @@ module DIALOG{
                 maxHeight += height[0] + height[2];
             }
             
-            // to ensure centered rotation the the width, height, & depth are spread above and below origin.
-            this._maxAboveOrigin.x =  (this.horizontalMargin + maxWidth  / 2);
-            this._maxAboveOrigin.y =  (this.verticalMargin   + maxHeight / 2);
-            this._maxAboveOrigin.z =  (depth / 2);
             
-            this._minBelowOrigin.x =  - this._maxAboveOrigin.x;
-            this._minBelowOrigin.y =  - this._maxAboveOrigin.y;
-            this._minBelowOrigin.z =  - this._maxAboveOrigin.z;
+            this._maxAboveOrigin.z =  (depth / 2);
+            this._minBelowOrigin.z =  - this._maxAboveOrigin.z;          
+            
+            this._assignRequirements(maxWidth, maxHeight, depth);
         }
         /**
          * @return {number} - This returns the sum of the max X of a vertex, above 0, & the min X of a vertex, when less than 0
@@ -648,6 +685,26 @@ module DIALOG{
         }
         
         /**
+         * make the actual assignments out of _calcRequiredSize, so can be called from DialogSys._adjustCameraForPanel,
+         * when fitToWindow.  There is no gauranttee that all width & height will be used, if the is no align_right or
+         * align_bottom direct child, or a stretcher somewhere in the tree.
+         */
+        public _assignRequirements(width : number, height : number, depth? : number){
+            // to ensure centered rotation the width, height, & depth are spread above and below origin.
+            this._maxAboveOrigin.x =  this.horizontalMargin + width  / 2;
+            this._minBelowOrigin.x =  -this._maxAboveOrigin.x;
+            
+            this._maxAboveOrigin.y =  this.verticalMargin   + height / 2;            
+            this._minBelowOrigin.y =  -this._maxAboveOrigin.y;
+            
+            if (!depth || depth < this.borderDepth)
+                depth = this.borderDepth;
+            
+            this._maxAboveOrigin.z =  depth / 2;
+            this._minBelowOrigin.z =  -this._maxAboveOrigin.z;          
+        }
+        
+        /**
          * @return {number} - This returns the sum of the max Z of a vertex, above 0, & the min Z of a vertex, when less than 0
          */
         public getReqdDepth() : number {
@@ -656,9 +713,15 @@ module DIALOG{
         
         public setLayerMask(maskId :number){
             for (var i = this._subs.length - 1; i >= 0; i--){
-                this._subs[i].setLayerMask(maskId);
+                if (this._subs[i] !== null){
+                    this._subs[i].setLayerMask(maskId);
+                    // not required at lower level, since setEnabled walks up tree, but should be faster
+                    this._subs[i].setEnabled(maskId !== DialogSys.SUSPENDED_DIALOG_LAYER);
+                }
             }
             this.layerMask = maskId;
+            // need to make sure not pickable, when mask is for suspended level
+            this.setEnabled(maskId !== DialogSys.SUSPENDED_DIALOG_LAYER);
         }
         // ================================= Sub-Panel Access / Mod ==================================
         /**
@@ -675,7 +738,7 @@ module DIALOG{
          * @param {number} index - the position at which to add the sub-panel
          */
         public addSubPanel(sub : BasePanel, index? :number) : void{
-            if (index){
+            if (index !== undefined){
                 this._subs.splice(index, 0, sub);
             }else{
                 this._subs.push(sub);
@@ -683,6 +746,7 @@ module DIALOG{
             
             if (sub && sub !== null){
                 (<any> sub).parent = this;
+                this.setLayerMask(this.layerMask);
             }
             this.invalidateLayout();
         }
@@ -728,14 +792,26 @@ module DIALOG{
             for (var i = this._subs.length - 1; i >= 0; i--){
                 sub = this._subs[i];
                 if (sub && sub !== null){
-                    var bBox = sub.getBoundingInfo().boundingBox;
                     sub.position.z = z + this._minBelowOrigin.z;
                 }
             }
             this.invalidateLayout();
         } 
         
+        /**
+         * Change the scaling.x & scaling.y recursively of each sub-panel.
+         * @param {number} size - This is the new scaling to use.
+         * @param {boolean} relative - When true, the size is multiplied by the previous value.
+         * @return {BasePanel} For convenience of stringing methods together
+         */
         public setSubsFaceSize(size : number, relative? : boolean) : BasePanel{
+            // _xyScale has no meaning in anything other than a letter, but recording for merging in a Label
+            if (relative){
+                this._xyScale *= size;
+            }else{
+                this._xyScale = size;
+            }
+            
             var sub : BasePanel;
             for (var i = this._subs.length - 1; i >= 0; i--){
                 sub = this._subs[i];
@@ -744,12 +820,13 @@ module DIALOG{
                         sub.setFaceSize(size, relative);
                     }else{
                         sub.setSubsFaceSize(size, relative);
-                        var x = this._bold ? this._xyScale * BasePanel.BOLD_MULT : this._xyScale;
-                        this.placeHolderWidth  = this.getFullScalePlaceholderWidth () * x;
-                        this.placeHolderHeight = this.getFullScalePlaceholderHeight() * this._xyScale;
                     }
                 }
             }
+            var x = this._bold ? this._xyScale * BasePanel.BOLD_MULT : this._xyScale;
+            this.placeHolderWidth  = this.getFullScalePlaceholderWidth () * x;
+            this.placeHolderHeight = this.getFullScalePlaceholderHeight() * this._xyScale;
+            
             return this;
         }
         
@@ -781,15 +858,29 @@ module DIALOG{
         }
         
         /**
-         * Change the scaling.x & scaling.y of each letter mesh.
-         * @param {number} x - Value for the X dimension
-         * @param {number} y - Value for the Y dimension
+         * Change the scaling.x & scaling.y of each panel.
          */
         public _scaleXY(){
             var x = this._bold ? this._xyScale * BasePanel.BOLD_MULT : this._xyScale;
             this.scaling.x = x;
             this.scaling.y = this._xyScale;
             this.invalidateLayout();
+        }
+
+        /**
+         * Change the scaling.z  of each panel.
+         * @param {number} z - Value for the Z dimension
+         * @return {BasePanel} For convenience of stringing methods together
+         */
+        public scaleZ(z : number) : BasePanel{
+            var sub : BasePanel;
+            for (var i = this._subs.length - 1; i >= 0; i--){
+                sub = this._subs[i];
+                if (sub && sub !== null){
+                    sub.scaling.z = z;
+                }
+            }
+            return this;
         }
 
         public stretch(vert : boolean, horiz : boolean) : BasePanel{
@@ -823,9 +914,37 @@ module DIALOG{
          * @param {boolean} doNotRecurse - ignored
          */
         public dispose(doNotRecurse?: boolean): void {
+            this.unregisterBeforeRender(BasePanel._beforeRender);                
             super.dispose(false);
-            if (this._bRenderer){
-                this.unregisterBeforeRender(this._bRenderer);                
+        }
+        
+        /**
+         * @override
+         * Do the entire hierarchy, in addition
+         */
+        public freezeWorldMatrix() {
+            super.freezeWorldMatrix();
+            var sub : BasePanel;
+            for (var i = this._subs.length - 1; i >= 0; i--){
+                sub = this._subs[i];
+                if (sub && sub !== null){
+                    sub.freezeWorldMatrix();
+                }
+            }
+        }
+        
+        /**
+         * @override
+         * Do the entire hierarchy, in addition
+         */
+        public unfreezeWorldMatrix() {
+            super.unfreezeWorldMatrix();
+            var sub : BasePanel;
+            for (var i = this._subs.length - 1; i >= 0; i--){
+                sub = this._subs[i];
+                if (sub && sub !== null){
+                    sub.unfreezeWorldMatrix();
+                }
             }
         }
     }
