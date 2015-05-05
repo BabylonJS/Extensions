@@ -131,7 +131,6 @@ var createMainPanel = function () {
     inputBtn = new DIALOG.Button("Input");
     inputBtn.enableButton(false);
     inputBtn.assignCallback(function(){ 
-//    	console.log(BABYLON.AbstractMesh.nCompWMs);
         DIALOG.DialogSys.pushPanel(createInputPanel() );
     });
     buttons.addSubPanel(inputBtn);
@@ -344,7 +343,9 @@ var showLCDDetails = function () {
     var flipCheck = new DIALOG.CheckBox("(o)  (o)");
     flipCheck.setFontSize(.9);
     flipCheck.assignCallback(function(){ 
+        display.unfreezeWorldMatrix();
     	display.rotation.z = flipCheck.isSelected() ? 3.14 : 0;
+        display.freezeWorldMatrix();
     });
     panel.addSubPanel(flipCheck);
     

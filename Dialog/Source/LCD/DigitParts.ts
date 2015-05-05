@@ -1,4 +1,4 @@
-// File generated with Tower of Babel version: 2.0.0 on 03/26/15
+// File generated with Tower of Babel version: 2.0.1 on 05/04/15
 
 module DigitParts{
 
@@ -188,7 +188,8 @@ module DigitParts{
         }
 
         public dispose(doNotRecurse?: boolean): void {
-            this.setEnabled(false);
+            super.dispose(doNotRecurse);
+            clean(0);
         }
     }
 
@@ -549,7 +550,7 @@ module DigitParts{
             this.position.y  = 0;
             this.position.z  = 0;
             this.rotation.x  = 0;
-            this.rotation.y  = 0; 
+            this.rotation.y  = 0;
             this.rotation.z  = 0;
             this.scaling.x   = 1;
             this.scaling.y   = 1;

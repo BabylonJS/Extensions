@@ -5,8 +5,8 @@ module DIALOG{
     
     export class BasePanel extends BABYLON.Mesh{   
         // Instance level Look & Feel (must call invalidateLayout() or use setter once visible)
-        public horizontalMargin = 0.1; 
-        public verticalMargin   = 0.1; 
+        public horizontalMargin = 0.1; // setter available
+        public verticalMargin   = 0.1; // setter available
                  
         public horizontalAlignment =  Panel.ALIGN_LEFT; // setter available
         public verticalAlignment   =  Panel.ALIGN_TOP ; // setter available
@@ -933,11 +933,11 @@ module DIALOG{
             }
         }
         
-        /**
+       /**
          * @override
          * Do the entire hierarchy, in addition
          */
-        public unfreezeWorldMatrix() {
+ /*        public unfreezeWorldMatrix() {
             super.unfreezeWorldMatrix();
             var sub : BasePanel;
             for (var i = this._subs.length - 1; i >= 0; i--){
@@ -946,7 +946,7 @@ module DIALOG{
                     sub.unfreezeWorldMatrix();
                 }
             }
-        }
+        }*/
     }
     //================================================================================================
     //================================================================================================

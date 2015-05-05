@@ -269,7 +269,7 @@ module DIALOG{
         }
         
         public static get Version(): string {
-            return "1.0.0";
+            return "1.0.1";
         }
     }
 }

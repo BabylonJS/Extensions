@@ -16,8 +16,8 @@ var DIALOG;
             this._button = _button;
             this._topLevel = _topLevel;
             // Instance level Look & Feel (must call invalidateLayout() or use setter once visible)
-            this.horizontalMargin = 0.1;
-            this.verticalMargin = 0.1;
+            this.horizontalMargin = 0.1; // setter available
+            this.verticalMargin = 0.1; // setter available
             this.horizontalAlignment = Panel.ALIGN_LEFT; // setter available
             this.verticalAlignment = Panel.ALIGN_TOP; // setter available
             // used to control the width of the border in the XY dimension
@@ -906,20 +906,6 @@ var DIALOG;
                 sub = this._subs[i];
                 if (sub && sub !== null) {
                     sub.freezeWorldMatrix();
-                }
-            }
-        };
-        /**
-         * @override
-         * Do the entire hierarchy, in addition
-         */
-        BasePanel.prototype.unfreezeWorldMatrix = function () {
-            _super.prototype.unfreezeWorldMatrix.call(this);
-            var sub;
-            for (var i = this._subs.length - 1; i >= 0; i--) {
-                sub = this._subs[i];
-                if (sub && sub !== null) {
-                    sub.unfreezeWorldMatrix();
                 }
             }
         };
@@ -2115,7 +2101,7 @@ var DIALOG;
         };
         Object.defineProperty(DialogSys, "Version", {
             get: function () {
-                return "1.0.0";
+                return "1.0.1";
             },
             enumerable: true,
             configurable: true
@@ -4104,7 +4090,7 @@ var DIALOG;
     })(DIALOG.BasePanel);
     DIALOG.Menu = Menu;
 })(DIALOG || (DIALOG = {}));
-// File generated with Tower of Babel version: 2.0.0 on 03/26/15
+// File generated with Tower of Babel version: 2.0.1 on 05/04/15
 var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -4306,7 +4292,8 @@ var DigitParts;
             this["castShadows"] = false; // typescript safe
         }
         Geometry.prototype.dispose = function (doNotRecurse) {
-            this.setEnabled(false);
+            _super.prototype.dispose.call(this, doNotRecurse);
+            clean(0);
         };
         return Geometry;
     })(BABYLON.Mesh);

@@ -209,11 +209,6 @@ declare module DIALOG {
          * Do the entire hierarchy, in addition
          */
         freezeWorldMatrix(): void;
-        /**
-         * @override
-         * Do the entire hierarchy, in addition
-         */
-        unfreezeWorldMatrix(): void;
     }
     class Panel extends BasePanel {
         static BORDER_MAT: BABYLON.StandardMaterial;
