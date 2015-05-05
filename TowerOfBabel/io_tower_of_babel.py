@@ -1,7 +1,7 @@
 bl_info = {
     'name': 'Tower of Babel',
     'author': 'David Catuhe, Jeff Palmer',
-    'version': (2, 0, 0),
+    'version': (2, 1, 0),
     'blender': (2, 72, 0),
     'location': 'File > Export > Tower of Babel [.js + .ts + .html(s)]',
     'description': 'Translate to inline JavaScript & TypeScript modules',
@@ -10,6 +10,7 @@ bl_info = {
     'tracker_url': '',
     'category': 'Import-Export'}
     
+import base64
 import bpy
 import bpy_extras.io_utils
 import time
@@ -173,6 +174,12 @@ class TowerOfBabel(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         default = True,
         )
     
+    inlineTextures = bpy.props.BoolProperty(
+        name="inline textures",
+        description="turn textures into encoded strings, for direct inclusion into source code",
+        default = True,
+        )
+    
     includeInitScene = bpy.props.BoolProperty(
         name="Include initScene()",
         description="add an initScene() method to the .js / .ts",
@@ -188,12 +195,13 @@ class TowerOfBabel(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     def draw(self, context):
         layout = self.layout
 
-        layout.prop(self, 'export_onlyCurrentLayer') 
+        layout.prop(self, "export_onlyCurrentLayer") 
         layout.prop(self, "export_noVertexOpt")
         layout.prop(self, "export_javaScript")
         layout.prop(self, "export_typeScript")
         layout.prop(self, "export_html")
         layout.prop(self, "logInBrowserConsole")
+        layout.prop(self, "inlineTextures")
         layout.separator()
         
         layout.prop(self, "includeInitScene")
@@ -288,7 +296,7 @@ class TowerOfBabel(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             # Materials, static for ease of uvs requirement testing
             stuffs = [mat for mat in bpy.data.materials if mat.users >= 1]
             for material in stuffs:
-                TowerOfBabel.materials.append(Material(material, scene, self.filepath)) # need file path incase an image texture
+                TowerOfBabel.materials.append(Material(material, scene, self.filepath, self.inlineTextures)) # need file path incase an image texture
 
             self.cameras = []
             self.lights = []
@@ -1479,11 +1487,13 @@ class Node:
                 file_handler.write('\n')
                 if is_typescript:
                     file_handler.write(indent + '    public dispose(doNotRecurse?: boolean): void {\n')
-                    file_handler.write(indent + '        this.setEnabled(false);\n')
+                    file_handler.write(indent + '        super.dispose(doNotRecurse);\n')
+                    file_handler.write(indent + '        clean(' + str(self.factoryIdx) + ');\n')
                     file_handler.write(indent + '    }\n')
                 else:
                     file_handler.write(indent + '    ' + self.legalName + '.prototype.dispose = function (doNotRecurse) {\n')
-                    file_handler.write(indent + '        this.setEnabled(false);\n')
+                    file_handler.write(indent + '        super.dispose(doNotRecurse);\n')
+                    file_handler.write(indent + '        clean(' + str(self.factoryIdx) + ');\n')
                     file_handler.write(indent + '    };\n')
 
             if is_typescript:
@@ -1889,25 +1899,38 @@ class MultiMaterial:
             file_handler.write(indent + 'multiMaterial.subMaterials.push(scene.getMaterialByID("' + materialName + '"));\n')
 #===============================================================================
 class Texture:
-    def __init__(self, slot, level, texture, filepath):       
-        # Copy image to output
+    def __init__(self, slot, level, texture, filepath, inlineTextures):
+        # Copy or encode image to output
         try:
             image = texture.texture.image
             imageFilepath = os.path.normpath(bpy.path.abspath(image.filepath))
             basename = os.path.basename(imageFilepath)
             targetdir = os.path.dirname(filepath)
-            targetpath = os.path.join(targetdir, basename)
             
             if image.packed_file:
-                image.save_render(targetpath)
+                if inlineTextures:
+                    textureFile = os.path.join(targetdir, basename + "temp")
+                else:
+                    textureFile = os.path.join(targetdir, basename)
+                
+                image.save_render(textureFile)
+                
             else:
-                sourcepath = bpy.path.abspath(image.filepath)
-                shutil.copy(sourcepath, targetdir)
+                textureFile = bpy.path.abspath(image.filepath)
+                if not inlineTextures:
+                    shutil.copy(textureFile, targetdir)
         except:
             ex = sys.exc_info()
             TowerOfBabel.log_handler.write('Error encountered processing image file:  ' + imageFilepath + ', Error:  '+ str(ex[1]) + '\n')
             #pass
         
+        if inlineTextures:
+            imageType = basename.rpartition('.')[2]
+            with open(textureFile, "rb") as image_file:
+                self.encoded_string = 'data:image/' + imageType + ';base64,' + base64.b64encode(image_file.read()).decode()
+                if image.packed_file:
+                    os.remove(textureFile)   
+                        
         # Export
         self.slot = slot
         self.name = basename
@@ -1946,7 +1969,10 @@ class Texture:
         self.coordinatesIndex = 0
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -        
     def core_script(self, file_handler, indent): 
-        file_handler.write(indent + 'texture = new BABYLON.Texture(materialsRootDir + "' + self.name + '", scene);\n')
+        if hasattr(self,'encoded_string'):
+            file_handler.write(indent + 'texture = BABYLON.Texture.CreateFromBase64String("' + self.encoded_string + '", "' + self.name + '", scene);\n')
+        else:    
+            file_handler.write(indent + 'texture = new BABYLON.Texture(materialsRootDir + "' + self.name + '", scene);\n')
 
         file_handler.write(indent + 'texture.name = materialsRootDir + "' + self.name + '";\n')
         file_handler.write(indent + 'texture.hasAlpha = ' + format_bool(self.hasAlpha) + ';\n')
@@ -1966,7 +1992,7 @@ class Texture:
         file_handler.write(indent + 'texture.wrapV = ' + format_int(self.wrapV) + ';\n')
 #===============================================================================
 class Material:
-    def __init__(self, material, scene, filepath):       
+    def __init__(self, material, scene, filepath, inlineTextures):       
         self.name = TowerOfBabel.nameSpace + '.' + material.name        
         TowerOfBabel.log('processing begun of material:  ' + self.name)
         self.ambient = material.ambient * material.diffuse_color
@@ -1986,31 +2012,31 @@ class Material:
                     if (mtex.use_map_color_diffuse and (mtex.texture_coords != 'REFLECTION')):
                         # Diffuse
                         TowerOfBabel.log('Diffuse texture found');
-                        self.textures.append(Texture('diffuseTexture', mtex.diffuse_color_factor, mtex, filepath))
+                        self.textures.append(Texture('diffuseTexture', mtex.diffuse_color_factor, mtex, filepath, inlineTextures))
                     if mtex.use_map_ambient:
                         # Ambient
                         TowerOfBabel.log('Ambient texture found');
-                        self.textures.append(Texture('ambientTexture', mtex.ambient_factor, mtex, filepath))
+                        self.textures.append(Texture('ambientTexture', mtex.ambient_factor, mtex, filepath, inlineTextures))
                     if mtex.use_map_alpha:
                         # Opacity
                         TowerOfBabel.log('Opacity texture found');
-                        self.textures.append(Texture('opacityTexture', mtex.alpha_factor, mtex, filepath))
+                        self.textures.append(Texture('opacityTexture', mtex.alpha_factor, mtex, filepath, inlineTextures))
                     if mtex.use_map_color_diffuse and (mtex.texture_coords == 'REFLECTION'):
                         # Reflection
                         TowerOfBabel.log('Reflection texture found');
-                        self.textures.append(Texture('reflectionTexture', mtex.diffuse_color_factor, mtex, filepath))
+                        self.textures.append(Texture('reflectionTexture', mtex.diffuse_color_factor, mtex, filepath, inlineTextures))
                     if mtex.use_map_emit:
                         # Emissive
                         TowerOfBabel.log('Emissive texture found');
-                        self.textures.append(Texture('emissiveTexture', mtex.emit_factor, mtex, filepath))     
+                        self.textures.append(Texture('emissiveTexture', mtex.emit_factor, mtex, filepath, inlineTextures))     
                     if mtex.use_map_normal:
                         # Bump
                         TowerOfBabel.log('Bump texture found');
-                        self.textures.append(Texture('bumpTexture', mtex.normal_factor, mtex, filepath))  
+                        self.textures.append(Texture('bumpTexture', mtex.normal_factor, mtex, filepath, inlineTextures))  
                     elif mtex.use_map_color_spec:
                         # Specular
                         TowerOfBabel.log('Specular texture found');
-                        self.textures.append(Texture('specularTexture', mtex.specular_color_factor, mtex, filepath))                        
+                        self.textures.append(Texture('specularTexture', mtex.specular_color_factor, mtex, filepath, inlineTextures))                        
             else: #type ==  'STUCCI' or 'NOISE'
                  TowerOfBabel.warn('WARNING texture type not currently supported:  ' + mtex.texture.type + ', ignored.')
 #                glsl_handler = open('/home/jeff/Desktop/' + mtex.texture.type + '.glsl', 'w')  
