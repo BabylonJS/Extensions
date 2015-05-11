@@ -1,8 +1,8 @@
-/// <reference path="./EventSeries.ts"/>
 /// <reference path="./ReferenceDeformation.ts"/>
 /// <reference path="./ShapeKeyGroup.ts"/>
+/// <reference path="./EventSeries.ts"/>
 module MORPH {
-    export class Mesh extends BABYLON.Mesh {
+    export class Mesh extends BABYLON.Mesh  implements POV.SeriesTargetable{
         public  debug = false;
         private _engine: BABYLON.Engine;
         private _positions32F : Float32Array;
@@ -12,10 +12,6 @@ module MORPH {
         
         // for normal processing
         private _vertexMemberOfFaces = new Array<Array<number>>(); // outer array each vertex, inner array faces vertex is a member of
-        
-        // for passive detection of game pause
-        private _lastResumeTime = 0;
-        private _instancePaused = false;
 
         // tracking system members
         private _clockStart = -1;
@@ -23,11 +19,8 @@ module MORPH {
         private _totalDeformations = 0;
         private _totalFrames = 0;
         
-        // pov orientation
-        private _definedFacingForward : boolean = true;
-
-        constructor(name: string, scene: BABYLON.Scene) {
-            super(name, scene);
+        constructor(name: string, scene: BABYLON.Scene, parent: BABYLON.Node = null) {
+            super(name, scene, parent);
             this._engine = scene.getEngine();    
             
             // tricky registering a prototype as a callback in constructor; cannot say 'this.beforeRender()' & must be wrappered
@@ -36,21 +29,13 @@ module MORPH {
         }
         // ============================ beforeRender callback & tracking =============================
         public beforeRender() : void {
-            if (this._positions32F === null || this._normals32F === null || Mesh._systemPaused || this._instancePaused) return;
-            var startTime = Mesh.now();            
-
-            // system resume test 
-            if (this._lastResumeTime < Mesh._systemResumeTime){
-                for (var g = this._shapeKeyGroups.length - 1; g >= 0; g--){
-                    this._shapeKeyGroups[g].resumePlay();
-                }
-                this._lastResumeTime = Mesh._systemResumeTime;
-            }
+            if (this._positions32F === null || this._normals32F === null || POV.BeforeRenderer.isSystemPaused() || this._instancePaused) return;
+            var startTime = BABYLON.Tools.Now;            
 
             var changesMade = false;
             for (var g = this._shapeKeyGroups.length - 1; g >= 0; g--){               
                 // do NOT combine these 2 lines or only 1 group will run!
-                var changed = this._shapeKeyGroups[g].incrementallyDeform(this._positions32F, this._normals32F);
+                var changed = this._shapeKeyGroups[g]._incrementallyDeform(this._positions32F, this._normals32F);
                 changesMade = changesMade || changed;
             }
             
@@ -61,7 +46,7 @@ module MORPH {
                 super.updateVerticesDataDirectly(BABYLON.VertexBuffer.PositionKind, this._positions32F);
                 super.updateVerticesDataDirectly(BABYLON.VertexBuffer.NormalKind  , this._normals32F);
             
-                this._renderCPU += Mesh.now() - startTime;
+                this._renderCPU += BABYLON.Tools.Now - startTime;
                 this._totalDeformations++;  
             }
                 
@@ -69,7 +54,7 @@ module MORPH {
         }
         
         public resetTracking() : void{
-            this._resetTracking(Mesh.now());
+            this._resetTracking(BABYLON.Tools.Now);
         }
         private _resetTracking(startTime : number) : void{
             this._clockStart = startTime;
@@ -79,7 +64,7 @@ module MORPH {
         }
         
         public getTrackingReport(reset : boolean = false) : string{
-            var totalWallClock = Mesh.now() - this._clockStart;
+            var totalWallClock = BABYLON.Tools.Now - this._clockStart;
             var report =
                     "\nNum Deformations: " + this._totalDeformations +
                     "\nRender CPU milli: " + this._renderCPU.toFixed(2) +
@@ -96,19 +81,26 @@ module MORPH {
             return report;    
         }
         // ======================================== Overrides ========================================
+        /** @override */
         public clone(name: string, newParent: BABYLON.Node, doNotCloneChildren?: boolean): Mesh {
-             BABYLON.Tools.Error("Shared vertex instances not supported for MORPH.Mesh");
+             BABYLON.Tools.Error("MORPH.Mesh:  Shared vertex instances not supported");
             return null;
         }
+        
+        /** @override */
         public createInstance(name: string): BABYLON.InstancedMesh {
-             BABYLON.Tools.Error("Shared vertex instances not supported for MORPH.Mesh");
+             BABYLON.Tools.Error("MORPH.Mesh:  Shared vertex instances not supported");
              return null;
         }
+        
+        /** @override */
         public convertToFlatShadedMesh() : void {
-            BABYLON.Tools.Error("Flat shading not supported for MORPH.Mesh");
+            BABYLON.Tools.Error("MORPH.Mesh:  Flat shading not supported");
         }
          
-        /* wrappered is so positions & normals vertex buffer & initial data can be captured */
+        /** @override
+         * wrappered is so positions & normals vertex buffer & initial data can be captured 
+         */
         public setVerticesData(kind: any, data: any, updatable?: boolean) : void {
             super.setVerticesData(kind, data, updatable || kind === BABYLON.VertexBuffer.PositionKind || kind === BABYLON.VertexBuffer.NormalKind);
             
@@ -121,7 +113,10 @@ module MORPH {
             }
         }
         
-        /** wrappered so this._vertexMemberOfFaces can be built after super.setIndices() called */
+        /** 
+         * @override
+         * wrappered so this._vertexMemberOfFaces can be built after super.setIndices() called
+         */
         public setIndices(indices: number[]): void {
             super.setIndices(indices);
             
@@ -248,7 +243,9 @@ module MORPH {
         public queueSingleEvent(event : ReferenceDeformation) : void {
             this.queueEventSeries(new EventSeries([event]));
         }
-        
+        /**
+         *  PovSeriesTargetable implementation
+         */
         public queueEventSeries(eSeries : EventSeries) : void {
             var groupFound = false;  
             for (var g = this._shapeKeyGroups.length - 1; g >= 0; g--){
@@ -268,103 +265,29 @@ module MORPH {
             }
             return null;
         }
-        // ================================== Point of View Movement =================================
-        /**
-         * When the mesh is defined facing forward, multipliers must be set so that movePOV() is 
-         * from the point of view of behind the front of the mesh.
-         * @param {boolean} definedFacingForward - True is the default
-         */
-        public setDefinedFacingForward(definedFacingForward : boolean) : void {
-            this._definedFacingForward = definedFacingForward;
-        }
+        // ============================ Mesh-instance wide play - pause ==============================
+        private _instancePaused = false;
         
-        /**
-         * Perform relative position change from the point of view of behind the front of the mesh.
-         * This is performed taking into account the meshes current rotation, so you do not have to care.
-         * Supports definition of mesh facing forward or backward.
-         * @param {number} amountRight
-         * @param {number} amountUp
-         * @param {number} amountForward
-         */
-        public movePOV(amountRight : number, amountUp : number, amountForward : number) : void {
-            this.position.addInPlace(this.calcMovePOV(amountRight, amountUp, amountForward));
-        }
-        
-        /**
-         * Calculate relative position change from the point of view of behind the front of the mesh.
-         * This is performed taking into account the meshes current rotation, so you do not have to care.
-         * Supports definition of mesh facing forward or backward.
-         * @param {number} amountRight
-         * @param {number} amountUp
-         * @param {number} amountForward
-         */
-        public calcMovePOV(amountRight : number, amountUp : number, amountForward : number) : BABYLON.Vector3 {
-            var rotMatrix = new BABYLON.Matrix();
-            var rotQuaternion = (this.rotationQuaternion) ? this.rotationQuaternion : BABYLON.Quaternion.RotationYawPitchRoll(this.rotation.y, this.rotation.x, this.rotation.z);
-            rotQuaternion.toRotationMatrix(rotMatrix);
-            
-            var translationDelta = BABYLON.Vector3.Zero();
-            var defForwardMult = this._definedFacingForward ? -1 : 1;
-            BABYLON.Vector3.TransformCoordinatesFromFloatsToRef(amountRight * defForwardMult, amountUp, amountForward * defForwardMult, rotMatrix, translationDelta);
-            return translationDelta;
-        }
-        // ================================== Point of View Rotation =================================
-        /**
-         * Perform relative rotation change from the point of view of behind the front of the mesh.
-         * Supports definition of mesh facing forward or backward.
-         * @param {number} flipBack
-         * @param {number} twirlClockwise
-         * @param {number} tiltRight
-         */
-        public rotatePOV(flipBack : number, twirlClockwise : number, tiltRight : number) : void {
-            this.rotation.addInPlace(this.calcRotatePOV(flipBack, twirlClockwise, tiltRight));
-        }
-        
-        /**
-         * Calculate relative rotation change from the point of view of behind the front of the mesh.
-         * Supports definition of mesh facing forward or backward.
-         * @param {number} flipBack
-         * @param {number} twirlClockwise
-         * @param {number} tiltRight
-         */
-        public calcRotatePOV(flipBack : number, twirlClockwise : number, tiltRight : number) : BABYLON.Vector3 {
-            var defForwardMult = this._definedFacingForward ? 1 : -1;
-            return new BABYLON.Vector3(flipBack * defForwardMult, twirlClockwise, tiltRight * defForwardMult);
-        }
-        // =================================== play - pause system ===================================
-        // pause & resume statics
-        private static _systemPaused = false;
-        private static _systemResumeTime = 0;
-        
-        /** system could be paused at a higher up without notification; just by stop calling beforeRender() */
-        public static pauseSystem(){ Mesh._systemPaused = true; }        
-        public static isSystemPaused() : boolean { return Mesh._systemPaused; }
-        
-        public static resumeSystem(){
-            Mesh._systemPaused = false;
-            Mesh._systemResumeTime = Mesh.now();
-        }
-        
-        // instance level methods
-        public pausePlay(){ this._instancePaused = true; }       
         public isPaused() : boolean { return this._instancePaused; }
+        
+        public pausePlay(){ 
+             this._instancePaused = true; 
+            
+            for (var g = this._shapeKeyGroups.length - 1; g >= 0; g--){
+                this._shapeKeyGroups[g].pausePlay();
+            }
+        }       
         
         public resumePlay(){
             this._instancePaused = false;
-            this._lastResumeTime = Mesh.now();
             
             for (var g = this._shapeKeyGroups.length - 1; g >= 0; g--){
                 this._shapeKeyGroups[g].resumePlay();
             }
         }
         // ========================================= Statics =========================================
-        /** wrapper for window.performance.now, incase not implemented, e.g. Safari */
-        public static now() : number{
-            return (typeof window.performance === "undefined") ? Date.now() : window.performance.now();
-        }
-        
         public static get Version(): string {
-            return "1.1.0";
+            return "1.2.0";
         }
     }
 }
