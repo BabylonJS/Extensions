@@ -1,8 +1,7 @@
-/// <reference path="./EventSeries.ts"/>
-/// <reference path="./Mesh.ts"/>
 /// <reference path="./ReferenceDeformation.ts"/>
+/// <reference path="./Mesh.ts"/>
 module MORPH {
-    export class ShapeKeyGroup {
+    export class ShapeKeyGroup extends POV.BeforeRenderer{
         // position elements converted to typed array
         private _affectedPositionElements : Uint16Array;
         private _nPosElements : number;
@@ -11,12 +10,6 @@ module MORPH {
         private _states  = new Array<Float32Array>();
         private _normals = new Array<Float32Array>();
         private _stateNames = new Array<string>();      
-
-        // event series queue & reference vars for current seris & step within
-        private _queue = new Array<EventSeries>();
-        private _currentSeries : EventSeries = null;
-        private _currentStepInSeries : ReferenceDeformation = null;
-        private _endOfLastFrameTs = -1;
 
         // affected vertices are used for normals, since all the entire vertex is involved, even if only the x of a position is affected
         private _affectedVertices : Uint16Array;
@@ -35,24 +28,7 @@ module MORPH {
         private _lastReusablePosUsed  = 0;
         private _lastReusableNormUsed = 0;
         
-        // rotation control members
-        private _doingRotation = false;
-        private _rotationStartVec : BABYLON.Vector3;
-        private _rotationEndVec   : BABYLON.Vector3;
-        
-        // position control members
-        private _doingMovePOV = false;
-        private _positionStartVec : BABYLON.Vector3;  // for lerp(ing) when NOT also rotating too
-        private _positionEndVec   : BABYLON.Vector3;  // for lerp(ing) when NOT also rotating too
-        private _fullAmtRight     : number;   // for when also rotating
-        private _fullAmtUp        : number;   // for when also rotating
-        private _fullAmtForward   : number;   // for when also rotating
-        private _amtRightSoFar    : number;   // for when also rotating
-        private _amtUpSoFar       : number;   // for when also rotating
-        private _amtForwardSoFar  : number;   // for when also rotating
-        
         // misc
-        private _activeLockedCamera : any = null; // any, or would require casting to FreeCamera & no point in JavaScript
         private _mirrorAxis = -1; // when in use x = 1, y = 2, z = 3
  
         /**
@@ -61,15 +37,18 @@ module MORPH {
          * @param {Array} affectedPositionElements - index of either an x, y, or z of positions.  Not all 3 of a vertex need be present.  Ascending order.
          * @param {Array} basisState - original state of the affectedPositionElements of positions
          */
-        constructor(private _mesh : Mesh, private _name : string, affectedPositionElements : Array<number>, basisState : Array<number>){
-            if (!(affectedPositionElements instanceof Array) || affectedPositionElements.length === 0                ) throw "ShapeKeyGroup: invalid affectedPositionElements arg";
-            if (!(basisState               instanceof Array) || basisState.length !== affectedPositionElements.length) throw "ShapeKeyGroup: invalid basisState arg";
+        constructor(_mesh : Mesh, _name : string, affectedPositionElements : Array<number>, basisState : Array<number>){
+            super(_mesh, true);
+            this._name = _name; // override dummy
+            
+            if (!(affectedPositionElements instanceof Array) || affectedPositionElements.length === 0                ) BABYLON.Tools.Error("ShapeKeyGroup: invalid affectedPositionElements arg");
+            if (!(basisState               instanceof Array) || basisState.length !== affectedPositionElements.length) BABYLON.Tools.Error("ShapeKeyGroup: invalid basisState arg");
 
             // validation that position elements are in ascending order; normals relies on this being true
             this._affectedPositionElements = new Uint16Array(affectedPositionElements);        
             this._nPosElements = affectedPositionElements.length;
             for (var i = 0; i + 1 < this._nPosElements; i++)
-                if (!(this._affectedPositionElements[i] < this._affectedPositionElements[i + 1])) throw "ShapeKeyGroup: affectedPositionElements must be in ascending order";
+                if (!(this._affectedPositionElements[i] < this._affectedPositionElements[i + 1])) BABYLON.Tools.Error("ShapeKeyGroup: affectedPositionElements must be in ascending order");
             
             // initialize 2 position reusables, the size needed
             this._reusablePositionFinals.push(new Float32Array(this._nPosElements));
@@ -137,13 +116,13 @@ module MORPH {
          */
         public addComboDerivedKey(referenceStateName : string, endStateNames : Array<string>, endStateRatios : Array<number>) : void{
             var referenceIdx = this.getIdxForState(referenceStateName.toUpperCase());
-            if (referenceIdx === -1) throw "ShapeKeyGroup: invalid reference state";
+            if (referenceIdx === -1) BABYLON.Tools.Error("ShapeKeyGroup: invalid reference state");
             
             var endStateIdxs = new Array<number>();
             var endStateIdx : number;
             for (var i = 0; i < endStateNames.length; i++){
                 endStateIdx = this.getIdxForState(endStateNames[i].toUpperCase() );
-                if (endStateIdx === -1) throw "ShapeKeyGroup: invalid end state name: " + endStateNames[i].toUpperCase();
+                if (endStateIdx === -1) BABYLON.Tools.Error("ShapeKeyGroup: invalid end state name: " + endStateNames[i].toUpperCase());
                 
                 endStateIdxs.push(endStateIdx);
             }
@@ -157,13 +136,13 @@ module MORPH {
         
         /** called in construction code from TOB, but outside the constructor, except for 'BASIS'.  Unlikely to be called by application code. */
         public addShapeKey(stateName : string, stateKey : Array<number>) : void {
-            if (!(stateKey instanceof Array) || stateKey.length !== this._nPosElements) throw "ShapeKeyGroup: invalid stateKey arg";
+            if (!(stateKey instanceof Array) || stateKey.length !== this._nPosElements) BABYLON.Tools.Error("ShapeKeyGroup: invalid stateKey arg");
             this.addShapeKeyInternal(stateName, new Float32Array(stateKey) );
         }
 
         /** worker method for both the addShapeKey() & addDerivedKey() methods */
         private addShapeKeyInternal(stateName : string, stateKey : Float32Array) : void {
-            if (typeof stateName !== 'string' || stateName.length === 0) throw "ShapeKeyGroup: invalid stateName arg";
+            if (typeof stateName !== 'string' || stateName.length === 0) BABYLON.Tools.Error("ShapeKeyGroup: invalid stateName arg");
             if (this.getIdxForState(stateName) !== -1){
                 BABYLON.Tools.Warn("ShapeKeyGroup: stateName " + stateName + " is a duplicate, ignored");
                 return;
@@ -176,111 +155,53 @@ module MORPH {
             this.buildNormEndPoint(coorespondingNormals, stateKey);
             this._normals.push(coorespondingNormals);
 
-            if (this._mesh.debug) console.log("Shape key: " + stateName + " added to group: " + this._name + " on MORPH.Mesh: " + this._mesh.name);
+            if ((<MORPH.Mesh> this._mesh).debug) BABYLON.Tools.Log("Shape key: " + stateName + " added to group: " + this._name + " on MORPH.Mesh: " + this._mesh.name);
         }
         // =================================== inside before render ==================================
         /**
          * Called by the beforeRender() registered by this._mesh
-         * @param {Float32Array} positions - Array of the positions for the entire mesh, portion updated based on _affectedIndices
-         * @param {Float32Array } normals  - Array of the normals for the entire mesh, if not null, portion updated based on _affectedVertices
+         * ShapeKeyGroup is a subclass of POV.BeforeRenderer, so need to call its beforeRender method, _incrementallyMove()
+         * @param {Float32Array} positions - Array of the positions for the entire mesh, portion updated based on _affectedPositionElements
+         * @param {Float32Array} normals   - Array of the normals   for the entire mesh, portion updated based on _affectedVertices
          */
-        public incrementallyDeform(positions : Float32Array, normals :Float32Array) : boolean {
-            // series level of processing; get another series from the queue when none or last is done
-            if (this._currentSeries === null || !this._currentSeries.hasMoreEvents() ){
-                if (! this._nextEventSeries()) return false;
+        public _incrementallyDeform(positions : Float32Array, normals :Float32Array) : boolean {
+            super._incrementallyMove();
+            
+            // test of this._currentSeries is duplicated, since super.incrementallyMove() cannot return a value
+            // is possible to have a MotionEvent(with no deformation), which is not a ReferenceDeformation sub-class
+            if (this._currentSeries === null || !(this._currentStepInSeries instanceof MORPH.ReferenceDeformation) ) return false;
+            
+            if (this._ratioComplete < 0) return false; // MotionEvent.BLOCKED or MotionEvent.WAITING
+            
+            // update the positions
+            for (var i = 0; i < this._nPosElements; i++){
+                positions[this._affectedPositionElements[i]] = this._priorFinalPositionVals[i] + ((this._currFinalPositionVals[i] - this._priorFinalPositionVals[i]) * this._ratioComplete);
             }
             
-            // ok, have an active event series, now get the next deformation in series if required
-            while (this._currentStepInSeries === null || this._currentStepInSeries.isComplete() ){
-                var next : any = this._currentSeries.nextEvent(this._name);
-                
-                if (next === null) return false; // being blocked, this must be a multi-group series, not ready for us
-                if (next instanceof BABYLON.Action){
-                    (<BABYLON.Action> next).execute(BABYLON.ActionEvent.CreateNew(this._mesh));    
-                }
-                else if (typeof next === "function"){
-                    next.call();
-                }
-                else{
-                   this._nextDeformation(<ReferenceDeformation> next);  // must be a new deformation. _currentStepInSeries assigned if valid
-                }  
+            // update the normals
+            var mIdx : number, kIdx : number;
+            for (var i = 0; i < this._nVertices; i++){
+                mIdx = 3 * this._affectedVertices[i] // offset for this vertex in the entire mesh
+                kIdx = 3 * i;                        // offset for this vertex in the shape key group
+                normals[mIdx    ] = this._priorFinalNormalVals[kIdx    ] + ((this._currFinalNormalVals[kIdx    ] - this._priorFinalNormalVals[kIdx    ]) * this._ratioComplete);
+                normals[mIdx + 1] = this._priorFinalNormalVals[kIdx + 1] + ((this._currFinalNormalVals[kIdx + 1] - this._priorFinalNormalVals[kIdx + 1]) * this._ratioComplete);
+                normals[mIdx + 2] = this._priorFinalNormalVals[kIdx + 2] + ((this._currFinalNormalVals[kIdx + 2] - this._priorFinalNormalVals[kIdx + 2]) * this._ratioComplete);
             }
-            
-            // have a deformation to process
-            var ratioComplete = this._currentStepInSeries.getCompletionMilestone();
-            if (ratioComplete < 0) return false; // Deformation.BLOCKED or Deformation.WAITING
-            
-            if (!this._stalling){        
-                // update the positions
-                for (var i = 0; i < this._nPosElements; i++){
-                    positions[this._affectedPositionElements[i]] = this._priorFinalPositionVals[i] + ((this._currFinalPositionVals[i] - this._priorFinalPositionVals[i]) * ratioComplete);
-                }
-            
-                // update the normals
-                var mIdx : number, kIdx : number;
-                for (var i = 0; i < this._nVertices; i++){
-                    mIdx = 3 * this._affectedVertices[i] // offset for this vertex in the entire mesh
-                    kIdx = 3 * i;                        // offset for this vertex in the shape key group
-                    normals[mIdx    ] = this._priorFinalNormalVals[kIdx    ] + ((this._currFinalNormalVals[kIdx    ] - this._priorFinalNormalVals[kIdx    ]) * ratioComplete);
-                    normals[mIdx + 1] = this._priorFinalNormalVals[kIdx + 1] + ((this._currFinalNormalVals[kIdx + 1] - this._priorFinalNormalVals[kIdx + 1]) * ratioComplete);
-                    normals[mIdx + 2] = this._priorFinalNormalVals[kIdx + 2] + ((this._currFinalNormalVals[kIdx + 2] - this._priorFinalNormalVals[kIdx + 2]) * ratioComplete);
-                }
-            
-                if (this._doingRotation){
-                    this._mesh.rotation = BABYLON.Vector3.Lerp(this._rotationStartVec, this._rotationEndVec, ratioComplete);
-                }
-            }
-            
-            if (this._doingMovePOV === true){
-                if (this._doingRotation){
-                    // some of these amounts, could be negative, if has a Pace with a hiccup
-                    var amtRight   = (this._fullAmtRight   * ratioComplete) - this._amtRightSoFar;
-                    var amtUp      = (this._fullAmtUp      * ratioComplete) - this._amtUpSoFar;
-                    var amtForward = (this._fullAmtForward * ratioComplete) - this._amtForwardSoFar;
-                    
-                    this._mesh.movePOV(amtRight, amtUp, amtForward);
-                    
-                    this._amtRightSoFar   += amtRight;
-                    this._amtUpSoFar      += amtUp;
-                    this._amtForwardSoFar += amtForward;
-                }else{
-                    this._mesh.position = BABYLON.Vector3.Lerp(this._positionStartVec, this._positionEndVec, ratioComplete);
-                }
-                
-                if (this._activeLockedCamera !== null) this._activeLockedCamera._getViewMatrix();
-            }
-            this._endOfLastFrameTs = Mesh.now();       
-            return !this._stalling;
+            return true;
         }
-       
-        public resumePlay() : void {
-            if (this._currentStepInSeries !== null) this._currentStepInSeries.resumePlay();
-        }
-        // ============================ Event Series Queueing & retrieval ============================
-        public queueEventSeries(eSeries : EventSeries) :void {
-            this._queue.push(eSeries);
-        }
-    
-        private _nextEventSeries() : boolean {
-            var ret = this._queue.length > 0;
-            if (ret){
-                this._currentSeries = this._queue.shift();
-                this._currentSeries.activate(this._name);
-            }
-            return ret;
-        }
-        // ===================================== deformation prep ====================================    
-        private _nextDeformation(deformation : ReferenceDeformation) : void {
-            // do this as soon as possible to get the clock started, retroactively, when sole group in the series, and within 50 millis of last deform
-            var lateStart = Mesh.now() - this._endOfLastFrameTs;
-            deformation.activate((this._currentSeries.nGroups === 1 && lateStart - this._endOfLastFrameTs < 50) ? lateStart : 0);
+        // ======================================== event prep =======================================    
+        public _nextEvent(event : POV.MotionEvent) : void {
+            super._nextEvent(event);
             
-            this._currentStepInSeries = deformation;
+            // is possible to have a MotionEvent(with no deformation), not ReferenceDeformation sub-class
+            if (!(event instanceof MORPH.ReferenceDeformation) ) return;        
+
             this._priorFinalPositionVals = this._currFinalPositionVals;
             this._priorFinalNormalVals   = this._currFinalNormalVals  ;
             
+            var deformation : ReferenceDeformation = <MORPH.ReferenceDeformation> event;
             var referenceIdx = this.getIdxForState(deformation.getReferenceStateName() );
-            if (referenceIdx === -1) throw "ShapeKeyGroup: invalid reference state";
+            if (referenceIdx === -1) BABYLON.Tools.Error("ShapeKeyGroup: invalid reference state");
             
             var endStateNames  = deformation.getEndStateNames();
             var endStateRatios = deformation.getEndStateRatios();
@@ -292,10 +213,10 @@ module MORPH {
                 var allZeros : boolean = true;
                 for (var i = 0; i < endStateNames.length; i++){
                    endStateIdx = this.getIdxForState(endStateNames[i].toUpperCase());
-                   if (endStateIdx === -1) throw "ShapeKeyGroup: invalid end state name: " + endStateNames[i].toUpperCase();              
+                   if (endStateIdx === -1) BABYLON.Tools.Error("ShapeKeyGroup: invalid end state name: " + endStateNames[i].toUpperCase());              
                    endStateIdxs.push(endStateIdx);
 
-                    if (endStateRatios[i] < 0 && this._mirrorAxis === -1) throw "ShapeKeyGroup " + this._name + ": invalid deformation, negative end state ratios when not mirroring";
+                    if (endStateRatios[i] < 0 && this._mirrorAxis === -1) BABYLON.Tools.Error("ShapeKeyGroup " + this._name + ": invalid deformation, negative end state ratios when not mirroring");
                     allZeros = allZeros && endStateRatios[i] === 0;
                 }
            
@@ -313,7 +234,7 @@ module MORPH {
                     } else{
                         // need to build _currFinalVals, toggling the _lastReusablePosUsed
                         this._lastReusablePosUsed = (this._lastReusablePosUsed === 1) ? 0 : 1;
-                        this.buildPosEndPoint(this._reusablePositionFinals[this._lastReusablePosUsed], referenceIdx, endStateIdxs, endStateRatios, this._mesh.debug);
+                        this.buildPosEndPoint(this._reusablePositionFinals[this._lastReusablePosUsed], referenceIdx, endStateIdxs, endStateRatios, (<MORPH.Mesh> this._mesh).debug);
                         this._currFinalPositionVals = this._reusablePositionFinals[this._lastReusablePosUsed];
                     
                         // need to build _currFinalNormalVals, toggling the _lastReusableNormUsed
@@ -322,36 +243,6 @@ module MORPH {
                         this._currFinalNormalVals = this._reusableNormalFinals[this._lastReusableNormUsed];
                     }
                 }
-            }
-
-            // prepare for rotation, if deformation calls for
-            this._doingRotation = deformation.rotatePOV !== null;
-            if (this._doingRotation){
-                this._rotationStartVec = this._mesh.rotation; // no clone required, since Lerp() returns a new Vec3 written over .rotation
-                this._rotationEndVec   = this._rotationStartVec.add(this._mesh.calcRotatePOV(deformation.rotatePOV.x, deformation.rotatePOV.y, deformation.rotatePOV.z));
-            }
-            
-            // prepare for POV move, if deformation calls for
-            this._doingMovePOV = deformation.movePOV !== null;
-            if (this._doingMovePOV){
-                this._fullAmtRight   = deformation.movePOV.x; this._amtRightSoFar   = 0;
-                this._fullAmtUp      = deformation.movePOV.y; this._amtUpSoFar      = 0;
-                this._fullAmtForward = deformation.movePOV.z; this._amtForwardSoFar = 0;
-                
-                // less resources to calcMovePOV() once then Lerp(), but calcMovePOV() uses rotation, so can only go fast when not rotating too
-                if (!this._doingRotation){
-                    this._positionStartVec = this._mesh.position; // no clone required, since Lerp() returns a new Vec3 written over .position
-                    this._positionEndVec   = this._positionStartVec.add(this._mesh.calcMovePOV(this._fullAmtRight, this._fullAmtUp, this._fullAmtForward));
-                }
-            }
-            
-            // determine if camera needs to be woke up for tracking
-            this._activeLockedCamera = null; // assigned for failure
-            
-            if (this._doingRotation || this._doingMovePOV){
-                var activeCamera = <any> this._mesh.getScene().activeCamera;
-                if(activeCamera.lockedTarget && activeCamera.lockedTarget === this._mesh)
-                     this._activeLockedCamera = activeCamera;
             }
         }
         /**
@@ -384,7 +275,7 @@ module MORPH {
                 }
                 targetArray[i] = refEndState[i] + deltaToRefState;            
             }
-            if (log) console.log(this._name + " end Point built for referenceIdx: " + referenceIdx + ",  endStateIdxs: " + endStateIdxs + ", endStateRatios: " + endStateRatios);
+            if (log) BABYLON.Tools.Log(this._name + " end Point built for referenceIdx: " + referenceIdx + ",  endStateIdxs: " + endStateIdxs + ", endStateRatios: " + endStateRatios);
         }
         
         /**
@@ -393,8 +284,9 @@ module MORPH {
          * @param {Float32Array} endStatePos - postion data to build the normals for.  Output from buildPosEndPoint, or data passed in from addShapeKey()
          */
         private buildNormEndPoint(targetArray : Float32Array, endStatePos : Float32Array) : void {
+            var mesh = <MORPH.Mesh> this._mesh;
             // build a full, mesh sized, set of positions & populate with the left-over initial data 
-            var futurePos = new Float32Array(this._mesh.originalPositions);
+            var futurePos = new Float32Array(mesh.originalPositions);
             
             // populate the changes that this state has
             for (var i = 0; i < this._nPosElements; i++){
@@ -402,7 +294,7 @@ module MORPH {
             }
             
             // compute using method in _mesh
-            this._mesh.normalsforVerticesInPlace(this._affectedVertices, targetArray, futurePos);
+            mesh.normalsforVerticesInPlace(this._affectedVertices, targetArray, futurePos);
         }
         // ==================================== Getters & setters ====================================    
         private getIdxForState(stateName : string) : number{
