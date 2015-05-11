@@ -1,6 +1,4 @@
 interface Navigator {
-    isCocoonJS: boolean; // delete once using babylon.2.0.d.ts
-    
     getUserMedia(
         options: { video?: boolean; audio?: boolean; }, 
         success: (stream: any) => void, 
