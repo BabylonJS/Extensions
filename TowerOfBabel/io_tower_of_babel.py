@@ -1,7 +1,7 @@
 bl_info = {
     'name': 'Tower of Babel',
     'author': 'David Catuhe, Jeff Palmer',
-    'version': (2, 1, 0),
+    'version': (2, 2, 0),
     'blender': (2, 72, 0),
     'location': 'File > Export > Tower of Babel [.js + .ts + .html(s)]',
     'description': 'Translate to inline JavaScript & TypeScript modules',
@@ -225,16 +225,22 @@ class TowerOfBabel(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     logInConsole = True; # static version, set in execute
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -                
     @staticmethod
-    def define_module_method(name, is_typescript, loadCheckVar = '', optionalArg = '', optionalTsType = '', optionalDefault = '""'):
+    def define_module_method(name, is_typescript, loadCheckVar = '', optionalArgs = []):
         if is_typescript:
             ret = '\n    export function ' + name + '(scene : BABYLON.Scene'
-            if len(optionalArg) > 0 : ret += ', ' + optionalArg + ' : ' + optionalTsType + " = " + optionalDefault
+            for optArg in optionalArgs:
+                ret += ', ' + optArg.argumentName + ' : ' + optArg.tsType + " = " + optArg.default
             ret += ') : void {\n'
         else:
             ret = '\n    function ' + name + '(scene'
-            if len(optionalArg) > 0 : 
-                ret += ', ' + optionalArg + ') {\n'
-                ret += '        if (!' + optionalArg + ') { ' + optionalArg + ' = ' + optionalDefault + '; }\n'
+            if len(optionalArgs) > 0 : 
+                constr = ''
+                defaults = ''
+                for optArg in optionalArgs:
+                    constr   += ', ' + optArg.argumentName
+                    defaults += '        if (!' + optArg.argumentName + ') { ' + optArg.argumentName + ' = ' + optArg.default + '; }\n'
+                ret += constr + ') {\n'
+                ret += defaults
             else:
                 ret += ') {\n'
             
@@ -432,7 +438,13 @@ class TowerOfBabel(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         # Materials - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # always need defineMaterials, since called by meshes
         file_handler.write('\n' + indent1 + 'var matLoaded = false;')
-        file_handler.write(TowerOfBabel.define_module_method('defineMaterials', is_typescript, 'matLoaded', 'materialsRootDir', 'string', '"./"'))
+        file_handler.write('\n' + indent1 + '// to keep from checkReadyOnlyOnce = true, defineMaterials() must be explicitly called with neverCheckReadyOnlyOnce = true,')
+        file_handler.write('\n' + indent1 + '// before any other functions in this module')
+
+        matArgs = []
+        matArgs.append(OptionalArgument('materialsRootDir', 'string', '"./"'))
+        matArgs.append(OptionalArgument('neverCheckReadyOnlyOnce', 'boolean', 'false'))
+        file_handler.write(TowerOfBabel.define_module_method('defineMaterials', is_typescript, 'matLoaded', matArgs))
         file_handler.write(indent2 + 'if (materialsRootDir.lastIndexOf("/") + 1  !== materialsRootDir.length) { materialsRootDir  += "/"; }\n')
 
         file_handler.write(indent2 + 'var material' + (' : BABYLON.StandardMaterial;\n' if is_typescript else ';\n') )          
@@ -456,7 +468,9 @@ class TowerOfBabel(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         # Armatures/Bones - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         if hasSkeletons:
             file_handler.write('\n' + indent1 + 'var bonesLoaded = false;')
-            file_handler.write(TowerOfBabel.define_module_method('defineSkeletons', is_typescript, 'bonesLoaded'))
+            skelArgs = []
+            skelArgs.append(OptionalArgument('bonesLoaded'))
+            file_handler.write(TowerOfBabel.define_module_method('defineSkeletons', is_typescript, skelArgs))
             file_handler.write(indent2 + 'var skeleton'  + (' : BABYLON.Skeleton;\n'  if is_typescript else ';\n') )          
             file_handler.write(indent2 + 'var bone'      + (' : BABYLON.Bone;\n'      if is_typescript else ';\n') )           
             file_handler.write(indent2 + 'var animation' + (' : BABYLON.Animation;\n' if is_typescript else ';\n') )          
@@ -597,6 +611,12 @@ class TowerOfBabel(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                 kids.append(mesh)
         return kids
 #===============================================================================
+class OptionalArgument:
+    def __init__(self, argumentName, tsType = '', default = '""'):
+        self.argumentName = argumentName
+        self.tsType = tsType
+        self.default = default
+#===============================================================================
 class World:
     def __init__(self, scene):
         self.autoClear = True
@@ -618,7 +638,9 @@ class World:
         TowerOfBabel.log('Python World class constructor completed')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -        
     def initScene_script(self, file_handler, meshes, is_typescript, hasSkeletons, hasCameras, hasLights, hasShadows, useFactory): 
-        file_handler.write(TowerOfBabel.define_module_method('initScene', is_typescript, '', 'materialsRootDir', 'string', '"./"'))
+        matArgs = []
+        matArgs.append(OptionalArgument('materialsRootDir', 'string', '"./"'))
+        file_handler.write(TowerOfBabel.define_module_method('initScene', is_typescript, '', matArgs))
             
         indent = '        '           
         file_handler.write(indent + 'scene.autoClear = ' + format_bool(self.autoClear) + ';\n')
@@ -2053,7 +2075,8 @@ class Material:
         file_handler.write(indent + 'material.emissiveColor = new BABYLON.Color3(' + format_color(self.emissive) + ');\n')
         file_handler.write(indent + 'material.specularPower = ' + format_f(self.specularPower) + ';\n')
         file_handler.write(indent + 'material.alpha =  '        + format_f(self.alpha        ) + ';\n')
-        file_handler.write(indent + 'material.backFaceCulling = ' + format_bool(self.backFaceCulling) + ';\n')             
+        file_handler.write(indent + 'material.backFaceCulling = ' + format_bool(self.backFaceCulling) + ';\n') 
+        file_handler.write(indent + 'material.checkReadyOnlyOnce = !neverCheckReadyOnlyOnce;\n')            
         for texSlot in self.textures:
             texSlot.core_script(file_handler, indent)
             file_handler.write(indent + 'material.' + texSlot.slot + ' = texture;\n')                      
