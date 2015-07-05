@@ -21,7 +21,7 @@ CastorGUI is an extension for the 3D engine [Babylon.js](www.babylonjs.com) but 
 * Create button
 * Create slider
 * Create progress
-* Create num
+* Create spinner
 * Create meter
 * Create radio button
 * Create checkbox
