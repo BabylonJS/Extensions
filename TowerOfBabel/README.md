@@ -1,8 +1,7 @@
 #Tower of Babel Exporter for Blender
-  
-<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/get_baked.png">
+<img src="/doc-assist/get_baked.png">
 ## Background: ##
----
+
 All Add-ons for Blender need to be written in Python.  The original Blender exporter was written as a single static class with some helper functions.  Everything was converted from Blender's representation of things to BJS's at the same time it was written out, in a single pass.  Some of the conversions made were from quads to triangles, and from right-handed coordinates to left-handed.
 
 Tower of Babel started with that code base, re-factoring it into a set classes that represented each of the various scene object types, .e.g. Lights, Materials, Cameras, & Meshes.  The idea was that the main class would make a first pass through the Blender scene, creating instances of all these classes.  The constructors of each of these classes was responsible for all the conversion needed to represent things in BJS, and storing this data as members of that instance.
@@ -11,14 +10,15 @@ The main class could then make a 2nd pass, against the collections of these Pyth
 
 Hmm, if there was also a method in each class named `to_script_file(is_typescript)`, then an inline .JS and / or .TS module source file could also be generated from the same information.  Early Tower of Babel versions could generate all 3, and the inspiration for the name Tower of Babel.  
 
-Eventually, the .babylon exporter was replaced with Tower of Babel code base, with source code generation removed.  Tower of Babel, itself, no-longer generates a .babylon file.  There is an attempt to keep the first pass of both as similar as possible using diff tools.  Either exporter can be used in Blender without the other.  They can also both be present.
+Eventually, the .babylon exporter was replaced with the Tower of Babel code base, with source code generation removed.  Tower of Babel, itself, no-longer generates a .babylon file.  There is an attempt to keep the first pass of both as similar as possible using diff tools.  Either exporter can be used in Blender without the other.  They can also both be present.
 
 ##Compare / Contrast to .babylon Exporter##
 ---
 ###Differences due to the type of the file generated.###
-**loading / Calling**-  A .babylon file is treated as data, and must be loaded asynchronously.  If you need to execute code that is reliant on a .babylon loading, it must be provided as a callback function to scene loader.  Things can get tricky when there is a whole series of .babylon files. All .JS files are loaded and parsed prior to any JavaScript executing.  This means any objects can be instanced simply using `new`, then placing any reliant code on the next line, e.g. 
+**Loading / Calling**-  A .babylon file is treated as data, and must be loaded asynchronously.  If you need to execute code that is reliant on a .babylon loading, it must be provided as a callback function to scene loader.  Things can get tricky when there is a whole series of .babylon files. All .JS files are loaded and parsed prior to any JavaScript executing.  This means any objects can be instanced simply using `new`, then placing any reliant code on the next line, e.g. 
 ```typescript
-var mesh = new ModuleName.MeshClass("name", scene, materialsRootDir, source); // materialsRootDir and source optional
+// materialsRootDir and source optional
+var mesh = new ModuleName.MeshClass("name", scene, materialsRootDir, source);
 mesh.position.x = 6;
 ```
 **Combining & Uglify**-  .JS module files can be combined together with others (there could be order issues though), while .babylon files cannot.  The generated .JS modules are meant to be readable with lots of whitespace.  When deploying, they can also be uglified.  If your files become very large or your web server has limited bandwidth, the difference in load behavior may be pronounced, though.  A combined & uglified approach probably will result in a faster up and running scene than a .babylon, but appear unresponsive.  This is not a problem for mobile apps coming from a store.
@@ -40,22 +40,21 @@ There are custom properties that are explicitly added by the exporter to control
 ###Custom Properties###
 The exporter adds custom properties to both the Exporter as well as some object types. The properties for objects are displayed as a section on their respective Data properties Tab.  The Exporter properties are displayed in the bottom left corner, when the Export menu item is clicked.  
 
-|Exporter | Mesh |
+|Exporter (on Scene tab) | Mesh |
 | --- | --- 
 |<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/exporterSettings.png">|<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/meshSettings.png">
 
 | Camera | Light
 | --- | --- 
-|<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/CameraSettings.png">|<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/lightSettings.png">
+|<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/cameraSettings.png">|<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/lightSettings.png">
 
-Settings for mesh, camera, and light are saved with the .blend file.  Unfortunately, this cannot be done for Exporter properties.
+The settings for each are saved with the .blend file.
 
 ###Mapped Properties###
 Blender has many scattered properties that are taken into account by the exporter.  Here is an assortment of where these properties are located:
 
 |World (Blender Render)| Blender Game Render Settings | Rotation Units
 |+---+|+---+|+---+
-|Horizon color must be shared.|Set on the material not the mesh.|Default rotation type is `XYZ Euler`.  Meshes and Cameras may also be `Quaternion`.
 |<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/worldSettings.png">|<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/gameRenderSettings.png">|<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/rotationSettings.png">
 
 ###Meshes###
