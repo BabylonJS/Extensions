@@ -1,5 +1,5 @@
 #Tower of Babel Exporter for Blender
-<img src="/doc-assist/get_baked.png">
+<img src="doc-assist/get_baked.png">
 ## Background: ##
 
 All Add-ons for Blender need to be written in Python.  The original Blender exporter was written as a single static class with some helper functions.  Everything was converted from Blender's representation of things to BJS's at the same time it was written out, in a single pass.  Some of the conversions made were from quads to triangles, and from right-handed coordinates to left-handed.
@@ -13,7 +13,6 @@ Hmm, if there was also a method in each class named `to_script_file(is_typescrip
 Eventually, the .babylon exporter was replaced with the Tower of Babel code base, with source code generation removed.  Tower of Babel, itself, no-longer generates a .babylon file.  There is an attempt to keep the first pass of both as similar as possible using diff tools.  Either exporter can be used in Blender without the other.  They can also both be present.
 
 ##Compare / Contrast to .babylon Exporter##
----
 ###Differences due to the type of the file generated.###
 **Loading / Calling**-  A .babylon file is treated as data, and must be loaded asynchronously.  If you need to execute code that is reliant on a .babylon loading, it must be provided as a callback function to scene loader.  Things can get tricky when there is a whole series of .babylon files. All .JS files are loaded and parsed prior to any JavaScript executing.  This means any objects can be instanced simply using `new`, then placing any reliant code on the next line, e.g. 
 ```typescript
@@ -32,7 +31,6 @@ Currently, the 2 exporters are pretty close feature wise.  Here are the feature 
 - Cloning using Mesh Class Factories
 
 ##Features & Usage##
----
 This document is not going to attempt to describe the actual mesh modeling or material creation.  There are many resources that show that.  We are concerned here with which features of Blender are exporteable, and how to access them.
 
 There are custom properties that are explicitly added by the exporter to control the export.  There are also built-in properties that are mapped into BabylonJS properties.
@@ -42,11 +40,11 @@ The exporter adds custom properties to both the Exporter as well as some object 
 
 |Exporter (on Scene tab) | Mesh |
 | --- | --- 
-|<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/exporterSettings.png">|<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/meshSettings.png">
+|<img src="doc-assist/exporterSettings.png">|<img src="doc-assist/meshSettings.png">
 
 | Camera | Light
 | --- | --- 
-|<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/cameraSettings.png">|<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/lightSettings.png">
+|<img src="doc-assist/cameraSettings.png">|<img src="doc-assist/lightSettings.png">
 
 The settings for each are saved with the .blend file.
 
@@ -54,8 +52,8 @@ The settings for each are saved with the .blend file.
 Blender has many scattered properties that are taken into account by the exporter.  Here is an assortment of where these properties are located:
 
 |World (Blender Render)| Blender Game Render Settings | Rotation Units
-|+---+|+---+|+---+
-|<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/worldSettings.png">|<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/gameRenderSettings.png">|<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/rotationSettings.png">
+| --- | --- | ---
+|<img src="doc-assist/worldSettings.png">|<img src="doc-assist/gameRenderSettings.png">|<img src="doc-assist/rotationSettings.png">
 
 ###Meshes###
 Meshes are output as a public sub-class of the base class custom property when they do not have a mesh as a parent.  They are output as an internal function which returns an instance of the base class custom property.  These child functions are called by the constructor or function of the parent mesh, never by you.  Here is the syntax again (source is for cloning):
@@ -95,7 +93,7 @@ TOWER_OF_BABEL.MeshFactory.MODULES.push(new Font2D.MeshFactory(scene));
 Blender has different names for the lights than BabylonJS.  Actually, Blender calls them lamps, not Lights.  Here is how they coorelate:
 
 |Blender | BabylonJS | Shadow Capable
-| --- | --- |+---+
+| --- | --- | ---
 |Point | Point | √
 |Sun | Directional | √
 |Spot | Spot |
@@ -105,14 +103,14 @@ Blender has different names for the lights than BabylonJS.  Actually, Blender ca
 ###Blender or Internal Render###
 ####Materials####
 Materials that were made for either the 
-<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/StdMaterials.png">
+<img src="doc-assist/StdMaterials.png">
 
 ####Textures####
 Textures can be added onto a material of mesh, so the faces that are assigned for the texture are the materials. Image textures are normally just a file copy, with some properties used as directions for BJS.  If there are any procedural textures anywhere for a mesh, then the image is worked into the baked images instead.
 
 |Procedural Textures| Image Textures
-|+---+|+---+
-|<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/proceduralTexture.png">|<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/imageTexture.png">
+| --- | ---
+|<img src="doc-assist/proceduralTexture.png">|<img src=doc-assist/imageTexture.png">
 
 ###Cycles Render / Texture Baking###
 ###Armatures###
