@@ -15,14 +15,15 @@ Eventually, the .babylon exporter was replaced with the Tower of Babel code base
 They can also both be present.  When this is the case, the custom properties of only one will display, the last used or installed.  You can also explicitly turn one off in Blender Preferences.  Fortunately, the common properties are named the same, so the settings transfer back and forth.
 
 ##Installation##
-<img src="doc-assist/blenderUserPreferences.png">
-    ** . . . **
-<img src="doc-assist/TOB_in_Preferences.png">
+<img src="doc-assist/blenderUserPreferences.png">  
 
-1- Open Blender and go to File->User Preferences->Addons Tab
-2- At the bottom of the little panel that opens you will see an "Install from File..." Button.
-3- Click this button, then navigate to the hard drive and directory where you have stored the file io_export_babylon.py (either where you unzipped Babylon.js or where you made a backup copy.
-4- Once the installation is complete, click on the Import/Export button (2 in image below) and browse through the list of addons until you find the now installed Babylon exporter. Click on the check box (3 in image below) for the Babylon Exporter to activate the addon, then click on the Save Settings button (4 in image below) in order not to have to repeat the activation process next time you open Blender.
+1. Go to File->User Preferences->Addons Tab
+2. Click the `Install from File...` Button (1 in image).
+3. Navigate to where you have downloaded / expanded the .PY file, and complete the operation.
+4. Click on the `Import-Export` button (2 in image) to reduce the list of add-ons to only that type.
+5. Reduce the list further by typing 'Bab' in the search field (3 in image).
+6. Click the check box of the add-on to activate it (4 in image).
+5. Click on the `Save User Settings` button, in order not to have to repeat the activation process next time you open Blender.  This also saves the display settings of the dialog.
 
 ##Compare / Contrast to .babylon Exporter##
 ###Differences due to the type of the file generated.###
@@ -43,7 +44,7 @@ Currently, the 2 exporters are pretty close feature wise.  Here are the features
 - Cloning using Mesh Class Factories
 
 ###BJS version Required###
-All features exported work in BJS version 2.1.  .TS / .JS files have no dependencies, so the minimium BJS version is 2.1.  The .babylon file needs 2.2 for some features, since adds made for some .babylon  properties were not done till 2.2.  Here is the table of features, and the behavior when used against 2.1:
+The .TS / .JS files have no dependencies, so the minimium BJS version is 2.1.  The .babylon file needs 2.2 for some features, since adds made for some .babylon  properties were not done till 2.2.  Here is the table of features, and the behavior when used against 2.1:
 
 |Feature|Behaviour
 | --- | ---
@@ -75,7 +76,7 @@ Blender has many scattered properties that are taken into account by the exporte
 
 |World (Blender Render)| Blender Game Render Settings | Rotation Units
 | --- | --- | ---
-|Horizon color must be shared.|Set on the material not the mesh.|Default rotation type is `XYZ Euler`.  Meshes and Cameras may also be `Quaternion`.
+|Horizon color must be shared.|Set on the material not the mesh.|Default is `XYZ Euler`.  Meshes and Cameras may also be `Quaternion`.
 |<img src="doc-assist/worldSettings.png">|<img src="doc-assist/gameRenderSettings.png">|<img src="doc-assist/rotationSettings.png">
 
 ###Meshes###
@@ -87,9 +88,7 @@ var mesh = new ModuleName.MeshClass("name", scene, materialsRootDir, source);
 ```
 
 ####Morph.Mesh Classes####
-|  | 
-|---|---
-| <img src="doc-assist/shapeKeys.png"> | If a mesh contains Shape Keys, then the mesh is derived from a Morph.Mesh base class.  You create a `Basis` shape key and all of the other keys relative to it.  The name of the shape key is important.  The format is SHAPE_KEY_GROUP-KEY.  This provides for having groups like mouth, left_eye, etc.  On the BJS side, having separate groups allows for concurrent, independent deformations.  No animation on Blender side is transferred.  This feature is experimental.  Armatures and shapekeys are not current compatible. 
+<img src="doc-assist/shapeKeys.png">  If a mesh contains Shape Keys, then the mesh is derived from a Morph.Mesh base class.  You create a `Basis` shape key and all of the other keys relative to it.  The name of the shape key is important.  The format is SHAPE_KEY_GROUP-KEY.  This provides for having groups like mouth, left_eye, etc.  On the BJS side, having separate groups allows for concurrent, independent deformations.  No animation on Blender side is transferred.  This feature is experimental.  Armatures and shapekeys are not current compatible. 
 
 ####Mesh Class Factories####
 This feature allows Meshes to be instanced on demand, using the existing geometry of another instance, if available.  The BJS terminology for this is cloning.  Sharing of geometry reduces GPU & CPU memory, and is very fast to create due to the lack of GPU calls to load data.  This is enabled using a custom property checkbox in the exporter, see below. The class factory needs to be instanced and then called like:
@@ -117,7 +116,7 @@ TOWER_OF_BABEL.MeshFactory.MODULES.push(new Font2D.MeshFactory(scene));
 Blender has different names for the lights than BabylonJS.  Actually, Blender calls them lamps, not Lights.  Here is how they correlate:
 
 |Blender | BabylonJS | Shadow Capable
-| --- | --- | ---
+| --- | --- |:---:
 |Point | Point | √
 |Sun | Directional | √
 |Spot | Spot |
@@ -140,8 +139,8 @@ Textures can be added onto a material of mesh, so the faces that are assigned fo
 ###Armatures###
 ###Fcurve Animations###
 Fcurve animations for Meshes, lights, and Cameras are transferred on export.  See the table below to see which properties are animatable, based on the object type.  If 
+
 ##Structure of Generated Module##
----
 The typescript module version is the one described below.  There are 2 features that are omitted from the sample code though:
 
 - Every entry point validates that the version of Babylon is compatible, as shown below.  This is omitted from all other sample code.  
