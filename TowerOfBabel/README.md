@@ -2,13 +2,13 @@
 <img src="doc-assist/get_baked.png">
 ## Background: ##
 
-All Add-ons for Blender need to be written in Python.  The original Blender exporter was written as a single static class with some helper functions.  Everything was converted from Blender's representation of things to BJS's at the same time it was written out, in a single pass.  Some of the conversions made were from quads to triangles, and from right-handed coordinates to left-handed.
+All Add-ons for Blender need to be written in Python.  The original Blender exporter was written as a single static class with some helper functions.  Everything was converted from Blender's representation of things to BJS's at the same time as it was written out, in a single pass.  Some of the conversions made were from quads to triangles, and from right-handed coordinates to left-handed.
 
-Tower of Babel started with that code base, re-factoring it into a set of classes that represented each of the various scene object types, .e.g. Lights, Materials, Cameras, & Meshes.  The idea was that the main class would make a first pass through the Blender scene, creating instances of all these classes.  The constructors of each of these classes was responsible for all the conversion needed to represent things in BJS, and storing this data as members of that instance.
+Tower of Babel started with that code base, re-factoring it into a set of classes that represented each of the various scene object types, .e.g. Lights, Materials, Cameras, &amp; Meshes.  The idea was that the main class would make a first pass through the Blender scene, creating instances of all these classes.  The constructors of each of these classes was responsible for all the conversion needed to represent things in BJS, and storing this data as members of that instance.
 
-The main class could then make a 2nd pass, against the collections of these Python classes, and execute a `to_scene_file()` method each class had.  Since all the information had already been preprocessed to be compatible, all these methods had to was the bare minimum to write-out their information in JSON format, A.K.A. a .babylon file. 
+The main class could then make a 2nd pass, against the collections of these Python classes, and execute a `to_scene_file()` method, that each class had.  Since all the information had already been preprocessed to be compatible, all these methods had to was the bare minimum to write-out their information in JSON format, A.K.A. a .babylon file. 
 
-Hmm, if there was also a method in each class named `to_script_file(is_typescript)`, then an in-line .JS and / or .TS module source file could also be generated from the same information.  Early Tower of Babel versions could generate all 3, and the inspiration for the name Tower of Babel.  
+Hmm, if there was also a method in each class named `to_script_file(is_typescript)`, then an in-line .JS and / or .TS module source file could also be generated from the same information.  Early Tower of Babel versions could generate all 3, and was the inspiration for the name Tower of Babel.  
 
 Eventually, the .babylon exporter was replaced with the Tower of Babel code base, with source code generation removed.  Tower of Babel, itself, no-longer generates a .babylon file.  There is an attempt to keep the first pass of both as similar as possible using diff tools.  Either exporter can be used in Blender without the other.  
 
@@ -21,9 +21,9 @@ They can also both be present.  When this is the case, the custom properties of 
 2. Click the `Install from File...` Button (1 in image).
 3. Navigate to where you have downloaded / expanded the .PY file, and complete the operation.
 4. Click on the `Import-Export` button (2 in image) to reduce the list of add-ons to only that type.
-5. Reduce the list further by typing 'Bab' in the search field (3 in image).
+5. Reduce the list further by typing 'bab' in the search field (3 in image).
 6. Click the check box of the add-on to activate it (4 in image).
-5. Click on the `Save User Settings` button, in order not to have to repeat the activation process next time you open Blender.  This also saves the display settings of the dialog.
+5. Click on the `Save User Settings` button, in order not to have to repeat the activation process next time you open Blender.
 
 ##Compare / Contrast to .babylon Exporter##
 ###Differences due to the type of the file generated.###
@@ -33,9 +33,9 @@ They can also both be present.  When this is the case, the custom properties of 
 var mesh = new ModuleName.MeshClass("name", scene, materialsRootDir, source);
 mesh.position.x = 6;
 ```
-**Combining & Uglify**-  .JS module files can be combined together with others (there could be order issues though), while .babylon files cannot.  The generated .JS modules are meant to be readable with lots of whitespace.  When deploying, they can also be uglified.  If your files become very large or your web server has limited bandwidth, the difference in load behavior may be pronounced, though.  A combined & uglified approach probably will result in a faster up and running scene than a .babylon, but appear unresponsive.  This is not a problem for mobile apps coming from a store.
+**Combining &amp; Uglify**-  .JS module files can be combined together with others (there could be order issues though), while .babylon files cannot.  The generated .JS modules are meant to be readable with lots of whitespace.  When deploying, they can also be uglified.  If your files become very large or your web server has limited bandwidth, the difference in load behavior may be pronounced, though.  A combined &amp; uglified approach probably will result in a faster up and running scene than a .babylon, but appear unresponsive.  This is not a problem for mobile apps coming from a store.
 
-**OO development & source code management**-  A .babylon file must have Javascript which reads it, `BABYLON.SceneLoader`, then takes the data and constructs `BABYLON.Mesh` objects.  There is no dynamic code execution in Javascript, so no sub-classing of `BABYLON.Mesh` is possible with a .babylon.  See Meshes under Features to see Tower of Babel's sub-classing capabilities.  Also, generated source code files, especially .TS files, are much better for placing in repositories like, Git.
+**OO development &amp; source code management**-  A .babylon file must have Javascript which reads it, `BABYLON.SceneLoader`, then takes the data and constructs `BABYLON.Mesh` objects.  There is no dynamic code execution in Javascript, so no sub-classing of `BABYLON.Mesh` is possible with a .babylon.  See Meshes under Features to see Tower of Babel's sub-classing capabilities.  Also, generated source code files, especially .TS files, are much better for placing in repositories like, Git.
 
 ###Feature Differences###
 Currently, the 2 exporters are pretty close feature wise.  Here are the features unique to Tower of Babel:
@@ -44,7 +44,7 @@ Currently, the 2 exporters are pretty close feature wise.  Here are the features
 - Cloning using Mesh Class Factories
 
 ###BJS version Required###
-The .TS / .JS files have no dependencies, so the minimium BJS version is 2.1.  The .babylon file needs 2.2 for some features, since adds made for some .babylon  properties were not done till 2.2.  Here is the table of features, and the behavior when used against 2.1:
+The .TS / .JS files have no dependencies, so the minimium BJS version is 2.1.  The .babylon file needs 2.2 for some features, since adds made were not done till 2.2 for some .babylon properties.  Here is the table of these properties, and the behavior when used against 2.1:
 
 |Feature|Behaviour
 | --- | ---
@@ -53,13 +53,13 @@ The .TS / .JS files have no dependencies, so the minimium BJS version is 2.1.  T
 |Material checkOnlyOnce | ignored
 |3D Camera rig | ignored
 
-##Features & Usage##
+##Features &amp; Usage##
 This document is not going to attempt to describe the actual mesh modeling or material creation in Blender.  There are many resources that show that.  We are concerned here with which features of Blender are exportable, and how to access them.
 
 There are custom properties that are explicitly added by the exporter to control the export.  There are also built-in properties that are mapped into BJS properties.
 
 ###Custom Properties###
-The exporter adds custom properties as well as some object types. The properties for objects are displayed as a section on their respective Data properties Tab.  The Exporter properties are displayed in the bottom left corner, when the Export menu item is clicked.  
+The exporter adds custom properties as well as some object types. The properties for objects are displayed as a section on their respective Data properties Tab.  Those bordered in blue, will not be in the .babylon exporter.
 
 |Exporter (on Scene tab) | Mesh |
 | --- | --- 
@@ -76,22 +76,26 @@ Blender has many scattered properties that are taken into account by the exporte
 
 |World (Blender Render)| Blender Game Render Settings | Rotation Units
 | --- | --- | ---
-|Horizon color must be shared.|Set on the material not the mesh.|Default is `XYZ Euler`.  Meshes and Cameras may also be `Quaternion`.
+|Horizon color must be shared.|Set on the material not the mesh.|Default is `XYZ Euler`.  Meshes &amp; Cameras may also be `Quaternion`.
 |<img src="doc-assist/worldSettings.png">|<img src="doc-assist/gameRenderSettings.png">|<img src="doc-assist/rotationSettings.png">
 
 ###Meshes###
-Meshes are output as a public sub-class of the base class custom property when they do not have a mesh as a parent.  They are output as an internal function which returns an instance of the base class custom property.  These child functions are called by the constructor or function of the parent mesh, never by you.  Here is the syntax again (source is for cloning):
+Meshes are output as a public sub-class of the base class custom property when they do not have a mesh as a parent, a root mesh.  They are output as an internal function which returns an instance of the base class custom property.  These child functions are called by the constructor of the parent mesh, never by you.  Here is the syntax again (source is for cloning):
 
 ```typescript
 // materialsRootDir and source optional
 var mesh = new ModuleName.MeshClass("name", scene, materialsRootDir, source); 
 ```
+####Nodes####
+Blender nodes are implemented as meshes in BJS, without any geometry.  Useful for assigning a common parent among meshes.
+
+####Instances####
+Instances, as BJS defines them, are objects of type `BABYLON.InstancedMesh`.  Their purpose is to take advantage GPU hardware acceleration available for identical meshes, including material.  They are made in Blender using the Object->Duplicate Linked menu item in the 3D View.  They are implemented as a public method, makeInstances(), for root meshes.  Child meshes are in-lined into the private function that also builds them.
 
 ####Morph.Mesh Classes####
-<img src="doc-assist/shapeKeys.png">  If a mesh contains Shape Keys, then the mesh is derived from a Morph.Mesh base class.  You create a `Basis` shape key and all of the other keys relative to it.  The name of the shape key is important.  The format is SHAPE_KEY_GROUP-KEY.  This provides for having groups like mouth, left_eye, etc.  On the BJS side, having separate groups allows for concurrent, independent deformations.  No animation on Blender side is transferred.  This feature is experimental.  Armatures and shapekeys are not current compatible. 
-
+If a mesh contains shape keys, then the mesh is derived from a Morph.Mesh base class.  You create a `Basis` shape key and all of the other keys relative to it.  The name of the shape key is important.  The format is SHAPE_KEY_GROUP-KEY.  This provides for having groups like mouth, left_eye, etc.  On the BJS side, having separate groups allows for concurrent, independent deformations.  No animation on Blender side is transferred.  This feature is experimental.  Armatures and shapekeys are not current compatible. <img src="doc-assist/shapeKeys.png">  
 ####Mesh Class Factories####
-This feature allows Meshes to be instanced on demand, using the existing geometry of another instance, if available.  The BJS terminology for this is cloning.  Sharing of geometry reduces GPU & CPU memory, and is very fast to create due to the lack of GPU calls to load data.  This is enabled using a custom property checkbox in the exporter, see below. The class factory needs to be instanced and then called like:
+This feature allows Meshes to be instanced on demand, using the existing geometry of another instance, if available.  The BJS terminology for this is cloning.  Sharing of geometry reduces GPU &amp; CPU memory, and is very fast to create due to the lack of GPU calls to load data.  This is enabled using a custom property checkbox in the exporter, see below. The class factory needs to be instanced and then called like:
 
 ```typescript
 var factory = new ModuleName.MeshFactory(scene, materialsRootDir); // materialsRootDir optional
@@ -138,7 +142,45 @@ Textures can be added onto a material of mesh, so the faces that are assigned fo
 ###Cycles Render / Texture Baking###
 ###Armatures###
 ###Fcurve Animations###
-Fcurve animations for Meshes, lights, and Cameras are transferred on export.  See the table below to see which properties are animatable, based on the object type.  If 
+Fcurve animations for Meshes, lights, and Cameras are transferred on export.  See the table below to see which properties are animatable, based on the object type.  If the custom property `Auto Launch Animations` is checked, then these will start when the object created.
+
+|Object Type| Rotation (Vector &amp; Quaternion)| Position | Scaling
+| --- |:---:|:---:|:---:|
+|**Meshes &amp; Nodes**| √| √| √
+|**Cameras** | √| √ |
+|**Lights** | | √| 
+
+###Log File###
+Another file always generated is the log file.  It has the same name as the script file or .babylon file with the extension .log.  It provides information about what it did or did not do.  Provides many possible warnings, instead of just leaving you wondering why something did not come through.  Most importantly, should the exporter terminate with an error, it will be contained in this file.  Here is part of one:
+```
+	Exporter version: 3.0.0, Blender version: 2.75 (sub 0)
+========= Conversion from Blender to Babylon.js =========
+	Python World class constructor completed
+	processing begun of mesh:  Cycles Torus
+		processing begun of baked material:  Cycles Torus
+			Cycles baking texture, type: DIFFUSE_COLOR, mapped using: BakingUV
+		num positions      :  1383
+		num normals        :  1383
+		num uvs            :  2766
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  3456
+	processing begun of mesh:  Cycles Torus 1
+		mesh is an instance of :  Cycles Torus.  Processing halted.
+	processing begun of mesh:  Ground
+		processing begun of baked material:  Ground
+		
+		...
+		
+	processing begun of light (SUN):  Directional_Lamp
+	processing begun of shadows for light:  Directional_Lamp
+	processing begun of light (HEMI):  Hemi_Lamp
+========= Writing of javascript file started =========
+========= Writing of javascript file completed =========
+========= end of processing =========
+elapsed time:  0 min, 19.1473 secs
+		
+```
 
 ##Structure of Generated Module##
 The typescript module version is the one described below.  There are 2 features that are omitted from the sample code though:
@@ -158,7 +200,7 @@ module ModuleName{
 ```
 
 ###initScene()###
-If you indicated that you wanted an `initScene()` included, it will be generated next.  When you call this function in your application code, it will do the .babylon file equivalent of `BABYLON.SceneLoader.Append()`.  You pass a previously instanced scene as an argument, and may also pass `resourcesRootDir`.  `resourcesRootDir` is very tolerant about whether you terminate it with a `/` or not.  The default is the same as the html file. When `initScene()` is called, the root directory of texture files & sound files must be the same.
+If you indicated that you wanted an `initScene()` included, it will be generated next.  When you call this function in your application code, it will do the .babylon file equivalent of `BABYLON.SceneLoader.Append()`.  You pass a previously instanced scene as an argument, and may also pass `resourcesRootDir`.  `resourcesRootDir` is very tolerant about whether you terminate it with a `/` or not.  The default is the same as the html file. When `initScene()` is called, the root directory of texture files &amp; sound files must be the same.
 
 The example below shows when everything is present.  The calling of the definition of skeletons, cameras, sounds, lights, and shadows are only added when there are some to define.
 
@@ -197,7 +239,7 @@ export function initScene(scene : BABYLON.Scene, resourcesRootDir : string = "./
 The example above shows when a MeshFactory class is also included.  A check is made for the Tower of Babel runtime.  If it's found then the MeshFactory is installed into it, and mesh instances are made that way.  When is MeshFactory not included, only the direct method using `new` is present.
 
 ###MeshFactory Class###
-This is an example of a mesh factory, showing only one class that is instance able, `meshClassNm1`.  The below switch statement will be expanded with a case statement for each root level mesh in the module that does not contain shape keys.  See section in Features & Usage, above, for calling instructions.
+This is an example of a mesh factory, showing only one class that is instance able, `meshClassNm1`.  The below switch statement will be expanded with a case statement for each root level mesh in the module that does not contain shape keys.  See section in Features &amp; Usage, above, for calling instructions.
 
 ```typescript
 var meshLib = new Array<Array<BABYLON.Mesh>>( **NUMBER_OF_ROOT_MESHES** );
