@@ -59,7 +59,7 @@ This document is not going to attempt to describe the actual mesh modeling or ma
 There are custom properties that are explicitly added by the exporter to control the export.  There are also built-in properties that are mapped into BJS properties.
 
 ###Custom Properties###
-The exporter adds custom properties as well as some object types. The properties for objects are displayed as a section on their respective Data properties Tab.  Those bordered in blue, will not be in the .babylon exporter.
+Custom properties are added for the exporte as well as for Mesh, Camera, &amp; Light object types. The properties for objects are displayed as a section on their respective Data properties Tab.  Those bordered in blue, will not be in the .babylon exporter.
 
 |Exporter (on Scene tab) | Mesh |
 | --- | --- 
@@ -86,14 +86,13 @@ Meshes are output as a public sub-class of the base class custom property when t
 // materialsRootDir and source optional
 var mesh = new ModuleName.MeshClass("name", scene, materialsRootDir, source); 
 ```
-####Nodes####
-Blender nodes are implemented as meshes in BJS, without any geometry.  Useful for assigning a common parent among meshes.
 
 ####Instances####
 Instances, as BJS defines them, are objects of type `BABYLON.InstancedMesh`.  Their purpose is to take advantage GPU hardware acceleration available for identical meshes, including material.  They are made in Blender using the Object->Duplicate Linked menu item in the 3D View.  They are implemented as a public method, makeInstances(), for root meshes.  Child meshes are in-lined into the private function that also builds them.
 
 ####Morph.Mesh Classes####
 If a mesh contains shape keys, then the mesh is derived from a Morph.Mesh base class.  You create a `Basis` shape key and all of the other keys relative to it.  The name of the shape key is important.  The format is SHAPE_KEY_GROUP-KEY.  This provides for having groups like mouth, left_eye, etc.  On the BJS side, having separate groups allows for concurrent, independent deformations.  No animation on Blender side is transferred.  This feature is experimental.  Armatures and shapekeys are not current compatible. <img src="doc-assist/shapeKeys.png">  
+
 ####Mesh Class Factories####
 This feature allows Meshes to be instanced on demand, using the existing geometry of another instance, if available.  The BJS terminology for this is cloning.  Sharing of geometry reduces GPU &amp; CPU memory, and is very fast to create due to the lack of GPU calls to load data.  This is enabled using a custom property checkbox in the exporter, see below. The class factory needs to be instanced and then called like:
 
@@ -114,18 +113,32 @@ TOWER_OF_BABEL.MeshFactory.instance("Font2D", "W") //get a W mesh from the Font2
 TOWER_OF_BABEL.MeshFactory.MODULES.push(new Font2D.MeshFactory(scene));
 ```
 
+####Nodes####
+Blender nodes are implemented as meshes in BJS, without any geometry.  Useful for assigning a common parent among meshes.
+
 ###Camera Options###
 
 ###Light / Shadow Generating###
-Blender has different names for the lights than BabylonJS.  Actually, Blender calls them lamps, not Lights.  Here is how they correlate:
+Blender has different names for light types than BabylonJS.  Actually, Blender calls them lamps, not Lights.  Here is how they correlate:
 
-|Blender | BabylonJS | Shadow Capable
-| --- | --- |:---:
-|Point | Point | √
-|Sun | Directional | √
-|Spot | Spot |
-|Hemi | Hemi |
-|Area | Hemi |
+|Blender | BabylonJS | Shadow Capable | Transfers Position | Transfers Direction
+| --- | --- |:---:|:---:|:---:
+|Point | Point          |   | √ |
+|Sun   | Directional    | √ | √ | √
+|Spot  | Spot           | √ | √ | √
+|Hemi  | Hemi           |   |   | √
+|Area  | Point(no range)|   | √ |
+
+There are also some mapped properties. Some that are always used, and some specific to certain types.
+
+|Common to All
+| --- | --- 
+|<img src="doc-assist/commonLightSettings.png">
+
+| Point|Spot 
+| --- | --- 
+|<img src="doc-assist/pointLightSettings.png">|<img src="doc-assist/spotLightSettings.png">
+
 
 ###Blender or Internal Render###
 ####Materials####
