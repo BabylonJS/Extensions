@@ -59,7 +59,7 @@ This document is not going to attempt to describe the actual mesh modeling or ma
 There are custom properties that are explicitly added by the exporter to control the export.  There are also built-in properties that are mapped into BJS properties.
 
 ###Custom Properties###
-Custom properties are added for the exporte as well as for Mesh, Camera, &amp; Light object types. The properties for objects are displayed as a section on their respective Data properties Tab.  Those bordered in blue, will not be in the .babylon exporter.
+Custom properties are added for the exporter as well as for Mesh, Camera, &amp; Light object types. The properties for objects are displayed as a section on their respective Data properties Tab.  Those bordered in blue, will not be in the .babylon exporter.
 
 |Exporter (on Scene tab) | Mesh |
 | --- | --- 
@@ -80,18 +80,20 @@ Blender has many scattered properties that are taken into account by the exporte
 |<img src="doc-assist/worldSettings.png">|<img src="doc-assist/gameRenderSettings.png">|<img src="doc-assist/rotationSettings.png">
 
 ###Meshes###
-Meshes are output as a public sub-class of the base class custom property when they do not have a mesh as a parent, a root mesh.  They are output as an internal function which returns an instance of the base class custom property.  These child functions are called by the constructor of the parent mesh, never by you.  Here is the syntax again (source is for cloning):
-
+Meshes are output as a public sub-class of the base class custom property when they do not have a mesh as a parent, a root mesh.  They are instanced using `new`, and can be sub-class by any hand written code you wish to make. Here is the syntax again (source is for cloning):
 ```typescript
 // materialsRootDir and source optional
 var mesh = new ModuleName.MeshClass("name", scene, materialsRootDir, source); 
 ```
 
+They are output as an internal function which returns an instance of the base class custom property.  These child functions are called by the constructor of the parent mesh, never by you.  
+
+
 ####Instances####
 Instances, as BJS defines them, are objects of type `BABYLON.InstancedMesh`.  Their purpose is to take advantage GPU hardware acceleration available for identical meshes, including material.  They are made in Blender using the Object->Duplicate Linked menu item in the 3D View.  They are implemented as a public method, makeInstances(), for root meshes.  Child meshes are in-lined into the private function that also builds them.
 
 ####Morph.Mesh Classes####
-If a mesh contains shape keys, then the mesh is derived from a Morph.Mesh base class.  You create a `Basis` shape key and all of the other keys relative to it.  The name of the shape key is important.  The format is SHAPE_KEY_GROUP-KEY.  This provides for having groups like mouth, left_eye, etc.  On the BJS side, having separate groups allows for concurrent, independent deformations.  No animation on Blender side is transferred.  This feature is experimental.  Armatures and shapekeys are not current compatible. <img src="doc-assist/shapeKeys.png">  
+<img style="float: right" src="doc-assist/shapeKeys.png"> If a mesh contains shape keys, then the mesh is derived from a Morph.Mesh base class.  You create a `Basis` shape key and all of the other keys relative to it.  The name of the shape key is important.  The format is SHAPE_KEY_GROUP-KEY.  This provides for having groups like mouth, left_eye, etc.  On the BJS side, having separate groups allows for concurrent, independent deformations.  No animation on Blender side is transferred.  This feature is experimental.  Armatures and shapekeys are not current compatible.   
 
 ####Mesh Class Factories####
 This feature allows Meshes to be instanced on demand, using the existing geometry of another instance, if available.  The BJS terminology for this is cloning.  Sharing of geometry reduces GPU &amp; CPU memory, and is very fast to create due to the lack of GPU calls to load data.  This is enabled using a custom property checkbox in the exporter, see below. The class factory needs to be instanced and then called like:
@@ -105,7 +107,8 @@ cloneSkeleton is an optional argument.  When `true`, it also clones the skeleton
 If there are multiple exports with class factories in them, the Tower of Babel runtime can assist with grouping factories together, so you can specify both the modulename and mesh class as strings.  The Dialog extension uses this so Letter meshes can specified as:
 
 ```typescript
-TOWER_OF_BABEL.MeshFactory.instance("Font2D", "W") //get a W mesh from the Font2D module 
+//get a W mesh from the Font2D module 
+TOWER_OF_BABEL.MeshFactory.instance("Font2D", "W") 
 ```
  A factory, once instanced, must be pushed onto the array of factories like:
  
@@ -117,6 +120,11 @@ TOWER_OF_BABEL.MeshFactory.MODULES.push(new Font2D.MeshFactory(scene));
 Blender nodes are implemented as meshes in BJS, without any geometry.  Useful for assigning a common parent among meshes.
 
 ###Camera Options###
+The position and direction of the camera are transferred for most cameras.  This is can also be preset to track to an object, called a locked target in BJS.  This is easiest to set up using the 3D view.  Select the camera, then shift right click the mesh to track to.  Press Cntrl T, which brings up a menu.  Select `Track to Constraint`.  See what this looks like in the Constraints Tab of the Camera below, where this cold also be set.
+
+| Camera Constraints|Camera Mapped Settings 
+| --- | --- 
+|<img src="doc-assist/cameraConstraints.png">|<img src="doc-assist/cameraMappedSettings.png">
 
 ###Light / Shadow Generating###
 Blender has different names for light types than BabylonJS.  Actually, Blender calls them lamps, not Lights.  Here is how they correlate:
