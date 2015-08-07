@@ -33,7 +33,7 @@ They can also both be present.  When this is the case, the custom properties of 
 var mesh = new ModuleName.MeshClass("name", scene, materialsRootDir, source);
 mesh.position.x = 6;
 ```
-**Combining &amp; Uglify**-  .JS module files can be combined together with others (there could be order issues though), while .babylon files cannot.  The generated .JS modules are meant to be readable with lots of whitespace.  When deploying, they can also be uglified.  If your files become very large or your web server has limited bandwidth, the difference in load behavior may be pronounced, though.  A combined &amp; uglified approach probably will result in a faster up and running scene than a .babylon, but appear unresponsive.  This is not a problem for mobile apps coming from a store.
+**Combining &amp; Uglify**-  .JS module files can be combined together with others (there could be order issues though), while .babylon files cannot.  The generated .JS modules are meant to be readable with lots of whitespace.  When deploying, they can also be uglified.  If your files become very large or your web server has limited bandwidth, the difference in load behavior may be pronounced, though.  A combined &amp; uglified approach probably will result in a faster up and running scene than a .babylon, but appear less responsive.  This does not apply to mobile apps, where download occurs during app install.
 
 **OO development &amp; source code management**-  A .babylon file must have Javascript which reads it, `BABYLON.SceneLoader`, and then takes the data and constructs `BABYLON.Mesh` objects.  There is no dynamic code execution in Javascript, so no sub-classing of `BABYLON.Mesh` is possible with a .babylon.  See Meshes under Features to see Tower of Babel's sub-classing capabilities.  Also, generated source code files, especially .TS files, are much better for placing in repositories like, Git.
 
@@ -92,7 +92,17 @@ Meshes that are the children of another mesh are output as an internal function 
 Instances, as BJS defines them, are objects of type `BABYLON.InstancedMesh`.  Their purpose is to take advantage GPU hardware acceleration available for identical meshes, including material.  They are made in Blender using the `Object->Duplicate Linked` menu item in the 3D View.  They are implemented as a public method, `makeInstances()`, for root meshes.  Instances of child meshes are in-lined into the private function that also builds them.
 
 ####Morph.Mesh Classes####
- If a mesh contains shape keys, then the mesh will be derived from a `Morph.Mesh` base class.  You create a `Basis` shape key and all of the other keys relative to it.  The name of the shape key is important.  The format is SHAPE_KEY_GROUP-KEY.  This provides for having groups like mouth, left_eye, etc.  On the BJS side, having separate groups allows for concurrent, independent deformations.  No animation on Blender side is transferred.  This feature is experimental.  Armatures and shape keys are not current compatible.<img style="float: right" src="doc-assist/shapeKeys.png">
+
+<table border = 0>
+<tr>
+<td  width=70%>
+If a mesh contains shape keys, then the mesh will be derived from a `Morph.Mesh` base class.  You create a `Basis` shape key and all of the other keys relative to it.  The name of the shape key is important.  The format is SHAPE_KEY_GROUP-KEY.  This provides for having groups like mouth, left_eye, etc.<br>
+<br>  
+On the BJS side, having separate groups allows for concurrent, independent deformations.  No animation on Blender side is transferred.  This feature is experimental.  Armatures and shape keys are not current compatible.
+</td>
+<td width=30%><img src="doc-assist/shapeKeys.png"></td>
+</tr>
+</table>
 
 ####Mesh Class Factories####
 This feature allows Meshes to be instanced on demand, using the existing geometry of another instance, if available.  The BJS terminology for this is cloning.  Sharing of geometry reduces GPU &amp; CPU memory, and is very fast to create due to the lack of GPU calls to load data.  This is enabled using a custom property checkbox in the exporter, see above. The class factory needs to be initialized and then called like:
@@ -103,13 +113,13 @@ var mesh = factory.instance("meshClassNm1", cloneSkeleton); // cloneSkeleton opt
 ```
 cloneSkeleton is an optional argument.  When `true`, it also clones the skeleton from the source.  It has no meaning unless the mesh class has an armature.
 
-If there are multiple exports with class factories in them, the Tower of Babel runtime can assist with grouping factories together, so you can specify both the modulename and mesh class as strings.  The Dialog extension uses this so Letter meshes can specified as:
+If there are multiple exports with class factories in them, the optional Tower of Babel runtime can assist with grouping factories together, so you can specify both the modulename and mesh class as strings.  The Dialog extension uses this so Letter meshes can specified as:
 
 ```typescript
 //get a W mesh from the Font2D module 
 TOWER_OF_BABEL.MeshFactory.instance("Font2D", "W") 
 ```
- A factory, once instanced, must be pushed onto the array of factories like:
+ To use the runtime, A factory, once instanced, must be pushed onto the array of factories like:
  
 ```typescript
 TOWER_OF_BABEL.MeshFactory.MODULES.push(new Font2D.MeshFactory(scene));
@@ -119,14 +129,14 @@ TOWER_OF_BABEL.MeshFactory.MODULES.push(new Font2D.MeshFactory(scene));
 Blender nodes are implemented as meshes in BJS, without any geometry.  Useful for assigning a common parent among meshes.  Fcurve animations are also possible with nodes.
 
 ###Cameras###
-The initial position and direction of the camera are transferred for cameras.  Cameras can also be preset to track to an object, called a locked target in BJS.  The easiest way to set up tracking is using the 3D view.  Arc Rotate &amp; Follow cameras required a mesh to track, or they cannot be exported.
+The initial position and direction of the camera is transferred, but not always by the same means.  Cameras can also be preset to track to an object, called a locked target in BJS.  Arc Rotate &amp; Follow cameras required a mesh to track, or they cannot be exported.  The easiest way to set up tracking is using the 3D view.
 
 - Right click the camera.
 - Shift right click the mesh to track to.  
 - Press Cntrl T, which brings up a menu. 
 - Select `Track to Constraint`.  
 
-To see what this looks like. view the Constraints Tab of the Camera below, where this could also used to do setup.
+To see what this looks like. view the Constraints Tab of Camera below, where this could also used to do the setup.
 
 | Camera Constraints|Camera Mapped Settings 
 | --- | --- 
@@ -160,21 +170,21 @@ Materials that are just made up of colors are setup using the Blender Render, as
 <img src="doc-assist/StdMaterials.png">
 
 ####Textures####
-Textures can be added onto a material of mesh, so the faces that are assigned for the texture are the materials. Image textures are normally just a file copy, with some properties mapped to BJS.  
+Textures can be added to a material of a mesh, so the faces that are assigned the texture are the materials. Image textures are normally just a file copy, with some properties mapped to BJS.  
 
-If there are any procedural textures anywhere for a mesh, then any image textures are just worked into the baked images instead.  Procedural textures are rendered in Blender, then output as an image.  Properties are used in the rendering process, rather than being mapped into BJS properties.  This opens up many more properties that can be used than image textures. 
+If there are procedural textures in any materials for a mesh, then any image textures are just worked into the baked images instead.  Procedural textures are rendered in Blender, then output as an image.  Properties are used in the rendering / baking process, rather than being mapped into BJS properties.  This opens up many more properties that can be used than mapped using image textures. 
 
 |Procedural Textures| Image Textures
 | --- | ---
 |<img src="doc-assist/proceduralTexture.png">|<img src="doc-assist/imageTexture.png">
 
 ####in-line textures####
-Textures do not need to be in a separate file.  They can be inside either the .JS or .babylon file (must be BJS 2.2 for .babylon).  The size of the combined file will be larger, but assuming you are using gzip on your server, the transmission is about the same.  Other than convenience,  having fewer files can improve the time a web page downloads due to the latency of doing each file.
+Textures do not need to be in a separate file.  They can also be inside either the .JS or .babylon file (must be BJS 2.2 for .babylon).  The size of the combined file will be larger, but assuming you are using gzip on your server, the transmission is about the same.  Other than just being self-contained,  having fewer files can improve the time a web page downloads due to the latency of doing each file.
 
 ####Cycles Render / Texture Baking####
-Cycles is supported by baking out a set of textures that BJS can accept.  Lighting / shadows are not taken into account as part of the baking.  If your cycles material is a simple diffuse node, setting a color, you are far better off replacing it with an equivalent material using the Blender Render.  You avoid doing texture lookups in the fragment shader, and do not waste GPU memory.  A texture takes up much more memory than disk space, since it is compressed on disk.
+The Cycles Render is supported by baking out a set of textures that BJS can accept.  Lighting / shadows are not taken into account as part of the baking.  If your Cycles material is a simple diffuse node, setting a color, you are far better off replacing it with an equivalent material using the Blender Render.  You avoid doing texture lookups in the fragment shader, and do not waste GPU memory.  A texture takes up much more GPU memory than disk space, since it is compressed on disk.
 
-When baking textures, either from Cycles or Blender Render Procedurals, the dimensions are set on a mesh by mesh basis.  This is part of the custom properties of a mesh.  It is highly recommended to make this a power of 2.  The format output is .JPG.  The quality setting controls the compression on disk.
+When baking textures, either from Cycles or Blender Render Procedural textures, the dimensions are set on a mesh by mesh basis.  This is part of the custom properties of a mesh.  It is highly recommended to make this a power of 2.  The format output is .JPG.  The quality setting controls the compression on disk.
 
 ###Fcurve Animations###
 Fcurve animations for Meshes, lights, and Cameras are transferred on export.  See the table below to see which properties are animatable, based on the object type.  If the custom property `Auto Launch Animations` is checked, then these will start when the object created.
@@ -189,7 +199,7 @@ Fcurve animations for Meshes, lights, and Cameras are transferred on export.  Se
 Armatures are exported. along with their animations.  It is no longer a requirement that an armature be the parent of a mesh it controls. These animations cannot be set to auto animate.
 
 ###Log File###
-Another file always generated is the log file.  It has the same name as the script file or .babylon file with the extension .log.  It provides information about what it did or did not do.  Provides many possible warnings, instead of just leaving you wondering why something did not come through.  Most importantly, should the exporter terminate with an error, it will be contained in this file.  Here is part of one:
+Another file always generated is the log file.  It has the same name as the script file or .babylon file with the extension .log.  It provides information about what was or was not done.  Many possible warnings are provided, instead of just leaving you wondering why something did not come through.  Most importantly, should the exporter terminate with an error, it will be contained in this file.  Here is part of one:
 ```
 	Exporter version: 3.0.0, Blender version: 2.75 (sub 0)
 ========= Conversion from Blender to Babylon.js =========
@@ -407,7 +417,7 @@ export class MeshClass extends BABYLON.Mesh {
         
         // child mesh instancing
         this.appendage = cloning ? child_Appendage(scene, this, source.Appendage) : child_Appendage(scene, this);
-        ...
+        ... more child meshes
 
         // miscellaneous properties section
         this.id = this.name;
@@ -462,7 +472,7 @@ export class MeshClass extends BABYLON.Mesh {
         instance.position.x  = 15;
         instance.position.y  = 1.719;
         instance.position.z  = -5;
-        // rotation & scaling as well
+        // rotation & scaling as well, not shown
         instance.freezeWorldMatrix();
         instance.checkCollisions = false;
         
@@ -510,7 +520,7 @@ export class Plane extends MORPH.Mesh {
 ```
 
 ###defineSkeletons() [Optional]###
-There is very little reason to call this yourself.  If you instance a mesh with a skeleton, this is called early int the constructor for you.  Like `defineMaterials()`, this only does something the first time it is called.
+There is very little reason to call this yourself.  If you instance a mesh with a skeleton, this is called early in the constructor for you.  Like `defineMaterials()`, this only does something the first time it is called.
 
 ```typescript
 var bonesLoaded = false;
@@ -672,18 +682,3 @@ The exported .JS file must of course be referenced in the `<head>` section of th
 
 ```
 
-Table tests for wrapping images
-
-
-| |
-|---|---
-|Text long enough to really,  really,  really,  really,  really,  really,  really,  really,  really,  really,  really,  really,  really,  really,  really,  really,  really,  really,  really, ensure wrapping.|<img src="doc-assist/commonLightSettings.png">
-
-Brute force and ignorance method, raw table tags:
-
-<table>
-<tr>
-<td><img src="doc-assist/commonLightSettings.png"></td>
-<td>Text long enough to really,  really,  really,  really,  really,  really,  really,  really,  really,  really,  really,  really,  really,  really,  really,  really,  really,  really,  really, ensure wrapping.</td>
-</tr>
-</table>
