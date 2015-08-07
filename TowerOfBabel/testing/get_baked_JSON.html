@@ -1,0 +1,67 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Blender exporter texture baking</title>
+    <!-- edit path - name of babylon library as required -->
+    <script src="http://cdn.babylonjs.com/2-1/babylon.js"></script>
+    <style>
+         html, body   { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; } 
+         #renderCanvas{ width: 100%; height: 100%; } 
+    </style>
+</head>
+<body>
+<canvas id="renderCanvas"></canvas>
+<script>
+    if (BABYLON.Engine.isSupported()) {
+        var canvas = document.getElementById("renderCanvas");
+        var engine = new BABYLON.Engine(canvas, true);
+
+        var url = "./TOB-out/"; // edit when .babylon / texture files in a different dir than html
+        BABYLON.SceneLoader.Load(url, "get_baked.babylon", engine, 
+            function (newScene) {     	        
+                newScene.executeWhenReady(function () {
+                // get the render list for the Mirror
+                var gus = newScene.getMeshByID("Gus");
+                var renderList = gus.getChildren();
+                renderList.push(gus);
+
+                var mirrorMaterial = new BABYLON.StandardMaterial("mirrorMat", newScene);
+                mirrorMaterial.diffuseColor  = new BABYLON.Color3(0.1,0.1,0.1);
+                mirrorMaterial.emissiveColor = new BABYLON.Color3(0.1,0.1,0.1);
+
+                mirrorMaterial.reflectionTexture = new BABYLON.MirrorTexture("mirrorTex", 4096, newScene, true);
+                mirrorMaterial.reflectionTexture.mirrorPlane = new BABYLON.Plane(0,0,-1,-6);
+                mirrorMaterial.reflectionTexture.renderList = renderList;
+                if (newScene.getMeshByID("Mirror") !== null)
+                	newScene.getMeshByID("Mirror").material = mirrorMaterial;
+                    
+                // Attach camera to canvas inputs
+                newScene.activeCamera.attachControl(canvas);
+                
+                // double check things that cannot be seen (only works when 2.2 loaded)
+                if (Number(BABYLON.Engine.Version.substr(0, BABYLON.Engine.Version.lastIndexOf("."))) > 2.1){
+                    console.log("Is checkonlyonce being read: " + newScene.getMaterialByID("get_baked.Eyes").checkReadyOnlyOnce);
+                    console.log("Is freezeworldmatrix being read: " + gus._isWorldMatrixFrozen);
+                }
+
+                // Once the scene is loaded, register a render loop
+                engine.runRenderLoop(function() {
+                    newScene.render();
+                });
+            });
+        }
+        );
+    }else{
+        alert("WebGL not supported in this browser.\n\n" + 
+              "If in Safari browser, check 'Show Develop menu in menu bar' on the Advanced tab of Preferences.  " +
+              "On the 'Develop' menu, check the 'Enable WebGL' menu item.");
+    }
+
+    //Resize
+    window.addEventListener("resize", function () {
+        engine.resize();
+    });
+
+</script>
+</body>
+</html>
