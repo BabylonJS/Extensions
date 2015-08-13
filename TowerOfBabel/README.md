@@ -1,5 +1,5 @@
 #Tower of Babel Exporter for Blender
-<img src="doc-assist/get_baked.png">
+<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/get_baked.png">
 ## Background: ##
 
 All Add-ons for Blender need to be written in Python.  The original Blender exporter was written as a single static class with some helper functions.  Everything was converted from Blender's representation of things to BJS's at the same time as it was written out, in a single pass.  Some of the conversions made were from quads to triangles, and from right-handed coordinates to left-handed.
@@ -15,7 +15,7 @@ Eventually, the .babylon exporter was replaced with the Tower of Babel code base
 They can also both be present.  When this is the case, the custom properties of only one will display, the last used or installed.  You can also explicitly turn one off in Blender Preferences.  Fortunately, the common properties are named the same, so the settings transfer back and forth.
 
 ##Installation##
-<img src="doc-assist/blenderUserPreferences.png">  
+<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/blenderUserPreferences.png">  
 
 1. Go to File->User Preferences->Addons Tab
 2. Click the `Install from File...` Button (1 in image).
@@ -63,11 +63,11 @@ Custom properties are added for the exporter as well as for Mesh, Camera, &amp; 
 
 |Exporter (on Scene tab) | Mesh |
 | --- | --- 
-|<img src="doc-assist/exporterSettings.png">|<img src="doc-assist/meshSettings.png">
+|<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/exporterSettings.png">|<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/meshSettings.png">
 
 | Camera | Light
 | --- | --- 
-|<img src="doc-assist/cameraSettings.png">|<img src="doc-assist/lightSettings.png">
+|<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/cameraSettings.png">|<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/lightSettings.png">
 
 The settings for each are saved with the .blend file.
 
@@ -77,7 +77,7 @@ Blender has many scattered properties that are taken into account by the exporte
 |World (Blender Render)| Blender Game Render Settings | Rotation Units
 | --- | --- | ---
 |Horizon color must be shared.|Set on the material not the mesh.|Default is `XYZ Euler`.  Meshes &amp; Cameras may also be `Quaternion`.
-|<img src="doc-assist/worldSettings.png">|<img src="doc-assist/gameRenderSettings.png">|<img src="doc-assist/rotationSettings.png">
+|<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/worldSettings.png">|<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/gameRenderSettings.png">|<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/rotationSettings.png">
 
 ###Meshes###
 Meshes are output as a public sub-class of the base class custom property when they do not have a mesh as a parent, a root mesh.  They are instanced using `new`, and can be further sub-classed by any hand written code you wish to make. Here is the syntax again (source is for cloning):
@@ -100,7 +100,7 @@ If a mesh contains shape keys, then the mesh will be derived from a `Morph.Mesh`
 <br>  
 On the BJS side, having separate groups allows for concurrent, independent deformations.  No animation on Blender side is transferred.  This feature is experimental.  Armatures and shape keys are not current compatible.
 </td>
-<td width=30%><img src="doc-assist/shapeKeys.png"></td>
+<td width=30%><img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/shapeKeys.png"></td>
 </tr>
 </table>
 
@@ -140,7 +140,7 @@ To see what this looks like. view the Constraints Tab of Camera below, where thi
 
 | Camera Constraints|Camera Mapped Settings 
 | --- | --- 
-|<img src="doc-assist/cameraConstraints.png">|<img src="doc-assist/cameraMappedSettings.png">
+|<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/cameraConstraints.png">|<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/cameraMappedSettings.png">
 
 ###Lights / Shadow Generating###
 Blender has different names for light types than BabylonJS.  Actually, Blender calls them lamps, not Lights.  Here is how they correlate:
@@ -157,17 +157,17 @@ There are also some mapped properties. Some that are always used, and some speci
 
 |Common to All
 | --- | --- 
-|<img src="doc-assist/commonLightSettings.png">
+|<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/commonLightSettings.png">
 
 | Point|Spot 
 | --- | --- 
-|<img src="doc-assist/pointLightSettings.png">|<img src="doc-assist/spotLightSettings.png">
+|<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/pointLightSettings.png">|<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/spotLightSettings.png">
 
 
 ###Materials###
 Materials that are just made up of colors are setup using the Blender Render, as seen below.  Making `MultiMaterials` are a matter of assigning more than one material for a mesh.  Once you have the materials, enter edit mode, select faces to have a materials,then click Assign.
 
-<img src="doc-assist/StdMaterials.png">
+<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/StdMaterials.png">
 
 ####Textures####
 Textures can be added to a material of a mesh, so the faces that are assigned the texture are the materials. Image textures are normally just a file copy, with some properties mapped to BJS.  
@@ -176,7 +176,7 @@ If there are procedural textures in any materials for a mesh, then any image tex
 
 |Procedural Textures| Image Textures
 | --- | ---
-|<img src="doc-assist/proceduralTexture.png">|<img src="doc-assist/imageTexture.png">
+|<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/proceduralTexture.png">|<img src="https://raw.githubusercontent.com/BabylonJS/Extensions/master/TowerOfBabel/doc-assist/imageTexture.png">
 
 ####in-line textures####
 Textures do not need to be in a separate file.  They can also be inside either the .JS or .babylon file (must be BJS 2.2 for .babylon).  The size of the combined file will be larger, but assuming you are using gzip on your server, the transmission is about the same.  Other than just being self-contained,  having fewer files can improve the time a web page downloads due to the latency of doing each file.
