@@ -920,8 +920,8 @@ class Mesh(FCurveAnimatable):
                         if obj == objArmature:
                             self.skeletonId = i
                             break
-                    else:
-                        i += 1
+                        else:
+                            i += 1
 
         # determine Position, rotation, & scaling
         if forcedParent is None:
