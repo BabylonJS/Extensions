@@ -1544,7 +1544,7 @@ def mesh_node_common_script(file_handler, meshOrNode, isRoot, kids, indent, is_t
     for kid in kids:
         nm = kid.legalName
         func = 'child_' + nm
-        file_handler.write(indent2 + var + '.' + nm + ' = cloning ? ' + func + '(scene, this, source.' + nm +') : ' + func + '(scene, this);\n')
+        file_handler.write(indent2 + var + '.' + nm + ' = cloning ? ' + func + '(scene, ' + var + ', source.' + nm +') : ' + func + '(scene, ' + var + ');\n')
     file_handler.write('\n')
 
 
