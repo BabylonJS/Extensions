@@ -89,6 +89,31 @@ module DIALOG{
             this.setEnabled(maskId !== DialogSys.SUSPENDED_DIALOG_LAYER);
         }
         
+        /**
+         * @override
+         * Do the entire hierarchy, in addition
+         */ 
+        public freezeWorldMatrixTree() {
+            this.freezeWorldMatrix();
+            this._inside.freezeWorldMatrix();
+            var insideKids = this._inside.getChildren();
+            for (var i = insideKids.length - 1; i >= 0; i--){
+                 (<BABYLON.Mesh> insideKids[i]).freezeWorldMatrix();
+            }
+        }
+        
+        /**
+         * @override
+         * Do the entire hierarchy, in addition
+         */ 
+         public unfreezeWorldMatrixTree() {
+            super.unfreezeWorldMatrix();
+            var insideKids = this._inside.getChildren();
+            for (var i = insideKids.length - 1; i >= 0; i--){
+                 (<BABYLON.Mesh> insideKids[i]).unfreezeWorldMatrix();
+            }
+        }
+        
         /** @override */
         public addSubPanel(sub : BasePanel, index? :number) : void{
             BABYLON.Tools.Error("wrappers can have no sub-panels");

@@ -3,14 +3,21 @@
 module DIALOG{
     export class Button extends Label{
         // these are the look and feel materials to use for buttons when selected or not
-        public static MAT           : BABYLON.MultiMaterial;
-        public static SELECTED_MAT  : BABYLON.MultiMaterial;
+        public static MAT             : BABYLON.MultiMaterial;
+        public static SELECTED_MAT    : BABYLON.MultiMaterial;
+        private static _DISOLVED_MAT  : BABYLON.MultiMaterial;
        
         // group for when this is a radio button
         private _group : RadioGroup;
         
         // afterRender items
         private _chngInProgress = false;
+        
+        // for disolving
+        private _sysHideButton = false;
+        private _rootPanel : BasePanel;
+        private _disolvedState = 1;
+        private static DISOLVE_STEP_RATE = 0.012; // @ 60 FPS, 1.39 seconds
         
         /**
          * @param {string} label - The text to display on the button.
@@ -61,11 +68,20 @@ module DIALOG{
         private static _delayedStart(mesh: BABYLON.AbstractMesh) : void {
             var asButton = <Button> mesh;
             if (asButton._chngInProgress){
-                asButton._chngInProgress = false;
-                asButton.setSelected(false);  // after delay change back to un-selected           
-                if (asButton._callback) asButton._callback(asButton);
+                if (asButton._disolvedState === 1 || asButton._disolvedState === 0){
+                    // after delay change back to un-selected, do not change _chngInProgress till after, so can be used when disolving
+                    asButton.setSelected(false);  
+                    asButton._chngInProgress = false;
+                    if (asButton._callback){
+                        asButton._callback(asButton);
+                    } 
+                
+                }else{
+                    asButton._disolvedState = Math.max(asButton._disolvedState - Button.DISOLVE_STEP_RATE, 0);
+                    asButton._rootPanel.disolve(asButton._disolvedState, asButton);
+                }
             
-            }else if (asButton.material !== Button.MAT){
+            }else if (asButton.material == Button.SELECTED_MAT){
                 asButton._chngInProgress = true;
             }
         }
@@ -79,9 +95,25 @@ module DIALOG{
          */
         public setSelected(selected : boolean, noCallbacks? :boolean) {
             this._selected = selected;
-            this.material = selected ? Button.SELECTED_MAT : Button.MAT;
+            var isDisolved = this._disolvedState === 0;
+            this.material = isDisolved ? Button._DISOLVED_MAT : (selected ? Button.SELECTED_MAT : Button.MAT);
             if (!noCallbacks){
-                if (this._group) this._group.reportSelected(this);               
+                if (this._group) this._group.reportSelected(this);
+            } 
+            
+            if (this._sysHideButton){
+                if (!this._chngInProgress){
+                    this._rootPanel = this.getRootPanel();
+                    if (isDisolved){
+                        this._rootPanel.reAppear();
+                        this._disolvedState = 1;
+                        this.material = Button.SELECTED_MAT;
+                        
+                    }else{
+                        // anything less than 1 & afterrenderer knows to disolve
+                        this._disolvedState = 0.99;
+                    }
+                }          
             }
         }
         
@@ -106,6 +138,22 @@ module DIALOG{
             
             }else BABYLON.Tools.Error("Button not radio type");
         }
+        
+        public hideSystemOnClick(hide : boolean){
+            this._sysHideButton = hide;
+            if (hide && !Button._DISOLVED_MAT){
+                var clear = new BABYLON.StandardMaterial("Clear", DialogSys._scene);
+                clear.checkReadyOnlyOnce = true;
+                clear.emissiveColor = new BABYLON.Color3(1,1,1);
+                clear.alpha = 0;
+                
+                var multiMaterial = new BABYLON.MultiMaterial("disolved_button", DialogSys._scene);
+                multiMaterial.subMaterials.push(clear);
+                multiMaterial.subMaterials.push(clear);
+                Button._DISOLVED_MAT = multiMaterial;                
+            }
+        }
+        public isSystemHidden(){ return this._disolvedState === 0; }        
         // ======================================== Overrides ========================================       
         /**
          * @override
@@ -115,6 +163,13 @@ module DIALOG{
         public dispose(doNotRecurse?: boolean): void {
             super.dispose(false);
             this.unregisterAfterRender(Button._delayedStart);
+        }
+        
+        public reAppearNoCallback() : void{
+            this._rootPanel = this.getRootPanel();
+            this._rootPanel.reAppear();
+            this._disolvedState = 1;
+            this.material = Button.MAT;
         }
         // ========================================== Enums  =========================================    
         private static _ACTION_BUTTON = 0; 

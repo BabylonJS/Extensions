@@ -1,10 +1,10 @@
 /// <reference path="./Panel.ts"/>
 module DIALOG{
     export class Letter extends BasePanel{
-        
+        public static LETTER_ABOVE = 0.682;
         // values for max above & min below; defaults good for most; Fontfactory overrides for extended letters
-        public maxAboveY =  0.682; // H, T, I, etc
-        public minBelowY = -0.23;  // g is the lowest   
+        public maxAboveY =  Letter.LETTER_ABOVE; // H, T, I, etc
+        public minBelowY = -0.23;                // g is the lowest   
         
         // These are similar to those generated in BoundingBox, except they are done without regard to scaling.
         // They are only done ONCE.
@@ -28,6 +28,8 @@ module DIALOG{
             // initially not visible.  Changed in first call to _calcRequiredSize.  Elliminates messy
             // first appearance, when dynamically adding panels after the first layout of top level panel.
             this.visibility = 0;
+            
+            this.setBorderVisible(true); // set so can reappear, once disolved
         }
         // ======================================== Overrides ========================================       
         /**
@@ -86,4 +88,8 @@ module DIALOG{
         /** @override */ public removeAt(index : number, doNotDispose? : boolean) : void{}
         /** @override */ public removeAll(doNotDispose? : boolean) : void{}
      }
+     // ========================================= Statics =========================================
+//    public static sizeToLetterHeight(target : BasePanel) : BasePanel){
+//        var aspectRatio = target
+//    }     
 }

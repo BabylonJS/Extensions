@@ -5,7 +5,11 @@ module DIALOG{
     
     class DigitWtLogic extends MeshWrapperPanel{
         public static _maxWorld : BABYLON.Vector3;
-        private static _minVisibility = 0;
+        
+        private _maxVisibility : number;
+        private _val : string;
+        private _show0   : boolean;
+        private _showDot : boolean;
         
         constructor(){
             if (!factory){
@@ -28,6 +32,8 @@ module DIALOG{
             this._minWorld = BABYLON.Vector3.Zero();
             this._maxWorld = DigitWtLogic._maxWorld;
             
+            this._maxVisibility = 1;
+            
             // initialize to 0, but not a visible 0
             this.setDigit('0', false);
         }
@@ -38,15 +44,19 @@ module DIALOG{
                 BABYLON.Tools.Error(val + ' is not a valid setting for Digit');
                 return;
             }
+            this._val = val;
+            this._show0 = show0;
+            this._showDot = showDot;
+            
             var visible0 = show0 && '0'.indexOf(val) !== -1;
-            geo.botLeft.visibility = ('E268'     .indexOf(val) !== -1 || visible0) ? 1 : DigitWtLogic._minVisibility;
-            geo.topLeft.visibility = ('E45689'   .indexOf(val) !== -1 || visible0) ? 1 : DigitWtLogic._minVisibility;
-            geo.top    .visibility = ('E2356789' .indexOf(val) !== -1 || visible0) ? 1 : DigitWtLogic._minVisibility;
-            geo.bottom .visibility = ('E235689'  .indexOf(val) !== -1 || visible0) ? 1 : DigitWtLogic._minVisibility;
-            geo.botRite.visibility = ('13456789' .indexOf(val) !== -1 || visible0) ? 1 : DigitWtLogic._minVisibility;
-            geo.topRite.visibility = ('1234789'  .indexOf(val) !== -1 || visible0) ? 1 : DigitWtLogic._minVisibility;
-            geo.center .visibility = ('E2345689-'.indexOf(val) !== -1            ) ? 1 : DigitWtLogic._minVisibility;
-            geo.dot    .visibility = showDot ? 1 : DigitWtLogic._minVisibility;
+            geo.botLeft.visibility = ('E268'     .indexOf(val) !== -1 || visible0) ? this._maxVisibility : 0;
+            geo.topLeft.visibility = ('E45689'   .indexOf(val) !== -1 || visible0) ? this._maxVisibility : 0;
+            geo.top    .visibility = ('E2356789' .indexOf(val) !== -1 || visible0) ? this._maxVisibility : 0;
+            geo.bottom .visibility = ('E235689'  .indexOf(val) !== -1 || visible0) ? this._maxVisibility : 0;
+            geo.botRite.visibility = ('13456789' .indexOf(val) !== -1 || visible0) ? this._maxVisibility : 0;
+            geo.topRite.visibility = ('1234789'  .indexOf(val) !== -1 || visible0) ? this._maxVisibility : 0;
+            geo.center .visibility = ('E2345689-'.indexOf(val) !== -1            ) ? this._maxVisibility : 0;
+            geo.dot    .visibility = (showDot) ? this._maxVisibility : 0;
         }        
         // ======================================== Overrides ========================================
         public setMaterial(mat : BABYLON.StandardMaterial) : void{
@@ -59,6 +69,16 @@ module DIALOG{
             geo.topRite.material = mat;
             geo.center .material = mat;
             geo.dot    .material = mat;
+        }
+        
+        public disolve(visibility : number, exceptionButton : BasePanel) : void{
+            this._maxVisibility = visibility;
+            this.setDigit(this._val, this._show0, this._showDot);            
+        }
+        
+        public reAppear() : void{
+            this._maxVisibility = 1;
+            this.setDigit(this._val, this._show0, this._showDot);            
         }
         /**
          * @override
@@ -82,23 +102,19 @@ module DIALOG{
         constructor(name : string, private _nDigits : number, private _alwaysDot? :boolean, private _fixed? : number){
             super(name, DialogSys._scene);
             this.name = name;
-             
-            if (!LCD.MAT){
-                LCD.MAT = DialogSys.BLACK[(DialogSys.USE_CULLING_MAT_FOR_2D) ? 0 : 1];
-            }
+            LCD._initMaterial();
             this.material = LCD.MAT;
             
             // add all meshes as subPanels, null or not
             for (var i = 0; i < _nDigits; i++){
                 this.addSubPanel(new DigitWtLogic() );
             }
-            this._value = 0;
+            this.value = 0;
         }
         
         public set value(value : number){
             this._value = value;
-            
-            
+                        
             var asString = this._fixed ? value.toFixed(this._fixed) : value.toString();
             var nDigits = asString.length;
 
@@ -113,7 +129,7 @@ module DIALOG{
             var subs = this.getSubPanels();
             
             // check for and response to a number too big to display
-            if (nDigits > this._nDigits){                
+            if (nDigits > this._nDigits){ 
                 (<DigitWtLogic> subs[0]).setDigit('E');
                 for (var i = 1; i < this._nDigits; i++){
                     (<DigitWtLogic> subs[i]).setDigit('0', false);
@@ -138,6 +154,12 @@ module DIALOG{
         }
         
         public get value() : number { return this._value; }
+        
+        public static _initMaterial(){
+            if (!LCD.MAT){
+                LCD.MAT = DialogSys.BLACK[(DialogSys.USE_CULLING_MAT_FOR_2D) ? 0 : 1];
+            }
+        }
     }
     //================================================================================================
     //================================================================================================
@@ -147,28 +169,26 @@ module DIALOG{
         public static SELECTED_MAT  : BABYLON.MultiMaterial;
         
         private _display : LCD;
-        private _value : number;
         private _downButton : Letter;
         private _upButton   : Letter;
                 
-        // after Renderer items
-        private _chngInProgress = false;
-        
         /**
          * Sub-class of BasePanel containing a set of DigitWtLogic subPanels.
          * @param {number} _nDigits - The # of digits to use.  
          */
-        constructor(label : string, _nDigits : number, public minValue : number, public maxValue : number, initialValue : number, public increment = 1){
+        constructor(label : string, _nDigits : number, public minValue : number, public maxValue : number, initialValue : number, public increment = 1, fixed? :number){
             super(label, DialogSys._scene);
             
             if (!NumberScroller.MAT){
+                LCD._initMaterial();
+                
                 var multiMaterial = new BABYLON.MultiMaterial("button", DialogSys._scene);
-                multiMaterial.subMaterials.push(DialogSys.BLACK [0]   ); // for sides, culling off
-                multiMaterial.subMaterials.push(DialogSys.BLACK [0]   ); // for back
+                multiMaterial.subMaterials.push(LCD.MAT); // for sides
+                multiMaterial.subMaterials.push(LCD.MAT); // for back
                 NumberScroller.MAT = multiMaterial;
 
                 multiMaterial = new BABYLON.MultiMaterial("button selected", DialogSys._scene);
-                multiMaterial.subMaterials.push(DialogSys.BLACK[0]); // for sides, culling off
+                multiMaterial.subMaterials.push(LCD.MAT); // for sides
                 multiMaterial.subMaterials.push(DialogSys.ORANGE [0]); // for back
                 NumberScroller.SELECTED_MAT = multiMaterial;
             }
@@ -191,12 +211,12 @@ module DIALOG{
             var alwaysDot = Math.floor(this.minValue) !== this.minValue || Math.floor(this.maxValue) !== this.maxValue || Math.floor(this.increment) !== this.increment;
             
             if (!alwaysDot && Math.floor(initialValue) !== initialValue){
-                BABYLON.Tools.Error('initialValue must be integer minValue, maxValue, & increment are');
+                BABYLON.Tools.Error('initialValue must be integer, since minValue, maxValue, & increment are');
                 return;
             }
             
             // do the display first, since not sure if mesh factory instanced
-            this._display = new LCD(name + '-lcd', _nDigits, alwaysDot);
+            this._display = new LCD(name + '-lcd', _nDigits, alwaysDot, fixed);
             this._display.setBorderVisible(true);
             this._display.verticalAlignment = Panel.ALIGN_VCENTER;
             this.value = initialValue;
@@ -208,12 +228,9 @@ module DIALOG{
                 labelPanel.verticalAlignment = Panel.ALIGN_BOTTOM;
                 this.addSubPanel(labelPanel);
             }
-            this.addSubPanel(this._downButton = this._getButton('Down') );
+            this.addSubPanel(this._downButton = this._getButton('Down', this) );
             this.addSubPanel(this._display);
-            this.addSubPanel(this._upButton   = this._getButton('Up') );
-            
-            super.registerAfterRender(NumberScroller._normalMaterials);
-            this.setBorderVisible(true); // nothing shown, needed for after renderer to always fire
+            this.addSubPanel(this._upButton   = this._getButton('Up', this) );
         }  
         // ======================================== Overrides ========================================       
         /**
@@ -226,13 +243,15 @@ module DIALOG{
             this.unregisterAfterRender(NumberScroller._normalMaterials);
         }
         // =============================== Selection / Action Methods ================================
-        private _getButton(className : string) : Letter{
+        private _getButton(className : string, nScroller : NumberScroller) : Letter{
             var ret = <Letter> factory.instance(className);
             var halfHeight = Panel.ExtractMax(ret).y;
             ret.verticalAlignment = Panel.ALIGN_VCENTER;
             ret.maxAboveY =  halfHeight;
             ret.minBelowY = -halfHeight;
             ret.material = NumberScroller.MAT;
+            ret.setButton(true);
+            ret.registerAfterRender(NumberScroller._normalMaterials);
             
             var ref = this;
             ret.registerPickAction(
@@ -242,6 +261,10 @@ module DIALOG{
                                       
                     if (className === 'Down') ref._decrement(); 
                     else ref._increment(); 
+                    
+                    if (nScroller._callback){
+                        nScroller._callback(nScroller);
+                    } 
                 }
             );
             return ret;
@@ -250,14 +273,13 @@ module DIALOG{
          * After renderer
          */
         private static _normalMaterials(mesh: BABYLON.AbstractMesh) : void {
-            var asScroller = <NumberScroller> mesh;
-            if (asScroller._chngInProgress){
-                asScroller._chngInProgress = false;
-                asScroller._downButton.material = NumberScroller.MAT;
-                asScroller._upButton  .material = NumberScroller.MAT;
+            var asScrollerButton = <any> mesh;
+            if (asScrollerButton._chngInProgress){
+                asScrollerButton._chngInProgress = false;
+                asScrollerButton.material = NumberScroller.MAT;
             
-            }else if (asScroller._downButton.material !== NumberScroller.MAT || asScroller._upButton.material !== NumberScroller.MAT){
-                asScroller._chngInProgress = true;
+            }else if (asScrollerButton.material !== NumberScroller.MAT){
+                asScrollerButton._chngInProgress = true;
             }
         }
         // ============================== value getter/setters Methods ===============================

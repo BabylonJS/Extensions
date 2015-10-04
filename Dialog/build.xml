@@ -2,11 +2,12 @@
 <project name="Dialog combine">
     <description>combine separate .js and .d.ts files </description>
 	
-	<property name="version" value="1.0"/>
+	<property name="version" value="1.1"/>
 	
 	<!-- assumes Babylon.js & Extensions respositories are mounted just below here -->
 	<property name="mountPoint" value="/js-dev"/>
-	<property name="gulp"       value="${mountPoint}/Babylon.js/Tools/Gulp"/>
+	<property name="gulp"       value="../../Gulp"/>
+	<property name="TOB"        value="${mountPoint}/Extensions/TowerOfBabel/testing/lib"/>
 	<property name="server"     value="/var/www-srvr/resources"/>
 	<property name="project"    value="${mountPoint}/Extensions/Dialog"/>
 	<property name="font"       value="${project}/fonts"/>
@@ -14,7 +15,8 @@
     <target name="combine">
     	<concat destfile="${project}/dialog.${version}.-debug.js" fixlastline="true">
         	<filelist dir="${project}/out"
-        	    files="Panel.js, 
+        	    files="Panel.js,
+        		       Spacer.js,
         		       Letter.js,
         		
         		       MeshWrapperPanel.js,
@@ -32,6 +34,7 @@
     	<concat destfile="${project}/dialog.${version}.d.ts" fixlastline="true">
         	<filelist dir="${project}/out"
         	    files="Panel.d.ts,
+        		       Spacer.d.ts,
         		       Letter.d.ts,
         		       StockFontsMixins.d.ts,
         		       MeshWrapperPanel.d.ts,
@@ -46,11 +49,12 @@
         		       LCD/Controls.d.ts"/>         
     	</concat>
     		
-        <copy file="${project}/dialog.${version}.-debug.js" tofile="${server}/lib/dialog.js"/>
+        <copy file="${project}/dialog.${version}.-debug.js" tofile="${TOB}/dialog.js"/>
+<!--        <copy file="${project}/dialog.${version}.-debug.js" tofile="${server}/lib/dialog.js"/>
     	
         <copy file="${project}/testing/dialog_common.js" todir="${server}/lib"/>
         <copy file="${project}/testing/dialog.html" todir="${server}"/>
-        <copy file="${project}/testing/dialog_cocoon.html" todir="${server}"/>
+        <copy file="${project}/testing/dialog_cocoon.html" todir="${server}"/> -->
     	
     </target>
     <!-- ===================== Minify Section ============================ -->
@@ -60,7 +64,8 @@
     	</exec>
 	    <move file="${project}/dialog.${version}.-debug.min.js" tofile="${project}/dialog.${version}.js"/> 
 	        
-    	<copy file="${project}/dialog.${version}.js" tofile="${server}/lib/dialog.js"/>
+        <copy file="${project}/dialog.${version}.js" tofile="${TOB}/dialog.js"/>
+<!--    	<copy file="${project}/dialog.${version}.js" tofile="${server}/lib/dialog.js"/> -->
     </target>
 	
     <!-- ===================== Fonts Section ============================ -->
@@ -69,7 +74,7 @@
 	    	<arg line="makeUgly --path ${font} --fileIn Font3D.js"/>
 	    </exec>
         <move file="${font}/Font3D.min.js" tofile="${font}/Font3D.js"/> 
-        <copy file="${font}/Font3D.js" todir="${server}/lib"/>
+        <copy file="${font}/Font3D.js" todir="${TOB}/lib"/>
     </target>
 		
     <target name="font2D">
@@ -77,7 +82,7 @@
 		    <arg line="makeUgly --path ${font} --fileIn Font2D.js"/>
 	    </exec>
         <move file="${font}/Font2D.min.js" tofile="${font}/Font2D.js"/> 
-        <copy file="${font}/Font2D.js" todir="${server}/lib"/>
+        <copy file="${font}/Font2D.js" todir="${TOB}/lib"/>
     </target>
 		
     <target name="font3D_EXT">
@@ -85,7 +90,7 @@
 		    <arg line="makeUgly --path ${font} --fileIn Font3D_EXT.js"/>
 	    </exec>
         <move file="${font}/Font3D_EXT.min.js" tofile="${font}/Font3D_EXT.js"/> 
-        <copy file="${font}/Font3D_EXT.js" todir="${server}/lib"/>
+        <copy file="${font}/Font3D_EXT.js" todir="${TOB}/lib"/>
     </target>
 		
     <target name="font2D_EXT">
@@ -93,7 +98,7 @@
 		    <arg line="makeUgly --path ${font} --fileIn Font2D_EXT.js"/>
 	    </exec>
        <move file="${font}/Font2D_EXT.min.js" tofile="${font}/Font2D_EXT.js"/> 
-       <copy file="${font}/Font2D_EXT.js" todir="${server}/lib"/>
+       <copy file="${font}/Font2D_EXT.js" todir="${TOB}/lib"/>
     </target>
 
     <!-- ================================================================== -->

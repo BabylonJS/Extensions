@@ -245,6 +245,8 @@ module DIALOG{
         
         public isSelected() : boolean { return this._selected; }
         public isPanelEnabled() : boolean { return this._panelEnabled; }
+        public isButton() : boolean { return this._button; }
+        public setButton(button : boolean) { this._button = button; } // those who cannot set it in constructor, like buttons for NumberScroller
          // ===================================== Layout Methods ======================================
         public get fitToWindow() : boolean { return this._fitToWindow; }
         /**
@@ -281,7 +283,7 @@ module DIALOG{
         public layout() : void{
             this._calcRequiredSize(); // determine what the requirements are for the entire heirarchy 
             this._layout(this.getReqdWidth(), this.getReqdHeight() );
-            this.freezeWorldMatrix();
+            this.freezeWorldMatrixTree();
             this._dirty = false;
         }
          
@@ -773,6 +775,11 @@ module DIALOG{
             this._subs = new Array<BasePanel>();
             this.invalidateLayout();
         }
+        
+        public getRootPanel() : BasePanel{
+            var parent = <Panel> (<any> this.parent);
+            return (parent) ? parent.getRootPanel() : this;
+        } 
         // =================================== Appearance Methods ====================================
         /**
          * Method for sub-classes to override.  Keeps the # of constructor arg down
@@ -908,6 +915,36 @@ module DIALOG{
             this.invalidateLayout();
             return this;
         }
+        
+        public disolve(visibility : number, exceptionButton : BasePanel) : void{
+            var sub : BasePanel;
+            for (var i = this._subs.length - 1; i >= 0; i--){
+                sub = this._subs[i];
+                if (sub && sub !== null){
+                    sub.disolve(visibility, exceptionButton);
+                }
+            }
+            if (this !== exceptionButton){
+                this.visibility = this.isBorderVisible() ? visibility : 0;
+                if (this._button){
+                    this.isPickable = false;
+                }
+            }
+        }
+        
+        public reAppear() : void{
+            var sub : BasePanel;
+            for (var i = this._subs.length - 1; i >= 0; i--){
+                sub = this._subs[i];
+                if (sub && sub !== null){
+                    sub.reAppear();
+                }
+            }
+            this.visibility = this.isBorderVisible() ? 1 : 0;
+            if (this._button){
+                this.isPickable = true;
+            }
+        }
         // ======================================== Overrides ========================================
         /**
          * recursing disposes of letter clones & original when no more in use.  Must make MeshFactory work.
@@ -922,13 +959,13 @@ module DIALOG{
          * @override
          * Do the entire hierarchy, in addition
          */
-        public freezeWorldMatrix() {
-            super.freezeWorldMatrix();
+        public freezeWorldMatrixTree() {
+            this.freezeWorldMatrix();
             var sub : BasePanel;
             for (var i = this._subs.length - 1; i >= 0; i--){
                 sub = this._subs[i];
                 if (sub && sub !== null){
-                    sub.freezeWorldMatrix();
+                    sub.freezeWorldMatrixTree();
                 }
             }
         }
@@ -937,16 +974,16 @@ module DIALOG{
          * @override
          * Do the entire hierarchy, in addition
          */
- /*        public unfreezeWorldMatrix() {
+         public unfreezeWorldMatrixTree() {
             super.unfreezeWorldMatrix();
             var sub : BasePanel;
             for (var i = this._subs.length - 1; i >= 0; i--){
                 sub = this._subs[i];
                 if (sub && sub !== null){
-                    sub.unfreezeWorldMatrix();
+                    sub.unfreezeWorldMatrixTree();
                 }
             }
-        }*/
+        }
     }
     //================================================================================================
     //================================================================================================

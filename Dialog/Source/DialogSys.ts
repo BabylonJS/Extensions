@@ -115,6 +115,7 @@ module DIALOG{
         public static buildFontMaterials(baseName : String, color : BABYLON.Color3, intensity = 1, alpha = 1) : Array<BABYLON.StandardMaterial> {
             var ret = new Array<BABYLON.StandardMaterial>(2);
             var mat = new BABYLON.StandardMaterial(baseName + "-3D", DialogSys._scene);
+            mat.checkReadyOnlyOnce = true;
             mat.ambientColor  = color;
             mat.diffuseColor  = (intensity === 1) ? color : new BABYLON.Color3(color.r * intensity, color.g * intensity, color.b * intensity);
             mat.specularColor = new BABYLON.Color3(0.5,0.5,0.5);
@@ -269,7 +270,7 @@ module DIALOG{
         }
         
         public static get Version(): string {
-            return "1.0.1";
+            return "1.1.0";
         }
     }
 }

@@ -1,4 +1,4 @@
-// File generated with Tower of Babel version: 2.0.1 on 05/04/15
+// File generated with Tower of Babel version: 2.2.0 on 05/15/15
 
 module DigitParts{
 
@@ -91,7 +91,9 @@ module DigitParts{
 
 
     var matLoaded = false;
-    export function defineMaterials(scene : BABYLON.Scene, materialsRootDir : string = "./") : void {
+    // to keep from checkReadyOnlyOnce = true, defineMaterials() must be explicitly called with neverCheckReadyOnlyOnce = true,
+    // before any other functions in this module
+    export function defineMaterials(scene : BABYLON.Scene, materialsRootDir : string = "./", neverCheckReadyOnlyOnce : boolean = false) : void {
         if (!BABYLON.Engine.Version || Number(BABYLON.Engine.Version.substr(0, BABYLON.Engine.Version.lastIndexOf("."))) < 2.0) throw "Babylon version too old";
         if (matLoaded) return;
         if (materialsRootDir.lastIndexOf("/") + 1  !== materialsRootDir.length) { materialsRootDir  += "/"; }
@@ -105,6 +107,7 @@ module DigitParts{
         material.specularPower = 50;
         material.alpha =  1;
         material.backFaceCulling = true;
+        material.checkReadyOnlyOnce = !neverCheckReadyOnlyOnce;
         material = new BABYLON.StandardMaterial("DigitParts.border.001", scene);
         material.ambientColor  = new BABYLON.Color3(0.0574,0.8,0.0876);
         material.diffuseColor  = new BABYLON.Color3(0.0459,0.64,0.0701);
@@ -113,6 +116,7 @@ module DigitParts{
         material.specularPower = 50;
         material.alpha =  1;
         material.backFaceCulling = true;
+        material.checkReadyOnlyOnce = !neverCheckReadyOnlyOnce;
         material = new BABYLON.StandardMaterial("DigitParts.face", scene);
         material.ambientColor  = new BABYLON.Color3(0.8,0.1603,0.7314);
         material.diffuseColor  = new BABYLON.Color3(0.64,0.1283,0.5851);
@@ -121,6 +125,7 @@ module DigitParts{
         material.specularPower = 50;
         material.alpha =  1;
         material.backFaceCulling = true;
+        material.checkReadyOnlyOnce = !neverCheckReadyOnlyOnce;
         material = new BABYLON.StandardMaterial("DigitParts.face.001", scene);
         material.ambientColor  = new BABYLON.Color3(0.8,0.1603,0.7314);
         material.diffuseColor  = new BABYLON.Color3(0.64,0.1283,0.5851);
@@ -129,6 +134,7 @@ module DigitParts{
         material.specularPower = 50;
         material.alpha =  1;
         material.backFaceCulling = true;
+        material.checkReadyOnlyOnce = !neverCheckReadyOnlyOnce;
         defineMultiMaterials(scene);
         matLoaded = true;
     }
@@ -178,7 +184,7 @@ module DigitParts{
             this.rotation.y  = 0;
             this.rotation.z  = 0;
             this.scaling.x   = 1;
-            this.scaling.y   = 1;
+            this.scaling.y   = 0.9523;
             this.scaling.z   = 1;
             this.isVisible       = false;
             this.setEnabled(true);
@@ -416,7 +422,7 @@ module DigitParts{
         ret.id = ret.name;
         ret.billboardMode  = 0;
         ret.position.x  = 0.03;
-        ret.position.y  = -0.0004;
+        ret.position.y  = 0;
         ret.position.z  = 0;
         ret.rotation.x  = 0;
         ret.rotation.y  = 0;
@@ -431,7 +437,7 @@ module DigitParts{
         ret["castShadows"]  = false; // typescript safe
         if (!cloning){
             ret.setVerticesData(BABYLON.VertexBuffer.PositionKind, [
-                0.12,0,0,0.42,0,0,0.42,0.12,0,0.12,0,0,0.12,0.12,0,0,0,0,0.42,0,0,0.54,0,0,0.42,0.12,0,0.12,0.12,0
+                0.12,0.12,0,0.12,0,0,0.42,0,0,0.12,0,0,0.12,0.12,0,0,0,0,0.42,0,0,0.54,0,0,0.42,0.12,0,0.42,0.12,0
             ],
             false);
 
@@ -517,7 +523,7 @@ module DigitParts{
         ret["castShadows"]  = false; // typescript safe
         if (!cloning){
             ret.setVerticesData(BABYLON.VertexBuffer.PositionKind, [
-                -0.1451,-0.06,0,-0.1451,0.06,0,-0.27,-0.0004,0,0.1449,-0.06,0,0.1449,0.06,0,-0.0289,0.06,0,0.27,0,0,-0.0289,-0.06,0
+                -0.1451,-0.06,0,-0.1451,0.06,0,-0.27,-0.0004,0,-0.0289,-0.06,0,0.1449,-0.06,0,-0.0289,0.06,0,0.1449,0.06,0,0.27,0,0
             ],
             false);
 
@@ -527,7 +533,7 @@ module DigitParts{
             false);
 
             ret.setIndices([
-                0,1,2,3,4,5,4,3,6,1,0,7,5,1,7,7,3,5
+                0,1,2,3,4,5,6,4,7,1,0,3,4,6,5,5,1,3
             ]);
 
             ret.subMeshes = [];
@@ -553,7 +559,7 @@ module DigitParts{
             this.rotation.y  = 0;
             this.rotation.z  = 0;
             this.scaling.x   = 1;
-            this.scaling.y   = 1;
+            this.scaling.y   = 0.9523;
             this.scaling.z   = 1;
             this.isVisible       = true;
             this.setEnabled(true);
@@ -605,7 +611,7 @@ module DigitParts{
             this.rotation.y  = 0;
             this.rotation.z  = 0;
             this.scaling.x   = 1;
-            this.scaling.y   = 1;
+            this.scaling.y   = 0.9523;
             this.scaling.z   = 1;
             this.isVisible       = true;
             this.setEnabled(true);

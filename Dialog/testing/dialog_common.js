@@ -6,6 +6,8 @@ var sysCameraChk;
 var details;
 var inputBtn;
 var dockBtn;
+var disappearBtn;
+var now;
 
 var load = function (sceneArg) {
 	scene = sceneArg;
@@ -128,6 +130,7 @@ var createMainPanel = function () {
     var returnedValue = new DIALOG.Panel(null);
     buttons.addSubPanel(returnedValue);
     
+    // inputBtn has global scope, so can be enabled / disabled in sysCameraCheck callback
     inputBtn = new DIALOG.Button("Input");
     inputBtn.enableButton(false);
     inputBtn.assignCallback(function(){ 
@@ -142,6 +145,11 @@ var createMainPanel = function () {
         DIALOG.DialogSys.pushPanel(createDockingPanel() );
     });
     buttons.addSubPanel(dockBtn);
+        
+    // dockBtn has global scope, so can be enabled / disabled in sysCameraCheck callback
+    disappearBtn = new DIALOG.Button("Hide");
+    disappearBtn.hideSystemOnClick(true);
+    buttons.addSubPanel(disappearBtn);
         
     topLevel.addSubPanel(buttons);
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -213,6 +221,10 @@ var assignDetailsPanel = function(panel){
 	details.removeAll();
 	details.addSubPanel(panel);
 	details.setSubsFaceSize(0.45, true);
+	
+	mainPanel.layout();
+	console.log("click response for " + panel.name + ": " + ((BABYLON.Tools.Now - now) / 1000) + " sec");
+	
 
 //    var stats = Font3D.getStats()
 //    console.log("clone count: " + stats[0]);
@@ -221,6 +233,7 @@ var assignDetailsPanel = function(panel){
 };
 //==============================================================================     
 var showLayoutDetails = function () {
+	now = BABYLON.Tools.Now;
     var panel = new DIALOG.Panel("LayoutDetails", DIALOG.Panel.LAYOUT_VERTICAL);
 
     var title = new DIALOG.Label("Layout");
@@ -262,6 +275,7 @@ var showLayoutDetails = function () {
 };
 //==============================================================================     
 var showFontDetails = function () {
+	now = BABYLON.Tools.Now;
     var panel = new DIALOG.Panel("FontDetails", DIALOG.Panel.LAYOUT_VERTICAL);
     var fileNmMat  = DIALOG.DialogSys.BLUE;
     var codeMat    = DIALOG.DialogSys.GREEN;
@@ -290,6 +304,7 @@ var showFontDetails = function () {
 };
 //==============================================================================     
 var showPanelsDetails = function () {
+	now = BABYLON.Tools.Now;
     var panel = new DIALOG.Panel("PanelDetails", DIALOG.Panel.LAYOUT_VERTICAL);
     var twoFer = new DIALOG.Panel("twoFerPanels", DIALOG.Panel.LAYOUT_HORIZONTAL);   
     var color = DIALOG.DialogSys.GREEN;
@@ -334,7 +349,8 @@ var showPanelsDetails = function () {
 };
 //==============================================================================     
 var showLCDDetails = function () {
-    var panel = new DIALOG.Panel("Top", DIALOG.Panel._LAYOUT_VERTICAL);
+	now = BABYLON.Tools.Now;
+    var panel = new DIALOG.Panel("LCD", DIALOG.Panel._LAYOUT_VERTICAL);
     	 
     var display = new DIALOG.LCD('display', 8);
     display.value = 5318008;
@@ -343,9 +359,8 @@ var showLCDDetails = function () {
     var flipCheck = new DIALOG.CheckBox("(o)  (o)");
     flipCheck.setFontSize(.9);
     flipCheck.assignCallback(function(){ 
-        display.unfreezeWorldMatrix();
     	display.rotation.z = flipCheck.isSelected() ? 3.14 : 0;
-        display.freezeWorldMatrix();
+        display.freezeWorldMatrixTree();
     });
     panel.addSubPanel(flipCheck);
     
@@ -356,6 +371,7 @@ var showLCDDetails = function () {
 };
 //==============================================================================     
 var showLimitationsDetails = function () {
+	now = BABYLON.Tools.Now;
     var panel = new DIALOG.Panel("LimitationsDetails", DIALOG.Panel.LAYOUT_VERTICAL);
 
     var title = new DIALOG.Label("Limitations");
@@ -373,6 +389,7 @@ var showLimitationsDetails = function () {
 };
 //==============================================================================     
 var showModalStackDetails = function () {
+	now = BABYLON.Tools.Now;
     var panel = new DIALOG.Panel("ModalStackDetails", DIALOG.Panel.LAYOUT_VERTICAL);
     var color = DIALOG.DialogSys.GREEN;
 
@@ -423,6 +440,7 @@ var showModalStackDetails = function () {
 };
 //==============================================================================     
 var showLAFDetails = function () {
+	now = BABYLON.Tools.Now;
     var panel = new DIALOG.Panel("LAFDetails", DIALOG.Panel.LAYOUT_VERTICAL);
     var color = DIALOG.DialogSys.GREEN;
 
