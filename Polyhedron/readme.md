@@ -1,4 +1,4 @@
-You will find here the file [_polyhedra.js_](https://raw.githubusercontent.com/BabylonJS/Extensions/master/Polyhedron/polyhedra.js)
+You will find here the file [_polyhedra.js_](https://raw.githubusercontent.com/BabylonJS/Extensions/master/Polyhedron/polyhedra.js) for BabylonJS.  
 
 This file contains the data from the website "Virtual Polyhedra: The Encyclopedia of Polyhedra" by [George W. Hart](http://www.georgehart.com/) : http://www.georgehart.com/virtual-polyhedra/vp.html  
 George Hart Wikipedia article : https://en.wikipedia.org/wiki/George_W._Hart  
