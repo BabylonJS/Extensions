@@ -2,6 +2,7 @@ You will find here the file _polyhedra.js_
 
 This file contains the data from the website "Virtual Polyhedra: The Encyclopedia of Polyhedra" by [George W. Hart](http://www.georgehart.com/) : http://www.georgehart.com/virtual-polyhedra/vp.html  
 These data were converted to JSON by [Lee Stemkoski](http://home.adelphi.edu/~stemkoski/) for this ThreeJS demo : http://stemkoski.github.io/Three.js/Polyhedra.html  
+Stemkoski's original data file is here : http://stemkoski.github.io/Three.js/js/polyhedra.js  
 <br/>
 <br/>
 These data are actually a list of 126 javascript objects that you can directly use with the BJS method _CreatePolyhedron()_  
