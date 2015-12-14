@@ -172,7 +172,7 @@ There are also some mapped properties. Some that are always used, and some speci
 
 | Point|Spot 
 | --- | --- 
-|<img src="pointLightSettings.png">|<img src="doc-assist/spotLightSettings.png">
+|<img src="doc-assist/pointLightSettings.png">|<img src="doc-assist/spotLightSettings.png">
 
 
 ###Materials###
