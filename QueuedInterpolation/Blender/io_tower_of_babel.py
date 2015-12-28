@@ -1,7 +1,7 @@
 bl_info = {
     'name': 'Tower of Babel',
     'author': 'David Catuhe, Jeff Palmer',
-    'version': (4, 0, 0),
+    'version': (4, 0, 1),
     'blender': (2, 75, 0),
     'location': 'File > Export > Tower of Babel [.js + .ts]',
     'description': 'Translate to inline JavaScript & TypeScript modules',
@@ -217,7 +217,7 @@ class Main(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     filepath = bpy.props.StringProperty(subtype = 'FILE_PATH') # assigned once the file selector returns
     log_handler = None  # assigned in execute
     nameSpace   = None  # assigned in execute
-    versionCheckCode = 'if (Number(ŝ.Engine.Version.substr(0, ŝ.Engine.Version.lastIndexOf("."))) < 2.3) throw "Babylon version too old";\n'
+    versionCheckCode = 'if (Number(B.Engine.Version.substr(0, B.Engine.Version.lastIndexOf("."))) < 2.3) throw "Babylon version too old";\n'
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     nWarnings = 0
     @staticmethod
@@ -238,7 +238,7 @@ class Main(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     def define_module_method(name, is_typescript, loadCheckVar = '', optionalArgs = [], isExportable = True):
         if is_typescript:
             ret  = '\n    export ' if isExportable else '\n    '
-            ret += 'function ' + name + '(scene : ŝ.Scene'
+            ret += 'function ' + name + '(scene : B.Scene'
             for optArg in optionalArgs:
                 ret += ', ' + optArg.argumentName + ' : ' + optArg.tsType + " = " + optArg.default
             ret += ') : void {\n'
@@ -258,7 +258,7 @@ class Main(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         ret += '        ' + Main.versionCheckCode
         if len(loadCheckVar) > 0 : ret += '        if (' + loadCheckVar + ') return;\n'
 
-        if Main.logInBrowserConsole: ret += "        ŝ.Tools.Log('In " + Main.nameSpace + "." + name + "');\n"
+        if Main.logInBrowserConsole: ret += "        B.Tools.Log('In " + Main.nameSpace + "." + name + "');\n"
         return ret
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def getMaterial(self, baseMaterialId):
@@ -449,8 +449,8 @@ class Main(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         # module open  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         if is_typescript:
             file_handler.write('module ' + Main.nameSpace + '{\n')
-            file_handler.write('    private static ŝ = BABYLON;\n')
-            file_handler.write('    private static ă = ŝ.Matrix.FromValues;\n')
+            file_handler.write('    private static B = BABYLON;\n')
+            file_handler.write('    private static M = B.Matrix.FromValues;\n')
         else:
             file_handler.write('var __extends = this.__extends || function (d, b) {\n')
             file_handler.write('    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];\n')
@@ -460,8 +460,8 @@ class Main(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             file_handler.write('};\n')
             file_handler.write('var ' + Main.nameSpace + ';\n')
             file_handler.write('(function (' + Main.nameSpace + ') {\n')
-            file_handler.write('    var ŝ = BABYLON;\n')
-            file_handler.write('    var ă = ŝ.Matrix.FromValues;\n')
+            file_handler.write('    var B = BABYLON;\n')
+            file_handler.write('    var M = B.Matrix.FromValues;\n')
 
         # World - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         if self.scene.includeInitScene:
@@ -478,12 +478,12 @@ class Main(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         file_handler.write(Main.define_module_method('defineMaterials', is_typescript, 'matLoaded', callArgs))
         file_handler.write(indent2 + 'if (materialsRootDir.lastIndexOf("/") + 1  !== materialsRootDir.length) { materialsRootDir  += "/"; }\n')
 
-        file_handler.write(indent2 + 'var material' + (' : ŝ.StandardMaterial;\n' if is_typescript else ';\n') )
-        file_handler.write(indent2 + 'var texture'  + (' : ŝ.Texture;\n\n'        if is_typescript else ';\n\n') )
+        file_handler.write(indent2 + 'var material' + (' : B.StandardMaterial;\n' if is_typescript else ';\n') )
+        file_handler.write(indent2 + 'var texture'  + (' : B.Texture;\n\n'        if is_typescript else ';\n\n') )
         for material in self.materials:
             material.to_script_file(file_handler, indent2)
         if self.hasMultiMat:
-            file_handler.write(indent2 + 'var multiMaterial' + (' : ŝ.MultiMaterial;\n' if is_typescript else ';\n') )
+            file_handler.write(indent2 + 'var multiMaterial' + (' : B.MultiMaterial;\n' if is_typescript else ';\n') )
             for multimaterial in self.multiMaterials:
                 multimaterial.to_script_file(file_handler, indent2)
         file_handler.write(indent2 + 'matLoaded = true;\n')
@@ -494,9 +494,9 @@ class Main(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         if self.hasSkeletons:
             file_handler.write('\n' + indent1 + 'var bonesLoaded = false;')
             file_handler.write(Main.define_module_method('defineSkeletons', is_typescript, 'bonesLoaded'))
-            file_handler.write(indent2 + 'var skeleton'  + (' : ŝ.Skeleton;\n'    if is_typescript else ';\n') )
-            file_handler.write(indent2 + 'var bone'      + (' : ŝ.Bone;\n'        if is_typescript else ';\n') )
-            file_handler.write(indent2 + 'var animation' + (' : ŝ.Animation;\n\n' if is_typescript else ';\n\n') )
+            file_handler.write(indent2 + 'var skeleton'  + (' : B.Skeleton;\n'    if is_typescript else ';\n') )
+            file_handler.write(indent2 + 'var bone'      + (' : B.Bone;\n'        if is_typescript else ';\n') )
+            file_handler.write(indent2 + 'var animation' + (' : B.Animation;\n\n' if is_typescript else ';\n\n') )
             for skeleton in self.skeletons:
                 skeleton.to_script_file(file_handler, indent2)
             file_handler.write(indent2 + 'bonesLoaded = true;\n')
@@ -530,8 +530,8 @@ class Main(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             file_handler.write(Main.define_module_method('defineSounds', is_typescript, 'soundsLoaded', callArgs))
             file_handler.write(indent2 + 'if (soundsRootDir.lastIndexOf("/") + 1  !== soundsRootDir.length) { soundsRootDir  += "/"; }\n')
 
-            file_handler.write(indent2 + 'var sound' + (' : ŝ.Sound;\n' if is_typescript else ';\n') )
-            file_handler.write(indent2 + 'var connectedMesh' + (' : ŝ.Mesh;\n\n' if is_typescript else ';\n\n') )
+            file_handler.write(indent2 + 'var sound' + (' : B.Sound;\n' if is_typescript else ';\n') )
+            file_handler.write(indent2 + 'var connectedMesh' + (' : B.Mesh;\n\n' if is_typescript else ';\n\n') )
             for sound in self.sounds:
                 sound.to_script_file(file_handler, indent2, is_typescript)
             file_handler.write(indent2 + 'soundsLoaded = true;\n')
@@ -553,7 +553,7 @@ class Main(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         if self.hasShadows:
             file_handler.write(Main.define_module_method('defineShadowGen', is_typescript, '', [], False))
             file_handler.write(indent2 + 'var light;\n') # intensionally vague, since scene.getLightByID() returns Light, not DirectionalLight
-            file_handler.write(indent2 + 'var shadowGenerator' + (' : ŝ.ShadowGenerator;\n\n' if is_typescript else ';\n\n') )
+            file_handler.write(indent2 + 'var shadowGenerator' + (' : B.ShadowGenerator;\n\n' if is_typescript else ';\n\n') )
             for shadowGen in self.shadowGenerators:
                 shadowGen.to_script_file(file_handler, indent2)
             file_handler.write(indent2 + 'freshenShadowRenderLists(scene);\n')
@@ -634,13 +634,13 @@ class World:
 
         indent = '        '
         file_handler.write(indent + 'scene.autoClear = ' + format_bool(self.autoClear) + ';\n')
-        file_handler.write(indent + 'scene.clearColor    = new ŝ.Color3(' + format_color(self.clear_color) + ');\n')
-        file_handler.write(indent + 'scene.ambientColor  = new ŝ.Color3(' + format_color(self.ambient_color) + ');\n')
-        file_handler.write(indent + 'scene.gravity = new ŝ.Vector3(' + format_vector(self.gravity) + ');\n')
+        file_handler.write(indent + 'scene.clearColor    = new B.Color3(' + format_color(self.clear_color) + ');\n')
+        file_handler.write(indent + 'scene.ambientColor  = new B.Color3(' + format_color(self.ambient_color) + ');\n')
+        file_handler.write(indent + 'scene.gravity = new B.Vector3(' + format_vector(self.gravity) + ');\n')
 
         if hasattr(self, 'fogMode'):
             file_handler.write(indent + 'scene.fogMode = ' + self.fogMode + ';\n')
-            file_handler.write(indent + 'scene.fogColor = new ŝ.Color3(' + format_color(self.fogColor) + ');\n')
+            file_handler.write(indent + 'scene.fogColor = new B.Color3(' + format_color(self.fogColor) + ');\n')
             file_handler.write(indent + 'scene.fogStart = ' + self.fogStart + ';\n')
             file_handler.write(indent + 'scene.fogEnd = ' + self.fogEnd + ';\n')
             file_handler.write(indent + 'scene.fogDensity = ' + self.fogDensity + ';\n')
@@ -714,18 +714,18 @@ class World:
             Main.warn('No meshes without parents, so meshFactory not built')
             return
 
-        file_handler.write('    var meshLib = new Array' + ('<Array<ŝ.Mesh>>(' if is_typescript else '(') + str(len(rootMeshes)) + ');\n')
+        file_handler.write('    var meshLib = new Array' + ('<Array<B.Mesh>>(' if is_typescript else '(') + str(len(rootMeshes)) + ');\n')
         file_handler.write('    var cloneCount = 1;\n\n')
         file_handler.write('    var originalVerts = 0;\n')
         file_handler.write('    var clonedVerts = 0;\n')
 
         if is_typescript:
             file_handler.write('    export class MeshFactory implements TOWER_OF_BABEL.FactoryModule {\n')
-            file_handler.write('        constructor(private _scene : ŝ.Scene, materialsRootDir: string = "./") {\n')
+            file_handler.write('        constructor(private _scene : B.Scene, materialsRootDir: string = "./") {\n')
             file_handler.write('            defineMaterials(_scene, materialsRootDir); //embedded version check\n')
             file_handler.write('        }\n\n')
             file_handler.write('        public getModuleName() : string { return "' + Main.nameSpace + '";}\n\n')
-            file_handler.write('        public instance(meshName : string, cloneSkeleton? : boolean) : ŝ.Mesh {\n')
+            file_handler.write('        public instance(meshName : string, cloneSkeleton? : boolean) : B.Mesh {\n')
 
         else:
             file_handler.write('    var MeshFactory = (function () {\n')
@@ -737,8 +737,8 @@ class World:
             file_handler.write('        MeshFactory.prototype.getModuleName = function () { return "' + Main.nameSpace + '";};\n\n')
             file_handler.write('        MeshFactory.prototype.instance = function (meshName, cloneSkeleton) {\n')
 
-        file_handler.write('            var ret' + (':ŝ.Mesh' if is_typescript else '') + ' = null;\n')
-        file_handler.write('            var src' + (':ŝ.Mesh' if is_typescript else '') + ';\n')
+        file_handler.write('            var ret' + (':B.Mesh' if is_typescript else '') + ' = null;\n')
+        file_handler.write('            var src' + (':B.Mesh' if is_typescript else '') + ';\n')
         file_handler.write('            switch (meshName){\n')
 
         for i in range(0, len(rootMeshes)):
@@ -764,7 +764,7 @@ class World:
         file_handler.write('                    ret.skeleton = src.skeleton.clone(skelName, skelName);\n')
         file_handler.write('                }\n')
         file_handler.write('            }\n')
-        file_handler.write('            else ŝ.Tools.Error("Mesh not found: " + meshName);\n')
+        file_handler.write('            else B.Tools.Error("Mesh not found: " + meshName);\n')
         file_handler.write('            return ret;\n')
 
         if is_typescript:
@@ -778,12 +778,12 @@ class World:
             file_handler.write('    ' + Main.nameSpace + '.MeshFactory = MeshFactory;\n')
 
         if is_typescript:
-            file_handler.write('    function getViable(libIdx : number, isNode? : boolean) : ŝ.Mesh {\n')
+            file_handler.write('    function getViable(libIdx : number, isNode? : boolean) : B.Mesh {\n')
         else:
             file_handler.write('    function getViable(libIdx, isNode) {\n')
         file_handler.write('        var meshes = meshLib[libIdx];\n')
         file_handler.write('        if (!meshes || meshes === null){\n')
-        file_handler.write('            if (!meshes) meshLib[libIdx] = new Array' + ('<ŝ.Mesh>' if is_typescript else '') + '();\n')
+        file_handler.write('            if (!meshes) meshLib[libIdx] = new Array' + ('<B.Mesh>' if is_typescript else '') + '();\n')
         file_handler.write('            return null;\n')
         file_handler.write('        }\n\n')
 
@@ -828,7 +828,7 @@ class Sound:
         if hasattr(self, 'connectedMeshId'):
             options += ', maxDistance: ' + format_f(self.maxDistance)
 
-        file_handler.write('\n' + indent + 'sound = new ŝ.Sound("' + self.name + '", soundsRootDir + "' + self.name + '", scene, ')
+        file_handler.write('\n' + indent + 'sound = new B.Sound("' + self.name + '", soundsRootDir + "' + self.name + '", scene, ')
         if is_typescript:
             file_handler.write('() => { scene._removePendingData(sound); }, ')
         else:
@@ -885,7 +885,7 @@ class FCurveAnimatable:
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def to_script_file(self, file_handler, jsVarName, indent, is_typescript):
         if (self.animationsPresent):
-            file_handler.write(indent + 'var animation' + (' : ŝ.Animation;\n' if is_typescript else ';\n') )
+            file_handler.write(indent + 'var animation' + (' : B.Animation;\n' if is_typescript else ';\n') )
             for animation in self.animations:
                 animation.to_script_file(file_handler, indent) # assigns the previously declared js variable 'animation'
                 file_handler.write(indent + jsVarName + '.animations.push(animation);\n')
@@ -1476,52 +1476,52 @@ class Mesh(FCurveAnimatable):
             file_handler.write(indent2A + var + '.numBoneInfluencers = ' + format_int(self.numBoneInfluencers) + ';\n\n')
             
 
-        file_handler.write(indent2A + var + '.setVerticesData(ŝ.VertexBuffer.PositionKind, new Float32Array([\n')
+        file_handler.write(indent2A + var + '.setVerticesData(B.VertexBuffer.PositionKind, new Float32Array([\n')
         file_handler.write(indent3A + format_vector_array(self.positions, VERTEX_OUTPUT_PER_LINE, indent3A) + '\n')
         file_handler.write(indent2A + ']),\n')
         file_handler.write(indent2A + format_bool(hasShapeKeys) + ');\n\n')
 
-        file_handler.write(indent2A + var + '.setVerticesData(ŝ.VertexBuffer.NormalKind, new Float32Array([\n')
+        file_handler.write(indent2A + var + '.setVerticesData(B.VertexBuffer.NormalKind, new Float32Array([\n')
         file_handler.write(indent3A + format_vector_array(self.normals, VERTEX_OUTPUT_PER_LINE, indent3A) + '\n')
         file_handler.write(indent2A + ']),\n')
         file_handler.write(indent2A + format_bool(hasShapeKeys) + ');\n\n')
 
         if len(self.uvs) > 0:
-            file_handler.write(indent2A + var + '.setVerticesData(ŝ.VertexBuffer.UVKind, new Float32Array([\n')
+            file_handler.write(indent2A + var + '.setVerticesData(B.VertexBuffer.UVKind, new Float32Array([\n')
             file_handler.write(indent3A + format_array(self.uvs, VERTEX_OUTPUT_PER_LINE, indent3A) + '\n')
             file_handler.write(indent2A + ']),\n')
             file_handler.write(indent2A + format_bool(False) + ');\n\n')
 
         if len(self.uvs2) > 0:
-            file_handler.write(indent2A + var + '.setVerticesData(ŝ.VertexBuffer.UV2Kind, new Float32Array([\n')
+            file_handler.write(indent2A + var + '.setVerticesData(B.VertexBuffer.UV2Kind, new Float32Array([\n')
             file_handler.write(indent3A + format_array(self.uvs2, VERTEX_OUTPUT_PER_LINE, indent3A) + '\n')
             file_handler.write(indent2A + ']),\n')
             file_handler.write(indent2A + format_bool(False) + ');\n\n')
 
         if len(self.colors) > 0:
-            file_handler.write(indent2A + var + '.setVerticesData(ŝ.VertexBuffer.ColorKind, new Float32Array([\n')
+            file_handler.write(indent2A + var + '.setVerticesData(B.VertexBuffer.ColorKind, new Float32Array([\n')
             file_handler.write(indent3A + format_array(self.colors, VERTEX_OUTPUT_PER_LINE, indent3A) + '\n')
             file_handler.write(indent2A + ']),\n')
             file_handler.write(indent2A + format_bool(False) + ');\n\n')
 
         if hasattr(self, 'skeletonWeights'):
-            file_handler.write(indent2A + var + '.setVerticesData(ŝ.VertexBuffer.MatricesWeightsKind, new Float32Array([\n')
+            file_handler.write(indent2A + var + '.setVerticesData(B.VertexBuffer.MatricesWeightsKind, new Float32Array([\n')
             file_handler.write(indent3A + format_array(self.skeletonWeights, VERTEX_OUTPUT_PER_LINE, indent3A) + '\n')
             file_handler.write(indent2A + ']),\n')
             file_handler.write(indent2A + format_bool(False) + ');\n\n')
 
-            file_handler.write(indent2A + var + '.setVerticesData(ŝ.VertexBuffer.MatricesIndicesKind, new Float32Array([\n')
+            file_handler.write(indent2A + var + '.setVerticesData(B.VertexBuffer.MatricesIndicesKind, new Float32Array([\n')
             file_handler.write(indent3A + format_array(self.skeletonIndices, VERTEX_OUTPUT_PER_LINE, indent3A) + '\n')
             file_handler.write(indent2A + ']),\n')
             file_handler.write(indent2A + format_bool(False) + ');\n\n')
 
         if hasattr(self, 'skeletonWeightsExtra'):
-            file_handler.write(indent2A + var + '.setVerticesData(ŝ.VertexBuffer.MatricesWeightsExtraKind, new Float32Array([\n')
+            file_handler.write(indent2A + var + '.setVerticesData(B.VertexBuffer.MatricesWeightsExtraKind, new Float32Array([\n')
             file_handler.write(indent3A + format_array(self.skeletonWeightsExtra, VERTEX_OUTPUT_PER_LINE, indent3A) + '\n')
             file_handler.write(indent2A + ']),\n')
             file_handler.write(indent2A + format_bool(False) + ');\n\n')
 
-            file_handler.write(indent2A + var + '.setVerticesData(ŝ.VertexBuffer.MatricesIndicesExtraKind, new Float32Array([\n')
+            file_handler.write(indent2A + var + '.setVerticesData(B.VertexBuffer.MatricesIndicesExtraKind, new Float32Array([\n')
             file_handler.write(indent3A + format_array(self.skeletonIndicesExtra, VERTEX_OUTPUT_PER_LINE, indent3A) + '\n')
             file_handler.write(indent2A + ']),\n')
             file_handler.write(indent2A + format_bool(False) + ');\n\n')
@@ -1618,7 +1618,7 @@ def mesh_node_common_script(file_handler, meshOrNode, isRoot, kids, indent, is_t
             for kid in kids:
                 file_handler.write(indent + '    public ' + kid.legalName + ' : ' + get_base_class(kid) + ';\n')
 
-            file_handler.write(indent + '    constructor(name: string, scene: ŝ.Scene, materialsRootDir: string = "./", source? : ' + meshOrNode.legalName + ') {\n')
+            file_handler.write(indent + '    constructor(name: string, scene: B.Scene, materialsRootDir: string = "./", source? : ' + meshOrNode.legalName + ') {\n')
             file_handler.write(indent2 + 'super(name, scene, null, source, true);\n\n')
         else:
             file_handler.write('\n' + indent + 'var ' + meshOrNode.legalName + ' = (function (_super) {\n')
@@ -1634,7 +1634,7 @@ def mesh_node_common_script(file_handler, meshOrNode, isRoot, kids, indent, is_t
         var = 'ret'
         indent2 = indent + '    '
         if is_typescript:
-            file_handler.write('\n' + indent + 'function child_' + meshOrNode.legalName + '(scene : ŝ.Scene, parent : any, source? : any) : ' + baseClass + ' {\n')
+            file_handler.write('\n' + indent + 'function child_' + meshOrNode.legalName + '(scene : B.Scene, parent : any, source? : any) : ' + baseClass + ' {\n')
         else:
             file_handler.write('\n' + indent + 'function child_' + meshOrNode.legalName + '(scene, parent, source){\n')
 
@@ -1643,7 +1643,7 @@ def mesh_node_common_script(file_handler, meshOrNode, isRoot, kids, indent, is_t
 
     file_handler.write(indent2 + "var cloning = source && source !== null;\n")
 
-    if Main.logInBrowserConsole: file_handler.write(indent2 + "ŝ.Tools.Log('defining mesh: ' + " + var + ".name + (cloning ? ' (cloned)' : ''));\n")
+    if Main.logInBrowserConsole: file_handler.write(indent2 + "B.Tools.Log('defining mesh: ' + " + var + ".name + (cloning ? ' (cloned)' : ''));\n")
 
     writePosRotScale(file_handler, meshOrNode, var, indent2)
 
@@ -1676,7 +1676,7 @@ def writePosRotScale(file_handler, object, var, indent):
         file_handler.write(indent + var + '.rotation.y  = ' + format_f(object.rotation.z) + ';\n')
         file_handler.write(indent + var + '.rotation.z  = ' + format_f(object.rotation.y) + ';\n')
     else:
-        file_handler.write(indent + var + '.rotationQuaternion  = new ŝ.Quaternion(' + format_quaternion(object.rotationQuaternion) + ');\n')
+        file_handler.write(indent + var + '.rotationQuaternion  = new B.Quaternion(' + format_quaternion(object.rotationQuaternion) + ');\n')
     file_handler.write(indent + var + '.scaling.x   = ' + format_f(object.scaling.x) + ';\n')
     file_handler.write(indent + var + '.scaling.y   = ' + format_f(object.scaling.z) + ';\n')
     file_handler.write(indent + var + '.scaling.z   = ' + format_f(object.scaling.y) + ';\n')
@@ -1687,7 +1687,7 @@ def writePosRotScale(file_handler, object, var, indent):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def get_base_class(meshOrNode):
         if len(meshOrNode.baseClass) > 0: return meshOrNode.baseClass
-        else: return 'QI.Mesh' if hasattr(meshOrNode, 'shapeKeyGroups') else 'ŝ.Mesh'
+        else: return 'QI.Mesh' if hasattr(meshOrNode, 'shapeKeyGroups') else 'B.Mesh'
 
 #===============================================================================
 class MeshInstance:
@@ -1706,7 +1706,7 @@ class Node(FCurveAnimatable):
         super().__init__(node, True, True, True)  #Should animations be done when forcedParent
         Main.log('processing begun of node:  ' + node.name)
         self.name = node.name
-        self.baseClass = 'ŝ.Mesh'
+        self.baseClass = 'B.Mesh'
         self.isNode = True # used in meshFactory
 
         # Tower of Babel specific member
@@ -1760,7 +1760,7 @@ class Node(FCurveAnimatable):
                 file_handler.write(indent + '}\n')
             else:
                 file_handler.write(indent + '    return ' + self.legalName + ';\n')
-                file_handler.write(indent + '})(ŝ.Mesh);\n')
+                file_handler.write(indent + '})(B.Mesh);\n')
         else:
             file_handler.write(indent + '    return ret;\n')
             file_handler.write(indent + '}\n')
@@ -1774,7 +1774,7 @@ class SubMesh:
         self.indexCount = indexCount
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def to_script_file(self, file_handler, jsMeshVar, indent):
-        file_handler.write(indent + 'new ŝ.SubMesh(' +
+        file_handler.write(indent + 'new B.SubMesh(' +
                           format_int(self.materialIndex) + ', ' +
                           format_int(self.verticesStart) + ', ' +
                           format_int(self.verticesCount) + ', ' +
@@ -1924,7 +1924,7 @@ class Bone:
     def to_script_file(self, file_handler, indent):
         parentBone = 'skeleton.bones[' + format_int(self.parentBoneIndex) + ']' if self.parentBoneIndex != -1 else 'null'
 
-        file_handler.write(indent + 'bone = new ŝ.Bone("' + self.name + '", skeleton,' + parentBone + ', ă(' + format_matrix4(self.matrix) + '));\n')
+        file_handler.write(indent + 'bone = new B.Bone("' + self.name + '", skeleton,' + parentBone + ', M(' + format_matrix4(self.matrix) + '));\n')
 
         if hasattr(self, 'animation'):
             self.animation.to_script_file(file_handler, indent) # declares and set the variable animation
@@ -1948,8 +1948,8 @@ class Skeleton:
     # assume the following JS variables have already been declared: scene, skeleton, bone, animation
     def to_script_file(self, file_handler, indent):
         # specifying scene gets skeleton added to scene in constructor
-        if Main.logInBrowserConsole: file_handler.write(indent + "ŝ.Tools.Log('defining skeleton:  " + self.name + "');\n")
-        file_handler.write(indent + 'skeleton = new ŝ.Skeleton("' + self.name + '", "' + format_int(self.id) + '", scene);\n') # MUST be String for inline
+        if Main.logInBrowserConsole: file_handler.write(indent + "B.Tools.Log('defining skeleton:  " + self.name + "');\n")
+        file_handler.write(indent + 'skeleton = new B.Skeleton("' + self.name + '", "' + format_int(self.id) + '", scene);\n') # MUST be String for inline
 
         for bone in self.bones:
             bone.to_script_file(file_handler, indent)
@@ -2025,20 +2025,20 @@ class Camera(FCurveAnimatable):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def to_script_file(self, file_handler, indent, is_typescript):
         # constructor args are not the same for each camera type
-        file_handler.write(indent + 'camera = new ŝ.' + self.CameraType + '("' + self.name + '"')
+        file_handler.write(indent + 'camera = new B.' + self.CameraType + '("' + self.name + '"')
         if self.CameraType == ARC_ROTATE_CAM:
             file_handler.write(', ' + format_f(self.arcRotAlpha) + ', ' + format_f(self.arcRotBeta) + ', ' + format_f(self.arcRotRadius))
             file_handler.write(', scene.getMeshByID("' + self.lockedTargetId + '")')
 
         else:
-            file_handler.write(', new ŝ.Vector3(' + format_vector(self.position) + ')')
+            file_handler.write(', new B.Vector3(' + format_vector(self.position) + ')')
 
         file_handler.write(', scene);\n')
 
         # always assign rig, even when none, Reason:  Could have VR camera with different Rig than default
         file_handler.write(indent + 'camera.setCameraRigMode(' + self.Camera3DRig + ',{interaxialDistance: ' + format_f(self.interaxialDistance) + '});\n')
 
-        file_handler.write(indent + 'camera.rotation = new ŝ.Vector3(' + format_vector(self.rotation) + ');\n')
+        file_handler.write(indent + 'camera.rotation = new B.Vector3(' + format_vector(self.rotation) + ');\n')
 
         file_handler.write(indent + 'camera.fov = ' + format_f(self.fov) + ';\n')
         file_handler.write(indent + 'camera.minZ = ' + format_f(self.minZ) + ';\n')
@@ -2049,7 +2049,7 @@ class Camera(FCurveAnimatable):
 
         file_handler.write(indent + 'camera.checkCollisions = ' + format_bool(self.checkCollisions) + ';\n')
         file_handler.write(indent + 'camera.applyGravity = ' + format_bool(self.applyGravity) + ';\n')
-        file_handler.write(indent + 'camera.ellipsoid = new ŝ.Vector3(' + format_array3(self.ellipsoid) + ');\n')
+        file_handler.write(indent + 'camera.ellipsoid = new B.Vector3(' + format_array3(self.ellipsoid) + ');\n')
 
         if self.CameraType == FOLLOW_CAM:
             file_handler.write(indent + 'camera.heightOffset = ' + format_f(self.followHeight) + ';\n')
@@ -2111,19 +2111,19 @@ class Light(FCurveAnimatable):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def to_script_file(self, file_handler, indent, is_typescript):
         if self.light_type == POINT_LIGHT:
-            file_handler.write(indent + 'light = new ŝ.PointLight("' + self.name + '", new ŝ.Vector3(' + format_vector(self.position) + '), scene);\n')
+            file_handler.write(indent + 'light = new B.PointLight("' + self.name + '", new B.Vector3(' + format_vector(self.position) + '), scene);\n')
 
         elif self.light_type == DIRECTIONAL_LIGHT:
-            file_handler.write(indent + 'light = new ŝ.DirectionalLight("' + self.name + '", new ŝ.Vector3(' + format_vector(self.direction) + '), scene);\n')
-            file_handler.write(indent + 'light.position = new ŝ.Vector3(' + format_vector(self.position) + ');\n')
+            file_handler.write(indent + 'light = new B.DirectionalLight("' + self.name + '", new B.Vector3(' + format_vector(self.direction) + '), scene);\n')
+            file_handler.write(indent + 'light.position = new B.Vector3(' + format_vector(self.position) + ');\n')
 
         elif self.light_type == SPOT_LIGHT:
-            file_handler.write(indent + 'light = new ŝ.SpotLight("' + self.name + '", new ŝ.Vector3(' + format_vector(self.position) +
-                               '), new ŝ.Vector3(' + format_vector(self.direction) + '), ' + format_f(self.angle) + ', ' + format_f(self.exponent) + ', scene);\n')
+            file_handler.write(indent + 'light = new B.SpotLight("' + self.name + '", new B.Vector3(' + format_vector(self.position) +
+                               '), new B.Vector3(' + format_vector(self.direction) + '), ' + format_f(self.angle) + ', ' + format_f(self.exponent) + ', scene);\n')
 
         else:
-            file_handler.write(indent + 'light = new ŝ.HemisphericLight("' + self.name + '", new ŝ.Vector3(' + format_vector(self.direction) + '), scene);\n')
-            file_handler.write(indent + 'light.groundColor = new ŝ.Color3(' + format_color(self.groundColor) + ');\n')
+            file_handler.write(indent + 'light = new B.HemisphericLight("' + self.name + '", new B.Vector3(' + format_vector(self.direction) + '), scene);\n')
+            file_handler.write(indent + 'light.groundColor = new B.Color3(' + format_color(self.groundColor) + ');\n')
 
         file_handler.write(indent + 'light.intensity = ' + format_f(self.intensity) + ';\n')
 
@@ -2133,8 +2133,8 @@ class Light(FCurveAnimatable):
         if hasattr(self, 'parentId'):
             file_handler.write(indent + 'light.parent = scene.getLastEntryByID("' + self.parentId + '");\n')
 
-        file_handler.write(indent + 'light.diffuse = new ŝ.Color3(' + format_color(self.diffuse) + ');\n')
-        file_handler.write(indent + 'light.specular = new ŝ.Color3(' + format_color(self.specular) + ');\n')
+        file_handler.write(indent + 'light.diffuse = new B.Color3(' + format_color(self.diffuse) + ');\n')
+        file_handler.write(indent + 'light.specular = new B.Color3(' + format_color(self.specular) + ');\n')
         super().to_script_file(file_handler, 'light', indent, is_typescript) # Animations
 
     @staticmethod
@@ -2159,7 +2159,7 @@ class ShadowGenerator:
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def to_script_file(self, file_handler, indent):
         file_handler.write(indent + 'light = scene.getLightByID("' + self.lightId + '");\n')
-        file_handler.write(indent + 'shadowGenerator = new ŝ.ShadowGenerator(' + format_int(self.mapSize) + ', light);\n')
+        file_handler.write(indent + 'shadowGenerator = new B.ShadowGenerator(' + format_int(self.mapSize) + ', light);\n')
         file_handler.write(indent + 'shadowGenerator.bias = ' + format_f(self.shadowBias) + ';\n')
         if hasattr(self, 'useVarianceShadowMap') :
             file_handler.write(indent + 'shadowGenerator.useVarianceShadowMap = true;\n')
@@ -2177,7 +2177,7 @@ class MultiMaterial:
         self.material_slots = material_slots
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def to_script_file(self, file_handler, indent):
-        file_handler.write(indent + 'multiMaterial = new ŝ.MultiMaterial("' + self.name + '", scene);\n')
+        file_handler.write(indent + 'multiMaterial = new B.MultiMaterial("' + self.name + '", scene);\n')
 
         for material in self.material_slots:
             file_handler.write(indent + 'multiMaterial.subMaterials.push(scene.getMaterialByID("' + material.name + '"));\n')
@@ -2283,11 +2283,11 @@ class Texture:
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def to_script_file(self, file_handler, indent):
         if hasattr(self,'encoded_URI'):
-            file_handler.write(indent + 'texture = ŝ.Texture.CreateFromBase64String(\n')
+            file_handler.write(indent + 'texture = B.Texture.CreateFromBase64String(\n')
             file_handler.write(indent + '"' + self.encoded_URI + '"\n')
             file_handler.write(indent + ', "' + self.name + '", scene);\n')
         else:
-            file_handler.write(indent + 'texture = new ŝ.Texture(materialsRootDir + "' + self.name + '", scene);\n')
+            file_handler.write(indent + 'texture = new B.Texture(materialsRootDir + "' + self.name + '", scene);\n')
 
         file_handler.write(indent + 'texture.hasAlpha = ' + format_bool(self.hasAlpha) + ';\n')
         file_handler.write(indent + 'texture.level = ' + format_f(self.level) + ';\n')
@@ -2463,11 +2463,11 @@ class Material:
         indent2 = indent + '    '
         file_handler.write('\n')
         file_handler.write(indent + 'if (!scene.getMaterialByID("' + self.name + '")){\n')
-        file_handler.write(indent2 + 'material = new ŝ.StandardMaterial("' + self.name + '", scene);\n')
-        file_handler.write(indent2 + 'material.ambientColor  = new ŝ.Color3(' + format_color(self.ambient) + ');\n')
-        file_handler.write(indent2 + 'material.diffuseColor  = new ŝ.Color3(' + format_color(self.diffuse) + ');\n')
-        file_handler.write(indent2 + 'material.emissiveColor = new ŝ.Color3(' + format_color(self.emissive) + ');\n')
-        file_handler.write(indent2 + 'material.specularColor = new ŝ.Color3(' + format_color(self.specular) + ');\n')
+        file_handler.write(indent2 + 'material = new B.StandardMaterial("' + self.name + '", scene);\n')
+        file_handler.write(indent2 + 'material.ambientColor  = new B.Color3(' + format_color(self.ambient) + ');\n')
+        file_handler.write(indent2 + 'material.diffuseColor  = new B.Color3(' + format_color(self.diffuse) + ');\n')
+        file_handler.write(indent2 + 'material.emissiveColor = new B.Color3(' + format_color(self.emissive) + ');\n')
+        file_handler.write(indent2 + 'material.specularColor = new B.Color3(' + format_color(self.specular) + ');\n')
         file_handler.write(indent2 + 'material.specularPower = ' + format_f(self.specularPower) + ';\n')
         file_handler.write(indent2 + 'material.alpha =  '        + format_f(self.alpha        ) + ';\n')
         file_handler.write(indent2 + 'material.backFaceCulling = ' + format_bool(self.backFaceCulling) + ';\n')
@@ -2571,23 +2571,25 @@ class BakedMaterial(Material):
         # mode_set's only work when there is an active object
         exporter.scene.objects.active = mesh
 
+         # UV unwrap operates on mesh in only edit mode, procedurals can also give error of 'no images to be found' when not done
+         # select all verticies of mesh, since smart_project works only with selected verticies
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_all(action='SELECT') 
+        
         # you need UV on a mesh in order to bake image.  This is not reqd for procedural textures, so may not exist
-        # need to look if it might already be created, as for a mesh with multi-materials
+        # need to look if it might already be created, if so use the first one
         uv = mesh.data.uv_textures[0] if len(mesh.data.uv_textures) > 0 else None
 
         if uv == None:
             mesh.data.uv_textures.new('BakingUV')
             uv = mesh.data.uv_textures['BakingUV']
-
-        uv.active = True
-        uv.active_render = True
-
-        # UV unwrap operates on mesh in only edit mode
-        # select all verticies of mesh, since smart_project works only with selected verticies
-        bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.mesh.select_all(action='SELECT')
-        bpy.ops.uv.smart_project(angle_limit = 66.0, island_margin = 0.0, user_area_weight = 1.0, use_aspect = True)
-
+            uv.active = True
+            uv.active_render = True
+            bpy.ops.uv.smart_project(angle_limit = 66.0, island_margin = 0.0, user_area_weight = 1.0, use_aspect = True)
+            uvName = 'BakingUV'  # issues with cycles when not done this way
+        else:
+            uvName = uv.name
+            
         # create a temporary image & link it to the UV/Image Editor so bake_image works
         bpy.data.images.new(name = mesh.name + '_BJS_BAKE', width = recipe.bakeSize, height = recipe.bakeSize, alpha = False, float_buffer = False)
         image = bpy.data.images[mesh.name + '_BJS_BAKE']
@@ -2601,25 +2603,25 @@ class BakedMaterial(Material):
 
         # now go thru all the textures that need to be baked
         if recipe.diffuseBaking:
-            self.bake('diffuseTexture', 'DIFFUSE_COLOR', 'TEXTURE', image, mesh, uv, exporter, recipe)
+            self.bake('diffuseTexture', 'DIFFUSE_COLOR', 'TEXTURE', image, mesh, uvName, exporter, recipe)
 
         if recipe.ambientBaking:
-            self.bake('ambientTexture', 'AO', 'AO', image, mesh, uv, exporter, recipe)
+            self.bake('ambientTexture', 'AO', 'AO', image, mesh, uvName, exporter, recipe)
 
         if recipe.opacityBaking:  # no eqivalent found for cycles
-            self.bake('opacityTexture', None, 'ALPHA', image, mesh, uv, exporter, recipe)
+            self.bake('opacityTexture', None, 'ALPHA', image, mesh, uvName, exporter, recipe)
 
         if recipe.reflectionBaking:
-            self.bake('reflectionTexture', 'REFLECTION', 'MIRROR_COLOR', image, mesh, uv, exporter, recipe)
+            self.bake('reflectionTexture', 'REFLECTION', 'MIRROR_COLOR', image, mesh, uvName, exporter, recipe)
 
         if recipe.emissiveBaking:
-            self.bake('emissiveTexture', 'EMIT', 'EMIT', image, mesh, uv, exporter, recipe)
+            self.bake('emissiveTexture', 'EMIT', 'EMIT', image, mesh, uvName, exporter, recipe)
 
         if recipe.bumpBaking:
-            self.bake('bumpTexture', 'NORMAL', 'NORMALS', image, mesh, uv, exporter, recipe)
+            self.bake('bumpTexture', 'NORMAL', 'NORMALS', image, mesh, uvName, exporter, recipe)
 
         if recipe.specularBaking:
-            self.bake('specularTexture', 'SPECULAR', 'SPEC_COLOR', image, mesh, uv, exporter, recipe)
+            self.bake('specularTexture', 'SPECULAR', 'SPEC_COLOR', image, mesh, uvName, exporter, recipe)
 
         # Toggle vertex selection & mode, if setting changed their value
         bpy.ops.mesh.select_all(action='TOGGLE')  # still in edit mode toggle select back to previous
@@ -2629,18 +2631,18 @@ class BakedMaterial(Material):
 
         exporter.scene.render.engine = engine
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    def bake(self, bjs_type, cycles_type, internal_type, image, mesh, uv, exporter, recipe):
+    def bake(self, bjs_type, cycles_type, internal_type, image, mesh, uvName, exporter, recipe):
         if recipe.cyclesRender:
             if cycles_type is None:
                 return
-            self.bakeCycles(cycles_type, image, uv, recipe.nodeTrees)
+            self.bakeCycles(cycles_type, image, uvName, recipe.nodeTrees)
         else:
-            self.bakeInternal(internal_type, image, uv)
+            self.bakeInternal(internal_type, image, uvName)
 
         self.textures.append(Texture(bjs_type, 1.0, image, mesh, exporter))
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    def bakeInternal(self, bake_type, image, uv):
-        Main.log('Internal baking texture, type: ' + bake_type + ', mapped using: ' + uv.name, 3)
+    def bakeInternal(self, bake_type, image, uvName):
+        Main.log('Internal baking texture, type: ' + bake_type + ', mapped using: ' + uvName, 3)
         # need to use the legal name, since this will become the file name, chars like ':' not legal
         legalName = legal_js_identifier(self.name)
         image.filepath = legalName + '_' + bake_type + '.jpg'
@@ -2666,8 +2668,8 @@ class BakedMaterial(Material):
 
         bpy.ops.object.bake_image()
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    def bakeCycles(self, bake_type, image, uv, nodeTrees):
-        Main.log('Cycles baking texture, type: ' + bake_type + ', mapped using: ' + uv.name, 3)
+    def bakeCycles(self, bake_type, image, uvName, nodeTrees):
+        Main.log('Cycles baking texture, type: ' + bake_type + ', mapped using: ' + uvName, 3)
         legalName = legal_js_identifier(self.name)
         image.filepath = legalName + '_' + bake_type + '.jpg'
 
@@ -2723,7 +2725,7 @@ class Animation:
     # assigns the var 'animation', which the caller has already defined
     # .babylon writes 'values', but the babylonFileLoader reads it, changing it to 'value'
     def to_script_file(self, file_handler, indent):
-        file_handler.write(indent + 'animation = new ŝ.Animation("' + self.name + '", "' +
+        file_handler.write(indent + 'animation = new B.Animation("' + self.name + '", "' +
                                                                              self.propertyInBabylon + '", ' +
                                                                              format_int(self.framePerSecond) + ', ' +
                                                                              format_int(self.dataType) + ', ' +
@@ -2734,11 +2736,11 @@ class Animation:
             file_handler.write(indent + '{frame: ' + format_int(self.frames[frame_idx]) + ', value: ')
             value_idx = self.values[frame_idx]
             if self.dataType == ANIMATIONTYPE_MATRIX:
-                file_handler.write('ă(' + format_matrix4(value_idx) + ')}')
+                file_handler.write('M(' + format_matrix4(value_idx) + ')}')
             elif self.dataType == ANIMATIONTYPE_QUATERNION:
-               file_handler.write('new ŝ.Quaternion(' + format_quaternion(value_idx) + ')}')
+               file_handler.write('new B.Quaternion(' + format_quaternion(value_idx) + ')}')
             else:
-                file_handler.write('new ŝ.Vector3(' + format_vector(value_idx) + ')}')
+                file_handler.write('new B.Vector3(' + format_vector(value_idx) + ')}')
 
             if frame_idx + 1 < nFrames:
                 file_handler.write(',')
