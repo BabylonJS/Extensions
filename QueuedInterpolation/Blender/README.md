@@ -17,14 +17,15 @@ They can also both be present.  When this is the case, the custom properties of 
 ##New in 4.2##
 - Blender Actions support, see **Actions** section
 - Skeleton animation library .blends now supported, see **Armatures** section
-- Inverse Kinematics friendly skeleton exporting, see **Armatures** sections
+- Inverse Kinematics friendly skeleton exporting, see **Armatures** section
 - Export time much shorter for .blends with armatures with actions
+
 ##New in 4.1##
 - Added export of bone length
 - Fixed flawed checking for bone animation optimization
+
 ##New in 4.0##
 ###Skeletons###
-
 **Variable bone / vertex influencers (1-8)**- Export and check what the log file said was the highest # of Influencers observed.  You might then go to the custom properties for the mesh (see below), and lower the 'Max bone influencers / vertex' below what was observed, then export again.  Often times you may not notice much or any damage / stiffness when animated.  Lowering from 5 to 4 will also reduce cpu &amp; gpu memory requirements, but they all reduce processing.
 
 **Vertex optimization using a skeleton**- Previously, having a skeleton for a mesh would cause no sharing of vertices between triangles.  This is no longer the case.  This reduces the size of vertex positions, normals, uvs, colors, skeleton info, and shape keys dramatically.  It will also reduce shape key, and cpu skinning processing.
@@ -209,7 +210,9 @@ The Cycles Render is supported by baking out a set of textures that BJS can acce
 When baking textures, either from Cycles or Blender Render Procedural textures, the dimensions are set on a mesh by mesh basis.  This is part of the custom properties of a mesh.  It is highly recommended to make this a power of 2.  The format output is .JPG.  The quality setting controls the compression on disk.
 
 ###Actions###
-Action animations for Meshes, lights, and Cameras are transferred on export.  A corresponding AnimationRange object with the same name as the action is made on import to BJS.  See the table below to see which properties are animatable, based on the object type.  If the custom property `Auto Launch Animations` is checked, then these will start when the object created.  This will play the entire animation, so may not useful when there are multiple actions, as all will be played.
+Action animations for Meshes, lights, and Cameras are transferred on export.  AnimationRanges are new in BJS as of 2.3. For each action, a corresponding AnimationRange object with the same name is made on import to BJS.  
+
+See the table below for which properties are animatable, based on the object type.  If the custom property `Auto Launch Animations` is checked, then these will start when the object created.  This will play the entire animation, so may not useful when there are multiple actions, as all will be played.
 
 |Object Type| Rotation (Vector &amp; Quaternion)| Position | Scaling
 | --- |:---:|:---:|:---:|
@@ -218,13 +221,13 @@ Action animations for Meshes, lights, and Cameras are transferred on export.  A 
 |**Lights** | | √| 
 
 ###Armatures###
-Armatures are exported. along with their actions as AnimationRanges.  It is no longer a requirement that an armature be the parent of a mesh it controls. These animations cannot be set to auto animate.
+Armatures are exported along with their actions as AnimationRanges.  It is no longer a requirement that an armature be the parent of a mesh it controls. Skeletal animations cannot be set to auto animate.
 
 **Variable bone / vertex influencers (1-8)**- Export and check what the log file said was the highest # of Influencers observed.  You might then go to the custom properties for the mesh, and lower the 'Max bone influencers / vertex' below what was observed, then export again.  Often times you may not notice much or any damage / stiffness when animated.  Lowering from 5 to 4 will also reduce cpu &amp; gpu memory requirements, but they all reduce processing.
 
-**Inverse Kinematics Friendly**- There is a custom exporter property (on Scene tab), Ignore IK Bones.  The effect is any bone with '.ik' in the name will not be exported.  Any extra bones that are needed to make inverse kinematics work will never make it to BJS.  So now you can do all your posing for your key frames more easily in Blender, without the baggage following you to BJS.
+**Inverse Kinematics Friendly**- There is a custom exporter property (on Scene tab), `Ignore IK Bones`.  The effect is any bone with `.ik` in the name will not be exported.  Any extra bones that are needed to make inverse kinematics work will never make it to BJS.  So now you can do all your posing for your key frames more easily in Blender, without the baggage following you to BJS.
 
-**Skeleton Animation Libraries**- As of BJS 2.3, the AnimationRanges of a skeleton can be transferred to another with the same bone structure to another.  The bone length can be taken into account during the copy to compensate for skeletons which are shorter, wider, or expressed in different units e.g. inches vs meters.  Here is an example of implementing a library as 2 .babylon files:
+**Skeleton Animation Libraries**- As of BJS 2.3, the AnimationRanges of a skeleton can be transferred to another with the same bone structure.  The bone lengths can be taken into account during the copy to compensate for skeletons which are shorter, wider, or expressed in different units e.g. inches vs meters.  Here is an example of implementing a library as 2 .babylon files:
 ```Typescript
 var scene = new BABYLON.Scene(engine);
         
@@ -239,9 +242,9 @@ scene.executeWhenReady(function () {
      ...
 });
 ```
-**Animation Differences**- The traditional BJS animation system, requires that skeletal animation have every frame. The .babylon file has a "baked" animation for bone animations.  While Tower of Babel only sends the key frames.  It is expected that if you are exporting with Tower of Babel that you will be using the QueuedInterpolation animation extension.  It generates any non-key frames, which is much more space efficient.
+**Animation Differences**- The traditional BJS animation system, requires that skeletal animation contain every frame. The .babylon file has these "baked" animations for bones.  While Tower of Babel only saves the key frames.  It is expected that if you are exporting with Tower of Babel that you will be using the QueuedInterpolation animation extension.  It generates any non-key frames at runtime, which is much more space efficient.
 
-This does not mean that you must bake any of your actions, skeletal or not, to produce a .babylon.  Keeping only the key frames are much more flexible than actually baking in the .blend file.
+This does not mean that you must bake any of your actions, skeletal or not, to produce a .babylon.  Keeping only the key frames is much more flexible than actually baking it into the .blend file.
 
 ###Log File###
 Another file always generated is the log file.  It has the same name as the script file or .babylon file with the extension .log.  It provides information about what was or was not done.  Many possible warnings are provided, instead of just leaving you wondering why something did not come through.  Most importantly, should the exporter terminate with an error, it will be contained in this file.  Here is part of one:
