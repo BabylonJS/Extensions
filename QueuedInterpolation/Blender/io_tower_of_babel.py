@@ -1,7 +1,7 @@
 bl_info = {
     'name': 'Tower of Babel',
     'author': 'David Catuhe, Jeff Palmer',
-    'version': (4, 1, 0),
+    'version': (4, 2, 0),
     'blender': (2, 75, 0),
     'location': 'File > Export > Tower of Babel [.js + .ts]',
     'description': 'Translate to inline JavaScript & TypeScript modules',
@@ -22,7 +22,7 @@ import sys, traceback # for writing errors to log file
 #===============================================================================
 # Registration the calling of the INFO_MT_file_export file selector
 def menu_func(self, context):
-    self.layout.operator(Main.bl_idname, text = 'Tower of Babel [.js + .ts]')
+    self.layout.operator(Main.bl_idname, text = 'Tower of Babel ver ' + format_version())
 
 def register():
     bpy.utils.register_module(__name__)
@@ -35,6 +35,10 @@ def unregister():
 if __name__ == '__main__':
     register()
 #===============================================================================
+def format_version():
+    version = bl_info['version']
+    return str(version[0]) + '.' + str(version[1]) +  '.' + str(version[2])
+
 # output related constants
 MAX_VERTEX_ELEMENTS = 65535
 MAX_VERTEX_ELEMENTS_32Bit = 16777216
@@ -42,6 +46,7 @@ VERTEX_OUTPUT_PER_LINE = 100
 MAX_FLOAT_PRECISION_INT = 4
 MAX_FLOAT_PRECISION = '%.' + str(MAX_FLOAT_PRECISION_INT) + 'f'
 COMPRESS_MATRIX_INDICES = False # this is True for .babylon exporter & False for TOB
+FRAME_BASED_ANIMATION = False # this is only able to be turned off by the TOB exporter right now
 
 # used in World constructor, defined in BABYLON.Scene
 #FOGMODE_NONE = 0
@@ -127,7 +132,7 @@ ANIMATIONLOOPMODE_CYCLE = 1
 #===============================================================================
 # Panel displayed in Scene Tab of properties, so settings can be saved in a .blend file
 class ExporterSettingsPanel(bpy.types.Panel):
-    bl_label = 'Exporter Settings'
+    bl_label = 'Exporter Settings ' + format_version()
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'scene'
@@ -177,6 +182,11 @@ class ExporterSettingsPanel(bpy.types.Panel):
         description="turn textures into encoded strings, for direct inclusion into source code",
         default = False,
         )
+    bpy.types.Scene.ignoreIKBones = bpy.props.BoolProperty(
+        name="Ignore IK Bones",
+        description="Do not export bones with '.ik' in the name",
+        default = False,
+        )
     bpy.types.Scene.includeInitScene = bpy.props.BoolProperty(
         name="Include initScene()",
         description="add an initScene() method to the .js / .ts",
@@ -198,6 +208,7 @@ class ExporterSettingsPanel(bpy.types.Panel):
         layout.prop(scene, "export_typeScript")
         layout.prop(scene, "logInBrowserConsole")
         layout.prop(scene, "inlineTextures")
+        layout.prop(scene, "ignoreIKBones")
 
         layout.separator()
 
@@ -299,8 +310,7 @@ class Main(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 
             Main.log_handler = io.open(self.filepathMinusExtension + '.log', 'w', encoding='utf8')
             version = bl_info['version']
-            Main.log('Exporter version: ' + str(version[0]) + '.' + str(version[1]) +  '.' + str(version[2]) +
-                             ', Blender version: ' + bpy.app.version_string)
+            Main.log('Exporter version: ' + format_version() + ', Blender version: ' + bpy.app.version_string)
 
             if bpy.ops.object.mode_set.poll():
                 bpy.ops.object.mode_set(mode = 'OBJECT')
@@ -336,6 +346,15 @@ class Main(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             if scene.attachedSound != '':
                 self.sounds.append(Sound(scene.attachedSound, scene.autoPlaySound, scene.loopSound))
 
+            # separate loop doing all skeletons, so available in Mesh to make skipping IK bones possible
+            for object in [object for object in scene.objects]:
+                if object.type == 'ARMATURE':  #skeleton.pose.bones
+                    if object.is_visible(scene):
+                        self.skeletons.append(Skeleton(object, scene, skeletonId))
+                        skeletonId += 1
+                    else:
+                        Main.warn('The following armature not visible in scene thus ignored: ' + object.name)
+
             # exclude lamps in this pass, so ShadowGenerator constructor can be passed meshesAnNodes
             for object in [object for object in scene.objects]:
                 if object.type == 'CAMERA':
@@ -343,13 +362,6 @@ class Main(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                         self.cameras.append(Camera(object))
                     else:
                         Main.warn('The following camera not visible in scene thus ignored: ' + object.name)
-
-                elif object.type == 'ARMATURE':  #skeleton.pose.bones
-                    if object.is_visible(scene):
-                        self.skeletons.append(Skeleton(object, scene, skeletonId))
-                        skeletonId += 1
-                    else:
-                        Main.warn('The following armature not visible in scene thus ignored: ' + object.name)
 
                 elif object.type == 'MESH':
                     forcedParent = None
@@ -380,7 +392,7 @@ class Main(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                 elif object.type == 'EMPTY':
                     self.meshesAndNodes.append(Node(object, scene.includeMeshFactory))
 
-                elif object.type != 'LAMP':
+                elif object.type != 'LAMP' and object.type != 'ARMATURE':
                     Main.warn('The following object (type - ' +  object.type + ') is not currently exportable thus ignored: ' + object.name)
 
             # Lamp / shadow Generator pass; meshesAnNodes complete & forceParents included
@@ -599,6 +611,13 @@ class Main(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             if hasattr(mesh, 'parentId') and mesh.parentId == prospectiveParent.name:
                 kids.append(mesh)
         return kids
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    def get_skeleton(self, name):
+        for skeleton in self.skeletons:
+            if skeleton.name == name:
+                return skeleton
+        #really cannot happen, will cause exception in caller
+        return None
 #===============================================================================
 class OptionalArgument:
     def __init__(self, argumentName, tsType = '', default = '""'):
@@ -845,33 +864,63 @@ class Sound:
             file_handler.write(indent + '}\n')
 #===============================================================================
 class FCurveAnimatable:
-    def __init__(self, object, supportsRotation, supportsPosition, supportsScaling, xOffsetForRotation = 0):
+    def define_animations(self, object, supportsRotation, supportsPosition, supportsScaling, xOffsetForRotation = 0):
 
         # just because a sub-class can be animatable does not mean it is
         self.animationsPresent = object.animation_data and object.animation_data.action
 
-        rotAnim = False
-        locAnim = False
-        scaAnim = False
-        useQuat = object.rotation_mode=='QUATERNION'
-
         if (self.animationsPresent):
-            Main.log('FCurve animation processing begun for:  ' + object.name, 1)
-            self.animations = []
-            for fcurve in object.animation_data.action.fcurves:
-                if supportsRotation and fcurve.data_path == 'rotation_euler' and rotAnim == False and useQuat == False:
-                    self.animations.append(VectorAnimation(object, 'rotation_euler', 'rotation', -1, xOffsetForRotation))
-                    rotAnim = True
-                elif supportsRotation and fcurve.data_path == 'rotation_quaternion' and rotAnim == False and useQuat == True:
-                    self.animations.append(QuaternionAnimation(object, 'rotation_quaternion', 'rotationQuaternion', 1, xOffsetForRotation))
-                    rotAnim = True
-                elif supportsPosition and fcurve.data_path == 'location' and locAnim == False:
-                    self.animations.append(VectorAnimation(object, 'location', 'position', 1))
-                    locAnim = True
-                elif supportsScaling and fcurve.data_path == 'scale' and scaAnim == False:
-                    self.animations.append(VectorAnimation(object, 'scale', 'scaling', 1))
-                    scaAnim = True
+            Main.log('animation processing begun', 2)
+            # instance each type of animation support regardless of whether there is any data for it
+            if supportsRotation:
+                if object.rotation_mode == 'QUATERNION':
+                    if object.type == 'CAMERA':
+                        # if it's a camera, convert quaternions to euler XYZ
+                        rotAnimation = QuaternionToEulerAnimation(object, 'rotation', 'rotation_quaternion', -1, xOffsetForRotation)
+                    else:
+                        rotAnimation = QuaternionAnimation(object, 'rotationQuaternion', 'rotation_quaternion', 1, xOffsetForRotation)
+                else:
+                    rotAnimation = VectorAnimation(object, 'rotation', 'rotation_euler', -1, xOffsetForRotation)
+
+            if supportsPosition:
+                posAnimation = VectorAnimation(object, 'position', 'location')
+
+            if supportsScaling:
+                scaleAnimation = VectorAnimation(object, 'scaling', 'scale')
+
+            self.ranges = []
+            frameOffset = bpy.context.scene.frame_start
+
+            for action in bpy.data.actions:
+                # get the range / assigning the action to the object
+                animationRange = AnimationRange.actionPrep(object, action, False, frameOffset)
+                if animationRange is None:
+                    continue
+
+                if supportsRotation:
+                    hasData = rotAnimation.append_range(object, frameOffset)
+
+                if supportsPosition:
+                    hasData |= posAnimation.append_range(object, frameOffset)
+
+                if supportsScaling:
+                    hasData |= scaleAnimation.append_range(object, frameOffset)
+
+                if hasData:
+                    Main.log('processing action ' + action.name, 3)
+                    self.ranges.append(animationRange)
+                    frameOffset = animationRange.frame_end + 1
+
             #Set Animations
+            self.animations = []
+            if supportsRotation and len(rotAnimation.frames) > 0:
+                 self.animations.append(rotAnimation)
+
+            if supportsPosition and len(posAnimation.frames) > 0:
+                 self.animations.append(posAnimation)
+
+            if supportsScaling and len(scaleAnimation.frames) > 0:
+                 self.animations.append(scaleAnimation)
 
             if (hasattr(object.data, "autoAnimate") and object.data.autoAnimate):
                 self.autoAnimate = True
@@ -896,13 +945,15 @@ class FCurveAnimatable:
                                              format_int(self.autoAnimateFrom) + ',' +
                                              format_int(self.autoAnimateTo) + ',' +
                                              format_bool(self.autoAnimateLoop) + ', 1.0);\n')
+
+            for range in self.ranges:
+                range.to_script_file(file_handler, indent, jsVarName)
 #===============================================================================
 class Mesh(FCurveAnimatable):
     def __init__(self, object, scene, startFace, forcedParent, nameID, exporter):
-        super().__init__(object, True, True, True)  #Should animations be done when forcedParent
-
         self.name = object.name + str(nameID)
         Main.log('processing begun of mesh:  ' + self.name)
+        self.define_animations(object, True, True, True)  #Should animations be done when forcedParent
 
         # Tower of Babel specific member
         self.legalName = legal_js_identifier(self.name)
@@ -926,6 +977,8 @@ class Mesh(FCurveAnimatable):
             objArmature = object.find_armature()
             if objArmature != None:
                 hasSkeleton = True
+                # used to get bone index, since could be skipping IK bones
+                skeleton = exporter.get_skeleton(objArmature.name)
                 i = 0
                 for obj in scene.objects:
                     if obj.type == "ARMATURE":
@@ -1045,7 +1098,7 @@ class Mesh(FCurveAnimatable):
 
         # Triangulate mesh if required
         Mesh.mesh_triangulate(mesh)
-        
+
         # Getting vertices and indices
         self.positions  = []
         self.normals    = []
@@ -1087,7 +1140,7 @@ class Mesh(FCurveAnimatable):
 
             if not hasShapeKeys:
                 Main.warn('Basis key missing, shape-key processing NOT performed', 2)
-            
+
         # used tracking of vertices as they are received
         alreadySavedVertices = []
         vertices_Normals = []
@@ -1097,7 +1150,7 @@ class Mesh(FCurveAnimatable):
         vertices_indices = []
         vertices_sk_weights = []
         vertices_sk_indices = []
-             
+
         self.offsetFace = 0
 
         for v in range(0, len(mesh.vertices)):
@@ -1148,10 +1201,11 @@ class Mesh(FCurveAnimatable):
                             index = group.group
                             weight = group.weight
 
+                            # do not need boneIndex; using skeleton.get_index_of_bone()
                             for boneIndex, bone in enumerate(objArmature.pose.bones):
                                 if object.vertex_groups[index].name == bone.name:
                                     matricesWeights.append(weight)
-                                    matricesIndices.append(boneIndex)
+                                    matricesIndices.append(skeleton.get_index_of_bone(bone.name))
 
                     # Texture coordinates
                     if hasUV:
@@ -1180,7 +1234,7 @@ class Mesh(FCurveAnimatable):
                             vNormal = vertices_Normals[vertex_index][index_UV]
                             if (normal.x != vNormal.x or normal.y != vNormal.y or normal.z != vNormal.z):
                                 continue;
-                            
+
                             if hasUV:
                                 vUV = vertices_UVs[vertex_index][index_UV]
                                 if (vUV[0] != vertex_UV[0] or vUV[1] != vertex_UV[1]):
@@ -1195,12 +1249,12 @@ class Mesh(FCurveAnimatable):
                                 vColor = vertices_Colors[vertex_index][index_UV]
                                 if (vColor.r != vertex_Color.r or vColor.g != vertex_Color.g or vColor.b != vertex_Color.b):
                                     continue
-                                
+
                             if hasSkeleton:
                                 vSkWeight = vertices_sk_weights[vertex_index]
                                 vSkIndices = vertices_sk_indices[vertex_index]
                                 if not same_array(vSkWeight[index_UV], matricesWeights) or not same_array(vSkIndices[index_UV], matricesIndices):
-                                    continue 
+                                    continue
 
                             if vertices_indices[vertex_index][index_UV] >= subMeshVerticesStart:
                                 alreadySaved = True
@@ -1215,10 +1269,10 @@ class Mesh(FCurveAnimatable):
                         # Export new one
                         index = verticesCount
                         alreadySavedVertices[vertex_index] = True
-                        
-                        vertices_Normals[vertex_index].append(normal)                        
+
+                        vertices_Normals[vertex_index].append(normal)
                         self.normals.append(normal)
-                        
+
                         if hasUV:
                             vertices_UVs[vertex_index].append(vertex_UV)
                             self.uvs.append(vertex_UV[0])
@@ -1245,8 +1299,8 @@ class Mesh(FCurveAnimatable):
                             highestInfluenceObserved = nInfluencers if nInfluencers > highestInfluenceObserved else highestInfluenceObserved
                             weightsPerVertex.append(matricesWeights)
                             indicesPerVertex.append(matricesIndices)
-                                
-                        if hasShapeKeys:         
+
+                        if hasShapeKeys:
                             keyOrderMap.append([vertex_index, len(self.positions)]) # use len positions before it is append to convert from 1 to 0 origin
 
                         vertices_indices[vertex_index].append(index)
@@ -1273,17 +1327,17 @@ class Mesh(FCurveAnimatable):
         if hasSkeleton:
             Main.log('Skeleton stats:  ', 2)
             self.toFixedInfluencers(weightsPerVertex, indicesPerVertex, object.data.maxInfluencers, highestInfluenceObserved)
-                
+
             if (COMPRESS_MATRIX_INDICES):
                 self.skeletonIndices = Mesh.packSkeletonIndices(self.skeletonIndices)
                 if (self.numBoneInfluencers > 4):
                     self.skeletonIndicesExtra = Mesh.packSkeletonIndices(self.skeletonIndicesExtra)
-                
+
             Main.log('Total Influencers:  ' + format_f(totalInfluencers), 3)
             Main.log('Avg # of influencers per vertex:  ' + format_f(totalInfluencers / len(self.positions)), 3)
             Main.log('Highest # of influencers observed:  ' + str(highestInfluenceObserved) + ', num vertices with this:  ' + format_int(influenceCounts[highestInfluenceObserved if highestInfluenceObserved < 9 else 0]), 3)
             Main.log('exported as ' + str(self.numBoneInfluencers) + ' influencers', 3)
-            nWeights = len(self.skeletonWeights) + len(self.skeletonWeightsExtra) if hasattr(self, 'skeletonWeightsExtra') else 0
+            nWeights = len(self.skeletonWeights) + (len(self.skeletonWeightsExtra) if hasattr(self, 'skeletonWeightsExtra') else 0)
             Main.log('num skeletonWeights and skeletonIndices:  ' + str(nWeights), 3)
 
         numZeroAreaFaces = self.find_zero_area_faces()
@@ -1371,43 +1425,43 @@ class Mesh(FCurveAnimatable):
         if (maxInfluencers > 8 or maxInfluencers < 1):
             maxInfluencers = 8
             Main.warn('Maximum # of influencers invalid, set to 8', 3)
-            
+
         self.numBoneInfluencers = maxInfluencers if maxInfluencers < highestObserved else highestObserved
         needExtras = self.numBoneInfluencers > 4
-        
+
         maxInfluencersExceeded = 0
-        
+
         fixedWeights = []
         fixedIndices = []
-        
+
         fixedWeightsExtra = []
         fixedIndicesExtra = []
-        
+
         for i in range(len(weightsPerVertex)):
             weights = weightsPerVertex[i]
             indices = indicesPerVertex[i]
             nInfluencers = len(weights)
-            
+
             if (nInfluencers > self.numBoneInfluencers):
                 maxInfluencersExceeded += 1
                 Mesh.sortByDescendingInfluence(weights, indices)
-                
+
             for j in range(4):
                 fixedWeights.append(weights[j] if nInfluencers > j else 0.0)
                 fixedIndices.append(indices[j] if nInfluencers > j else 0  )
-                
+
             if needExtras:
                 for j in range(4, 8):
                     fixedWeightsExtra.append(weights[j] if nInfluencers > j else 0.0)
                     fixedIndicesExtra.append(indices[j] if nInfluencers > j else 0  )
-                            
+
         self.skeletonWeights = fixedWeights
         self.skeletonIndices = fixedIndices
-        
+
         if needExtras:
             self.skeletonWeightsExtra = fixedWeightsExtra
             self.skeletonIndicesExtra = fixedIndicesExtra
-            
+
         if maxInfluencersExceeded > 0:
             Main.warn('Maximum # of influencers exceeded for ' + format_int(maxInfluencersExceeded) + ' vertices, extras ignored', 3)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1423,11 +1477,11 @@ class Mesh(FCurveAnimatable):
                     tmp = weights[idx]
                     weights[idx    ] = weights[idx - 1]
                     weights[idx - 1] = tmp
-                    
+
                     tmp = indices[idx]
                     indices[idx    ] = indices[idx - 1]
                     indices[idx - 1] = tmp
-                    
+
                     notSorted = True
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # assume that toFixedInfluencers has already run, which ensures indices length is a multiple of 4
@@ -1441,9 +1495,9 @@ class Mesh(FCurveAnimatable):
             matricesIndicesCompressed += indices[idx + 1] <<  8
             matricesIndicesCompressed += indices[idx + 2] << 16
             matricesIndicesCompressed += indices[idx + 3] << 24
-            
+
             compressedIndices.append(matricesIndicesCompressed)
-            
+
         return compressedIndices
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def to_script_file(self, file_handler, kids, indent, is_typescript):
@@ -1472,7 +1526,7 @@ class Mesh(FCurveAnimatable):
             file_handler.write('\n' + indent2A + 'defineSkeletons(scene);\n')
             file_handler.write(indent2A + var + '.skeleton = scene.getLastSkeletonByID("' + format_int(self.skeletonId) + '");\n')
             file_handler.write(indent2A + var + '.numBoneInfluencers = ' + format_int(self.numBoneInfluencers) + ';\n\n')
-            
+
 
         file_handler.write(indent2A + var + '.setVerticesData(B.VertexBuffer.PositionKind, new Float32Array([\n')
         file_handler.write(indent3A + format_vector_array(self.positions, VERTEX_OUTPUT_PER_LINE, indent3A) + '\n')
@@ -1678,7 +1732,7 @@ def writePosRotScale(file_handler, object, var, indent):
     file_handler.write(indent + var + '.scaling.x   = ' + format_f(object.scaling.x) + ';\n')
     file_handler.write(indent + var + '.scaling.y   = ' + format_f(object.scaling.z) + ';\n')
     file_handler.write(indent + var + '.scaling.z   = ' + format_f(object.scaling.y) + ';\n')
-    
+
     # need to check if present, since Node has no freezeWorldMatrix
     if hasattr(object, 'freezeWorldMatrix') and object.freezeWorldMatrix:
         file_handler.write(indent + var + '.freezeWorldMatrix();\n')
@@ -1701,8 +1755,8 @@ class MeshInstance:
 #===============================================================================
 class Node(FCurveAnimatable):
     def __init__(self, node, includeMeshFactory):
-        super().__init__(node, True, True, True)  #Should animations be done when forcedParent
         Main.log('processing begun of node:  ' + node.name)
+        self.define_animations(object, True, True, True)  #Should animations be done when forcedParent
         self.name = node.name
         self.baseClass = 'B.Mesh'
         self.isNode = True # used in meshFactory
@@ -1795,7 +1849,7 @@ class RawShapeKey:
             pair = keyOrderMap[i]
             value = keyBlock.data[pair[0]].co
             self.vertices[pair[1]] = value
-            if not same_vertex(value, basis.data[pair[0]].co):                
+            if not same_vertex(value, basis.data[pair[0]].co):
                 nDifferent += 1
 
         if state != 'BASIS':
@@ -1876,9 +1930,11 @@ class Bone:
         self.name = bone.name
         self.length = bone.length
         self.index = index
+        self.blenderBoneObj = bone # record so can be used by get_matrix, called by append_animation_pose
+        self.parentBone = bone.parent
 
-        matrix_world = skeleton.matrix_world
-        self.matrix = Bone.get_matrix(bone, matrix_world)
+        self.matrix_world = skeleton.matrix_world
+        self.matrix = self.get_matrix()
 
         parentId = -1
         if (bone.parent):
@@ -1891,37 +1947,28 @@ class Bone:
 
         #animation
         if (skeleton.animation_data):
-            Main.log('animation begun of bone:  ' + self.name, 3)
-            self.animation = Animation(ANIMATIONTYPE_MATRIX, scene.render.fps, ANIMATIONLOOPMODE_CYCLE, 'anim', '_matrix')
-
-            start_frame = scene.frame_start
-            end_frame = scene.frame_end
-            previousBoneMatrix = None
-            for frame in range(start_frame, end_frame + 1):
-                bpy.context.scene.frame_set(frame)
-                currentBoneMatrix = Bone.get_matrix(bone, matrix_world)
-
-                if (frame != end_frame and same_matrix4(currentBoneMatrix, previousBoneMatrix)):
-                    continue
-
-                self.animation.frames.append(frame)
-                self.animation.values.append(Bone.get_matrix(bone, matrix_world))
-                previousBoneMatrix = currentBoneMatrix
-
-            bpy.context.scene.frame_set(start_frame)
+            self.animation = Animation(ANIMATIONTYPE_MATRIX, ANIMATIONLOOPMODE_CYCLE, 'anim', '_matrix')
+            self.previousBoneMatrix = None
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    @staticmethod
-    def get_matrix(bone, matrix_world):
+    def append_animation_pose(self, frame, force = False):
+        currentBoneMatrix = self.get_matrix()
+
+        if (force or not same_matrix4(currentBoneMatrix, self.previousBoneMatrix)):
+            self.animation.frames.append(frame)
+            self.animation.values.append(currentBoneMatrix)
+            self.previousBoneMatrix = currentBoneMatrix
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    def get_matrix(self):
         SystemMatrix = mathutils.Matrix.Scale(-1, 4, mathutils.Vector((0, 0, 1))) * mathutils.Matrix.Rotation(math.radians(-90), 4, 'X')
 
-        if (bone.parent):
-            return (SystemMatrix * matrix_world * bone.parent.matrix).inverted() * (SystemMatrix * matrix_world * bone.matrix)
+        if (self.parentBone):
+            return (SystemMatrix * self.matrix_world * self.parentBone.matrix).inverted() * (SystemMatrix * self.matrix_world * self.blenderBoneObj.matrix)
         else:
-            return SystemMatrix * matrix_world * bone.matrix
+            return  SystemMatrix * self.matrix_world * self.blenderBoneObj.matrix
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # assume the following JS variables have already been declared: skeleton, bone, animation
     def to_script_file(self, file_handler, indent):
-        parentBone = 'skeleton.bones[' + format_int(self.parentBoneIndex) + ']' if self.parentBoneIndex != -1 else 'null'
+        parentBone = 'skeleton.bones[' + format_int(self.parentBoneIndex) + ']' if self.parentBone else 'null'
 
         file_handler.write(indent + 'bone = new B.Bone("' + self.name + '", skeleton,' + parentBone + ', M(' + format_matrix4(self.matrix) + '));\n')
         file_handler.write(indent + 'bone.length = ' + format_f(self.length) + ';\n')
@@ -1937,13 +1984,41 @@ class Skeleton:
         self.id = id
         self.bones = []
 
-        bones = skeleton.pose.bones
-        j = 0
-        for bone in bones:
-            self.bones.append(Bone(bone, skeleton, scene, j))
-            j = j + 1
+        for bone in skeleton.pose.bones:
+            if scene.ignoreIKBones and '.ik' in bone.name:
+                Main.log('Ignoring IK bone:  ' + bone.name, 2)
+                continue
 
-        Main.log('processing complete of skeleton:  ' + skeleton.name)
+            self.bones.append(Bone(bone, skeleton, scene, len(self.bones)))
+
+        if (skeleton.animation_data):
+            self.ranges = []
+            frameOffset = scene.frame_start
+            for action in bpy.data.actions:
+                # get the range / assigning the action to the object
+                animationRange = AnimationRange.actionPrep(skeleton, action, FRAME_BASED_ANIMATION, frameOffset)
+                if animationRange is None:
+                    continue
+
+                Main.log('processing action ' + action.name, 2)
+                self.ranges.append(animationRange)
+
+                for frame in animationRange.frames:
+                    bpy.context.scene.frame_set(frame)
+
+                    for bone in self.bones:
+                        bone.append_animation_pose(frame + frameOffset, frame == animationRange.highest_frame)
+
+                frameOffset = animationRange.frame_end + 1
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # Since IK bones could be being skipped, looking up index of bone in second pass of mesh required
+    def get_index_of_bone(self, boneName):
+        for bone in self.bones:
+            if boneName == bone.name:
+                return bone.index
+
+        # should not happen, but if it does clearly a bug, so terminate
+        raise 'bone name "' + boneName + '" not found in skeleton'
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # assume the following JS variables have already been declared: scene, skeleton, bone, animation
     def to_script_file(self, file_handler, indent):
@@ -1953,17 +2028,19 @@ class Skeleton:
 
         for bone in self.bones:
             bone.to_script_file(file_handler, indent)
+
+        for range in self.ranges:
+            range.to_script_file(file_handler, indent, 'skeleton')
 #===============================================================================
 class Camera(FCurveAnimatable):
     def __init__(self, camera):
-        super().__init__(camera, True, True, False, math.pi / 2)
-
         if camera.parent and camera.parent.type != 'ARMATURE':
             self.parentId = camera.parent.name
 
         self.CameraType = camera.data.CameraType
         self.name = camera.name
         Main.log('processing begun of camera (' + self.CameraType + '):  ' + self.name)
+        self.define_animations(camera, True, True, False, math.pi / 2)
         self.position = camera.location
 
         # for quaternions, convert to euler XYZ, otherwise, use the default rotation_euler
@@ -2069,13 +2146,13 @@ class Camera(FCurveAnimatable):
 #===============================================================================
 class Light(FCurveAnimatable):
     def __init__(self, light):
-        super().__init__(light, False, True, False)
-
         if light.parent and light.parent.type != 'ARMATURE':
             self.parentId = light.parent.name
 
         self.name = light.name
         Main.log('processing begun of light (' + light.data.type + '):  ' + self.name)
+        self.define_animations(light, False, True, False)
+
         light_type_items = {'POINT': POINT_LIGHT, 'SUN': DIRECTIONAL_LIGHT, 'SPOT': SPOT_LIGHT, 'HEMI': HEMI_LIGHT, 'AREA': POINT_LIGHT}
         self.light_type = light_type_items[light.data.type]
 
@@ -2202,7 +2279,7 @@ class Texture:
             usingMap = texture.uv_layer
             if len(usingMap) == 0:
                 usingMap = mesh.data.uv_textures[0].name
-                
+
             Main.log('Image texture found, type:  ' + slot + ', mapped using: "' + usingMap + '"', 3)
             if mesh.data.uv_textures[0].name == usingMap:
                 self.coordinatesIndex = 0
@@ -2389,19 +2466,19 @@ class BakingRecipe:
                                 nReflectionImages += 1
                             else:
                                 nDiffuseImages += 1
-    
+
                         if mtex.use_map_ambient:
                             nAmbientImages += 1
-    
+
                         if mtex.use_map_alpha:
                             nOpacityImages += 1
-    
+
                         if mtex.use_map_emit:
                             nEmissiveImages += 1
-    
+
                         if mtex.use_map_normal:
                             nBumpImages += 1
-    
+
                         if mtex.use_map_color_spec:
                             nSpecularImages += 1
 
@@ -2428,7 +2505,7 @@ class BakingRecipe:
 
                         if mtex.use_map_color_spec:
                             self.specularBaking = True
-                            
+
                 # 2nd pass 2 check for multiples of a given image type
                 if nDiffuseImages > 1:
                     self.needsBaking = self.diffuseBaking = True
@@ -2444,13 +2521,13 @@ class BakingRecipe:
                     self.needsBaking = self.bumpBaking = True
                 if nSpecularImages > 1:
                     self.needsBaking = self.specularBaking = True
-                        
+
         self.multipleRenders = blenderRender and self.cyclesRender
-        
+
         # check for really old .blend file, eg. 2.49, to ensure that everything requires exists
         if self.needsBaking and bpy.data.screens.find('UV Editing') == -1:
             Main.warn('Contains material requiring baking, but resources not available.  Probably .blend very old', 2)
-            self.needsBaking = False     
+            self.needsBaking = False
 #===============================================================================
 # Not intended to be instanced directly
 class Material:
@@ -2476,15 +2553,15 @@ class Material:
         for texSlot in self.textures:
             texSlot.to_script_file(file_handler, indent2)
             file_handler.write(indent2 + 'material.' + texSlot.slot + ' = texture;\n')
-            
+
         file_handler.write(indent + '}\n')
 #===============================================================================
 class StdMaterial(Material):
     def __init__(self, material_slot, exporter, mesh):
         super().__init__(mesh.data.checkReadyOnlyOnce)
-        nameSpace = Main.nameSpace if mesh.data.materialNameSpace == DEFAULT_MATERIAL_NAMESPACE else mesh.data.materialNameSpace 
+        nameSpace = Main.nameSpace if mesh.data.materialNameSpace == DEFAULT_MATERIAL_NAMESPACE else mesh.data.materialNameSpace
         self.name = nameSpace + '.' + material_slot.name
-                
+
         Main.log('processing begun of Standard material:  ' +  material_slot.name, 2)
 
         # a material slot is not a reference to an actual material; need to look up
@@ -2546,7 +2623,7 @@ class StdMaterial(Material):
 class BakedMaterial(Material):
     def __init__(self, exporter, mesh, recipe):
         super().__init__(mesh.data.checkReadyOnlyOnce)
-        nameSpace = Main.nameSpace if mesh.data.materialNameSpace == DEFAULT_MATERIAL_NAMESPACE else mesh.data.materialNameSpace 
+        nameSpace = Main.nameSpace if mesh.data.materialNameSpace == DEFAULT_MATERIAL_NAMESPACE else mesh.data.materialNameSpace
         self.name = nameSpace + '.' + mesh.name
         Main.log('processing begun of baked material:  ' +  mesh.name, 2)
 
@@ -2574,8 +2651,8 @@ class BakedMaterial(Material):
          # UV unwrap operates on mesh in only edit mode, procedurals can also give error of 'no images to be found' when not done
          # select all verticies of mesh, since smart_project works only with selected verticies
         bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.mesh.select_all(action='SELECT') 
-        
+        bpy.ops.mesh.select_all(action='SELECT')
+
         # you need UV on a mesh in order to bake image.  This is not reqd for procedural textures, so may not exist
         # need to look if it might already be created, if so use the first one
         uv = mesh.data.uv_textures[0] if len(mesh.data.uv_textures) > 0 else None
@@ -2589,7 +2666,7 @@ class BakedMaterial(Material):
             uvName = 'BakingUV'  # issues with cycles when not done this way
         else:
             uvName = uv.name
-            
+
         # create a temporary image & link it to the UV/Image Editor so bake_image works
         bpy.data.images.new(name = mesh.name + '_BJS_BAKE', width = recipe.bakeSize, height = recipe.bakeSize, alpha = False, float_buffer = False)
         image = bpy.data.images[mesh.name + '_BJS_BAKE']
@@ -2702,17 +2779,75 @@ class BakedMaterial(Material):
                 bpy.data.images.remove(image)
                 break
 #===============================================================================
+class AnimationRange:
+    # constructor called by the static actionPrep method
+    def __init__(self, name, frames, frameOffset):
+        self.name = name
+        self.highest_frame = frames[len(frames) - 1]
+        self.frame_start = frameOffset
+        self.frame_end   = frameOffset + self.highest_frame
+        self.frames = frames
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    def to_script_file(self, file_handler, indent, var):
+        file_handler.write(indent + var + '.createAnimationRange("' + self.name + '", ' + format_int(self.frame_start) + ', ' + format_int(self.frame_end) + ');\n')
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    @staticmethod
+    def actionPrep(object, action, includeAllFrames, frameOffset):
+        # assign the action & test if there is any data for that action for this object
+#        bpy.context.scene.objects.active = object
+        object.animation_data.action = action
+        if len(object.animation_data.action.fcurves) == 0:
+            return None
+
+        if includeAllFrames:
+            frame_start, frame_end = [int(x) for x in action.frame_range]
+            frames = range(frame_start, frame_end)
+
+        else:
+            # capture built up from fcurves
+            frames = dict()
+            for fcurve in object.animation_data.action.fcurves:
+                for key in fcurve.keyframe_points:
+                    frame = key.co.x
+                    frames[frame] = True
+
+            frames = sorted(frames)
+
+        return AnimationRange(action.name, frames, frameOffset)
+#===============================================================================
 class Animation:
-    def __init__(self, dataType, framePerSecond, loopBehavior, name, propertyInBabylon):
+    def __init__(self, dataType, loopBehavior, name, propertyInBabylon, attrInBlender = None, mult = 1, xOffset = 0):
         self.dataType = dataType
-        self.framePerSecond = framePerSecond
+        self.framePerSecond = bpy.context.scene.render.fps
         self.loopBehavior = loopBehavior
         self.name = name
         self.propertyInBabylon = propertyInBabylon
 
+        # these never get used by Bones, so optional in contructor args
+        self.attrInBlender = attrInBlender
+        self.mult = mult
+        self.xOffset = xOffset
+
         #keys
         self.frames = []
         self.values = [] # vector3 for ANIMATIONTYPE_VECTOR3 & matrices for ANIMATIONTYPE_MATRIX
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # a separate method outside of constructor, so can be called once for each Blender Action object participates in
+    def append_range(self, object, frameOffset):
+        # action already assigned, always using poses, not every frame, build up again filtering by attrInBlender
+        frames = dict()
+        for fcurve in object.animation_data.action.fcurves:
+            if fcurve.data_path == self.attrInBlender:
+                for key in fcurve.keyframe_points:
+                    frame = key.co.x
+                    frames[frame] = 1
+
+        for Frame in sorted(frames):
+            self.frames.append(Frame + frameOffset)
+            bpy.context.scene.frame_set(int(Frame))
+            self.values.append(self.get_attr(object))
+
+        return len(frames) > 0
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # for auto animate
     def get_first_frame(self):
@@ -2749,60 +2884,27 @@ class Animation:
         file_handler.write(indent + ']);\n')
 #===============================================================================
 class VectorAnimation(Animation):
-    def __init__(self, object, attrInBlender, propertyInBabylon, mult, xOffset = 0):
-        super().__init__(ANIMATIONTYPE_VECTOR3, 30, ANIMATIONLOOPMODE_CYCLE, propertyInBabylon + ' animation', propertyInBabylon)
-
-        # capture  built up from fcurves
-        frames = dict()
-        for fcurve in object.animation_data.action.fcurves:
-            if fcurve.data_path == attrInBlender:
-                for key in fcurve.keyframe_points:
-                    frame = key.co.x
-                    frames[frame] = 1
-
-        #for each frame (next step ==> set for key frames)
-        for Frame in sorted(frames):
-            self.frames.append(Frame)
-            bpy.context.scene.frame_set(int(Frame + bpy.context.scene.frame_start))
-            self.values.append(scale_vector(getattr(object, attrInBlender), mult, xOffset))
+    def __init__(self, object, propertyInBabylon, attrInBlender, mult = 1, xOffset = 0):
+        super().__init__(ANIMATIONTYPE_VECTOR3, ANIMATIONLOOPMODE_CYCLE, propertyInBabylon + ' animation', propertyInBabylon, attrInBlender, mult, xOffset)
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    def get_attr(self, object):
+        return scale_vector(getattr(object, self.attrInBlender), self.mult, self.xOffset)
 #===============================================================================
 class QuaternionAnimation(Animation):
-    def __init__(self, object, attrInBlender, propertyInBabylon, mult, xOffset = 0):
-        super().__init__(ANIMATIONTYPE_QUATERNION, 30, ANIMATIONLOOPMODE_CYCLE, propertyInBabylon + ' animation', propertyInBabylon)
-
-        # capture  built up from fcurves
-        frames = dict()
-        for fcurve in object.animation_data.action.fcurves:
-            if fcurve.data_path == attrInBlender:
-                for key in fcurve.keyframe_points:
-                    frame = key.co.x
-                    frames[frame] = 1
-
-        #for each frame (next step ==> set for key frames)
-        for Frame in sorted(frames):
-            self.frames.append(Frame)
-            bpy.context.scene.frame_set(int(Frame + bpy.context.scene.frame_start))
-            self.values.append(post_rotate_quaternion(getattr(object, attrInBlender), xOffset))
+    def __init__(self, object, propertyInBabylon, attrInBlender, mult = 1, xOffset = 0):
+        super().__init__(ANIMATIONTYPE_QUATERNION, ANIMATIONLOOPMODE_CYCLE, propertyInBabylon + ' animation', propertyInBabylon, attrInBlender, mult, xOffset)
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    def get_attr(self, object):
+        return post_rotate_quaternion(getattr(object, self.attrInBlender), self.xOffset)
 #===============================================================================
 class QuaternionToEulerAnimation(Animation):
-    def __init__(self, object, attrInBlender, propertyInBabylon, mult, xOffset = 0):
-        super().__init__(ANIMATIONTYPE_VECTOR3, 30, ANIMATIONLOOPMODE_CYCLE, propertyInBabylon + ' animation', propertyInBabylon)
-
-        # capture  built up from fcurves
-        frames = dict()
-        for fcurve in object.animation_data.action.fcurves:
-            if fcurve.data_path == attrInBlender:
-                for key in fcurve.keyframe_points:
-                    frame = key.co.x
-                    frames[frame] = 1
-
-        #for each frame (next step ==> set for key frames)
-        for Frame in sorted(frames):
-            self.frames.append(Frame)
-            bpy.context.scene.frame_set(int(Frame + bpy.context.scene.frame_start))
-            quat = getattr(object, attrInBlender)
-            eul  = quat.to_euler("XYZ")
-            self.values.append(scale_vector(eul, mult, xOffset))
+    def __init__(self, propertyInBabylon, attrInBlender, mult = 1, xOffset = 0):
+        super().__init__(ANIMATIONTYPE_VECTOR3, ANIMATIONLOOPMODE_CYCLE, propertyInBabylon + ' animation', propertyInBabylon, attrInBlender, mult, Offset)
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    def get_attr(self, object):
+        quat = getattr(object, self.attrInBlender)
+        eul  = quat.to_euler("XYZ")
+        return scale_vector(eul, self.mult, self.xOffset)
 #===============================================================================
 #  module level formatting methods, called from multiple classes
 #===============================================================================
@@ -2919,12 +3021,12 @@ def same_matrix4(matA, matB):
     if(matA is None or matB is None): return False
     if (len(matA) != len(matB)): return False
     for i in range(len(matA)):
-        if (round(matA[i][0], MAX_FLOAT_PRECISION_INT) != round(matB[i][0], MAX_FLOAT_PRECISION_INT) or 
-            round(matA[i][1], MAX_FLOAT_PRECISION_INT) != round(matB[i][1], MAX_FLOAT_PRECISION_INT) or 
-            round(matA[i][2], MAX_FLOAT_PRECISION_INT) != round(matB[i][2], MAX_FLOAT_PRECISION_INT) or 
-            round(matA[i][3], MAX_FLOAT_PRECISION_INT) != round(matB[i][3], MAX_FLOAT_PRECISION_INT)): 
+        if (round(matA[i][0], MAX_FLOAT_PRECISION_INT) != round(matB[i][0], MAX_FLOAT_PRECISION_INT) or
+            round(matA[i][1], MAX_FLOAT_PRECISION_INT) != round(matB[i][1], MAX_FLOAT_PRECISION_INT) or
+            round(matA[i][2], MAX_FLOAT_PRECISION_INT) != round(matB[i][2], MAX_FLOAT_PRECISION_INT) or
+            round(matA[i][3], MAX_FLOAT_PRECISION_INT) != round(matB[i][3], MAX_FLOAT_PRECISION_INT)):
             return False
-        
+
     return True
 
 def same_vertex(vertA, vertB):
@@ -2936,7 +3038,7 @@ def same_array(arrayA, arrayB):
     if len(arrayA) != len(arrayB): return False
     for i in range(len(arrayA)):
         if arrayA[i] != arrayB[i] : return False
-        
+
     return True
 #===============================================================================
 # custom properties definition and display
@@ -3134,7 +3236,7 @@ bpy.types.Lamp.shadowBlurBoxOffset = bpy.props.IntProperty(
 )
 
 class ObjectPanel(bpy.types.Panel):
-    bl_label = 'Tower of Babel'
+    bl_label = 'Tower of Babel ' + format_version()
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'data'
@@ -3151,22 +3253,22 @@ class ObjectPanel(bpy.types.Panel):
 
         if isMesh:
             layout.prop(ob.data, 'baseClass')
-            
+
             row = layout.row()
             row.prop(ob.data, 'useFlatShading')
             row.prop(ob.data, 'checkCollisions')
-            
+
             row = layout.row()
             row.prop(ob.data, 'castShadows')
             row.prop(ob.data, 'receiveShadows')
-            
+
             row = layout.row()
             row.prop(ob.data, 'freezeWorldMatrix')
             row.prop(ob.data, 'loadDisabled')
-            
-            layout.prop(ob.data, 'autoAnimate')            
+
+            layout.prop(ob.data, 'autoAnimate')
             layout.prop(ob.data, 'maxInfluencers')
-            
+
             box = layout.box()
             box.label(text="Shape Keys:")
             box.prop(ob.data, 'ignoreShapeKeys')
@@ -3176,7 +3278,7 @@ class ObjectPanel(bpy.types.Panel):
             box.label('Materials')
             box.prop(ob.data, 'materialNameSpace')
             box.prop(ob.data, 'checkReadyOnlyOnce')
-            
+
             box = layout.box()
             box.label(text='Procedural Texture / Cycles Baking')
             box.prop(ob.data, 'bakeSize')
