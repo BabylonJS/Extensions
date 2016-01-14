@@ -1,4 +1,4 @@
-#Tower of Babel Exporter for Blender, 4.0
+#Tower of Babel Exporter for Blender, 4.2
 <img src="doc-assist/get_baked.png">
 ## Background ##
 
@@ -14,8 +14,16 @@ Eventually, the .babylon exporter was replaced with the Tower of Babel code base
 
 They can also both be present.  When this is the case, the custom properties of only one will display, the last used or installed.  You can also explicitly turn one off in Blender Preferences.  Fortunately, the common properties are named the same, so the settings transfer back and forth.
 
+##New in 4.2##
+- Blender Actions support, see **Actions** section
+- Skeleton animation library .blends now supported, see **Armatures** section
+- Inverse Kinematics friendly skeleton exporting, see **Armatures** sections
+- Export time much shorter for .blends with armatures with actions
+##New in 4.1##
+- Added export of bone length
+- Fixed flawed checking for bone animation optimization
 ##New in 4.0##
-###Skeletons##
+###Skeletons###
 
 **Variable bone / vertex influencers (1-8)**- Export and check what the log file said was the highest # of Influencers observed.  You might then go to the custom properties for the mesh (see below), and lower the 'Max bone influencers / vertex' below what was observed, then export again.  Often times you may not notice much or any damage / stiffness when animated.  Lowering from 5 to 4 will also reduce cpu &amp; gpu memory requirements, but they all reduce processing.
 
@@ -55,6 +63,9 @@ mesh.position.x = 6;
 **Combining &amp; Uglify**-  .JS module files can be combined together with others (there could be order issues though), while .babylon files cannot.  The generated .JS modules are meant to be readable with lots of whitespace.  When deploying, they can also be uglified.  If your files become very large or your web server has limited bandwidth, the difference in load behavior may be pronounced, though.  A combined &amp; uglified approach probably will result in a faster up and running scene than a .babylon, but appear less responsive.  This does not apply to mobile apps, where download occurs during app install.
 
 **OO development &amp; source code management**-  A .babylon file must have Javascript which reads it, `BABYLON.SceneLoader`, and then takes the data and constructs `BABYLON.Mesh` objects.  There is no dynamic code execution in Javascript, so no sub-classing of `BABYLON.Mesh` is possible with a .babylon.  See Meshes under Features to see Tower of Babel's sub-classing capabilities.  Also, generated source code files, especially .TS files, are much better for placing in repositories like, Git.
+
+###Skeleton animation###
+The traditional BJS animation system, requires that skeletal animation have every frame. The .babylon file has a "baked" animation for bone animations.  While Tower of Babel only sends the key frames.  It is expected that if you are exporting with Tower of Babel that you will be using the QueuedInterpolation animation extension.  It generates any non-key frames, which is much more space efficient.
 
 ###Feature Differences###
 Currently, the 2 exporters are pretty close feature wise.  Here are the features unique to Tower of Babel:
@@ -190,15 +201,15 @@ If there are procedural textures in any materials for a mesh, then any image tex
 |<img src="doc-assist/proceduralTexture.png">|<img src="doc-assist/imageTexture.png">
 
 ####in-line textures####
-Textures do not need to be in a separate file.  They can also be inside either the .JS or .babylon file (must be BJS 2.2 for .babylon).  The size of the combined file will be larger, but assuming you are using gzip on your server, the transmission is about the same.  Other than just being self-contained,  having fewer files can improve the time a web page downloads due to the latency of doing each file.
+Textures do not need to be in a separate file.  They can also be inside either the .JS or .babylon file.  The size of the combined file will be larger, but assuming you are using gzip on your server, the transmission is about the same.  Other than just being self-contained,  having fewer files can improve the time a web page downloads due to the latency of doing each file.
 
 ####Cycles Render / Texture Baking####
 The Cycles Render is supported by baking out a set of textures that BJS can accept.  Lighting / shadows are not taken into account as part of the baking.  If your Cycles material is a simple diffuse node, setting a color, you are far better off replacing it with an equivalent material using the Blender Render.  You avoid doing texture lookups in the fragment shader, and do not waste GPU memory.  A texture takes up much more GPU memory than disk space, since it is compressed on disk.
 
 When baking textures, either from Cycles or Blender Render Procedural textures, the dimensions are set on a mesh by mesh basis.  This is part of the custom properties of a mesh.  It is highly recommended to make this a power of 2.  The format output is .JPG.  The quality setting controls the compression on disk.
 
-###Fcurve Animations###
-Fcurve animations for Meshes, lights, and Cameras are transferred on export.  See the table below to see which properties are animatable, based on the object type.  If the custom property `Auto Launch Animations` is checked, then these will start when the object created.
+###Actions###
+Action animations for Meshes, lights, and Cameras are transferred on export.  A corresponding AnimationRange object with the same name as the action is made on import to BJS.  See the table below to see which properties are animatable, based on the object type.  If the custom property `Auto Launch Animations` is checked, then these will start when the object created.  This will play the entire animation, so may not useful when there are multiple actions, as all will be played.
 
 |Object Type| Rotation (Vector &amp; Quaternion)| Position | Scaling
 | --- |:---:|:---:|:---:|
@@ -207,7 +218,30 @@ Fcurve animations for Meshes, lights, and Cameras are transferred on export.  Se
 |**Lights** | | √| 
 
 ###Armatures###
-Armatures are exported. along with their animations.  It is no longer a requirement that an armature be the parent of a mesh it controls. These animations cannot be set to auto animate.
+Armatures are exported. along with their actions as AnimationRanges.  It is no longer a requirement that an armature be the parent of a mesh it controls. These animations cannot be set to auto animate.
+
+**Variable bone / vertex influencers (1-8)**- Export and check what the log file said was the highest # of Influencers observed.  You might then go to the custom properties for the mesh, and lower the 'Max bone influencers / vertex' below what was observed, then export again.  Often times you may not notice much or any damage / stiffness when animated.  Lowering from 5 to 4 will also reduce cpu &amp; gpu memory requirements, but they all reduce processing.
+
+**Inverse Kinematics Friendly**- There is a custom exporter property (on Scene tab), Ignore IK Bones.  The effect is any bone with '.ik' in the name will not be exported.  Any extra bones that are needed to make inverse kinematics work will never make it to BJS.  So now you can do all your posing for your key frames more easily in Blender, without the baggage following you to BJS.
+
+**Skeleton Animation Libraries**- As of BJS 2.3, the AnimationRanges of a skeleton can be transferred to another with the same bone structure to another.  The bone length can be taken into account during the copy to compensate for skeletons which are shorter, wider, or expressed in different units e.g. inches vs meters.  Here is an example of implementing a library as 2 .babylon files:
+```Typescript
+var scene = new BABYLON.Scene(engine);
+        
+BABYLON.SceneLoader.Append(url, "meshes.babylon", scene);
+BABYLON.SceneLoader.Append(url, "skeleton_library.babylon", scene);
+scene.executeWhenReady(function () {
+     var meshSkeleton = scene.getSkeletonByName("name");
+     var library = scene.getSkeletonByName("library");
+
+     meshSkeleton.copyAnimationRange(library, "myAction", true); // true says to rescaleAsRequired
+     meshSkeleton.beginAnimation("myAction");
+     ...
+});
+```
+**Animation Differences**- The traditional BJS animation system, requires that skeletal animation have every frame. The .babylon file has a "baked" animation for bone animations.  While Tower of Babel only sends the key frames.  It is expected that if you are exporting with Tower of Babel that you will be using the QueuedInterpolation animation extension.  It generates any non-key frames, which is much more space efficient.
+
+This does not mean that you must bake any of your actions, skeletal or not, to produce a .babylon.  Keeping only the key frames are much more flexible than actually baking in the .blend file.
 
 ###Log File###
 Another file always generated is the log file.  It has the same name as the script file or .babylon file with the extension .log.  It provides information about what was or was not done.  Many possible warnings are provided, instead of just leaving you wondering why something did not come through.  Most importantly, should the exporter terminate with an error, it will be contained in this file.  Here is part of one:
