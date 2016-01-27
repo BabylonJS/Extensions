@@ -1,9 +1,9 @@
 bl_info = {
     'name': 'Tower of Babel',
     'author': 'David Catuhe, Jeff Palmer',
-    'version': (4, 2, 0),
+    'version': (4, 3, 0),
     'blender': (2, 75, 0),
-    'location': 'File > Export > Tower of Babel [.js + .ts]',
+    'location': 'File > Export > Tower of Babel [.js + .d.ts]',
     'description': 'Translate to inline JavaScript & TypeScript modules',
     'wiki_url': 'https://github.com/BabylonJS/Extensions/tree/master/QueuedInterpolation/Blender',
     'tracker_url': '',
@@ -147,21 +147,6 @@ class ExporterSettingsPanel(bpy.types.Panel):
         description="Use face normals on all meshes.  Increases vertices.",
         default = False,
         )
-    bpy.types.Scene.export_javaScript = bpy.props.BoolProperty(
-        name="Export Javascript (.js) File",
-        description="Produce an inline JavaScript (xxx.js) File",
-        default = True,
-        )
-    bpy.types.Scene.export_typeScript = bpy.props.BoolProperty(
-        name="Export Typescript (.ts) File",
-        description="Produce an inline TypeScript (xxx.ts) File",
-        default = False,
-        )
-    bpy.types.Scene.logInBrowserConsole = bpy.props.BoolProperty(
-        name="Log in Browser Console",
-        description="add console logs for calls to code",
-        default = True,
-        )
     bpy.types.Scene.attachedSound = bpy.props.StringProperty(
         name='Sound',
         description='',
@@ -184,18 +169,23 @@ class ExporterSettingsPanel(bpy.types.Panel):
         )
     bpy.types.Scene.ignoreIKBones = bpy.props.BoolProperty(
         name="Ignore IK Bones",
-        description="Do not export bones with '.ik' in the name",
+        description="Do not export bones with either '.ik' or 'ik.'(not case sensitive) in the name",
         default = False,
         )
     bpy.types.Scene.includeInitScene = bpy.props.BoolProperty(
         name="Include initScene()",
-        description="add an initScene() method to the .js / .ts",
+        description="add an initScene() method",
         default = True,
         )
     bpy.types.Scene.includeMeshFactory = bpy.props.BoolProperty(
         name="Include MeshFactory Class",
-        description="add an MeshFactory class to the .js / .ts",
+        description="add an MeshFactory class",
         default = False,
+        )
+    bpy.types.Scene.logInBrowserConsole = bpy.props.BoolProperty(
+        name="Log in Browser Console",
+        description="add console logs for calls to code",
+        default = True,
         )
 
     def draw(self, context):
@@ -204,9 +194,6 @@ class ExporterSettingsPanel(bpy.types.Panel):
         scene = context.scene
         layout.prop(scene, "export_onlySelectedLayer")
         layout.prop(scene, "export_flatshadeScene")
-        layout.prop(scene, "export_javaScript")
-        layout.prop(scene, "export_typeScript")
-        layout.prop(scene, "logInBrowserConsole")
         layout.prop(scene, "inlineTextures")
         layout.prop(scene, "ignoreIKBones")
 
@@ -214,6 +201,7 @@ class ExporterSettingsPanel(bpy.types.Panel):
 
         layout.prop(scene, "includeInitScene")
         layout.prop(scene, "includeMeshFactory")
+        layout.prop(scene, "logInBrowserConsole")
 
         box = layout.box()
         box.prop(scene, 'attachedSound')
@@ -247,25 +235,25 @@ class Main(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     logInBrowserConsole = True; # static version, set in execute
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    def define_module_method(name, is_typescript, loadCheckVar = '', optionalArgs = [], isExportable = True):
-        if is_typescript:
-            ret  = '\n    export ' if isExportable else '\n    '
-            ret += 'function ' + name + '(scene : B.Scene'
+    def define_Typescript_method(name, loadCheckVar = '', optionalArgs = []):
+        ret  = '\n    export function ' + name + '(scene : BABYLON.Scene'
+        for optArg in optionalArgs:
+            ret += ', ' + optArg.argumentName + ' : ' + optArg.tsType + " = " + optArg.default
+        ret += ') : void;\n'
+        return ret
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    def define_module_method(name, loadCheckVar = '', optionalArgs = []):
+        ret = '\n    function ' + name + '(scene'
+        if len(optionalArgs) > 0 :
+            constr = ''
+            defaults = ''
             for optArg in optionalArgs:
-                ret += ', ' + optArg.argumentName + ' : ' + optArg.tsType + " = " + optArg.default
-            ret += ') : void {\n'
+                constr   += ', ' + optArg.argumentName
+                defaults += '        if (!' + optArg.argumentName + ') { ' + optArg.argumentName + ' = ' + optArg.default + '; }\n'
+            ret += constr + ') {\n'
+            ret += defaults
         else:
-            ret = '\n    function ' + name + '(scene'
-            if len(optionalArgs) > 0 :
-                constr = ''
-                defaults = ''
-                for optArg in optionalArgs:
-                    constr   += ', ' + optArg.argumentName
-                    defaults += '        if (!' + optArg.argumentName + ') { ' + optArg.argumentName + ' = ' + optArg.default + '; }\n'
-                ret += constr + ') {\n'
-                ret += defaults
-            else:
-                ret += ') {\n'
+            ret += ') {\n'
 
         ret += '        ' + Main.versionCheckCode
         if len(loadCheckVar) > 0 : ret += '        if (' + loadCheckVar + ') return;\n'
@@ -419,9 +407,8 @@ class Main(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             self.hasShadows   = len(self.shadowGenerators) > 0
             self.hasSounds    = len(self.sounds) > 0
 
-            # 2 passes of output files
-            if (scene.export_typeScript): self.to_script_file(True , version)
-            if (scene.export_javaScript): self.to_script_file(False, version)
+            # output files, .js & .d.ts
+            self.to_script_file(version)
 
         except:# catch *all* exceptions
             ex = sys.exc_info()
@@ -446,41 +433,145 @@ class Main(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 
         return {'FINISHED'}
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    def to_script_file(self, is_typescript, TOB_version):
+    def to_scene_file(self):
+        Main.log('========= Writing of scene file started =========', 0)
+        # Open file
+        file_handler = io.open(self.filepathMinusExtension + '.babylon', 'w', encoding='utf8')
+        file_handler.write('{')
+        self.world.to_scene_file(file_handler)
+
+        # Materials
+        file_handler.write(',\n"materials":[')
+        first = True
+        for material in self.materials:
+            if first != True:
+                file_handler.write(',\n')
+
+            first = False
+            material.to_scene_file(file_handler)
+        file_handler.write(']')
+
+        # Multi-materials
+        file_handler.write(',\n"multiMaterials":[')
+        first = True
+        for multimaterial in self.multiMaterials:
+            if first != True:
+                file_handler.write(',')
+
+            first = False
+            multimaterial.to_scene_file(file_handler)
+        file_handler.write(']')
+
+        # Armatures/Bones
+        file_handler.write(',\n"skeletons":[')
+        first = True
+        for skeleton in self.skeletons:
+            if first != True:
+                file_handler.write(',')
+
+            first = False
+            skeleton.to_scene_file(file_handler)
+        file_handler.write(']')
+
+        # Meshes
+        file_handler.write(',\n"meshes":[')
+        first = True
+        for m in range(0, len(self.meshesAndNodes)):
+            mesh = self.meshesAndNodes[m]
+            if first != True:
+                file_handler.write(',')
+
+            first = False
+            mesh.to_scene_file(file_handler)
+        file_handler.write(']')
+
+        # Cameras
+        file_handler.write(',\n"cameras":[')
+        first = True
+        for camera in self.cameras:
+            if hasattr(camera, 'fatalProblem'): continue
+            if first != True:
+                file_handler.write(',')
+
+            first = False
+            camera.update_for_target_attributes(self.meshesAndNodes)
+            camera.to_scene_file(file_handler)
+        file_handler.write(']')
+
+        # Active camera
+        if hasattr(self, 'activeCamera'):
+            write_string(file_handler, 'activeCamera', self.activeCamera)
+
+        # Lights
+        file_handler.write(',\n"lights":[')
+        first = True
+        for light in self.lights:
+            if first != True:
+                file_handler.write(',')
+
+            first = False
+            light.to_scene_file(file_handler)
+        file_handler.write(']')
+
+        # Shadow generators
+        file_handler.write(',\n"shadowGenerators":[')
+        first = True
+        for shadowGen in self.shadowGenerators:
+            if first != True:
+                file_handler.write(',')
+
+            first = False
+            shadowGen.to_scene_file(file_handler)
+        file_handler.write(']')
+
+        # Sounds
+        if len(self.sounds) > 0:
+            file_handler.write('\n,"sounds":[')
+            first = True
+            for sound in self.sounds:
+                if first != True:
+                    file_handler.write(',')
+
+                first = False
+                sound.to_scene_file(file_handler)
+
+            file_handler.write(']')
+
+        # Closing
+        file_handler.write('\n}')
+        file_handler.close()
+        Main.log('========= Writing of scene file completed =========', 0)
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    def to_script_file(self, TOB_version):
         indent1 = '    '
         indent2 = '        '
-        close   = '}\n'        if is_typescript else '};\n'
-        name    = 'typescript' if is_typescript else 'javascript'
-        ext     = '.ts'        if is_typescript else '.js'
 
-        Main.log('========= Writing of ' + name + ' file started =========', 0)
-        file_handler = io.open(self.filepathMinusExtension + ext, 'w') #, encoding='utf8')
+        Main.log('========= Writing of files started =========', 0)
+        file_handler            = io.open(self.filepathMinusExtension + '.js'  , 'w')
+        typescript_file_handler = io.open(self.filepathMinusExtension + '.d.ts', 'w')
 
         file_handler.write('// File generated with Tower of Babel version: ' + str(TOB_version[0]) + '.' + str(TOB_version[1]) +  '.' + str(TOB_version[2]) +
                            ' on ' + time.strftime("%x") + '\n')
 
         # module open  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        if is_typescript:
-            file_handler.write('module ' + Main.nameSpace + '{\n')
-            file_handler.write('    private static B = BABYLON;\n')
-            file_handler.write('    private static M = B.Matrix.FromValues;\n')
-        else:
-            file_handler.write('var __extends = this.__extends || function (d, b) {\n')
-            file_handler.write('    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];\n')
-            file_handler.write('    function __() { this.constructor = d; }\n')
-            file_handler.write('    __.prototype = b.prototype;\n')
-            file_handler.write('    d.prototype = new __();\n')
-            file_handler.write('};\n')
-            file_handler.write('var ' + Main.nameSpace + ';\n')
-            file_handler.write('(function (' + Main.nameSpace + ') {\n')
-            file_handler.write('    var B = BABYLON;\n')
-            file_handler.write('    var M = B.Matrix.FromValues;\n')
+        typescript_file_handler.write('declare module ' + Main.nameSpace + '{\n')
+
+        file_handler.write('var __extends = this.__extends || function (d, b) {\n')
+        file_handler.write('    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];\n')
+        file_handler.write('    function __() { this.constructor = d; }\n')
+        file_handler.write('    __.prototype = b.prototype;\n')
+        file_handler.write('    d.prototype = new __();\n')
+        file_handler.write('};\n')
+        file_handler.write('var ' + Main.nameSpace + ';\n')
+        file_handler.write('(function (' + Main.nameSpace + ') {\n')
+        file_handler.write('    var B = BABYLON;\n')
+        file_handler.write('    var M = B.Matrix.FromValues;\n')
 
         # World - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         if self.scene.includeInitScene:
-            self.world.initScene_script(file_handler, is_typescript, self)
+            self.world.initScene_script(file_handler, typescript_file_handler, self)
         if self.scene.includeMeshFactory:
-            self.world.meshFactory_script(file_handler, is_typescript, self.meshesAndNodes)
+            self.world.meshFactory_script(file_handler, typescript_file_handler, self.meshesAndNodes)
 
         # Materials - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # always need defineMaterials, since called by meshes
@@ -488,51 +579,57 @@ class Main(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 
         callArgs = []
         callArgs.append(OptionalArgument('materialsRootDir', 'string', '"./"'))
-        file_handler.write(Main.define_module_method('defineMaterials', is_typescript, 'matLoaded', callArgs))
+        file_handler           .write(Main.define_module_method    ('defineMaterials', 'matLoaded', callArgs))
+        typescript_file_handler.write(Main.define_Typescript_method('defineMaterials', 'matLoaded', callArgs))
+
         file_handler.write(indent2 + 'if (materialsRootDir.lastIndexOf("/") + 1  !== materialsRootDir.length) { materialsRootDir  += "/"; }\n')
 
-        file_handler.write(indent2 + 'var material' + (' : B.StandardMaterial;\n' if is_typescript else ';\n') )
-        file_handler.write(indent2 + 'var texture'  + (' : B.Texture;\n\n'        if is_typescript else ';\n\n') )
+        file_handler.write(indent2 + 'var material;\n')
+        file_handler.write(indent2 + 'var texture;\n\n')
         for material in self.materials:
             material.to_script_file(file_handler, indent2)
         if self.hasMultiMat:
-            file_handler.write(indent2 + 'var multiMaterial' + (' : B.MultiMaterial;\n' if is_typescript else ';\n') )
+            file_handler.write(indent2 + 'var multiMaterial;\n')
             for multimaterial in self.multiMaterials:
                 multimaterial.to_script_file(file_handler, indent2)
         file_handler.write(indent2 + 'matLoaded = true;\n')
         file_handler.write(indent1 + '}\n')
-        if not is_typescript: file_handler.write(indent1 + Main.nameSpace + '.defineMaterials = defineMaterials;\n')
+        file_handler.write(indent1 + Main.nameSpace + '.defineMaterials = defineMaterials;\n')
 
         # Armatures/Bones - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         if self.hasSkeletons:
             file_handler.write('\n' + indent1 + 'var bonesLoaded = false;')
-            file_handler.write(Main.define_module_method('defineSkeletons', is_typescript, 'bonesLoaded'))
-            file_handler.write(indent2 + 'var skeleton'  + (' : B.Skeleton;\n'    if is_typescript else ';\n') )
-            file_handler.write(indent2 + 'var bone'      + (' : B.Bone;\n'        if is_typescript else ';\n') )
-            file_handler.write(indent2 + 'var animation' + (' : B.Animation;\n\n' if is_typescript else ';\n\n') )
+            file_handler           .write(Main.define_module_method    ('defineSkeletons', 'bonesLoaded'))
+            typescript_file_handler.write(Main.define_Typescript_method('defineSkeletons', 'bonesLoaded'))
+
+            file_handler.write(indent2 + 'var skeleton;\n')
+            file_handler.write(indent2 + 'var bone;\n')
+            file_handler.write(indent2 + 'var animation;\n\n')
             for skeleton in self.skeletons:
                 skeleton.to_script_file(file_handler, indent2)
             file_handler.write(indent2 + 'bonesLoaded = true;\n')
             file_handler.write(indent1 + '}\n')
-            if not is_typescript: file_handler.write(indent1 + Main.nameSpace + '.defineSkeletons = defineSkeletons;\n')
+            file_handler.write(indent1 + Main.nameSpace + '.defineSkeletons = defineSkeletons;\n')
 
         # Meshes and Nodes - - - - - - - - - - - - - - - - - - - - - - - - - - -
         for mesh in self.meshesAndNodes:
-            mesh.to_script_file(file_handler, self.get_kids(mesh), indent1, is_typescript)
+            mesh.to_script_file(file_handler, typescript_file_handler, self.get_kids(mesh), indent1)
 
         # Cameras - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         if self.hasCameras:
-            file_handler.write(Main.define_module_method('defineCameras', is_typescript))
+            file_handler           .write(Main.define_module_method    ('defineCameras'))
+            typescript_file_handler.write(Main.define_Typescript_method('defineCameras'))
+
             file_handler.write(indent2 + 'var camera;\n\n') # intensionally vague, since sub-classes instances & different specifc propeties set
             for camera in self.cameras:
                 if hasattr(camera, 'fatalProblem'): continue
                 camera.update_for_target_attributes(self.meshesAndNodes)
-                camera.to_script_file(file_handler, indent2, is_typescript)
+                camera.to_script_file(file_handler, indent2)
 
             if hasattr(self, 'activeCamera'):
                 file_handler.write(indent2 + 'scene.setActiveCameraByID("' + self.activeCamera + '");\n')
             file_handler.write(indent1 + '}\n')
-            if not is_typescript: file_handler.write(indent1 + Main.nameSpace + '.defineCameras = defineCameras;\n')
+            file_handler.write(indent1 + Main.nameSpace + '.defineCameras = defineCameras;\n')
 
         # Sounds - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         if self.hasSounds:
@@ -540,40 +637,48 @@ class Main(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 
             callArgs = []
             callArgs.append(OptionalArgument('soundsRootDir', 'string', '"./"'))
-            file_handler.write(Main.define_module_method('defineSounds', is_typescript, 'soundsLoaded', callArgs))
+            file_handler           .write(Main.define_module_method    ('defineSounds', 'soundsLoaded', callArgs))
+            typescript_file_handler.write(Main.define_Typescript_method('defineSounds', 'soundsLoaded', callArgs))
+
             file_handler.write(indent2 + 'if (soundsRootDir.lastIndexOf("/") + 1  !== soundsRootDir.length) { soundsRootDir  += "/"; }\n')
 
-            file_handler.write(indent2 + 'var sound' + (' : B.Sound;\n' if is_typescript else ';\n') )
-            file_handler.write(indent2 + 'var connectedMesh' + (' : B.Mesh;\n\n' if is_typescript else ';\n\n') )
+            file_handler.write(indent2 + 'var sound;\n')
+            file_handler.write(indent2 + 'var connectedMesh;\n\n')
             for sound in self.sounds:
-                sound.to_script_file(file_handler, indent2, is_typescript)
+                sound.to_script_file(file_handler, indent2)
             file_handler.write(indent2 + 'soundsLoaded = true;\n')
             file_handler.write(indent1 + '}\n')
-            if not is_typescript: file_handler.write(indent1 + Main.nameSpace + '.defineSounds = defineSounds;\n')
+            file_handler.write(indent1 + Main.nameSpace + '.defineSounds = defineSounds;\n')
 
         # Lights - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         if self.hasLights:
-            file_handler.write(Main.define_module_method('defineLights', is_typescript))
+            file_handler           .write(Main.define_module_method    ('defineLights'))
+            typescript_file_handler.write(Main.define_Typescript_method('defineLights'))
+
             file_handler.write(indent2 + 'var light;\n\n') # intensionally vague, since sub-classes instances & different specifc propeties set
             for light in self.lights:
-                light.to_script_file(file_handler, indent2, is_typescript)
+                light.to_script_file(file_handler, indent2)
             if self.hasShadows:
                 file_handler.write(indent2 + 'defineShadowGen(scene);\n')
             file_handler.write(indent1 + '}\n')
-            if not is_typescript: file_handler.write(indent1 + Main.nameSpace + '.defineLights = defineLights;\n')
+            file_handler.write(indent1 + Main.nameSpace + '.defineLights = defineLights;\n')
 
         # Shadow generators - - - - - - - - - - - - - - - - - - - - - - - - - - -
         if self.hasShadows:
-            file_handler.write(Main.define_module_method('defineShadowGen', is_typescript, '', [], False))
+            file_handler           .write(Main.define_module_method    ('defineShadowGen'))
+            typescript_file_handler.write(Main.define_Typescript_method('defineShadowGen'))
+
             file_handler.write(indent2 + 'var light;\n') # intensionally vague, since scene.getLightByID() returns Light, not DirectionalLight
-            file_handler.write(indent2 + 'var shadowGenerator' + (' : B.ShadowGenerator;\n\n' if is_typescript else ';\n\n') )
+            file_handler.write(indent2 + 'var shadowGenerator;\n\n')
             for shadowGen in self.shadowGenerators:
                 shadowGen.to_script_file(file_handler, indent2)
             file_handler.write(indent2 + 'freshenShadowRenderLists(scene);\n')
             file_handler.write(indent1 + '}\n')
 
         # freshenShadowRenderLists  - - - - - - - - - - - - - - - - - - - - - - -
-        file_handler.write(Main.define_module_method('freshenShadowRenderLists', is_typescript))
+        file_handler           .write(Main.define_module_method    ('freshenShadowRenderLists'))
+        typescript_file_handler.write(Main.define_Typescript_method('freshenShadowRenderLists'))
+
         file_handler.write(indent2 + 'var renderList = [];\n')
         file_handler.write(indent2 + 'for (var i = 0; i < scene.meshes.length; i++){\n')
         file_handler.write(indent2 + '    if (scene.meshes[i]["castShadows"])\n')
@@ -584,16 +689,15 @@ class Main(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         file_handler.write(indent2 + '        scene.lights[i]._shadowGenerator.getShadowMap().renderList = renderList;\n')
         file_handler.write(indent2 + '}\n')
         file_handler.write(indent1 + '}\n')
-        if not is_typescript: file_handler.write(indent1 + Main.nameSpace + '.freshenShadowRenderLists = freshenShadowRenderLists;\n')
+        file_handler.write(indent1 + Main.nameSpace + '.freshenShadowRenderLists = freshenShadowRenderLists;\n')
 
         # Module closing - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        if is_typescript:
-            file_handler.write('\n}')
-        else:
-            file_handler.write('})(' + Main.nameSpace + ' || ('  + Main.nameSpace + ' = {}));')
+        file_handler.write('})(' + Main.nameSpace + ' || ('  + Main.nameSpace + ' = {}));')
+        typescript_file_handler.write('}\n')
 
         file_handler.close()
-        Main.log('========= Writing of ' + name + ' file completed =========', 0)
+        typescript_file_handler.close()
+        Main.log('========= Writing of files completed =========', 0)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def isInSelectedLayer(self, obj, scene):
         if not scene.export_onlySelectedLayer:
@@ -647,10 +751,24 @@ class World:
 
         Main.log('Python World class constructor completed')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    def initScene_script(self, file_handler, is_typescript, exporter):
+    def to_scene_file(self, file_handler):
+        write_bool(file_handler, 'autoClear', self.autoClear, True)
+        write_color(file_handler, 'clearColor', self.clear_color)
+        write_color(file_handler, 'ambientColor', self.ambient_color)
+        write_vector(file_handler, 'gravity', self.gravity)
+
+        if hasattr(self, 'fogMode'):
+            write_int(file_handler, 'fogMode', self.fogMode)
+            write_color(file_handler, 'fogColor', self.fogColor)
+            write_float(file_handler, 'fogStart', self.fogStart)
+            write_float(file_handler, 'fogEnd', self.fogEnd)
+            write_float(file_handler, 'fogDensity', self.fogDensity)
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    def initScene_script(self, file_handler, typescript_file_handler, exporter):
         callArgs = []
         callArgs.append(OptionalArgument('resourcesRootDir', 'string', '"./"'))
-        file_handler.write(Main.define_module_method('initScene', is_typescript, '', callArgs))
+        file_handler.write(Main.define_module_method('initScene', '', callArgs))
+        typescript_file_handler.write(Main.define_Typescript_method('initScene', '', callArgs))
 
         indent = '        '
         file_handler.write(indent + 'scene.autoClear = ' + format_bool(self.autoClear) + ';\n')
@@ -706,10 +824,9 @@ class World:
         if exporter.hasLights : file_handler.write(indent + 'defineLights(scene);\n')
 
         file_handler.write('    }\n')
-        if not is_typescript:
-            file_handler.write('    ' + Main.nameSpace + '.initScene = initScene;\n')
+        file_handler.write('    ' + Main.nameSpace + '.initScene = initScene;\n')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    def meshFactory_script(self, file_handler, is_typescript, meshesAndNodes):
+    def meshFactory_script(self, file_handler, typescript_file_handler, meshesAndNodes):
         rootMeshes = []
         classNames = []
         isNode     = []
@@ -734,31 +851,27 @@ class World:
             Main.warn('No meshes without parents, so meshFactory not built')
             return
 
-        file_handler.write('    var meshLib = new Array' + ('<Array<B.Mesh>>(' if is_typescript else '(') + str(len(rootMeshes)) + ');\n')
+        typescript_file_handler.write('    class MeshFactory implements TOWER_OF_BABEL.FactoryModule {\n')
+        typescript_file_handler.write('        constructor(_scene : BABYLON.Scene, materialsRootDir: string);\n')
+        typescript_file_handler.write('        getModuleName() : string;\n')
+        typescript_file_handler.write('        instance(meshName : string, cloneSkeleton? : boolean) : BABYLON.Mesh;\n')
+        typescript_file_handler.write('    }\n')
+        typescript_file_handler.write('    export function getStats() : [number];\n')
+
+        file_handler.write('    var meshLib = new Array(' + str(len(rootMeshes)) + ');\n')
         file_handler.write('    var cloneCount = 1;\n\n')
         file_handler.write('    var originalVerts = 0;\n')
         file_handler.write('    var clonedVerts = 0;\n')
-
-        if is_typescript:
-            file_handler.write('    export class MeshFactory implements TOWER_OF_BABEL.FactoryModule {\n')
-            file_handler.write('        constructor(private _scene : B.Scene, materialsRootDir: string = "./") {\n')
-            file_handler.write('            defineMaterials(_scene, materialsRootDir); //embedded version check\n')
-            file_handler.write('        }\n\n')
-            file_handler.write('        public getModuleName() : string { return "' + Main.nameSpace + '";}\n\n')
-            file_handler.write('        public instance(meshName : string, cloneSkeleton? : boolean) : B.Mesh {\n')
-
-        else:
-            file_handler.write('    var MeshFactory = (function () {\n')
-            file_handler.write('        function MeshFactory(_scene, materialsRootDir) {\n')
-            file_handler.write('            this._scene = _scene;\n');
-            file_handler.write('            if (!materialsRootDir) { materialsRootDir = "./"; }\n')
-            file_handler.write('            defineMaterials(_scene, materialsRootDir); //embedded version check\n')
-            file_handler.write('        }\n\n')
-            file_handler.write('        MeshFactory.prototype.getModuleName = function () { return "' + Main.nameSpace + '";};\n\n')
-            file_handler.write('        MeshFactory.prototype.instance = function (meshName, cloneSkeleton) {\n')
-
-        file_handler.write('            var ret' + (':B.Mesh' if is_typescript else '') + ' = null;\n')
-        file_handler.write('            var src' + (':B.Mesh' if is_typescript else '') + ';\n')
+        file_handler.write('    var MeshFactory = (function () {\n')
+        file_handler.write('        function MeshFactory(_scene, materialsRootDir) {\n')
+        file_handler.write('            this._scene = _scene;\n');
+        file_handler.write('            if (!materialsRootDir) { materialsRootDir = "./"; }\n')
+        file_handler.write('            defineMaterials(_scene, materialsRootDir); //embedded version check\n')
+        file_handler.write('        }\n\n')
+        file_handler.write('        MeshFactory.prototype.getModuleName = function () { return "' + Main.nameSpace + '";};\n\n')
+        file_handler.write('        MeshFactory.prototype.instance = function (meshName, cloneSkeleton) {\n')
+        file_handler.write('            var ret = null;\n')
+        file_handler.write('            var src;\n')
         file_handler.write('            switch (meshName){\n')
 
         for i in range(0, len(rootMeshes)):
@@ -769,10 +882,7 @@ class World:
             file_handler.write('                        originalVerts += ret.getTotalVertices();\n')
             file_handler.write('                        meshLib[' + str(i) + '].push(ret);\n')
             file_handler.write('                    }else{\n')
-            if is_typescript:
-                file_handler.write('                        ret = new ' + classNames[i] + '("' + rootMeshes[i] + '" + "_" + cloneCount++, this._scene, null, <' + classNames[i] + '> src);\n')
-            else:
-                file_handler.write('                        ret = new ' + classNames[i] + '("' + rootMeshes[i] + '" + "_" + cloneCount++, this._scene, null, src);\n')
+            file_handler.write('                        ret = new ' + classNames[i] + '("' + rootMeshes[i] + '" + "_" + cloneCount++, this._scene, null, src);\n')
             file_handler.write('                        clonedVerts += ret.getTotalVertices();\n')
             file_handler.write('                    }\n')
             file_handler.write('                    break;\n')
@@ -786,24 +896,15 @@ class World:
         file_handler.write('            }\n')
         file_handler.write('            else B.Tools.Error("Mesh not found: " + meshName);\n')
         file_handler.write('            return ret;\n')
+        file_handler.write('        };\n')
+        file_handler.write('        return MeshFactory;\n')
+        file_handler.write('    })();\n')
+        file_handler.write('    ' + Main.nameSpace + '.MeshFactory = MeshFactory;\n')
 
-        if is_typescript:
-             file_handler.write('        }\n')
-             file_handler.write('    }\n')
-
-        else:
-            file_handler.write('        };\n')
-            file_handler.write('        return MeshFactory;\n')
-            file_handler.write('    })();\n')
-            file_handler.write('    ' + Main.nameSpace + '.MeshFactory = MeshFactory;\n')
-
-        if is_typescript:
-            file_handler.write('    function getViable(libIdx : number, isNode? : boolean) : B.Mesh {\n')
-        else:
-            file_handler.write('    function getViable(libIdx, isNode) {\n')
+        file_handler.write('    function getViable(libIdx, isNode) {\n')
         file_handler.write('        var meshes = meshLib[libIdx];\n')
         file_handler.write('        if (!meshes || meshes === null){\n')
-        file_handler.write('            if (!meshes) meshLib[libIdx] = new Array' + ('<B.Mesh>' if is_typescript else '') + '();\n')
+        file_handler.write('            if (!meshes) meshLib[libIdx] = new Array();\n')
         file_handler.write('            return null;\n')
         file_handler.write('        }\n\n')
 
@@ -813,10 +914,7 @@ class World:
         file_handler.write('        return null;\n')
         file_handler.write('    }\n\n')
 
-        if is_typescript:
-            file_handler.write('    function clean(libIdx : number) : void {\n')
-        else:
-            file_handler.write('    function clean(libIdx) {\n')
+        file_handler.write('    function clean(libIdx) {\n')
         file_handler.write('        var meshes = meshLib[libIdx];\n')
         file_handler.write('        if (!meshes  || meshes === null) return;\n\n')
 
@@ -828,11 +926,8 @@ class World:
         file_handler.write('        if (!stillViable) meshLib[libIdx] = null;\n')
         file_handler.write('    }\n\n')
 
-        if is_typescript:
-            file_handler.write('    export function getStats() : [number] { return [cloneCount, originalVerts, clonedVerts]; }\n\n')
-        else:
-            file_handler.write('    function getStats() { return [cloneCount, originalVerts, clonedVerts]; }' + Main.nameSpace + '.getStats = getStats;\n\n')
-
+        file_handler.write('    function getStats() { return [cloneCount, originalVerts, clonedVerts]; }\n')
+        file_handler.write('    ' + Main.nameSpace + '.getStats = getStats;\n\n')
 #===============================================================================
 class Sound:
     def __init__(self, name, autoplay, loop, connectedMesh = None):
@@ -843,16 +938,24 @@ class Sound:
             self.connectedMeshId = connectedMesh.name
             self.maxDistance = connectedMesh.data.maxSoundDistance
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    def to_script_file(self, file_handler, indent, is_typescript):
+    def to_scene_file(self, file_handler):
+        file_handler.write('{')
+        write_string(file_handler, 'name', self.name, True)
+        write_bool(file_handler, 'autoplay', self.autoplay)
+        write_bool(file_handler, 'loop', self.loop)
+
+        if hasattr(self, 'connectedMeshId'):
+            write_string(file_handler, 'connectedMeshId', self.connectedMeshId)
+            write_float(file_handler, 'maxDistance', self.maxDistance)
+        file_handler.write('}')
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    def to_script_file(self, file_handler, indent):
         options = 'autoplay: ' + format_bool(self.autoplay) + ', loop: ' + format_bool(self.loop)
         if hasattr(self, 'connectedMeshId'):
             options += ', maxDistance: ' + format_f(self.maxDistance)
 
         file_handler.write('\n' + indent + 'sound = new B.Sound("' + self.name + '", soundsRootDir + "' + self.name + '", scene, ')
-        if is_typescript:
-            file_handler.write('() => { scene._removePendingData(sound); }, ')
-        else:
-            file_handler.write('function () { scene._removePendingData(sound); }, ')
+        file_handler.write('function () { scene._removePendingData(sound); }, ')
 
         file_handler.write('{' + options + '});\n')
         file_handler.write(indent + 'scene._addPendingData(sound);\n')
@@ -933,9 +1036,37 @@ class FCurveAnimatable:
                         self.autoAnimateTo = animation.get_last_frame()
                 self.autoAnimateLoop = True
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    def to_script_file(self, file_handler, jsVarName, indent, is_typescript):
+    def to_scene_file(self, file_handler):
         if (self.animationsPresent):
-            file_handler.write(indent + 'var animation' + (' : B.Animation;\n' if is_typescript else ';\n') )
+            file_handler.write('\n,"animations":[')
+            first = True
+            for animation in self.animations:
+                if first == False:
+                    file_handler.write(',')
+                animation.to_scene_file(file_handler)
+                first = False
+            file_handler.write(']')
+
+            file_handler.write(',"ranges":[')
+            first = True
+            for range in self.ranges:
+                if first != True:
+                    file_handler.write(',')
+                first = False
+
+                range.to_scene_file(file_handler)
+
+            file_handler.write(']')
+
+            if (hasattr(self, "autoAnimate") and self.autoAnimate):
+                write_bool(file_handler, 'autoAnimate', self.autoAnimate)
+                write_int(file_handler, 'autoAnimateFrom', self.autoAnimateFrom)
+                write_int(file_handler, 'autoAnimateTo', self.autoAnimateTo)
+                write_bool(file_handler, 'autoAnimateLoop', self.autoAnimateLoop)
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    def to_script_file(self, file_handler, jsVarName, indent):
+        if (self.animationsPresent):
+            file_handler.write(indent + 'var animation;\n')
             for animation in self.animations:
                 animation.to_script_file(file_handler, indent) # assigns the previously declared js variable 'animation'
                 file_handler.write(indent + jsVarName + '.animations.push(animation);\n')
@@ -1500,9 +1631,94 @@ class Mesh(FCurveAnimatable):
 
         return compressedIndices
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    def to_script_file(self, file_handler, kids, indent, is_typescript):
+    def to_scene_file(self, file_handler):
+        file_handler.write('{')
+        write_string(file_handler, 'name', self.name, True)
+        write_string(file_handler, 'id', self.name)
+        if hasattr(self, 'parentId'): write_string(file_handler, 'parentId', self.parentId)
+
+        if hasattr(self, 'materialId'): write_string(file_handler, 'materialId', self.materialId)
+        write_int(file_handler, 'billboardMode', self.billboardMode)
+        write_vector(file_handler, 'position', self.position)
+
+        if hasattr(self, "rotationQuaternion"):
+            write_quaternion(file_handler, 'rotationQuaternion', self.rotationQuaternion)
+        else:
+            write_vector(file_handler, 'rotation', self.rotation)
+
+        write_vector(file_handler, 'scaling', self.scaling)
+        write_bool(file_handler, 'isVisible', self.isVisible)
+        write_bool(file_handler, 'freezeWorldMatrix', self.freezeWorldMatrix)
+        write_bool(file_handler, 'isEnabled', self.isEnabled)
+        write_bool(file_handler, 'checkCollisions', self.checkCollisions)
+        write_bool(file_handler, 'receiveShadows', self.receiveShadows)
+
+        if hasattr(self, 'physicsImpostor'):
+            write_int(file_handler, 'physicsImpostor', self.physicsImpostor)
+            write_float(file_handler, 'physicsMass', self.physicsMass)
+            write_float(file_handler, 'physicsFriction', self.physicsFriction)
+            write_float(file_handler, 'physicsRestitution', self.physicsRestitution)
+
+        # Geometry
+        if hasattr(self, 'skeletonId'):
+            write_int(file_handler, 'skeletonId', self.skeletonId)
+            write_int(file_handler, 'numBoneInfluencers', self.numBoneInfluencers)
+
+        write_vector_array(file_handler, 'positions', self.positions)
+        write_vector_array(file_handler, 'normals'  , self.normals  )
+
+        if len(self.uvs) > 0:
+            write_array(file_handler, 'uvs', self.uvs)
+
+        if len(self.uvs2) > 0:
+            write_array(file_handler, 'uvs2', self.uvs2)
+
+        if len(self.colors) > 0:
+            write_array(file_handler, 'colors', self.colors)
+
+        if hasattr(self, 'skeletonWeights'):
+            write_array(file_handler, 'matricesWeights', self.skeletonWeights)
+            write_array(file_handler, 'matricesIndices', self.skeletonIndices)
+
+        if hasattr(self, 'skeletonWeightsExtra'):
+            write_array(file_handler, 'matricesWeightsExtra', self.skeletonWeightsExtra)
+            write_array(file_handler, 'matricesIndicesExtra', self.skeletonIndicesExtra)
+
+        write_array(file_handler, 'indices', self.indices)
+
+        # Sub meshes
+        file_handler.write('\n,"subMeshes":[')
+        first = True
+        for subMesh in self.subMeshes:
+            if first == False:
+                file_handler.write(',')
+            subMesh.to_scene_file(file_handler)
+            first = False
+        file_handler.write(']')
+
+        super().to_scene_file(file_handler) # Animations
+
+        # Instances
+        first = True
+        file_handler.write('\n,"instances":[')
+        for instance in self.instances:
+            if first == False:
+                file_handler.write(',')
+
+            instance.to_scene_file(file_handler)
+
+            first = False
+        file_handler.write(']')
+
+        # Close mesh
+        file_handler.write('}\n')
+        self.alreadyExported = True
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    def to_script_file(self, file_handler, typescript_file_handler, kids, indent):
         isRootMesh = not hasattr(self, 'parentId')
-        mesh_node_common_script(file_handler, self, isRootMesh, kids, indent, is_typescript)
+
+        mesh_node_common_script(file_handler, typescript_file_handler, self, isRootMesh, kids, indent)
+
         hasShapeKeys = hasattr(self, 'shapeKeyGroups')
         baseClass = get_base_class(self)
         var = 'this' if isRootMesh else 'ret'
@@ -1589,17 +1805,17 @@ class Mesh(FCurveAnimatable):
             subMesh.to_script_file(file_handler, var, indent2A)
 
         # Octree, cannot predetermine since something in scene; break down and write an if
-        file_handler.write(indent2A + 'if (scene["_selectionOctree"]) {// typescript safe\n')
+        file_handler.write(indent2A + 'if (scene._selectionOctree) {\n')
         file_handler.write(indent3A + 'scene.createOrUpdateSelectionOctree();\n')
         file_handler.write(indent2A + '}\n')
 
         if (hasShapeKeys):
-            file_handler.write(indent2A + 'var shapeKeyGroup' + (' : QI.ShapeKeyGroup;\n' if is_typescript else ';\n') )
+            file_handler.write(indent2A + 'var shapeKeyGroup;\n')
             for shapeKeyGroup in self.shapeKeyGroups:
                 shapeKeyGroup.to_script_file(file_handler, var, indent2A) # assigns the previously declared js variable 'shapeKeyGroup'
                 file_handler.write(indent2A + 'this.addShapeKeyGroup(shapeKeyGroup);\n')
 
-        super().to_script_file(file_handler, var, indent2A, is_typescript) # Animations
+        super().to_script_file(file_handler, var, indent2A) # Animations
 
         # close no cloning section
         file_handler.write(indent2 + '}\n')
@@ -1609,34 +1825,21 @@ class Mesh(FCurveAnimatable):
 
             if hasattr(self,'factoryIdx'):
                 file_handler.write('\n')
-                if is_typescript:
-                    file_handler.write(indent + '    public dispose(doNotRecurse?: boolean): void {\n')
-                    file_handler.write(indent + '        super.dispose(doNotRecurse);\n')
-                    file_handler.write(indent + '        clean(' + str(self.factoryIdx) + ');\n')
-                    file_handler.write(indent + '    }\n')
-                else:
-                    file_handler.write(indent + '    ' + self.legalName + '.prototype.dispose = function (doNotRecurse) {\n')
-                    file_handler.write(indent + '        _super.prototype.dispose.call(this, doNotRecurse);\n')
-                    file_handler.write(indent + '        clean(' + str(self.factoryIdx) + ');\n')
-                    file_handler.write(indent + '    };\n')
+                file_handler.write(indent + '    ' + self.legalName + '.prototype.dispose = function (doNotRecurse) {\n')
+                file_handler.write(indent + '        _super.prototype.dispose.call(this, doNotRecurse);\n')
+                file_handler.write(indent + '        clean(' + str(self.factoryIdx) + ');\n')
+                file_handler.write(indent + '    };\n')
 
             # instances handled as a separate function when a root mesh
             if len(self.instances) > 0:
                 file_handler.write('\n')
-                if is_typescript:
-                    file_handler.write(indent + '    public makeInstances(): void {\n')
-                else:
-                    file_handler.write(indent + '    ' + self.legalName + '.prototype.makeInstances = function () {\n')
-
+                file_handler.write(indent + '    ' + self.legalName + '.prototype.makeInstances = function () {\n')
                 self.writeMakeInstances(file_handler, var, indent + '        ')
                 file_handler.write(indent + '    };\n')
 
-            if is_typescript:
-                file_handler.write(indent + '}\n')
-            else:
-                file_handler.write(indent + '    return ' + self.legalName + ';\n')
-                file_handler.write(indent + '})(' + baseClass + ');\n')
-                file_handler.write(indent + Main.nameSpace + '.' + self.legalName + ' = ' + self.legalName + ';\n')
+            file_handler.write(indent + '    return ' + self.legalName + ';\n')
+            file_handler.write(indent + '})(' + baseClass + ');\n')
+            file_handler.write(indent + Main.nameSpace + '.' + self.legalName + ' = ' + self.legalName + ';\n')
         else:
             # instances handled as inline code when a child mesh
             if len(self.instances) > 0:
@@ -1655,7 +1858,7 @@ class Mesh(FCurveAnimatable):
                     file_handler.write(indent + 'instance.animations.push(' + var + '.animations[' + format_int(idx) + '].clone() );\n')
 #===============================================================================
 #  module level since called from Mesh & Node
-def mesh_node_common_script(file_handler, meshOrNode, isRoot, kids, indent, is_typescript):
+def mesh_node_common_script(file_handler, typescript_file_handler, meshOrNode, isRoot, kids, indent):
     isRootMesh = not hasattr(meshOrNode, 'parentId')
     hasShapeKeys = hasattr(meshOrNode, 'shapeKeyGroups')
     baseClass = get_base_class(meshOrNode)
@@ -1664,31 +1867,32 @@ def mesh_node_common_script(file_handler, meshOrNode, isRoot, kids, indent, is_t
     if isRootMesh:
         var = 'this'
         indent2 = indent + '        '
-        if is_typescript:
-            # declaration of class & memeber kids
-            file_handler.write('\n' + indent + 'export class ' + meshOrNode.legalName + ' extends ' + baseClass + ' {\n')
-            for kid in kids:
-                file_handler.write(indent + '    public ' + kid.legalName + ' : ' + get_base_class(kid) + ';\n')
 
-            file_handler.write(indent + '    constructor(name: string, scene: B.Scene, materialsRootDir: string = "./", source? : ' + meshOrNode.legalName + ') {\n')
-            file_handler.write(indent2 + 'super(name, scene, null, source, true);\n\n')
-        else:
-            file_handler.write('\n' + indent + 'var ' + meshOrNode.legalName + ' = (function (_super) {\n')
-            file_handler.write(indent + '    __extends(' + meshOrNode.legalName + ', _super);\n')
-            file_handler.write(indent + '    function ' + meshOrNode.legalName + '(name, scene, materialsRootDir, source) {\n')
-            file_handler.write(indent2 + '_super.call(this, name, scene, null, source, true);\n\n')
+        # declaration of class & member kids
+        typescript_file_handler.write('\n' + indent + 'class ' + meshOrNode.legalName + ' extends ' + baseClass + ' {\n')
+        for kid in kids:
+            typescript_file_handler.write(indent + '    public ' + kid.legalName + ' : ' + get_base_class(kid) + ';\n')
 
-            file_handler.write(indent2 + 'if (!materialsRootDir) { materialsRootDir = "./"; }\n')
+        typescript_file_handler.write(indent + '    constructor(name: string, scene: BABYLON.Scene, materialsRootDir: string = "./", source? : ' + meshOrNode.legalName + ');\n')
+
+        # define makeInstances, a node will not have this
+        if isRootMesh and hasattr(meshOrNode, 'instances') and len(meshOrNode.instances) > 0:
+            typescript_file_handler.write(indent + '    makeInstances(): void ;\n')
+        typescript_file_handler.write(indent + '}\n')
+        # - - - - - - - - - - -
+        file_handler.write('\n' + indent + 'var ' + meshOrNode.legalName + ' = (function (_super) {\n')
+        file_handler.write(indent + '    __extends(' + meshOrNode.legalName + ', _super);\n')
+        file_handler.write(indent + '    function ' + meshOrNode.legalName + '(name, scene, materialsRootDir, source) {\n')
+        file_handler.write(indent2 + '_super.call(this, name, scene, null, source, true);\n\n')
+
+        file_handler.write(indent2 + 'if (!materialsRootDir) { materialsRootDir = "./"; }\n')
 
         file_handler.write(indent2 + 'defineMaterials(scene, materialsRootDir); //embedded version check\n')
 
     else:
         var = 'ret'
         indent2 = indent + '    '
-        if is_typescript:
-            file_handler.write('\n' + indent + 'function child_' + meshOrNode.legalName + '(scene : B.Scene, parent : any, source? : any) : ' + baseClass + ' {\n')
-        else:
-            file_handler.write('\n' + indent + 'function child_' + meshOrNode.legalName + '(scene, parent, source){\n')
+        file_handler.write('\n' + indent + 'function child_' + meshOrNode.legalName + '(scene, parent, source){\n')
 
         file_handler.write(indent2 + Main.versionCheckCode)
         file_handler.write(indent2 + 'var ' + var + ' = new ' + baseClass + '(parent.name + ".' + meshOrNode.legalName + '", scene, parent, source);\n')
@@ -1713,7 +1917,7 @@ def mesh_node_common_script(file_handler, meshOrNode, isRoot, kids, indent, is_t
     file_handler.write(indent2 + var + '.setEnabled(' + format_bool(meshOrNode.isEnabled) + ');\n')
     file_handler.write(indent2 + var + '.checkCollisions = ' + format_bool(meshOrNode.checkCollisions) + ';\n')
     file_handler.write(indent2 + var + '.receiveShadows  = ' + format_bool(meshOrNode.receiveShadows) + ';\n')
-    file_handler.write(indent2 + var + '["castShadows"]  = ' + format_bool(meshOrNode.castShadows) + '; // typescript safe\n')
+    file_handler.write(indent2 + var + '.castShadows  = ' + format_bool(meshOrNode.castShadows) + ';\n')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #  module level since called from Mesh & Node, and also for instances
 def writePosRotScale(file_handler, object, var, indent):
@@ -1739,7 +1943,7 @@ def writePosRotScale(file_handler, object, var, indent):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def get_base_class(meshOrNode):
         if len(meshOrNode.baseClass) > 0: return meshOrNode.baseClass
-        else: return 'QI.Mesh' if hasattr(meshOrNode, 'shapeKeyGroups') else 'B.Mesh'
+        else: return 'QI.Mesh' if hasattr(meshOrNode, 'shapeKeyGroups') else 'BABYLON.Mesh'
 
 #===============================================================================
 class MeshInstance:
@@ -1752,11 +1956,25 @@ class MeshInstance:
             self.rotationQuaternion = rotationQuaternion
         self.scaling = scaling
         self.freezeWorldMatrix = freezeWorldMatrix
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+     def to_scene_file(self, file_handler):
+        file_handler.write('{')
+        write_string(file_handler, 'name', self.name, True)
+        write_vector(file_handler, 'position', self.position)
+        if hasattr(self, 'rotation'):
+            write_vector(file_handler, 'rotation', self.rotation)
+        else:
+            write_quaternion(file_handler, 'rotationQuaternion', self.rotationQuaternion)
+
+        write_vector(file_handler, 'scaling', self.scaling)
+        # freeze World Matrix currently ignored for instances
+        write_bool(file_handler, 'freezeWorldMatrix', self.freezeWorldMatrix)
+        file_handler.write('}')
 #===============================================================================
 class Node(FCurveAnimatable):
     def __init__(self, node, includeMeshFactory):
         Main.log('processing begun of node:  ' + node.name)
-        self.define_animations(object, True, True, True)  #Should animations be done when forcedParent
+        self.define_animations(node, True, True, True)  #Should animations be done when forcedParent
         self.name = node.name
         self.baseClass = 'B.Mesh'
         self.isNode = True # used in meshFactory
@@ -1785,34 +2003,46 @@ class Node(FCurveAnimatable):
         self.castShadows = False
         self.receiveShadows = False
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    def to_scene_file(self, file_handler):
+        file_handler.write('{')
+        write_string(file_handler, 'name', self.name, True)
+        write_string(file_handler, 'id', self.name)
+        if hasattr(self, 'parentId'): write_string(file_handler, 'parentId', self.parentId)
+
+        write_vector(file_handler, 'position', self.position)
+        if hasattr(self, "rotationQuaternion"):
+            write_quaternion(file_handler, "rotationQuaternion", self.rotationQuaternion)
+        else:
+            write_vector(file_handler, 'rotation', self.rotation)
+        write_vector(file_handler, 'scaling', self.scaling)
+        write_bool(file_handler, 'isVisible', self.isVisible)
+        write_bool(file_handler, 'isEnabled', self.isEnabled)
+        write_bool(file_handler, 'checkCollisions', self.checkCollisions)
+        write_int(file_handler, 'billboardMode', self.billboardMode)
+        write_bool(file_handler, 'receiveShadows', self.receiveShadows)
+
+        super().to_scene_file(file_handler) # Animations
+        file_handler.write('}')
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def setFactoryIdx(self, factoryIdx):
         self.factoryIdx = factoryIdx
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    def to_script_file(self, file_handler, kids, indent, is_typescript):
+    def to_script_file(self, file_handler, typescript_file_handler, kids, indent):
         isRootNode = not hasattr(self, 'parentId')
-        mesh_node_common_script(file_handler, self, isRootNode, kids, indent, is_typescript)
+        mesh_node_common_script(file_handler, typescript_file_handler, self, isRootNode, kids, indent)
 
         if isRootNode:
             file_handler.write(indent + '    }\n')
 
             if hasattr(self,'factoryIdx'):
                 file_handler.write('\n')
-                if is_typescript:
-                    file_handler.write(indent + '    public dispose(doNotRecurse?: boolean): void {\n')
-                    file_handler.write(indent + '        super.dispose(doNotRecurse);\n')
-                    file_handler.write(indent + '        clean(' + str(self.factoryIdx) + ');\n')
-                    file_handler.write(indent + '    }\n')
-                else:
-                    file_handler.write(indent + '    ' + self.legalName + '.prototype.dispose = function (doNotRecurse) {\n')
-                    file_handler.write(indent + '        super.dispose(doNotRecurse);\n')
-                    file_handler.write(indent + '        clean(' + str(self.factoryIdx) + ');\n')
-                    file_handler.write(indent + '    };\n')
+                file_handler.write(indent + '    ' + self.legalName + '.prototype.dispose = function (doNotRecurse) {\n')
+                file_handler.write(indent + '        super.dispose(doNotRecurse);\n')
+                file_handler.write(indent + '        clean(' + str(self.factoryIdx) + ');\n')
+                file_handler.write(indent + '    };\n')
 
-            if is_typescript:
-                file_handler.write(indent + '}\n')
-            else:
-                file_handler.write(indent + '    return ' + self.legalName + ';\n')
-                file_handler.write(indent + '})(B.Mesh);\n')
+            file_handler.write(indent + '    return ' + self.legalName + ';\n')
+            file_handler.write(indent + '})(B.Mesh);\n')
         else:
             file_handler.write(indent + '    return ret;\n')
             file_handler.write(indent + '}\n')
@@ -1824,6 +2054,15 @@ class SubMesh:
         self.indexStart = indexStart
         self.verticesCount = verticesCount
         self.indexCount = indexCount
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    def to_scene_file(self, file_handler):
+        file_handler.write('{')
+        write_int(file_handler, 'materialIndex', self.materialIndex, True)
+        write_int(file_handler, 'verticesStart', self.verticesStart)
+        write_int(file_handler, 'verticesCount', self.verticesCount)
+        write_int(file_handler, 'indexStart'   , self.indexStart)
+        write_int(file_handler, 'indexCount'   , self.indexCount)
+        file_handler.write('}')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def to_script_file(self, file_handler, jsMeshVar, indent):
         file_handler.write(indent + 'new B.SubMesh(' +
@@ -1930,11 +2169,11 @@ class Bone:
         self.name = bone.name
         self.length = bone.length
         self.index = index
-        self.blenderBoneObj = bone # record so can be used by get_matrix, called by append_animation_pose
+        self.posedBone = bone # record so can be used by get_matrix, called by append_animation_pose
         self.parentBone = bone.parent
 
         self.matrix_world = skeleton.matrix_world
-        self.matrix = self.get_matrix()
+        self.matrix = self.get_bone_matrix()
 
         parentId = -1
         if (bone.parent):
@@ -1951,26 +2190,49 @@ class Bone:
             self.previousBoneMatrix = None
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def append_animation_pose(self, frame, force = False):
-        currentBoneMatrix = self.get_matrix()
+        currentBoneMatrix = self.get_bone_matrix()
 
         if (force or not same_matrix4(currentBoneMatrix, self.previousBoneMatrix)):
             self.animation.frames.append(frame)
             self.animation.values.append(currentBoneMatrix)
             self.previousBoneMatrix = currentBoneMatrix
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    def get_matrix(self):
+    def set_rest_pose(self, editBone, matrix_world):
+        self.rest = Bone.get_matrix(editBone, self.matrix_world)
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    def get_bone_matrix(self):
+        return Bone.get_matrix(self.posedBone, self.matrix_world)
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    @staticmethod
+    def get_matrix(bone, matrix_world):
         SystemMatrix = mathutils.Matrix.Scale(-1, 4, mathutils.Vector((0, 0, 1))) * mathutils.Matrix.Rotation(math.radians(-90), 4, 'X')
 
-        if (self.parentBone):
-            return (SystemMatrix * self.matrix_world * self.parentBone.matrix).inverted() * (SystemMatrix * self.matrix_world * self.blenderBoneObj.matrix)
+        if (bone.parent):
+            return (SystemMatrix * matrix_world * bone.parent.matrix).inverted() * (SystemMatrix * matrix_world * bone.matrix)
         else:
-            return  SystemMatrix * self.matrix_world * self.blenderBoneObj.matrix
+            return SystemMatrix * matrix_world * bone.matrix
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    def to_scene_file(self, file_handler):
+        file_handler.write('\n{')
+        write_string(file_handler, 'name', self.name, True)
+        write_int(file_handler, 'index', self.index)
+        write_matrix4(file_handler, 'matrix', self.matrix)
+        write_matrix4(file_handler, 'rest', self.rest)
+        write_int(file_handler, 'parentBoneIndex', self.parentBoneIndex)
+        write_float(file_handler, 'length', self.length)
+
+        #animation
+        if hasattr(self, 'animation'):
+            file_handler.write('\n,"animation":')
+            self.animation.to_scene_file(file_handler)
+
+        file_handler.write('}')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # assume the following JS variables have already been declared: skeleton, bone, animation
     def to_script_file(self, file_handler, indent):
         parentBone = 'skeleton.bones[' + format_int(self.parentBoneIndex) + ']' if self.parentBone else 'null'
 
-        file_handler.write(indent + 'bone = new B.Bone("' + self.name + '", skeleton,' + parentBone + ', M(' + format_matrix4(self.matrix) + '));\n')
+        file_handler.write(indent + 'bone = new B.Bone("' + self.name + '", skeleton,' + parentBone + ', M(' + format_matrix4(self.matrix) + ')' + ', M(' + format_matrix4(self.rest) + '));\n')
         file_handler.write(indent + 'bone.length = ' + format_f(self.length) + ';\n')
 
         if hasattr(self, 'animation'):
@@ -1985,7 +2247,7 @@ class Skeleton:
         self.bones = []
 
         for bone in skeleton.pose.bones:
-            if scene.ignoreIKBones and '.ik' in bone.name:
+            if scene.ignoreIKBones and ('.ik' in bone.name.lower() or 'ik.' in bone.name.lower() ):
                 Main.log('Ignoring IK bone:  ' + bone.name, 2)
                 continue
 
@@ -2010,6 +2272,20 @@ class Skeleton:
                         bone.append_animation_pose(frame + frameOffset, frame == animationRange.highest_frame)
 
                 frameOffset = animationRange.frame_end + 1
+
+        # mode_set's only work when there is an active object, switch bones to edit mode to rest position
+        scene.objects.active = skeleton
+        bpy.ops.object.mode_set(mode='EDIT')
+        matrix_world = skeleton.matrix_world
+
+        # you need to access edit_bones from skeleton.data not skeleton.pose when in edit mode
+        for editBone in skeleton.data.edit_bones:
+            for myBoneObj in self.bones:
+                if editBone.name == myBoneObj.name:
+                    myBoneObj.set_rest_pose(editBone, matrix_world)
+                    break
+
+        bpy.ops.object.mode_set(mode='OBJECT')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # Since IK bones could be being skipped, looking up index of bone in second pass of mesh required
     def get_index_of_bone(self, boneName):
@@ -2019,6 +2295,36 @@ class Skeleton:
 
         # should not happen, but if it does clearly a bug, so terminate
         raise 'bone name "' + boneName + '" not found in skeleton'
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    def to_scene_file(self, file_handler):
+        file_handler.write('{')
+        write_string(file_handler, 'name', self.name, True)
+        write_int(file_handler, 'id', self.id)  # keep int for legacy of original exporter
+
+        file_handler.write(',"bones":[')
+        first = True
+        for bone in self.bones:
+            if first != True:
+                file_handler.write(',')
+            first = False
+
+            bone.to_scene_file(file_handler)
+
+        file_handler.write(']')
+
+        if hasattr(self, 'ranges'):
+            file_handler.write(',"ranges":[')
+            first = True
+            for range in self.ranges:
+                if first != True:
+                    file_handler.write(',')
+                first = False
+
+                range.to_scene_file(file_handler)
+
+            file_handler.write(']')
+
+        file_handler.write('}')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # assume the following JS variables have already been declared: scene, skeleton, bone, animation
     def to_script_file(self, file_handler, indent):
@@ -2100,7 +2406,46 @@ class Camera(FCurveAnimatable):
             self.arcRotBeta   = beta
             self.arcRotRadius = distance3D
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    def to_script_file(self, file_handler, indent, is_typescript):
+    def to_scene_file(self, file_handler):
+        file_handler.write('{')
+        write_string(file_handler, 'name', self.name, True)
+        write_string(file_handler, 'id', self.name)
+        write_vector(file_handler, 'position', self.position)
+        write_vector(file_handler, 'rotation', self.rotation)
+        write_float(file_handler, 'fov', self.fov)
+        write_float(file_handler, 'minZ', self.minZ)
+        write_float(file_handler, 'maxZ', self.maxZ)
+        write_float(file_handler, 'speed', self.speed)
+        write_float(file_handler, 'inertia', self.inertia)
+        write_bool(file_handler, 'checkCollisions', self.checkCollisions)
+        write_bool(file_handler, 'applyGravity', self.applyGravity)
+        write_array3(file_handler, 'ellipsoid', self.ellipsoid)
+
+        # always assign rig, even when none, Reason:  Could have VR camera with different Rig than default
+        write_int(file_handler, 'cameraRigMode', self.Camera3DRig)
+        write_float(file_handler, 'interaxial_distance', self.interaxialDistance)
+
+        write_string(file_handler, 'type', self.CameraType)
+
+        if hasattr(self, 'parentId'): write_string(file_handler, 'parentId', self.parentId)
+
+        if self.CameraType == FOLLOW_CAM:
+            write_float(file_handler, 'heightOffset',  self.followHeight)
+            write_float(file_handler, 'radius',  self.followDistance)
+            write_float(file_handler, 'rotationOffset',  self.followRotation)
+
+        elif self.CameraType == ARC_ROTATE_CAM:
+            write_float(file_handler, 'alpha', self.arcRotAlpha)
+            write_float(file_handler, 'beta', self.arcRotBeta)
+            write_float(file_handler, 'radius',  self.arcRotRadius)
+
+        if hasattr(self, 'lockedTargetId'):
+            write_string(file_handler, 'lockedTargetId', self.lockedTargetId)
+
+        super().to_scene_file(file_handler) # Animations
+        file_handler.write('}')
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    def to_script_file(self, file_handler, indent):
         # constructor args are not the same for each camera type
         file_handler.write(indent + 'camera = new B.' + self.CameraType + '("' + self.name + '"')
         if self.CameraType == ARC_ROTATE_CAM:
@@ -2142,7 +2487,7 @@ class Camera(FCurveAnimatable):
         if hasattr(self, 'parentId'):
             file_handler.write(indent + 'camera.parent = scene.getLastEntryByID("' + self.parentId + '");\n')
 
-        super().to_script_file(file_handler, 'camera', indent, is_typescript) # Animations
+        super().to_script_file(file_handler, 'camera', indent) # Animations
 #===============================================================================
 class Light(FCurveAnimatable):
     def __init__(self, light):
@@ -2186,7 +2531,32 @@ class Light(FCurveAnimatable):
         self.diffuse   = light.data.color if light.data.use_diffuse  else mathutils.Color((0, 0, 0))
         self.specular  = light.data.color if light.data.use_specular else mathutils.Color((0, 0, 0))
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    def to_script_file(self, file_handler, indent, is_typescript):
+    def to_scene_file(self, file_handler):
+        file_handler.write('{')
+        write_string(file_handler, 'name', self.name, True)
+        write_string(file_handler, 'id', self.name)
+        write_float(file_handler, 'type', self.light_type)
+
+        if hasattr(self, 'parentId'   ): write_string(file_handler, 'parentId'   , self.parentId   )
+        if hasattr(self, 'position'   ): write_vector(file_handler, 'position'   , self.position   )
+        if hasattr(self, 'direction'  ): write_vector(file_handler, 'direction'  , self.direction  )
+        if hasattr(self, 'angle'      ): write_float (file_handler, 'angle'      , self.angle      )
+        if hasattr(self, 'exponent'   ): write_float (file_handler, 'exponent'   , self.exponent   )
+        if hasattr(self, 'groundColor'): write_color (file_handler, 'groundColor', self.groundColor)
+        if hasattr(self, 'range'      ): write_float (file_handler, 'range'      , self.range      )
+
+        write_float(file_handler, 'intensity', self.intensity)
+        write_color(file_handler, 'diffuse', self.diffuse)
+        write_color(file_handler, 'specular', self.specular)
+
+        super().to_scene_file(file_handler) # Animations
+        file_handler.write('}')
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    @staticmethod
+    def get_direction(matrix):
+        return (matrix.to_3x3() * mathutils.Vector((0.0, 0.0, -1.0))).normalized()
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    def to_script_file(self, file_handler, indent):
         if self.light_type == POINT_LIGHT:
             file_handler.write(indent + 'light = new B.PointLight("' + self.name + '", new B.Vector3(' + format_vector(self.position) + '), scene);\n')
 
@@ -2212,11 +2582,7 @@ class Light(FCurveAnimatable):
 
         file_handler.write(indent + 'light.diffuse = new B.Color3(' + format_color(self.diffuse) + ');\n')
         file_handler.write(indent + 'light.specular = new B.Color3(' + format_color(self.specular) + ');\n')
-        super().to_script_file(file_handler, 'light', indent, is_typescript) # Animations
-
-    @staticmethod
-    def get_direction(matrix):
-        return (matrix.to_3x3() * mathutils.Vector((0.0, 0.0, -1.0))).normalized()
+        super().to_script_file(file_handler, 'light', indent) # Animations
 #===============================================================================
 class ShadowGenerator:
     def __init__(self, lamp, meshesAndNodes, scene):
@@ -2233,6 +2599,33 @@ class ShadowGenerator:
             self.useBlurVarianceShadowMap = True
             self.shadowBlurScale = lamp.data.shadowBlurScale
             self.shadowBlurBoxOffset = lamp.data.shadowBlurBoxOffset
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    def to_scene_file(self, file_handler):
+        file_handler.write('{')
+        write_int(file_handler, 'mapSize', self.mapSize, True)
+        write_string(file_handler, 'lightId', self.lightId)
+        write_float(file_handler, 'bias', self.shadowBias)
+
+        if hasattr(self, 'useVarianceShadowMap') :
+            write_bool(file_handler, 'useVarianceShadowMap', self.useVarianceShadowMap)
+        elif hasattr(self, 'usePoissonSampling'):
+            write_bool(file_handler, 'usePoissonSampling', self.usePoissonSampling)
+        elif hasattr(self, 'useBlurVarianceShadowMap'):
+            write_bool(file_handler, 'useBlurVarianceShadowMap', self.useBlurVarianceShadowMap)
+            write_int(file_handler, 'blurScale', self.shadowBlurScale)
+            write_int(file_handler, 'blurBoxOffset', self.shadowBlurBoxOffset)
+
+        file_handler.write(',"renderList":[')
+        first = True
+        for caster in self.shadowCasters:
+            if first != True:
+                file_handler.write(',')
+            first = False
+
+            file_handler.write('"' + caster + '"')
+
+        file_handler.write(']')
+        file_handler.write('}')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def to_script_file(self, file_handler, indent):
         file_handler.write(indent + 'light = scene.getLightByID("' + self.lightId + '");\n')
@@ -2252,6 +2645,21 @@ class MultiMaterial:
         self.name = Main.nameSpace + '.' + 'Multimaterial#' + str(idx)
         Main.log('processing begun of multimaterial:  ' + self.name, 2)
         self.material_slots = material_slots
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    def to_scene_file(self, file_handler):
+        file_handler.write('{')
+        write_string(file_handler, 'name', self.name, True)
+        write_string(file_handler, 'id', self.name)
+
+        file_handler.write(',"materials":[')
+        first = True
+        for material in self.material_slots:
+            if first != True:
+                file_handler.write(',')
+            file_handler.write('"' + material.name +'"')
+            first = False
+        file_handler.write(']')
+        file_handler.write('}')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def to_script_file(self, file_handler, indent):
         file_handler.write(indent + 'multiMaterial = new B.MultiMaterial("' + self.name + '", scene);\n')
@@ -2357,6 +2765,26 @@ class Texture:
         else:
             self.wrapU = CLAMP_ADDRESSMODE
             self.wrapV = CLAMP_ADDRESSMODE
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    def to_scene_file(self, file_handler):
+        file_handler.write(', \n"' + self.slot + '":{')
+        write_string(file_handler, 'name', self.name, True)
+        write_float(file_handler, 'level', self.level)
+        write_float(file_handler, 'hasAlpha', self.hasAlpha)
+        write_int(file_handler, 'coordinatesMode', self.coordinatesMode)
+        write_float(file_handler, 'uOffset', self.uOffset)
+        write_float(file_handler, 'vOffset', self.vOffset)
+        write_float(file_handler, 'uScale', self.uScale)
+        write_float(file_handler, 'vScale', self.vScale)
+        write_float(file_handler, 'uAng', self.uAng)
+        write_float(file_handler, 'vAng', self.vAng)
+        write_float(file_handler, 'wAng', self.wAng)
+        write_int(file_handler, 'wrapU', self.wrapU)
+        write_int(file_handler, 'wrapV', self.wrapV)
+        write_int(file_handler, 'coordinatesIndex', self.coordinatesIndex)
+        if hasattr(self,'encoded_URI'):
+            write_string(file_handler, 'base64String', self.encoded_URI)
+        file_handler.write('}')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def to_script_file(self, file_handler, indent):
         if hasattr(self,'encoded_URI'):
@@ -2535,6 +2963,23 @@ class Material:
         self.checkReadyOnlyOnce = checkReadyOnlyOnce
         # first pass of textures, either appending image type or recording types of bakes to do
         self.textures = []
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    def to_scene_file(self, file_handler):
+        file_handler.write('{')
+        write_string(file_handler, 'name', self.name, True)
+        write_string(file_handler, 'id', self.name)
+        write_color(file_handler, 'ambient', self.ambient)
+        write_color(file_handler, 'diffuse', self.diffuse)
+        write_color(file_handler, 'specular', self.specular)
+        write_color(file_handler, 'emissive', self.emissive)
+        write_float(file_handler, 'specularPower', self.specularPower)
+        write_float(file_handler, 'alpha', self.alpha)
+        write_bool(file_handler, 'backFaceCulling', self.backFaceCulling)
+        write_bool(file_handler, 'checkReadyOnlyOnce', self.checkReadyOnlyOnce)
+        for texSlot in self.textures:
+            texSlot.to_scene_file(file_handler)
+
+        file_handler.write('}')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def to_script_file(self, file_handler, indent):
         indent2 = indent + '    '
@@ -2788,6 +3233,13 @@ class AnimationRange:
         self.frame_end   = frameOffset + self.highest_frame
         self.frames = frames
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    def to_scene_file(self, file_handler):
+        file_handler.write('{')
+        write_string(file_handler, 'name', self.name, True)
+        write_int(file_handler, 'from', self.frame_start)
+        write_int(file_handler, 'to', self.frame_end)
+        file_handler.write('}')
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def to_script_file(self, file_handler, indent, var):
         file_handler.write(indent + var + '.createAnimationRange("' + self.name + '", ' + format_int(self.frame_start) + ', ' + format_int(self.frame_end) + ');\n')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -2856,6 +3308,37 @@ class Animation:
     # for auto animate
     def get_last_frame(self):
         return self.frames[len(self.frames) - 1] if len(self.frames) > 0 else -1
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    def to_scene_file(self, file_handler):
+        file_handler.write('{')
+        write_int(file_handler, 'dataType', self.dataType, True)
+        write_int(file_handler, 'framePerSecond', self.framePerSecond)
+
+        file_handler.write(',"keys":[')
+        first = True
+        for frame_idx in range(len(self.frames)):
+            if first != True:
+                file_handler.write(',')
+            first = False
+            file_handler.write('{')
+            write_int(file_handler, 'frame', self.frames[frame_idx], True)
+            value_idx = self.values[frame_idx]
+            if self.dataType == ANIMATIONTYPE_MATRIX:
+                write_matrix4(file_handler, 'values', value_idx)
+            elif self.dataType == ANIMATIONTYPE_QUATERNION:
+                write_quaternion(file_handler, 'values', value_idx)
+            else:
+                write_vector(file_handler, 'values', value_idx)
+            file_handler.write('}')
+
+        file_handler.write(']')   # close keys
+
+        # put this at the end to make less crazy looking ]}]]]}}}}}}}]]]],
+        # since animation is also at the end of the bone, mesh, camera, or light
+        write_int(file_handler, 'loopBehavior', self.loopBehavior)
+        write_string(file_handler, 'name', self.name)
+        write_string(file_handler, 'property', self.propertyInBabylon)
+        file_handler.write('}')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # assigns the var 'animation', which the caller has already defined
     # .babylon writes 'values', but the babylonFileLoader reads it, changing it to 'value'
