@@ -1,7 +1,7 @@
 bl_info = {
     'name': 'Tower of Babel',
     'author': 'David Catuhe, Jeff Palmer',
-    'version': (4, 3, 0),
+    'version': (4, 3, 1),
     'blender': (2, 75, 0),
     'location': 'File > Export > Tower of Babel [.js + .d.ts]',
     'description': 'Translate to inline JavaScript & TypeScript modules',
@@ -2335,8 +2335,9 @@ class Skeleton:
         for bone in self.bones:
             bone.to_script_file(file_handler, indent)
 
-        for range in self.ranges:
-            range.to_script_file(file_handler, indent, 'skeleton')
+        if hasattr(self, 'ranges'):
+            for range in self.ranges:
+                range.to_script_file(file_handler, indent, 'skeleton')
 #===============================================================================
 class Camera(FCurveAnimatable):
     def __init__(self, camera):
