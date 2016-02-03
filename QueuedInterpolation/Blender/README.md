@@ -1,4 +1,4 @@
-#Tower of Babel Exporter for Blender, 4.3
+#Tower of Babel Exporter for Blender, 4.4
 <img src="doc-assist/get_baked.png">
 ## Background ##
 
@@ -13,6 +13,9 @@ Hmm, if there was also a method in each class named `to_script_file(is_typescrip
 Eventually, the .babylon exporter was replaced with the Tower of Babel code base, with source code generation removed.  Tower of Babel, itself, no-longer generates a .babylon file.  There is an attempt to keep the first pass of both as similar as possible using diff tools.  Either exporter can be used in Blender without the other.  
 
 They can also both be present.  When this is the case, the custom properties of only one will display, the last used or installed.  You can also explicitly turn one off in Blender Preferences.  Fortunately, the common properties are named the same, so the settings transfer back and forth.
+
+##New in 4.4##
+- Support for saving textures in a sub-directory from the main file.
 
 ##New in 4.3##
 - Fixes from 4.2.1: Node typo, better .ik bone detection, & rest pose for bones.
