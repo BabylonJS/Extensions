@@ -1,7 +1,7 @@
 bl_info = {
     'name': 'Tower of Babel',
     'author': 'David Catuhe, Jeff Palmer',
-    'version': (4, 4, 0),
+    'version': (4, 4, 1),
     'blender': (2, 75, 0),
     'location': 'File > Export > Tower of Babel [.js + .d.ts]',
     'description': 'Translate to inline JavaScript & TypeScript modules',
@@ -317,7 +317,8 @@ class Main(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             if not scene.inlineTextures:
                 self.textureDir = os.path.join(self.textureDir, scene.textureDir)
                 if not os.path.isdir(self.textureDir):
-                    raise EnvironmentError('directory for textures, ' + self.textureDir + ', DOES NOT EXIST')
+                    os.makedirs(self.textureDir)
+                    Main.warn("Texture sub-directory did not already exist, created: " + self.textureDir)
 
             Main.log('========= Conversion from Blender to Babylon.js =========', 0)
             Main.log('Scene settings used:', 1)
