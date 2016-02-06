@@ -1,45 +1,46 @@
-# CastorGUI
+# CastorGUI V1.5
 
 **A Babylon.js extension to create a GUI**
 
-# What's that ?
-CastorGUI is an extension for the 3D engine [Babylon.js](www.babylonjs.com) but can also fit any other game engine which uses a canvas and provide a class set to display a game GUI as a layer on top of the canvas HTML/CSS.
-
-* [You can find the extension here](https://github.com/dad72/CastorGUI)
-* [Demo online of this extension](http://www.castorengine.com/castorengine/Data/JS/CastorGUI/demo)
-* [Tutorial English](https://github.com/dad72/CastorGUI/wiki)
-* [Tutorial French](https://bitbucket.org/Dad72/castorengine/wiki/Utiliser%20le%20systeme%20GUI%20dans%20les%20scripts)
+* [Demo online of this extension](http://www.babylon.actifgames.com/demoCastorGUI/)
+* [Tutorial](https://github.com/dad72/CastorGUI/wiki)
 * [Documentation](https://github.com/dad72/CastorGUI/tree/master/doc)
 
 ## Features:
 
-* Create texture
-* Create text
-* Create window draggable (with title & button close)
-* Create dialog (with button close)
-* Create panel (simple dialog without button close)
-* Create button
-* Create slider
-* Create progress
-* Create spinner
-* Create meter
-* Create radio button
-* Create checkbox
-* Create textfield
-* Create textarea
-* Create label
-* Create fieldset
-* Create select with options
+Select or create themes.
 
-## Quick overview of use 
+Create GUI (element html5 and css3):
+* texture
+* text
+* label
+* window draggable (with title & button close)
+* dialog (with button close)
+* panel (simple dialog without button close)
+* button
+* slider
+* progress
+* meter (jauge de measure)
+* select color (with compatitility IE and Edge)
+* spinner
+* radio button
+* checkbox
+* textfield
+* textarea
+* fieldset
+* select with options
+
+## Quick overview of use
 
 We must create a GUIManager that allows to recover the origin of the canvas and provides other basic thing.
 A GUIManager can have a CSS that Formatted anything you want to customize your GUI.
+You can also options to add a theme in the third parameter.
 
 ```javascript
 var canvas = document.getElementById("game");
 var css = "button {cursor:pointer;}";
-var guisystem = new CASTORGUI.GUIManager(canvas, css);
+var options = {themeRoot: "../style/", themeGUI: "default"};
+var guisystem = new CASTORGUI.GUIManager(canvas, css, options);
 ```
 Then we create interfaces items. eg textures and dialog with text:
 
