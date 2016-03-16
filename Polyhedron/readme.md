@@ -24,4 +24,4 @@ var squareAntiPrism = { "name":"Square Antiprism", "category":["Antiprism"],
 var mesh = BABYLON.Mesh.CreatePolyhedron("sap", {custom: squareAntiPrism}, scene);
 ```
 
-Display of all the polyhedron types from this file : _PG URL_
+Display of all the polyhedron types from this file : http://www.babylonjs-playground.com/frame.html#21QRSK#1  
