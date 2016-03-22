@@ -16,23 +16,23 @@
   
 1. Do not work directly with text. 
                     
-2. can used your custom text anywhere you want.
+2. Can used your custom text anywhere you want.
                     
-3. don't need make shader language structer.
+3. Don't need make shader language structer.
                     
-4. don't need make shader material in framework.
+4. Don't need make shader material in framework.
                     
-5. can have your output shader anytime you want.
+5. Can have your output shader anytime you want.
                     
-6. can make all standard material with this .
+6. Can make all standard material with this .
                     
-7. some useful function let you mix the materials .
+7. Some useful function let you mix the materials .
                     
-8. can make your custom function and use it always .
+8. Can make your custom function and use it always .
                     
-9. work with shader like javascript language.
+9. Work with shader like javascript language.
                     
-10. short and undrastandable structure.
+10. Short and understandable structure.
                     
                   
 Anything in here is a solution for make easy way to solve a problem.
