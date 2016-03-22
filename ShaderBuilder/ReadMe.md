@@ -12,40 +12,35 @@
   
   Eash Is collection of javascript functions ( and classes) for make easily webgl vertex shader and fragment shader. 
   
-  Benefits. 
+##Benefits. 
   
-                    a. do not work directly with text. 
+1. Do not work directly with text. 
                     
-                    b. can used your custom text anywhere you want.
+2. can used your custom text anywhere you want.
                     
-                    c. don't need make shader language structer.
+3. don't need make shader language structer.
                     
-                    d. don't need make shader material in framework.
+4. don't need make shader material in framework.
                     
-                    e. can have your output shader anytime you want.
+5. can have your output shader anytime you want.
                     
-                    f. can make all standard material with this .
+6. can make all standard material with this .
                     
-                    g. some useful function let you mix the materials .
+7. some useful function let you mix the materials .
                     
-                    h. can make your custom function and use it always .
+8. can make your custom function and use it always .
                     
-                    i. work with shader like javascript language.
+9. work with shader like javascript language.
                     
-                    j. short and undrastandable structure.
+10. short and undrastandable structure.
                     
                   
-
- anything in here is a solution for make easy way to solve a problem.
-  so when we look shader parts (fragment and vertex) we see Low-level programming language and that is hard to programming in this language with other high-level language (javascript in this case).
+Anything in here is a solution for make easy way to solve a problem.
+So when we look shader parts (fragment and vertex) we see Low-level programming language and that is hard to programming in this language with other high-level language (javascript in this case).
   
-                        why : shader is Low-level programming language. 
-                     
-                        what: define some structure and function to make easy and understandable .
-                        
-                        who : all babylonjs users . 
-                        
-                        when : anytime we need a matrial or postprocess we can use that.
-                        
-                        where : in Browsers can be support WebGl. 
+* why : shader is Low-level programming language. 
+* what: define some structure and function to make easy and understandable.
+* who : all babylonjs users. 
+* when : anytime we need a matrial or postprocess we can use that.
+* where : in Browsers can be support WebGl. 
                    
