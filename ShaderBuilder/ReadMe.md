@@ -1,21 +1,17 @@
- <h1 >Shader Builder Requirement</h1>
+#Shader Builder Requirement#
   1. BabylonJs all version 
   2. Eash.min.js
   3. Know About how work Shader 
-  
-  // You Can Be Perfesional in Eash if You Know :</div>
   4. Mathematicals  
-    a. Basic
-    b. Vector 2D,3D and Matrix System <a   href="https://en.wikipedia.org/wiki/Vector_(mathematics_and_physics)">learn now</a>
-    c. Mathematicals functions, special <a   href="https://en.wikipedia.org/wiki/Trigonometric_functions">Trigonometric functions</a> 
+    1. Basic
+    2. Vector 2D,3D and Matrix System <a   href="https://en.wikipedia.org/wiki/Vector_(mathematics_and_physics)">learn now</a>
+    3. Mathematicals functions, special <a   href="https://en.wikipedia.org/wiki/Trigonometric_functions">Trigonometric functions</a> 
   5. WebGl <a  href="http://mew.cx/glsl_quickref.pdf">reference</a> 
 
-  <h1 >About Shader Builder </h1> 
+#About Shader Builder#
   
   Eash Is collection of javascript functions ( and classes) for make easily webgl vertex shader and fragment shader. 
   
-      
-      
   Benefits. 
   
                     a. do not work directly with text. 
