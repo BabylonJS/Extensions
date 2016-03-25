@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    <title>Babylon.js Easy Shader sample code</title>
+
+    <!-- Babylon.js -->
+    <script src="Scripts/handjs.js"></script>
+    <script src="Scripts/Babylonjs.js"></script> 
+    <script src="ShaderBuilder.js"></script>
+
+    <style>
+        html, body {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+
+
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <canvas id="renderCanvas"></canvas>
+
+    <script>
+
+        var canvas = document.getElementById("renderCanvas");
+
+        var engine = new BABYLON.Engine(canvas, true);
+
+        BABYLON.ShaderBuilder.InitializeEngine();
+      
+
+
+        var camera, time = 5000000;
+        var sphere;
+        var createScene = function () {
+
+            var scene = new BABYLON.Scene(engine);
+
+            camera = new BABYLON.ArcRotateCamera("camera1", 2, 2, 50, new BABYLON.Vector3(0, 5, -100), scene);
+
+            camera.setTarget(BABYLON.Vector3.Zero());
+
+            camera.attachControl(canvas, true);
+
+            var light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
+
+            light.intensity = 0.7; 
+            sphere = new BABYLON.Mesh.CreateSphere("sphere1", 200, 5 , scene);
+             
+
+            sphere.material = new BABYLON.ShaderBuilder()
+                 .Solid({a:0.})
+                 .Reflect({ path: '/images/cube/w.jpg' , bias:0., equirectangular:true },1.)
+                .Effect({ pr: 'length(vec3(px,py,pz)) ' })
+                .Effect({ pr: 'pow(pr,3.)*13.' })
+
+                    .Light({ normal: 'nrm', color: { r: 1., g: 1., b: 1., a: 1. }, supplement: true, direction: 'camera', phonge: '63' })
+              .Light({ normal: 'nrm', color: { r: 1., g: 1., b: 1., a: 1. } ,  phonge: '1' })
+                .Light({ normal: 'nrm', color: { r: 0., g: 0., b: 0., a: 1. }, supplement: true, direction: 'camera', darkColorMode: true, phonge: '153' })
+                .Transparency()
+               .BuildMaterial(scene); 
+
+            //rester action
+            sphere.actionManager = new BABYLON.ActionManager(scene);
+            sphere.actionManager.registerAction(
+                new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickUpTrigger, (pEvent) => {
+                    sphere.material.flagUp(5);
+                }));
+
+            sphere.actionManager.registerAction(
+                new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPointerOverTrigger, (pEvent) => {
+                    sphere.material.flagUp(4);
+                }));
+
+            sphere.actionManager.registerAction(
+                new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPointerOutTrigger, (pEvent) => {
+                    sphere.material.flagDown(4);
+                })); 
+
+            sphere.on
+
+
+
+            return scene;
+
+        };
+
+        var scene = createScene();
+
+        engine.runRenderLoop(function () {
+            time++;
+
+            new BABYLON.ShaderMaterialHelper().SetUniforms(
+                scene.meshes,
+                camera.position,
+                camera.target,
+                 { x: 0, y: 0 },
+                 { x: 100, y: 100 },
+                 time);
+
+            scene.render();
+
+        });
+
+        window.addEventListener("resize", function () {
+
+            engine.resize();
+
+        });
+
+    </script>
+
+</body>
+
+</html>
+
