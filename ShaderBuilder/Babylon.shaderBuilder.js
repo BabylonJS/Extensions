@@ -319,9 +319,9 @@ var BABYLON;
     " + ShaderMaterialHelperStatics.Position + " = " + ShaderMaterialHelperStatics.AttrPosition + "; \n\
     " + ShaderMaterialHelperStatics.Normal + " = " + ShaderMaterialHelperStatics.AttrNormal + "; \n\
     vec4 result = vec4(" + ShaderMaterialHelperStatics.Position + ",1.);  \n\
-      vuv = uv;\n\
-     #[Source]\n\
+    #[Source] \n\
     gl_Position = worldViewProjection * result;\n\
+                vuv = uv;\n\
     #[AfterFinishVertex] \n\
  }");
             // start Build Fragment Frame 
@@ -544,7 +544,8 @@ void main(void) { \n\
                 " vec4 color#[Ind] = texture2D(" +
                     ShaderMaterialHelperStatics.Texture2D + s + " ,ppo#[Ind].xy*vec2(" +
                     Shader.Print(option.scaleX) + "," + Shader.Print(option.scaleY) + ")+vec2(" +
-                    Shader.Print(option.x) + "," + Shader.Print(option.y) + ")" + (option.bias == null || Shader.Print(option.bias) == '0.' ? "" : "," + Shader.Print(option.bias)) + ");",
+                    Shader.Print(option.x) + "," + Shader.Print(option.y) + ")" +
+                    (option.bias != null ? "," + Shader.Print(option.bias) : "") + ");",
                 " if(nrm#[Ind].z < " + Shader.Print(option.normalLevel) + "){ ",
                 (option.alpha ? " result =  color#[Ind];" : "result = vec4(color#[Ind].rgb , 1.); "),
                 "}"]);
@@ -840,7 +841,7 @@ void main(void) { \n\
                     ' vec3 vReflect#[Ind] = normalize( reflect( normalize(  ' + ShaderMaterialHelperStatics.Camera + '- vec3(world * vec4(' + ShaderMaterialHelperStatics.Position + ', 1.0))),  nWorld#[Ind] ) ); ' +
                     'float yaw#[Ind] = .5 - atan( vReflect#[Ind].z, -1.* vReflect#[Ind].x ) / ( 2.0 * 3.14159265358979323846264);  ' +
                     ' float pitch#[Ind] = .5 - atan( vReflect#[Ind].y, length( vReflect#[Ind].xz ) ) / ( 3.14159265358979323846264);  ' +
-                    ' vec3 color#[Ind] = texture2D( ' + ShaderMaterialHelperStatics.Texture2D + s + ', vec2( yaw#[Ind], pitch#[Ind])' + (option.bias == null || Shader.Print(option.bias) == '0.' ? "" : "," + Shader.Print(option.bias)) + ' ).rgb; result = vec4(color#[Ind] ,1.);';
+                    ' vec3 color#[Ind] = texture2D( ' + ShaderMaterialHelperStatics.Texture2D + s + ', vec2( yaw#[Ind], pitch#[Ind]),' + Shader.Print(option.bias) + ' ).rgb; result = vec4(color#[Ind] ,1.);';
             }
             else {
                 option.path = Shader.Def(option.path, "/images/cube/a");
@@ -852,7 +853,7 @@ void main(void) { \n\
                     "vec3 coords#[Ind] = " + (option.refract ? "refract" : "reflect") + "(viewDir#[Ind]" + (option.revers ? "*vec3(1.0)" : "*vec3(-1.0)") + ", " + option.normal + " " + (option.refract ? ",(" + Shader.Print(option.refractMap) + ")" : "") + " )+" + ShaderMaterialHelperStatics.Position + "; ",
                     "vec3 vReflectionUVW#[Ind] = vec3( " + ShaderMaterialHelperStatics.ReflectMatrix + " *  vec4(coords#[Ind], 0)); ",
                     "vec3 rc#[Ind]= textureCube(" +
-                        ShaderMaterialHelperStatics.TextureCube + s + ", vReflectionUVW#[Ind] " + (option.bias == null || Shader.Print(option.bias) == '0.' ? "" : "," + Shader.Print(option.bias)) + ").rgb;",
+                        ShaderMaterialHelperStatics.TextureCube + s + ", vReflectionUVW#[Ind]," + Shader.Print(option.bias) + ").rgb;",
                     "result =result  + vec4(rc#[Ind].x ,rc#[Ind].y,rc#[Ind].z, " + (!option.alpha ? "1." : "(rc#[Ind].x+rc#[Ind].y+rc#[Ind].z)/3.0 ") + ")*(min(1.,max(0.," + Shader.Print(option.reflectMap) + ")));  "
                 ].join('\n\
             ');
@@ -929,9 +930,9 @@ void main(void) { \n\
                 " float  ph#[Ind]= pow(" + Shader.Print(option.phonge) + "*2., (" + Shader.Print(option.phongePower) + "*0.3333))/(" + Shader.Print(option.phongeLevel) + "*3.) ;  ",
                 "  float ndl#[Ind] = max(0., dot(vnrm#[Ind], l#[Ind]));                            ",
                 "  float ls#[Ind] = " + (option.supplement ? "1.0 -" : "") + "max(0.,min(1.,ndl#[Ind]*ph#[Ind]*(" + Shader.Print(option.reducer) + "))) ;         ",
-                "  result  += vec4( c1#[Ind].xyz*( ls#[Ind])*" + Shader.Print(c_c.a) + " ,  ls#[Ind]); ",
-                "  float ls2#[Ind] = " + (option.supplement ? "0.*" : "1.*") + "max(0.,min(1., sc#[Ind]*(" + Shader.Print(option.reducer) + "))) ;         ",
-                "  result  += vec4( c1#[Ind].xyz*( ls2#[Ind])*" + Shader.Print(c_c.a) + " ,  ls2#[Ind]); ",
+                "  result  += vec4( c1#[Ind].xyz*( ls#[Ind])*" + Shader.Print(c_c.a) + " , ls#[Ind]); ",
+                "  float ls2#[Ind] = " + (option.supplement ? "1.0 -" : "") + "max(0.,min(1., sc#[Ind]*(" + Shader.Print(option.reducer) + "))) ;         ",
+                "  result  += vec4( c1#[Ind].xyz*( ls2#[Ind])*" + Shader.Print(c_c.a) + " , ls2#[Ind]); ",
             ]);
             sresult = Shader.Replace(sresult, '#[Ind]', "_" + Shader.Indexer + "_");
             this.Body = Shader.Def(this.Body, "");
