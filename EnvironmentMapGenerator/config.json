@@ -1,0 +1,5 @@
+{
+  "sourceFiles": ["src/**/*.ts"],
+  "distDirectory": "dist/",
+  "distFile": "babylonx.environmentmapgenerator.js"
+}
