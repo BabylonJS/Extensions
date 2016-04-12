@@ -8,13 +8,13 @@ In order to help decreasing this processing time, the environment map generator 
 
 ## What is it ?
 
-This tool simply preprocessed you hdr texture and pack them in an efficient binary format fully compativle with BJS.
+This tool preprocesses your hdr texture(s) and pack them in an efficient binary format that is fully compativle with Babylon.js.
 
 ## How to use ?
 
 After cloning the babylon extension repository, open a command prompt in the Environment Map Generator folder.
 
-First install the node required dependencies:
+First install the required dependencies:
 
 ```
 npm install
@@ -26,7 +26,7 @@ Then run the tool with the following command:
 gulp webserver
 ```
 
-Once the window is open, you can simply drag and drop your .hdr files (lots of examples are available on [HDRLib](http://hdrlib.com)).
+Once the window is open, simply drag and drop your .hdr files (lots of examples are available on [HDRLib](http://hdrlib.com)).
 
 You now have to wait for a while (the bigger the size the longer the wait) and you preprocessed file will be downloaded.
 
