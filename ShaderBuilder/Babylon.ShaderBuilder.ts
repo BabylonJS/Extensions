@@ -211,23 +211,23 @@ module BABYLONX {
         attributes: string[]
     }
 
-    export class ShaderMaterialHelper<iScene>{
-        ShaderMaterial(name: string, scene: iScene, shader: ShaderStruct, helpers: ShaderHelper) {
+    export class ShaderMaterialHelper<Scene>{
+        ShaderMaterial(name: string, scene: Scene, shader: ShaderStruct, helpers: ShaderHelper) {
             return this.MakeShaderMaterialForEngine(name, scene, shader, helpers);
         }
-        MakeShaderMaterialForEngine(name: string, scene: iScene, shader: ShaderStruct, helpers: ShaderHelper) { return {}; }
-        DefineTexture(txt: ITexture, scene: iScene) {
+        MakeShaderMaterialForEngine(name: string, scene: Scene, shader: ShaderStruct, helpers: ShaderHelper) { return {}; }
+        DefineTexture(txt: ITexture, scene: Scene) {
 
             return null;
         }
-        DefineCubeTexture(txt: ITexture, scene: iScene) {
+        DefineCubeTexture(txt: ITexture, scene: Scene) {
             return null;
         }
         SetUniforms(meshes: any, cameraPos: any, cameraTarget: any, mouse: any, screen: any, time: any) {
 
         }
         PostProcessTextures(pps: any, name: string, txt: any) { }
-        DefineRenderTarget(name: string, scale: number, scene: iScene) {
+        DefineRenderTarget(name: string, scale: number, scene: Scene) {
             return {};
         }
         ShaderPostProcess(name: string, samplers: any, camera: any, scale: number, shader: ShaderStruct, helpers: ShaderHelper, option: IPostProcess) {
