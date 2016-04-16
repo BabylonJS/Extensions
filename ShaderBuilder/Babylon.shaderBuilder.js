@@ -1,5 +1,5 @@
-var BABYLON;
-(function (BABYLON) {
+var BABYLONX;
+(function (BABYLONX) {
     var ShaderMaterialHelperStatics = (function () {
         function ShaderMaterialHelperStatics() {
         }
@@ -41,8 +41,8 @@ var BABYLON;
         ShaderMaterialHelperStatics.Texture2D = "txtRef_";
         ShaderMaterialHelperStatics.TextureCube = "cubeRef_";
         return ShaderMaterialHelperStatics;
-    })();
-    BABYLON.ShaderMaterialHelperStatics = ShaderMaterialHelperStatics;
+    }());
+    BABYLONX.ShaderMaterialHelperStatics = ShaderMaterialHelperStatics;
     var Normals = (function () {
         function Normals() {
         }
@@ -52,14 +52,15 @@ var BABYLON;
         Normals.Flat = 'normalize(cross(dFdx(' + ShaderMaterialHelperStatics.Position + ' * -1.), dFdy(' + ShaderMaterialHelperStatics.Position + ')))';
         Normals.Map = 'normalMap()';
         return Normals;
-    })();
-    BABYLON.Normals = Normals;
+    }());
+    BABYLONX.Normals = Normals;
     var Speculars = (function () {
         function Speculars() {
         }
         Speculars.Map = 'specularMap()';
         return Speculars;
-    })();
+    }());
+    BABYLONX.Speculars = Speculars;
     var ShaderMaterialHelper = (function () {
         function ShaderMaterialHelper() {
         }
@@ -75,9 +76,16 @@ var BABYLON;
         };
         ShaderMaterialHelper.prototype.SetUniforms = function (meshes, cameraPos, cameraTarget, mouse, screen, time) {
         };
+        ShaderMaterialHelper.prototype.PostProcessTextures = function (pps, name, txt) { };
+        ShaderMaterialHelper.prototype.DefineRenderTarget = function (name, scale, scene) {
+            return {};
+        };
+        ShaderMaterialHelper.prototype.ShaderPostProcess = function (name, samplers, camera, scale, shader, helpers, option) {
+            return {};
+        };
         return ShaderMaterialHelper;
-    })();
-    BABYLON.ShaderMaterialHelper = ShaderMaterialHelper;
+    }());
+    BABYLONX.ShaderMaterialHelper = ShaderMaterialHelper;
     var Shader = (function () {
         function Shader() {
         }
@@ -114,10 +122,38 @@ var BABYLON;
         Shader.DefCustom = function (t, c) {
             this.Me.Body += t + " custom_" + this.Print(++this.Me.CustomIndexer) + "_ = " + c + ";";
         };
+        Shader.toRGB = function (a, b) {
+            b = Shader.Def(b, 255);
+            var x = a - Math.floor(a / b) * b;
+            a = Math.floor(a / b);
+            var y = a - Math.floor(a / b) * b;
+            a = Math.floor(a / b);
+            var z = a - Math.floor(a / b) * b;
+            if (x > 126)
+                x++;
+            if (y > 126)
+                y++;
+            if (z > 126)
+                z++;
+            return { r: x, g: y, b: z };
+        };
+        Shader.torgb = function (a, b) {
+            b = Shader.Def(b, 255);
+            var i = Shader.toRGB(a, b);
+            return { r: i.r / 256, g: i.g / 256, b: i.b / 256 };
+        };
+        Shader.toID = function (a, b) {
+            b = Shader.Def(b, 255);
+            var c = 255 / b;
+            var x = Math.floor(a.r / c);
+            var y = Math.floor(a.g / c);
+            var z = Math.floor(a.b / c);
+            return z * b * b + y * b + x;
+        };
         Shader._null = 'set null anyway';
         return Shader;
-    })();
-    BABYLON.Shader = Shader;
+    }());
+    BABYLONX.Shader = Shader;
     var Helper = (function () {
         function Helper() {
             var setting = Shader.Me.Setting;
@@ -126,6 +162,9 @@ var BABYLON;
             instance.Setting = setting;
             return instance;
         }
+        Helper.Depth = function (far) {
+            return 'max(0.,min(1.,(' + Shader.Print(far) + '-abs(length(camera-pos)))/' + Shader.Print(far) + ' ))';
+        };
         Helper.Red = 0;
         Helper.Yellow = 1;
         Helper.White = 2;
@@ -135,15 +174,15 @@ var BABYLON;
         Helper.Black = 7;
         Helper.Green = 8;
         return Helper;
-    })();
-    BABYLON.Helper = Helper;
+    }());
+    BABYLONX.Helper = Helper;
     var ShaderSetting = (function () {
         function ShaderSetting() {
             this.PrecisionMode = ShaderMaterialHelperStatics.PrecisionHighMode;
         }
         return ShaderSetting;
-    })();
-    BABYLON.ShaderSetting = ShaderSetting;
+    }());
+    BABYLONX.ShaderSetting = ShaderSetting;
     var ShaderBuilder = (function () {
         function ShaderBuilder() {
             this.Setting = new ShaderSetting();
@@ -168,12 +207,17 @@ var BABYLON;
             Shader.Me = this;
         }
         ShaderBuilder.InitializeEngine = function () {
-            eval(BABYLON.Shader.Replace(BABYLON.Shader.Replace("BABYLON.ShaderMaterialHelper.prototype.MakeShaderMaterialForEngine=function(name,scene,shader,helpers){BABYLON.Effect.ShadersStore[name+#[QT]VertexShader#[QT]]=shader.Vertex;BABYLON.Effect.ShadersStore[name+#[QT]PixelShader#[QT]]=shader.Pixel;return new BABYLON.ShaderMaterial(name,scene,{vertex:name,fragment:name},helpers);}", "#[QT]", '"'), '#[T]', "'"));
-            eval(BABYLON.Shader.Replace(BABYLON.Shader.Replace("BABYLON.ShaderMaterialHelper.prototype.DefineTexture = function (option, sc) { var tx = new BABYLON.Texture(option, sc); return tx; } ", "#[QT]", '"'), '#[T]', "'"));
-            eval(BABYLON.Shader.Replace(BABYLON.Shader.Replace("BABYLON.ShaderMaterialHelper.prototype.DefineCubeTexture = function (option, sc) { var tx = new BABYLON.CubeTexture(option, sc); tx.coordinatesMode = BABYLON.Texture.PLANAR_MODE; return tx; }  ", "#[QT]", '"'), '#[T]', "'"));
-            eval(BABYLON.Shader.Replace(BABYLON.Shader.Replace("BABYLON.ShaderMaterialHelper.prototype.SetUniforms = function (meshes, cameraPos, cameraTarget, mouse, screen, time) { for (var ms in meshes) { ms = meshes[ms]; if (ms.material && (ms.material.ShaderSetting != null || ms.material.ShaderSetting != undefined)) { if (ms.material.ShaderSetting.Camera)                ms.material.setVector3(BABYLON.ShaderMaterialHelperStatics.Camera, cameraPos); if (ms.material.ShaderSetting.Center)                ms.material.setVector3(BABYLON.ShaderMaterialHelperStatics.Center, { x: 0., y: 0., z: 0. }); if (ms.material.ShaderSetting.Mouse)                ms.material.setVector2(BABYLON.ShaderMaterialHelperStatics.Mouse, mouse); if (ms.material.ShaderSetting.Screen)                ms.material.setVector2(BABYLON.ShaderMaterialHelperStatics.Screen, screen); if (ms.material.ShaderSetting.GlobalTime)                ms.material.setVector4(BABYLON.ShaderMaterialHelperStatics.GlobalTime, { x: 0., y: 0., z: 0., w: 0. }); if (ms.material.ShaderSetting.Look)                ms.material.setVector3(BABYLON.ShaderMaterialHelperStatics.Look, cameraTarget); if (ms.material.ShaderSetting.Time)                ms.material.setFloat(BABYLON.ShaderMaterialHelperStatics.Time, time);        }        }    }", "#[QT]", '"'), '#[T]', "'"));
+            eval(Shader.Replace(Shader.Replace("BABYLONX.ShaderMaterialHelper.prototype.MakeShaderMaterialForEngine=function(name,scene,shader,helpers){BABYLON.Effect.ShadersStore[name+#[QT]VertexShader#[QT]]=shader.Vertex;BABYLON.Effect.ShadersStore[name+#[QT]PixelShader#[QT]]=shader.Pixel;return new BABYLON.ShaderMaterial(name,scene,{vertex:name,fragment:name},helpers);}", "#[QT]", '"'), '#[T]', "'"));
+            eval(Shader.Replace(Shader.Replace("BABYLONX.ShaderMaterialHelper.prototype.DefineTexture = function (option, sc) { var tx = new BABYLON.Texture(option, sc); return tx; } ", "#[QT]", '"'), '#[T]', "'"));
+            eval(Shader.Replace(Shader.Replace("BABYLONX.ShaderMaterialHelper.prototype.DefineCubeTexture = function (option, sc) { var tx = new BABYLON.CubeTexture(option, sc); tx.coordinatesMode = BABYLON.Texture.PLANAR_MODE; return tx; }  ", "#[QT]", '"'), '#[T]', "'"));
+            eval(Shader.Replace(Shader.Replace("BABYLONX.ShaderMaterialHelper.prototype.SetUniforms = function (meshes, cameraPos, cameraTarget, mouse, screen, time) { for (var ms in meshes) { ms = meshes[ms]; if (ms.material && (ms.material.ShaderSetting != null || ms.material.ShaderSetting != undefined)) { if (ms.material.ShaderSetting.Camera)                ms.material.setVector3(BABYLONX.ShaderMaterialHelperStatics.Camera, cameraPos); if (ms.material.ShaderSetting.Center)                ms.material.setVector3(BABYLONX.ShaderMaterialHelperStatics.Center, { x: 0., y: 0., z: 0. }); if (ms.material.ShaderSetting.Mouse)                ms.material.setVector2(BABYLONX.ShaderMaterialHelperStatics.Mouse, mouse); if (ms.material.ShaderSetting.Screen)                ms.material.setVector2(BABYLONX.ShaderMaterialHelperStatics.Screen, screen); if (ms.material.ShaderSetting.GlobalTime)                ms.material.setVector4(BABYLONX.ShaderMaterialHelperStatics.GlobalTime, { x: 0., y: 0., z: 0., w: 0. }); if (ms.material.ShaderSetting.Look)                ms.material.setVector3(BABYLONX.ShaderMaterialHelperStatics.Look, cameraTarget); if (ms.material.ShaderSetting.Time)                ms.material.setFloat(BABYLONX.ShaderMaterialHelperStatics.Time, time);        }        }    }", "#[QT]", '"'), '#[T]', "'"));
+            eval(Shader.Replace(Shader.Replace("BABYLONX.ShaderMaterialHelper.prototype.ShaderPostProcess = function (name, samplers, camera, scale, shader, helpers, option) {if (!option) option = {};if (!option.samplingMode) option.samplingMode = BABYLON.Texture.BILINEAR_SAMPLINGMODE;BABYLON.Effect.ShadersStore[name + #[QT]PixelShader#[QT]] = shader.Pixel;var pps = new BABYLON.PostProcess(name, name, helpers.uniforms, samplers, scale, camera, option.samplingMode);pps.onApply = function (effect) {effect.setFloat(#[T]time#[T], time);effect.setVector2(#[QT]screen#[QT], { x: pps.width, y: pps.height });effect.setVector3(#[QT]camera#[QT], camera.position);if (option && option.onApply)option.onApply(effect);};return pps;} ", "#[QT]", '"'), '#[T]', "'"));
+            eval(Shader.Replace(Shader.Replace("BABYLONX.ShaderMaterialHelper.prototype.PostProcessTextures = function (pps, name, txt) {pps._effect.setTexture(name, txt);}", "#[QT]", '"'), '#[T]', "'"));
         };
-        ShaderBuilder.prototype.PrepareBeforeMaterialBuild = function (scene) {
+        ShaderBuilder.InitializePostEffects = function (scene, scale) {
+            ShaderBuilder.ColorIdRenderTarget = new ShaderMaterialHelper().DefineRenderTarget("ColorId", scale, scene);
+        };
+        ShaderBuilder.prototype.PrepareBeforeMaterialBuild = function () {
             this.Setting = Shader.Me.Setting;
             this.Attributes.push(ShaderMaterialHelperStatics.AttrPosition);
             this.Attributes.push(ShaderMaterialHelperStatics.AttrNormal);
@@ -260,6 +304,9 @@ var BABYLON;
                     }
                 }
             }
+            if (this.Setting.CameraShot) {
+                this.Fragment.push("uniform  sampler2D  textureSampler;");
+            }
             if (this.Setting.TextureCubes != null) {
                 for (var s in this.Setting.TextureCubes) {
                     if (this.Setting.TextureCubes[s].inVertex) {
@@ -319,9 +366,9 @@ var BABYLON;
     " + ShaderMaterialHelperStatics.Position + " = " + ShaderMaterialHelperStatics.AttrPosition + "; \n\
     " + ShaderMaterialHelperStatics.Normal + " = " + ShaderMaterialHelperStatics.AttrNormal + "; \n\
     vec4 result = vec4(" + ShaderMaterialHelperStatics.Position + ",1.);  \n\
-    #[Source] \n\
+      vuv = uv;\n\
+     #[Source]\n\
     gl_Position = worldViewProjection * result;\n\
-                vuv = uv;\n\
     #[AfterFinishVertex] \n\
  }");
             // start Build Fragment Frame 
@@ -336,6 +383,82 @@ var BABYLON;
             this.Fragment.push(" \n\
 void main(void) { \n\
      int discardState = 0;\n\
+     vec4 result = vec4(0.);\n\
+     #[Source] \n\
+     if(discardState == 0)gl_FragColor = result; \n\
+}");
+        };
+        ShaderBuilder.prototype.PrepareBeforePostProcessBuild = function () {
+            this.Setting = Shader.Me.Setting;
+            this.Attributes.push(ShaderMaterialHelperStatics.AttrPosition);
+            // start Build Vertex Frame 
+            /*#extension GL_OES_standard_derivatives : enable*/
+            this.Fragment.push("precision " + this.Setting.PrecisionMode + " float;\n\
+\n\
+ ");
+            if (this.Setting.Uv) {
+                this.Fragment.push("varying vec2 vUV;");
+            }
+            if (this.Setting.Flags) {
+                this.Fragment.push("uniform  float " + ShaderMaterialHelperStatics.uniformFlags + ";");
+            }
+            if (this.Setting.Texture2Ds != null) {
+                for (var s in this.Setting.Texture2Ds) {
+                    if (this.Setting.Texture2Ds[s].inFragment) {
+                        this.Fragment.push("uniform  sampler2D  " + ShaderMaterialHelperStatics.Texture2D + s + ";");
+                    }
+                }
+            }
+            if (this.PPSSamplers != null) {
+                for (var s in this.PPSSamplers) {
+                    if (this.PPSSamplers[s]) {
+                        this.Fragment.push("uniform  sampler2D  " + this.PPSSamplers[s] + ";");
+                    }
+                }
+            }
+            if (this.Setting.CameraShot) {
+                this.Fragment.push("uniform  sampler2D  textureSampler;");
+            }
+            if (this.Setting.Mouse) {
+                this.Fragment.push("uniform  vec2 " + ShaderMaterialHelperStatics.Mouse + ";");
+            }
+            if (this.Setting.Screen) {
+                this.Fragment.push("uniform  vec2 " + ShaderMaterialHelperStatics.Screen + ";");
+            }
+            if (this.Setting.Camera) {
+                this.Fragment.push("uniform  vec3 " + ShaderMaterialHelperStatics.Camera + ";");
+            }
+            if (this.Setting.Look) {
+                this.Fragment.push("uniform  vec3 " + ShaderMaterialHelperStatics.Look + ";");
+            }
+            if (this.Setting.Time) {
+                this.Fragment.push("uniform  float " + ShaderMaterialHelperStatics.Time + ";");
+            }
+            if (this.Setting.GlobalTime) {
+                this.Fragment.push("uniform  vec4 " + ShaderMaterialHelperStatics.GlobalTime + ";");
+            }
+            if (this.Setting.Helpers) {
+                var sresult = Shader.Join([
+                    "vec3 random3(vec3 c) {   float j = 4096.0*sin(dot(c,vec3(17.0, 59.4, 15.0)));   vec3 r;   r.z = fract(512.0*j); j *= .125;  r.x = fract(512.0*j); j *= .125; r.y = fract(512.0*j);  return r-0.5;  } ",
+                    "float rand(vec2 co){   return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453); } ",
+                    "const float F3 =  0.3333333;const float G3 =  0.1666667;",
+                    "float simplex3d(vec3 p) {   vec3 s = floor(p + dot(p, vec3(F3)));   vec3 x = p - s + dot(s, vec3(G3));  vec3 e = step(vec3(0.0), x - x.yzx);  vec3 i1 = e*(1.0 - e.zxy);  vec3 i2 = 1.0 - e.zxy*(1.0 - e);   vec3 x1 = x - i1 + G3;   vec3 x2 = x - i2 + 2.0*G3;   vec3 x3 = x - 1.0 + 3.0*G3;   vec4 w, d;    w.x = dot(x, x);   w.y = dot(x1, x1);  w.z = dot(x2, x2);  w.w = dot(x3, x3);   w = max(0.6 - w, 0.0);   d.x = dot(random3(s), x);   d.y = dot(random3(s + i1), x1);   d.z = dot(random3(s + i2), x2);  d.w = dot(random3(s + 1.0), x3);  w *= w;   w *= w;  d *= w;   return dot(d, vec4(52.0));     }  ",
+                    "float noise(vec3 m) {  return   0.5333333*simplex3d(m)   +0.2666667*simplex3d(2.0*m) +0.1333333*simplex3d(4.0*m) +0.0666667*simplex3d(8.0*m);   } ",
+                    "vec2  rotate_xy(vec2 pr1,vec2  pr2,float alpha) {vec2 pp2 = vec2( pr2.x - pr1.x,   pr2.y - pr1.y );return  vec2( pr1.x + pp2.x * cos(alpha*3.14159265/180.) - pp2.y * sin(alpha*3.14159265/180.),pr1.y + pp2.x * sin(alpha*3.14159265/180.) + pp2.y * cos(alpha*3.14159265/180.));} \n vec3  r_y(vec3 n, float a,vec3 c) {vec3 c1 = vec3( c.x,  c.y,   c.z );c1.x = c1.x;c1.y = c1.z;vec2 p = rotate_xy(vec2(c1.x,c1.y), vec2( n.x,  n.z ), a);n.x = p.x;n.z = p.y;return n; } \n vec3  r_x(vec3 n, float a,vec3 c) {vec3 c1 = vec3( c.x,  c.y,   c.z );c1.x = c1.y;c1.y = c1.z;vec2 p = rotate_xy(vec2(c1.x,c1.y), vec2( n.y,  n.z ), a);n.y = p.x;n.z = p.y;return n; } \n vec3  r_z(vec3 n, float a,vec3 c) {  vec3 c1 = vec3( c.x,  c.y,   c.z );vec2 p = rotate_xy(vec2(c1.x,c1.y), vec2( n.x,  n.y ), a);n.x = p.x;n.y = p.y;return n; }",
+                    "float getIdColor(vec4 a){    float b = 255.;float c = 255. / b;float x = floor(a.x*256. / c);float y = floor(a.y *256./ c);float z = floor(a.z*256. / c);return z * b * b + y * b + x;}"
+                ]);
+                this.Fragment.push(sresult);
+            }
+            if (this.Setting.NormalMap != null) {
+                this.Fragment.push("vec3 normalMap() { vec4 result = vec4(0.);   return result.xyz;}");
+            }
+            // start Build Fragment Frame  
+            this.Fragment.push(this.FragmentBeforeMain);
+            this.Fragment.push(" \n\
+void main(void) { \n\
+     int discardState = 0;\n\
+     vec2 vuv = vUV;\n\
+     vec3 center = vec3(0.);\n\
      vec4 result = vec4(0.);\n\
      #[Source] \n\
      if(discardState == 0)gl_FragColor = result; \n\
@@ -409,7 +532,7 @@ void main(void) { \n\
             return this.Body;
         };
         ShaderBuilder.prototype.BuildMaterial = function (scene) {
-            this.PrepareBeforeMaterialBuild(scene);
+            this.PrepareBeforeMaterialBuild();
             if (Shader.ShaderIdentity == null)
                 Shader.ShaderIdentity = 0;
             Shader.ShaderIdentity++;
@@ -425,6 +548,45 @@ void main(void) { \n\
             });
             Shader.Indexer = 1;
             return this.PrepareMaterial(shaderMaterial, scene);
+        };
+        ShaderBuilder.prototype.BuildPostProcess = function (camera, scene, scale, option) {
+            this.Setting.Screen = true;
+            this.Setting.Mouse = true;
+            this.Setting.Time = true;
+            this.Setting.CameraShot = true;
+            this.PrepareBeforePostProcessBuild();
+            if (Shader.ShaderIdentity == null)
+                Shader.ShaderIdentity = 0;
+            Shader.ShaderIdentity++;
+            var samplers = [];
+            for (var s in this.Setting.Texture2Ds) {
+                samplers.push(ShaderMaterialHelperStatics.Texture2D + s);
+            }
+            if (this.PPSSamplers != null) {
+                for (var s in this.PPSSamplers) {
+                    if (this.PPSSamplers[s]) {
+                        samplers.push(this.PPSSamplers[s]);
+                    }
+                }
+            }
+            var shaderPps = new ShaderMaterialHelper().ShaderPostProcess("ShaderBuilder_" + Shader.ShaderIdentity, samplers, camera, scale, {
+                Pixel: Shader.Join(this.Fragment)
+                    .replace("#[Source]", this.Body),
+                Vertex: Shader.Join(this.Vertex)
+                    .replace("#[Source]", Shader.Def(this.VertexBody, ""))
+                    .replace("#[AfterFinishVertex]", Shader.Def(this.AfterVertex, ""))
+            }, {
+                uniforms: this.Uniforms,
+                attributes: this.Attributes
+            }, option);
+            if (this.Setting.Texture2Ds != null) {
+                for (var s in this.Setting.Texture2Ds) {
+                    // setTexture2D
+                    var texture = new ShaderMaterialHelper().DefineTexture(this.Setting.Texture2Ds[s].key, scene);
+                    new ShaderMaterialHelper().PostProcessTextures(shaderPps, ShaderMaterialHelperStatics.Texture2D + s, texture);
+                }
+            }
+            return shaderPps;
         };
         ShaderBuilder.prototype.Event = function (index, mat) {
             Shader.Me.Setting.Flags = true;
@@ -443,6 +605,26 @@ void main(void) { \n\
         };
         ShaderBuilder.prototype.Transparency = function () {
             Shader.Me.Setting.Transparency = true;
+            return this;
+        };
+        ShaderBuilder.prototype.PostEffect1 = function (id, effect) {
+            if (Shader.Me.PostEffect1Effects == null)
+                Shader.Me.PostEffect1Effects = [];
+            Shader.Me.PostEffect1[id] = effect;
+            return this;
+        };
+        ShaderBuilder.prototype.PostEffect2 = function (id, effect) {
+            if (Shader.Me.PostEffect2Effects == null)
+                Shader.Me.PostEffect2Effects = [];
+            Shader.Me.PostEffect2[id] = effect;
+            return this;
+        };
+        ShaderBuilder.prototype.ImportSamplers = function (txts) {
+            if (Shader.Me.PPSSamplers == null)
+                Shader.Me.PPSSamplers = [];
+            for (var s in txts) {
+                Shader.Me.PPSSamplers.push(txts[s]);
+            }
             return this;
         };
         ShaderBuilder.prototype.Wired = function () {
@@ -488,17 +670,93 @@ void main(void) { \n\
                 Shader.Me.Setting.TextureCubes = [];
             return -1;
         };
+        ShaderBuilder.prototype.Func = function (fun) {
+            return fun(Shader.Me);
+        };
+        ShaderBuilder.prototype.Nut = function (value, option) {
+            Shader.Indexer++;
+            option = Shader.Def(option, {});
+            option.frame = Shader.Def(option.frame, 'sin(time*0.4)');
+            var sresult = Shader.Join([
+                "float nut#[Ind]= " + Shader.Print(value) + ";",
+                "float nut_ts#[Ind] = " + Shader.Print(option.frame) + ";",
+                this.Func(function (me) {
+                    var f = [];
+                    for (var i = 0; i < option.bones.length; i++) {
+                        f.push('vec3 nut_p#[Ind]_' + i + ' = ' + option.bones[i].center + ';');
+                    }
+                    return Shader.Join(f);
+                }),
+                this.Func(function (me) {
+                    var f = [];
+                    for (var i = 0; i < option.bones.length; i++) {
+                        f.push('if(nut#[Ind] ' + option.bones[i].bet + '){ ');
+                        for (var j = 0; j < option.array.length; j++) {
+                            if (option.bones[i].rotation.x != null && option.bones[i].rotation.x != undefined) {
+                                f.push(option.array[j] + ' = r_x(' + option.array[j] +
+                                    ',nut_ts#[Ind]*' + Shader.Print(option.bones[i].rotation.x)
+                                    + ',nut_p#[Ind]_' + i + ');');
+                                for (var v = i + 1; v < option.bones.length; v++) {
+                                    f.push('nut_p#[Ind]_' + v + ' = r_x(nut_p#[Ind]_' + v +
+                                        ',nut_ts#[Ind]*' + Shader.Print(option.bones[i].rotation.x)
+                                        + ',nut_p#[Ind]_' + i + ');');
+                                }
+                            }
+                            if (option.bones[i].rotation.y != null && option.bones[i].rotation.y != undefined) {
+                                f.push(option.array[j] + ' = r_y(' + option.array[j] + ',nut_ts#[Ind]*' + Shader.Print(option.bones[i].rotation.y)
+                                    + ',nut_p#[Ind]_' + i + ');');
+                                for (var v = i + 1; v < option.bones.length; v++) {
+                                    f.push('nut_p#[Ind]_' + v + ' = r_y(nut_p#[Ind]_' + v + ',nut_ts#[Ind]*' + Shader.Print(option.bones[i].rotation.y)
+                                        + ',nut_p#[Ind]_' + i + ');');
+                                }
+                            }
+                            if (option.bones[i].rotation.z != null && option.bones[i].rotation.z != undefined) {
+                                f.push(option.array[j] + ' = r_z(' + option.array[j] + ',nut_ts#[Ind]*' + Shader.Print(option.bones[i].rotation.z)
+                                    + ',nut_p#[Ind]_' + i + ');');
+                                for (var v = i + 1; v < option.bones.length; v++) {
+                                    f.push('nut_p#[Ind]_' + v + ' = r_z(nut_p#[Ind]_' + v + ',nut_ts#[Ind]*' + Shader.Print(option.bones[i].rotation.z)
+                                        + ',nut_p#[Ind]_' + i + ');');
+                                }
+                            }
+                        }
+                        f.push('}');
+                    }
+                    return Shader.Join(f);
+                })
+            ]);
+            this.VertexBody = Shader.Def(this.VertexBody, "");
+            sresult = Shader.Replace(sresult, '#[Ind]', "_" + Shader.Indexer + "_") + " result = vec4(pos,1.);";
+            this.VertexBody += sresult;
+            return this;
+        };
         ShaderBuilder.prototype.Map = function (option) {
             Shader.Indexer++;
             option = Shader.Def(option, { path: '/images/color.png' });
-            var s = Shader.Me.GetMapIndex(option.path);
-            if (s == -1) {
-                Shader.Me.Setting.Texture2Ds.push({ key: option.path, inVertex: option.useInVertex, inFragment: true });
+            var s = 0.;
+            var refInd = '';
+            if (option.index == null || option.index == undefined) {
+                s = Shader.Me.GetMapIndex(option.path);
+                if (s == -1) {
+                    Shader.Me.Setting.Texture2Ds.push({ key: option.path, inVertex: option.useInVertex, inFragment: true });
+                }
+                else {
+                    Shader.Me.Setting.Texture2Ds[s].inVertex = option.useInVertex;
+                }
+                s = Shader.Me.GetMapIndex(option.path);
+                refInd = ShaderMaterialHelperStatics.Texture2D + s;
+            }
+            else if (option.index == "current") {
+                refInd = "textureSampler"; // used Only for postProcess
             }
             else {
-                Shader.Me.Setting.Texture2Ds[s].inVertex = true;
+                var sn = Shader.Replace(option.index.toString(), '-', '0');
+                var reg = new RegExp('^\\d+$');
+                if (reg.test(sn) && option.index.toString().indexOf('.') == -1)
+                    refInd = ShaderMaterialHelperStatics.Texture2D + option.index;
+                else {
+                    refInd = option.index;
+                }
             }
-            s = Shader.Me.GetMapIndex(option.path);
             Shader.Me.Setting.Center = true;
             Shader.Me.Setting.Helpers = true;
             Shader.Me.Setting.Uv = true;
@@ -542,10 +800,9 @@ void main(void) { \n\
 ");
             var sresult = Shader.Join([rotate,
                 " vec4 color#[Ind] = texture2D(" +
-                    ShaderMaterialHelperStatics.Texture2D + s + " ,ppo#[Ind].xy*vec2(" +
+                    refInd + " ,ppo#[Ind].xy*vec2(" +
                     Shader.Print(option.scaleX) + "," + Shader.Print(option.scaleY) + ")+vec2(" +
-                    Shader.Print(option.x) + "," + Shader.Print(option.y) + ")" +
-                    (option.bias != null ? "," + Shader.Print(option.bias) : "") + ");",
+                    Shader.Print(option.x) + "," + Shader.Print(option.y) + ")" + (option.bias == null || Shader.Print(option.bias) == '0.' ? "" : "," + Shader.Print(option.bias)) + ");",
                 " if(nrm#[Ind].z < " + Shader.Print(option.normalLevel) + "){ ",
                 (option.alpha ? " result =  color#[Ind];" : "result = vec4(color#[Ind].rgb , 1.); "),
                 "}"]);
@@ -571,11 +828,11 @@ void main(void) { \n\
                     " float yi2#[Ind] = mod(uvt#[Ind].y -ys#[Ind]*0.5,ys#[Ind])+ys#[Ind]*yid#[Ind]   ;                         ",
                     "                                                                       ",
                     "                                                                       ",
-                    " vec4 f#[Ind] = texture2D(" + ShaderMaterialHelperStatics.Texture2D + s + ",vec2(xi#[Ind],yi#[Ind])) ;                             ",
+                    " vec4 f#[Ind] = texture2D(" + refInd + ",vec2(xi#[Ind],yi#[Ind])) ;                             ",
                     " result =   f#[Ind] ;                                               ",
-                    (option.tiled ? [" vec4 f2#[Ind] = texture2D(" + ShaderMaterialHelperStatics.Texture2D + s + ",vec2(xi2#[Ind]+xid#[Ind] ,yi#[Ind])) ;                      ",
-                        " vec4 f3#[Ind] = texture2D(" + ShaderMaterialHelperStatics.Texture2D + s + ",vec2(xi#[Ind],yi2#[Ind]+yid#[Ind])) ;                       ",
-                        " vec4 f4#[Ind] = texture2D(" + ShaderMaterialHelperStatics.Texture2D + s + ",vec2(xi2#[Ind]+xid#[Ind],yi2#[Ind]+yid#[Ind])) ;                  ",
+                    (option.tiled ? [" vec4 f2#[Ind] = texture2D(" + refInd + ",vec2(xi2#[Ind]+xid#[Ind] ,yi#[Ind])) ;                      ",
+                        " vec4 f3#[Ind] = texture2D(" + refInd + ",vec2(xi#[Ind],yi2#[Ind]+yid#[Ind])) ;                       ",
+                        " vec4 f4#[Ind] = texture2D(" + refInd + ",vec2(xi2#[Ind]+xid#[Ind],yi2#[Ind]+yid#[Ind])) ;                  ",
                         "                                                                       ",
                         "                                                                       ",
                         " float ir#[Ind]  = 0.,ir2#[Ind] = 0.;                                              ",
@@ -841,7 +1098,7 @@ void main(void) { \n\
                     ' vec3 vReflect#[Ind] = normalize( reflect( normalize(  ' + ShaderMaterialHelperStatics.Camera + '- vec3(world * vec4(' + ShaderMaterialHelperStatics.Position + ', 1.0))),  nWorld#[Ind] ) ); ' +
                     'float yaw#[Ind] = .5 - atan( vReflect#[Ind].z, -1.* vReflect#[Ind].x ) / ( 2.0 * 3.14159265358979323846264);  ' +
                     ' float pitch#[Ind] = .5 - atan( vReflect#[Ind].y, length( vReflect#[Ind].xz ) ) / ( 3.14159265358979323846264);  ' +
-                    ' vec3 color#[Ind] = texture2D( ' + ShaderMaterialHelperStatics.Texture2D + s + ', vec2( yaw#[Ind], pitch#[Ind]),' + Shader.Print(option.bias) + ' ).rgb; result = vec4(color#[Ind] ,1.);';
+                    ' vec3 color#[Ind] = texture2D( ' + ShaderMaterialHelperStatics.Texture2D + s + ', vec2( yaw#[Ind], pitch#[Ind])' + (option.bias == null || Shader.Print(option.bias) == '0.' ? "" : "," + Shader.Print(option.bias)) + ' ).rgb; result = vec4(color#[Ind] ,1.);';
             }
             else {
                 option.path = Shader.Def(option.path, "/images/cube/a");
@@ -853,7 +1110,7 @@ void main(void) { \n\
                     "vec3 coords#[Ind] = " + (option.refract ? "refract" : "reflect") + "(viewDir#[Ind]" + (option.revers ? "*vec3(1.0)" : "*vec3(-1.0)") + ", " + option.normal + " " + (option.refract ? ",(" + Shader.Print(option.refractMap) + ")" : "") + " )+" + ShaderMaterialHelperStatics.Position + "; ",
                     "vec3 vReflectionUVW#[Ind] = vec3( " + ShaderMaterialHelperStatics.ReflectMatrix + " *  vec4(coords#[Ind], 0)); ",
                     "vec3 rc#[Ind]= textureCube(" +
-                        ShaderMaterialHelperStatics.TextureCube + s + ", vReflectionUVW#[Ind]," + Shader.Print(option.bias) + ").rgb;",
+                        ShaderMaterialHelperStatics.TextureCube + s + ", vReflectionUVW#[Ind] " + (option.bias == null || Shader.Print(option.bias) == '0.' ? "" : "," + Shader.Print(option.bias)) + ").rgb;",
                     "result =result  + vec4(rc#[Ind].x ,rc#[Ind].y,rc#[Ind].z, " + (!option.alpha ? "1." : "(rc#[Ind].x+rc#[Ind].y+rc#[Ind].z)/3.0 ") + ")*(min(1.,max(0.," + Shader.Print(option.reflectMap) + ")));  "
                 ].join('\n\
             ');
@@ -930,9 +1187,9 @@ void main(void) { \n\
                 " float  ph#[Ind]= pow(" + Shader.Print(option.phonge) + "*2., (" + Shader.Print(option.phongePower) + "*0.3333))/(" + Shader.Print(option.phongeLevel) + "*3.) ;  ",
                 "  float ndl#[Ind] = max(0., dot(vnrm#[Ind], l#[Ind]));                            ",
                 "  float ls#[Ind] = " + (option.supplement ? "1.0 -" : "") + "max(0.,min(1.,ndl#[Ind]*ph#[Ind]*(" + Shader.Print(option.reducer) + "))) ;         ",
-                "  result  += vec4( c1#[Ind].xyz*( ls#[Ind])*" + Shader.Print(c_c.a) + " , ls#[Ind]); ",
-                "  float ls2#[Ind] = " + (option.supplement ? "1.0 -" : "") + "max(0.,min(1., sc#[Ind]*(" + Shader.Print(option.reducer) + "))) ;         ",
-                "  result  += vec4( c1#[Ind].xyz*( ls2#[Ind])*" + Shader.Print(c_c.a) + " , ls2#[Ind]); ",
+                "  result  += vec4( c1#[Ind].xyz*( ls#[Ind])*" + Shader.Print(c_c.a) + " ,  ls#[Ind]); ",
+                "  float ls2#[Ind] = " + (option.supplement ? "0.*" : "1.*") + "max(0.,min(1., sc#[Ind]*(" + Shader.Print(option.reducer) + "))) ;         ",
+                "  result  += vec4( c1#[Ind].xyz*( ls2#[Ind])*" + Shader.Print(c_c.a) + " ,  ls2#[Ind]); ",
             ]);
             sresult = Shader.Replace(sresult, '#[Ind]', "_" + Shader.Indexer + "_");
             this.Body = Shader.Def(this.Body, "");
@@ -962,8 +1219,20 @@ void main(void) { \n\
             this.Body += sresult;
             return this;
         };
+        ShaderBuilder.prototype.IdColor = function (id, w) {
+            var kg = { r: 0.0, g: 0.0, b: .0 };
+            kg = Shader.torgb(id.valueOf() * 1.0, 255);
+            this.Body = Shader.Def(this.Body, "");
+            this.Body += 'result = vec4(' + Shader.Print(kg.r) + ',' + Shader.Print(kg.g) + ',' + Shader.Print(Math.max(kg.b, 0.0)) + ',' + Shader.Print(w) + ');';
+            return this;
+        };
+        ShaderBuilder.prototype.Discard = function () {
+            this.Body = Shader.Def(this.Body, "");
+            this.Body += 'discard;';
+            return this;
+        };
         return ShaderBuilder;
-    })();
-    BABYLON.ShaderBuilder = ShaderBuilder;
-})(BABYLON || (BABYLON = {}));
+    }());
+    BABYLONX.ShaderBuilder = ShaderBuilder;
+})(BABYLONX || (BABYLONX = {}));
 //# sourceMappingURL=ShaderBuilder.js.map
