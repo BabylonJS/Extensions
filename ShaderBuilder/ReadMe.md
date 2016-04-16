@@ -129,5 +129,7 @@ but you can manage too with this method like this sample we discard front face a
  <a href="http://www.babylonjs-playground.com/#13MIIE#14" >demo fresnel</a><br>
  <a href="http://www.babylonjs-playground.com/#13MIIE#15" >demo specularMap</a><br>
  
+ Onther Progress ...
+ 
 
  
