@@ -232,8 +232,6 @@
 
 
 
-
-
 # Shader
 
 ## Description
@@ -308,10 +306,185 @@
 | | ShaderSetting.Normal | | | |;
 
 
+
+
+
+# ShaderBuilder
+
+## Description
+## Constructor
+## Statics
+## Members
+|        | Name | Type   | Value          | Description |
+| :---:  | :--- |  :---: |     :---:      | :--- |
+| | ShaderBuilder.Setting | | | |;
+| | ShaderBuilder.Extentions | Bool | true | |;
+| | ShaderBuilder.Attributes | Bool | true | |;
+| | ShaderBuilder.Fragment | Bool | true | |;
+| | ShaderBuilder.Helpers | Bool | true | |;
+| | ShaderBuilder.Uniforms | Str | | |;
+| | ShaderBuilder.Varings | Str | | |;
+| | ShaderBuilder.Vertex | Str | | |;
+| | ShaderBuilder.CustomIndexer | | | |;
+
+
+## Methods
+
+## InitializeEngine() → 
+## PrepareBeforeMaterialBuild(scene) → 
+|         |    Name                                        | Type                     | Description |
+| :---:  | :--- |  :---: |     :---      |
+| | scene | scene | BabylonJS scene |;
+
+
+## PrepareMaterial(material, scene) → 
+|         |    Name                                        | Type                     | Description |
+| :---:  | :--- |  :---: |     :---      |
+| | material | material | the material to prepare |;
+| | scene | scene | BabylonJS scene |;
+
+## Build() → 
+
+## BuildMaterial(scene) →
+|         |    Name                                        | Type                     | Description |
+| :---:  | :--- |  :---: |     :---      |
+| | scene | scene | BabylonJS scene |;
+
+
+ 
+## Event(index, material) → 
+|         |    Name                                        | Type                     | Description |
+| :---:  | :--- |  :---: |     :---      |
+| | index | num? | |;
+| | material | material | the event material |;
+
+## EventVertex(index, material) → 
+|         |    Name                                        | Type                     | Description |
+| :---:  | :--- |  :---: |     :---      |
+| | index | num? | |;
+| | material | material | the event material |;
+
+## Transparency() → 
+
+## Wired() → 
+
+## VertexShader(material) → 
+|         |    Name                                        | Type                     | Description |
+| :---:  | :--- |  :---: |     :---      |
+| | material | material | the affected material |;
+
+
+## Solid(color) → 
+|         |    Name                                        | Type                     | Description |
+| :---:  | :--- |  :---: |     :---      |
+| | color | Color4? | the solid color |;
+
+
+
+## GetMapIndex(key) → 
+|         |    Name                                        | Type                     | Description |
+| :---:  | :--- |  :---: |     :---      |
+| | key | num | index into the map |;
+
+
+## GetCubeMapIndex(key) → 
+|         |    Name                                        | Type                     | Description |
+| :---:  | :--- |  :---: |     :---      |
+| | key | num | index into the map |;
+
+
+## Map(option) → 
+|         |    Name                                        | Type                     | Description |
+| :---:  | :--- |  :---: |     :---      |
+| | option | | |;
+
+## Multi(mats, combine) → 
+|         |    Name                                        | Type                     | Description |
+| :---:  | :--- |  :---: |     :---      |
+| | mats | array? | |;
+| | combine | | |;
+
+## Back(material) → 
+|         |    Name                                        | Type                     | Description |
+| :---:  | :--- |  :---: |     :---      |
+| | material | material | the affected material |;
+
+## Inline(material) → 
+|         |    Name                                        | Type                     | Description |
+| :---:  | :--- |  :---: |     :---      |
+| | material | material | the affected material |;
+
+## Front(material) → 
+|         |    Name                                        | Type                     | Description |
+| :---:  | :--- |  :---: |     :---      |
+| | material | material | the affected material |;
+
+## Range(material1, material2, option) → 
+|         |    Name                                        | Type                     | Description |
+| :---:  | :--- |  :---: |     :---      |
+| | material1 | material | start range material |;
+| | material2 | material | end range material |;
+| | option | option | |;
+
+## Reference(index, material) → 
+|         |    Name                                        | Type                     | Description |
+| :---:  | :--- |  :---: |     :---      |
+| | index | num? | |;
+| | material | material | the reference-target material |;
+
+## ReplaceColor(index, color, material, option) → 
+|         |    Name                                        | Type                     | Description |
+| :---:  | :--- |  :---: |     :---      |
+| | index | num? | |;
+| | color | Color4? | the solid color |;
+| | material | material | the reference-target material |;
+| | option | option | |;
+
+## ReflectCube(option) → 
+|         |    Name                                        | Type                     | Description |
+| :---:  | :--- |  :---: |     :---      |
+| | option | option | |;
+
+## NormalMap(value, material) → 
+|         |    Name                                        | Type                     | Description |
+| :---:  | :--- |  :---: |     :---      |
+| | value | | |;
+| | material | material | the normalMap material |;
+
+## SpecularMap(material) → 
+|         |    Name                                        | Type                     | Description |
+| :---:  | :--- |  :---: |     :---      |
+| | material | material | the specularMap material |;
+
+## Instance() → 
+
+## Reflect(option, opacity) → 
+|         |    Name                                        | Type                     | Description |
+| :---:  | :--- |  :---: |     :---      |
+| | option | | |;
+| | opacity | num? | |;
+
 ## Light(option) → 
 |         |    Name                                        | Type                     | Description |
 | :---:  | :--- |  :---: |     :---      |
 | | option | option | |;
+
+## Effect(option) → 
+|         |    Name                                        | Type                     | Description |
+| :---:  | :--- |  :---: |     :---      |
+| | option | option | |;
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 Todo:  options.
