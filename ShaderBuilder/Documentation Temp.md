@@ -298,6 +298,15 @@
 |        | Name | Type   | Value          | Description |
 | :---:  | :--- |  :---: |     :---:      | :--- |
 | | ShaderSetting.PrecisionMode | | | |;
+| | ShaderSetting.Uv | Bool | true | |;
+| | ShaderSetting.Time | Bool | true | |;
+| | ShaderSetting.Camera | Bool | true | |;
+| | ShaderSetting.Helpers | Bool | true | |;
+| | ShaderSetting.NormalMap | Str | | |;
+| | ShaderSetting.SpecularMap | Str | | |;
+| | ShaderSetting.NormalOpacity | Str | | |;
+| | ShaderSetting.Normal | | | |;
+
 
 
 
