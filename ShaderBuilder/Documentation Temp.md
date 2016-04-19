@@ -308,5 +308,12 @@
 | | ShaderSetting.Normal | | | |;
 
 
+## Light(option) → 
+|         |    Name                                        | Type                     | Description |
+| :---:  | :--- |  :---: |     :---      |
+| | option | option | |;
+
+
+Todo:  options.
 
 
