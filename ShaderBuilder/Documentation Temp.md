@@ -111,3 +111,59 @@
         
 <h1>  constructor() : demo : http://www.babylonjs-playground.com/#1TYWYB#5 </h1>
          
+
+
+
+## ShaderMaterialHelperStatics
+
+
+|         |    Name                                        | Type                     | Value | Description |
+| :---:  | :--- |  :---: |     :---:      | :--- |
+| | ShaderMaterialHelperStatics.Dark                       | Bool                     |  false | |;
+| | ShaderMaterialHelperStatics.Light                      | Bool                     |  true | |;
+| | ShaderMaterialHelperStatics.PrecisionHighMode          |  |  'highp'              | |;
+| | ShaderMaterialHelperStatics.PrecisionMediumMode        |  | 'mediump'             | |;
+| | ShaderMaterialHelperStatics.face_back                  |  | "!gl_FrontFacing"     | |;
+| | ShaderMaterialHelperStatics.face_front                 |  | "gl_FrontFacing"      | |;
+| | ShaderMaterialHelperStatics.AttrPosition               |  | 'position'            | |;
+| | ShaderMaterialHelperStatics.AttrNormal                 |  | 'normal'              | |;
+| | ShaderMaterialHelperStatics.AttrUv                     |  | 'uv'                  | |;
+| | ShaderMaterialHelperStatics.AttrUv2                    |  | 'uv2'                 | |;
+| | ShaderMaterialHelperStatics.AttrTypeForPosition        |  | 'vec3'                | |;
+| | ShaderMaterialHelperStatics.AttrTypeForNormal          |  | 'vec3'                | |;
+| | ShaderMaterialHelperStatics.AttrTypeForUv              |  | 'vec2'                | |;
+| | ShaderMaterialHelperStatics.AttrTypeForUv2             |  | 'vec2'                | |;
+| | ShaderMaterialHelperStatics.uniformView                |  | "view"                | |;
+| | ShaderMaterialHelperStatics.uniformWorld               |  | "world"               | |;
+| | ShaderMaterialHelperStatics.uniformWorldView           |  | "worldView"           | |;
+| | ShaderMaterialHelperStatics.uniformViewProjection      |  | "viewProjection"      | |;
+| | ShaderMaterialHelperStatics.uniformWorldViewProjection |  | "worldViewProjection" | |;
+| | ShaderMaterialHelperStatics.uniformStandardType        |  | "mat4"                | |;
+| | ShaderMaterialHelperStatics.uniformFlags               |  | "flags"               | |;
+| | ShaderMaterialHelperStatics.Mouse                      |  | "mouse"               | |;
+| | ShaderMaterialHelperStatics.Screen                     |  | "screen"              | |;
+| | ShaderMaterialHelperStatics.Camera                     |  | "camera"              | |;
+| | ShaderMaterialHelperStatics.Look                       |  | "look"                | |;
+| | ShaderMaterialHelperStatics.Time                       |  | "time"                | |;
+| | ShaderMaterialHelperStatics.GlobalTime                 |  | "gtime"               | |;
+| | ShaderMaterialHelperStatics.Position                   |  | "pos"                 | |;
+| | ShaderMaterialHelperStatics.WorldPosition              |  | "wpos"                | |;
+| | ShaderMaterialHelperStatics.Normal                     |  | "nrm"                 | |;
+| | ShaderMaterialHelperStatics.WorldNormal                |  | "wnrm"                | |;
+| | ShaderMaterialHelperStatics.Uv                         |  | "vuv"                 | |;
+| | ShaderMaterialHelperStatics.Uv2                        |  | "vuv2"                | |;
+| | ShaderMaterialHelperStatics.Center                     |  | 'center'              | |;
+| | ShaderMaterialHelperStatics.ReflectMatrix              |  | "refMat"              | |;
+| | ShaderMaterialHelperStatics.Texture2D                  |  | "txtRef_"             | |;
+| | ShaderMaterialHelperStatics.TextureCube                |  | "cubeRef_"            | |;
+
+
+
+Example table:
+
+|              | Center-aligned | Right-aligned | Center-aligned | Right-aligned |
+| :---:        | :---           |          ---: |     :---:      |          ---: |
+| git status   | git status     | git status    | git status     | git status    |
+| git diff     | git diff       | git diff      | git diff       | git diff      |
+
+
