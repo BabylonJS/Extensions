@@ -233,3 +233,71 @@
 
 
 
+
+# Shader
+
+## Description
+## Constructor
+## Members
+## Methods
+## Replace(string, text, datatype) → 
+
+|         |    Name                                        | Type                     | Description |
+| :---:  | :--- |  :---: |     :---      |
+| | string | str | target string |;
+| | text | str | |;
+| | datatype | str | |;
+
+## Def(attribute, value) → 
+
+|         |    Name                                        | Type                     | Description |
+| :---:  | :--- |  :---: |     :---      |
+| | attribute | str | shader attribute |;
+| | value | any | value |;
+
+
+## Join(string) → 
+
+|         |    Name                                        | Type                     | Description |
+| :---:  | :--- |  :---: |     :---      |
+| | string | str | string for shader inclusion |;
+
+## Print(n) → 
+
+|         |    Name                                        | Type                     | Description |
+| :---:  | :--- |  :---: |     :---      |
+| | n | str | |;
+
+
+## Custom() → 
+
+## Index() → 
+
+## DefCustom() → 
+
+## Index() → 
+
+# Helper
+
+## Description
+## Constructor
+## Statics
+    Helper.Red = 0;
+    Helper.Yellow = 1;
+    Helper.White = 2;
+    Helper.Cyan = 4;
+    Helper.Blue = 5;
+    Helper.Pink = 6;
+    Helper.Black = 7;
+    Helper.Green = 8;
+## Members
+## Methods
+
+# ShaderSetting
+
+|        | Name | Type   | Value          | Description |
+| :---:  | :--- |  :---: |     :---:      | :--- |
+| | ShaderSetting.PrecisionMode | | | |;
+
+
+
