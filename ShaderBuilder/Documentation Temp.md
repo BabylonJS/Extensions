@@ -36,7 +36,7 @@
 
         SetUniform(name: string, type: string) 
 
-<h1>   BuildMaterial(scene) http://www.babylonjs-playground.com/#1TYWYB#5 <h1>
+<h1>   BuildMaterial(scene) http://www.babylonjs-playground.com/#1TYWYB#5 </h1>
 
         BuildPostProcess(camera: any, scene: any, scale: number, option: IPostProcess) 
 
