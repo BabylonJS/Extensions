@@ -45,3 +45,36 @@ So when we look shader parts (fragment and vertex) we see Low-level programming 
 * where : in Browsers can be support WebGl. 
                    
 Author: https://github.com/NasimiAsl
+
+Usage
+
+1.Make a Shader Material
+    
+  <h3>[  mesh  ].material = new BABYLONX.ShaderBuilder()<br/>.[ source ]<br/>.BuildMaterial([ scene ]);<h3>
+   [ source ] :  Some ShaderBuilder Methods
+
+ sample :<a href='http://www.babylonjs-playground.com/#1TYWYB#1'> shaderMaterial demo </h5> </a>
+
+2. Make PostProcess
+
+   <h3>var postprocess1 = new BABYLONX.ShaderBuilder().[ source ].BuildPostProcess([ camera ],[ scene ],[ scale ],[ option ])<h3>
+    [ source ] :  Some ShaderBuilder Methods
+    [ scale ] : number between [ 0. .. 1. ] scale Postprocess Layer
+    [ option ] : loot interface documentation : IPostProcess
+
+   sample : <a href='http://www.babylonjs-playground.com/#1TYWYB#2'> <h5> postprocess demo </h5> </a>
+
+3.Inner Fragment Shader Result
+
+   <h3> BABYLONX.Helper()<br/>.[ source ]<br/>.Build()<h3>
+    [  source   ] :  Some ShaderBuilder Methods
+
+   sample : <a href='http://www.babylonjs-playground.com/#1TYWYB#2'> <h5> Fragment Shader result demo </h5> </a> <br>
+   
+   description : shader result is vec4 variable you most fill in code with shader language(c) or make it with ShaderBuilder Methods 
+   
+
+ 
+
+   
+
