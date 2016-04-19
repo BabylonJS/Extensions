@@ -159,11 +159,77 @@
 
 
 
-Example table:
 
-|              | Center-aligned | Right-aligned | Center-aligned | Right-aligned |
-| :---:        | :---           |          ---: |     :---:      |          ---: |
-| git status   | git status     | git status    | git status     | git status    |
-| git diff     | git diff       | git diff      | git diff       | git diff      |
+
+## Normals
+
+
+|         |    Name                                        | Type                     | Value | Description |
+| :---:  | :--- |  :---: |     :---:      | :--- |
+| | Normals.Default | | | |;
+| | Normals.Inverse | | | |;
+| | Normals.Pointed | | | |;
+| | Normals.Flat    | | | |;
+| | Normals.Map     | | | |;
+
+
+## Speculars
+
+|        | Name | Type   | Value          | Description |
+| :---:  | :--- |  :---: |     :---:      | :--- |
+| | Speculars.Map | | | |;
+
+
+# ShaderMaterialHelper
+
+## Description
+## Constructor
+## Members
+## Methods
+## ShaderMaterial(name, scene, shader, helpers) → 
+
+|         |    Name                                        | Type                     | Description |
+| :---:  | :--- |  :---: |     :---      |
+| | name | str | Name of material |;
+| | scene | BabylonJS scene| The scene for this material |;
+| | shader | shader| |;
+| | helpers    | array | |;
+
+## MakeShaderMaterialForEngine(name, scene, shader, helpers) → 
+
+|         |    Name                                        | Type                     | Description |
+| :---:  | :--- |  :---: |     :---      |
+| | name | str | Name of material |;
+| | scene | BabylonJS scene| The scene for this material |;
+| | shader | shader| |;
+| | helpers    | array | |;
+
+
+## DefineTexture(name, scene, shader, helpers) → 
+
+|         |    Name                                        | Type                     | Description |
+| :---:  | :--- |  :---: |     :---      |
+| | text | str | text |;
+| | scene | BabylonJS scene| The scene for this material |;
+
+## DefineCubeTexture(name, scene, shader, helpers) → 
+
+|         |    Name                                        | Type                     | Description |
+| :---:  | :--- |  :---: |     :---      |
+| | text | str | text |;
+| | scene | BabylonJS scene| The scene for this material |;
+
+## SetUniforms(name, scene, shader, helpers) → 
+
+|         |    Name                                        | Type                     | Description |
+| :---:  | :--- |  :---: |     :---      |
+| | meshes | array | Affected meshes |;
+| | cameraPos | vector3? | Camera position |;
+| | cameraTarget | mesh or Vector3 | Camera target |;
+| | mouse    | | |;
+| | screen | | |;
+| | time    | | |;
+
+
 
 
