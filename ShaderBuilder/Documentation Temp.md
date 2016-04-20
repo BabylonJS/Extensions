@@ -4,9 +4,9 @@
 2.shaderBuilder.js<br/>
 3.Know About how work Shader <br/>
 4.Mathematicals<br/>
-  4.1.Basic<br/>
-  4.2.Vector 2D,3D and Matrix System learn now<br/>
-  4.3.Mathematicals functions, special Trigonometric functions<br/>
+---4.1.Basic<br/>
+---4.2.Vector 2D,3D and Matrix System learn now<br/>
+---4.3.Mathematicals functions, special Trigonometric functions<br/>
 5.WebGl reference<br/><br/>
 
 Anything in here is a solution for make easy way to solve a problem. So when we look shader parts (fragment and vertex) we see Low-level programming language and that is hard to programming in this language with other high-level language (javascript in this case).<br/><br/>
@@ -19,8 +19,8 @@ where : in Browsers can be support WebGl.<br/>
 
 **** we need define some terms we used in shader <br/>
 1. shader string  => string with part of c language we used in shader </br>
-2. shader string : vec3 =>   'vec3(0.)' or 'nrm' or 'nrm*sin(time)'  </br>
-3. shader string : vec2 =>   'vec2(0.)' or 'vuv' or 'vuv*sin(time)'  </br>
+2. shader string : vec3 =>   'vec3(0.)' or 'nrm' or 'nrm * sin(time)'  </br>
+3. shader string : vec2 =>   'vec2(0.)' or 'vuv' or 'vuv * sin(time)'  </br>
 4. shader string : ???  we say variable type for all  <br/><br/>
 5. string result : part of source you make with shader language and need firrl result variable
 **** result is a vec4 varialbe and definded befor you source and all methods use that like resource of before <br/>
