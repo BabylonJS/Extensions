@@ -121,21 +121,56 @@ make solid Color
 
 
 ## GetMapIndex(key) → 
+
+for find a index of Textures path
+
 |         |    Name                                        | Type                     | Description |
 | :---:  | :--- |  :---: |     :---      |
-| | key | num | index into the map |;
+| | key | string  | path |;
 
 
 ## GetCubeMapIndex(key) → 
+
+for find of index of Cube texture
+
 |         |    Name                                        | Type                     | Description |
 | :---:  | :--- |  :---: |     :---      |
-| | key | num | index into the map |;
+| | key | string | path |;
 
 
 ## Map(option) → 
+
+for make a texture
+and indexed texture
+and animation
+
+
+
 |         |    Name                                        | Type                     | Description |
 | :---:  | :--- |  :---: |     :---      |
-| | option | | |;
+| | option | IMap |   {</br>
+        path: string,</br>
+        x: any,</br>
+        y: any,</br>
+        scaleX: any,</br>
+        scaleY: any,</br>
+        rotation: IVector3;</br>
+        useInVertex: boolean;</br>
+        uv: string,</br>
+        normal: string,</br>
+        normalLevel: string,</br>
+        bias: string,</br>
+        alpha: boolean,</br>
+        rowIndex: number,</br>
+        columnIndex: number,</br>
+        indexCount: number,</br>
+        tiled: boolean,</br>
+        animation: boolean,</br>
+        animationSpeed: number,</br>
+        animationFrameEnd: number,</br>
+        animationFrameStart: number,</br>
+        index: any,</br>
+    } |;
 
 ## Multi(mats, combine) → 
 |         |    Name                                        | Type                     | Description |
