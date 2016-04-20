@@ -84,22 +84,32 @@ this method used only in fragment shader
 |         |    Name                                        | Type                     | Description |
 | :---:  | :--- |  :---: |     :---      |
 | | index | num? | |;
-| | material | material | the event material |;
+| | material | material | the event material 'string result' see ShaderBuilder Terms |;
 
 ## EventVertex(index, material) → 
+we can define 20 flag (for control) AND SET IT BY mesh.material.flagUp(flagNumber) and .flagDown(flagNumber)
+this method make your changer when index flag is Up
+this method used only in vertex shader
+
 |         |    Name                                        | Type                     | Description |
 | :---:  | :--- |  :---: |     :---      |
 | | index | num? | |;
-| | material | material | the event material |;
+| | material | material | the event material 'string result' see ShaderBuilder Terms  |;
 
 ## Transparency() → 
 
+enable transparency material
+
 ## Wired() → 
 
+
+
 ## VertexShader(material) → 
+area for make Vertex Shader 
+default = 'result = vec4(pos,1.);'
 |         |    Name                                        | Type                     | Description |
 | :---:  | :--- |  :---: |     :---      |
-| | material | material | the affected material |;
+| | material | material | the affected material 'string result' see ShaderBuilder Terms |;
 
 
 ## Solid(color) → 
