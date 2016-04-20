@@ -148,29 +148,33 @@ and animation
 
 |         |    Name                                        | Type                     | Description |
 | :---:  | :--- |  :---: |     :---      |
-| | option | IMap |   {</br>
-        path: string,</br>
-        x: any,</br>
-        y: any,</br>
-        scaleX: any,</br>
-        scaleY: any,</br>
-        rotation: IVector3;</br>
-        useInVertex: boolean;</br>
-        uv: string,</br>
-        normal: string,</br>
-        normalLevel: string,</br>
-        bias: string,</br>
-        alpha: boolean,</br>
-        rowIndex: number,</br>
-        columnIndex: number,</br>
-        indexCount: number,</br>
-        tiled: boolean,</br>
-        animation: boolean,</br>
+| | option | IMap |   |;
+
+IMap descriptions
+
+ { </br>
+        path: string,  // path of images</br>        
+        x: any, // move in x  // shader string: float </br>
+        y: any, // move in y // shader string: float </br>
+        scaleX: any,// shader string: float </br>
+        scaleY: any,// shader string: float </br>
+        rotation: IVector3; // { x : deg , y : deg , z : deg }</br>
+        useInVertex: boolean; // when you want use it in Vertex</br>
+        uv: string, // shader string: vec2  => default is vuv</br>
+        normal: string,//  shader string: vec3  </br>
+        normalLevel: string,// shader string: float  -1 .. 1 you can restriction of textures with that</br>
+        bias: string,//  shader string: float  BRP Blur Mode</br>
+        alpha: boolean,// Use Transparency Texture</br>
+        rowIndex: number,// index of Row when you Use Indexed Texture </br>
+        columnIndex: number,// index of Column when you use Indexed Texture</br>
+        indexCount: number,// row and column count : 3 means (3 row x 3 column ) ...</br>
+        tiled: boolean,// try make tiled </br></br>
+        animation: boolean, // for animated indexed texture </br>
         animationSpeed: number,</br>
         animationFrameEnd: number,</br>
         animationFrameStart: number,</br>
-        index: any,</br>
-    } |;
+        index: any,// use number og index you used before or you can use 'current' for postprocess layes </br>
+    }
 
 ## Multi(mats, combine) → 
 |         |    Name                                        | Type                     | Description |
