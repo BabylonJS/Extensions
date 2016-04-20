@@ -113,9 +113,10 @@ default = 'result = vec4(pos,1.);'
 
 
 ## Solid(color) → 
+make solid Color
 |         |    Name                                        | Type                     | Description |
 | :---:  | :--- |  :---: |     :---      |
-| | color | Color4? | the solid color |;
+| | color | Color4? | the solid color : {r,g,b,a}|;
 
 
 
