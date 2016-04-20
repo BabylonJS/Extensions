@@ -466,6 +466,56 @@ enumration of shader string all type is vec3  'normalize(vec3(x,y,z))'
 
 
 
+## Option
+|        | Name | Type   | Value          | Description |
+| :---:  | :--- |  :---: |     :---:      | :--- |
+| | option.path | | | |;
+| | option.useInVertex | | | |;
+| | option.normal | | | |;
+| | option.alpha | | | |;
+| | option.bias | | | |;
+| | option.normalLevel | | | |;
+| | option.rotation | | | |;
+| | option.scaleX | | | |;
+| | option.scaleY | | | |;
+| | option.x | | | |;
+| | option.y | | | |;
+| | option.uv | | | |;
+| | option.tiled | | | |;
+| | option.columnIndex | | | |;
+| | option.rowIndex | | | |;
+| | option.animation | | | |;
+| | option.animationSpeed | | | |;
+| | option.animationFrameEnd | | | |;
+| | option.animationFrameStart | | | |;
+| | option.indexCount | | | |;
+| | option.start | | | |;
+| | option.end | | | |;
+| | option.direction | | | |;
+| | option.rangeStep | | | |;
+| | option.rangePower | | | |;
+| | option.colorIndex | | | |;
+| | option.colorStep | | | |;
+| | option.indexToEnd | | | |;
+| | option.reflectMap | | | |;
+| | option.equirectangular | | | |;
+| | option.refract | | | |;
+| | option.revers | | | |;
+| | option.refractMap | | | |;
+| | option.color | | | |;
+| | option.darkColorMode | | | |;
+| | option.specular | | | |;
+| | option.specularLevel | | | |;
+| | option.specularPower | | | |;
+| | option.phonge | | | |;
+| | option.phongePower | | | |;
+| | option.phongeLevel | | | |;
+| | option.supplement | | | |;
+| | option.reducer | | | |;
+| | option.parallel | | | |;
+| | option. | | | |;
+| | option. | | | |;
+| | option. | | | |;
 
 
 
@@ -475,6 +525,8 @@ enumration of shader string all type is vec3  'normalize(vec3(x,y,z))'
 
 
 
-Todo:  options.
+
+
+
 
 
