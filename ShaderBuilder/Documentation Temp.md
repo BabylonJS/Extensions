@@ -63,13 +63,24 @@ you need call this Like static Method befor you starting material builder
  
 ## Build() → 
 
+return 'string result' see ShaderBuilder Terms
+
 ## BuildMaterial(scene) →
+
+this return a shaderMaterial
+use this for last of part.
+
 |         |    Name                                        | Type                     | Description |
 | :---:  | :--- |  :---: |     :---      |
 | | scene | scene | BabylonJS scene |;
  
  
 ## Event(index, material) → 
+
+we can define 20 flag (for control) AND SET IT BY mesh.material.flagUp(flagNumber) and .flagDown(flagNumber)
+this method make your changer when index flag is Up
+this method used only in fragment shader
+
 |         |    Name                                        | Type                     | Description |
 | :---:  | :--- |  :---: |     :---      |
 | | index | num? | |;
