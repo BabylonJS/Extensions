@@ -1,5 +1,5 @@
 
-ShaderBuilder References : <a href='http://cdn.rawgit.com/RNasimiAsl/Extensions/master/ShaderBuilder/Documentation/ShaderBuilderReferences.html.html'>here</a>
+ShaderBuilder References : <a href='http://cdn.rawgit.com/RNasimiAsl/Extensions/master/ShaderBuilder/Documentation/ShaderBuilderReferences.html'>here</a>
 
 Shader Builder Requirement
 
