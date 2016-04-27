@@ -252,7 +252,7 @@
                                 <td align="left">the event material 'string result' see ShaderBuilder Terms</td>
                             </tr>
                         </tbody>
-                    </table> 
+                    </table>
 
                     <div class="frow">
                         <div>
@@ -322,15 +322,15 @@
                             mesh.material =  <span class=" bl blk">
                                 new BABYLONX.ShaderBuilder()<br />
                                 .Solid({r:1}) <span class="green">// Default Material</span> <br />
-                                                 .VertexShader('result = vec4(pos,1.);') <span class="green">
-    // Default Vertex Definition
-</span> <br />
-    .EventVertex(1, <span class="green">// flag Number</span> <br />
-    &nbsp; &nbsp; &nbsp;BABYLONX.Helper()<span class="green"> // Deep Start Fluent</span><br />
-    &nbsp; &nbsp; &nbsp;.InLine('result = vec4(pos+nrm*2.,1.);')<span class="green">// Hover Material</span><br />
-    &nbsp; &nbsp; &nbsp;.Build())<span class="green">// Build Result</span><br />
-    .BuildMaterial(scene);<span class="green">// Build Shader</span>
-</span>
+                                .VertexShader('result = vec4(pos,1.);') <span class="green">
+                                    // Default Vertex Definition
+                                </span> <br />
+                                .EventVertex(1, <span class="green">// flag Number</span> <br />
+                                &nbsp; &nbsp; &nbsp;BABYLONX.Helper()<span class="green"> // Deep Start Fluent</span><br />
+                                &nbsp; &nbsp; &nbsp;.InLine('result = vec4(pos+nrm*2.,1.);')<span class="green">// Hover Material</span><br />
+                                &nbsp; &nbsp; &nbsp;.Build())<span class="green">// Build Result</span><br />
+                                .BuildMaterial(scene);<span class="green">// Build Shader</span>
+                            </span>
                             <br /><br />
                             mesh.material.<span class=" bl blk">flagUp(1);</span><span class="green">// Call When You Want See Hover Material</span><br /><br />
                             mesh.material.<span class=" bl blk">flagDown(1);</span><span class="green">// Call When You Want See Default Material</span>
@@ -339,7 +339,193 @@
                         <div onclick=" this.children[0].src = this.children[0].src.replace('nan.html','EventVertex.htm'); this.children[0].classList.remove('hdn');this.children[1].classList.add('hdn')">
                             <iframe class="demo hdn" scrolling="no" seamless="seamless" frameborder="0" src='http://cdn.rawgit.com/RNasimiAsl/Extensions/master/ShaderBuilder/Documentation/nan.html'></iframe>
                             <div class="demo">
-                                <a onclick="return false;" href="http://cdn.rawgit.com/RNasimiAsl/Extensions/master/ShaderBuilder/Documentation/EventVertex.htm"> Event in Vertex Hover Demo </a>
+                                <a onclick="return false;" href="http://cdn.rawgit.com/RNasimiAsl/Extensions/master/ShaderBuilder/Documentation/EventVertex.htm"> Event in Vertex Demo </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr />
+            <div>
+                <h1>new BABYLONX.ShaderBuilder().[ ].<span class="bl">VertexShader(material)</span>.[ ] </h1>
+                <div class="p1">
+
+                    For Define Vertex Position in Vertex Shader
+                    </span> <br />
+
+                    <h3 class="green">parameters</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th align="left">Name</th>
+                                <th align="center">Type</th>
+                                <th align="left">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+
+                                <td align="left">material <span class="red">!requirment</span></td>
+                                <td align="center">material</td>
+                                <td align="left">the  'string result' see ShaderBuilder Terms</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="frow">
+                        <div>
+                            <h3 class="bl green">Sample For Vertex , Wired , Rotation Vertex</h3>
+                            mesh.material =  <span class=" bl blk">
+                                new BABYLONX.ShaderBuilder()<br />
+                                .Wired()<br />
+                                .Solid({r:1}) <span class="green">// Default Material</span> <br />
+                                .VertexShader('pos = r_y(pos,time*0.01,vec3(0.)); result = vec4(pos,1.);') <span class="green">
+                                    // Default Vertex Definition And Rotate around y
+                                </span> <br />
+                                .BuildMaterial(scene);<span class="green">// Build Shader</span>
+                            </span>
+                        </div>
+                        <div onclick=" this.children[0].src = this.children[0].src.replace('nan.html','Vertex.htm'); this.children[0].classList.remove('hdn');this.children[1].classList.add('hdn')">
+                            <iframe class="demo hdn" scrolling="no" seamless="seamless" frameborder="0" src='http://cdn.rawgit.com/RNasimiAsl/Extensions/master/ShaderBuilder/Documentation/nan.html'></iframe>
+                            <div class="demo">
+                                <a onclick="return false;" href="http://cdn.rawgit.com/RNasimiAsl/Extensions/master/ShaderBuilder/Documentation/Vertex.htm"> Vertex Demo </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr />
+            <div>
+                <h1>new BABYLONX.ShaderBuilder().[ ].<span class="bl">Wired()</span>.[ ] </h1>
+                <div class="p1">
+                    Show Wired Mode<br />
+                    you Just Need Used One Time in All Level Fluent Usage
+                </div>
+            </div>
+            <hr />
+            <div>
+                <h1>new BABYLONX.ShaderBuilder().[ ].<span class="bl">Transparency()</span>.[ ] </h1>
+                <div class="p1">
+                    Enable Transparency Mode for Material<br />
+                    you Just Need Used One Time in All Level Fluent Usage
+                </div>
+            </div>
+            <hr />
+            <div>
+                <h1>new BABYLONX.ShaderBuilder().[ ].<span class="bl">Back(material)</span>.[ ] </h1>
+                <div class="p1">
+
+                    For Define Back Face Material
+                    </span> <br />
+
+                    <h3 class="green">parameters</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th align="left">Name</th>
+                                <th align="center">Type</th>
+                                <th align="left">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+
+                                <td align="left">material  </td>
+                                <td align="center">material</td>
+                                <td align="left">the  'string result' see ShaderBuilder Terms if You dont set last result used for Back Face</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                </div>
+            </div>
+            <hr />
+            <div>
+                <h1>new BABYLONX.ShaderBuilder().[ ].<span class="bl">Front(material)</span>.[ ] </h1>
+                <div class="p1">
+                    Front Face Defined By Default But You Can Manage That From This<br />
+                    Special Usage for Hide Front Face You Just Need Set Material like 'discard;'
+                    For Define Back Face Material
+                    </span> <br />
+
+                    <h3 class="green">parameters</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th align="left">Name</th>
+                                <th align="center">Type</th>
+                                <th align="left">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+
+                                <td align="left">material  </td>
+                                <td align="center">material</td>
+                                <td align="left">the  'string result' see ShaderBuilder Terms if You dont set last result used for Front Face</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                </div>
+            </div>
+            <hr />
+
+            <div>
+                <h1>new BABYLONX.ShaderBuilder().[ ].<span class="bl">InLine(material)</span>.[ ] </h1>
+                <div class="p1">
+
+                    Useful method For Make your custom shader in here.<br />
+                    if you can fill 'result' variable in your custom shader after this method result set like Inline Method
+                    <br />
+
+                    <h3 class="green">parameters</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th align="left">Name</th>
+                                <th align="center">Type</th>
+                                <th align="left">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+
+                                <td align="left">material <span class="red">!requirment</span></td>
+                                <td align="center">material</td>
+                                <td align="left">the  'string result' see ShaderBuilder Terms</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="frow">
+                        <div>
+                            <h3 class="bl green">Sample For Inline , Back , Front , Transparency</h3>
+                            mesh.material =  <span class=" bl blk">
+                                =     new BABYLONX.ShaderBuilder()
+                                .Solid({r:1})<span class="green">
+                                    // Default Material
+                                </span><br />
+                                .Back('if(nrm.x > 0.) discard;')<span class="green">
+                                    // Hide Back Single Face
+                                </span><br />
+                                .Front(' discard;')<span class="green">
+                                    // hid Front All Face
+                                </span><br />
+                                .Light({ phonge: 1.,specular:18, normal:BABYLONX.Normals.Flat, direction: 'camera' })<br />
+                                .Transparency()<br />
+                                .InLine('result = vec4(  length(result.xyz)/3.);')<span class="green">
+                                    // change last result
+                                </span><br />
+                                .BuildMaterial(scene);<span class="green">
+                                    // Build Shader
+                                </span><br /> <br />
+                            </span>
+                        </div>
+                        <div onclick=" this.children[0].src = this.children[0].src.replace('nan.html', 'InLine_Back_Front.htm'); this.children[0].classList.remove('hdn'); this.children[1].classList.add('hdn')">
+                            <iframe class="demo hdn" scrolling="no" seamless="seamless" frameborder="0" src='http://cdn.rawgit.com/RNasimiAsl/Extensions/master/ShaderBuilder/Documentation/nan.html'></iframe>
+                            <div class="demo">
+                                <a onclick="return false;" href="http://cdn.rawgit.com/RNasimiAsl/Extensions/master/ShaderBuilder/Documentation/InLine_Back_Front.htm"> Back,InLine,Front Demo </a>
                             </div>
                         </div>
                     </div>
@@ -347,6 +533,128 @@
             </div>
             <hr />
 
+
+            <div>
+                <h1>new BABYLONX.ShaderBuilder().[ ].<span class="bl">Multi(mats, combine)</span>.[ ] </h1>
+                <div class="p1">
+
+                    Useful method For combine or Mix Materials<br />
+                    <br />
+
+                    <h3 class="green">parameters</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th align="left">Name</th>
+                                <th align="center">Type</th>
+                                <th align="left">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+
+                                <td align="left">mats <span class="red">!requirment</span></td>
+                                <td align="center">array string or struct</td>
+                                <td align="left">
+                                    the  'string result' see ShaderBuilder Terms <br />
+                                    ['mat1','mat2',...] or<br />
+                                    [{result:'mat1',opacity:0.} , 'mat2' ,...]<br />
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tbody>
+                            <tr>
+
+                                <td align="left">combine </td>
+                                <td align="center">boolean</td>
+                                <td align="left"> combine materials or Mix Materials</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="frow">
+                        <div>
+                            <h3 class="bl green">Sample For Multi</h3>
+                            mesh.material =   <span class=" bl blk">
+                                new BABYLONX.ShaderBuilder().Multi([<br />
+                                &nbsp; &nbsp; &nbsp;BABYLONX.Helper().Solid({r:1}).Build(),<br />
+                                &nbsp; &nbsp; &nbsp;BABYLONX.Helper().Solid({g:1}).Build()])<br />
+                                .BuildMaterial(scene);
+                            </span>
+                        </div>
+                        <div onclick=" this.children[0].src = this.children[0].src.replace('nan.html', 'Multi.htm'); this.children[0].classList.remove('hdn'); this.children[1].classList.add('hdn')">
+                            <iframe class="demo hdn" scrolling="no" seamless="seamless" frameborder="0" src='http://cdn.rawgit.com/RNasimiAsl/Extensions/master/ShaderBuilder/Documentation/nan.html'></iframe>
+                            <div class="demo">
+                                <a onclick="return false;" href="http://cdn.rawgit.com/RNasimiAsl/Extensions/master/ShaderBuilder/Documentation/Multi.htm"> Multi Demo </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr />
+
+            <div>
+                <h1>new BABYLONX.ShaderBuilder().[ ].<span class="bl">Range(material1, material2, option)</span>.[ ] </h1>
+                <div class="p1">
+
+                    Useful method For Control Range or Mix Materials<br />
+                    <br /> 
+                    <h3 class="green">parameters</h3> 
+                    <table>
+                        <thead>
+                            <tr>
+                                
+                                <th align="left">Name</th>
+                                <th align="center">Type</th>
+                                <th align="left">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                
+                                <td align="left">material1</td>
+                                <td align="center">material</td>
+                                <td align="left">the  'string result' see ShaderBuilder Terms</td>
+                            </tr>
+                            <tr>
+                                 
+                                <td align="left">material2</td>
+                                <td align="center">material</td>
+                                <td align="left">the  'string result' see ShaderBuilder Terms</td>
+                            </tr>
+                            <tr> 
+                                <td align="left">option</td>
+                                <td align="center">IRange</td>
+                                <td align="left">
+                                    interface IRange {<br />
+                                    start: float shader string ; <br />
+                                    end:  float shader string;<br />
+                                    direction: float shader string;<br />
+                                    }
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="frow">
+                        <div>
+                            <h3 class="bl green">Sample For Range</h3>
+                            mesh.material =   <span class=" bl blk">
+                                new BABYLONX.ShaderBuilder().Range( <br />
+                                &nbsp; &nbsp; &nbsp;BABYLONX.Helper().Solid({r:1}).Build(),<br />
+                                &nbsp; &nbsp; &nbsp;BABYLONX.Helper().Map({ path:'imagepath' }).Build() ,{start:1.5,end:-1.5,direction:'pos.x'})<br />
+                                .BuildMaterial(scene);
+                            </span>
+                        </div>
+                        <div onclick=" this.children[0].src = this.children[0].src.replace('nan.html', 'Range.htm'); this.children[0].classList.remove('hdn'); this.children[1].classList.add('hdn')">
+                            <iframe class="demo hdn" scrolling="no" seamless="seamless" frameborder="0" src='http://cdn.rawgit.com/RNasimiAsl/Extensions/master/ShaderBuilder/Documentation/nan.html'></iframe>
+                            <div class="demo">
+                                <a onclick="return false;" href="http://cdn.rawgit.com/RNasimiAsl/Extensions/master/ShaderBuilder/Documentation/Range.htm"> Range Demo </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr />
         </div>
 
         <br>
