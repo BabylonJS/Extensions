@@ -399,8 +399,8 @@ module BABYLONX {
             eval(Shader.Replace(Shader.Replace("BABYLONX.ShaderMaterialHelper.prototype.DefineCubeTexture = function (option, sc) { var tx = new BABYLON.CubeTexture(option, sc); tx.coordinatesMode = BABYLON.Texture.PLANAR_MODE; return tx; }  ", "#[QT]", '"'), '#[T]', "'"));
             eval(Shader.Replace(Shader.Replace("BABYLONX.ShaderMaterialHelper.prototype.SetUniforms = function (meshes, cameraPos, cameraTarget, mouse, screen, time) { for (var ms in meshes) { ms = meshes[ms]; if (ms.material && (ms.material.ShaderSetting != null || ms.material.ShaderSetting != undefined)) { if (ms.material.ShaderSetting.Camera)                ms.material.setVector3(BABYLONX.ShaderMaterialHelperStatics.Camera, cameraPos); if (ms.material.ShaderSetting.Center)                ms.material.setVector3(BABYLONX.ShaderMaterialHelperStatics.Center, { x: 0., y: 0., z: 0. }); if (ms.material.ShaderSetting.Mouse)                ms.material.setVector2(BABYLONX.ShaderMaterialHelperStatics.Mouse, mouse); if (ms.material.ShaderSetting.Screen)                ms.material.setVector2(BABYLONX.ShaderMaterialHelperStatics.Screen, screen); if (ms.material.ShaderSetting.GlobalTime)                ms.material.setVector4(BABYLONX.ShaderMaterialHelperStatics.GlobalTime, { x: 0., y: 0., z: 0., w: 0. }); if (ms.material.ShaderSetting.Look)                ms.material.setVector3(BABYLONX.ShaderMaterialHelperStatics.Look, cameraTarget); if (ms.material.ShaderSetting.Time)                ms.material.setFloat(BABYLONX.ShaderMaterialHelperStatics.Time, time);        }        }    }", "#[QT]", '"'), '#[T]', "'"));
 
-            eval(Shader.Replace(Shader.Replace("BABYLONX.ShaderMaterialHelper.prototype.ShaderPostProcess = function (name, samplers, camera, scale, shader, helpers, option) {if (!option) option = {};if (!option.samplingMode) option.samplingMode = BABYLON.Texture.BILINEAR_SAMPLINGMODE;BABYLON.Effect.ShadersStore[name + #[QT]PixelShader#[QT]] = shader.Pixel;var pps = new BABYLON.PostProcess(name, name, helpers.uniforms, samplers, scale, camera, option.samplingMode);pps.onApply = function (effect) {effect.setFloat(#[T]time#[T], time);effect.setVector2(#[QT]screen#[QT], { x: pps.width, y: pps.height });effect.setVector3(#[QT]camera#[QT], camera.position);if (option && option.onApply)option.onApply(effect);};return pps;} ", "#[QT]", '"'), '#[T]', "'")); 
-            eval(Shader.Replace(Shader.Replace("BABYLONX.ShaderMaterialHelper.prototype.PostProcessTextures = function (pps, name, txt) {pps._effect.setTexture(name, txt);}", "#[QT]", '"'), '#[T]', "'")); 
+            eval(Shader.Replace(Shader.Replace("BABYLONX.ShaderMaterialHelper.prototype.ShaderPostProcess = function (name, samplers, camera, scale, shader, helpers, option) {if (!option) option = {};if (!option.samplingMode) option.samplingMode = BABYLON.Texture.BILINEAR_SAMPLINGMODE;BABYLON.Effect.ShadersStore[name + #[QT]PixelShader#[QT]] = shader.Pixel;var pps = new BABYLON.PostProcess(name, name, helpers.uniforms, samplers, scale, camera, option.samplingMode);pps.onApply = function (effect) {effect.setFloat(#[T]time#[T], time);effect.setVector2(#[QT]screen#[QT], { x: pps.width, y: pps.height });effect.setVector3(#[QT]camera#[QT], camera.position);if (option && option.onApply)option.onApply(effect);};return pps;} ", "#[QT]", '"'), '#[T]', "'"));
+            eval(Shader.Replace(Shader.Replace("BABYLONX.ShaderMaterialHelper.prototype.PostProcessTextures = function (pps, name, txt) {pps._effect.setTexture(name, txt);}", "#[QT]", '"'), '#[T]', "'"));
 
         }
         static ColorIdRenderTarget: any;
@@ -414,6 +414,8 @@ module BABYLONX {
         Varings: string[];
         Attributes: string[];
         Uniforms: string[];
+        FragmentUniforms: string ;
+        VertexUniforms: string ;
         Extentions: string[];
         References: string;
         Helpers: string[];
@@ -491,6 +493,10 @@ module BABYLONX {
                 this.Vertex.push("uniform   " + ShaderMaterialHelperStatics.uniformStandardType + ' ' + ShaderMaterialHelperStatics.uniformWorldView + ";");
             }
 
+            if (this.VertexUniforms) {
+                this.Vertex.push(this.VertexUniforms);
+            }
+
 
             /*#extension GL_OES_standard_derivatives : enable*/
             this.Fragment.push("precision " + this.Setting.PrecisionMode + " float;\n\
@@ -528,6 +534,10 @@ module BABYLONX {
                 this.Fragment.push("uniform  float " + ShaderMaterialHelperStatics.uniformFlags + ";");
             }
 
+
+            if (this.FragmentUniforms) {
+                this.Fragment.push(this.FragmentUniforms);
+            }
             this.Fragment.push("varying vec3 " + ShaderMaterialHelperStatics.Position + ";");
             this.Fragment.push("varying vec3 " + ShaderMaterialHelperStatics.Normal + ";");
 
@@ -863,6 +873,27 @@ void main(void) { \n\
             return this.Body;
         }
 
+        BuildVertex() {
+
+            Shader.Me.Parent.Setting = Shader.Me.Setting;
+            Shader.Me = Shader.Me.Parent;
+
+            return this.VertexBody;
+        }
+
+        SetUniform(name:string,type:string) {
+
+            if (!Shader.Me.VertexUniforms) Shader.Me.VertexUniforms = "";
+            if (!Shader.Me.FragmentUniforms) Shader.Me.FragmentUniforms = "";
+
+            this.VertexUniforms += 'uniform ' + type + ' ' + name + ';\n\
+            ';
+            this.FragmentUniforms += 'uniform ' + type + ' ' + name + ';\n\
+            ';
+            
+            return this;
+        }
+
         BuildMaterial(scene) {
             this.PrepareBeforeMaterialBuild();
 
@@ -1106,7 +1137,7 @@ void main(void) { \n\
             ]);
 
             this.VertexBody = Shader.Def(this.VertexBody, "");
-            sresult = Shader.Replace(sresult, '#[Ind]', "_" + Shader.Indexer + "_")+" result = vec4(pos,1.);";
+            sresult = Shader.Replace(sresult, '#[Ind]',   Shader.Indexer.toString()  ) + " result = vec4(pos,1.);";
             this.VertexBody += sresult;
 
             return this;
@@ -1726,5 +1757,5 @@ void main(void) { \n\
         }
 
     }
-} 
+}
 
