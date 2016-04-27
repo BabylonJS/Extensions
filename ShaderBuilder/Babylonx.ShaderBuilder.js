@@ -259,6 +259,9 @@ var BABYLONX;
             if (this.Setting.VertexWorldView) {
                 this.Vertex.push("uniform   " + ShaderMaterialHelperStatics.uniformStandardType + ' ' + ShaderMaterialHelperStatics.uniformWorldView + ";");
             }
+            if (this.VertexUniforms) {
+                this.Vertex.push(this.VertexUniforms);
+            }
             /*#extension GL_OES_standard_derivatives : enable*/
             this.Fragment.push("precision " + this.Setting.PrecisionMode + " float;\n\
 #extension GL_OES_standard_derivatives : enable\n\
@@ -285,6 +288,9 @@ var BABYLONX;
             }
             if (this.Setting.Flags) {
                 this.Fragment.push("uniform  float " + ShaderMaterialHelperStatics.uniformFlags + ";");
+            }
+            if (this.FragmentUniforms) {
+                this.Fragment.push(this.FragmentUniforms);
             }
             this.Fragment.push("varying vec3 " + ShaderMaterialHelperStatics.Position + ";");
             this.Fragment.push("varying vec3 " + ShaderMaterialHelperStatics.Normal + ";");
@@ -531,6 +537,22 @@ void main(void) { \n\
             Shader.Me = Shader.Me.Parent;
             return this.Body;
         };
+        ShaderBuilder.prototype.BuildVertex = function () {
+            Shader.Me.Parent.Setting = Shader.Me.Setting;
+            Shader.Me = Shader.Me.Parent;
+            return this.VertexBody;
+        };
+        ShaderBuilder.prototype.SetUniform = function (name, type) {
+            if (!Shader.Me.VertexUniforms)
+                Shader.Me.VertexUniforms = "";
+            if (!Shader.Me.FragmentUniforms)
+                Shader.Me.FragmentUniforms = "";
+            this.VertexUniforms += 'uniform ' + type + ' ' + name + ';\n\
+            ';
+            this.FragmentUniforms += 'uniform ' + type + ' ' + name + ';\n\
+            ';
+            return this;
+        };
         ShaderBuilder.prototype.BuildMaterial = function (scene) {
             this.PrepareBeforeMaterialBuild();
             if (Shader.ShaderIdentity == null)
@@ -725,7 +747,7 @@ void main(void) { \n\
                 })
             ]);
             this.VertexBody = Shader.Def(this.VertexBody, "");
-            sresult = Shader.Replace(sresult, '#[Ind]', "_" + Shader.Indexer + "_") + " result = vec4(pos,1.);";
+            sresult = Shader.Replace(sresult, '#[Ind]', Shader.Indexer.toString()) + " result = vec4(pos,1.);";
             this.VertexBody += sresult;
             return this;
         };
