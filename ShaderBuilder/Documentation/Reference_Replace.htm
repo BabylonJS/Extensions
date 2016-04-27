@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    <title>Babylon.js sample code</title>
+    <!-- Babylon.js -->
+    <script src="http://www.babylonjs.com/hand.minified-1.2.js"></script>
+    <script src="http://www.babylonjs.com/cannon.js"></script>
+    <script src="http://www.babylonjs.com/oimo.js"></script>
+    <script src="http://www.babylonjs.com/babylon.js"></script>
+    <script src="http://cdn.rawgit.com/RNasimiAsl/Extensions/master/ShaderBuilder/Babylonx.ShaderBuilder.js"></script>
+    <style>
+        html, body {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        var canvas = document.getElementById("renderCanvas");
+        var engine = new BABYLON.Engine(canvas, true);
+        // Shader Builder Documentation
+
+
+        time = 0;
+        var camera,mesh;
+        BABYLONX.ShaderBuilder.InitializeEngine();
+
+        var createScene = function () {
+
+        	var scene = new BABYLON.Scene(engine);
+        	camera = new BABYLON.ArcRotateCamera("camera1",Math.PI/2, 1.0, 40, new BABYLON.Vector3(0, 0, 0), scene);
+        	camera.attachControl(canvas, true);
+
+        	var light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
+        	light.intensity = 0.7;
+
+        	mesh = BABYLON.Mesh.CreateBox("g1", 5, scene);
+             
+        	mesh.material =
+                new BABYLONX.ShaderBuilder()
+                .Map({ path: 'imagePath1' })
+                .Reference(1)
+                .Red(1, BABYLONX.Helper().Solid({ g: 1 }).Build())
+                .Black(1, BABYLONX.Helper().Solid({ g: 1 , b:1 }).Build()) 
+                .BuildMaterial(scene);
+
+
+
+         	mesh.actionManager = new BABYLON.ActionManager(scene);
+	mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPointerOverTrigger, function(ev){
+		mesh.material.flagUp(1);
+	}));
+	mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPointerOutTrigger, function(ev){
+		mesh.material.flagDown(1);
+	}));
+
+        	scene.registerBeforeRender(function () {
+        			time++;
+
+        			// initialize Shader requirment per frame
+        	    new BABYLONX 
+        			.ShaderMaterialHelper()
+        			.SetUniforms(
+        				scene.meshes,
+        				camera.position,
+        				camera.target,
+        				{ x: 0, y: 0 },
+        				{ x: 100, y: 100 },
+        				time
+        			);
+        		});
+
+
+        	return scene;
+
+        };
+
+        var scene = createScene();
+        engine.runRenderLoop(function () {
+            scene.render();
+        });
+        // Resize
+        window.addEventListener("resize", function () {
+            engine.resize();
+        });
+    </script>
+</body>
+</html>
