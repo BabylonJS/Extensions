@@ -1,17 +1,354 @@
 <html lang="en">
 <head>
-  <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
-  <title>ShaderBuilder Docs</title>
-  <link href="" rel="stylesheet" type="text/css">
-<style> 
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+    <title>ShaderBuilder Docs</title>
+    <link href="" rel="stylesheet" type="text/css">
+    <style>
+        *, input {
+            font-family: 'Segoe UI Light';
+            color: #808080;
+        }
 
-</style>
-<body>
- 
-<div>
-  <iframe src='http://cdn.rawgit.com/RNasimiAsl/Extensions/master/ShaderBuilder/Documentation/StandardUsage.htm' ></iframe>
-</div>
+        .red {
+            color: #cf120d !important;
+        }
 
-<br>
-</body>
+        .blk {
+            color: #000 !important;
+        }
+
+        .green {
+            color: #19a10f !important;
+        }
+
+        .demo {
+            width: 400px;
+            height: 300px;
+            background-color: #312f2f;
+            color: #ffffff !important;
+            text-align: center;
+            border-radius: 30px;
+            display: -ms-inline-flexbox;
+            display: -webkit-inline-flex;
+            display: inline-flex;
+            -webkit-flex-direction: column;
+            -ms-flex-direction: column;
+            flex-direction: column;
+            -webkit-flex-wrap: nowrap;
+            -ms-flex-wrap: nowrap;
+            flex-wrap: nowrap;
+            -webkit-justify-content: center;
+            -ms-flex-pack: center;
+            justify-content: center;
+            -webkit-align-content: center;
+            -ms-flex-line-pack: center;
+            align-content: center;
+            -webkit-align-items: center;
+            -ms-flex-align: center;
+            align-items: center;
+        }
+
+            .demo:hover {
+                background-color: #808080;
+            }
+
+            .demo > a {
+                color: #ffffff !important;
+                text-decoration: none;
+                font-family: 'Segoe UI Light';
+                font-size: 32px;
+            }
+
+        .hdn {
+            display: none;
+        }
+
+        .frow {
+            display: -ms-flexbox;
+            display: -webkit-flex;
+            display: flex;
+            -webkit-flex-direction: row;
+            -ms-flex-direction: row;
+            flex-direction: row;
+            -webkit-flex-wrap: wrap;
+            -ms-flex-wrap: wrap;
+            flex-wrap: wrap;
+            -webkit-justify-content: space-around;
+            -ms-flex-pack: distribute;
+            justify-content: space-around;
+            -webkit-align-content: stretch;
+            -ms-flex-line-pack: stretch;
+            align-content: stretch;
+            -webkit-align-items: stretch;
+            -ms-flex-align: stretch;
+            align-items: stretch;
+        }
+
+            .frow > div {
+                min-width: 400px;
+                width: 50%;
+                font-family: 'Segoe UI Light';
+            }
+
+        .bl {
+            font-family: 'Segoe UI Semibold';
+            color: #000000;
+        }
+
+        table {
+            background-color: #e4e4e4 !important;
+            border-radius: 5px;
+            padding: 10px;
+            font-family: 'Segoe UI Light';
+        }
+
+        .p1 {
+            padding-left: 30px;
+        }
+
+        table td {
+            background-color: #cccccc !important;
+            border-radius: 3px;
+            padding: 5px;
+        }
+    </style>
+    <body>
+
+        <div class="main-content p1">
+            <h1 class="bl">BABYLONX</h1>
+            <div class="p1"> Namespace of <span class="bl">Babylonjs Extensions. </span></div>
+            <hr />
+            <h1>BABYLONX.<span class="bl">ShaderBuilder</span> </h1>
+            <div class="p1">
+                Javascript function (Fluent interface) For Make <span class="bl">
+                    Shader (vertex and Fragment) | String Builder
+                </span> <br />
+                implemanted for BabylonJs
+            </div>
+            <hr />
+
+            <div>
+                <h1> ShaderBuilder Usage <span class="bl">Terms </span> </h1>
+
+                <div class="p1">
+                    we need define some terms we used in shader
+                    <div class="p1">
+                        1. <span class="bl"> shader string        </span>| string with part of c language we used in shader <br />
+                        2. <span class="bl"> shader string : vec4 </span>| for define a vector4 {x,y,z,w} or {r,g,b,a} | 'vec4(0.)' or 'result'   <br />
+                        3. <span class="bl"> shader string : vec3 </span>| for define a vector3 {x,y,z} or {r,g,b}  | 'vec3(0.)' or 'vuv' or 'vuv * sin(time)' <br />
+                        4. <span class="bl"> shader string : vec2 </span>| for define a vector2 {x,y}   | 'vec2(0.)' or 'vuv' or 'vuv * sin(time)' <br />
+                        5. <span class="bl"> shader string : float </span>| float number * use always . in your output | '0.' or '.1' or '0.1'  <br />
+                        6. <span class="bl">
+                            string result
+                        </span> part of source you make with shader language and need fill result variable <br /> result is a vec4 varialbe and definded befor you source and all methods use that like resource of before <br />
+                        samples : 'result = vec4(1.,0.,0.,1.);' or 'float v = noise(pos);result = vec4(vec3(v),1.);'<br />
+                        7. <span class="bl"> Fluent Usage </span> <a href="https://en.wikipedia.org/wiki/Fluent_interface"> learn </a>
+                    </div>
+                </div>
+
+
+            </div>
+
+            <hr />
+
+            <div>
+                <h1>BABYLONX.ShaderBuilder().<span class="bl">InitializeEngine()</span>; </h1>
+                <div class="p1">
+                    <span class="bl red">
+                        !requirment :
+                    </span>
+                    you need call this Like static Method befor you starting material builder
+                </div>
+            </div>
+            <hr />
+
+            <div>
+                <h1>new BABYLONX.ShaderBuilder().[ Fluent Usage ].<span class="bl">BuildMaterial(scene)</span>; </h1>
+                <div class="p1">
+                    <span class="bl red">
+                        !Finished Fluent interface
+                    </span>
+                    this return a shaderMaterial and Prepare all Material Need (uniforms , samplers , etc ) <br />
+                    this method Make a shaderMaterial in ShaderStore Array<br />
+                    <h3 class="green">parameters</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th align="left">Name</th>
+                                <th align="center">Type</th>
+                                <th align="left">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td align="left">scene <span class="red">!requirment</span></td>
+                                <td align="center">scene</td>
+                                <td align="left">BabylonJS scene</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <hr />
+
+            <div>
+                <h1> BABYLONX.<span class="bl">Helper()</span>.[ Fluent Usage ].Build()</h1>
+                <div class="p1">
+                    Helper() method Used Deep Side Of Fluent Usage.<br />
+                    When We Need Make New Fluent Struct And Use it Like Parameter for Current Method we Used this.<br /><br />
+                    sample : <span class=" bl blk">
+                        new BABYLONX.ShaderBuilder().Multi([<br />
+                        &nbsp; &nbsp; &nbsp;BABYLONX.Helper().Solid({r:1}).Build(),<br />
+                        &nbsp; &nbsp; &nbsp;BABYLONX.Helper().Solid({g:1}).Build()])<br />
+                        .BuildMaterial(scene);
+                    </span>
+                </div>
+            </div>
+            <hr />
+
+            <div>
+                <h1> BABYLONX.Helper().[ Fluent Usage ].<span class="bl">Build()</span>; </h1>
+                <div class="p1">
+                    <span class="bl red">
+                        !Finished Fluent interface
+                    </span>
+                    return 'string result' see ShaderBuilder Terms<br />
+                    this method Make a Inner Source and return string
+
+                </div>
+            </div>
+            <hr />
+
+
+            <div>
+                <h1>new BABYLONX.ShaderBuilder().[ ].<span class="bl">Event(index, material)</span>.[ ] </h1>
+                <div class="p1">
+
+                    we can define 20 flag (for control) AND set it by <span class="bl">
+                        mesh.material.flagUp(flagNumber) and .flagDown(flagNumber)
+                    </span> <br />
+                    this method  make your wanted material when index flag is Up .<br />
+                    method used only in fragment shader
+                    <h3 class="green">parameters</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th align="left">Name</th>
+                                <th align="center">Type</th>
+                                <th align="left">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+
+                                <td align="left">index <span class="red">!requirment</span></td>
+                                <td align="center">integer Number</td>
+                                <td align="left">1 to 20 flag</td>
+                            </tr>
+                            <tr>
+
+                                <td align="left">material <span class="red">!requirment</span></td>
+                                <td align="center">material</td>
+                                <td align="left">the event material 'string result' see ShaderBuilder Terms</td>
+                            </tr>
+                        </tbody>
+                    </table> 
+
+                    <div class="frow">
+                        <div>
+                            <h3 class="bl green">Sample For Hover</h3>
+                            mesh.material =  <span class=" bl blk">
+                                new BABYLONX.ShaderBuilder()<br />
+                                .Solid({r:1}) <span class="green">// Default Material</span> <br />
+                                .Event(1, <span class="green">// flag Number</span> <br />
+                                &nbsp; &nbsp; &nbsp;BABYLONX.Helper()<span class="green"> // Deep Start Fluent</span><br />
+                                &nbsp; &nbsp; &nbsp;.Solid({g:1})<span class="green">// Hover Material</span><br />
+                                &nbsp; &nbsp; &nbsp;.Build())<span class="green">// Build Result</span><br />
+                                .BuildMaterial(scene);<span class="green">// Build Shader</span>
+                            </span>
+                            <br /><br />
+                            mesh.material.<span class=" bl blk">flagUp(1);</span><span class="green">// Call When You Want See Hover Material</span><br /><br />
+                            mesh.material.<span class=" bl blk">flagDown(1);</span><span class="green">// Call When You Want See Default Material</span>
+
+                        </div>
+                        <div onclick=" this.children[0].src = this.children[0].src.replace('nan.html','Event.htm'); this.children[0].classList.remove('hdn');this.children[1].classList.add('hdn')">
+                            <iframe class="demo hdn" scrolling="no" seamless="seamless" frameborder="0" src='http://cdn.rawgit.com/RNasimiAsl/Extensions/master/ShaderBuilder/Documentation/nan.html'></iframe>
+                            <div class="demo">
+                                <a onclick="return false;" href="http://cdn.rawgit.com/RNasimiAsl/Extensions/master/ShaderBuilder/Documentation/Event.htm"> Event Hover Demo </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr />
+
+            <div>
+                <h1>new BABYLONX.ShaderBuilder().[ ].<span class="bl">EventVertex(index, material)</span>.[ ] </h1>
+                <div class="p1">
+
+                    we can define 20 flag (for control) AND set it by <span class="bl">
+                        mesh.material.flagUp(flagNumber) and .flagDown(flagNumber)
+                    </span> <br />
+                    this method  make your wanted material when index flag is Up .<br />
+                    method used only in vertex shader
+                    <h3 class="green">parameters</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th align="left">Name</th>
+                                <th align="center">Type</th>
+                                <th align="left">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+
+                                <td align="left">index <span class="red">!requirment</span></td>
+                                <td align="center">integer Number</td>
+                                <td align="left">1 to 20 flag</td>
+                            </tr>
+                            <tr>
+
+                                <td align="left">material <span class="red">!requirment</span></td>
+                                <td align="center">material</td>
+                                <td align="left">the event material 'string result' see ShaderBuilder Terms</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="frow">
+                        <div>
+                            <h3 class="bl green">Sample For Hover</h3>
+                            mesh.material =  <span class=" bl blk">
+                                new BABYLONX.ShaderBuilder()<br />
+                                .Solid({r:1}) <span class="green">// Default Material</span> <br />
+                                                 .VertexShader('result = vec4(pos,1.);') <span class="green">
+    // Default Vertex Definition
+</span> <br />
+    .EventVertex(1, <span class="green">// flag Number</span> <br />
+    &nbsp; &nbsp; &nbsp;BABYLONX.Helper()<span class="green"> // Deep Start Fluent</span><br />
+    &nbsp; &nbsp; &nbsp;.InLine('result = vec4(pos+nrm*2.,1.);')<span class="green">// Hover Material</span><br />
+    &nbsp; &nbsp; &nbsp;.Build())<span class="green">// Build Result</span><br />
+    .BuildMaterial(scene);<span class="green">// Build Shader</span>
+</span>
+                            <br /><br />
+                            mesh.material.<span class=" bl blk">flagUp(1);</span><span class="green">// Call When You Want See Hover Material</span><br /><br />
+                            mesh.material.<span class=" bl blk">flagDown(1);</span><span class="green">// Call When You Want See Default Material</span>
+
+                        </div>
+                        <div onclick=" this.children[0].src = this.children[0].src.replace('nan.html','EventVertex.htm'); this.children[0].classList.remove('hdn');this.children[1].classList.add('hdn')">
+                            <iframe class="demo hdn" scrolling="no" seamless="seamless" frameborder="0" src='http://cdn.rawgit.com/RNasimiAsl/Extensions/master/ShaderBuilder/Documentation/nan.html'></iframe>
+                            <div class="demo">
+                                <a onclick="return false;" href="http://cdn.rawgit.com/RNasimiAsl/Extensions/master/ShaderBuilder/Documentation/EventVertex.htm"> Event in Vertex Hover Demo </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr />
+
+        </div>
+
+        <br>
+    </body>
 </html>
