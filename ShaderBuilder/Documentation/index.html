@@ -655,6 +655,224 @@
                 </div>
             </div>
             <hr />
+
+
+
+            <div>
+                <h1>new BABYLONX.ShaderBuilder().[ ].<span class="bl">Reference(index, material)</span>.[ ] </h1>
+                <div class="p1">
+
+                    Useful method For Keep Your Result Material In A Reference And You Can Use That For Change Color(Replace Color)<br />
+                    See Sample In ColorReplace 
+                    <br />
+                    <h3 class="green">parameters</h3>
+                    <table>
+                        <thead>
+                            <tr> 
+                                <th align="left">Name</th>
+                                <th align="center">Type</th>
+                                <th align="left">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+
+                                <td align="left">index <span class="red">!requirment</span></td>
+                                <td align="center">Integer number</td>
+                                <td align="left">you need when you want change color</td>
+                            </tr>
+                            <tr> 
+                                <td align="left">material </td>
+                                <td align="center">material</td>
+                                <td align="left">the  'string result' see ShaderBuilder Terms <br /> 
+                                if you set it null your last result referenced in index</td>
+                            </tr> 
+                        </tbody>
+                    </table> 
+                </div>
+            </div>
+            <hr />
+
+
+            <div>
+                <h1>new BABYLONX.ShaderBuilder().[ ].<span class="bl">ReplaceColor(index, color, material, option)</span>.[ ] </h1>
+                <h3>new BABYLONX.ShaderBuilder().[ ].<span class="bl">Red(index,   material, option)</span>.[ ] </h3>
+                <h3>new BABYLONX.ShaderBuilder().[ ].<span class="bl">Green(index,  material, option)</span>.[ ] </h3>
+                <h3>new BABYLONX.ShaderBuilder().[ ].<span class="bl">Blue(index,  material, option)</span>.[ ] </h3>
+                <h3>new BABYLONX.ShaderBuilder().[ ].<span class="bl">Cyan(index,   material, option)</span>.[ ] </h3>
+                <h3>new BABYLONX.ShaderBuilder().[ ].<span class="bl">Yellow(index,   material, option)</span>.[ ] </h3>
+                <h3>new BABYLONX.ShaderBuilder().[ ].<span class="bl">Pink(index,   material, option)</span>.[ ] </h3>
+                <h3>new BABYLONX.ShaderBuilder().[ ].<span class="bl">White(index,   material, option)</span>.[ ] </h3>
+                <h3>new BABYLONX.ShaderBuilder().[ ].<span class="bl">Black(index,   material, option)</span>.[ ] </h3> 
+
+                <div class="p1">
+
+                    you Can Replace any Color to Your wanted material with This Method You Most Reference Your Result Befor Use This<br />
+                    We Defined All Kind of Color You can Replace ( 8 Color  red,green,blue,cyan,pink,yellow,white,black )<br />
+
+                    <br />
+                    <h3 class="green">parameters</h3>
+                  
+                    <table>
+                        <tbody>
+                            <tr>
+                                <th align="left">Name</th>
+                                <th align="center">Type</th>
+                                <th align="left">Description</th>
+                            </tr>
+                            <tr>
+                                
+                                <td align="left">index</td>
+                                <td align="center">referenced index</td>
+                                <td align="left">&nbsp;</td>
+                            </tr>
+                            <tr>
+                                
+                                <td align="left">color</td>
+                                <td align="center">color Name (recommand Use Other Methods we Define All Color Type)</td>
+                                <td align="left">the solid color</td>
+                            </tr>
+                            <tr>
+                                
+                                <td align="left">material</td>
+                                <td align="center">material</td>
+                                <td align="left">the reference-target material</td>
+                            </tr>
+                            <tr>
+                                <td align="left">option</td>
+                                <td align="center">IReplaceColor interface</td>
+                                <td align="left">
+                                    interface IReplaceColor {<br />
+
+                                    rangeStep: any, // you can select color Step, this is between -0.488   and 0.488 <br />
+                                    rangePower: any,// you can select color Opacity when that wanna set aterial Power, this is between -0.488   and 0.488 <br />
+                                    colorIndex: number, // advance Usage you can use that for devided your color this is your Color Index <br />
+                                    colorStep: number, // advance Usage you can use that for devided your color all Your Color Devided Parts <br />
+                                    indexToEnd: boolean,  // advance Usage you can use that for devided your color Fill To end  <br />
+                                    }
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table> 
+
+                    <div class="frow">
+                        <div>
+                            <h3 class="bl green">Sample For Range</h3>
+                            mesh.material =   <span class=" bl blk"> new BABYLONX.ShaderBuilder()<br />
+                .Map({ path: 'imagePath1' }) // Make a Material<br />
+                .Reference(1) // reference last material to index 1<br />
+                .Red(1, BABYLONX.Helper().Solid({ g: 1 }).Build()) // replace red referenced color  to green color<br />
+                .Black(1, BABYLONX.Helper().Solid({ g: 1 , b:1 }).Build()) // replace Black referenced color to cyan <br />
+                .BuildMaterial(scene);
+                            </span>
+                        </div>
+                        <div onclick=" this.children[0].src = this.children[0].src.replace('nan.html', 'Reference_Replace.htm'); this.children[0].classList.remove('hdn'); this.children[1].classList.add('hdn')">
+                            <iframe class="demo hdn" scrolling="no" seamless="seamless" frameborder="0" src='http://cdn.rawgit.com/RNasimiAsl/Extensions/master/ShaderBuilder/Documentation/nan.html'></iframe>
+                            <div class="demo">
+                                <a onclick="return false;" href="http://cdn.rawgit.com/RNasimiAsl/Extensions/master/ShaderBuilder/Documentation/Reference_Replace.htm"> Range Demo </a>
+                            </div>
+                        </div>
+                    </div>
+                    <hr />
+                    <div class="frow">
+                        <div>
+                            <h3 class="bl green">Sample For Reference and Deep Fluent  </h3>
+                            mesh.material = new BABYLONX.ShaderBuilder()<br />
+                            .Map({ path: 'imagePath1' })<br />
+                            .Reference(1)<br />
+                            .Event(1, // hover<br />
+                            BABYLONX.Helper().Red(1,<br />
+                            &nbsp;&nbsp;&nbsp;&nbsp; BABYLONX.Helper()<br />
+                            &nbsp;&nbsp;&nbsp;&nbsp; .Map({ path: 'imagepath2', scaleX: 3., scaleY: 3 })<br />
+                            &nbsp;&nbsp;&nbsp;&nbsp; <br />
+                            &nbsp;&nbsp;&nbsp;&nbsp; .Reference(2)<br />
+                            &nbsp;&nbsp;&nbsp;&nbsp; .Red(2,<br />
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; BABYLONX.Helper()<br />
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; .Map({ path: 'imagepath3', scaleX: 9., scaleY: 9 })<br />
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br />
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; .Reference(3)<br />
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; .Red(3,<br />
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; BABYLONX.Helper()<br />
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; .Map({ path: 'imagepath3', scaleX: 9., scaleY: 9 })<br />
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; .Build())<br />
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; .Build())<br />
+                            &nbsp;&nbsp;&nbsp;&nbsp; .Build())<br />
+                            .Build()).BuildMaterial(scene);
+                            
+                        </div>
+                        <div onclick=" this.children[0].src = this.children[0].src.replace('nan.html', 'Deep_Fluent_sample.htm'); this.children[0].classList.remove('hdn'); this.children[1].classList.add('hdn')">
+                            <iframe class="demo hdn" scrolling="no" seamless="seamless" frameborder="0" src='http://cdn.rawgit.com/RNasimiAsl/Extensions/master/ShaderBuilder/Documentation/nan.html'></iframe>
+                            <div class="demo">
+                                <a onclick="return false;" href="http://cdn.rawgit.com/RNasimiAsl/Extensions/master/ShaderBuilder/Documentation/Deep_Fluent_sample.htm"> Range Demo </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr /> 
+            <div>
+                <h1>new BABYLONX.ShaderBuilder().[ ].<span class="bl"> Solid(option) </span>.[ ] </h1>
+                !under construction
+            </div>
+            <hr />
+            <div>
+                <h1>new BABYLONX.ShaderBuilder().[ ].<span class="bl"> NormalMap(value, material) </span>.[ ] </h1>
+                !under construction
+            </div>
+            <div>
+                <h1>new BABYLONX.ShaderBuilder().[ ].<span class="bl">Map(option)</span>.[ ] </h1>
+                !under construction
+            </div>
+            <hr /> 
+            <div>
+                <h1>new BABYLONX.ShaderBuilder().[ ].<span class="bl"> Reflect(option, opacity)</span>.[ ] </h1>
+                !under construction
+            </div>
+            <div>
+                <h1>new BABYLONX.ShaderBuilder().[ ].<span class="bl">Light(option)</span>.[ ] </h1>
+                !under construction
+            </div>
+            <hr />
+            <div>
+                <h1>new BABYLONX.ShaderBuilder().[ ].<span class="bl">Effect(option)</span>.[ ] </h1>
+                !under construction
+            </div>
+            <hr />
+            <div>
+                <h1>new BABYLONX.ShaderBuilder().[ ].<span class="bl">SetUniforms(name, scene, shader, helpers)</span>.[ ] </h1>
+                !under construction
+            </div>
+            <hr />
+            <div>
+                <h1>new BABYLONX.ShaderBuilder().[ ].<span class="bl">BuildPostProcess(camera , scene , scale , option )</span>  </h1>
+                !under construction
+            </div>
+            <hr />
+            <div>
+                <h1>new BABYLONX.ShaderBuilder().[ ].<span class="bl">ImportSamplers(txts)</span>.[ ] </h1>
+                !under construction
+            </div>
+            <hr />
+            <div>
+                <h1>new BABYLONX.ShaderBuilder().[ ].<span class="bl">Func(fun)</span></h1>
+                !under construction
+            </div>
+            <hr />
+            <div>
+                <h1>new BABYLONX.ShaderBuilder().[ ].<span class="bl">Nut(value , option )</span>.[ ]</h1>
+                !under construction
+            </div>
+            <hr />
+            <div>
+                <h1>new BABYLONX.ShaderBuilder().[ ].<span class="bl">IdColor(id )</span>.[ ]</h1>
+                !under construction
+            </div>
+            <hr />
+            <div>
+                <h1>new BABYLONX.ShaderBuilder().[ ].<span class="bl">Discard()</span>.[ ]</h1>
+                !under construction
+            </div>
+            <hr />
         </div>
 
         <br>
