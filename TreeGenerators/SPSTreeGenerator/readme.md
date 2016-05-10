@@ -13,8 +13,7 @@ This base tree is used in two different ways.
 After importing into your BJS project simply add
 
 ```
-var tree = createTree(trunkHeight, trunkTaper, trunkSlices, trunkMaterial, boughs, forks, forkAngle, forkRatio, branches, branchAngle, bowFr;
-eq, bowHeight, leavesOnBranch, leafWHRatio, leafMaterial, scene);
+var tree = createTree(trunkHeight, trunkTaper, trunkSlices, trunkMaterial, boughs, forks, forkAngle, forkRatio, branches, branchAngle, bowFreq, bowHeight, leavesOnBranch, leafWHRatio, leafMaterial, scene);
 ```
 
 ## Parameters
