@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Ascii Art Renderer</title>
+        <script src="./libs/babylon.max.js"></script>
+        
+        <style>
+            html, body {
+                width: 100%;
+                height: 100%;
+                padding: 0;
+                margin: 0;
+                overflow: hidden;
+            }
+
+            #renderCanvas {
+                width: 100%;
+                height: 100%;
+            }
+        </style>
+    </head>
+    <body>
+        <canvas id="renderCanvas"></canvas>
+
+        <script src="./dist/babylonx.asciiartrenderer.js"></script>
+        <script type="text/javascript">
+            window.onload = function() {
+                if (BABYLON.Engine.isSupported()) {
+                    var canvas = document.getElementById("renderCanvas");
+                    var engine = new BABYLON.Engine(canvas, true);
+                    
+                    // Chose the clear color to black to fit well with the font.
+                    var scene = new BABYLON.Scene(engine);
+                    scene.clearColor = BABYLON.Color3.Black();
+
+                    // Create an Arc Rotate Camera - aimed negative z this time
+                    var camera = new BABYLON.ArcRotateCamera("Camera", Math.PI / 2, 1.0, 110, BABYLON.Vector3.Zero(), scene);
+                    camera.attachControl(canvas, true);
+
+                    // Create a light
+                    var light = new BABYLON.PointLight("Omni", new BABYLON.Vector3(60, 60, 80), scene);
+
+                    // Environment Texture
+                    var hdrTexture = new BABYLON.HDRCubeTexture("TextureSample/environment.babylon.hdr", scene);
+
+                    // Skybox
+                    var hdrSkybox = BABYLON.Mesh.CreateBox("hdrSkyBox", 1000.0, scene);
+                    var hdrSkyboxMaterial = new BABYLON.PBRMaterial("skyBox", scene);
+                    hdrSkyboxMaterial.backFaceCulling = false;
+                    hdrSkyboxMaterial.reflectionTexture = hdrTexture;
+                    hdrSkyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+                    hdrSkyboxMaterial.microSurface = 1.0;
+                    hdrSkyboxMaterial.disableLighting = true;
+                    hdrSkybox.material = hdrSkyboxMaterial;
+                    hdrSkybox.infiniteDistance = true;
+
+                    // Mesh Creation function
+                    var createMesh = function (x, z, reflectivity, glossiness) {
+                        // Creation of a sphere
+                        var sphere = BABYLON.Mesh.CreateSphere("Sphere_x_" + x + "_z_" + z, 10.0, 9.0, scene);
+                        sphere.position.z = z;
+                        sphere.position.x = x;
+
+                        // Creation of a material
+                        var materialSphere = new BABYLON.PBRMaterial("Material_x_" + x + "_z_" + z, scene);
+                        materialSphere.reflectionTexture = hdrTexture;
+                        materialSphere.albedoColor = new BABYLON.Color3(0.2, 0.9, 1.0);
+                        materialSphere.reflectivityColor = new BABYLON.Color3(reflectivity, reflectivity, reflectivity);
+                        materialSphere.microSurface = glossiness;
+                        materialSphere.usePhysicalLightFalloff = false;
+
+                        // Attach the material to the sphere
+                        sphere.material = materialSphere;
+
+                        // Change rendering group to not conflict with the skybox
+                        sphere.renderingGroupId = 1;
+                    };
+
+                    // Dynamically create a 6*6 ranges of sphere demoing most of the 
+                    // reflectivity glossiness combinaisons.	
+                    var x = 38;
+                    for (var i = 0; i < 6; i++) {
+                        var reflectivity = i / 5;
+                        var z = -55;
+                        for (var j = 0; j < 6; j++) {
+                            var glossiness = j / 5;
+                            createMesh(x, z, reflectivity, glossiness);
+                            z = z + 15;
+                        }
+                        x = x - 15;
+                    }
+
+                    // ASCII ART SAMPLE BEGIN
+                    // Creates the post process
+                    var postProcess = new BABYLONX.AsciiArtPostProcess("AsciiArt", camera, { mixToNormal: 0.9 });
+                    // ASCII ART SAMPLE END
+
+                    // Displays the scene.
+                    var alpha = 0;
+                    engine.runRenderLoop(function() {
+                        scene.render();
+                        alpha += 0.01;
+                        postProcess.mixToNormal = Math.cos(alpha) * 0.5 + 0.5;
+                    });
+                }
+            };
+        </script>
+    </body>
+</html>

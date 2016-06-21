@@ -1,0 +1,8 @@
+{
+  "sourceFiles": ["src/**/*.ts"],
+  "shaderFiles": ["src/**/*.fx"],
+  "distDirectory": "dist/",
+  "distFile": "babylonx.asciiartrenderer.js",
+  "shaderVariableName": "BABYLONX.AsciiArtRenderer.ShadersStore",
+  "initScript": "src/babylonx.AsciiArtPostProcessInitialize.js"
+}
