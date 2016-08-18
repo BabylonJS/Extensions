@@ -126,6 +126,8 @@ module DIALOG{
             }
             this.placeHolderWidth  = this.getFullScalePlaceholderWidth ();
             this.placeHolderHeight = this.getFullScalePlaceholderHeight();
+            
+            this.isPickable = this._button;
         }
         
         // =================================== Rendering Methods =====================================        
@@ -246,7 +248,11 @@ module DIALOG{
         public isSelected() : boolean { return this._selected; }
         public isPanelEnabled() : boolean { return this._panelEnabled; }
         public isButton() : boolean { return this._button; }
-        public setButton(button : boolean) { this._button = button; } // those who cannot set it in constructor, like buttons for NumberScroller
+        
+        /** for those who cannot set it in constructor, like buttons for NumberScroller */
+        public setButton(button : boolean) { 
+            this.isPickable = this._button = button; 
+        } 
          // ===================================== Layout Methods ======================================
         public get fitToWindow() : boolean { return this._fitToWindow; }
         /**

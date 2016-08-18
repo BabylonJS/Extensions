@@ -60,6 +60,7 @@ declare module DIALOG {
         isSelected(): boolean;
         isPanelEnabled(): boolean;
         isButton(): boolean;
+        /** for those who cannot set it in constructor, like buttons for NumberScroller */
         setButton(button: boolean): void;
         /**
          * Assign whether Top Level Panel to conform to window dimensions.
@@ -249,33 +250,6 @@ declare module DIALOG {
         static ALIGN_BOTTOM: number;
     }
 }
-/// <reference path="Panel.d.ts" />
-declare module DIALOG {
-    class Spacer extends BasePanel {
-        /**
-         * Sub-class of BasePanel containing no geometry.  Used to assign blank space.  Actual space
-         * that a unit occupies is relative to the total units that the top level panel requires in that
-         * dimension.  Best to put in spacer with 0,0 during dev.  Once rest is settled, then tune here.
-         *
-         * @param {number} vertUnits       - The amount of space in the vertical   dimension.
-         * @param {number} horizontalUnits - The amount of space in the horizontal dimension.
-         */
-        constructor(vertUnits: number, horizontalUnits: number);
-        /**
-         * @override
-         */
-        useGeometryForBorder(): boolean;
-        /**
-         * @override
-         * No meaning for spacers
-         */
-        addSubPanel(sub: Panel, index?: number): void;
-        /** @override */ getSubPanel(): Array<Panel>;
-        /** @override */ removeAt(index: number, doNotDispose?: boolean): void;
-        /** @override */ removeAll(doNotDispose?: boolean): void;
-    }
-}
-/// <reference path="Panel.d.ts" />
 declare module DIALOG {
     class Letter extends BasePanel {
         static LETTER_ABOVE: number;
@@ -314,177 +288,6 @@ declare module DIALOG {
         /** @override */ removeAll(doNotDispose?: boolean): void;
     }
 }
-declare module Font2D {
-    class MeshFactory implements TOWER_OF_BABEL.FactoryModule {
-        private _scene;
-        constructor(_scene: BABYLON.Scene, materialsRootDir?: string);
-        getModuleName(): string;
-        instance(meshName: string, cloneSkeleton?: boolean): BABYLON.Mesh;
-    }
-}
-declare module Font2D_EXT {
-    class MeshFactory implements TOWER_OF_BABEL.FactoryModule {
-        private _scene;
-        constructor(_scene: BABYLON.Scene, materialsRootDir?: string);
-        getModuleName(): string;
-        instance(meshName: string, cloneSkeleton?: boolean): BABYLON.Mesh;
-    }
-}
-declare module Font3D {
-    class MeshFactory implements TOWER_OF_BABEL.FactoryModule {
-        private _scene;
-        constructor(_scene: BABYLON.Scene, materialsRootDir?: string);
-        getModuleName(): string;
-        instance(meshName: string, cloneSkeleton?: boolean): BABYLON.Mesh;
-    }
-}
-declare module Font3D_EXT {
-    class MeshFactory implements TOWER_OF_BABEL.FactoryModule {
-        private _scene;
-        constructor(_scene: BABYLON.Scene, materialsRootDir?: string);
-        getModuleName(): string;
-        instance(meshName: string, cloneSkeleton?: boolean): BABYLON.Mesh;
-    }
-}
-/// <reference path="Panel.d.ts" />
-declare module DIALOG {
-    /**
-     * A way to map a mesh into a panel.  Very similar to Letter, except it is an actual sub-class of BasePanel.
-     */
-    class MeshWrapperPanel extends BasePanel {
-        _inside: BABYLON.Mesh;
-        private _needBorders;
-        _minWorld: BABYLON.Vector3;
-        _maxWorld: BABYLON.Vector3;
-        constructor(_inside: BABYLON.Mesh, _needBorders?: boolean);
-        setMaterial(mat: BABYLON.StandardMaterial): void;
-        /**
-         * @override
-         */
-        useGeometryForBorder(): boolean;
-        /**
-         * @override
-         * No actual layout of sub-panels.  Need to set the _actual members, as super does though.
-         */
-        _layout(widthConstraint: number, heightConstraint: number): void;
-        /**
-         * @override
-         */
-        _calcRequiredSize(): void;
-        /**
-         * @override
-         * Change layermask of this._inside and any children
-         */
-        setLayerMask(maskId: number): void;
-        /**
-         * @override
-         * Do the entire hierarchy, in addition
-         */
-        freezeWorldMatrixTree(): void;
-        /**
-         * @override
-         * Do the entire hierarchy, in addition
-         */
-        unfreezeWorldMatrixTree(): void;
-        /** @override */
-        addSubPanel(sub: BasePanel, index?: number): void;
-        /** @override */ getSubPanel(): Array<Panel>;
-        /** @override */ removeAt(index: number, doNotDispose?: boolean): void;
-        /** @override */ removeAll(doNotDispose?: boolean): void;
-        /** @override */
-        setSubsFaceSize(size: number, relative?: boolean): BasePanel;
-    }
-}
-/// <reference path="Panel.d.ts" />
-/// <reference path="FontFactory.d.ts" />
-declare module DIALOG {
-    class DialogSys {
-        static WHITE: Array<BABYLON.StandardMaterial>;
-        static BLACK: Array<BABYLON.StandardMaterial>;
-        static BLUE: Array<BABYLON.StandardMaterial>;
-        static GOLD: Array<BABYLON.StandardMaterial>;
-        static RED: Array<BABYLON.StandardMaterial>;
-        static GREY: Array<BABYLON.StandardMaterial>;
-        static LT_GREY: Array<BABYLON.StandardMaterial>;
-        static ORANGE: Array<BABYLON.StandardMaterial>;
-        static GREEN: Array<BABYLON.StandardMaterial>;
-        static ACTIVE_DIALOG_LAYER: number;
-        static SUSPENDED_DIALOG_LAYER: number;
-        static DEFAULT_LAYERMASK: number;
-        private static _dialogStack;
-        private static _camera;
-        private static _light;
-        static _scene: BABYLON.Scene;
-        static CURRENT_FONT_MAT_ARRAY: Array<BABYLON.StandardMaterial>;
-        static USE_CULLING_MAT_FOR_2D: boolean;
-        static DEPTH_SCALING_3D: number;
-        /**
-         * Must be run before instancing any panels.  Stores scene, so does not have to be part of Panel constructors.
-         * Also instances system camera / lights, load stock fonts in TOB runtime, & build font materials.
-         * @param {BABYLON.Scene} scene - The scene to construct Panels in.
-         */
-        static initialize(scene: BABYLON.Scene): void;
-        /**
-         *
-         */
-        static onNewLight(newLight?: BABYLON.Light, positionInArray?: number, scene?: BABYLON.Scene): void;
-        /**
-         * Remove all the things made / done in initialize().
-         */
-        static dispose(): void;
-        /**
-         * Build sets of materials for Letter generation.  Output should be to DialogSys.CURRENT_FONT_MAT_ARRAY,
-         * prior to Letter creation.
-         *
-         * @return {Array<BABYLON.StandardMaterial>}:
-         *    [0] - Version when building from a 3D font
-         *    [1] - Version when building from a 2D font; backface culling disabled
-         */
-        static buildFontMaterials(baseName: String, color: BABYLON.Color3, intensity?: number, alpha?: number): Array<BABYLON.StandardMaterial>;
-        /**
-         * Add a top level panel to the modal stack.  When first panel re-enable system camera,
-         * otherwise hide the previous panel using layermask.
-         * @param {BasePanel} panel - The new top of the stack panel.
-         */
-        static pushPanel(panel: BasePanel): void;
-        static popPanel(doNotDispose?: boolean): any;
-        /**
-         * Adjusts camera ortho settings & viewport based on the top panel on the stack.
-         * Called by pushPanel(), popPanel(), & window resize event registered for above.
-         * Called externally in BasePanel._beforeRender(), for top level Panels.
-         */
-        static _adjustCameraForPanel(): void;
-        /**
-         * called internally to get the ratios of a panel relative to thecurrent window size
-         */
-        private static _getScalingToWindow(width, height);
-        static Version: string;
-    }
-}
-/// <reference path="Letter.d.ts" />
-declare module DIALOG {
-    /**
-     * class to retrieve Letters from Mesh factories.  load your own fonts to TOWER_OF_BABEL.MeshFactory.MODULES
-     */
-    class FontFactory {
-        /**
-         * Initialize the stock Typeface modules, could not do in getLetters, without passing scene everytime.
-         * When both Font2D & Font3D are found, Label.DEFAULT_FONT_MODULE is set to Font2D.
-         * @param {BABYLON.Scene} scene - needed to instance meshes.
-         */
-        static loadStockTypefaces(scene: BABYLON.Scene): void;
-        /**
-         * Get an array of meshes <Letter> which match match the string passed
-         * @param {string} letters - list of characters
-         * @param {string} typeface - the identifier of the font to retrieve
-         * @param {BABYLON.Material} customMaterial - optional material to override with, stock material probably 'White'
-         * @return {Array} - Same length letters arg. ' ', space chars & those not found are null.
-         */
-        static getLetters(letters: string, typeface: string, customMaterial?: BABYLON.Material): Array<Letter>;
-    }
-}
-/// <reference path="Panel.d.ts" />
-/// <reference path="Letter.d.ts" />
 declare module DIALOG {
     class Label extends BasePanel {
         _prohibitMerging: boolean;
@@ -536,53 +339,6 @@ declare module DIALOG {
         private _bigLetter(material, vertexData);
     }
 }
-/// <reference path="Panel.d.ts" />
-/// <reference path="Label.d.ts" />
-/// <reference path="CheckBoxFont.d.ts" />
-declare module DIALOG {
-    class CheckBox extends Label {
-        private static factory;
-        constructor(letters: string, typeFace?: string, _prohibitMerging?: boolean);
-        /**
-         * all meshes within 2D & 3D consume same space, so no layout required. to switch them out.
-         */
-        private _assignCheckMesh();
-        setSelected(selected: any): void;
-        enableButton(enabled: boolean): void;
-        /**
-         * @override
-         */
-        _calcRequiredSize(): void;
-    }
-}
-declare module CheckBoxFont {
-    class MeshFactory implements TOWER_OF_BABEL.FactoryModule {
-        private _scene;
-        constructor(_scene: BABYLON.Scene, materialsRootDir?: string);
-        getModuleName(): string;
-        instance(meshName: string, cloneSkeleton?: boolean): BABYLON.Mesh;
-    }
-    function getStats(): [number];
-    function defineMaterials(scene: BABYLON.Scene, materialsRootDir?: string): void;
-    class unchecked2D extends DIALOG.Letter {
-        constructor(name: string, scene: BABYLON.Scene, materialsRootDir?: string, source?: unchecked2D);
-        dispose(doNotRecurse?: boolean): void;
-    }
-    class checked2D extends DIALOG.Letter {
-        constructor(name: string, scene: BABYLON.Scene, materialsRootDir?: string, source?: checked2D);
-        dispose(doNotRecurse?: boolean): void;
-    }
-    class checked3D extends DIALOG.Letter {
-        constructor(name: string, scene: BABYLON.Scene, materialsRootDir?: string, source?: checked3D);
-        dispose(doNotRecurse?: boolean): void;
-    }
-    class unchecked3D extends DIALOG.Letter {
-        constructor(name: string, scene: BABYLON.Scene, materialsRootDir?: string, source?: unchecked3D);
-        dispose(doNotRecurse?: boolean): void;
-    }
-}
-/// <reference path="Panel.d.ts" />
-/// <reference path="Label.d.ts" />
 declare module DIALOG {
     class Button extends Label {
         _button_type: number;
@@ -640,50 +396,6 @@ declare module DIALOG {
         static RADIO_BUTTON: number;
     }
 }
-/// <reference path="Panel.d.ts" />
-/// <reference path="Label.d.ts" />
-/// <reference path="Button.d.ts" />
-declare module DIALOG {
-    class Menu extends BasePanel implements RadioGroup {
-        private _menu;
-        private _selectedIndex;
-        private _callbacks;
-        /**
-         * @param {string} title - Optional mesh to display above the menu buttons
-         * @param {[string]} labels - Each string results in a menu button created using it as the text
-         * @param {number} layoutDir - Vertical for menus, but allow sub-classes like a TabbedPanel to set to horizontal
-         * @param {boolean} topLevel - Give a menu the opportunity to be a top level panel
-         */
-        constructor(title: string, labels: [string], layoutDir?: number, topLevel?: boolean);
-        assignMenuCallback(itemIdx: number, func: (button: Button) => void): void;
-        /**
-         * called by Buttons that have a RadioGroup (this) assigned to them
-         * @param {BasePanel} reporter - This is the button report in that it has been clicked
-         */
-        reportSelected(reporter: BasePanel): void;
-        selectedIndex: number;
-        /**
-         * @override
-         * Add a Button to the end of the menu, or at the index passed.
-         * Also make room in _callbacks.
-         *
-         * @param {BasePanel} sub - Button to be added.
-         * @param {number} index - the position at which to add the Gutton
-         */
-        addSubPanel(sub: BasePanel, index?: number): void;
-        /**
-         * @override
-         * remove a sub-panel & callback
-         * @param {number} index - the index of the button to be removed
-         */
-        removeAt(index: number): void;
-        /**
-         * @override
-         * remove all menu buttons  & callback
-         */
-        removeAll(): void;
-    }
-}
 declare module DigitParts {
     class MeshFactory implements TOWER_OF_BABEL.FactoryModule {
         private _scene;
@@ -715,8 +427,182 @@ declare module DigitParts {
         dispose(doNotRecurse?: boolean): void;
     }
 }
-/// <reference path="../Panel.d.ts" />
-/// <reference path="../MeshWrapperPanel.d.ts" />
+declare module DIALOG {
+    /**
+     * class to retrieve Letters from Mesh factories.  load your own fonts to TOWER_OF_BABEL.MeshFactory.MODULES
+     */
+    class FontFactory {
+        /**
+         * Initialize the stock Typeface modules, could not do in getLetters, without passing scene everytime.
+         * When both Font2D & Font3D are found, Label.DEFAULT_FONT_MODULE is set to Font2D.
+         * @param {BABYLON.Scene} scene - needed to instance meshes.
+         */
+        static loadStockTypefaces(scene: BABYLON.Scene): void;
+        /**
+         * Get an array of meshes <Letter> which match match the string passed
+         * @param {string} letters - list of characters
+         * @param {string} typeface - the identifier of the font to retrieve
+         * @param {BABYLON.Material} customMaterial - optional material to override with, stock material probably 'White'
+         * @return {Array} - Same length letters arg. ' ', space chars & those not found are null.
+         */
+        static getLetters(letters: string, typeface: string, customMaterial?: BABYLON.Material): Array<Letter>;
+    }
+}
+declare module DIALOG {
+    class DialogSys {
+        static WHITE: Array<BABYLON.StandardMaterial>;
+        static BLACK: Array<BABYLON.StandardMaterial>;
+        static BLUE: Array<BABYLON.StandardMaterial>;
+        static GOLD: Array<BABYLON.StandardMaterial>;
+        static RED: Array<BABYLON.StandardMaterial>;
+        static GREY: Array<BABYLON.StandardMaterial>;
+        static LT_GREY: Array<BABYLON.StandardMaterial>;
+        static ORANGE: Array<BABYLON.StandardMaterial>;
+        static GREEN: Array<BABYLON.StandardMaterial>;
+        static ACTIVE_DIALOG_LAYER: number;
+        static SUSPENDED_DIALOG_LAYER: number;
+        static DEFAULT_LAYERMASK: number;
+        private static _dialogStack;
+        private static _camera;
+        private static _light;
+        static _scene: BABYLON.Scene;
+        private static _onNewLightObserver;
+        static CURRENT_FONT_MAT_ARRAY: Array<BABYLON.StandardMaterial>;
+        static USE_CULLING_MAT_FOR_2D: boolean;
+        static DEPTH_SCALING_3D: number;
+        /**
+         * Must be run before instancing any panels.  Stores scene, so does not have to be part of Panel constructors.
+         * Also instances system camera / lights, load stock fonts in TOB runtime, & build font materials.
+         * @param {BABYLON.Scene} scene - The scene to construct Panels in.
+         */
+        static initialize(scene: BABYLON.Scene): void;
+        /**
+         *
+         */
+        static onNewLight(newLight?: BABYLON.Light): void;
+        /**
+         * Remove all the things made / done in initialize().
+         */
+        static dispose(): void;
+        /**
+         * Build sets of materials for Letter generation.  Output should be to DialogSys.CURRENT_FONT_MAT_ARRAY,
+         * prior to Letter creation.
+         *
+         * @return {Array<BABYLON.StandardMaterial>}:
+         *    [0] - Version when building from a 3D font
+         *    [1] - Version when building from a 2D font; backface culling disabled
+         */
+        static buildFontMaterials(baseName: String, color: BABYLON.Color3, intensity?: number, alpha?: number): Array<BABYLON.StandardMaterial>;
+        /**
+         * Add a top level panel to the modal stack.  When first panel re-enable system camera,
+         * otherwise hide the previous panel using layermask.
+         * @param {BasePanel} panel - The new top of the stack panel.
+         */
+        static pushPanel(panel: BasePanel): void;
+        static popPanel(doNotDispose?: boolean): any;
+        /**
+         * Adjusts camera ortho settings & viewport based on the top panel on the stack.
+         * Called by pushPanel(), popPanel(), & window resize event registered for above.
+         * Called externally in BasePanel._beforeRender(), for top level Panels.
+         */
+        static _adjustCameraForPanel(): void;
+        /**
+         * called internally to get the ratios of a panel relative to thecurrent window size
+         */
+        private static _getScalingToWindow(width, height);
+        static Version: string;
+    }
+}
+declare module CheckBoxFont {
+    class MeshFactory implements TOWER_OF_BABEL.FactoryModule {
+        private _scene;
+        constructor(_scene: BABYLON.Scene, materialsRootDir?: string);
+        getModuleName(): string;
+        instance(meshName: string, cloneSkeleton?: boolean): BABYLON.Mesh;
+    }
+    function getStats(): [number];
+    function defineMaterials(scene: BABYLON.Scene, materialsRootDir?: string): void;
+    class unchecked2D extends DIALOG.Letter {
+        constructor(name: string, scene: BABYLON.Scene, materialsRootDir?: string, source?: unchecked2D);
+        dispose(doNotRecurse?: boolean): void;
+    }
+    class checked2D extends DIALOG.Letter {
+        constructor(name: string, scene: BABYLON.Scene, materialsRootDir?: string, source?: checked2D);
+        dispose(doNotRecurse?: boolean): void;
+    }
+    class checked3D extends DIALOG.Letter {
+        constructor(name: string, scene: BABYLON.Scene, materialsRootDir?: string, source?: checked3D);
+        dispose(doNotRecurse?: boolean): void;
+    }
+    class unchecked3D extends DIALOG.Letter {
+        constructor(name: string, scene: BABYLON.Scene, materialsRootDir?: string, source?: unchecked3D);
+        dispose(doNotRecurse?: boolean): void;
+    }
+}
+declare module DIALOG {
+    class CheckBox extends Label {
+        private static factory;
+        constructor(letters: string, typeFace?: string, _prohibitMerging?: boolean);
+        /**
+         * all meshes within 2D & 3D consume same space, so no layout required. to switch them out.
+         */
+        private _assignCheckMesh();
+        setSelected(selected: any): void;
+        enableButton(enabled: boolean): void;
+        /**
+         * @override
+         */
+        _calcRequiredSize(): void;
+    }
+}
+declare module DIALOG {
+    /**
+     * A way to map a mesh into a panel.  Very similar to Letter, except it is an actual sub-class of BasePanel.
+     */
+    class MeshWrapperPanel extends BasePanel {
+        _inside: BABYLON.Mesh;
+        private _needBorders;
+        _minWorld: BABYLON.Vector3;
+        _maxWorld: BABYLON.Vector3;
+        constructor(_inside: BABYLON.Mesh, _needBorders?: boolean);
+        setMaterial(mat: BABYLON.StandardMaterial): void;
+        /**
+         * @override
+         */
+        useGeometryForBorder(): boolean;
+        /**
+         * @override
+         * No actual layout of sub-panels.  Need to set the _actual members, as super does though.
+         */
+        _layout(widthConstraint: number, heightConstraint: number): void;
+        /**
+         * @override
+         */
+        _calcRequiredSize(): void;
+        /**
+         * @override
+         * Change layermask of this._inside and any children
+         */
+        setLayerMask(maskId: number): void;
+        /**
+         * @override
+         * Do the entire hierarchy, in addition
+         */
+        freezeWorldMatrixTree(): void;
+        /**
+         * @override
+         * Do the entire hierarchy, in addition
+         */
+        unfreezeWorldMatrixTree(): void;
+        /** @override */
+        addSubPanel(sub: BasePanel, index?: number): void;
+        /** @override */ getSubPanel(): Array<Panel>;
+        /** @override */ removeAt(index: number, doNotDispose?: boolean): void;
+        /** @override */ removeAll(doNotDispose?: boolean): void;
+        /** @override */
+        setSubsFaceSize(size: number, relative?: boolean): BasePanel;
+    }
+}
 declare module DIALOG {
     class LCD extends BasePanel {
         private _nDigits;
@@ -760,5 +646,103 @@ declare module DIALOG {
         private _increment();
         private _decrement();
         value: number;
+    }
+}
+declare module DIALOG {
+    class Menu extends BasePanel implements RadioGroup {
+        private _menu;
+        private _selectedIndex;
+        private _callbacks;
+        /**
+         * @param {string} title - Optional mesh to display above the menu buttons
+         * @param {[string]} labels - Each string results in a menu button created using it as the text
+         * @param {number} layoutDir - Vertical for menus, but allow sub-classes like a TabbedPanel to set to horizontal
+         * @param {boolean} topLevel - Give a menu the opportunity to be a top level panel
+         */
+        constructor(title: string, labels: [string], layoutDir?: number, topLevel?: boolean);
+        assignMenuCallback(itemIdx: number, func: (button: Button) => void): void;
+        /**
+         * called by Buttons that have a RadioGroup (this) assigned to them
+         * @param {BasePanel} reporter - This is the button report in that it has been clicked
+         */
+        reportSelected(reporter: BasePanel): void;
+        selectedIndex: number;
+        /**
+         * @override
+         * Add a Button to the end of the menu, or at the index passed.
+         * Also make room in _callbacks.
+         *
+         * @param {BasePanel} sub - Button to be added.
+         * @param {number} index - the position at which to add the Gutton
+         */
+        addSubPanel(sub: BasePanel, index?: number): void;
+        /**
+         * @override
+         * remove a sub-panel & callback
+         * @param {number} index - the index of the button to be removed
+         */
+        removeAt(index: number): void;
+        /**
+         * @override
+         * remove all menu buttons  & callback
+         */
+        removeAll(): void;
+    }
+}
+declare module Font2D {
+    class MeshFactory implements TOWER_OF_BABEL.FactoryModule {
+        private _scene;
+        constructor(_scene: BABYLON.Scene, materialsRootDir?: string);
+        getModuleName(): string;
+        instance(meshName: string, cloneSkeleton?: boolean): BABYLON.Mesh;
+    }
+}
+declare module Font2D_EXT {
+    class MeshFactory implements TOWER_OF_BABEL.FactoryModule {
+        private _scene;
+        constructor(_scene: BABYLON.Scene, materialsRootDir?: string);
+        getModuleName(): string;
+        instance(meshName: string, cloneSkeleton?: boolean): BABYLON.Mesh;
+    }
+}
+declare module Font3D {
+    class MeshFactory implements TOWER_OF_BABEL.FactoryModule {
+        private _scene;
+        constructor(_scene: BABYLON.Scene, materialsRootDir?: string);
+        getModuleName(): string;
+        instance(meshName: string, cloneSkeleton?: boolean): BABYLON.Mesh;
+    }
+}
+declare module Font3D_EXT {
+    class MeshFactory implements TOWER_OF_BABEL.FactoryModule {
+        private _scene;
+        constructor(_scene: BABYLON.Scene, materialsRootDir?: string);
+        getModuleName(): string;
+        instance(meshName: string, cloneSkeleton?: boolean): BABYLON.Mesh;
+    }
+}
+declare module DIALOG {
+    class Spacer extends BasePanel {
+        /**
+         * Sub-class of BasePanel containing no geometry.  Used to assign blank space.  Actual space
+         * that a unit occupies is relative to the total units that the top level panel requires in that
+         * dimension.  Best to put in spacer with 0,0 during dev.  Once rest is settled, then tune here.
+         *
+         * @param {number} vertUnits       - The amount of space in the vertical   dimension.
+         * @param {number} horizontalUnits - The amount of space in the horizontal dimension.
+         */
+        constructor(vertUnits: number, horizontalUnits: number);
+        /**
+         * @override
+         */
+        useGeometryForBorder(): boolean;
+        /**
+         * @override
+         * No meaning for spacers
+         */
+        addSubPanel(sub: Panel, index?: number): void;
+        /** @override */ getSubPanel(): Array<Panel>;
+        /** @override */ removeAt(index: number, doNotDispose?: boolean): void;
+        /** @override */ removeAll(doNotDispose?: boolean): void;
     }
 }

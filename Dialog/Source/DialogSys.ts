@@ -24,6 +24,8 @@ module DIALOG{
         private static _light  : BABYLON.PointLight;      
         public  static  _scene : BABYLON.Scene;
         
+        private static _onNewLightObserver: BABYLON.Observer<BABYLON.Light>;
+        
         // current settings applied as meshes generated, sort of LAF
         public static CURRENT_FONT_MAT_ARRAY : Array<BABYLON.StandardMaterial>;
         public static USE_CULLING_MAT_FOR_2D = true;
@@ -75,15 +77,14 @@ module DIALOG{
                     scene.lights[i].excludeWithLayerMask = DialogSys.ACTIVE_DIALOG_LAYER;
                 }
             }
-            scene.onNewLightAdded = DialogSys.onNewLight;
+            scene
+            this._onNewLightObserver = scene.onNewLightAddedObservable.add(DialogSys.onNewLight);
         }
         /**
          * 
          */
-        public static onNewLight(newLight?: BABYLON.Light, positionInArray?: number, scene?: BABYLON.Scene) : void{
-            if (scene === DialogSys._scene){
-                newLight.excludeWithLayerMask = DialogSys.ACTIVE_DIALOG_LAYER;
-            }
+        public static onNewLight(newLight?: BABYLON.Light) : void{
+            newLight.excludeWithLayerMask = DialogSys.ACTIVE_DIALOG_LAYER;
         }
         /**
          * Remove all the things made / done in initialize().
@@ -100,7 +101,7 @@ module DIALOG{
             DialogSys.LT_GREY [0].dispose(); DialogSys.LT_GREY [1].dispose(); 
             DialogSys.ORANGE  [0].dispose(); DialogSys.ORANGE  [1].dispose(); 
             DialogSys.GREEN   [0].dispose(); DialogSys.GREEN   [1].dispose();
-            DialogSys._scene.onNewLightAdded = null;
+            DialogSys._scene.onNewLightAddedObservable.remove(DialogSys._onNewLightObserver);
             DialogSys._scene = null;
         }
         
@@ -270,7 +271,7 @@ module DIALOG{
         }
         
         public static get Version(): string {
-            return "1.1.0";
+            return "1.1.1";
         }
     }
 }
