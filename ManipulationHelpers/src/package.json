@@ -1,0 +1,22 @@
+{
+  "name": "manipulationhelpers",
+  "version": "1.0.0",
+  "description": "Babylon.js extension to manipulate scene nodes",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nockawa/Extensions/ManipulationHelpers"
+  },
+  "author": "Loic Baumann",
+  "license": "ISC",
+  "devDependencies": {
+    "gulp-rename": "^1.2.2",
+    "gulp-sass": "^2.2.0",
+    "gulp-typescript": "^2.12.2",
+    "gulp-uglify": "^1.5.3",
+    "merge2": "^1.0.2"
+  }
+}

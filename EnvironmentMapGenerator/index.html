@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Environment Map Generator</title>
+        <script src="./libs/babylon.max.js"></script>
+        
+        <style>
+            html, body {
+                width: 100%;
+                height: 100%;
+                padding: 0;
+                margin: 0;
+                overflow: hidden;
+            }
+
+            #renderCanvas {
+                width: 100%;
+                height: 100%;
+            }
+
+            #inputs {
+                position: absolute;
+                background-color: white;
+                border: 2px solid black;
+                font-size: 16px;
+                color: black;
+                top: 5px;
+                left: 5px;
+                width: 300px;
+                height: 150px;
+            }
+            
+            div {
+                margin: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="inputs">
+            <div>
+                Target Size: <input id="targetSize" type="text" value="128" />
+            </div>
+            <div>
+                <b>Please, drop your .hdr file in the page.</b>
+            </div>
+            <div id="output">
+                Please, be patient during the generation of the file.
+            </div>
+        </div>
+        
+        <canvas id="renderCanvas"></canvas>
+
+        <script src="./dist/babylonx.environmentmapgenerator.js"></script>
+        <script type="text/javascript">
+            var sizeInput = document.getElementById('targetSize');
+            var outputDiv = document.getElementById('output');
+            var canvas = document.getElementById('renderCanvas');
+            
+            var emg = new BABYLONX.EnvironmentMapGenerator(canvas,
+                sizeInput,
+                outputDiv
+            );
+            
+            emg.run();
+        </script>
+    </body>
+</html>
