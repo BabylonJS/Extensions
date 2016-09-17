@@ -7,10 +7,10 @@ module BABYLONX {
     }
 
     export interface IColor {
-        r: any;
-        g: any;
-        b: any;
-        a: any;
+        r?: any;
+        g?: any;
+        b?: any;
+        a?: any;
     }
 
     export interface IVector3 {
