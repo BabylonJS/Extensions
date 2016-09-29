@@ -209,6 +209,11 @@ If there are procedural textures in any materials for a mesh, then any image tex
 | --- | ---
 |<img src="doc-assist/proceduralTexture.png">|<img src="doc-assist/imageTexture.png">
 
+|Spheremap
+| ---
+|How to set a texture to get a spheremap
+|<img src="doc-assist/textureSpheremapExample.png">
+
 ####in-line textures####
 Textures do not need to be in a separate file.  They can also be inside either the .JS or .babylon file.  The size of the combined file will be larger, but assuming you are using gzip on your server, the transmission is about the same.  Other than just being self-contained,  having fewer files can improve the time a web page downloads due to the latency of doing each file.
 
