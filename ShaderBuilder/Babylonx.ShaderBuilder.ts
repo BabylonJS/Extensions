@@ -7,10 +7,10 @@ module BABYLONX {
     }
 
     export interface IColor {
-        r: any;
-        g: any;
-        b: any;
-        a: any;
+        r?: any;
+        g?: any;
+        b?: any;
+        a?: any;
     }
 
     export interface IVector3 {
@@ -414,8 +414,8 @@ module BABYLONX {
         Varings: string[];
         Attributes: string[];
         Uniforms: string[];
-        FragmentUniforms: string ;
-        VertexUniforms: string ;
+        FragmentUniforms: string;
+        VertexUniforms: string;
         Extentions: string[];
         References: string;
         Helpers: string[];
@@ -782,7 +782,7 @@ void main(void) { \n\
         PrepareMaterial(material: any, scene: any) {
 
             material.ShaderSetting =
-                this.Setting;
+            this.Setting;
 
 
             if (!this.Setting.Transparency) {
@@ -881,7 +881,7 @@ void main(void) { \n\
             return this.VertexBody;
         }
 
-        SetUniform(name:string,type:string) {
+        SetUniform(name: string, type: string) {
 
             if (!Shader.Me.VertexUniforms) Shader.Me.VertexUniforms = "";
             if (!Shader.Me.FragmentUniforms) Shader.Me.FragmentUniforms = "";
@@ -890,7 +890,7 @@ void main(void) { \n\
             ';
             this.FragmentUniforms += 'uniform ' + type + ' ' + name + ';\n\
             ';
-            
+
             return this;
         }
 
@@ -1075,7 +1075,7 @@ void main(void) { \n\
             return -1;
         }
 
-        Func(fun: any) {
+        Func(fun: any): any {
             return fun(Shader.Me);
         }
 
@@ -1137,7 +1137,7 @@ void main(void) { \n\
             ]);
 
             this.VertexBody = Shader.Def(this.VertexBody, "");
-            sresult = Shader.Replace(sresult, '#[Ind]',   Shader.Indexer.toString()  ) + " result = vec4(pos,1.);";
+            sresult = Shader.Replace(sresult, '#[Ind]', Shader.Indexer.toString()) + " result = vec4(pos,1.);";
             this.VertexBody += sresult;
 
             return this;
@@ -1555,10 +1555,10 @@ void main(void) { \n\
                 Shader.Me.Setting.FragmentWorld = true;
 
                 sresult = ' vec3 nWorld#[Ind] = normalize( mat3( world[0].xyz, world[1].xyz, world[2].xyz ) *  ' + option.normal + '); ' +
-                    ' vec3 vReflect#[Ind] = normalize( reflect( normalize(  ' + ShaderMaterialHelperStatics.Camera + '- vec3(world * vec4(' + ShaderMaterialHelperStatics.Position + ', 1.0))),  nWorld#[Ind] ) ); ' +
-                    'float yaw#[Ind] = .5 - atan( vReflect#[Ind].z, -1.* vReflect#[Ind].x ) / ( 2.0 * 3.14159265358979323846264);  ' +
-                    ' float pitch#[Ind] = .5 - atan( vReflect#[Ind].y, length( vReflect#[Ind].xz ) ) / ( 3.14159265358979323846264);  ' +
-                    ' vec3 color#[Ind] = texture2D( ' + ShaderMaterialHelperStatics.Texture2D + s + ', vec2( yaw#[Ind], pitch#[Ind])' + (option.bias == null || Shader.Print(option.bias) == '0.' ? "" : "," + Shader.Print(option.bias)) + ' ).rgb; result = vec4(color#[Ind] ,1.);';
+                ' vec3 vReflect#[Ind] = normalize( reflect( normalize(  ' + ShaderMaterialHelperStatics.Camera + '- vec3(world * vec4(' + ShaderMaterialHelperStatics.Position + ', 1.0))),  nWorld#[Ind] ) ); ' +
+                'float yaw#[Ind] = .5 - atan( vReflect#[Ind].z, -1.* vReflect#[Ind].x ) / ( 2.0 * 3.14159265358979323846264);  ' +
+                ' float pitch#[Ind] = .5 - atan( vReflect#[Ind].y, length( vReflect#[Ind].xz ) ) / ( 3.14159265358979323846264);  ' +
+                ' vec3 color#[Ind] = texture2D( ' + ShaderMaterialHelperStatics.Texture2D + s + ', vec2( yaw#[Ind], pitch#[Ind])' + (option.bias == null || Shader.Print(option.bias) == '0.' ? "" : "," + Shader.Print(option.bias)) + ' ).rgb; result = vec4(color#[Ind] ,1.);';
             }
             else {
                 option.path = Shader.Def(option.path, "/images/cube/a");
