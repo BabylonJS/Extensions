@@ -41,7 +41,7 @@ var BABYLONX;
         ShaderMaterialHelperStatics.Texture2D = "txtRef_";
         ShaderMaterialHelperStatics.TextureCube = "cubeRef_";
         return ShaderMaterialHelperStatics;
-    }());
+    })();
     BABYLONX.ShaderMaterialHelperStatics = ShaderMaterialHelperStatics;
     var Normals = (function () {
         function Normals() {
@@ -52,14 +52,14 @@ var BABYLONX;
         Normals.Flat = 'normalize(cross(dFdx(' + ShaderMaterialHelperStatics.Position + ' * -1.), dFdy(' + ShaderMaterialHelperStatics.Position + ')))';
         Normals.Map = 'normalMap()';
         return Normals;
-    }());
+    })();
     BABYLONX.Normals = Normals;
     var Speculars = (function () {
         function Speculars() {
         }
         Speculars.Map = 'specularMap()';
         return Speculars;
-    }());
+    })();
     BABYLONX.Speculars = Speculars;
     var ShaderMaterialHelper = (function () {
         function ShaderMaterialHelper() {
@@ -84,7 +84,7 @@ var BABYLONX;
             return {};
         };
         return ShaderMaterialHelper;
-    }());
+    })();
     BABYLONX.ShaderMaterialHelper = ShaderMaterialHelper;
     var Shader = (function () {
         function Shader() {
@@ -152,7 +152,7 @@ var BABYLONX;
         };
         Shader._null = 'set null anyway';
         return Shader;
-    }());
+    })();
     BABYLONX.Shader = Shader;
     var Helper = (function () {
         function Helper() {
@@ -174,14 +174,14 @@ var BABYLONX;
         Helper.Black = 7;
         Helper.Green = 8;
         return Helper;
-    }());
+    })();
     BABYLONX.Helper = Helper;
     var ShaderSetting = (function () {
         function ShaderSetting() {
             this.PrecisionMode = ShaderMaterialHelperStatics.PrecisionHighMode;
         }
         return ShaderSetting;
-    }());
+    })();
     BABYLONX.ShaderSetting = ShaderSetting;
     var ShaderBuilder = (function () {
         function ShaderBuilder() {
@@ -1254,7 +1254,7 @@ void main(void) { \n\
             return this;
         };
         return ShaderBuilder;
-    }());
+    })();
     BABYLONX.ShaderBuilder = ShaderBuilder;
 })(BABYLONX || (BABYLONX = {}));
 //# sourceMappingURL=ShaderBuilder.js.map
