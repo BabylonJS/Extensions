@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Minifier">
+	<property name="version" value="1.0"/>
+
+	<!-- assumes Babylon.js & Extensions respositories are mounted just below mountPoint -->
+	<property name="mountPoint" value="/js-dev"/>
+	<property name="blog"       value="${mountPoint}/Palmer-JC.github.io"/>
+	<property name="project"    value="${mountPoint}/Extensions/QueuedInterpolation"/>
+	<property name="out"        value="${project}/out"/>
+	<property name="baseFile"   value= "QueuedInterpolation.${version}"/>
+
+	<property name="dialog"     value="${mountPoint}/Extensions/Dialog"/>
+	<property name="being"      value="${mountPoint}/Extensions/Being"/>
+	<property name="gulp"       value="${mountPoint}/Gulp"/>
+    <!-- ===================== Minify Section ============================ -->
+    <target name="minify" depends="combiner" >
+    	<exec dir="${gulp}" executable="gulp" failonerror="true" >
+	    	<arg line="makeUgly --path ${project} --fileIn ${baseFile}.js"/>
+    	</exec>
+
+        <copy file="${project}/${baseFile}.min.js" toDir="${blog}/lib"/>
+        <copy file="${project}/${baseFile}.js" toDir="${blog}/lib"/>
+        <copy file="${project}/${baseFile}.d.ts" toDir="${dialog}/References"/>
+        <copy file="${project}/${baseFile}.d.ts" toDir="${being}/References"/>
+    </target>
+    <!-- ==================== Combiner Section =========================== -->
+	<property name="skel"       value="${out}/deformation/skeletonBased"/>
+	<property name="shape"      value="${out}/deformation/shapeKeyBased"/>
+	<property name="queue"      value="${out}/queue"/>
+	<property name="being2"     value="${out}/being"/>
+	<property name="audio"      value="${out}/audio"/>
+	<property name="entrances"  value="${out}/entrances"/>
+	<property name="TOB"        value="${out}/TOB-Runtime"/>
+
+	<target name="combiner" >
+        <concat destfile="${baseFile}.js">
+	        <filelist>
+	        	<file name="${skel}/MatrixComp.js" />
+	        	<file name="${skel}/SkeletonPoseLibrary.js" />
+	        	<file name="${queue}/TimelineControl.js" />
+             	<file name="${queue}/Pace.js" />
+    	        <file name="${queue}/MotionEvent.js" />
+	            <file name="${queue}/NonMotionEvents.js" />
+	        	<file name="${queue}/EventSeries.js" />
+	        	<file name="${queue}/PovProcessor.js" />
+	        	<file name="${skel}/Bone.js" />
+		    	<file name="${skel}/Skeleton.js" />
+		    	<file name="${skel}/Pose.js" />
+		    	<file name="${being2}/EyeBall.js" />
+		    	<file name="${being2}/Eyes.js" />
+		    	<file name="${skel}/PoseEvent.js" />
+		    	<file name="${skel}/PoseProcessor.js" />
+		    	<file name="${shape}/VertexDeformation.js" />
+		    	<file name="${shape}/ShapeKeyGroup.js" />
+		    	<file name="${out}/Mesh.js" />
+		    	<file name="${audio}/AudioRecorder.js" />
+		    	<file name="${being2}/Body.js" />
+		    	<file name="${entrances}/GatherEntrance.js" />
+		    	<file name="${entrances}/FireEntrance.js" />
+		    	<file name="${entrances}/ExpandEntrance.js" />
+		    	<file name="${TOB}/MeshFactory.js" />
+	        </filelist>
+    	</concat>
+
+        <concat destfile="${baseFile}.d.ts">
+	        <filelist>
+	        	<file name="${skel}/MatrixComp.d.ts" />
+	        	<file name="${skel}/SkeletonPoseLibrary.d.ts" />
+	        	<file name="${queue}/TimelineControl.d.ts" />
+             	<file name="${queue}/Pace.d.ts" />
+    	        <file name="${queue}/MotionEvent.d.ts" />
+	            <file name="${queue}/NonMotionEvents.d.ts" />
+	        	<file name="${queue}/EventSeries.d.ts" />
+	        	<file name="${queue}/PovProcessor.d.ts" />
+	        	<file name="${skel}/Bone.d.ts" />
+		    	<file name="${skel}/Skeleton.d.ts" />
+		    	<file name="${skel}/Pose.d.ts" />
+		    	<file name="${being2}/EyeBall.d.ts" />
+		    	<file name="${being2}/Eyes.d.ts" />
+		    	<file name="${skel}/PoseEvent.d.ts" />
+		    	<file name="${skel}/PoseProcessor.d.ts" />
+		    	<file name="${shape}/VertexDeformation.d.ts" />
+		    	<file name="${shape}/ShapeKeyGroup.d.ts" />
+		    	<file name="${out}/Mesh.d.ts" />
+		    	<file name="${audio}/AudioRecorder.d.ts" />
+		    	<file name="${being2}/Body.d.ts" />
+		    	<file name="${entrances}/GatherEntrance.d.ts" />
+		    	<file name="${entrances}/FireEntrance.d.ts" />
+		    	<file name="${entrances}/ExpandEntrance.d.ts" />
+		    	<file name="${TOB}/MeshFactory.js" />
+	        </filelist>
+	    </concat>
+    </target>
+</project>

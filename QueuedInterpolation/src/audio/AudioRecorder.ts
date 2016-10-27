@@ -53,7 +53,7 @@ module QI {
 
                 getUserMedia({audio: true})
                      .then (function (streamReceived) { AudioRecorder.prepMic(streamReceived); })
-                     .catch(function (reportError   ) { window.alert('QI.AudioRecorder: Error initializing audio capture- ' + reportError); });
+                     .catch(function (reportError   ) { window.alert('QI.AudioRecorder: Error initializing audio capture:\n\t' + reportError + '\nNote: Firefox errors when mic not plugged in.'); });
 
             }else{
                 window.alert('QI.AudioRecorder: Navigator.getUserMedia not supported.');
@@ -114,8 +114,8 @@ module QI {
         // ==================================== Recording Methods ====================================
         /**
          * Begin recording from the microphone
-         * @param {number} durationMS- length to record in millis (default Number.MAX_VALUE)
-         * @param {() => void} doneCallback - function to call when recording has completed (optional)
+         * @param {number} durationMS- Length to record in millis (default Number.MAX_VALUE).
+         * @param {() => void} doneCallback - Function to call when recording has completed (optional).
          */
         public recordStart(durationMS = Number.MAX_VALUE, doneCallback? : () => void) : void {
             if (this.recording){ BABYLON.Tools.Warn('QI.AudioRecorder: already recording'); return; }
@@ -163,7 +163,7 @@ module QI {
 
         /**
          * Delete buffers
-         * @param {boolean} fullReset- Make no-longer playback ready
+         * @param {boolean} fullReset- Make no-longer playback ready (default true).
          */
         public clean(fullReset = true) : void {
             // reset all the during recording buffers at the end of a recording.
