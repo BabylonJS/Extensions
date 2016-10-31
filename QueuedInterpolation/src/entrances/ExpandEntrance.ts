@@ -2,33 +2,26 @@
 
 module QI {
     export class ExpandEntrance implements GrandEntrance {
-        // changing these post mesh instancing will only be effective if mesh has textures, otherwise subclass
-        public soundEffect : BABYLON.Sound;
-        public duration = 150;
-        public afterGlow = 100;
-
         private _HighLightLayer : BABYLON.HighlightLayer;
 
         /**
          * @constructor - This is the required constructor for a GrandEntrance.  This is what Tower of Babel
          * generated code expects.
          * @param {QI.Mesh} _mesh - Root level mesh to display.
+         * @param {Array<number>} durations - The millis of various sections of entrance.  For Fire only 1.
+         * @param {BABYLON.Sound} soundEffect - An optional instance of the sound to play as a part of entrance.
          */
-        constructor(public _mesh: Mesh) { }
+        constructor(public _mesh: Mesh, public durations : Array<number>, public soundEffect? : BABYLON.Sound) { }
 
         /** GrandEntrance implementation */
         public makeEntrance() : void {
-            // load whoosh, unless already loaded by user with alternate
-            if (!this.soundEffect) {
-                this.soundEffect = QI.Mesh.MakeWhoosh(this._mesh.getScene());
-            }
             var startingState = ExpandEntrance.buildNucleus(this._mesh);
 
             // queue a return to basis
             var ref = this;
             var events : Array<any>;
             events = [
-                // start sound. When using Whoosh or other inline sound, this could be in MorphImmediate, but if changed don't know.
+                // start sound, if passed. When using inline sound, this could be in MorphImmediate, but if changed don't know.
                 new Stall(1, Mesh.COMPUTED_GROUP_NAME, ref.soundEffect),
 
                 // morphImmediate to starting state prior making root mesh visible
@@ -38,7 +31,7 @@ module QI {
                 function(){ref._mesh.isVisible = true;},
 
                 // return to a basis state
-                new BasisReturn(Mesh.COMPUTED_GROUP_NAME, ref.duration),
+                new BasisReturn(Mesh.COMPUTED_GROUP_NAME, ref.durations[0]),
 
                 // make any children visible
                 function(){
@@ -61,13 +54,13 @@ module QI {
                 });
 
                 // add wait & clean up on the end
-                events.push(new Stall(ref.afterGlow, Mesh.COMPUTED_GROUP_NAME));
+                events.push(new Stall(ref.durations[1], Mesh.COMPUTED_GROUP_NAME));
                 events.push(function(){ ref._HighLightLayer.dispose();  });
             }
 
             // Make sure there is a block event for all queues not part of this entrance.
             // User could have added events, say skeleton based, for a morph based entrance, so block it.
-            this._mesh.appendStallForMissingQueues(events, this.duration, Mesh.COMPUTED_GROUP_NAME);
+            this._mesh.appendStallForMissingQueues(events, this.durations[0] + this.durations[1], Mesh.COMPUTED_GROUP_NAME);
 
             // run functions of series on the compute group so everything sequential
             var series = new EventSeries(events, 1, 1.0, Mesh.COMPUTED_GROUP_NAME);

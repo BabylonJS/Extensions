@@ -2,7 +2,7 @@
 
 This process utilitizes the [MHX2 plug-in](https://thomasmakehuman.wordpress.com/) & [MakeHuman Community plug-in](https://github.com/makehumancommunity/community-plugins/tree/master/blender_source/MH_Community).  The workflow below makes as little use of MHX2 as possible.  It clearly is the best format for Blender right now, however it is complicated, and has problems making / saving custom expressions (winking).  It also does not play well with Skeleton Libraries, which are key to this process.
 
-<img src="doc-assist/MH_Community.jpg">
+<img src="doc-assist/MH_community.jpg">
 
 The community plug-in contains operations to transfer information from the MakeHuman application to the Blender mesh / skeleton post import, and in theory could handle other import / export formats, but they are not as good.  Its use allows for publishing a workflow that has a minimum of UI to describe & options to use.  The community platform is a way to preprocess MH meshes in direct support of Babylon.JS / BEING upstream of export.  The 'Separate Eyes' operation directly supports BEING.
 

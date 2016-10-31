@@ -5,10 +5,6 @@ module QI{
      * The Fire Entrance REQUIRES that BABYLON.FireMaterial.js be loaded
      */
     export class FireEntrance implements GrandEntrance {
-        // changing these post mesh instancing will only be effective if mesh has textures, otherwise subclass
-        public soundEffect : BABYLON.Sound;
-        public duration = 250;
-
         private _count = 3;
         private _diffuse : BABYLON.Texture;
         private _distortion : BABYLON.Texture;
@@ -18,8 +14,10 @@ module QI{
          * @constructor - This is the required constructor for a GrandEntrance.  This is what Tower of Babel
          * generated code expects.
          * @param {QI.Mesh} _mesh - Root level mesh to display.
+         * @param {Array<number>} durations - The millis of various sections of entrance.  For Fire only 1.
+         * @param {BABYLON.Sound} soundEffect - An optional instance of the sound to play as a part of entrance.
          */
-        constructor(public _mesh: Mesh) { }
+        constructor(public _mesh: Mesh, public durations : Array<number>, public soundEffect? : BABYLON.Sound) { }
 
         /** GrandEntrance implementation */
         public makeEntrance() : void {
@@ -55,11 +53,6 @@ module QI{
          * The fire is now ready. Go for it.
          */
         private _showTime() : void {
-            // load whoosh, unless already loaded by user with alternate
-            if (!this.soundEffect) {
-                this.soundEffect = QI.Mesh.MakeWhoosh(this._mesh.getScene());
-            }
-
             // record permanent material, so can be returned when done
             var materialHold = this._mesh.material;
 
@@ -76,14 +69,14 @@ module QI{
             // queue a return to actual material
             var ref = this;
             var events = [
-                // start sound. When using Whoosh or other inline sound, this could be in later Stall, but if changed don't know.
+                // start sound, if passed. When using inline sound, this could be in later Stall, but if changed don't know.
                 new Stall(1, PovProcessor.POV_GROUP_NAME, ref.soundEffect),
 
                 // make root mesh visible
                 function(){ref._mesh.isVisible = true;},
 
                 // let fire flame a little
-                new Stall(ref.duration, PovProcessor.POV_GROUP_NAME),
+                new Stall(ref.durations[0], PovProcessor.POV_GROUP_NAME),
 
                 //  change back to original material; clean up fire resources
                 function () {
@@ -99,7 +92,7 @@ module QI{
 
             // make sure there is a block event for all queues not part of this entrance.
             // user could have added events, say skeleton based, for a morph based entrance, so block it.
-            this._mesh.appendStallForMissingQueues(events, this.duration);
+            this._mesh.appendStallForMissingQueues(events, this.durations[0]);
 
             // run functions of series on the POV processor, so not dependent on a shapekeygroup or skeleton processor existing
             var series = new EventSeries(events);

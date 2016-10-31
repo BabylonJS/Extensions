@@ -54,6 +54,8 @@
 		    	<file name="${shape}/ShapeKeyGroup.js" />
 		    	<file name="${out}/Mesh.js" />
 		    	<file name="${audio}/AudioRecorder.js" />
+		    	<file name="${audio}/AudioDecoder.js" />
+		    	<file name="${audio}/Whoosh.js" />
 		    	<file name="${being2}/Body.js" />
 		    	<file name="${entrances}/GatherEntrance.js" />
 		    	<file name="${entrances}/FireEntrance.js" />
@@ -83,6 +85,8 @@
 		    	<file name="${shape}/ShapeKeyGroup.d.ts" />
 		    	<file name="${out}/Mesh.d.ts" />
 		    	<file name="${audio}/AudioRecorder.d.ts" />
+		    	<file name="${audio}/AudioDecoder.d.ts" />
+		    	<file name="${audio}/Whoosh.d.ts" />
 		    	<file name="${being2}/Body.d.ts" />
 		    	<file name="${entrances}/GatherEntrance.d.ts" />
 		    	<file name="${entrances}/FireEntrance.d.ts" />
