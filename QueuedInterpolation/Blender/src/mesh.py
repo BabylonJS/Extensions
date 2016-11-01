@@ -896,7 +896,7 @@ def get_base_class(meshOrNode):
     if hasattr(meshOrNode, 'isNode'): return 'B.Mesh'
 
     if len(meshOrNode.userSuppliedBaseClass) > 0: return meshOrNode.userSuppliedBaseClass
-    else: return 'QI.Mesh' if hasattr(meshOrNode, 'shapeKeyGroups') or hasattr(meshOrNode, 'skeletonWeights') or meshOrNode.grandEntrance != JUST_MAKE_VISIBLE else 'B.Mesh'
+    else: return 'QI.Mesh' if hasattr(meshOrNode, 'shapeKeyGroups') or hasattr(meshOrNode, 'skeletonWeights') or meshOrNode.needEntrance else 'B.Mesh'
 #===============================================================================
 class MeshInstance:
      def __init__(self, instancedMesh, rotation, rotationQuaternion):
