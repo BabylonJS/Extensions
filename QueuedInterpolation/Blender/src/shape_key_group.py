@@ -19,7 +19,7 @@ class RawShapeKey:
             pair = keyOrderMap[i]
             value = keyBlock.data[pair[0]].co
             self.vertices[pair[1]] = value
-            if not same_vertex(value, basis.data[pair[0]].co):
+            if not similar_vertex(value, basis.data[pair[0]].co):
                 nDifferent += 1
 
         if state != 'BASIS':

@@ -1,7 +1,7 @@
 bl_info = {
     'name': 'Tower of Babel',
     'author': 'David Catuhe, Jeff Palmer',
-    'version': (4, 99, 1),
+    'version': (4, 99, 2),
     'blender': (2, 76, 0),
     'location': 'File > Export > Tower of Babel [.js + .d.ts]',
     'description': 'Translate to inline JavaScript modules',
@@ -80,6 +80,7 @@ class TOBMain(bpy.types.Operator, ExportHelper):
     filename_ext = '.js'            # used as the extension on file selector
 
     filepath = bpy.props.StringProperty(subtype = 'FILE_PATH') # assigned once the file selector returns
+    filter_glob = bpy.props.StringProperty(name='.js',default='*.js', options={'HIDDEN'})
 
     def execute(self, context):
         from .js_exporter import JSExporter
@@ -108,14 +109,13 @@ class ArchiveShapeKeys(bpy.types.Operator, ExportHelper):
     bl_options = {'REGISTER', 'INTERNAL'}
 
     filepath = bpy.props.StringProperty(subtype = 'FILE_PATH') # assigned once the file selector returns
+    filter_glob = bpy.props.StringProperty(name='.tob',default='*.tob', options={'HIDDEN'})
 
     def execute(self, context):
         from .shape_key_archive import ShapeKeyExporter
 
         exporter = ShapeKeyExporter()
-        result = exporter.execute(context, self.filepath)
-        if result is not None:
-            self.report({'ERROR'}, result)
+        exporter.execute(self, context, self.filepath)
         return {'FINISHED'}
 
     @classmethod
@@ -137,9 +137,7 @@ class RestoreShapeKeys(bpy.types.Operator, ImportHelper):
         from .shape_key_archive import ShapeKeyImporter
 
         importer = ShapeKeyImporter()
-        result = importer.execute(context, self.filepath)
-        if result is not None:
-            self.report({'ERROR'}, result)
+        importer.execute(self, context, self.filepath)
         return {'FINISHED'}
 
     @classmethod
@@ -158,11 +156,7 @@ class PoseLibToShapeKeys(bpy.types.Operator):
 
         # get a reference of the current skeleton
         skeleton = context.object
-
-        result = poseLibToShapeKeys(context.scene, skeleton)
-        if result is not None:
-            self.report({'ERROR'}, result)
-
+        poseLibToShapeKeys(self, context.scene, skeleton)
         return {'FINISHED'}
 
     @classmethod
@@ -177,17 +171,12 @@ class ApplyCurrentPose(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        from .pose_lib import applyCurrentPose
+        from .pose_lib import poseLibToShapeKeys
 
         # get a reference of the current skeleton
         skeleton = context.object
         shapeKeyName = skeleton.data.shapeKeyName
-        print ('name of skeleton: ' + skeleton.name + ", key: " + shapeKeyName)
-
-        result = applyCurrentPose(context.scene, skeleton, shapeKeyName)
-        if result is not None:
-            self.report({'ERROR'}, result)
-
+        poseLibToShapeKeys(self, context.scene, skeleton, shapeKeyName)
         return {'FINISHED'}
 
     @classmethod
@@ -203,6 +192,7 @@ class ExportPoselib(bpy.types.Operator, ExportHelper):
     bl_options = {'REGISTER', 'INTERNAL'}
 
     filepath = bpy.props.StringProperty(subtype = 'FILE_PATH') # assigned once the file selector returns
+    filter_glob = bpy.props.StringProperty(name='.js',default='*.js', options={'HIDDEN'})
 
     def execute(self, context):
         from .pose_lib import PoseLibExporter

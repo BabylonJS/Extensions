@@ -2,7 +2,7 @@ from .animation import *
 from .armature import *
 from .logger import *
 from .package_level import *
-from .shape_key_archive import hasShape
+from .shape_key_archive import deleteShape
 
 import bpy
 from math import radians
@@ -117,46 +117,59 @@ class PoseLibExporter:
         return roots
 #===============================================================================
 # convert each element in pose Library
-def poseLibToShapeKeys(scene, skeleton):
-    meshes = getMeshesForRig(scene, skeleton, True)
+def poseLibToShapeKeys(operator, scene, skeleton, shapeKeyName = None):
     selectedBones = getSelectedBones(skeleton)
+    if (len(selectedBones) == 0):
+        operator.report({'ERROR'}, 'At least one bone must be selected')
+        return
+    else:
+        operator.report({'INFO'}, 'Taking into account ' + str(len(selectedBones)) + ' bones')
 
-    # clear all transforms, but do not change selection
-    skeleton.select = True
-    scene.objects.active = skeleton
+    # clear all transform of all bones, to avoid strays when a vertex shares has vertex group of un-selected bone with a selected bone
     bpy.ops.object.mode_set(mode = 'POSE')
-    bpy.ops.pose.select_all(action='SELECT')
+    bpy.ops.pose.select_all(action = 'SELECT')
     bpy.ops.pose.transforms_clear()
-    skeleton.select = False
-
-    for idx in range(len(skeleton.pose_library.pose_markers)):
-        name = skeleton.pose_library.pose_markers[idx].name
-        print('working on pose: ' + name)
-
-        # select skeleton & apply pose:  idx
-        skeleton.select = True
-        scene.objects.active = skeleton
-        bpy.ops.object.mode_set(mode = 'POSE')
-        bpy.ops.poselib.apply_pose(pose_index = idx)
-        skeleton.select = False
-        result = applyPose(scene, meshes, name, selectedBones)
-        if result is not None: return result
-
-    return None
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-def applyCurrentPose(scene, skeleton, shapeKeyName):
+    
+    # better results still occur when posing all the bones, so comment this out
+    #setSelectedBones(skeleton, selectedBones)
+    
+    # get the list meshes this rig controls (creates basis key if missing)
     meshes = getMeshesForRig(scene, skeleton, True)
-    selectedBones = getSelectedBones(skeleton)
-    return applyPose(scene, meshes, shapeKeyName, selectedBones)
+    
+    # much easier to get vertex stats sorted by mesh; initialize
+    meshStats = []
+    for i in range(len(meshes)):
+        meshStats.append([])
+    
+    # process each of the poses
+    if shapeKeyName is None:
+        for idx in range(len(skeleton.pose_library.pose_markers)):
+            name = skeleton.pose_library.pose_markers[idx].name
+            bpy.ops.poselib.apply_pose(pose_index = idx)
+            applyPose(scene, meshes, name, selectedBones, meshStats)
+    else:
+        applyPose(scene, meshes, shapeKeyName, selectedBones, meshStats)
+         
+    # create report in shape within mesh order
+    for m, mesh in enumerate(meshes):
+        operator.report({'INFO'}, 'Total Vertices for ' + mesh.name + ':  ' + str(len(mesh.data.vertices)))
+        stats = meshStats[m]
+        
+        if shapeKeyName is None:
+            for idx in range(len(skeleton.pose_library.pose_markers)):
+                operator.report({'INFO'}, '     ' + skeleton.pose_library.pose_markers[idx].name + ':  ' + str(stats[idx]))
+        else:
+            operator.report({'INFO'}, '     ' + shapeKeyName + ':  ' + str(stats[0]))            
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # This is opposed to:
 #    bpy.ops.object.modifier_apply(apply_as='SHAPE', modifier='ARMATURE')
 # which removes modifier, so only one pose can be done
-def applyPose(scene, meshes, name, selectedBones):
-    for mesh in meshes:
-        # test if key already exists
-        if hasShape(mesh, name):
-            return name + ' key already exists on mesh: ' + mesh.name
+def applyPose(scene, meshes, name, selectedBones, meshStats):
+    for m, mesh in enumerate(meshes):
+        stats = meshStats[m]
+        
+        # delete if key already exists
+        deleteShape(mesh, name)
 
         # add an empty key (create a basis when none)
         key = mesh.shape_key_add(name, False)
@@ -173,14 +186,14 @@ def applyPose(scene, meshes, name, selectedBones):
         for v in tmp.vertices:
             # first pass; exclude verts not influenced by the Bones selected
             if not isVertexInfluenced(mesh.vertex_groups, v, selectedBones) : continue
-
+            
             value   = v.co
             baseval = basis.data[v.index].co
             if not similar_vertex(value, baseval):
                 key.data[v.index].co = value
                 nDiff += 1
 
-        print('key: ' + name + ' on mesh ' + mesh.name + ': ' + str(nDiff) + ' of ' + str(len(tmp.vertices)))
+        stats.append(nDiff)
 
         # when no verts different, delete key for this mesh
         if nDiff == 0:
@@ -188,8 +201,6 @@ def applyPose(scene, meshes, name, selectedBones):
 
         # remove temp mesh
         bpy.data.meshes.remove(tmp)
-
-    return None
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def getSelectedBones(skeleton):
     vGroupNames = []
@@ -198,69 +209,17 @@ def getSelectedBones(skeleton):
             vGroupNames.append(bone.name)
 
     return vGroupNames
-
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# not in use
+def setSelectedBones(skeleton, selectedBones):
+    bpy.ops.pose.select_all(action = 'DESELECT')
+    for bone in skeleton.data.bones:
+        for boneName in selectedBones:  
+           if bone.name == boneName:
+               bone.select = True
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def isVertexInfluenced(mesh_vertex_groups, vertex, selectedBones):
     for group in vertex.groups:
         for bone in selectedBones:
             if mesh_vertex_groups[group.group].name == bone:
                 return True
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-#def processKey(file_handler, keyBlock, basis, startVert, firstVert, meshName):
-#    nVerts = len(basis.data)
-#    changed= 0
-#    for i in range(0, nVerts):
-#        value   = keyBlock.data[i].co
-#        baseval = basis.data[i].co
-#        if not same_vertex(value, baseval):
-#            if not firstVert:
-#                file_handler.write(',')
-#            diff = Vector((value[0] - baseval[0], value[1] - baseval[1], value[2] - baseval[2]))
-#            file_handler.write('[' + str(i + startVert) + ', [' + format_vector(diff) + ']]')
-#            changed += 1
-#            firstVert = False
-#    print('\t'+ meshName + ': ' + str(changed))
-
-#def getRestPositions(scene, skeleton, meshes):
-    # clear all transforms before getting positions
-#    skeleton.select = True
-#    scene.objects.active = skeleton
-#    bpy.ops.object.mode_set(mode='POSE')
-#    bpy.ops.pose.select_all(action='SELECT')
-#    bpy.ops.pose.transforms_clear()
-#    skeleton.select = False
-
-#    restPositions = []
-#    for mesh in meshes:
-        # get temporary version with modifiers applies
-#        tmp = mesh.to_mesh(scene, True, 'PREVIEW')
-#        restPositions.append(tmp.vertices)
-
-#    return restPositions
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

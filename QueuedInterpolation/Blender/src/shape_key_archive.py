@@ -6,7 +6,7 @@ from io import open
 from mathutils import Vector
 #===============================================================================
 class ShapeKeyExporter:
-    def execute(self, context, filepath):
+    def execute(self, operator, context, filepath):
         scene = context.scene
 
         selectedMeshes = getSelectedMeshes(scene)
@@ -24,20 +24,21 @@ class ShapeKeyExporter:
             file_handler.write('\n     {') # open key
             write_string(file_handler, 'name', keyName, True)
             file_handler.write(',"meshes":{') # open meshes
-            ShapeKeyExporter.recordKey(file_handler, ShapeKeyExporter.getMeshesHavingKey(selectedMeshes, keyName), keyName)
+            nVerts = ShapeKeyExporter.recordKey(file_handler, ShapeKeyExporter.getMeshesHavingKey(selectedMeshes, keyName), keyName)
             file_handler.write('\n          }') # close meshes
             file_handler.write('\n     }') # close key
+            
+#            operator.report({'INFO'}, 'nVerts for ' + keyName + ' key for selected meshes:  ' + str(nVerts))
 
         # Closing
         file_handler.write('\n]') # close keys
         file_handler.write('\n}') # close file
         file_handler.close()
-
-        return None
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     @staticmethod
     def recordKey(file_handler, participatingMeshes, keyName):
         first = True
+        nVerts = 0
         for mesh in participatingMeshes:
             if first != True:
                 file_handler.write(',')
@@ -46,10 +47,13 @@ class ShapeKeyExporter:
             file_handler.write('\n          "' + mesh.name + '":[')
 
             block = mesh.data.shape_keys.key_blocks[keyName]
+            nVerts += len(block.data)
             for idx, data in enumerate(block.data):
                 if idx > 0: file_handler.write(',')
                 file_handler.write('[' + format_vector_non_swapping(data.co) + ']')
             file_handler.write(']')
+            
+        return nVerts
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     @staticmethod
     # assume meshes have shapekeys, so no test reqd
@@ -82,11 +86,8 @@ class ShapeKeyExporter:
         return False
 #===============================================================================
 class ShapeKeyImporter:
-    def execute(self, context, filepath):
+    def execute(self, operator, context, filepath):
         scene = context.scene
-
-        # used for building error return
-        ret = ''
 
         self.selectedMeshes = getSelectedMeshes(scene)
 
@@ -100,27 +101,28 @@ class ShapeKeyImporter:
         for key in key_data["keys"]:
             keyName = key["name"]
             meshes = list(key["meshes"].items())
-            print('importing key: ' + keyName)
+            totVerts = 0
+            operator.report({'INFO'}, 'importing key: ' + keyName)
 
             for meshOfKey, verts in meshes:
                 target = self.getTargetMesh(meshOfKey)
                 if target is None:
-                    ret += '\nNo Target Mesh found for key: ' + keyName + ', source mesh: ' + meshOfKey
+                    operator.report({'ERROR'}, '     No Target Mesh found for key: ' + keyName + ', source mesh: ' + meshOfKey)
                     continue
 
                 nVerts = len(verts)
+                totVerts += nVerts
 
                 # make sure source & target have same # of verts
                 if nVerts != len(target.data.vertices):
-                    ret += '\nTarget Mesh found for key: ' + keyName + '(' + target.name + ') has ' + str(len(target.data.vertices)) + 'vert, while source had: ' + str(nVerts)
+                    operator.report({'ERROR'}, '     Target Mesh found for key: ' + keyName + '(' + target.name + ') has ' + str(len(target.data.vertices)) + 'vert, while source had: ' + str(nVerts))
                     continue
 
                 # make sure there is not already a key of that name on target
                 if hasShape(target, keyName):
-                    ret += '\nkey: ' + keyName + ' already exists on target source mesh: ' + target.name
+                    operator.report({'ERROR'}, '     key: ' + keyName + ' already exists on target source mesh: ' + target.name)
                     continue
 
-                print('\tadded target: ' + target.name)
                 # ensure that there is a Basis key
                 if not target.data.shape_keys:
                     target.shape_key_add('Basis')
@@ -134,8 +136,9 @@ class ShapeKeyImporter:
                 for vert in verts[:nVerts]:
                     targetKey.data[i].co = Vector((vert[0], vert[1], vert[2]))
                     i += 1
+                    
+#            operator.report({'INFO'}, 'Total Verts for selected Meshes: ' + str(totVerts))
 
-        return ret if len(ret) > 0 else None
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def getTargetMesh(self, meshOfKey):
         suffix = meshOfKey.partition(self.prefixDelimiter)[2]
@@ -163,6 +166,15 @@ def getShapeIndex(mesh, shapeName):
             return idx
 
     return -1
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+def deleteShape(mesh, shapeName):
+    if not mesh.data.shape_keys:
+        return
+
+    for idx, key_block in enumerate(mesh.data.shape_keys.key_blocks):
+        if key_block.name == shapeName:
+            mesh.shape_key_remove(key_block)
+            return
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def hasShape(mesh, shapeName):
     return getShapeIndex(mesh, shapeName) != -1

@@ -220,7 +220,7 @@ def same_vertex(vertA, vertB):
 
     return True
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-def similar_vertex(vertA, vertB, tolerance = 0.00025):
+def similar_vertex(vertA, vertB, tolerance = 0.00015):
     if vertA is None or vertB is None: return False
 
     if (abs(vertA.x - vertB.x) > tolerance or
