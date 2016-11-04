@@ -19,11 +19,8 @@ module QI {
             var ref = this;
             var events : Array<any>;
             events = [
-                // start sound, if passed. When using inline sound, this could be in MorphImmediate, but if changed don't know.
-                new Stall(1, Mesh.COMPUTED_GROUP_NAME, ref.soundEffect),
-
-                // morphImmediate to starting state prior making root mesh visible
-                new MorphImmediate(Mesh.COMPUTED_GROUP_NAME, startingState),
+                // morphImmediate to starting state prior making root mesh visible.  Start sound, if passed.
+                new MorphImmediate(Mesh.COMPUTED_GROUP_NAME, startingState, 1, {sound : ref.soundEffect}),
 
                 // make root mesh visible
                 function(){ref._mesh.isVisible = true;},
@@ -62,21 +59,12 @@ module QI {
             var computedGroup = mesh.makeComputedGroup();
 
             // determine the SCATTER key
-            var baseFactor = 5;
-            var bBox = mesh.getBoundingInfo().boundingBox;
-            var center = bBox.center;
-
-            var sz = bBox.extendSize;
-            var biggest = (sz.x > sz.y && sz.x > sz.z) ? sz.x : (sz.y > sz.x && sz.y > sz.z) ? sz.y : sz.z;
-            var xFactor = baseFactor * biggest / sz.x;
-            var yFactor = baseFactor * biggest / sz.y;
-            var zFactor = baseFactor * biggest / sz.z;
 
             var scatter = new Float32Array(nElements);
             for (var i = 0; i < nElements; i += 3){
-                scatter[i    ] = (mesh._originalPositions[i    ] - center.x) * xFactor * Math.random();
-                scatter[i + 1] = (mesh._originalPositions[i + 1] - center.y) * yFactor * Math.random();
-                scatter[i + 2] = (mesh._originalPositions[i + 2] - center.z) * zFactor * Math.random();
+                scatter[i    ] = mesh._originalPositions[i    ] + mesh._originalPositions[i    ] * Math.random();
+                scatter[i + 1] = mesh._originalPositions[i + 1] + mesh._originalPositions[i + 1] * Math.random();
+                scatter[i + 2] = mesh._originalPositions[i + 2] + mesh._originalPositions[i + 2] * Math.random();
             }
             computedGroup._addShapeKey(startingState, scatter);
             return startingState;

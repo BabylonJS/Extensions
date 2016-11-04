@@ -21,11 +21,8 @@ module QI {
             var ref = this;
             var events : Array<any>;
             events = [
-                // start sound, if passed. When using inline sound, this could be in MorphImmediate, but if changed don't know.
-                new Stall(1, Mesh.COMPUTED_GROUP_NAME, ref.soundEffect),
-
-                // morphImmediate to starting state prior making root mesh visible
-                new MorphImmediate(Mesh.COMPUTED_GROUP_NAME, startingState),
+                // morphImmediate to starting state prior making root mesh visible.  Start sound, if passed.
+                new MorphImmediate(Mesh.COMPUTED_GROUP_NAME, startingState, 1, {sound : ref.soundEffect}),
 
                 // make root mesh visible
                 function(){ref._mesh.isVisible = true;},
@@ -50,7 +47,7 @@ module QI {
                     var camera = (scene.activeCameras.length > 0) ? scene.activeCameras[0] : scene.activeCamera;
                     ref._HighLightLayer = new BABYLON.HighlightLayer("QI.ExpandEntrance internal", scene, {camera: camera});
 
-                    this._HighLightLayer.addMesh(ref._mesh, BABYLON.Color3.White());
+                    ref._HighLightLayer.addMesh(ref._mesh, BABYLON.Color3.White());
                 });
 
                 // add wait & clean up on the end
@@ -81,13 +78,11 @@ module QI {
             var nElements = mesh._originalPositions.length;
             var computedGroup = mesh.makeComputedGroup();
 
-            var center = mesh.getBoundingInfo().boundingBox.center;
-
             var nucleus = new Float32Array(nElements);
             for (var i = 0; i < nElements; i += 3){
-                nucleus[i    ] = center.x;
-                nucleus[i + 1] = center.y;
-                nucleus[i + 2] = center.z;
+                nucleus[i    ] = 0;
+                nucleus[i + 1] = 0;
+                nucleus[i + 2] = 0;
             }
             computedGroup._addShapeKey(startingState, nucleus);
             return startingState;

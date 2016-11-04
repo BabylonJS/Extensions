@@ -69,14 +69,11 @@ module QI{
             // queue a return to actual material
             var ref = this;
             var events = [
-                // start sound, if passed. When using inline sound, this could be in later Stall, but if changed don't know.
-                new Stall(1, PovProcessor.POV_GROUP_NAME, ref.soundEffect),
-
                 // make root mesh visible
                 function(){ref._mesh.isVisible = true;},
 
-                // let fire flame a little
-                new Stall(ref.durations[0], PovProcessor.POV_GROUP_NAME),
+                // let fire flame a little.  Start sound, if passed.
+                new Stall(ref.durations[0], PovProcessor.POV_GROUP_NAME, ref.soundEffect),
 
                 //  change back to original material; clean up fire resources
                 function () {
