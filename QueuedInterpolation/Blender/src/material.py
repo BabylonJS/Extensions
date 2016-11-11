@@ -1,3 +1,4 @@
+from .exporter_settings_panel import *
 from .logger import *
 from .package_level import *
 
@@ -68,16 +69,16 @@ class Texture:
         # always write the file out, since base64 encoding is easiest from a file
         try:
             imageFilepath = path.normpath(bpy.path.abspath(image.filepath))
-            basename = path.basename(imageFilepath)
+            self.fileNoPath = path.basename(imageFilepath)
 
             internalImage = image.packed_file or wasBaked
 
             # when coming from either a packed image or a baked image, then save_render
             if internalImage:
                 if exporter.scene.inlineTextures:
-                    textureFile = path.join(exporter.textureDir, basename + "temp")
+                    textureFile = path.join(exporter.textureDir, self.fileNoPath + 'temp')
                 else:
-                    textureFile = path.join(exporter.textureDir, basename)
+                    textureFile = path.join(exporter.textureDir, self.fileNoPath)
 
                 image.save_render(textureFile)
 
@@ -90,7 +91,7 @@ class Texture:
             ex = exc_info()
             Logger.warn('Error encountered processing image file:  ' + ', Error:  '+ str(ex[1]))
 
-        if exporter.scene.inlineTextures:
+        if exporter.scene.textureMethod == INLINE:
             # base64 is easiest from a file, so sometimes a temp file was made above;  need to delete those
             with open(textureFile, "rb") as image_file:
                 asString = b64encode(image_file.read()).decode()
@@ -99,9 +100,18 @@ class Texture:
             if internalImage:
                 remove(textureFile)
 
+        # build priority Order
+        if exporter.scene.textureMethod == PRIORITIZED:
+            nameNoExtension = self.fileNoPath.rpartition('.')[0]
+            self.priorityNames = []
+            for ext in exporter.scene.texturePriority.split():
+                self.priorityNames.append(nameNoExtension + ext)
+
+            # add blend image last
+            self.priorityNames.append(self.fileNoPath)
+
         # capture texture attributes
         self.slot = slot
-        self.name = basename
         self.level = level
 
         if (texture and texture.mapping == 'CUBE'):
@@ -137,9 +147,24 @@ class Texture:
         if hasattr(self,'encoded_URI'):
             file_handler.write(indent + 'texture = B.Texture.CreateFromBase64String(\n')
             file_handler.write(indent + '"' + self.encoded_URI + '"\n')
-            file_handler.write(indent + ', "' + self.name + '", scene, false, true, BABYLON.Texture.TRILINEAR_SAMPLINGMODE, onTexturesLoaded);\n')
+            file_handler.write(indent + ', "' + self.fileNoPath + '", scene, false, true, B.Texture.TRILINEAR_SAMPLINGMODE, onTexturesLoaded);\n')
+
         else:
-            file_handler.write(indent + 'texture = new B.Texture(materialsRootDir + "' + self.name + '", scene, false, true, BABYLON.Texture.TRILINEAR_SAMPLINGMODE, onTexturesLoaded);\n')
+            file_handler.write(indent + 'texture = new B.Texture(')
+            if hasattr(self,'priorityNames'):
+                file_handler.write('[')
+                first = True
+                for name in self.priorityNames:
+                    if first == False:
+                        file_handler.write(',')
+                    file_handler.write('materialsRootDir + "' + name + '"')
+                    first = False
+                file_handler.write(']')
+
+            else:
+                file_handler.write('materialsRootDir + "' + self.fileNoPath + '"')
+
+            file_handler.write(', scene, false, true, B.Texture.TRILINEAR_SAMPLINGMODE, onTexturesLoaded);\n')
 
         file_handler.write(indent + 'pendingTextures++;\n')
 
