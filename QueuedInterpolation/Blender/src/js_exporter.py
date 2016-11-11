@@ -41,7 +41,7 @@ class JSExporter:
 
             # assign texture location, purely temporary if inlining
             self.textureDir = path.dirname(filepath)
-            if not scene.inlineTextures:
+            if scene.textureMethod != INLINE:
                 self.textureDir = path.join(self.textureDir, scene.textureDir)
                 if not path.isdir(self.textureDir):
                     makedirs(self.textureDir)
