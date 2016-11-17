@@ -32,7 +32,7 @@ module QI {
         private _positions32F : Float32Array;
         private _normals32F   : Float32Array;
 
-        private _povProcessor : PovProcessor;
+        public  _povProcessor : PovProcessor; // public for EyeBall
         private _shapeKeyGroups = new Array<ShapeKeyGroup>();
         private _poseProcessor : PoseProcessor;
 
@@ -56,7 +56,6 @@ module QI {
 
         // for grand entrances
         public static COMPUTED_GROUP_NAME = "COMPUTED-GROUP"; // having a '-' is strategic, since that is the separator for blender shapekeys (GROUP-KEYNAME)
-        public static WHOOSH : BABYLON.Sound;
         public entranceMethod : GrandEntrance; // set prior to being on screen for any effect
 
         /**
@@ -213,13 +212,30 @@ module QI {
          * @param {string} groupName - The name of the group to look up.
          */
         public removeShapeKeyGroup(groupName : string) : void {
-            for (var g = 0, len = this._shapeKeyGroups.length; g < len; g++){
-                if (this._shapeKeyGroups[g].getName() === groupName){
+            for (var g = 0, len = this._shapeKeyGroups.length; g < len; g++) {
+                if (this._shapeKeyGroups[g].getName() === groupName) {
                     this._shapeKeyGroups = this._shapeKeyGroups.splice(g, 1);
                     return;
                 }
             }
             BABYLON.Tools.Warn("QI.Mesh:  no shape key group with name: " + groupName);
+        }
+        
+        /**
+         * Clear out any events, on all the queues the Mesh has.
+         * @param {boolean} stopCurrentSeries - When true, stop the current MotionSeries too.
+         */
+        public clearAllQueues(stopCurrentSeries? : boolean) :void {
+            for (var g = 0, len = this._shapeKeyGroups.length; g < len; g++) {
+                this._shapeKeyGroups[g].clearQueue(stopCurrentSeries);
+            }
+            if (this._poseProcessor){
+                this._poseProcessor.clearQueue(stopCurrentSeries);
+            }
+
+            if (this._povProcessor){
+                this._povProcessor.clearQueue(stopCurrentSeries);
+            }
         }
 
         /**

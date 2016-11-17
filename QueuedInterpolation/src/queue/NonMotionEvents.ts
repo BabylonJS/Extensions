@@ -20,7 +20,7 @@ module QI{
         public initialize(lateStartMilli = 0, scene? : BABYLON.Scene) :void {
             this.activate(lateStartMilli);
 
-            if (scene){
+            if (scene) {
                 TimelineControl.initialize(scene); // only does something the first call
                 var ref = this;
                 this._registeredFN = function(){ref._beforeRender();};
@@ -33,7 +33,7 @@ module QI{
 
 
         private _beforeRender() : void {
-            if (TimelineControl.isSystemPaused){
+            if (TimelineControl.isSystemPaused) {
                 if (!this._paused){
                     this.pause();
                     this._paused = true;
@@ -50,9 +50,19 @@ module QI{
 
             this._incrementallyUpdate(ratioComplete);
 
-            if (this.isComplete() && this._scene){
+            if (this.isComplete() ) {
+                this.clear();
+            }
+        }
+        
+        /**
+         * Stop / cleanup resources. Only does anything when not being added to a queue.
+         */
+        public clear() {
+            if (this._scene){
+                this._paused = false;
                 this._scene.unregisterBeforeRender(this._registeredFN);
-                this._scene = null;
+                this._scene = null; 
             }
         }
 

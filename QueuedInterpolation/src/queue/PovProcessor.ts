@@ -194,7 +194,7 @@ module QI {
         }
 
         /**
-         * Clear out any event
+         * Clear out any events
          * @param {boolean} stopCurrentSeries - When true, stop the current MotionSeries too.
          */
         public clearQueue(stopCurrentSeries? : boolean) :void {

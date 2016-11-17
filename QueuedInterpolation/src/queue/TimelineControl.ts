@@ -87,6 +87,7 @@ module QI {
         public static get Now            () : number  { return TimelineControl._now; }
         public static get FrameID        () : number  { return TimelineControl._frameID; }
         public static get Speed          () : number  { return TimelineControl._speed; }
+        
         public static set Speed          (newSpeed : number) {
             if (!TimelineControl._isRealtime){
                 BABYLON.Tools.Error("TimelineControl: changing speed only supported for realtime mode");
@@ -95,13 +96,10 @@ module QI {
 
             TimelineControl._speed = newSpeed;
 
-            // reset the speed of all playing / or paused sound tracks
+            // reset the speed of all sound tracks
             var tracks = TimelineControl._scene.mainSoundTrack.soundCollection;
             for (var i = 0, len = tracks.length; i < len; i++) {
-                var track = tracks[i];
-                if ((track.isPaused && TimelineControl._systemPaused) || (track.isPaused && !TimelineControl._systemPaused)){
-                    track.setPlaybackRate(newSpeed);
-                }
+                tracks[i].setPlaybackRate(newSpeed);
             }
         }
         // =================================== SYSTEM play - pause ===================================
@@ -111,11 +109,25 @@ module QI {
 
         /** system could be paused at a higher up without notification; just by stop calling beforeRender() */
         public static get isSystemPaused() : boolean { return TimelineControl._systemPaused; }
-        public static pauseSystem() : void { TimelineControl._systemPaused = true; }
+        public static pauseSystem() : void { 
+            TimelineControl._systemPaused = true;
+
+            // pause all sound tracks, done at the MotionEvent level too, but that is also for pausing a single queue
+            var tracks = TimelineControl._scene.mainSoundTrack.soundCollection;
+            for (var i = 0, len = tracks.length; i < len; i++) {
+                tracks[i].pause();
+            }
+        }
 
         public static resumeSystem() : void {
            // since Now is computed in an after renderer, resumes are queued. Processing a call to resumeSystem directly would have a stale 'Now'.
            TimelineControl._resumeQueued = true;
+
+            // resume playing all sound tracks, done at the MotionEvent level too, but that is also for resuming a single queue
+            var tracks = TimelineControl._scene.mainSoundTrack.soundCollection;
+            for (var i = 0, len = tracks.length; i < len; i++) {
+                tracks[i].play();
+            }
         }
         public static get SystemResumeTime() : number { return TimelineControl._systemResumeTime; }
     }
