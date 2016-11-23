@@ -52,7 +52,6 @@ module QI{
 
                 // scaling pre-processing
                 this._skelDimensionsRatio = this.dimensionsAtRest.divide(this._poseLibrary.dimensionsAtRest);
-                console.log("this._skelDimensionsRatio " + this._skelDimensionsRatio.toString());
 
                 // test if dimensions all the same, if so better performance setting to null
                 if (this._skelDimensionsRatio.x === 1 && this._skelDimensionsRatio.y === 1 && this._skelDimensionsRatio.z === 1){

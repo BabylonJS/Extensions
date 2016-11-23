@@ -3,8 +3,7 @@
 module BEING{
     /** Class to control a set of EyeBalls.
      *
-     * Movement up / down left right are controlled by POV rotation. EyeBalls are not inheriting from QI.Mesh, since no shape keys.
-     * Just add a pov processor, which registers itself.
+     * Movement up / down left right are controlled by POV rotation.
      *
      * Camera following implemented using billboard mode, doable since just a single eye per mesh.
      *

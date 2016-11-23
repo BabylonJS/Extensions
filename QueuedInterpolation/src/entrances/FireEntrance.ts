@@ -5,7 +5,7 @@ module QI{
      * The Fire Entrance REQUIRES that BABYLON.FireMaterial.js be loaded
      */
     export class FireEntrance implements GrandEntrance {
-        private _count = 3;
+        private _count : number;
         private _diffuse : BABYLON.Texture;
         private _distortion : BABYLON.Texture;
         private _opacity : BABYLON.Texture;
@@ -24,7 +24,7 @@ module QI{
             if (!BABYLON.FireMaterial) {
                 throw "Fire Material library not found";
             }
-
+            this._count = 3;
             var ref = this;
             var callback = function () { ref._loaded(); };
             // same as coming from https://github.com/BabylonJS/Samples/tree/master/Assets/fire

@@ -415,6 +415,10 @@ declare module QI {
          */
         initialize(lateStartMilli?: number, scene?: BABYLON.Scene): void;
         private _beforeRender();
+        /**
+         * Stop / cleanup resources. Only does anything when not being added to a queue.
+         */
+        clear(): void;
         _incrementallyUpdate(ratioComplete: number): void;
     }
     /**
@@ -683,7 +687,7 @@ declare module QI {
          */
         queueSingleEvent(event: MotionEvent, nRepeats?: number): void;
         /**
-         * Clear out any event
+         * Clear out any events
          * @param {boolean} stopCurrentSeries - When true, stop the current MotionSeries too.
          */
         clearQueue(stopCurrentSeries?: boolean): void;
@@ -849,133 +853,6 @@ declare module QI {
          */
         _assignPose(skeleton: Skeleton, immediately?: boolean): void;
         private _mergeSubPoses(subPoses);
-    }
-}
-declare module BEING {
-    /** class for a single eye.  2 Eye Classes are "controlled" in tandem by calling the public methods of this class.
-     *
-     * Movement up / down left right are controlled by POV rotation. EyeBalls are not inheriting from QI.Mesh, since no shape keys.
-     * Just add a pov processor, which registers itself.
-     *
-     * Camera following implemented using billboard mode, doable since just a single eye per mesh.
-     *
-     * Pupil size / color to be implemented with a custom material.  You can use a 2 eye texture though. When Blender
-     * splits the eyes, it handles paritioning of the UV's as well.  Of course, you lose pupil size then using a
-     * texture.
-     *
-     * NOTE: For MakeHuman there is an operator which will automatically separate the eyes, change origin, & set base class.
-     * It is in the MakeHuman Community Plugin for Blender.  See https://github.com/makehumancommunity/community-plugins/tree/master/blender_source/MH_Community
-     */
-    class EyeBall extends BABYLON.Mesh {
-        private static _FOLLOW_MODE_SET_BACK;
-        private static _RANDOM_MODE_SET_BACK;
-        private _povProcessor;
-        private _pupilSize;
-        private _originalPositionZ;
-        /**
-         * @constructor - Args same As BABYLON.Mesh
-         * @param {string} name - The value used by scene.getMeshByName().  Must end in either '_L' or '_R'.
-         * @param {Scene} scene - The scene to add this mesh to.
-         * @param {Node} parent - The head / body, so eye stays in head as parent moves
-         * @param {Mesh} source - An optional Mesh from which geometry is shared, cloned.
-         * @param {boolean} doNotCloneChildren - When cloning, skip cloning child meshes of source, default False.
-         *                  When false, achieved by calling a clone(), also passing False.
-         *                  This will make creation of children, recursive.
-         */
-        constructor(name: string, scene: BABYLON.Scene, parent?: BABYLON.Node, source?: BABYLON.Mesh, doNotCloneChildren?: boolean);
-        /** @override */
-        dispose(doNotRecurse?: boolean): void;
-        /**
-         * @param {QI.MotionEvent} amt - Only the rotation component may be specified.  movePOV MUST be null.
-         */
-        queueRotation(amt: QI.MotionEvent, postEventFunc?: () => void): void;
-        /**
-         * called publicly by Eyes.moveRandom()
-         */
-        stop(): void;
-        /**
-         * Toggle followMode (implemented using BILLBOARD_MODE).
-         * @param {boolean} stop - Toggle
-         */
-        followMode(stop?: boolean): void;
-        /**
-         * Toggle random (but tandem) eye movements without actively management
-         * @param {boolean} stop - Toggle
-         */
-        moveRandom(stop?: boolean): void;
-        /** shift eyes back slightly, so rotation does not cause eyes to violate skin
-         * @param {number} amt - 0 to 1, used
-         */
-        private _performSetBack(amt);
-        /**
-         * Getter to identify which EyeBall instance is left or right side.
-         * @returns {boolean} - When true instance is left side, else is right side.
-         */
-        isLeft(): boolean;
-        /**
-         * @param {number} size - A value from 0 to 1, where 1 is maximum dilation.
-         */
-        setPupilSize(size: number): void;
-    }
-}
-/// <reference path="EyeBall.d.ts" />
-declare module BEING {
-    /** Class to control a set of EyeBalls.
-     *
-     * Movement up / down left right are controlled by POV rotation. EyeBalls are not inheriting from QI.Mesh, since no shape keys.
-     * Just add a pov processor, which registers itself.
-     *
-     * Camera following implemented using billboard mode, doable since just a single eye per mesh.
-     *
-     * Pupil size / color to be implemented with a custom material.  You can use a 2 eye texture though. When Blender
-     * splits the eyes, it handles partitioning of the UV's as well.  Of course, you lose pupil size then using a
-     * texture.
-     *
-     * NOTE: For MakeHuman there is an operator which will automatically separate the eyes, change origin, & set base class.
-     * It is in the MakeHuman Community Plugin for Blender.  See https://github.com/makehumancommunity/community-plugins/tree/master/blender_source/MH_Community
-     */
-    class Eyes {
-        private static MAX_UP;
-        private static L_EYE_RANGE;
-        private static R_EYE_RANGE;
-        private _leftEye;
-        private _rightEye;
-        private _pupilSize;
-        private _followMode;
-        /** Do not want for force the eye to only work with a make human.  Use this to analze parent mesh to pick out
-         *  the eyeballs from the children meshes.
-         *
-         * @param {BABYLON.Mesh} parentMesh - The mesh search for children that are instances of BEING.EyeBall.
-         * @returns {BEING.Eyes} - When 2 child BEING.EyeBalls are found, a constructor is run & returned.  Otherwise
-         * null is returned.
-         */
-        static getInstance(parentMesh: BABYLON.Mesh): Eyes;
-        /**
-         * Non-exported constructor, called only by Eyes.getInstance().
-         */
-        constructor(eyes: Array<EyeBall>);
-        /**
-         * @param {number} up   - 1 is highest, 0 straightforward, -1 is lowest
-         * @param {number} left - 1 is leftmost from the meshes point of view, 0 straightforward, -1 is rightmost
-         * @param {number} duration - The time the rotation is to take, in millis (Default 600).
-         * @param {number) wait - The time to wait once event is begun execution (Default 0).
-         * @param {function} postEventFunc - call this upon completion, only done one eye; presume it is next random
-         */
-        queueRotation(up: number, left: number, duration?: number, wait?: number, postEventFunc?: () => void): void;
-        /**
-         * Toggle followMode (implemented using BILLBOARD_MODE).
-         * @param {boolean} stop - Toggle
-         */
-        followMode(stop?: boolean): void;
-        /**
-         * Toggle random (but tandem) eye movements without actively management
-         * @param {boolean} stop - Toggle
-         */
-        moveRandom(stop?: boolean): void;
-        /**
-         * @param {number} size - A value from 0 to 1, where 1 is maximum dilation.
-         */
-        setPupilSize(size: number): void;
     }
 }
 /// <reference path="Pose.d.ts" />
@@ -1378,7 +1255,7 @@ declare module QI {
         private _registeredFN;
         private _positions32F;
         private _normals32F;
-        private _povProcessor;
+        _povProcessor: PovProcessor;
         private _shapeKeyGroups;
         private _poseProcessor;
         _originalPositions: Float32Array;
@@ -1392,7 +1269,6 @@ declare module QI {
         _skeletonChangesMade: boolean;
         private _lastFrameID;
         static COMPUTED_GROUP_NAME: string;
-        static WHOOSH: BABYLON.Sound;
         entranceMethod: GrandEntrance;
         /**
          * @constructor - Args same As BABYLON.Mesh, except that using a source for cloning requires there be no shape keys
@@ -1429,6 +1305,11 @@ declare module QI {
          * @param {string} groupName - The name of the group to look up.
          */
         removeShapeKeyGroup(groupName: string): void;
+        /**
+         * Clear out any events, on all the queues the Mesh has.
+         * @param {boolean} stopCurrentSeries - When true, stop the current MotionSeries too.
+         */
+        clearAllQueues(stopCurrentSeries?: boolean): void;
         /**
          * Go thru an array of Events prior to creating an event series.  Add a stall for any queue(s) that
          * does not have an event.  Useful for syncing the entire meshe's groups even though a queue may not
@@ -1468,7 +1349,10 @@ declare module QI {
         addSubPose(poseName: string, immediately?: boolean): void;
         removeSubPose(poseName: string): void;
         clearAllSubPoses(): void;
-        /** entry point called by TOB generated code, when everything is ready. */
+        /** Entry point called by TOB generated code, when everything is ready.
+         *  To load in advance without showing export disabled.  Call this when ready.
+         *  Can also be called after the first time, if makeVisible(false) was called.
+         */
         grandEntrance(): void;
         /**
          * make computed shape key group when missing.  Used mostly by GrandEntrances.
@@ -1656,6 +1540,129 @@ declare module QI {
 /// <reference path="AudioDecoder.d.ts" />
 declare module QI {
     function Whoosh(scene: BABYLON.Scene): BABYLON.Sound;
+}
+/// <reference path="../Mesh.d.ts" />
+declare module BEING {
+    /** class for a single eye.  2 Eye Classes are "controlled" in tandem by calling the public methods of this class.
+     *
+     * Movement up / down left right are controlled by POV rotation.
+     *
+     * Camera following implemented using billboard mode, doable since just a single eye per mesh.
+     *
+     * Pupil size / color to be implemented with a custom material.  You can use a 2 eye texture though. When Blender
+     * splits the eyes, it handles paritioning of the UV's as well.  Of course, you lose pupil size then using a
+     * texture.
+     *
+     * NOTE: For MakeHuman there is an operator which will automatically separate the eyes, change origin, & set base class.
+     * It is in the MakeHuman Community Plugin for Blender.  See https://github.com/makehumancommunity/community-plugins/tree/master/blender_source/MH_Community
+     */
+    class EyeBall extends QI.Mesh {
+        private static _FOLLOW_MODE_SET_BACK;
+        private static _RANDOM_MODE_SET_BACK;
+        private _pupilSize;
+        private _originalPositionZ;
+        /**
+         * @constructor - Args same As BABYLON.Mesh
+         * @param {string} name - The value used by scene.getMeshByName().  Must end in either '_L' or '_R'.
+         * @param {Scene} scene - The scene to add this mesh to.
+         * @param {Node} parent - The head / body, so eye stays in head as parent moves
+         * @param {Mesh} source - An optional Mesh from which geometry is shared, cloned.
+         * @param {boolean} doNotCloneChildren - When cloning, skip cloning child meshes of source, default False.
+         *                  When false, achieved by calling a clone(), also passing False.
+         *                  This will make creation of children, recursive.
+         */
+        constructor(name: string, scene: BABYLON.Scene, parent?: BABYLON.Node, source?: QI.Mesh, doNotCloneChildren?: boolean);
+        /**
+         * @param {QI.MotionEvent} amt - Only the rotation component may be specified.  movePOV MUST be null.
+         */
+        queueRotation(amt: QI.MotionEvent, postEventFunc?: () => void): void;
+        /**
+         * called publicly by Eyes.moveRandom()
+         */
+        stop(): void;
+        /**
+         * Toggle followMode (implemented using BILLBOARD_MODE).
+         * @param {boolean} stop - Toggle
+         */
+        followMode(stop?: boolean): void;
+        /**
+         * Toggle random (but tandem) eye movements without actively management
+         * @param {boolean} stop - Toggle
+         */
+        moveRandom(stop?: boolean): void;
+        /** shift eyes back slightly, so rotation does not cause eyes to violate skin
+         * @param {number} amt - 0 to 1, used
+         */
+        private _performSetBack(amt);
+        /**
+         * Getter to identify which EyeBall instance is left or right side.
+         * @returns {boolean} - When true instance is left side, else is right side.
+         */
+        isLeft(): boolean;
+        /**
+         * @param {number} size - A value from 0 to 1, where 1 is maximum dilation.
+         */
+        setPupilSize(size: number): void;
+    }
+}
+/// <reference path="EyeBall.d.ts" />
+declare module BEING {
+    /** Class to control a set of EyeBalls.
+     *
+     * Movement up / down left right are controlled by POV rotation.
+     *
+     * Camera following implemented using billboard mode, doable since just a single eye per mesh.
+     *
+     * Pupil size / color to be implemented with a custom material.  You can use a 2 eye texture though. When Blender
+     * splits the eyes, it handles partitioning of the UV's as well.  Of course, you lose pupil size then using a
+     * texture.
+     *
+     * NOTE: For MakeHuman there is an operator which will automatically separate the eyes, change origin, & set base class.
+     * It is in the MakeHuman Community Plugin for Blender.  See https://github.com/makehumancommunity/community-plugins/tree/master/blender_source/MH_Community
+     */
+    class Eyes {
+        private static MAX_UP;
+        private static L_EYE_RANGE;
+        private static R_EYE_RANGE;
+        private _leftEye;
+        private _rightEye;
+        private _pupilSize;
+        private _followMode;
+        /** Do not want for force the eye to only work with a make human.  Use this to analze parent mesh to pick out
+         *  the eyeballs from the children meshes.
+         *
+         * @param {BABYLON.Mesh} parentMesh - The mesh search for children that are instances of BEING.EyeBall.
+         * @returns {BEING.Eyes} - When 2 child BEING.EyeBalls are found, a constructor is run & returned.  Otherwise
+         * null is returned.
+         */
+        static getInstance(parentMesh: BABYLON.Mesh): Eyes;
+        /**
+         * Non-exported constructor, called only by Eyes.getInstance().
+         */
+        constructor(eyes: Array<EyeBall>);
+        /**
+         * @param {number} up   - 1 is highest, 0 straightforward, -1 is lowest
+         * @param {number} left - 1 is leftmost from the meshes point of view, 0 straightforward, -1 is rightmost
+         * @param {number} duration - The time the rotation is to take, in millis (Default 600).
+         * @param {number) wait - The time to wait once event is begun execution (Default 0).
+         * @param {function} postEventFunc - call this upon completion, only done one eye; presume it is next random
+         */
+        queueRotation(up: number, left: number, duration?: number, wait?: number, postEventFunc?: () => void): void;
+        /**
+         * Toggle followMode (implemented using BILLBOARD_MODE).
+         * @param {boolean} stop - Toggle
+         */
+        followMode(stop?: boolean): void;
+        /**
+         * Toggle random (but tandem) eye movements without actively management
+         * @param {boolean} stop - Toggle
+         */
+        moveRandom(stop?: boolean): void;
+        /**
+         * @param {number} size - A value from 0 to 1, where 1 is maximum dilation.
+         */
+        setPupilSize(size: number): void;
+    }
 }
 /// <reference path="Eyes.d.ts" />
 /// <reference path="../Mesh.d.ts" />

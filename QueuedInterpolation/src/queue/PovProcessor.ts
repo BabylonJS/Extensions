@@ -146,7 +146,7 @@ module QI {
                 }
 
                 if (this._doingMovePOV){
-                    if (this._doingRotation &&  !this._currentStepInSeries.options.noStepWiseMovement){
+                    if (this._doingRotation && !this._currentStepInSeries.options.noStepWiseMovement && ! this._currentStepInSeries.options.absoluteMovement){
                         // some of these amounts, could be negative, if has a Pace with a hiccup
                         var amtRight   = (this._fullAmtRight   * this._ratioComplete) - this._amtRightSoFar;
                         var amtUp      = (this._fullAmtUp      * this._ratioComplete) - this._amtUpSoFar;
@@ -265,12 +265,13 @@ module QI {
                 var movePOV = event.movePOV;
                 if (movementScaling) movePOV = movePOV.multiply(movementScaling);
                 this._positionStartVec = this._node["position"].clone();
-                this._fullAmtRight   = event.options.absoluteMovement ? movePOV.x - this._positionStartVec.x : movePOV.x; this._amtRightSoFar   = 0;
-                this._fullAmtUp      = event.options.absoluteMovement ? movePOV.y - this._positionStartVec.y : movePOV.y; this._amtUpSoFar      = 0;
-                this._fullAmtForward = event.options.absoluteMovement ? movePOV.z - this._positionStartVec.z : movePOV.z; this._amtForwardSoFar = 0;
+                
+                this._fullAmtRight   = movePOV.x; this._amtRightSoFar   = 0;
+                this._fullAmtUp      = movePOV.y; this._amtUpSoFar      = 0;
+                this._fullAmtForward = movePOV.z; this._amtForwardSoFar = 0;
 
                 // less resources to calcMovePOV() once then Lerp(), but calcMovePOV() uses rotation, so can only go fast when not rotating too
-                if (!this._doingRotation || event.options.noStepWiseMovement){
+                if (!this._doingRotation || event.options.noStepWiseMovement || event.options.absoluteMovement){
                     this._positionEndVec = event.options.absoluteMovement ? event.movePOV : this._positionStartVec.add(this.calcMovePOV(this._fullAmtRight, this._fullAmtUp, this._fullAmtForward));
                 }
             }
@@ -355,7 +356,7 @@ module QI {
         }
         // ========================================= Statics =========================================
         public static get Version(): string {
-            return "0.99.0";
+            return "1.0.0";
         }
 
         public static LerpToRef(start: BABYLON.Vector3, end: BABYLON.Vector3, amount: number, result: BABYLON.Vector3): void {

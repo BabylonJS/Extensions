@@ -1,8 +1,9 @@
+/// <reference path="../Mesh.ts"/>
+
 module BEING{
     /** class for a single eye.  2 Eye Classes are "controlled" in tandem by calling the public methods of this class.
      *
-     * Movement up / down left right are controlled by POV rotation. EyeBalls are not inheriting from QI.Mesh, since no shape keys.
-     * Just add a pov processor, which registers itself.
+     * Movement up / down left right are controlled by POV rotation.
      *
      * Camera following implemented using billboard mode, doable since just a single eye per mesh.
      *
@@ -13,12 +14,11 @@ module BEING{
      * NOTE: For MakeHuman there is an operator which will automatically separate the eyes, change origin, & set base class.
      * It is in the MakeHuman Community Plugin for Blender.  See https://github.com/makehumancommunity/community-plugins/tree/master/blender_source/MH_Community
      */
-    export class EyeBall extends BABYLON.Mesh {
+    export class EyeBall extends QI.Mesh {
 
         private static _FOLLOW_MODE_SET_BACK = 0.15;
         private static _RANDOM_MODE_SET_BACK = 0.10;
 
-        private _povProcessor : QI.PovProcessor;
         private _pupilSize = 0.5;
         private _originalPositionZ : number;
 
@@ -32,15 +32,8 @@ module BEING{
          *                  When false, achieved by calling a clone(), also passing False.
          *                  This will make creation of children, recursive.
          */
-        constructor(name: string, scene: BABYLON.Scene, parent: BABYLON.Node = null, source?: BABYLON.Mesh, doNotCloneChildren?: boolean) {
+        constructor(name: string, scene: BABYLON.Scene, parent: BABYLON.Node = null, source?: QI.Mesh, doNotCloneChildren?: boolean) {
             super(name, scene, parent, source, doNotCloneChildren);
-            this._povProcessor = new QI.PovProcessor(this, false);
-        }
-
-        /** @override */
-        public dispose(doNotRecurse?: boolean) : void {
-            super.dispose(doNotRecurse);
-            this._povProcessor.dispose();
         }
 
         /**
@@ -53,8 +46,8 @@ module BEING{
             var deformations : Array<any> = [amt];
             if (postEventFunc) deformations.push(postEventFunc);
             var series = new QI.EventSeries(deformations);
-//            series._debug = true;
-            this._povProcessor.queueEventSeries(series);
+            series._debug = true;
+            this.queueEventSeries(series);
         }
 
         /**

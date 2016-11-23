@@ -46,8 +46,6 @@
 	        	<file name="${skel}/Bone.js" />
 		    	<file name="${skel}/Skeleton.js" />
 		    	<file name="${skel}/Pose.js" />
-		    	<file name="${being2}/EyeBall.js" />
-		    	<file name="${being2}/Eyes.js" />
 		    	<file name="${skel}/PoseEvent.js" />
 		    	<file name="${skel}/PoseProcessor.js" />
 		    	<file name="${shape}/VertexDeformation.js" />
@@ -56,6 +54,8 @@
 		    	<file name="${audio}/AudioRecorder.js" />
 		    	<file name="${audio}/AudioDecoder.js" />
 		    	<file name="${audio}/Whoosh.js" />
+		    	<file name="${being2}/EyeBall.js" />
+		    	<file name="${being2}/Eyes.js" />
 		    	<file name="${being2}/Body.js" />
 		    	<file name="${entrances}/GatherEntrance.js" />
 		    	<file name="${entrances}/FireEntrance.js" />
@@ -77,8 +77,6 @@
 	        	<file name="${skel}/Bone.d.ts" />
 		    	<file name="${skel}/Skeleton.d.ts" />
 		    	<file name="${skel}/Pose.d.ts" />
-		    	<file name="${being2}/EyeBall.d.ts" />
-		    	<file name="${being2}/Eyes.d.ts" />
 		    	<file name="${skel}/PoseEvent.d.ts" />
 		    	<file name="${skel}/PoseProcessor.d.ts" />
 		    	<file name="${shape}/VertexDeformation.d.ts" />
@@ -87,6 +85,8 @@
 		    	<file name="${audio}/AudioRecorder.d.ts" />
 		    	<file name="${audio}/AudioDecoder.d.ts" />
 		    	<file name="${audio}/Whoosh.d.ts" />
+		    	<file name="${being2}/EyeBall.d.ts" />
+		    	<file name="${being2}/Eyes.d.ts" />
 		    	<file name="${being2}/Body.d.ts" />
 		    	<file name="${entrances}/GatherEntrance.d.ts" />
 		    	<file name="${entrances}/FireEntrance.d.ts" />

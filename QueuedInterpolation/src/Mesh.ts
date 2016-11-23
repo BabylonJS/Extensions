@@ -429,9 +429,14 @@ module QI {
             }
         }
         // =================================== BJS side ShapeGroup ===================================
-        /** entry point called by TOB generated code, when everything is ready. */
+        /** Entry point called by TOB generated code, when everything is ready.
+         *  To load in advance without showing export disabled.  Call this when ready.
+         *  Can also be called after the first time, if makeVisible(false) was called.
+         */
         public grandEntrance() : void {
-            if (this.entranceMethod) this.entranceMethod.makeEntrance(); else this.makeVisible(true);
+            if (this.isEnabled() && !this.isVisible) {
+                if (this.entranceMethod) this.entranceMethod.makeEntrance(); else this.makeVisible(true);
+            }
          }
 
         /**

@@ -74,9 +74,9 @@ module QI{
             if (libraryPose.rotationBasisDiff) {
                 var relRot   = libraryPose.rotationBasisDiff   .multiply(this.rotationBasisRatio   ).add(this.rotation);
                 var relTrans = libraryPose.translationBasisDiff.multiply(this.translationBasisRatio).addInPlace(this.translation);
+                var retScale = libraryPose.scaleBasisDiff      .multiply(this.scaleBasisRatio      ).addInPlace(this.scale);
 
-                // to-do something about scale
-                return new MatrixComp(relRot, relTrans);
+                return new MatrixComp(relRot, relTrans, retScale);
 
             // otherwise target for this bone is basis, so return this
             } else {
@@ -95,9 +95,9 @@ module QI{
          * Equals test.
          */
         public equals(rotation : BABYLON.Quaternion, translation : BABYLON.Vector3, scale : BABYLON.Vector3) : boolean {
-            if (this.rotation !== rotation) return false;
-            if (this.translation !== translation) return false;
-            if (this.scale !== scale) return false;
+            if (!this.rotation.equals(rotation)) return false;
+            if (!this.translation.equals(translation)) return false;
+            if (!this.scale.equals(scale)) return false;
             return true;
         }
 

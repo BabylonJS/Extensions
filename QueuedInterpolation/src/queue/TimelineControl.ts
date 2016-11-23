@@ -112,22 +112,16 @@ module QI {
         public static pauseSystem() : void { 
             TimelineControl._systemPaused = true;
 
-            // pause all sound tracks, done at the MotionEvent level too, but that is also for pausing a single queue
-            var tracks = TimelineControl._scene.mainSoundTrack.soundCollection;
-            for (var i = 0, len = tracks.length; i < len; i++) {
-                tracks[i].pause();
-            }
+             // disable the audio system
+            TimelineControl._scene.audioEnabled = false;
         }
 
         public static resumeSystem() : void {
            // since Now is computed in an after renderer, resumes are queued. Processing a call to resumeSystem directly would have a stale 'Now'.
            TimelineControl._resumeQueued = true;
 
-            // resume playing all sound tracks, done at the MotionEvent level too, but that is also for resuming a single queue
-            var tracks = TimelineControl._scene.mainSoundTrack.soundCollection;
-            for (var i = 0, len = tracks.length; i < len; i++) {
-                tracks[i].play();
-            }
+            // resume the audio system
+            TimelineControl._scene.audioEnabled = true;
         }
         public static get SystemResumeTime() : number { return TimelineControl._systemResumeTime; }
     }
