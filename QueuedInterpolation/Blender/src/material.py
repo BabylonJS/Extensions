@@ -75,7 +75,7 @@ class Texture:
 
             # when coming from either a packed image or a baked image, then save_render
             if internalImage:
-                if exporter.scene.inlineTextures:
+                if exporter.scene.textureMethod == INLINE:
                     textureFile = path.join(exporter.textureDir, self.fileNoPath + 'temp')
                 else:
                     textureFile = path.join(exporter.textureDir, self.fileNoPath)
