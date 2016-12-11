@@ -3,6 +3,7 @@ var typescript = require("gulp-typescript");
 var sourcemaps = require("gulp-sourcemaps");
 var merge2 = require("merge2");
 var concat = require("gulp-concat");
+var uglify = require("gulp-uglify");
 
 var tsConfig = {
     noExternalResolve: true,
@@ -14,7 +15,13 @@ var tsConfig = {
 };
 var tsProject = typescript.createProject(tsConfig);
 
-gulp.task("default", function () {
+var files = [
+    "./temp/babylon.scenecomponents.js",
+    "./temp/babylon.scenemanager.js",
+    "./temp/babylon.scenenavagent.js"
+]
+
+gulp.task("compile", function () {
     var tsResult = gulp.src("./src/**/*.ts")      
             .pipe(sourcemaps.init())
             .pipe(typescript(tsProject));
@@ -31,6 +38,13 @@ gulp.task("default", function () {
                         return ''; 
                     }
                 }))
-            .pipe(gulp.dest("./dist"))
+            .pipe(gulp.dest("./temp/"))
     ])            
+});
+
+gulp.task("default", ["compile"], function () {
+    return merge2(gulp.src(files))
+        .pipe(concat("babylon.scenemanager.js"))
+        .pipe(uglify())
+        .pipe(gulp.dest("./dist/"));
 });
