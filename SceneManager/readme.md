@@ -5,11 +5,11 @@ To compile the project just run "npm install" in the folder.
 
 Scene Manager Static Helpers:
 
-1... BABYLON.SceneManager.CreateScene       - Creates a new scene and attaches a manager object.
-2... BABYLON.SceneManager.LoadScene         - Calls BABYLON.SceneLoader.Load and parses the scene metadata (attaches a manager object to loaded scene)
-3... BABYLON.SceneManager.ImportMesh        - Call BABYLON.SceneLoader.ImportMesh and parses mesh metadata (a manager object is already attached)
-4... BABYLON.SceneManager.RegisterLoader    - Registers the page level scene loader (allows for re-loading scenes using 'loadLevel')
-5... BABYLON.SceneManager.GetInstance       - Get the currently attached manager object on the scene
+- BABYLON.SceneManager.CreateScene       - Creates a new scene and attaches a manager object.
+- BABYLON.SceneManager.LoadScene         - Calls BABYLON.SceneLoader.Load and parses the scene metadata (attaches a manager object to loaded scene)
+- BABYLON.SceneManager.ImportMesh        - Call BABYLON.SceneLoader.ImportMesh and parses mesh metadata (a manager object is already attached)
+- BABYLON.SceneManager.RegisterLoader    - Registers the page level scene loader (allows for re-loading scenes using 'loadLevel')
+- BABYLON.SceneManager.GetInstance       - Get the currently attached manager object on the scene
 
 All scene level functionallity is exposed via the BABYLON.SceneManager and BABYLON.SceneComponent instances.
 
