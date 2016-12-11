@@ -13,13 +13,13 @@ declare module BABYLON {
         private _manager;
         private _owned;
         constructor(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, host: BABYLON.Scene, enableUpdate?: boolean, propertyBag?: any);
-        readonly scene: BABYLON.Scene;
-        readonly engine: BABYLON.Engine;
+        scene: BABYLON.Scene;
+        engine: BABYLON.Engine;
         start(): void;
         update(): void;
         after(): void;
         destroy(): void;
-        readonly manager: BABYLON.SceneManager;
+        manager: BABYLON.SceneManager;
         setProperty(name: string, propertyValue: any): void;
         getProperty<T>(name: string, defaultValue?: T): T;
         findComponent(klass: string): any;
@@ -33,33 +33,33 @@ declare module BABYLON {
     abstract class CameraComponent extends BABYLON.SceneComponent {
         private _camera;
         constructor(owner: BABYLON.UniversalCamera, scene: BABYLON.Scene, enableUpdate?: boolean, propertyBag?: any);
-        readonly camera: BABYLON.UniversalCamera;
+        camera: BABYLON.UniversalCamera;
     }
     abstract class LightComponent extends BABYLON.SceneComponent {
         private _light;
         constructor(owner: BABYLON.Light, scene: BABYLON.Scene, enableUpdate?: boolean, propertyBag?: any);
-        readonly light: BABYLON.Light;
+        light: BABYLON.Light;
     }
     abstract class MeshComponent extends BABYLON.SceneComponent {
         private _mesh;
         constructor(owner: BABYLON.AbstractMesh, scene: BABYLON.Scene, enableUpdate?: boolean, propertyBag?: any);
-        readonly mesh: BABYLON.AbstractMesh;
+        mesh: BABYLON.AbstractMesh;
     }
     abstract class SceneController extends BABYLON.MeshComponent {
         abstract ready(): void;
         constructor(owner: BABYLON.AbstractMesh, scene: BABYLON.Scene, enableUpdate?: boolean, propertyBag?: any);
     }
     class ObjectMetadata {
-        readonly type: string;
-        readonly objectId: string;
-        readonly objectName: string;
-        readonly tagName: string;
-        readonly layerIndex: number;
-        readonly layerName: string;
-        readonly areaIndex: number;
-        readonly navAgent: BABYLON.INavigationAgent;
-        readonly meshLink: BABYLON.INavigationLink;
-        readonly meshObstacle: BABYLON.INavigationObstacle;
+        type: string;
+        objectId: string;
+        objectName: string;
+        tagName: string;
+        layerIndex: number;
+        layerName: string;
+        areaIndex: number;
+        navAgent: BABYLON.INavigationAgent;
+        meshLink: BABYLON.INavigationLink;
+        meshObstacle: BABYLON.INavigationObstacle;
         private _metadata;
         constructor(data: IObjectMetadata);
         setProperty(name: string, propertyValue: any): void;
@@ -276,6 +276,7 @@ declare module BABYLON {
         static GamepadMovementSensibility: number;
     }
 }
+
 declare module BABYLON {
     class SceneManager {
         static GetInstance(scene: BABYLON.Scene): BABYLON.SceneManager;
@@ -345,8 +346,8 @@ declare module BABYLON {
         private static rightHanded;
         private static loader;
         constructor(rootUrl: string, sceneFilename: string, scene: BABYLON.Scene);
-        readonly ie: boolean;
-        readonly url: string;
+        ie: boolean;
+        url: string;
         dispose(): void;
         isRunning(): boolean;
         loadLevel(name: string, path?: string): void;
@@ -442,6 +443,7 @@ declare module BABYLON {
         private static createObjectFromString(str, type);
     }
 }
+
 declare class Navigation {
     buildNodes(mesh: BABYLON.AbstractMesh): any;
     setZoneData(zone: string, data: any): void;
@@ -456,9 +458,9 @@ declare module BABYLON {
         private _mesh;
         private _info;
         constructor(owner: BABYLON.AbstractMesh);
-        readonly mesh: BABYLON.AbstractMesh;
-        readonly info: BABYLON.INavigationAgent;
-        readonly hasAgentInfo: boolean;
+        mesh: BABYLON.AbstractMesh;
+        info: BABYLON.INavigationAgent;
+        hasAgentInfo: boolean;
         setDestination(destination: BABYLON.Vector3): void;
     }
 }

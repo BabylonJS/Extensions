@@ -1,6 +1,8 @@
 
 The BabylonJS Managed Scene Component API uses a component object model to create and manage a scene component's life-cycle.
 
+To compile the project just run "npm install" in the folder. 
+
 Scene Manager Static Helpers:
 
 1... BABYLON.SceneManager.CreateScene       - Creates a new scene and attaches a manager object.
