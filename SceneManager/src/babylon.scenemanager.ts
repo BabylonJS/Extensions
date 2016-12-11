@@ -178,7 +178,7 @@ module BABYLON {
                                     var physicsRestitution: number = terrain.metadata.properties.physicsRestitution;
                                     var physicsImpostor: number = terrain.metadata.properties.physicsImpostor;
                                     var groundTessellation: number = terrain.metadata.properties.groundTessellation;
-                                    BABYLON.SceneManager.createGroundTerrain((terrain.name + "_Ground"), tempBase64, {
+                                    BABYLON.SceneManager.createGroundTerrain((terrain.name + "_Collider"), tempBase64, {
                                         width: terrainWidth,
                                         height: terrainLength,
                                         minHeight: 0,
