@@ -178,7 +178,7 @@ module BABYLON {
                                     var physicsRestitution: number = terrain.metadata.properties.physicsRestitution;
                                     var physicsImpostor: number = terrain.metadata.properties.physicsImpostor;
                                     var groundTessellation: number = terrain.metadata.properties.groundTessellation;
-                                    BABYLON.SceneManager.createGroundTerrain((terrain.name + "_Ground"), tempBase64, {
+                                    BABYLON.SceneManager.createGroundTerrain((terrain.name + "_Collider"), tempBase64, {
                                         width: terrainWidth,
                                         height: terrainLength,
                                         minHeight: 0,
@@ -188,7 +188,7 @@ module BABYLON {
                                         onReady: (mesh: BABYLON.Mesh) => {
                                             tempBase64 = null;
                                             mesh.isVisible = false;
-                                            mesh.visibility = 0.75;
+                                            mesh.visibility = 0.5;
                                             mesh.checkCollisions = true;
                                             mesh.position = BABYLON.Vector3.Zero();
                                             mesh.rotation = terrain.rotation.clone();
@@ -461,7 +461,7 @@ module BABYLON {
             }
             return result;
         }
-        public findSceneComponent(klass: string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): any {
+        public findSceneComponent(klass: string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): BABYLON.SceneComponent {
             var result: BABYLON.SceneComponent = null;
             if (owner.metadata != null && owner.metadata.api) {
                 var metadata: BABYLON.IObjectMetadata = owner.metadata as BABYLON.IObjectMetadata;
@@ -477,7 +477,7 @@ module BABYLON {
             }
             return result;
         }
-        public findSceneComponents(klass: string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): any[] {
+        public findSceneComponents(klass: string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): BABYLON.SceneComponent[] {
             var result: BABYLON.SceneComponent[] = [];
             if (owner.metadata != null && owner.metadata.api) {
                 var metadata: BABYLON.IObjectMetadata = owner.metadata as BABYLON.IObjectMetadata;
@@ -492,9 +492,9 @@ module BABYLON {
             }
             return result;
         }
-        public findSceneController(): any {
+        public findSceneController(): BABYLON.SceneController {
             var meshes: BABYLON.AbstractMesh[] = this._scene.meshes;
-            var result: BABYLON.SceneComponent = null;
+            var result: BABYLON.SceneController = null;
             if (meshes != null && meshes.length > 0) {
                 for (var ii: number = 0; ii < meshes.length; ii++) {
                     var mesh: AbstractMesh = meshes[ii];
