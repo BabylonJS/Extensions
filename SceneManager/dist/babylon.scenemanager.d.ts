@@ -22,9 +22,9 @@ declare module BABYLON {
         manager: BABYLON.SceneManager;
         setProperty(name: string, propertyValue: any): void;
         getProperty<T>(name: string, defaultValue?: T): T;
-        findComponent(klass: string): any;
-        findComponents(klass: string): any[];
-        getOwnerMetadata(): BABYLON.ObjectMetadata;
+        getMetadata(): BABYLON.ObjectMetadata;
+        findComponent(klass: string): BABYLON.SceneComponent;
+        findComponents(klass: string): BABYLON.SceneComponent[];
         private registerInstance(instance);
         private updateInstance(instance);
         private afterInstance(instance);
@@ -41,9 +41,20 @@ declare module BABYLON {
         light: BABYLON.Light;
     }
     abstract class MeshComponent extends BABYLON.SceneComponent {
+        onIntersectionEnter: (mesh: BABYLON.AbstractMesh) => void;
+        onIntersectionStay: (mesh: BABYLON.AbstractMesh) => void;
+        onIntersectionExit: (mesh: BABYLON.AbstractMesh) => void;
+        private _list;
         private _mesh;
+        private _collider;
+        private _intersecting;
         constructor(owner: BABYLON.AbstractMesh, scene: BABYLON.Scene, enableUpdate?: boolean, propertyBag?: any);
         mesh: BABYLON.AbstractMesh;
+        hasCollisionMesh(): boolean;
+        getCollisionMesh(): BABYLON.AbstractMesh;
+        setIntersectionMeshes(meshes: BABYLON.AbstractMesh[]): void;
+        clearIntersectionList(): void;
+        private updateIntersectionList();
     }
     abstract class SceneController extends BABYLON.MeshComponent {
         abstract ready(): void;
@@ -250,6 +261,10 @@ declare module BABYLON {
         rotation: BABYLON.Vector3;
         scale: BABYLON.Vector3;
     }
+    interface ICollisionState {
+        mesh: BABYLON.AbstractMesh;
+        intersecting: boolean;
+    }
     interface IObjectMetadata {
         api: boolean;
         type: string;
@@ -266,7 +281,16 @@ declare module BABYLON {
         properties: any;
     }
     class UserInputOptions {
-        static PointerAngularSensibility: number;
+        static JoystickRightHandleColor: string;
+        static JoystickLeftSensibility: number;
+        static JoystickRightSensibility: number;
+        static JoystickDeadStickValue: number;
+        static JoystickLStickXInverted: boolean;
+        static JoystickLStickYInverted: boolean;
+        static JoystickRStickXInverted: boolean;
+        static JoystickRStickYInverted: boolean;
+        static JoystickAngularSensibility: number;
+        static JoystickMovementSensibility: number;
         static GamepadDeadStickValue: number;
         static GamepadLStickXInverted: boolean;
         static GamepadLStickYInverted: boolean;
@@ -274,6 +298,7 @@ declare module BABYLON {
         static GamepadRStickYInverted: boolean;
         static GamepadAngularSensibility: number;
         static GamepadMovementSensibility: number;
+        static PointerAngularSensibility: number;
     }
 }
 
@@ -345,7 +370,7 @@ declare module BABYLON {
         private static preventDefault;
         private static rightHanded;
         private static loader;
-        constructor(rootUrl: string, sceneFilename: string, scene: BABYLON.Scene);
+        constructor(rootUrl: string, file: string, scene: BABYLON.Scene);
         ie: boolean;
         url: string;
         dispose(): void;
@@ -354,7 +379,7 @@ declare module BABYLON {
         toggleDebug(): void;
         getSceneName(): string;
         getScenePath(): string;
-        getObjectMetadata(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): BABYLON.ObjectMetadata;
+        getSceneMetadata(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): BABYLON.ObjectMetadata;
         showFullscreen(): void;
         start(): void;
         stop(): void;
@@ -366,13 +391,20 @@ declare module BABYLON {
         getSceneMarkup(): string;
         drawSceneMarkup(markup: string): void;
         clearSceneMarkup(): void;
+        hasCollisionMesh(owner: BABYLON.AbstractMesh): boolean;
+        getCollisionMesh(owner: BABYLON.AbstractMesh): BABYLON.AbstractMesh;
         addSceneComponent(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, klass: string, enableUpdate?: boolean, propertyBag?: any): BABYLON.SceneComponent;
-        findSceneComponent(klass: string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): any;
-        findSceneComponents(klass: string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): any[];
-        findSceneController(): any;
+        findSceneComponent(klass: string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): BABYLON.SceneComponent;
+        findSceneComponents(klass: string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): BABYLON.SceneComponent[];
+        findSceneController(): BABYLON.SceneController;
         createSceneController(klass: string): BABYLON.SceneController;
         resetUserInput(): void;
-        enableUserInput(preventDefault?: boolean, useCapture?: boolean, gamepadConnected?: (pad: BABYLON.Gamepad, kind: BABYLON.GamepadType) => void): void;
+        enableUserInput(options?: {
+            preventDefault?: boolean;
+            useCapture?: boolean;
+            virtualJoystick?: boolean;
+            gamepadConnected?: (pad: BABYLON.Gamepad, kind: BABYLON.GamepadType) => void;
+        }): void;
         disableUserInput(useCapture?: boolean): void;
         getUserInput(input: BABYLON.UserInputAxis): number;
         onKeyUp(callback: (keycode: number) => void): void;
@@ -430,7 +462,8 @@ declare module BABYLON {
         private static inputLeftStickHandler(values);
         private static inputRightStickHandler(values);
         private static inputGamepadConnected(pad);
-        private static updateUserInputState();
+        private static inputVirtualJoysticks();
+        private static updateUserInput();
         private static parseSceneMetadata(rootUrl, sceneFilename, scene);
         private static parseMeshMetadata(meshes, scene);
         private static parseSceneCameras(cameras, scene, ticklist);
