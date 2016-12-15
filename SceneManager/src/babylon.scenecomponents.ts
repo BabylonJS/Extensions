@@ -18,6 +18,7 @@
         public constructor(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, host: BABYLON.Scene, enableUpdate: boolean = true, propertyBag: any = {}) {
             if (owner == null) throw new Error("Null owner scene obejct specified.");
             if (host == null) throw new Error("Null host scene obejct specified.");
+            this.tick = enableUpdate;
             this._owned = owner;
             this._started = false;
             this._manager = null;
@@ -25,7 +26,6 @@
             this._properties = propertyBag;
             this._engine = host.getEngine();
             this._scene = host;
-            this.tick = enableUpdate;
 
             /* Scene Component Instance Handlers */
             var instance: BABYLON.SceneComponent = this;
@@ -34,11 +34,9 @@
             instance._after = function () { instance.afterInstance(instance); };
             instance.dispose = function () { instance.disposeInstance(instance); };
         }
-
         public get scene(): BABYLON.Scene { 
             return this._scene;
         }
-
         public get engine(): BABYLON.Engine { 
             return this._engine;
         }
@@ -69,22 +67,22 @@
             if (result == null) result = defaultValue;
             return (result != null) ? result as T : null;
         }
-        public findComponent(klass: string): any {
+        public getMetadata(): BABYLON.ObjectMetadata {
+            return this.manager.getSceneMetadata(this._owned);
+        }
+        public findComponent(klass: string): BABYLON.SceneComponent {
             return this.manager.findSceneComponent(klass, this._owned);
         }
-        public findComponents(klass: string): any[] {
+        public findComponents(klass: string): BABYLON.SceneComponent[] {
             return this.manager.findSceneComponents(klass, this._owned);
-        }
-        public getOwnerMetadata(): BABYLON.ObjectMetadata {
-            return this.manager.getObjectMetadata(this._owned);
         }
 
         /* Private Scene Component Instance Worker Functions */
-        private registerInstance(instance: BABYLON.SceneComponent): void {
-            instance.scene.registerBeforeRender(instance._before);
-            instance.scene.registerAfterRender(instance._after);
+        private registerInstance(instance: any): void {
+            instance._scene.registerBeforeRender(instance._before);
+            instance._scene.registerAfterRender(instance._after);
         }
-        private updateInstance(instance: BABYLON.SceneComponent): void {
+        private updateInstance(instance: any): void {
             if (!instance._started) {
                 /* First frame starts component */
                 instance.start();
@@ -92,24 +90,29 @@
             } else if (instance._started && instance.tick) {
                 /* All other frames tick component */
                 instance.update();
+                /* Update instance intersection list */
+                if (instance.updateIntersectionList) {
+                    instance.updateIntersectionList();
+                }
             }
         }
-        private afterInstance(instance: BABYLON.SceneComponent): void {
+        private afterInstance(instance: any): void {
             if (instance._started && instance.tick) {
                 instance.after();
             }
         }
-        private disposeInstance(instance: BABYLON.SceneComponent) {
-            instance.scene.unregisterBeforeRender(instance._before);
-            instance.scene.unregisterAfterRender(instance._after);
+        private disposeInstance(instance: any) {
+            instance._scene.unregisterBeforeRender(instance._before);
+            instance._scene.unregisterAfterRender(instance._after);
             instance.destroy();
             instance.tick = false;
+            instance._started = false;
             instance._before = null;
             instance._after = null;
-            instance._started = false;
             instance._properties = null;
             instance._engine = null;
             instance._scene = null;
+            instance._owned = null;
             instance._manager = null;
             instance.register = null;
             instance.dispose = null;
@@ -117,7 +120,7 @@
     }
 
     export abstract class CameraComponent extends BABYLON.SceneComponent {
-        private _camera: BABYLON.UniversalCamera;
+        private _camera: BABYLON.UniversalCamera = null;
         public constructor(owner: BABYLON.UniversalCamera, scene: BABYLON.Scene, enableUpdate: boolean = true, propertyBag: any = {}) {
             super(owner, scene, enableUpdate, propertyBag);
             this._camera = owner;
@@ -128,7 +131,7 @@
     }
 
     export abstract class LightComponent extends BABYLON.SceneComponent {
-        private _light: BABYLON.Light;
+        private _light: BABYLON.Light  = null;
         public constructor(owner: BABYLON.Light, scene: BABYLON.Scene, enableUpdate: boolean = true, propertyBag: any = {}) {
             super(owner, scene, enableUpdate, propertyBag);
             this._light = owner;
@@ -139,7 +142,15 @@
     }
 
     export abstract class MeshComponent extends BABYLON.SceneComponent {
-        private _mesh:BABYLON.AbstractMesh;
+        public onIntersectionEnter: (mesh:BABYLON.AbstractMesh) => void = null;
+        public onIntersectionStay: (mesh:BABYLON.AbstractMesh) => void = null;
+        public onIntersectionExit: (mesh:BABYLON.AbstractMesh) => void = null;
+
+        private _list:ICollisionState[] = [];
+        private _mesh:BABYLON.AbstractMesh = null;
+        private _collider:BABYLON.AbstractMesh = null;
+        private _intersecting:boolean = false;
+
         public constructor(owner: BABYLON.AbstractMesh, scene: BABYLON.Scene, enableUpdate: boolean = true, propertyBag: any = {}) {
             super(owner, scene, enableUpdate, propertyBag);
             this._mesh = owner;
@@ -147,6 +158,55 @@
         public get mesh():BABYLON.AbstractMesh {
             return this._mesh;
         }
+        public hasCollisionMesh():boolean {
+            return this.manager.hasCollisionMesh(this._mesh); 
+        }
+        public getCollisionMesh():BABYLON.AbstractMesh {
+            return this.manager.getCollisionMesh(this._mesh);            
+        }
+        public setIntersectionMeshes(meshes:BABYLON.AbstractMesh[]):void {
+            if (meshes != null) {
+                meshes.forEach((mesh) => {
+                    if (mesh != null) {
+                        var collisionMesh:BABYLON.AbstractMesh = this.manager.getCollisionMesh(mesh);
+                        if (collisionMesh != null) {
+                            this._list.push({ mesh: collisionMesh, intersecting: false });
+                        }
+                    }
+                });
+            }
+        }
+        public clearIntersectionList():void {
+            this._list = [];
+        }
+        private updateIntersectionList():void {
+            if (this._collider == null) {
+                this._collider = this.getCollisionMesh();
+            }
+            if (this._collider != null && this._list != null && this._list.length > 0) {
+                this._list.forEach((collisionState) => {
+                    this._intersecting = this._collider.intersectsMesh(collisionState.mesh);
+                    if (this._intersecting) {
+                        if (!collisionState.intersecting) {
+                            if (this.onIntersectionEnter != null) {
+                                this.onIntersectionEnter(collisionState.mesh);
+                            }
+                        } else {
+                            if (this.onIntersectionStay != null) {
+                                this.onIntersectionStay(collisionState.mesh);
+                            }
+                        }
+                    } else {
+                        if (collisionState.intersecting) {
+                            if (this.onIntersectionExit != null) {
+                                this.onIntersectionExit(collisionState.mesh);
+                            }
+                        }
+                    }
+                    collisionState.intersecting = this._intersecting;
+                });
+            }
+        }        
     }
 
     export abstract class SceneController extends BABYLON.MeshComponent {
@@ -404,6 +464,11 @@
         scale: BABYLON.Vector3;
     }
 
+    export interface ICollisionState {
+        mesh:BABYLON.AbstractMesh;
+        intersecting:boolean;
+    }
+
     export interface IObjectMetadata {
         api: boolean;
         type: string;
@@ -421,7 +486,16 @@
     }
 
     export class UserInputOptions {
-        public static PointerAngularSensibility: number = 10.0;
+        public static JoystickRightHandleColor: string = "yellow";
+        public static JoystickLeftSensibility: number = 0.15;
+        public static JoystickRightSensibility: number = 0.05;
+        public static JoystickDeadStickValue: number = 0.01;
+        public static JoystickLStickXInverted: boolean = false;
+        public static JoystickLStickYInverted: boolean = false;
+        public static JoystickRStickXInverted: boolean = false;
+        public static JoystickRStickYInverted: boolean = false;
+        public static JoystickAngularSensibility = 1.0;
+        public static JoystickMovementSensibility = 1.0;
         public static GamepadDeadStickValue: number = 0.25;
         public static GamepadLStickXInverted: boolean = false;
         public static GamepadLStickYInverted: boolean = false;
@@ -429,5 +503,6 @@
         public static GamepadRStickYInverted: boolean = false;
         public static GamepadAngularSensibility = 1.0;
         public static GamepadMovementSensibility = 1.0;
+        public static PointerAngularSensibility: number = 10.0;
     }
 }

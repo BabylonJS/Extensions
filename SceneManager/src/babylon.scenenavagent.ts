@@ -1,6 +1,7 @@
-// Babylon Navigation Mesh Tool
-// https://github.com/wanadev/babylon-navigation-mesh
 declare class Navigation {
+    // Babylon Navigation Mesh Tool
+    // https://github.com/wanadev/babylon-navigation-mesh
+    
     buildNodes(mesh: BABYLON.AbstractMesh): any;
     setZoneData(zone: string, data: any): void;
     getGroup(zone: string, position: BABYLON.Vector3): number;
