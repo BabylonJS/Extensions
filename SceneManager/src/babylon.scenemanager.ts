@@ -1031,7 +1031,7 @@ module BABYLON {
             return true;
         }
         private static inputPointerUpHandler(e: PointerEvent): any {
-            if (e.button === 0) {
+            if (e.button === 0 && BABYLON.SceneManager.previousPosition != null) {
                 BABYLON.SceneManager.previousPosition = null;
                 BABYLON.SceneManager.k_mousex = 0;
                 BABYLON.SceneManager.k_mousey = 0;
@@ -1047,7 +1047,7 @@ module BABYLON {
             return true;
         }
         private static inputPointerMoveHandler(e: PointerEvent): any {
-            if (e.button === 0 && BABYLON.SceneManager.previousPosition != null) {
+            if (BABYLON.SceneManager.previousPosition != null) {
                 BABYLON.SceneManager.clientx = e.clientX;
                 BABYLON.SceneManager.clienty = e.clientY;
                 var offsetX = e.clientX - BABYLON.SceneManager.previousPosition.x;
