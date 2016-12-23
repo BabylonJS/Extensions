@@ -19,7 +19,7 @@ class JSExporter:
     nameSpace   = None  # assigned in execute
     nNonLegalNames = 0
 
-    versionCheckCode = 'if (Number(B.Engine.Version.substr(0, B.Engine.Version.lastIndexOf("."))) < 2.4) throw "Babylon version too old";\n'
+    versionCheckCode = '' #'if (Number(B.Engine.Version.substr(0, B.Engine.Version.lastIndexOf("."))) < 2.4) throw "Babylon version too old";\n'
     logInBrowserConsole = True; # static version, set in execute
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def execute(self, context, filepath):
@@ -41,7 +41,7 @@ class JSExporter:
 
             # assign texture location, purely temporary if inlining
             self.textureDir = path.dirname(filepath)
-            if scene.textureMethod != INLINE:
+            if not scene.inlineTextures:
                 self.textureDir = path.join(self.textureDir, scene.textureDir)
                 if not path.isdir(self.textureDir):
                     makedirs(self.textureDir)
@@ -51,11 +51,9 @@ class JSExporter:
             Logger.log('Scene settings used:', 1)
             Logger.log('selected layers only:  ' + format_bool(scene.export_onlySelectedLayer), 2)
             Logger.log('flat shading entire scene:  ' + format_bool(scene.export_flatshadeScene), 2)
-            Logger.log('texture Method:  ' + scene.textureMethod, 2)
-            if scene.textureMethod != INLINE:
+            Logger.log('inline textures:  ' + format_bool(scene.inlineTextures), 2)
+            if not scene.inlineTextures:
                 Logger.log('texture directory:  ' + self.textureDir, 2)
-            if scene.textureMethod == PRIORITIZED:
-                Logger.log('Priority Order:  ' + scene.texturePriority)
             self.world = World(scene)
 
             bpy.ops.screen.animation_cancel()

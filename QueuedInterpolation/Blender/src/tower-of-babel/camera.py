@@ -61,7 +61,7 @@ class Camera(FCurveAnimatable):
 
         if self.CameraType == ARC_ROTATE_CAM or self.CameraType == FOLLOW_CAM:
             if not hasattr(self, 'lockedTargetId'):
-                Logger.warn('Camera type with manditory target specified, but no target to track set.  Ignored', 2)
+                Logger.warn('Camera type with mandatory target specified, but no target to track set.  Ignored', 2)
                 self.fatalProblem = True
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def update_for_target_attributes(self, meshesAndNodes):

@@ -1,7 +1,7 @@
 bl_info = {
     'name': 'Tower of Babel',
     'author': 'David Catuhe, Jeff Palmer',
-    'version': (5, 0, 0),
+    'version': (5, 0, 1),
     'blender': (2, 76, 0),
     'location': 'File > Export > Tower of Babel [.js + .d.ts]',
     'description': 'Translate to inline JavaScript modules',

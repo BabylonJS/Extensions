@@ -1,4 +1,3 @@
-from .exporter_settings_panel import *
 from .logger import *
 from .package_level import *
 
@@ -75,7 +74,7 @@ class Texture:
 
             # when coming from either a packed image or a baked image, then save_render
             if internalImage:
-                if exporter.scene.textureMethod == INLINE:
+                if exporter.scene.inlineTextures:
                     textureFile = path.join(exporter.textureDir, self.fileNoPath + 'temp')
                 else:
                     textureFile = path.join(exporter.textureDir, self.fileNoPath)
@@ -91,7 +90,7 @@ class Texture:
             ex = exc_info()
             Logger.warn('Error encountered processing image file:  ' + ', Error:  '+ str(ex[1]))
 
-        if exporter.scene.textureMethod == INLINE:
+        if exporter.scene.inlineTextures:
             # base64 is easiest from a file, so sometimes a temp file was made above;  need to delete those
             with open(textureFile, "rb") as image_file:
                 asString = b64encode(image_file.read()).decode()
@@ -99,16 +98,6 @@ class Texture:
 
             if internalImage:
                 remove(textureFile)
-
-        # build priority Order
-        if exporter.scene.textureMethod == PRIORITIZED:
-            nameNoExtension = self.fileNoPath.rpartition('.')[0]
-            self.priorityNames = []
-            for ext in exporter.scene.texturePriority.split():
-                self.priorityNames.append(nameNoExtension + ext)
-
-            # add blend image last
-            self.priorityNames.append(self.fileNoPath)
 
         # capture texture attributes
         self.slot = slot
@@ -150,21 +139,7 @@ class Texture:
             file_handler.write(indent + ', "' + self.fileNoPath + '", scene, false, true, B.Texture.TRILINEAR_SAMPLINGMODE, onTexturesLoaded);\n')
 
         else:
-            file_handler.write(indent + 'texture = new B.Texture(')
-            if hasattr(self,'priorityNames'):
-                file_handler.write('[')
-                first = True
-                for name in self.priorityNames:
-                    if first == False:
-                        file_handler.write(',')
-                    file_handler.write('materialsRootDir + "' + name + '"')
-                    first = False
-                file_handler.write(']')
-
-            else:
-                file_handler.write('materialsRootDir + "' + self.fileNoPath + '"')
-
-            file_handler.write(', scene, false, true, B.Texture.TRILINEAR_SAMPLINGMODE, onTexturesLoaded);\n')
+            file_handler.write(indent + 'texture = new B.Texture(materialsRootDir + "' + self.fileNoPath + '", scene, false, true, B.Texture.TRILINEAR_SAMPLINGMODE, onTexturesLoaded);\n')
 
         file_handler.write(indent + 'pendingTextures++;\n')
 
