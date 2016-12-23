@@ -278,8 +278,20 @@ var BABYLONX;
     BABYLONX.GeometryBuilder = GeometryBuilder;
     var Geometry = (function () {
         function Geometry(geo) {
+            if (geo == null) {
+                geo = {
+                    faces: [],
+                    vertices: [],
+                    normals: [],
+                    positions: [],
+                    uvs: [],
+                    uvs2: [],
+                    name: ""
+                };
+            }
             this.faces = GeometryBuilder.Def(geo.faces, []);
             this.positions = GeometryBuilder.Def(geo.positions, []);
+            this.vertices = GeometryBuilder.Def(geo.vertices, []);
             this.normals = GeometryBuilder.Def(geo.normals, []);
             this.uvs = GeometryBuilder.Def(geo.uvs, []);
             this.uvs2 = GeometryBuilder.Def(geo.uvs2, []);
@@ -292,5 +304,244 @@ var BABYLONX;
         return Geometry;
     })();
     BABYLONX.Geometry = Geometry;
+    var GeometryParser = (function () {
+        function GeometryParser(data, lastUV, flip) {
+            var GP = GeometryParser;
+            this.Objects = GP.def(this.Objects, []);
+            this.Uv_update = lastUV;
+            this.Uvs_helper1 = [];
+            this.Flip = flip;
+            if (/^o /gm.test(data) === false) {
+                this.Geometry = new Geometry(null);
+                this.Objects.push(this.Geometry);
+            }
+            var lines = data.split('\n');
+            var oldIndex = 0;
+            var oldLine = '';
+            var lastchar = '';
+            for (var i = 0; i < lines.length; i++) {
+                var line = lines[i];
+                line = line.trim();
+                var result;
+                if (line.length === 0 || line.charAt(0) === '#') {
+                    continue;
+                }
+                else if ((result = GP.VertexPattern.exec(line)) !== null) {
+                    // ["v 1.0 2.0 3.0", "1.0", "2.0", "3.0"]
+                    if (lastchar == 'g')
+                        this.NewGeo();
+                    GeometryBuilder.PushVertex(GP.n_1(this.Objects), { x: -1 * result[1], y: result[2] * 1.0, z: result[3] * 1.0 }, null); // un !uc
+                    lastchar = 'v';
+                }
+                else if ((result = GP.NormalPattern.exec(line)) !== null) {
+                    lastchar = 'n';
+                }
+                else if ((result = GP.UVPattern.exec(line)) !== null) {
+                    // ["vt 0.1 0.2", "0.1", "0.2"]
+                    this.Uvs_helper1.push({ x: parseFloat(result[1]), y: parseFloat(result[2]) });
+                    // uvs.push({ x: result[1], y: result[2] });
+                    lastchar = 't';
+                }
+                else if ((result = GP.FacePattern1.exec(line)) !== null) {
+                    // ["f 1 2 3", "1", "2", "3", undefined]
+                    this.Handle_face_line([result[1], result[2], result[3], result[4]], null, null);
+                    lastchar = 'f';
+                }
+                else if ((result = GP.FacePattern2.exec(line)) !== null) {
+                    // ["f 1/1 2/2 3/3", " 1/1", "1", "1", " 2/2", "2", "2", " 3/3", "3", "3", undefined, undefined, undefined]
+                    this.Handle_face_line([result[2], result[5], result[8], result[11]], //faces
+                    [result[3], result[6], result[9], result[12]], null //uv
+                    );
+                    lastchar = 'f';
+                }
+                else if ((result = GP.FacePattern3.exec(line)) !== null) {
+                    // ["f 1/1/1 2/2/2 3/3/3", " 1/1/1", "1", "1", "1", " 2/2/2", "2", "2", "2", " 3/3/3", "3", "3", "3", undefined, undefined, undefined, undefined]
+                    this.Handle_face_line([result[2], result[6], result[10], result[14]], //faces
+                    [result[3], result[7], result[11], result[15]], //uv
+                    [result[4], result[8], result[12], result[16]] //normal
+                    );
+                    lastchar = 'f';
+                }
+                else if ((result = GP.FacePattern4.exec(line)) !== null) {
+                    // ["f 1//1 2//2 3//3", " 1//1", "1", "1", " 2//2", "2", "2", " 3//3", "3", "3", undefined, undefined, undefined]
+                    this.Handle_face_line([result[2], result[5], result[8], result[11]], //faces
+                    [], //uv
+                    [result[3], result[6], result[9], result[12]] //normal
+                    );
+                    lastchar = 'f';
+                }
+                else if (/^o /.test(line)) {
+                    if (line.replace('o', '').trim() != 'default') {
+                        oldLine = line.replace('o', '').trim();
+                        if (oldLine != '' && this.Objects.length > 0)
+                            GP.n_1(this.Objects).refname = oldLine;
+                    }
+                    else
+                        oldLine = '';
+                    this.NewGeo();
+                    lastchar = 'o';
+                }
+                else if (/^g /.test(line)) {
+                    if (line.replace('g', '').trim() != 'default') {
+                        oldLine = line.replace('g', '').trim();
+                        if (oldLine != '' && this.Objects.length > 0)
+                            GP.n_1(this.Objects).refname = oldLine;
+                    }
+                    else
+                        oldLine = '';
+                    lastchar = 'g';
+                }
+                else if (/^usemtl /.test(line)) {
+                    // material
+                    // material.name = line.substring( 7 ).trim();
+                    lastchar = 'u';
+                }
+                else if (/^mtllib /.test(line)) {
+                    // mtl file
+                    lastchar = 'm';
+                }
+                else if (/^s /.test(line)) {
+                    // smooth shading 
+                    lastchar = 's';
+                }
+            }
+        }
+        GeometryParser.def = function (a, d) {
+            if (a != undefined && a != null)
+                return (d != undefined && d != null ? a : true);
+            else if (d != GeometryParser._null)
+                return (d != undefined && d != null ? d : false);
+            return null;
+        };
+        GeometryParser.n_1 = function (ar) {
+            ar = GeometryParser.def(ar, []);
+            if (!GeometryParser.def(ar.length, null))
+                return null;
+            return ar[ar.length - 1];
+        };
+        GeometryParser.prototype.Vector = function (x, y, z) {
+            return { x: x, y: y, z: z };
+        };
+        GeometryParser.prototype.Face3 = function (a, b, c, normals) {
+            return { x: a - GeometryParser.OldIndex, y: b - GeometryParser.OldIndex, z: c - GeometryParser.OldIndex };
+        };
+        GeometryParser.prototype.ParseVertexIndex = function (index) {
+            index = parseInt(index);
+            return index >= 0 ? index - 1 : index + GeometryParser.Vertices.length;
+        };
+        GeometryParser.prototype.ParseNormalIndex = function (index) {
+            index = parseInt(index);
+            return index >= 0 ? index - 1 : index + GeometryParser.Normals.length;
+        };
+        GeometryParser.prototype.ParseUVIndex = function (index) {
+            index = parseInt(index);
+            return index >= 0 ? index - 1 : 1.0;
+        };
+        GeometryParser.prototype.Add_face = function (a, b, c, uvs) {
+            var GP = GeometryParser;
+            a = this.ParseVertexIndex(a - GP.OldIndex);
+            b = this.ParseVertexIndex(b - GP.OldIndex);
+            c = this.ParseVertexIndex(c - GP.OldIndex);
+            if (this.Uv_update) {
+                if (GP.def(GP.n_1(this.Objects).uvs[a * 2], null) && GP.n_1(this.Objects).uvs[a * 2] != this.Uvs_helper1[this.ParseUVIndex(uvs[0])].x && GP.n_1(this.Objects).uvs[a * 2 + 1] != this.Uvs_helper1[this.ParseUVIndex(uvs[0])].y) {
+                    this.NewVtx++;
+                    a = GeometryBuilder.PushVertex(GP.n_1(this.Objects), { x: parseFloat(GP.n_1(this.Objects).positions[a * 3]), y: parseFloat(GP.n_1(this.Objects).positions[a * 3 + 1]), z: parseFloat(GP.n_1(this.Objects).positions[a * 3 + 2]) }, null); // uv !uc
+                }
+                if (GP.def(GP.n_1(this.Objects).uvs[b * 2], null) && GP.n_1(this.Objects).uvs[b * 2] != this.Uvs_helper1[this.ParseUVIndex(uvs[1])].x && GP.n_1(this.Objects).uvs[b * 2 + 1] != this.Uvs_helper1[this.ParseUVIndex(uvs[1])].y) {
+                    b = GeometryBuilder.PushVertex(GP.n_1(this.Objects), { x: parseFloat(GP.n_1(this.Objects).positions[b * 3]), y: parseFloat(GP.n_1(this.Objects).positions[b * 3 + 1]), z: parseFloat(GP.n_1(this.Objects).positions[b * 3 + 2]) }, null); // uv !uc
+                    this.NewVtx++;
+                }
+                if (GP.def(GP.n_1(this.Objects).uvs[c * 2], null) && GP.n_1(this.Objects).uvs[c * 2] != this.Uvs_helper1[this.ParseUVIndex(uvs[2])].x && GP.n_1(this.Objects).uvs[c * 2 + 1] != this.Uvs_helper1[this.ParseUVIndex(uvs[2])].y) {
+                    c = GeometryBuilder.PushVertex(GP.n_1(this.Objects), { x: parseFloat(GP.n_1(this.Objects).positions[c * 3]), y: parseFloat(GP.n_1(this.Objects).positions[c * 3 + 1]), z: parseFloat(GP.n_1(this.Objects).positions[c * 3 + 2]) }, null); // uv !uc
+                    this.NewVtx++;
+                }
+            }
+            GeometryBuilder.MakeFace(GP.n_1(this.Objects), [a,
+                b,
+                c], {
+                faceUVMap: GeometryBuilder.face3UV012,
+                Face3Point: true,
+                pointIndex1: null,
+                pointIndex2: null,
+                pointIndex3: null,
+                pointIndex4: null,
+                uvStart: null,
+                uvEnd: null,
+                flip: this.Flip, onlyPush: false
+            });
+            var faceIndex = GP.n_1(this.Objects).faces.length;
+            try {
+                if (!GP.def(GP.n_1(this.Objects).uvs[a * 2], null))
+                    GP.n_1(this.Objects).uvs[a * 2] = this.Uvs_helper1[this.ParseUVIndex(uvs[0])].x;
+                if (!GP.def(GP.n_1(this.Objects).uvs[a * 2 + 1], null))
+                    GP.n_1(this.Objects).uvs[a * 2 + 1] = this.Uvs_helper1[this.ParseUVIndex(uvs[0])].y;
+                if (!GP.def(GP.n_1(this.Objects).uvs[b * 2], null))
+                    GP.n_1(this.Objects).uvs[b * 2] = this.Uvs_helper1[this.ParseUVIndex(uvs[1])].x;
+                if (!GP.def(GP.n_1(this.Objects).uvs[b * 2 + 1], null))
+                    GP.n_1(this.Objects).uvs[b * 2 + 1] = this.Uvs_helper1[this.ParseUVIndex(uvs[1])].y;
+                if (!GP.def(GP.n_1(this.Objects).uvs[c * 2], null))
+                    GP.n_1(this.Objects).uvs[c * 2] = this.Uvs_helper1[this.ParseUVIndex(uvs[2])].x;
+                if (!GP.def(GP.n_1(this.Objects).uvs[c * 2 + 1], null))
+                    GP.n_1(this.Objects).uvs[c * 2 + 1] = this.Uvs_helper1[this.ParseUVIndex(uvs[2])].y;
+                GP.n_1(this.Objects).uvh = GP.def(GP.n_1(this.Objects).uvh, []);
+                GP.n_1(this.Objects).uvf = GP.def(GP.n_1(this.Objects).uvf, []);
+                GP.n_1(this.Objects).uvh[a] = GP.def(GP.n_1(this.Objects).uvh[a], []);
+                GP.n_1(this.Objects).uvh[b] = GP.def(GP.n_1(this.Objects).uvh[b], []);
+                GP.n_1(this.Objects).uvh[c] = GP.def(GP.n_1(this.Objects).uvh[c], []);
+                GP.n_1(this.Objects).uvh[a * 2] = (this.Uvs_helper1[this.ParseUVIndex(uvs[0])].x);
+                GP.n_1(this.Objects).uvh[a * 2 + 1] = (this.Uvs_helper1[this.ParseUVIndex(uvs[0])].y);
+                GP.n_1(this.Objects).uvf[a] = faceIndex;
+                GP.n_1(this.Objects).uvh[b * 2] = (this.Uvs_helper1[this.ParseUVIndex(uvs[1])].x);
+                GP.n_1(this.Objects).uvh[b * 2 + 1] = (this.Uvs_helper1[this.ParseUVIndex(uvs[1])].y);
+                GP.n_1(this.Objects).uvf[b] = faceIndex;
+                GP.n_1(this.Objects).uvh[c * 2] = (this.Uvs_helper1[this.ParseUVIndex(uvs[2])].x);
+                GP.n_1(this.Objects).uvh[c * 2 + 1] = (this.Uvs_helper1[this.ParseUVIndex(uvs[2])].y);
+                GP.n_1(this.Objects).uvf[c] = faceIndex;
+            }
+            catch (e) {
+            }
+        };
+        GeometryParser.prototype.Handle_face_line = function (faces, uvs, normals_inds) {
+            var GP = GeometryParser;
+            uvs = GP.def(uvs, [0, 0, 0, 0]);
+            if (faces[3] === undefined) {
+                this.Add_face(faces[0], faces[1], faces[2], uvs);
+            }
+            else {
+                this.Add_face(faces[0], faces[1], faces[3], [uvs[0], uvs[1], uvs[3]]);
+                this.Add_face(faces[1], faces[2], faces[3], [uvs[1], uvs[2], uvs[3]]);
+            }
+        };
+        //
+        GeometryParser.prototype.NewGeo = function () {
+            var GP = GeometryParser;
+            if (this.Objects.length == 0 || GP.n_1(this.Objects).vertices.length > 0) {
+                GP.OldIndex += GP.n_1(this.Objects).length > 0 ? GP.n_1(this.Objects).vertices.length - this.NewVtx : 0;
+                this.NewVtx = 0;
+                this.Geometry = new Geometry(null);
+                this.Objects.push(this.Geometry);
+            }
+        };
+        GeometryParser.OldIndex = 0;
+        GeometryParser.Vertices = [];
+        GeometryParser.Normals = [];
+        GeometryParser._null = "null all time";
+        // v float float float
+        GeometryParser.VertexPattern = /v( +[\d|\.|\+|\-|e]+)( +[\d|\.|\+|\-|e]+)( +[\d|\.|\+|\-|e]+)/;
+        // vn float float float
+        GeometryParser.NormalPattern = /vn( +[\d|\.|\+|\-|e]+)( +[\d|\.|\+|\-|e]+)( +[\d|\.|\+|\-|e]+)/;
+        // vt float float
+        GeometryParser.UVPattern = /vt( +[\d|\.|\+|\-|e]+)( +[\d|\.|\+|\-|e]+)/;
+        // f vertex vertex vertex ...
+        GeometryParser.FacePattern1 = /f( +-?\d+)( +-?\d+)( +-?\d+)( +-?\d+)?/;
+        // f vertex/uv vertex/uv vertex/uv ...
+        GeometryParser.FacePattern2 = /f( +(-?\d+)\/(-?\d+))( +(-?\d+)\/(-?\d+))( +(-?\d+)\/(-?\d+))( +(-?\d+)\/(-?\d+))?/;
+        // f vertex/uv/normal vertex/uv/normal vertex/uv/normal ...
+        GeometryParser.FacePattern3 = /f( +(-?\d+)\/(-?\d+)\/(-?\d+))( +(-?\d+)\/(-?\d+)\/(-?\d+))( +(-?\d+)\/(-?\d+)\/(-?\d+))( +(-?\d+)\/(-?\d+)\/(-?\d+))?/;
+        // f vertex//normal vertex//normal vertex//normal ... 
+        GeometryParser.FacePattern4 = /f( +(-?\d+)\/\/(-?\d+))( +(-?\d+)\/\/(-?\d+))( +(-?\d+)\/\/(-?\d+))( +(-?\d+)\/\/(-?\d+))?/;
+        return GeometryParser;
+    })();
+    BABYLONX.GeometryParser = GeometryParser;
 })(BABYLONX || (BABYLONX = {}));
 //# sourceMappingURL=GeometryBuilder.js.map
