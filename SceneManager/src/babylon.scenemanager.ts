@@ -283,6 +283,11 @@ module BABYLON {
                 this._scene.debugLayer.show();
             }
         }
+        public randomNumber(min:number, max:number):number {
+            if (min === max) return min;
+            var random:number = Math.random();
+            return ((random * (max - min)) + min);
+        }
         public getSceneName(): string {
             return this._filename;
         }
