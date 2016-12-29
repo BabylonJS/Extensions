@@ -293,7 +293,7 @@
     }
 
     export enum UserInputKey {
-        Backspace = 8,
+        BackSpace = 8,
         Tab = 9,
         Enter = 13,
         Shift = 16,
@@ -303,7 +303,7 @@
         Break = 19,
         CapsLock = 20,
         Escape = 27,
-        Space = 32,
+        SpaceBar = 32,
         PageUp = 33,
         PageDown = 34,
         End = 35,
