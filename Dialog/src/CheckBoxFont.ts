@@ -103,7 +103,6 @@ module CheckBoxFont{
 
     var matLoaded = false;
     export function defineMaterials(scene : BABYLON.Scene, materialsRootDir : string = "./") : void {
-        if (!BABYLON.Engine.Version || Number(BABYLON.Engine.Version.substr(0, BABYLON.Engine.Version.lastIndexOf("."))) < 2.0) throw "Babylon version too old";
         if (matLoaded) return;
         if (materialsRootDir.lastIndexOf("/") + 1  !== materialsRootDir.length) { materialsRootDir  += "/"; }
         var material : BABYLON.StandardMaterial;

@@ -9,7 +9,7 @@ module DigitParts{
     var clonedVerts = 0;
     export class MeshFactory implements TOWER_OF_BABEL.FactoryModule {
         constructor(private _scene : BABYLON.Scene, materialsRootDir: string = "./") {
-            DigitParts.defineMaterials(_scene, materialsRootDir); //embedded version check
+            DigitParts.defineMaterials(_scene, materialsRootDir);
         }
 
         public getModuleName() : string { return "DigitParts";}
@@ -94,7 +94,6 @@ module DigitParts{
     // to keep from checkReadyOnlyOnce = true, defineMaterials() must be explicitly called with neverCheckReadyOnlyOnce = true,
     // before any other functions in this module
     export function defineMaterials(scene : BABYLON.Scene, materialsRootDir : string = "./", neverCheckReadyOnlyOnce : boolean = false) : void {
-        if (!BABYLON.Engine.Version || Number(BABYLON.Engine.Version.substr(0, BABYLON.Engine.Version.lastIndexOf("."))) < 2.0) throw "Babylon version too old";
         if (matLoaded) return;
         if (materialsRootDir.lastIndexOf("/") + 1  !== materialsRootDir.length) { materialsRootDir  += "/"; }
         var material : BABYLON.StandardMaterial;
@@ -140,7 +139,6 @@ module DigitParts{
     }
 
     export function defineMultiMaterials(scene : BABYLON.Scene) : void {
-        if (!BABYLON.Engine.Version || Number(BABYLON.Engine.Version.substr(0, BABYLON.Engine.Version.lastIndexOf("."))) < 2.0) throw "Babylon version too old";
         var multiMaterial : BABYLON.MultiMaterial;
         multiMaterial = new BABYLON.MultiMaterial("DigitParts.Multimaterial#0", scene);
         multiMaterial.id = "DigitParts.Multimaterial#0";
@@ -200,7 +198,6 @@ module DigitParts{
     }
 
     function child_botLeft(scene : BABYLON.Scene, parent : any, source? : any) : BABYLON.Mesh {
-        if (!BABYLON.Engine.Version || Number(BABYLON.Engine.Version.substr(0, BABYLON.Engine.Version.lastIndexOf("."))) < 2.0) throw "Babylon version too old";
         var ret = new BABYLON.Mesh(parent.name + ".botLeft", scene, parent, source);
         var cloning = source && source !== null;
 
@@ -243,7 +240,6 @@ module DigitParts{
     }
 
     function child_topLeft(scene : BABYLON.Scene, parent : any, source? : any) : BABYLON.Mesh {
-        if (!BABYLON.Engine.Version || Number(BABYLON.Engine.Version.substr(0, BABYLON.Engine.Version.lastIndexOf("."))) < 2.0) throw "Babylon version too old";
         var ret = new BABYLON.Mesh(parent.name + ".topLeft", scene, parent, source);
         var cloning = source && source !== null;
 
@@ -286,7 +282,6 @@ module DigitParts{
     }
 
     function child_top(scene : BABYLON.Scene, parent : any, source? : any) : BABYLON.Mesh {
-        if (!BABYLON.Engine.Version || Number(BABYLON.Engine.Version.substr(0, BABYLON.Engine.Version.lastIndexOf("."))) < 2.0) throw "Babylon version too old";
         var ret = new BABYLON.Mesh(parent.name + ".top", scene, parent, source);
         var cloning = source && source !== null;
 
@@ -329,7 +324,6 @@ module DigitParts{
     }
 
     function child_topRite(scene : BABYLON.Scene, parent : any, source? : any) : BABYLON.Mesh {
-        if (!BABYLON.Engine.Version || Number(BABYLON.Engine.Version.substr(0, BABYLON.Engine.Version.lastIndexOf("."))) < 2.0) throw "Babylon version too old";
         var ret = new BABYLON.Mesh(parent.name + ".topRite", scene, parent, source);
         var cloning = source && source !== null;
 
@@ -372,7 +366,6 @@ module DigitParts{
     }
 
     function child_botRite(scene : BABYLON.Scene, parent : any, source? : any) : BABYLON.Mesh {
-        if (!BABYLON.Engine.Version || Number(BABYLON.Engine.Version.substr(0, BABYLON.Engine.Version.lastIndexOf("."))) < 2.0) throw "Babylon version too old";
         var ret = new BABYLON.Mesh(parent.name + ".botRite", scene, parent, source);
         var cloning = source && source !== null;
 
@@ -415,7 +408,6 @@ module DigitParts{
     }
 
     function child_bottom(scene : BABYLON.Scene, parent : any, source? : any) : BABYLON.Mesh {
-        if (!BABYLON.Engine.Version || Number(BABYLON.Engine.Version.substr(0, BABYLON.Engine.Version.lastIndexOf("."))) < 2.0) throw "Babylon version too old";
         var ret = new BABYLON.Mesh(parent.name + ".bottom", scene, parent, source);
         var cloning = source && source !== null;
 
@@ -458,7 +450,6 @@ module DigitParts{
     }
 
     function child_dot(scene : BABYLON.Scene, parent : any, source? : any) : BABYLON.Mesh {
-        if (!BABYLON.Engine.Version || Number(BABYLON.Engine.Version.substr(0, BABYLON.Engine.Version.lastIndexOf("."))) < 2.0) throw "Babylon version too old";
         var ret = new BABYLON.Mesh(parent.name + ".dot", scene, parent, source);
         var cloning = source && source !== null;
 
@@ -501,7 +492,6 @@ module DigitParts{
     }
 
     function child_center(scene : BABYLON.Scene, parent : any, source? : any) : BABYLON.Mesh {
-        if (!BABYLON.Engine.Version || Number(BABYLON.Engine.Version.substr(0, BABYLON.Engine.Version.lastIndexOf("."))) < 2.0) throw "Babylon version too old";
         var ret = new BABYLON.Mesh(parent.name + ".center", scene, parent, source);
         var cloning = source && source !== null;
 

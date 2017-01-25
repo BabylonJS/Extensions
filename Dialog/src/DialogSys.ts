@@ -271,7 +271,7 @@ module DIALOG{
         }
         
         public static get Version(): string {
-            return "1.1.1";
+            return "1.2.0";
         }
     }
 }

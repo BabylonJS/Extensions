@@ -1,8 +1,16 @@
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
+var __extends = (this && this.__extends) || function (d, b) {
+for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+function __() { this.constructor = d; }
+__.prototype = b.prototype;
+d.prototype = new __();
+};
+
 var DIALOG;
 (function (DIALOG) {
     var BasePanel = (function (_super) {
@@ -10,38 +18,38 @@ var DIALOG;
         function BasePanel(name, scene, parent, source, doNotCloneChildren, _layoutDir, _button, _topLevel) {
             if (parent === void 0) { parent = null; }
             if (_layoutDir === void 0) { _layoutDir = Panel.LAYOUT_HORIZONTAL; }
-            _super.call(this, name, scene, parent, source, doNotCloneChildren);
-            this._layoutDir = _layoutDir;
-            this._button = _button;
-            this._topLevel = _topLevel;
+            var _this = _super.call(this, name, scene, parent, source, doNotCloneChildren) || this;
+            _this._layoutDir = _layoutDir;
+            _this._button = _button;
+            _this._topLevel = _topLevel;
             // Instance level Look & Feel (must call invalidateLayout() or use setter once visible)
-            this.horizontalMargin = 0.1; // setter available
-            this.verticalMargin = 0.1; // setter available
-            this.horizontalAlignment = Panel.ALIGN_LEFT; // setter available
-            this.verticalAlignment = Panel.ALIGN_TOP; // setter available
+            _this.horizontalMargin = 0.1; // setter available
+            _this.verticalMargin = 0.1; // setter available
+            _this.horizontalAlignment = Panel.ALIGN_LEFT; // setter available
+            _this.verticalAlignment = Panel.ALIGN_TOP; // setter available
             // used to control the width of the border in the XY dimension
-            this.borderInsideVert = 0.05;
-            this.borderDepth = DIALOG.DialogSys.DEPTH_SCALING_3D;
-            this.stretchHorizontal = false; // setter available
-            this.stretchVertical = false; // setter available
-            this._bold = false;
+            _this.borderInsideVert = 0.05;
+            _this.borderDepth = DIALOG.DialogSys.DEPTH_SCALING_3D;
+            _this.stretchHorizontal = false; // setter available
+            _this.stretchVertical = false; // setter available
+            _this._bold = false;
             // - - - - - - - - - - - - - - - - - - - - - - - - - - - 
             // members for top level panels to hold settings when on the dialog modal stack
-            this.maxViewportWidth = 1;
-            this.maxViewportHeight = 1;
-            this._fitToWindow = false;
+            _this.maxViewportWidth = 1;
+            _this.maxViewportHeight = 1;
+            _this._fitToWindow = false;
             // - - - - - - - - - - - - - - - - - - - - - - - - - - - 
             // members to hold the result of the required size calc
             // are public only for sub-classing
-            this._maxAboveOrigin = BABYLON.Vector3.Zero();
-            this._minBelowOrigin = BABYLON.Vector3.Zero(); // expressed as either 0, or a negative number of the smallest vertex in each dimension
-            this._nStretchers = [0, 0];
-            this._xyScale = 1;
-            this._dirty = true;
-            this._visibleBorder = false;
-            this._panelEnabled = true;
-            this._selected = false;
-            this._subs = new Array(); // essentially same as children, but both type defined & in order of layout
+            _this._maxAboveOrigin = BABYLON.Vector3.Zero();
+            _this._minBelowOrigin = BABYLON.Vector3.Zero(); // expressed as either 0, or a negative number of the smallest vertex in each dimension
+            _this._nStretchers = [0, 0];
+            _this._xyScale = 1;
+            _this._dirty = true;
+            _this._visibleBorder = false;
+            _this._panelEnabled = true;
+            _this._selected = false;
+            _this._subs = new Array(); // essentially same as children, but both type defined & in order of layout
             if (!Panel.BORDER_MAT) {
                 Panel.BORDER_MAT = DIALOG.DialogSys.GOLD[1]; // need no culling
                 var multiMaterial = new BABYLON.MultiMaterial("Top Level mat", DIALOG.DialogSys._scene);
@@ -51,28 +59,29 @@ var DIALOG;
                 multiMaterial.subMaterials.push(transBlack); // for back
                 Panel.TOP_LEVEL_BORDER_MAT = multiMaterial;
             }
-            if (this.useGeometryForBorder()) {
-                var needBack = this._topLevel || this._button;
-                this.setVerticesData(BABYLON.VertexBuffer.PositionKind, this._computePositionsData(1, 1), true);
-                this.setVerticesData(BABYLON.VertexBuffer.NormalKind, needBack ? BasePanel._TOP_LEVEL_NORMALS : BasePanel._NORMALS, false);
-                this.setIndices(needBack ? BasePanel._TOP_LEVEL_INDICES : BasePanel._INDICES);
-                this.subMeshes = [];
-                new BABYLON.SubMesh(0, 0, 40, 0, 168, this);
+            if (_this.useGeometryForBorder()) {
+                var needBack = _this._topLevel || _this._button;
+                _this.setVerticesData(BABYLON.VertexBuffer.PositionKind, _this._computePositionsData(1, 1), true);
+                _this.setVerticesData(BABYLON.VertexBuffer.NormalKind, needBack ? BasePanel._TOP_LEVEL_NORMALS : BasePanel._NORMALS, false);
+                _this.setIndices(needBack ? BasePanel._TOP_LEVEL_INDICES : BasePanel._INDICES);
+                _this.subMeshes = [];
+                new BABYLON.SubMesh(0, 0, 40, 0, 168, _this);
                 if (needBack) {
-                    new BABYLON.SubMesh(1, 40, 4, 168, 6, this);
-                    this.material = Panel.TOP_LEVEL_BORDER_MAT;
+                    new BABYLON.SubMesh(1, 40, 4, 168, 6, _this);
+                    _this.material = Panel.TOP_LEVEL_BORDER_MAT;
                 }
                 else {
-                    this.material = Panel.BORDER_MAT;
+                    _this.material = Panel.BORDER_MAT;
                 }
-                this.setBorderVisible(this._topLevel);
+                _this.setBorderVisible(_this._topLevel);
             }
-            if (this._topLevel) {
-                _super.prototype.registerBeforeRender.call(this, BasePanel._beforeRender);
+            if (_this._topLevel) {
+                _super.prototype.registerBeforeRender.call(_this, BasePanel._beforeRender);
             }
-            this.placeHolderWidth = this.getFullScalePlaceholderWidth();
-            this.placeHolderHeight = this.getFullScalePlaceholderHeight();
-            this.isPickable = this._button;
+            _this.placeHolderWidth = _this.getFullScalePlaceholderWidth();
+            _this.placeHolderHeight = _this.getFullScalePlaceholderHeight();
+            _this.isPickable = _this._button;
+            return _this;
         }
         // =================================== Rendering Methods =====================================        
         BasePanel.prototype._computePositionsData = function (widthConstraint, heightConstraint) {
@@ -859,35 +868,35 @@ var DIALOG;
                 }
             }
         };
-        BasePanel.BOLD_MULT = 1.4;
-        // statics for borders
-        BasePanel._NORMALS = [
-            0, 0, -1, 0, 0, -1, 0.7071, 0, -0.7071, 0.7071, 0, 0.7071, 0.7071, 0, -0.7071, 0, 0, 1, 0.7071, 0, 0.7071, -0.7071, 0, -0.7071, -0.7071, 0, 0.7071, -0.7071, 0, 0.7071, 0, 0, 1, 0, 0, -1, -0.7071, 0, -0.7071, 0, -0.7071, -0.7071, 0, 0, -1, 0, 0.7071, 0.7071, 0, 0, 1, -0.7071, 0, -0.7071, -0.5773, 0.5773, -0.5773, -0.5773,
-            0.5773, 0.5773, 0.7071, 0, 0.7071, 0.5773, 0.5773, 0.5773, 0.5773, 0.5773, -0.5773, -0.7071, 0, 0.7071, -0.5773, -0.5773, 0.5773, -0.5773, -0.5773, -0.5773, 0, -0.7071, 0.7071, 0.7071, 0, -0.7071, 0.5773, -0.5773, -0.5773, 0.5773, -0.5773, 0.5773, 0, 0.7071, -0.7071, 0, 0.7071, -0.7071, 0, 0, 1, 0, -0.7071,
-            -0.7071, -0.7071, 0, -0.7071, 0, 0.7071, 0.7071, -0.7071, 0, 0.7071, 0.7071, 0, -0.7071, 0, -0.7071, 0.7071, 0.7071, 0, 0.7071 //,0,0,-1,   0,0,-1,   0,0,-1,   0,0,-1
-        ];
-        BasePanel._TOP_LEVEL_NORMALS = [
-            0, 0, -1, 0, 0, -1, 0.7071, 0, -0.7071, 0.7071, 0, 0.7071, 0.7071, 0, -0.7071, 0, 0, 1, 0.7071, 0, 0.7071, -0.7071, 0, -0.7071, -0.7071, 0, 0.7071, -0.7071, 0, 0.7071, 0, 0, 1, 0, 0, -1, -0.7071, 0, -0.7071, 0, -0.7071, -0.7071, 0, 0, -1, 0, 0.7071, 0.7071, 0, 0, 1, -0.7071, 0, -0.7071, -0.5773, 0.5773, -0.5773, -0.5773,
-            0.5773, 0.5773, 0.7071, 0, 0.7071, 0.5773, 0.5773, 0.5773, 0.5773, 0.5773, -0.5773, -0.7071, 0, 0.7071, -0.5773, -0.5773, 0.5773, -0.5773, -0.5773, -0.5773, 0, -0.7071, 0.7071, 0.7071, 0, -0.7071, 0.5773, -0.5773, -0.5773, 0.5773, -0.5773, 0.5773, 0, 0.7071, -0.7071, 0, 0.7071, -0.7071, 0, 0, 1, 0, -0.7071,
-            -0.7071, -0.7071, 0, -0.7071, 0, 0.7071, 0.7071, -0.7071, 0, 0.7071, 0.7071, 0, -0.7071, 0, -0.7071, 0.7071, 0.7071, 0, 0.7071, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1
-        ];
-        BasePanel._INDICES = [
-            0, 1, 2, 3, 4, 2, 5, 3, 6, 7, 8, 9, 10, 9, 8, 11, 7, 12, 13, 1, 14, 15, 5, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 24, 23, 27, 28, 29, 30, 18, 17, 15, 30, 31, 13, 25, 24, 4, 0, 2, 6, 3, 2, 32, 5, 6, 12, 7, 9, 16, 10, 8, 14, 11, 12, 28, 27, 1, 28, 1, 33, 34, 25, 13, 34, 13, 14, 21, 5, 35, 1, 13, 33, 21, 20, 5, 36, 19, 15, 36, 15, 16, 36, 17, 19, 37, 20, 22, 5,
-            15, 35, 34, 23, 25, 26, 32, 38, 32, 39, 29, 32, 26, 10, 39, 27, 29, 30, 0, 31, 32, 29, 38, 26, 23, 10, 0, 37, 22, 0, 30, 11, 22, 21, 35, 30, 17, 11, 22, 35, 31, 0, 22, 31, 19, 18, 30, 19, 30, 15, 29, 28, 33, 35, 15, 31, 38, 29, 33, 13, 26, 33, 26, 38, 33, 13, 24, 26 //,40,41,42,43,40,42
-        ];
-        BasePanel._TOP_LEVEL_INDICES = [
-            0, 1, 2, 3, 4, 2, 5, 3, 6, 7, 8, 9, 10, 9, 8, 11, 7, 12, 13, 1, 14, 15, 5, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 24, 23, 27, 28, 29, 30, 18, 17, 15, 30, 31, 13, 25, 24, 4, 0, 2, 6, 3, 2, 32, 5, 6, 12, 7, 9, 16, 10, 8, 14, 11, 12, 28, 27, 1, 28, 1, 33, 34, 25, 13, 34, 13, 14, 21, 5, 35, 1, 13, 33, 21, 20, 5, 36, 19, 15, 36, 15, 16, 36, 17, 19, 37, 20, 22, 5,
-            15, 35, 34, 23, 25, 26, 32, 38, 32, 39, 29, 32, 26, 10, 39, 27, 29, 30, 0, 31, 32, 29, 38, 26, 23, 10, 0, 37, 22, 0, 30, 11, 22, 21, 35, 30, 17, 11, 22, 35, 31, 0, 22, 31, 19, 18, 30, 19, 30, 15, 29, 28, 33, 35, 15, 31, 38, 29, 33, 13, 26, 33, 26, 38, 33, 13, 24, 26, 40, 41, 42, 43, 40, 42
-        ];
         return BasePanel;
     }(BABYLON.Mesh));
+    BasePanel.BOLD_MULT = 1.4;
+    // statics for borders
+    BasePanel._NORMALS = [
+        0, 0, -1, 0, 0, -1, 0.7071, 0, -0.7071, 0.7071, 0, 0.7071, 0.7071, 0, -0.7071, 0, 0, 1, 0.7071, 0, 0.7071, -0.7071, 0, -0.7071, -0.7071, 0, 0.7071, -0.7071, 0, 0.7071, 0, 0, 1, 0, 0, -1, -0.7071, 0, -0.7071, 0, -0.7071, -0.7071, 0, 0, -1, 0, 0.7071, 0.7071, 0, 0, 1, -0.7071, 0, -0.7071, -0.5773, 0.5773, -0.5773, -0.5773,
+        0.5773, 0.5773, 0.7071, 0, 0.7071, 0.5773, 0.5773, 0.5773, 0.5773, 0.5773, -0.5773, -0.7071, 0, 0.7071, -0.5773, -0.5773, 0.5773, -0.5773, -0.5773, -0.5773, 0, -0.7071, 0.7071, 0.7071, 0, -0.7071, 0.5773, -0.5773, -0.5773, 0.5773, -0.5773, 0.5773, 0, 0.7071, -0.7071, 0, 0.7071, -0.7071, 0, 0, 1, 0, -0.7071,
+        -0.7071, -0.7071, 0, -0.7071, 0, 0.7071, 0.7071, -0.7071, 0, 0.7071, 0.7071, 0, -0.7071, 0, -0.7071, 0.7071, 0.7071, 0, 0.7071 //,0,0,-1,   0,0,-1,   0,0,-1,   0,0,-1
+    ];
+    BasePanel._TOP_LEVEL_NORMALS = [
+        0, 0, -1, 0, 0, -1, 0.7071, 0, -0.7071, 0.7071, 0, 0.7071, 0.7071, 0, -0.7071, 0, 0, 1, 0.7071, 0, 0.7071, -0.7071, 0, -0.7071, -0.7071, 0, 0.7071, -0.7071, 0, 0.7071, 0, 0, 1, 0, 0, -1, -0.7071, 0, -0.7071, 0, -0.7071, -0.7071, 0, 0, -1, 0, 0.7071, 0.7071, 0, 0, 1, -0.7071, 0, -0.7071, -0.5773, 0.5773, -0.5773, -0.5773,
+        0.5773, 0.5773, 0.7071, 0, 0.7071, 0.5773, 0.5773, 0.5773, 0.5773, 0.5773, -0.5773, -0.7071, 0, 0.7071, -0.5773, -0.5773, 0.5773, -0.5773, -0.5773, -0.5773, 0, -0.7071, 0.7071, 0.7071, 0, -0.7071, 0.5773, -0.5773, -0.5773, 0.5773, -0.5773, 0.5773, 0, 0.7071, -0.7071, 0, 0.7071, -0.7071, 0, 0, 1, 0, -0.7071,
+        -0.7071, -0.7071, 0, -0.7071, 0, 0.7071, 0.7071, -0.7071, 0, 0.7071, 0.7071, 0, -0.7071, 0, -0.7071, 0.7071, 0.7071, 0, 0.7071, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1
+    ];
+    BasePanel._INDICES = [
+        0, 1, 2, 3, 4, 2, 5, 3, 6, 7, 8, 9, 10, 9, 8, 11, 7, 12, 13, 1, 14, 15, 5, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 24, 23, 27, 28, 29, 30, 18, 17, 15, 30, 31, 13, 25, 24, 4, 0, 2, 6, 3, 2, 32, 5, 6, 12, 7, 9, 16, 10, 8, 14, 11, 12, 28, 27, 1, 28, 1, 33, 34, 25, 13, 34, 13, 14, 21, 5, 35, 1, 13, 33, 21, 20, 5, 36, 19, 15, 36, 15, 16, 36, 17, 19, 37, 20, 22, 5,
+        15, 35, 34, 23, 25, 26, 32, 38, 32, 39, 29, 32, 26, 10, 39, 27, 29, 30, 0, 31, 32, 29, 38, 26, 23, 10, 0, 37, 22, 0, 30, 11, 22, 21, 35, 30, 17, 11, 22, 35, 31, 0, 22, 31, 19, 18, 30, 19, 30, 15, 29, 28, 33, 35, 15, 31, 38, 29, 33, 13, 26, 33, 26, 38, 33, 13, 24, 26 //,40,41,42,43,40,42
+    ];
+    BasePanel._TOP_LEVEL_INDICES = [
+        0, 1, 2, 3, 4, 2, 5, 3, 6, 7, 8, 9, 10, 9, 8, 11, 7, 12, 13, 1, 14, 15, 5, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 24, 23, 27, 28, 29, 30, 18, 17, 15, 30, 31, 13, 25, 24, 4, 0, 2, 6, 3, 2, 32, 5, 6, 12, 7, 9, 16, 10, 8, 14, 11, 12, 28, 27, 1, 28, 1, 33, 34, 25, 13, 34, 13, 14, 21, 5, 35, 1, 13, 33, 21, 20, 5, 36, 19, 15, 36, 15, 16, 36, 17, 19, 37, 20, 22, 5,
+        15, 35, 34, 23, 25, 26, 32, 38, 32, 39, 29, 32, 26, 10, 39, 27, 29, 30, 0, 31, 32, 29, 38, 26, 23, 10, 0, 37, 22, 0, 30, 11, 22, 21, 35, 30, 17, 11, 22, 35, 31, 0, 22, 31, 19, 18, 30, 19, 30, 15, 29, 28, 33, 35, 15, 31, 38, 29, 33, 13, 26, 33, 26, 38, 33, 13, 24, 26, 40, 41, 42, 43, 40, 42
+    ];
     DIALOG.BasePanel = BasePanel;
     //================================================================================================
     //================================================================================================
     var Panel = (function (_super) {
         __extends(Panel, _super);
         function Panel(name, _layoutDir, topLevel) {
-            _super.call(this, name, DIALOG.DialogSys._scene, null, null, false, _layoutDir, false, topLevel);
+            return _super.call(this, name, DIALOG.DialogSys._scene, null, null, false, _layoutDir, false, topLevel) || this;
         }
         // ========================================= Statics  ========================================
         /**
@@ -1005,19 +1014,74 @@ var DIALOG;
             enumerable: true,
             configurable: true
         });
-        // ========================================== Enums  =========================================    
-        Panel._LAYOUT_HORIZONTAL = 0;
-        Panel._LAYOUT_VERTICAL = 1;
-        Panel._ALIGN_LEFT = -3;
-        Panel._ALIGN_HCENTER = -2;
-        Panel._ALIGN_RIGHT = -1;
-        Panel._ALIGN_TOP = 1;
-        Panel._ALIGN_VCENTER = 2;
-        Panel._ALIGN_BOTTOM = 3;
         return Panel;
     }(BasePanel));
+    // ========================================== Enums  =========================================    
+    Panel._LAYOUT_HORIZONTAL = 0;
+    Panel._LAYOUT_VERTICAL = 1;
+    Panel._ALIGN_LEFT = -3;
+    Panel._ALIGN_HCENTER = -2;
+    Panel._ALIGN_RIGHT = -1;
+    Panel._ALIGN_TOP = 1;
+    Panel._ALIGN_VCENTER = 2;
+    Panel._ALIGN_BOTTOM = 3;
     DIALOG.Panel = Panel;
 })(DIALOG || (DIALOG = {}));
+
+
+
+
+
+
+
+/// <reference path="./Panel.ts"/>
+var DIALOG;
+(function (DIALOG) {
+    var Spacer = (function (_super) {
+        __extends(Spacer, _super);
+        /**
+         * Sub-class of BasePanel containing no geometry.  Used to assign blank space.  Actual space
+         * that a unit occupies is relative to the total units that the top level panel requires in that
+         * dimension.  Best to put in spacer with 0,0 during dev.  Once rest is settled, then tune here.
+         *
+         * @param {number} vertUnits       - The amount of space in the vertical   dimension.
+         * @param {number} horizontalUnits - The amount of space in the horizontal dimension.
+         */
+        function Spacer(vertUnits, horizontalUnits) {
+            var _this = _super.call(this, null, DIALOG.DialogSys._scene) || this;
+            _this.verticalMargin = vertUnits;
+            _this.horizontalMargin = horizontalUnits;
+            _this.setEnabled(false);
+            return _this;
+        }
+        // ======================================== Overrides ========================================
+        /**
+         * @override
+         */
+        Spacer.prototype.useGeometryForBorder = function () {
+            return false;
+        };
+        /**
+         * @override
+         * No meaning for spacers
+         */
+        Spacer.prototype.addSubPanel = function (sub, index) {
+            BABYLON.Tools.Error("spacers can have no sub-panels");
+        };
+        /** @override */ Spacer.prototype.getSubPanel = function () { return null; };
+        /** @override */ Spacer.prototype.removeAt = function (index, doNotDispose) { };
+        /** @override */ Spacer.prototype.removeAll = function (doNotDispose) { };
+        return Spacer;
+    }(DIALOG.BasePanel));
+    DIALOG.Spacer = Spacer;
+})(DIALOG || (DIALOG = {}));
+
+
+
+
+
+
+
 /// <reference path="./Panel.ts"/>
 var DIALOG;
 (function (DIALOG) {
@@ -1028,20 +1092,22 @@ var DIALOG;
          */
         function Letter(name, scene, parent, source, doNotCloneChildren) {
             if (parent === void 0) { parent = null; }
+            var _this = 
             // Panel's _layoutDir, _button,  & _topLevel constructor parms, forced to default to (LAYOUT_HORIZONTAL, false, & false)
-            _super.call(this, name, scene, parent, source, doNotCloneChildren);
+            _super.call(this, name, scene, parent, source, doNotCloneChildren) || this;
             // values for max above & min below; defaults good for most; Fontfactory overrides for extended letters
-            this.maxAboveY = Letter.LETTER_ABOVE; // H, T, I, etc
-            this.minBelowY = -0.23; // g is the lowest   
+            _this.maxAboveY = Letter.LETTER_ABOVE; // H, T, I, etc
+            _this.minBelowY = -0.23; // g is the lowest   
             // indicate this letter is really a result of merged meshes
-            this._consolidated = false;
+            _this._consolidated = false;
             // remove inner margins
-            this.horizontalMargin = 0;
-            this.verticalMargin = 0;
+            _this.horizontalMargin = 0;
+            _this.verticalMargin = 0;
             // initially not visible.  Changed in first call to _calcRequiredSize.  Elliminates messy
             // first appearance, when dynamically adding panels after the first layout of top level panel.
-            this.visibility = 0;
-            this.setBorderVisible(true); // set so can reappear, once disolved
+            _this.visibility = 0;
+            _this.setBorderVisible(true); // set so can reappear, once disolved
+            return _this;
         }
         // ======================================== Overrides ========================================       
         /**
@@ -1093,11 +1159,1056 @@ var DIALOG;
         /** @override */ Letter.prototype.getSubPanel = function () { return null; };
         /** @override */ Letter.prototype.removeAt = function (index, doNotDispose) { };
         /** @override */ Letter.prototype.removeAll = function (doNotDispose) { };
-        Letter.LETTER_ABOVE = 0.682;
         return Letter;
     }(DIALOG.BasePanel));
+    Letter.LETTER_ABOVE = 0.682;
     DIALOG.Letter = Letter;
+    // ========================================= Statics =========================================
+    //    public static sizeToLetterHeight(target : BasePanel) : BasePanel){
+    //        var aspectRatio = target
+    //    }     
 })(DIALOG || (DIALOG = {}));
+
+// File generated with Tower of Babel version: 2.2.0 on 05/15/15
+
+
+
+
+
+
+var DigitParts;
+(function (DigitParts) {
+    var meshLib = new Array(3);
+    var cloneCount = 1;
+    var originalVerts = 0;
+    var clonedVerts = 0;
+    var MeshFactory = (function () {
+        function MeshFactory(_scene, materialsRootDir) {
+            if (materialsRootDir === void 0) { materialsRootDir = "./"; }
+            this._scene = _scene;
+            DigitParts.defineMaterials(_scene, materialsRootDir);
+        }
+        MeshFactory.prototype.getModuleName = function () { return "DigitParts"; };
+        MeshFactory.prototype.instance = function (meshName, cloneSkeleton) {
+            var ret = null;
+            var src;
+            switch (meshName) {
+                case "Geometry":
+                    src = getViable(0, true);
+                    if (src === null) {
+                        ret = new Geometry("Geometry", this._scene);
+                        originalVerts += ret.getTotalVertices();
+                        meshLib[0].push(ret);
+                    }
+                    else {
+                        ret = new Geometry("Geometry" + "_" + cloneCount++, this._scene, null, src);
+                        clonedVerts += ret.getTotalVertices();
+                    }
+                    break;
+                case "Down":
+                    src = getViable(1);
+                    if (src === null) {
+                        ret = new Down("Down", this._scene);
+                        originalVerts += ret.getTotalVertices();
+                        meshLib[1].push(ret);
+                    }
+                    else {
+                        ret = new Down("Down" + "_" + cloneCount++, this._scene, null, src);
+                        clonedVerts += ret.getTotalVertices();
+                    }
+                    break;
+                case "Up":
+                    src = getViable(2);
+                    if (src === null) {
+                        ret = new Up("Up", this._scene);
+                        originalVerts += ret.getTotalVertices();
+                        meshLib[2].push(ret);
+                    }
+                    else {
+                        ret = new Up("Up" + "_" + cloneCount++, this._scene, null, src);
+                        clonedVerts += ret.getTotalVertices();
+                    }
+                    break;
+            }
+            if (ret !== null) {
+                if (cloneSkeleton && src && src.skeleton) {
+                    var skelName = src.skeleton.name + cloneCount;
+                    ret.skeleton = src.skeleton.clone(skelName, skelName);
+                }
+            }
+            else
+                BABYLON.Tools.Error("Mesh not found: " + meshName);
+            return ret;
+        };
+        return MeshFactory;
+    }());
+    DigitParts.MeshFactory = MeshFactory;
+    function getViable(libIdx, isNode) {
+        var meshes = meshLib[libIdx];
+        if (!meshes || meshes === null) {
+            if (!meshes)
+                meshLib[libIdx] = new Array();
+            return null;
+        }
+        for (var i = meshes.length - 1; i >= 0; i--) {
+            if (meshes[i].geometry || isNode)
+                return meshes[i];
+        }
+        return null;
+    }
+    function clean(libIdx) {
+        var meshes = meshLib[libIdx];
+        if (!meshes || meshes === null)
+            return;
+        var stillViable = false;
+        for (var i = meshes.length - 1; i >= 0; i--) {
+            if (!meshes[i].geometry)
+                meshes[i] = null;
+            else
+                stillViable = true;
+        }
+        if (!stillViable)
+            meshLib[libIdx] = null;
+    }
+    function getStats() { return [cloneCount, originalVerts, clonedVerts]; }
+    DigitParts.getStats = getStats;
+    var matLoaded = false;
+    // to keep from checkReadyOnlyOnce = true, defineMaterials() must be explicitly called with neverCheckReadyOnlyOnce = true,
+    // before any other functions in this module
+    function defineMaterials(scene, materialsRootDir, neverCheckReadyOnlyOnce) {
+        if (materialsRootDir === void 0) { materialsRootDir = "./"; }
+        if (neverCheckReadyOnlyOnce === void 0) { neverCheckReadyOnlyOnce = false; }
+        if (matLoaded)
+            return;
+        if (materialsRootDir.lastIndexOf("/") + 1 !== materialsRootDir.length) {
+            materialsRootDir += "/";
+        }
+        var material;
+        var texture;
+        material = new BABYLON.StandardMaterial("DigitParts.border", scene);
+        material.ambientColor = new BABYLON.Color3(0.0574, 0.8, 0.0876);
+        material.diffuseColor = new BABYLON.Color3(0.0459, 0.64, 0.0701);
+        material.specularColor = new BABYLON.Color3(0.5, 0.5, 0.5);
+        material.emissiveColor = new BABYLON.Color3(0, 0, 0);
+        material.specularPower = 50;
+        material.alpha = 1;
+        material.backFaceCulling = true;
+        material.checkReadyOnlyOnce = !neverCheckReadyOnlyOnce;
+        material = new BABYLON.StandardMaterial("DigitParts.border.001", scene);
+        material.ambientColor = new BABYLON.Color3(0.0574, 0.8, 0.0876);
+        material.diffuseColor = new BABYLON.Color3(0.0459, 0.64, 0.0701);
+        material.specularColor = new BABYLON.Color3(0.5, 0.5, 0.5);
+        material.emissiveColor = new BABYLON.Color3(0, 0, 0);
+        material.specularPower = 50;
+        material.alpha = 1;
+        material.backFaceCulling = true;
+        material.checkReadyOnlyOnce = !neverCheckReadyOnlyOnce;
+        material = new BABYLON.StandardMaterial("DigitParts.face", scene);
+        material.ambientColor = new BABYLON.Color3(0.8, 0.1603, 0.7314);
+        material.diffuseColor = new BABYLON.Color3(0.64, 0.1283, 0.5851);
+        material.specularColor = new BABYLON.Color3(0.5, 0.5, 0.5);
+        material.emissiveColor = new BABYLON.Color3(0, 0, 0);
+        material.specularPower = 50;
+        material.alpha = 1;
+        material.backFaceCulling = true;
+        material.checkReadyOnlyOnce = !neverCheckReadyOnlyOnce;
+        material = new BABYLON.StandardMaterial("DigitParts.face.001", scene);
+        material.ambientColor = new BABYLON.Color3(0.8, 0.1603, 0.7314);
+        material.diffuseColor = new BABYLON.Color3(0.64, 0.1283, 0.5851);
+        material.specularColor = new BABYLON.Color3(0.5, 0.5, 0.5);
+        material.emissiveColor = new BABYLON.Color3(0, 0, 0);
+        material.specularPower = 50;
+        material.alpha = 1;
+        material.backFaceCulling = true;
+        material.checkReadyOnlyOnce = !neverCheckReadyOnlyOnce;
+        defineMultiMaterials(scene);
+        matLoaded = true;
+    }
+    DigitParts.defineMaterials = defineMaterials;
+    function defineMultiMaterials(scene) {
+        var multiMaterial;
+        multiMaterial = new BABYLON.MultiMaterial("DigitParts.Multimaterial#0", scene);
+        multiMaterial.id = "DigitParts.Multimaterial#0";
+        multiMaterial.subMaterials.push(scene.getMaterialByID("DigitParts.border"));
+        multiMaterial.subMaterials.push(scene.getMaterialByID("DigitParts.face"));
+        multiMaterial = new BABYLON.MultiMaterial("DigitParts.Multimaterial#1", scene);
+        multiMaterial.id = "DigitParts.Multimaterial#1";
+        multiMaterial.subMaterials.push(scene.getMaterialByID("DigitParts.border.001"));
+        multiMaterial.subMaterials.push(scene.getMaterialByID("DigitParts.face.001"));
+    }
+    DigitParts.defineMultiMaterials = defineMultiMaterials;
+    var Geometry = (function (_super) {
+        __extends(Geometry, _super);
+        function Geometry(name, scene, materialsRootDir, source) {
+            if (materialsRootDir === void 0) { materialsRootDir = "./"; }
+            var _this = _super.call(this, name, scene, null, source, true) || this;
+            DigitParts.defineMaterials(scene, materialsRootDir); //embedded version check
+            var cloning = source && source !== null;
+            _this.botLeft = cloning ? child_botLeft(scene, _this, source.botLeft) : child_botLeft(scene, _this);
+            _this.topLeft = cloning ? child_topLeft(scene, _this, source.topLeft) : child_topLeft(scene, _this);
+            _this.top = cloning ? child_top(scene, _this, source.top) : child_top(scene, _this);
+            _this.topRite = cloning ? child_topRite(scene, _this, source.topRite) : child_topRite(scene, _this);
+            _this.botRite = cloning ? child_botRite(scene, _this, source.botRite) : child_botRite(scene, _this);
+            _this.bottom = cloning ? child_bottom(scene, _this, source.bottom) : child_bottom(scene, _this);
+            _this.dot = cloning ? child_dot(scene, _this, source.dot) : child_dot(scene, _this);
+            _this.center = cloning ? child_center(scene, _this, source.center) : child_center(scene, _this);
+            _this.id = _this.name;
+            _this.billboardMode = 0;
+            _this.position.x = 0;
+            _this.position.y = 0;
+            _this.position.z = 0;
+            _this.rotation.x = 0;
+            _this.rotation.y = 0;
+            _this.rotation.z = 0;
+            _this.scaling.x = 1;
+            _this.scaling.y = 0.9523;
+            _this.scaling.z = 1;
+            _this.isVisible = false;
+            _this.setEnabled(true);
+            _this.checkCollisions = false;
+            _this.receiveShadows = false;
+            _this["castShadows"] = false; // typescript safe
+            return _this;
+        }
+        Geometry.prototype.dispose = function (doNotRecurse) {
+            _super.prototype.dispose.call(this, doNotRecurse);
+            clean(0);
+        };
+        return Geometry;
+    }(BABYLON.Mesh));
+    DigitParts.Geometry = Geometry;
+    function child_botLeft(scene, parent, source) {
+        var ret = new BABYLON.Mesh(parent.name + ".botLeft", scene, parent, source);
+        var cloning = source && source !== null;
+        ret.id = ret.name;
+        ret.billboardMode = 0;
+        ret.position.x = 0;
+        ret.position.y = 0;
+        ret.position.z = 0;
+        ret.rotation.x = 0;
+        ret.rotation.y = 0;
+        ret.rotation.z = 0;
+        ret.scaling.x = 1;
+        ret.scaling.y = 1;
+        ret.scaling.z = 1;
+        ret.isVisible = true;
+        ret.setEnabled(true);
+        ret.checkCollisions = false;
+        ret.receiveShadows = false;
+        ret["castShadows"] = false; // typescript safe
+        if (!cloning) {
+            ret.setVerticesData(BABYLON.VertexBuffer.PositionKind, [
+                0.12, 0.12, 0, 0.12, 0.46, 0, 0, 0.46, 0, 0, 0.12, 0, 0, 0, 0, 0.12, 0.12, 0, 0, 0.5196, 0, 0, 0.46, 0, 0.1198, 0.46, 0, 0, 0.12, 0
+            ], false);
+            ret.setVerticesData(BABYLON.VertexBuffer.NormalKind, [
+                0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1
+            ], false);
+            ret.setIndices([
+                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 2
+            ]);
+            ret.subMeshes = [];
+            new BABYLON.SubMesh(0, 0, 10, 0, 12, ret);
+            ret.computeWorldMatrix(true);
+        }
+        return ret;
+    }
+    function child_topLeft(scene, parent, source) {
+        var ret = new BABYLON.Mesh(parent.name + ".topLeft", scene, parent, source);
+        var cloning = source && source !== null;
+        ret.id = ret.name;
+        ret.billboardMode = 0;
+        ret.position.x = 0;
+        ret.position.y = 0.5396;
+        ret.position.z = 0;
+        ret.rotation.x = 0;
+        ret.rotation.y = 0;
+        ret.rotation.z = 0;
+        ret.scaling.x = 1;
+        ret.scaling.y = 1;
+        ret.scaling.z = 1;
+        ret.isVisible = true;
+        ret.setEnabled(true);
+        ret.checkCollisions = false;
+        ret.receiveShadows = false;
+        ret["castShadows"] = false; // typescript safe
+        if (!cloning) {
+            ret.setVerticesData(BABYLON.VertexBuffer.PositionKind, [
+                0, 0.0596, 0, 0.12, 0.0596, 0, 0.12, 0.3996, 0, 0, 0.3996, 0, 0.12, 0.3996, 0, 0, 0.5196, 0, 0, 0, 0, 0.1198, 0.0596, 0, 0, 0.0596, 0, 0, 0.3996, 0
+            ], false);
+            ret.setVerticesData(BABYLON.VertexBuffer.NormalKind, [
+                0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1
+            ], false);
+            ret.setIndices([
+                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 2
+            ]);
+            ret.subMeshes = [];
+            new BABYLON.SubMesh(0, 0, 10, 0, 12, ret);
+            ret.computeWorldMatrix(true);
+        }
+        return ret;
+    }
+    function child_top(scene, parent, source) {
+        var ret = new BABYLON.Mesh(parent.name + ".top", scene, parent, source);
+        var cloning = source && source !== null;
+        ret.id = ret.name;
+        ret.billboardMode = 0;
+        ret.position.x = 0.03;
+        ret.position.y = 1.0579;
+        ret.position.z = 0;
+        ret.rotation.x = 0;
+        ret.rotation.y = 0;
+        ret.rotation.z = 0;
+        ret.scaling.x = 1;
+        ret.scaling.y = 1;
+        ret.scaling.z = 1;
+        ret.isVisible = true;
+        ret.setEnabled(true);
+        ret.checkCollisions = false;
+        ret.receiveShadows = false;
+        ret["castShadows"] = false; // typescript safe
+        if (!cloning) {
+            ret.setVerticesData(BABYLON.VertexBuffer.PositionKind, [
+                0.42, 0, 0, 0.12, 0, 0, 0.12, -0.12, 0, 0.42, 0, 0, 0.42, -0.12, 0, 0.54, 0, 0, 0.12, 0, 0, 0, 0, 0, 0.12, -0.12, 0, 0.42, -0.12, 0
+            ], false);
+            ret.setVerticesData(BABYLON.VertexBuffer.NormalKind, [
+                0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1
+            ], false);
+            ret.setIndices([
+                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 2
+            ]);
+            ret.subMeshes = [];
+            new BABYLON.SubMesh(0, 0, 10, 0, 12, ret);
+            ret.computeWorldMatrix(true);
+        }
+        return ret;
+    }
+    function child_topRite(scene, parent, source) {
+        var ret = new BABYLON.Mesh(parent.name + ".topRite", scene, parent, source);
+        var cloning = source && source !== null;
+        ret.id = ret.name;
+        ret.billboardMode = 0;
+        ret.position.x = 0.6;
+        ret.position.y = 0.5396;
+        ret.position.z = 0;
+        ret.rotation.x = 0;
+        ret.rotation.y = 0;
+        ret.rotation.z = 0;
+        ret.scaling.x = 1;
+        ret.scaling.y = 1;
+        ret.scaling.z = 1;
+        ret.isVisible = true;
+        ret.setEnabled(true);
+        ret.checkCollisions = false;
+        ret.receiveShadows = false;
+        ret["castShadows"] = false; // typescript safe
+        if (!cloning) {
+            ret.setVerticesData(BABYLON.VertexBuffer.PositionKind, [
+                -0.12, 0.3996, 0, -0.12, 0.0596, 0, 0, 0.0596, 0, 0, 0.3996, 0, 0, 0.5196, 0, -0.12, 0.3996, 0, 0, 0, 0, 0, 0.0596, 0, -0.1198, 0.0596, 0, 0, 0.3996, 0
+            ], false);
+            ret.setVerticesData(BABYLON.VertexBuffer.NormalKind, [
+                0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1
+            ], false);
+            ret.setIndices([
+                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 2
+            ]);
+            ret.subMeshes = [];
+            new BABYLON.SubMesh(0, 0, 10, 0, 12, ret);
+            ret.computeWorldMatrix(true);
+        }
+        return ret;
+    }
+    function child_botRite(scene, parent, source) {
+        var ret = new BABYLON.Mesh(parent.name + ".botRite", scene, parent, source);
+        var cloning = source && source !== null;
+        ret.id = ret.name;
+        ret.billboardMode = 0;
+        ret.position.x = 0.6;
+        ret.position.y = 0.5196;
+        ret.position.z = 0;
+        ret.rotation.x = 0;
+        ret.rotation.y = 0;
+        ret.rotation.z = 0;
+        ret.scaling.x = 1;
+        ret.scaling.y = 1;
+        ret.scaling.z = 1;
+        ret.isVisible = true;
+        ret.setEnabled(true);
+        ret.checkCollisions = false;
+        ret.receiveShadows = false;
+        ret["castShadows"] = false; // typescript safe
+        if (!cloning) {
+            ret.setVerticesData(BABYLON.VertexBuffer.PositionKind, [
+                0, -0.0596, 0, -0.12, -0.0596, 0, -0.12, -0.3996, 0, 0, -0.3996, 0, -0.12, -0.3996, 0, 0, -0.5196, 0, 0, 0, 0, -0.1198, -0.0596, 0, 0, -0.0596, 0, 0, -0.3996, 0
+            ], false);
+            ret.setVerticesData(BABYLON.VertexBuffer.NormalKind, [
+                0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1
+            ], false);
+            ret.setIndices([
+                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 2
+            ]);
+            ret.subMeshes = [];
+            new BABYLON.SubMesh(0, 0, 10, 0, 12, ret);
+            ret.computeWorldMatrix(true);
+        }
+        return ret;
+    }
+    function child_bottom(scene, parent, source) {
+        var ret = new BABYLON.Mesh(parent.name + ".bottom", scene, parent, source);
+        var cloning = source && source !== null;
+        ret.id = ret.name;
+        ret.billboardMode = 0;
+        ret.position.x = 0.03;
+        ret.position.y = 0;
+        ret.position.z = 0;
+        ret.rotation.x = 0;
+        ret.rotation.y = 0;
+        ret.rotation.z = 0;
+        ret.scaling.x = 1;
+        ret.scaling.y = 1;
+        ret.scaling.z = 1;
+        ret.isVisible = true;
+        ret.setEnabled(true);
+        ret.checkCollisions = false;
+        ret.receiveShadows = false;
+        ret["castShadows"] = false; // typescript safe
+        if (!cloning) {
+            ret.setVerticesData(BABYLON.VertexBuffer.PositionKind, [
+                0.12, 0.12, 0, 0.12, 0, 0, 0.42, 0, 0, 0.12, 0, 0, 0.12, 0.12, 0, 0, 0, 0, 0.42, 0, 0, 0.54, 0, 0, 0.42, 0.12, 0, 0.42, 0.12, 0
+            ], false);
+            ret.setVerticesData(BABYLON.VertexBuffer.NormalKind, [
+                0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1
+            ], false);
+            ret.setIndices([
+                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 2
+            ]);
+            ret.subMeshes = [];
+            new BABYLON.SubMesh(0, 0, 10, 0, 12, ret);
+            ret.computeWorldMatrix(true);
+        }
+        return ret;
+    }
+    function child_dot(scene, parent, source) {
+        var ret = new BABYLON.Mesh(parent.name + ".dot", scene, parent, source);
+        var cloning = source && source !== null;
+        ret.id = ret.name;
+        ret.billboardMode = 0;
+        ret.position.x = 0.64;
+        ret.position.y = -0.0004;
+        ret.position.z = 0;
+        ret.rotation.x = 0;
+        ret.rotation.y = 0;
+        ret.rotation.z = 0;
+        ret.scaling.x = 1;
+        ret.scaling.y = 1;
+        ret.scaling.z = 1;
+        ret.isVisible = true;
+        ret.setEnabled(true);
+        ret.checkCollisions = false;
+        ret.receiveShadows = false;
+        ret["castShadows"] = false; // typescript safe
+        if (!cloning) {
+            ret.setVerticesData(BABYLON.VertexBuffer.PositionKind, [
+                0.12, 0, 0, 0.12, 0.12, 0, 0, 0.12, 0, 0, 0, 0
+            ], false);
+            ret.setVerticesData(BABYLON.VertexBuffer.NormalKind, [
+                0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1
+            ], false);
+            ret.setIndices([
+                0, 1, 2, 3, 0, 2
+            ]);
+            ret.subMeshes = [];
+            new BABYLON.SubMesh(0, 0, 4, 0, 6, ret);
+            ret.computeWorldMatrix(true);
+        }
+        return ret;
+    }
+    function child_center(scene, parent, source) {
+        var ret = new BABYLON.Mesh(parent.name + ".center", scene, parent, source);
+        var cloning = source && source !== null;
+        ret.id = ret.name;
+        ret.billboardMode = 0;
+        ret.position.x = 0.3;
+        ret.position.y = 0.5296;
+        ret.position.z = 0;
+        ret.rotation.x = 0;
+        ret.rotation.y = 0;
+        ret.rotation.z = 0;
+        ret.scaling.x = 1;
+        ret.scaling.y = 1;
+        ret.scaling.z = 1;
+        ret.isVisible = true;
+        ret.setEnabled(true);
+        ret.checkCollisions = false;
+        ret.receiveShadows = false;
+        ret["castShadows"] = false; // typescript safe
+        if (!cloning) {
+            ret.setVerticesData(BABYLON.VertexBuffer.PositionKind, [
+                -0.1451, -0.06, 0, -0.1451, 0.06, 0, -0.27, -0.0004, 0, -0.0289, -0.06, 0, 0.1449, -0.06, 0, -0.0289, 0.06, 0, 0.1449, 0.06, 0, 0.27, 0, 0
+            ], false);
+            ret.setVerticesData(BABYLON.VertexBuffer.NormalKind, [
+                0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1
+            ], false);
+            ret.setIndices([
+                0, 1, 2, 3, 4, 5, 6, 4, 7, 1, 0, 3, 4, 6, 5, 5, 1, 3
+            ]);
+            ret.subMeshes = [];
+            new BABYLON.SubMesh(0, 0, 8, 0, 18, ret);
+            ret.computeWorldMatrix(true);
+        }
+        return ret;
+    }
+    var Down = (function (_super) {
+        __extends(Down, _super);
+        function Down(name, scene, materialsRootDir, source) {
+            if (materialsRootDir === void 0) { materialsRootDir = "./"; }
+            var _this = _super.call(this, name, scene, null, source, true) || this;
+            DigitParts.defineMaterials(scene, materialsRootDir); //embedded version check
+            var cloning = source && source !== null;
+            _this.id = _this.name;
+            _this.billboardMode = 0;
+            _this.position.x = 0;
+            _this.position.y = 0;
+            _this.position.z = 0;
+            _this.rotation.x = 0;
+            _this.rotation.y = 0;
+            _this.rotation.z = 0;
+            _this.scaling.x = 1;
+            _this.scaling.y = 0.9523;
+            _this.scaling.z = 1;
+            _this.isVisible = true;
+            _this.setEnabled(true);
+            _this.checkCollisions = false;
+            _this.receiveShadows = false;
+            _this["castShadows"] = false; // typescript safe
+            if (!cloning) {
+                _this.setVerticesData(BABYLON.VertexBuffer.PositionKind, [
+                    0, -0.0034, 0, 0.0024, -0.0017, 0, 0, 0, 0, 0.8105, -0.6441, 0.02, 0.8105, 0.6359, 0.02, -0.0866, -0.0021, 0.02, -0.0895, -0.0041, 0.02, -0.0895, 0, 0.02, 0.75, -0.5368, 0, 0.75, 0.5299, 0, 0.0024, -0.0017, 0
+                ], false);
+                _this.setVerticesData(BABYLON.VertexBuffer.NormalKind, [
+                    0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1
+                ], false);
+                _this.setIndices([
+                    0, 1, 2, 3, 4, 5, 6, 5, 7, 8, 9, 10
+                ]);
+                _this.setMaterialByID("DigitParts.Multimaterial#0");
+                _this.subMeshes = [];
+                new BABYLON.SubMesh(0, 0, 8, 0, 9, _this);
+                new BABYLON.SubMesh(1, 8, 3, 9, 3, _this);
+                _this.computeWorldMatrix(true);
+            }
+            return _this;
+        }
+        Down.prototype.dispose = function (doNotRecurse) {
+            _super.prototype.dispose.call(this, doNotRecurse);
+            clean(1);
+        };
+        return Down;
+    }(DIALOG.Letter));
+    DigitParts.Down = Down;
+    var Up = (function (_super) {
+        __extends(Up, _super);
+        function Up(name, scene, materialsRootDir, source) {
+            if (materialsRootDir === void 0) { materialsRootDir = "./"; }
+            var _this = _super.call(this, name, scene, null, source, true) || this;
+            DigitParts.defineMaterials(scene, materialsRootDir); //embedded version check
+            var cloning = source && source !== null;
+            _this.id = _this.name;
+            _this.billboardMode = 0;
+            _this.position.x = 0;
+            _this.position.y = 0;
+            _this.position.z = 0;
+            _this.rotation.x = 0;
+            _this.rotation.y = 0;
+            _this.rotation.z = 0;
+            _this.scaling.x = 1;
+            _this.scaling.y = 0.9523;
+            _this.scaling.z = 1;
+            _this.isVisible = true;
+            _this.setEnabled(true);
+            _this.checkCollisions = false;
+            _this.receiveShadows = false;
+            _this["castShadows"] = false; // typescript safe
+            if (!cloning) {
+                _this.setVerticesData(BABYLON.VertexBuffer.PositionKind, [
+                    0, 0.0034, 0, -0.0024, 0.0017, 0, 0, 0, 0, -0.8105, 0.6441, 0.02, -0.8105, -0.6359, 0.02, 0.0866, 0.0021, 0.02, 0.0895, 0.0041, 0.02, 0.0895, 0, 0.02, -0.75, 0.5368, 0, -0.75, -0.5299, 0, -0.0024, 0.0017, 0
+                ], false);
+                _this.setVerticesData(BABYLON.VertexBuffer.NormalKind, [
+                    0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1
+                ], false);
+                _this.setIndices([
+                    0, 1, 2, 3, 4, 5, 6, 5, 7, 8, 9, 10
+                ]);
+                _this.setMaterialByID("DigitParts.Multimaterial#1");
+                _this.subMeshes = [];
+                new BABYLON.SubMesh(0, 0, 8, 0, 9, _this);
+                new BABYLON.SubMesh(1, 8, 3, 9, 3, _this);
+                _this.computeWorldMatrix(true);
+            }
+            return _this;
+        }
+        Up.prototype.dispose = function (doNotRecurse) {
+            _super.prototype.dispose.call(this, doNotRecurse);
+            clean(2);
+        };
+        return Up;
+    }(DIALOG.Letter));
+    DigitParts.Up = Up;
+})(DigitParts || (DigitParts = {}));
+
+// File generated with Tower of Babel version: 2.0.0 on 03/24/15
+
+
+
+
+
+
+var CheckBoxFont;
+(function (CheckBoxFont) {
+    var meshLib = new Array(4);
+    var cloneCount = 1;
+    var originalVerts = 0;
+    var clonedVerts = 0;
+    var MeshFactory = (function () {
+        function MeshFactory(_scene, materialsRootDir) {
+            if (materialsRootDir === void 0) { materialsRootDir = "./"; }
+            this._scene = _scene;
+            CheckBoxFont.defineMaterials(_scene, materialsRootDir); //embedded version check
+        }
+        MeshFactory.prototype.getModuleName = function () { return "CheckBoxFont"; };
+        MeshFactory.prototype.instance = function (meshName, cloneSkeleton) {
+            var ret = null;
+            var src;
+            switch (meshName) {
+                case "unchecked2D":
+                    src = getViable(0);
+                    if (src === null) {
+                        ret = new unchecked2D("unchecked2D", this._scene);
+                        originalVerts += ret.getTotalVertices();
+                        meshLib[0].push(ret);
+                    }
+                    else {
+                        ret = new unchecked2D("unchecked2D" + "_" + cloneCount++, this._scene, null, src);
+                        clonedVerts += ret.getTotalVertices();
+                    }
+                    break;
+                case "checked2D":
+                    src = getViable(1);
+                    if (src === null) {
+                        ret = new checked2D("checked2D", this._scene);
+                        originalVerts += ret.getTotalVertices();
+                        meshLib[1].push(ret);
+                    }
+                    else {
+                        ret = new checked2D("checked2D" + "_" + cloneCount++, this._scene, null, src);
+                        clonedVerts += ret.getTotalVertices();
+                    }
+                    break;
+                case "checked3D":
+                    src = getViable(2);
+                    if (src === null) {
+                        ret = new checked3D("checked3D", this._scene);
+                        originalVerts += ret.getTotalVertices();
+                        meshLib[2].push(ret);
+                    }
+                    else {
+                        ret = new checked3D("checked3D" + "_" + cloneCount++, this._scene, null, src);
+                        clonedVerts += ret.getTotalVertices();
+                    }
+                    break;
+                case "unchecked3D":
+                    src = getViable(3);
+                    if (src === null) {
+                        ret = new unchecked3D("unchecked3D", this._scene);
+                        originalVerts += ret.getTotalVertices();
+                        meshLib[3].push(ret);
+                    }
+                    else {
+                        ret = new unchecked3D("unchecked3D" + "_" + cloneCount++, this._scene, null, src);
+                        clonedVerts += ret.getTotalVertices();
+                    }
+                    break;
+            }
+            if (ret !== null) {
+                if (cloneSkeleton && src && src.skeleton) {
+                    var skelName = src.skeleton.name + cloneCount;
+                    ret.skeleton = src.skeleton.clone(skelName, skelName);
+                }
+            }
+            else
+                BABYLON.Tools.Error("Mesh not found: " + meshName);
+            return ret;
+        };
+        return MeshFactory;
+    }());
+    CheckBoxFont.MeshFactory = MeshFactory;
+    function getViable(libIdx, isNode) {
+        var meshes = meshLib[libIdx];
+        if (!meshes || meshes === null) {
+            if (!meshes)
+                meshLib[libIdx] = new Array();
+            return null;
+        }
+        for (var i = meshes.length - 1; i >= 0; i--) {
+            if (meshes[i].geometry || isNode)
+                return meshes[i];
+        }
+        return null;
+    }
+    function clean(libIdx) {
+        var meshes = meshLib[libIdx];
+        if (!meshes || meshes === null)
+            return;
+        var stillViable = false;
+        for (var i = meshes.length - 1; i >= 0; i--) {
+            if (!meshes[i].geometry)
+                meshes[i] = null;
+            else
+                stillViable = true;
+        }
+        if (!stillViable)
+            meshLib[libIdx] = null;
+    }
+    function getStats() { return [cloneCount, originalVerts, clonedVerts]; }
+    CheckBoxFont.getStats = getStats;
+    var matLoaded = false;
+    function defineMaterials(scene, materialsRootDir) {
+        if (materialsRootDir === void 0) { materialsRootDir = "./"; }
+        if (matLoaded)
+            return;
+        if (materialsRootDir.lastIndexOf("/") + 1 !== materialsRootDir.length) {
+            materialsRootDir += "/";
+        }
+        var material;
+        var texture;
+        matLoaded = true;
+    }
+    CheckBoxFont.defineMaterials = defineMaterials;
+    var unchecked2D = (function (_super) {
+        __extends(unchecked2D, _super);
+        function unchecked2D(name, scene, materialsRootDir, source) {
+            if (materialsRootDir === void 0) { materialsRootDir = "./"; }
+            var _this = _super.call(this, name, scene, null, source, true) || this;
+            CheckBoxFont.defineMaterials(scene, materialsRootDir); //embedded version check
+            var cloning = source && source !== null;
+            _this.id = _this.name;
+            _this.billboardMode = 0;
+            _this.position.x = 0;
+            _this.position.y = 0;
+            _this.position.z = 0;
+            _this.rotation.x = 0;
+            _this.rotation.y = 0;
+            _this.rotation.z = 0;
+            _this.scaling.x = 1;
+            _this.scaling.y = 1;
+            _this.scaling.z = 1;
+            _this.isVisible = true;
+            _this.setEnabled(true);
+            _this.checkCollisions = false;
+            _this.receiveShadows = false;
+            _this["castShadows"] = false; // typescript safe
+            if (!cloning) {
+                _this.setVerticesData(BABYLON.VertexBuffer.PositionKind, [
+                    -0.6, 0, 0, -0.05, 0, 0, -0.05, 0.05, 0, -0.6, 0, 0, -0.6, 0.65, 0, -0.65, 0.65, 0, -0.6, 0.6, 0, -0.05, 0.6, 0, -0.05, 0.65, 0, 0, 0, 0, 0, 0.65, 0, -0.05, 0.65, 0, -0.6, 0.05, 0, -0.65, 0, 0, -0.6, 0.65, 0, -0.05, 0, 0
+                ], false);
+                _this.setVerticesData(BABYLON.VertexBuffer.NormalKind, [
+                    0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1
+                ], false);
+                _this.setIndices([
+                    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0, 2, 13, 3, 5, 14, 6, 8, 15, 9, 11
+                ]);
+                _this.subMeshes = [];
+                new BABYLON.SubMesh(0, 0, 16, 0, 24, _this);
+                _this.computeWorldMatrix(true);
+            }
+            return _this;
+        }
+        unchecked2D.prototype.dispose = function (doNotRecurse) {
+            _super.prototype.dispose.call(this, doNotRecurse);
+            clean(0);
+        };
+        return unchecked2D;
+    }(DIALOG.Letter));
+    CheckBoxFont.unchecked2D = unchecked2D;
+    var checked2D = (function (_super) {
+        __extends(checked2D, _super);
+        function checked2D(name, scene, materialsRootDir, source) {
+            if (materialsRootDir === void 0) { materialsRootDir = "./"; }
+            var _this = _super.call(this, name, scene, null, source, true) || this;
+            CheckBoxFont.defineMaterials(scene, materialsRootDir); //embedded version check
+            var cloning = source && source !== null;
+            _this.id = _this.name;
+            _this.billboardMode = 0;
+            _this.position.x = 0;
+            _this.position.y = 0;
+            _this.position.z = 0;
+            _this.rotation.x = 0;
+            _this.rotation.y = 0;
+            _this.rotation.z = 0;
+            _this.scaling.x = 1;
+            _this.scaling.y = 1;
+            _this.scaling.z = 1;
+            _this.isVisible = true;
+            _this.setEnabled(true);
+            _this.checkCollisions = false;
+            _this.receiveShadows = false;
+            _this["castShadows"] = false; // typescript safe
+            if (!cloning) {
+                _this.setVerticesData(BABYLON.VertexBuffer.PositionKind, [
+                    -0.1305, 0.1659, 0, -0.4841, 0.5195, 0, -0.5195, 0.4841, 0, -0.4841, 0.1305, 0, -0.1305, 0.4841, 0, -0.1659, 0.5195, 0, -0.6, 0, 0, -0.05, 0, 0, -0.05, 0.05, 0, -0.6, 0, 0, -0.6, 0.65, 0, -0.65, 0.65, 0, -0.6, 0.6, 0, -0.05, 0.6, 0, -0.05, 0.65, 0, 0, 0, 0, 0, 0.65, 0, -0.05, 0.65, 0, -0.1659, 0.1305, 0, -0.5195, 0.1659, 0, -0.6, 0.05, 0, -0.65, 0, 0, -0.6, 0.65, 0, -0.05, 0, 0
+                ], false);
+                _this.setVerticesData(BABYLON.VertexBuffer.NormalKind, [
+                    0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1
+                ], false);
+                _this.setIndices([
+                    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 0, 2, 19, 3, 5, 20, 6, 8, 21, 9, 11, 22, 12, 14, 23, 15, 17
+                ]);
+                _this.subMeshes = [];
+                new BABYLON.SubMesh(0, 0, 24, 0, 36, _this);
+                _this.computeWorldMatrix(true);
+            }
+            return _this;
+        }
+        checked2D.prototype.dispose = function (doNotRecurse) {
+            _super.prototype.dispose.call(this, doNotRecurse);
+            clean(1);
+        };
+        return checked2D;
+    }(DIALOG.Letter));
+    CheckBoxFont.checked2D = checked2D;
+    var checked3D = (function (_super) {
+        __extends(checked3D, _super);
+        function checked3D(name, scene, materialsRootDir, source) {
+            if (materialsRootDir === void 0) { materialsRootDir = "./"; }
+            var _this = _super.call(this, name, scene, null, source, true) || this;
+            CheckBoxFont.defineMaterials(scene, materialsRootDir); //embedded version check
+            var cloning = source && source !== null;
+            _this.id = _this.name;
+            _this.billboardMode = 0;
+            _this.position.x = 0;
+            _this.position.y = 0;
+            _this.position.z = 0;
+            _this.rotation.x = 0;
+            _this.rotation.y = 0;
+            _this.rotation.z = 0;
+            _this.scaling.x = 1;
+            _this.scaling.y = 1;
+            _this.scaling.z = 1;
+            _this.isVisible = true;
+            _this.setEnabled(true);
+            _this.checkCollisions = false;
+            _this.receiveShadows = false;
+            _this["castShadows"] = false; // typescript safe
+            if (!cloning) {
+                _this.setVerticesData(BABYLON.VertexBuffer.PositionKind, [
+                    -0.1305, 0.1659, 0, -0.4841, 0.5195, 0, -0.5195, 0.4841, 0, -0.1659, 0.1305, 0, -0.1659, 0.1305, 1, -0.4841, 0.5195, 1, -0.5195, 0.4841, 1, -0.4841, 0.1305, 0, -0.1305, 0.4841, 0, -0.1659, 0.5195, 0, -0.5195, 0.1659, 0, -0.5195, 0.1659, 1, -0.4841, 0.1305, 1, -0.1305, 0.4841, 1, -0.1659, 0.5195, 1, -0.6, 0, 0, -0.05, 0, 0, -0.05, 0.05, 0, -0.6, 0.05, 0, -0.6, 0.05, 1, -0.6, 0, 1, -0.05, 0, 1, -0.05, 0.05, 1, -0.6, 0, 0, -0.6, 0.65, 0, -0.65, 0.65, 0, -0.6, 0, 1, -0.65, 0, 0, -0.6, 0.65, 1, -0.65, 0.65, 1, -0.6, 0.6, 0, -0.05, 0.6, 0, -0.05, 0.65, 0, -0.6, 0.6, 1, -0.6, 0.65, 0, -0.05, 0.65, 1, 0, 0, 0, 0, 0.65, 0, -0.05, 0.65, 0, 0, 0, 1, -0.05, 0, 0, 0, 0.65, 1, -0.05, 0.65, 1, -0.1305, 0.1659, 1, -0.65, 0, 1, -0.6, 0.65, 1, -0.05, 0.6, 1, -0.05, 0, 1
+                ], false);
+                _this.setVerticesData(BABYLON.VertexBuffer.NormalKind, [
+                    0.8165, 0, -0.5773, 0, 0.8165, -0.5773, -0.8165, 0, -0.5773, 0, -0.8165, -0.5773, 0, -1, 0, 0, 1, 0, -1, 0, 0, 0, -0.8165, -0.5773, 0.8165, 0, -0.5773, 0, 0.8165, -0.5773, -0.8165, 0, -0.5773, -1, 0, 0, 0, -1, 0, 1, 0, 0, 0, 1, 0, -0.5773, -0.5773, -0.5773, 0.5773, -0.5773, -0.5773, 0.5773, 0.5773, -0.5773, -0.5773, 0.5773, -0.5773, -0.7071, 0.7071, 0, -0.7071, -0.7071, 0, 0.7071, -0.7071, 0, 0.7071, 0.7071, 0, 0.5773, -0.5773, -0.5773, 0.5773, 0.5773, -0.5773, -0.5773, 0.5773, -0.5773, 0.7071, -0.7071, 0, -0.5773, -0.5773, -0.5773, 0.7071, 0.7071, 0, -0.7071, 0.7071, 0, -0.5773, -0.5773, -0.5773, 0.5773, -0.5773, -0.5773, 0.5773, 0.5773, -0.5773, -0.7071, -0.7071, 0, -0.5773, 0.5773, -0.5773, 0.7071, 0.7071, 0, 0.5773, -0.5773, -0.5773, 0.5773, 0.5773, -0.5773, -0.5773, 0.5773, -0.5773, 0.7071, -0.7071, 0, -0.5773, -0.5773, -0.5773, 0.7071, 0.7071, 0, -0.7071, 0.7071, 0, 1, 0, 0, -0.7071, -0.7071, 0, -0.7071, 0.7071, 0, 0.7071, -0.7071, 0, -0.7071, -0.7071, 0
+                ], false);
+                _this.setIndices([
+                    0, 1, 2, 0, 3, 4, 5, 1, 0, 2, 1, 5, 3, 2, 6, 7, 8, 9, 7, 10, 11, 8, 7, 12, 9, 8, 13, 10, 9, 14, 15, 16, 17, 15, 18, 19, 16, 15, 20, 17, 16, 21, 18, 17, 22, 23, 24, 25, 26, 23, 27, 28, 24, 23, 29, 25, 24, 27, 25, 29, 30, 31, 32, 33, 30, 34, 31, 30, 33, 35, 32, 31, 34, 32, 35, 36, 37, 38, 39, 36, 40, 41, 37, 36, 42, 38, 37, 40, 38, 42, 3, 0, 2, 43, 0, 4, 43, 5, 0, 6, 2, 5, 4, 3, 6, 10, 7, 9, 12, 7, 11, 13, 8, 12, 14, 9, 13, 11, 10, 14, 18, 15, 17, 20, 15, 19, 21, 16, 20, 22, 17, 21, 19, 18, 22, 27, 23, 25, 44, 26, 27, 26, 28, 23, 28, 29, 24, 44, 27, 29, 34, 30, 32, 45, 33, 34, 46, 31, 33, 46, 35, 31, 45, 34, 35, 40, 36, 38, 47, 39, 40, 39, 41, 36, 41, 42, 37, 47, 40, 42
+                ]);
+                _this.subMeshes = [];
+                new BABYLON.SubMesh(0, 0, 48, 0, 180, _this);
+                _this.computeWorldMatrix(true);
+            }
+            return _this;
+        }
+        checked3D.prototype.dispose = function (doNotRecurse) {
+            _super.prototype.dispose.call(this, doNotRecurse);
+            clean(2);
+        };
+        return checked3D;
+    }(DIALOG.Letter));
+    CheckBoxFont.checked3D = checked3D;
+    var unchecked3D = (function (_super) {
+        __extends(unchecked3D, _super);
+        function unchecked3D(name, scene, materialsRootDir, source) {
+            if (materialsRootDir === void 0) { materialsRootDir = "./"; }
+            var _this = _super.call(this, name, scene, null, source, true) || this;
+            CheckBoxFont.defineMaterials(scene, materialsRootDir); //embedded version check
+            var cloning = source && source !== null;
+            _this.id = _this.name;
+            _this.billboardMode = 0;
+            _this.position.x = 0;
+            _this.position.y = 0;
+            _this.position.z = 0;
+            _this.rotation.x = 0;
+            _this.rotation.y = 0;
+            _this.rotation.z = 0;
+            _this.scaling.x = 1;
+            _this.scaling.y = 1;
+            _this.scaling.z = 1;
+            _this.isVisible = true;
+            _this.setEnabled(true);
+            _this.checkCollisions = false;
+            _this.receiveShadows = false;
+            _this["castShadows"] = false; // typescript safe
+            if (!cloning) {
+                _this.setVerticesData(BABYLON.VertexBuffer.PositionKind, [
+                    -0.6, 0, 0, -0.05, 0, 0, -0.05, 0.05, 0, -0.6, 0.05, 0, -0.6, 0.05, 1, -0.6, 0, 1, -0.05, 0, 1, -0.05, 0.05, 1, -0.6, 0, 0, -0.6, 0.65, 0, -0.65, 0.65, 0, -0.6, 0, 1, -0.65, 0, 0, -0.6, 0.65, 1, -0.65, 0.65, 1, -0.6, 0.6, 0, -0.05, 0.6, 0, -0.05, 0.65, 0, -0.6, 0.6, 1, -0.6, 0.65, 0, -0.05, 0.65, 1, 0, 0, 0, 0, 0.65, 0, -0.05, 0.65, 0, 0, 0, 1, -0.05, 0, 0, 0, 0.65, 1, -0.05, 0.65, 1, -0.65, 0, 1, -0.6, 0.65, 1, -0.05, 0.6, 1, -0.05, 0, 1
+                ], false);
+                _this.setVerticesData(BABYLON.VertexBuffer.NormalKind, [
+                    -0.5773, -0.5773, -0.5773, 0.5773, -0.5773, -0.5773, 0.5773, 0.5773, -0.5773, -0.5773, 0.5773, -0.5773, -0.7071, 0.7071, 0, -0.7071, -0.7071, 0, 0.7071, -0.7071, 0, 0.7071, 0.7071, 0, 0.5773, -0.5773, -0.5773, 0.5773, 0.5773, -0.5773, -0.5773, 0.5773, -0.5773, 0.7071, -0.7071, 0, -0.5773, -0.5773, -0.5773, 0.7071, 0.7071, 0, -0.7071, 0.7071, 0, -0.5773, -0.5773, -0.5773, 0.5773, -0.5773, -0.5773, 0.5773, 0.5773, -0.5773, -0.7071, -0.7071, 0, -0.5773, 0.5773, -0.5773, 0.7071, 0.7071, 0, 0.5773, -0.5773, -0.5773, 0.5773, 0.5773, -0.5773, -0.5773, 0.5773, -0.5773, 0.7071, -0.7071, 0, -0.5773, -0.5773, -0.5773, 0.7071, 0.7071, 0, -0.7071, 0.7071, 0, -0.7071, -0.7071, 0, -0.7071, 0.7071, 0, 0.7071, -0.7071, 0, -0.7071, -0.7071, 0
+                ], false);
+                _this.setIndices([
+                    0, 1, 2, 0, 3, 4, 1, 0, 5, 2, 1, 6, 3, 2, 7, 8, 9, 10, 11, 8, 12, 13, 9, 8, 14, 10, 9, 12, 10, 14, 15, 16, 17, 18, 15, 19, 16, 15, 18, 20, 17, 16, 19, 17, 20, 21, 22, 23, 24, 21, 25, 26, 22, 21, 27, 23, 22, 25, 23, 27, 3, 0, 2, 5, 0, 4, 6, 1, 5, 7, 2, 6, 4, 3, 7, 12, 8, 10, 28, 11, 12, 11, 13, 8, 13, 14, 9, 28, 12, 14, 19, 15, 17, 29, 18, 19, 30, 16, 18, 30, 20, 16, 29, 19, 20, 25, 21, 23, 31, 24, 25, 24, 26, 21, 26, 27, 22, 31, 25, 27
+                ]);
+                _this.subMeshes = [];
+                new BABYLON.SubMesh(0, 0, 32, 0, 120, _this);
+                _this.computeWorldMatrix(true);
+            }
+            return _this;
+        }
+        unchecked3D.prototype.dispose = function (doNotRecurse) {
+            _super.prototype.dispose.call(this, doNotRecurse);
+            clean(3);
+        };
+        return unchecked3D;
+    }(DIALOG.Letter));
+    CheckBoxFont.unchecked3D = unchecked3D;
+})(CheckBoxFont || (CheckBoxFont = {}));
+
+
+
+
+
+
+
+/// <reference path="./Panel.ts"/>
+var DIALOG;
+(function (DIALOG) {
+    /**
+     * A way to map a mesh into a panel.  Very similar to Letter, except it is an actual sub-class of BasePanel.
+     */
+    var MeshWrapperPanel = (function (_super) {
+        __extends(MeshWrapperPanel, _super);
+        function MeshWrapperPanel(_inside, _needBorders) {
+            var _this = 
+            // Panel's _layoutDir & _topLevel constructor parms, forced to default to LAYOUT_HORIZONTAL & false
+            _super.call(this, _inside.name + "_wrapper", _inside.getScene()) || this;
+            _this._inside = _inside;
+            _this._needBorders = _needBorders;
+            _inside.parent = _this;
+            return _this;
+        }
+        MeshWrapperPanel.prototype.setMaterial = function (mat) {
+            this._inside.material = mat;
+        };
+        // ======================================== Overrides ========================================
+        /**
+         * @override
+         */
+        MeshWrapperPanel.prototype.useGeometryForBorder = function () {
+            return this._needBorders;
+        };
+        /**
+         * @override
+         * No actual layout of sub-panels.  Need to set the _actual members, as super does though.
+         */
+        MeshWrapperPanel.prototype._layout = function (widthConstraint, heightConstraint) {
+            if (!this._actualAboveOriginX) {
+                this.visibility = 1;
+            }
+            this._actualAboveOriginX = this._maxAboveOrigin.x;
+            this._actualAboveOriginY = this._maxAboveOrigin.y;
+            this._actualBelowOriginX = this._minBelowOrigin.x;
+            this._actualBelowOriginY = this._minBelowOrigin.y;
+        };
+        /**
+         * @override
+         */
+        MeshWrapperPanel.prototype._calcRequiredSize = function () {
+            // done only once.  Deferred till now, since putting this instead of setVerticesData is never called in clones
+            if (!this._minWorld) {
+                var extend = BABYLON.Tools.ExtractMinAndMax(this._inside.getVerticesData(BABYLON.VertexBuffer.PositionKind), 0, this._inside.getTotalVertices());
+                this._minWorld = extend.minimum;
+                this._maxWorld = extend.maximum;
+            }
+            this._maxAboveOrigin.x = this._maxWorld.x * this._inside.scaling.x;
+            this._maxAboveOrigin.y = this._maxWorld.y * this._inside.scaling.y;
+            this._maxAboveOrigin.z = this._maxWorld.z * this._inside.scaling.z;
+            if (this._needBorders) {
+                this._maxAboveOrigin.x += this.horizontalMargin;
+                this._maxAboveOrigin.y += this.verticalMargin;
+            }
+            this._minBelowOrigin.x = this._minWorld.x * this._inside.scaling.x;
+            this._minBelowOrigin.y = this._minWorld.y * this._inside.scaling.y;
+            this._minBelowOrigin.z = this._minWorld.z * this._inside.scaling.z;
+            if (this._needBorders) {
+                this._minBelowOrigin.x -= this.horizontalMargin;
+                this._minBelowOrigin.y -= this.verticalMargin;
+            }
+        };
+        /**
+         * @override
+         * Change layermask of this._inside and any children
+         */
+        MeshWrapperPanel.prototype.setLayerMask = function (maskId) {
+            var insideKids = this._inside.getChildren();
+            for (var i = insideKids.length - 1; i >= 0; i--) {
+                insideKids[i].layerMask = maskId;
+                insideKids[i].setEnabled(maskId !== DIALOG.DialogSys.SUSPENDED_DIALOG_LAYER);
+            }
+            this._inside.layerMask = maskId;
+            this._inside.setEnabled(maskId !== DIALOG.DialogSys.SUSPENDED_DIALOG_LAYER);
+            this.layerMask = maskId;
+            this.setEnabled(maskId !== DIALOG.DialogSys.SUSPENDED_DIALOG_LAYER);
+        };
+        /**
+         * @override
+         * Do the entire hierarchy, in addition
+         */
+        MeshWrapperPanel.prototype.freezeWorldMatrixTree = function () {
+            this.freezeWorldMatrix();
+            this._inside.freezeWorldMatrix();
+            var insideKids = this._inside.getChildren();
+            for (var i = insideKids.length - 1; i >= 0; i--) {
+                insideKids[i].freezeWorldMatrix();
+            }
+        };
+        /**
+         * @override
+         * Do the entire hierarchy, in addition
+         */
+        MeshWrapperPanel.prototype.unfreezeWorldMatrixTree = function () {
+            _super.prototype.unfreezeWorldMatrix.call(this);
+            var insideKids = this._inside.getChildren();
+            for (var i = insideKids.length - 1; i >= 0; i--) {
+                insideKids[i].unfreezeWorldMatrix();
+            }
+        };
+        /** @override */
+        MeshWrapperPanel.prototype.addSubPanel = function (sub, index) {
+            BABYLON.Tools.Error("wrappers can have no sub-panels");
+        };
+        /** @override */ MeshWrapperPanel.prototype.getSubPanel = function () { return null; };
+        /** @override */ MeshWrapperPanel.prototype.removeAt = function (index, doNotDispose) { };
+        /** @override */ MeshWrapperPanel.prototype.removeAll = function (doNotDispose) { };
+        /** @override */
+        MeshWrapperPanel.prototype.setSubsFaceSize = function (size, relative) {
+            if (relative) {
+                this._xyScale *= size;
+            }
+            else {
+                this._xyScale = size;
+            }
+            this._inside.scaling.x = this._xyScale;
+            this._inside.scaling.y = this._xyScale;
+            this.invalidateLayout();
+            return this;
+        };
+        return MeshWrapperPanel;
+    }(DIALOG.BasePanel));
+    DIALOG.MeshWrapperPanel = MeshWrapperPanel;
+})(DIALOG || (DIALOG = {}));
+
+
+
+
+
+
+
 /// <reference path="./Panel.ts"/>
 /// <reference path="./Letter.ts"/>
 var DIALOG;
@@ -1115,21 +2226,22 @@ var DIALOG;
          */
         function Label(letters, typeFace, customMaterial, _button, _prohibitMerging) {
             if (typeFace === void 0) { typeFace = Label.DEFAULT_FONT_MODULE; }
-            _super.call(this, letters, DIALOG.DialogSys._scene, null, null, false, DIALOG.Panel.LAYOUT_HORIZONTAL, _button);
-            this._prohibitMerging = _prohibitMerging;
-            this._merged = false;
-            this._isTypeface3D = typeFace.indexOf("3D") > -1;
+            var _this = _super.call(this, letters, DIALOG.DialogSys._scene, null, null, false, DIALOG.Panel.LAYOUT_HORIZONTAL, _button) || this;
+            _this._prohibitMerging = _prohibitMerging;
+            _this._merged = false;
+            _this._isTypeface3D = typeFace.indexOf("3D") > -1;
             var meshes = DIALOG.FontFactory.getLetters(letters, typeFace, customMaterial);
             // add all meshes as subPanels, null or not
             for (var i = 0; i < meshes.length; i++) {
-                this.addSubPanel(meshes[i]);
+                _this.addSubPanel(meshes[i]);
             }
             // align in Z dim, so 3D letters, re scaled by factory, are positioned at 0 in Z.  No effect in 2D.
-            this.setUniformZ(0);
+            _this.setUniformZ(0);
             if (!_button) {
-                this.material = DIALOG.DialogSys.ORANGE[1];
-                this.verticalMargin = 0.02;
+                _this.material = DIALOG.DialogSys.ORANGE[1];
+                _this.verticalMargin = 0.02;
             }
+            return _this;
         }
         // =================================== Appearance Methods ====================================
         /**
@@ -1263,11 +2375,18 @@ var DIALOG;
             ret._calcRequiredSize();
             return ret;
         };
-        Label.NO_MERGING = false;
         return Label;
     }(DIALOG.BasePanel));
+    Label.NO_MERGING = false;
     DIALOG.Label = Label;
 })(DIALOG || (DIALOG = {}));
+
+
+
+
+
+
+
 /// <reference path="./Panel.ts"/>
 /// <reference path="./Label.ts"/>
 var DIALOG;
@@ -1281,13 +2400,13 @@ var DIALOG;
          */
         function Button(label, _button_type, typeFace) {
             if (_button_type === void 0) { _button_type = Button.ACTION_BUTTON; }
-            _super.call(this, label, typeFace, null, true);
-            this._button_type = _button_type;
+            var _this = _super.call(this, label, typeFace, null, true) || this;
+            _this._button_type = _button_type;
             // afterRender items
-            this._chngInProgress = false;
+            _this._chngInProgress = false;
             // for disolving
-            this._sysHideButton = false;
-            this._disolvedState = 1;
+            _this._sysHideButton = false;
+            _this._disolvedState = 1;
             // initialize the 2 materials for button on first call
             if (!Button.MAT) {
                 var multiMaterial = new BABYLON.MultiMaterial("button", DIALOG.DialogSys._scene);
@@ -1300,23 +2419,24 @@ var DIALOG;
                 Button.SELECTED_MAT = multiMaterial;
             }
             // customize settings for buttons            
-            this.setBorderVisible(true);
-            this.borderInsideVert *= 1.5;
-            this.horizontalMargin *= 1.5;
-            this.verticalMargin *= 1.5;
-            this.setFontSize(0.65);
-            this.setSelected(false); // assigns the multi material too
-            this.enableButton(true); // assigns the material of the letters too
-            var ref = this;
-            this.registerPickAction(function () {
+            _this.setBorderVisible(true);
+            _this.borderInsideVert *= 1.5;
+            _this.horizontalMargin *= 1.5;
+            _this.verticalMargin *= 1.5;
+            _this.setFontSize(0.65);
+            _this.setSelected(false); // assigns the multi material too
+            _this.enableButton(true); // assigns the material of the letters too
+            var ref = _this;
+            _this.registerPickAction(function () {
                 if (!ref._panelEnabled)
                     return;
                 ref.setSelected(true);
             });
             //register after Renderer, when Button.ACTION_BUTTON
-            if (this._button_type === Button.ACTION_BUTTON) {
-                _super.prototype.registerAfterRender.call(this, Button._delayedStart);
+            if (_this._button_type === Button.ACTION_BUTTON) {
+                _super.prototype.registerAfterRender.call(_this, Button._delayedStart);
             }
+            return _this;
         }
         /**
         * _delayedStart() registered only for Button.ACTION_BUTTON types
@@ -1437,610 +2557,15 @@ var DIALOG;
             enumerable: true,
             configurable: true
         });
-        Button.DISOLVE_STEP_RATE = 0.012; // @ 60 FPS, 1.39 seconds
-        // ========================================== Enums  =========================================    
-        Button._ACTION_BUTTON = 0;
-        Button._RADIO_BUTTON = 2;
         return Button;
     }(DIALOG.Label));
+    Button.DISOLVE_STEP_RATE = 0.012; // @ 60 FPS, 1.39 seconds
+    // ========================================== Enums  =========================================    
+    Button._ACTION_BUTTON = 0;
+    Button._RADIO_BUTTON = 2;
     DIALOG.Button = Button;
 })(DIALOG || (DIALOG = {}));
-// File generated with Tower of Babel version: 2.2.0 on 05/15/15
-var DigitParts;
-(function (DigitParts) {
-    var meshLib = new Array(3);
-    var cloneCount = 1;
-    var originalVerts = 0;
-    var clonedVerts = 0;
-    var MeshFactory = (function () {
-        function MeshFactory(_scene, materialsRootDir) {
-            if (materialsRootDir === void 0) { materialsRootDir = "./"; }
-            this._scene = _scene;
-            DigitParts.defineMaterials(_scene, materialsRootDir); //embedded version check
-        }
-        MeshFactory.prototype.getModuleName = function () { return "DigitParts"; };
-        MeshFactory.prototype.instance = function (meshName, cloneSkeleton) {
-            var ret = null;
-            var src;
-            switch (meshName) {
-                case "Geometry":
-                    src = getViable(0, true);
-                    if (src === null) {
-                        ret = new Geometry("Geometry", this._scene);
-                        originalVerts += ret.getTotalVertices();
-                        meshLib[0].push(ret);
-                    }
-                    else {
-                        ret = new Geometry("Geometry" + "_" + cloneCount++, this._scene, null, src);
-                        clonedVerts += ret.getTotalVertices();
-                    }
-                    break;
-                case "Down":
-                    src = getViable(1);
-                    if (src === null) {
-                        ret = new Down("Down", this._scene);
-                        originalVerts += ret.getTotalVertices();
-                        meshLib[1].push(ret);
-                    }
-                    else {
-                        ret = new Down("Down" + "_" + cloneCount++, this._scene, null, src);
-                        clonedVerts += ret.getTotalVertices();
-                    }
-                    break;
-                case "Up":
-                    src = getViable(2);
-                    if (src === null) {
-                        ret = new Up("Up", this._scene);
-                        originalVerts += ret.getTotalVertices();
-                        meshLib[2].push(ret);
-                    }
-                    else {
-                        ret = new Up("Up" + "_" + cloneCount++, this._scene, null, src);
-                        clonedVerts += ret.getTotalVertices();
-                    }
-                    break;
-            }
-            if (ret !== null) {
-                if (cloneSkeleton && src && src.skeleton) {
-                    var skelName = src.skeleton.name + cloneCount;
-                    ret.skeleton = src.skeleton.clone(skelName, skelName);
-                }
-            }
-            else
-                BABYLON.Tools.Error("Mesh not found: " + meshName);
-            return ret;
-        };
-        return MeshFactory;
-    }());
-    DigitParts.MeshFactory = MeshFactory;
-    function getViable(libIdx, isNode) {
-        var meshes = meshLib[libIdx];
-        if (!meshes || meshes === null) {
-            if (!meshes)
-                meshLib[libIdx] = new Array();
-            return null;
-        }
-        for (var i = meshes.length - 1; i >= 0; i--) {
-            if (meshes[i].geometry || isNode)
-                return meshes[i];
-        }
-        return null;
-    }
-    function clean(libIdx) {
-        var meshes = meshLib[libIdx];
-        if (!meshes || meshes === null)
-            return;
-        var stillViable = false;
-        for (var i = meshes.length - 1; i >= 0; i--) {
-            if (!meshes[i].geometry)
-                meshes[i] = null;
-            else
-                stillViable = true;
-        }
-        if (!stillViable)
-            meshLib[libIdx] = null;
-    }
-    function getStats() { return [cloneCount, originalVerts, clonedVerts]; }
-    DigitParts.getStats = getStats;
-    var matLoaded = false;
-    // to keep from checkReadyOnlyOnce = true, defineMaterials() must be explicitly called with neverCheckReadyOnlyOnce = true,
-    // before any other functions in this module
-    function defineMaterials(scene, materialsRootDir, neverCheckReadyOnlyOnce) {
-        if (materialsRootDir === void 0) { materialsRootDir = "./"; }
-        if (neverCheckReadyOnlyOnce === void 0) { neverCheckReadyOnlyOnce = false; }
-        if (!BABYLON.Engine.Version || Number(BABYLON.Engine.Version.substr(0, BABYLON.Engine.Version.lastIndexOf("."))) < 2.0)
-            throw "Babylon version too old";
-        if (matLoaded)
-            return;
-        if (materialsRootDir.lastIndexOf("/") + 1 !== materialsRootDir.length) {
-            materialsRootDir += "/";
-        }
-        var material;
-        var texture;
-        material = new BABYLON.StandardMaterial("DigitParts.border", scene);
-        material.ambientColor = new BABYLON.Color3(0.0574, 0.8, 0.0876);
-        material.diffuseColor = new BABYLON.Color3(0.0459, 0.64, 0.0701);
-        material.specularColor = new BABYLON.Color3(0.5, 0.5, 0.5);
-        material.emissiveColor = new BABYLON.Color3(0, 0, 0);
-        material.specularPower = 50;
-        material.alpha = 1;
-        material.backFaceCulling = true;
-        material.checkReadyOnlyOnce = !neverCheckReadyOnlyOnce;
-        material = new BABYLON.StandardMaterial("DigitParts.border.001", scene);
-        material.ambientColor = new BABYLON.Color3(0.0574, 0.8, 0.0876);
-        material.diffuseColor = new BABYLON.Color3(0.0459, 0.64, 0.0701);
-        material.specularColor = new BABYLON.Color3(0.5, 0.5, 0.5);
-        material.emissiveColor = new BABYLON.Color3(0, 0, 0);
-        material.specularPower = 50;
-        material.alpha = 1;
-        material.backFaceCulling = true;
-        material.checkReadyOnlyOnce = !neverCheckReadyOnlyOnce;
-        material = new BABYLON.StandardMaterial("DigitParts.face", scene);
-        material.ambientColor = new BABYLON.Color3(0.8, 0.1603, 0.7314);
-        material.diffuseColor = new BABYLON.Color3(0.64, 0.1283, 0.5851);
-        material.specularColor = new BABYLON.Color3(0.5, 0.5, 0.5);
-        material.emissiveColor = new BABYLON.Color3(0, 0, 0);
-        material.specularPower = 50;
-        material.alpha = 1;
-        material.backFaceCulling = true;
-        material.checkReadyOnlyOnce = !neverCheckReadyOnlyOnce;
-        material = new BABYLON.StandardMaterial("DigitParts.face.001", scene);
-        material.ambientColor = new BABYLON.Color3(0.8, 0.1603, 0.7314);
-        material.diffuseColor = new BABYLON.Color3(0.64, 0.1283, 0.5851);
-        material.specularColor = new BABYLON.Color3(0.5, 0.5, 0.5);
-        material.emissiveColor = new BABYLON.Color3(0, 0, 0);
-        material.specularPower = 50;
-        material.alpha = 1;
-        material.backFaceCulling = true;
-        material.checkReadyOnlyOnce = !neverCheckReadyOnlyOnce;
-        defineMultiMaterials(scene);
-        matLoaded = true;
-    }
-    DigitParts.defineMaterials = defineMaterials;
-    function defineMultiMaterials(scene) {
-        if (!BABYLON.Engine.Version || Number(BABYLON.Engine.Version.substr(0, BABYLON.Engine.Version.lastIndexOf("."))) < 2.0)
-            throw "Babylon version too old";
-        var multiMaterial;
-        multiMaterial = new BABYLON.MultiMaterial("DigitParts.Multimaterial#0", scene);
-        multiMaterial.id = "DigitParts.Multimaterial#0";
-        multiMaterial.subMaterials.push(scene.getMaterialByID("DigitParts.border"));
-        multiMaterial.subMaterials.push(scene.getMaterialByID("DigitParts.face"));
-        multiMaterial = new BABYLON.MultiMaterial("DigitParts.Multimaterial#1", scene);
-        multiMaterial.id = "DigitParts.Multimaterial#1";
-        multiMaterial.subMaterials.push(scene.getMaterialByID("DigitParts.border.001"));
-        multiMaterial.subMaterials.push(scene.getMaterialByID("DigitParts.face.001"));
-    }
-    DigitParts.defineMultiMaterials = defineMultiMaterials;
-    var Geometry = (function (_super) {
-        __extends(Geometry, _super);
-        function Geometry(name, scene, materialsRootDir, source) {
-            if (materialsRootDir === void 0) { materialsRootDir = "./"; }
-            _super.call(this, name, scene, null, source, true);
-            DigitParts.defineMaterials(scene, materialsRootDir); //embedded version check
-            var cloning = source && source !== null;
-            this.botLeft = cloning ? child_botLeft(scene, this, source.botLeft) : child_botLeft(scene, this);
-            this.topLeft = cloning ? child_topLeft(scene, this, source.topLeft) : child_topLeft(scene, this);
-            this.top = cloning ? child_top(scene, this, source.top) : child_top(scene, this);
-            this.topRite = cloning ? child_topRite(scene, this, source.topRite) : child_topRite(scene, this);
-            this.botRite = cloning ? child_botRite(scene, this, source.botRite) : child_botRite(scene, this);
-            this.bottom = cloning ? child_bottom(scene, this, source.bottom) : child_bottom(scene, this);
-            this.dot = cloning ? child_dot(scene, this, source.dot) : child_dot(scene, this);
-            this.center = cloning ? child_center(scene, this, source.center) : child_center(scene, this);
-            this.id = this.name;
-            this.billboardMode = 0;
-            this.position.x = 0;
-            this.position.y = 0;
-            this.position.z = 0;
-            this.rotation.x = 0;
-            this.rotation.y = 0;
-            this.rotation.z = 0;
-            this.scaling.x = 1;
-            this.scaling.y = 0.9523;
-            this.scaling.z = 1;
-            this.isVisible = false;
-            this.setEnabled(true);
-            this.checkCollisions = false;
-            this.receiveShadows = false;
-            this["castShadows"] = false; // typescript safe
-        }
-        Geometry.prototype.dispose = function (doNotRecurse) {
-            _super.prototype.dispose.call(this, doNotRecurse);
-            clean(0);
-        };
-        return Geometry;
-    }(BABYLON.Mesh));
-    DigitParts.Geometry = Geometry;
-    function child_botLeft(scene, parent, source) {
-        if (!BABYLON.Engine.Version || Number(BABYLON.Engine.Version.substr(0, BABYLON.Engine.Version.lastIndexOf("."))) < 2.0)
-            throw "Babylon version too old";
-        var ret = new BABYLON.Mesh(parent.name + ".botLeft", scene, parent, source);
-        var cloning = source && source !== null;
-        ret.id = ret.name;
-        ret.billboardMode = 0;
-        ret.position.x = 0;
-        ret.position.y = 0;
-        ret.position.z = 0;
-        ret.rotation.x = 0;
-        ret.rotation.y = 0;
-        ret.rotation.z = 0;
-        ret.scaling.x = 1;
-        ret.scaling.y = 1;
-        ret.scaling.z = 1;
-        ret.isVisible = true;
-        ret.setEnabled(true);
-        ret.checkCollisions = false;
-        ret.receiveShadows = false;
-        ret["castShadows"] = false; // typescript safe
-        if (!cloning) {
-            ret.setVerticesData(BABYLON.VertexBuffer.PositionKind, [
-                0.12, 0.12, 0, 0.12, 0.46, 0, 0, 0.46, 0, 0, 0.12, 0, 0, 0, 0, 0.12, 0.12, 0, 0, 0.5196, 0, 0, 0.46, 0, 0.1198, 0.46, 0, 0, 0.12, 0
-            ], false);
-            ret.setVerticesData(BABYLON.VertexBuffer.NormalKind, [
-                0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1
-            ], false);
-            ret.setIndices([
-                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 2
-            ]);
-            ret.subMeshes = [];
-            new BABYLON.SubMesh(0, 0, 10, 0, 12, ret);
-            ret.computeWorldMatrix(true);
-        }
-        return ret;
-    }
-    function child_topLeft(scene, parent, source) {
-        if (!BABYLON.Engine.Version || Number(BABYLON.Engine.Version.substr(0, BABYLON.Engine.Version.lastIndexOf("."))) < 2.0)
-            throw "Babylon version too old";
-        var ret = new BABYLON.Mesh(parent.name + ".topLeft", scene, parent, source);
-        var cloning = source && source !== null;
-        ret.id = ret.name;
-        ret.billboardMode = 0;
-        ret.position.x = 0;
-        ret.position.y = 0.5396;
-        ret.position.z = 0;
-        ret.rotation.x = 0;
-        ret.rotation.y = 0;
-        ret.rotation.z = 0;
-        ret.scaling.x = 1;
-        ret.scaling.y = 1;
-        ret.scaling.z = 1;
-        ret.isVisible = true;
-        ret.setEnabled(true);
-        ret.checkCollisions = false;
-        ret.receiveShadows = false;
-        ret["castShadows"] = false; // typescript safe
-        if (!cloning) {
-            ret.setVerticesData(BABYLON.VertexBuffer.PositionKind, [
-                0, 0.0596, 0, 0.12, 0.0596, 0, 0.12, 0.3996, 0, 0, 0.3996, 0, 0.12, 0.3996, 0, 0, 0.5196, 0, 0, 0, 0, 0.1198, 0.0596, 0, 0, 0.0596, 0, 0, 0.3996, 0
-            ], false);
-            ret.setVerticesData(BABYLON.VertexBuffer.NormalKind, [
-                0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1
-            ], false);
-            ret.setIndices([
-                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 2
-            ]);
-            ret.subMeshes = [];
-            new BABYLON.SubMesh(0, 0, 10, 0, 12, ret);
-            ret.computeWorldMatrix(true);
-        }
-        return ret;
-    }
-    function child_top(scene, parent, source) {
-        if (!BABYLON.Engine.Version || Number(BABYLON.Engine.Version.substr(0, BABYLON.Engine.Version.lastIndexOf("."))) < 2.0)
-            throw "Babylon version too old";
-        var ret = new BABYLON.Mesh(parent.name + ".top", scene, parent, source);
-        var cloning = source && source !== null;
-        ret.id = ret.name;
-        ret.billboardMode = 0;
-        ret.position.x = 0.03;
-        ret.position.y = 1.0579;
-        ret.position.z = 0;
-        ret.rotation.x = 0;
-        ret.rotation.y = 0;
-        ret.rotation.z = 0;
-        ret.scaling.x = 1;
-        ret.scaling.y = 1;
-        ret.scaling.z = 1;
-        ret.isVisible = true;
-        ret.setEnabled(true);
-        ret.checkCollisions = false;
-        ret.receiveShadows = false;
-        ret["castShadows"] = false; // typescript safe
-        if (!cloning) {
-            ret.setVerticesData(BABYLON.VertexBuffer.PositionKind, [
-                0.42, 0, 0, 0.12, 0, 0, 0.12, -0.12, 0, 0.42, 0, 0, 0.42, -0.12, 0, 0.54, 0, 0, 0.12, 0, 0, 0, 0, 0, 0.12, -0.12, 0, 0.42, -0.12, 0
-            ], false);
-            ret.setVerticesData(BABYLON.VertexBuffer.NormalKind, [
-                0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1
-            ], false);
-            ret.setIndices([
-                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 2
-            ]);
-            ret.subMeshes = [];
-            new BABYLON.SubMesh(0, 0, 10, 0, 12, ret);
-            ret.computeWorldMatrix(true);
-        }
-        return ret;
-    }
-    function child_topRite(scene, parent, source) {
-        if (!BABYLON.Engine.Version || Number(BABYLON.Engine.Version.substr(0, BABYLON.Engine.Version.lastIndexOf("."))) < 2.0)
-            throw "Babylon version too old";
-        var ret = new BABYLON.Mesh(parent.name + ".topRite", scene, parent, source);
-        var cloning = source && source !== null;
-        ret.id = ret.name;
-        ret.billboardMode = 0;
-        ret.position.x = 0.6;
-        ret.position.y = 0.5396;
-        ret.position.z = 0;
-        ret.rotation.x = 0;
-        ret.rotation.y = 0;
-        ret.rotation.z = 0;
-        ret.scaling.x = 1;
-        ret.scaling.y = 1;
-        ret.scaling.z = 1;
-        ret.isVisible = true;
-        ret.setEnabled(true);
-        ret.checkCollisions = false;
-        ret.receiveShadows = false;
-        ret["castShadows"] = false; // typescript safe
-        if (!cloning) {
-            ret.setVerticesData(BABYLON.VertexBuffer.PositionKind, [
-                -0.12, 0.3996, 0, -0.12, 0.0596, 0, 0, 0.0596, 0, 0, 0.3996, 0, 0, 0.5196, 0, -0.12, 0.3996, 0, 0, 0, 0, 0, 0.0596, 0, -0.1198, 0.0596, 0, 0, 0.3996, 0
-            ], false);
-            ret.setVerticesData(BABYLON.VertexBuffer.NormalKind, [
-                0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1
-            ], false);
-            ret.setIndices([
-                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 2
-            ]);
-            ret.subMeshes = [];
-            new BABYLON.SubMesh(0, 0, 10, 0, 12, ret);
-            ret.computeWorldMatrix(true);
-        }
-        return ret;
-    }
-    function child_botRite(scene, parent, source) {
-        if (!BABYLON.Engine.Version || Number(BABYLON.Engine.Version.substr(0, BABYLON.Engine.Version.lastIndexOf("."))) < 2.0)
-            throw "Babylon version too old";
-        var ret = new BABYLON.Mesh(parent.name + ".botRite", scene, parent, source);
-        var cloning = source && source !== null;
-        ret.id = ret.name;
-        ret.billboardMode = 0;
-        ret.position.x = 0.6;
-        ret.position.y = 0.5196;
-        ret.position.z = 0;
-        ret.rotation.x = 0;
-        ret.rotation.y = 0;
-        ret.rotation.z = 0;
-        ret.scaling.x = 1;
-        ret.scaling.y = 1;
-        ret.scaling.z = 1;
-        ret.isVisible = true;
-        ret.setEnabled(true);
-        ret.checkCollisions = false;
-        ret.receiveShadows = false;
-        ret["castShadows"] = false; // typescript safe
-        if (!cloning) {
-            ret.setVerticesData(BABYLON.VertexBuffer.PositionKind, [
-                0, -0.0596, 0, -0.12, -0.0596, 0, -0.12, -0.3996, 0, 0, -0.3996, 0, -0.12, -0.3996, 0, 0, -0.5196, 0, 0, 0, 0, -0.1198, -0.0596, 0, 0, -0.0596, 0, 0, -0.3996, 0
-            ], false);
-            ret.setVerticesData(BABYLON.VertexBuffer.NormalKind, [
-                0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1
-            ], false);
-            ret.setIndices([
-                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 2
-            ]);
-            ret.subMeshes = [];
-            new BABYLON.SubMesh(0, 0, 10, 0, 12, ret);
-            ret.computeWorldMatrix(true);
-        }
-        return ret;
-    }
-    function child_bottom(scene, parent, source) {
-        if (!BABYLON.Engine.Version || Number(BABYLON.Engine.Version.substr(0, BABYLON.Engine.Version.lastIndexOf("."))) < 2.0)
-            throw "Babylon version too old";
-        var ret = new BABYLON.Mesh(parent.name + ".bottom", scene, parent, source);
-        var cloning = source && source !== null;
-        ret.id = ret.name;
-        ret.billboardMode = 0;
-        ret.position.x = 0.03;
-        ret.position.y = 0;
-        ret.position.z = 0;
-        ret.rotation.x = 0;
-        ret.rotation.y = 0;
-        ret.rotation.z = 0;
-        ret.scaling.x = 1;
-        ret.scaling.y = 1;
-        ret.scaling.z = 1;
-        ret.isVisible = true;
-        ret.setEnabled(true);
-        ret.checkCollisions = false;
-        ret.receiveShadows = false;
-        ret["castShadows"] = false; // typescript safe
-        if (!cloning) {
-            ret.setVerticesData(BABYLON.VertexBuffer.PositionKind, [
-                0.12, 0.12, 0, 0.12, 0, 0, 0.42, 0, 0, 0.12, 0, 0, 0.12, 0.12, 0, 0, 0, 0, 0.42, 0, 0, 0.54, 0, 0, 0.42, 0.12, 0, 0.42, 0.12, 0
-            ], false);
-            ret.setVerticesData(BABYLON.VertexBuffer.NormalKind, [
-                0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1
-            ], false);
-            ret.setIndices([
-                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 2
-            ]);
-            ret.subMeshes = [];
-            new BABYLON.SubMesh(0, 0, 10, 0, 12, ret);
-            ret.computeWorldMatrix(true);
-        }
-        return ret;
-    }
-    function child_dot(scene, parent, source) {
-        if (!BABYLON.Engine.Version || Number(BABYLON.Engine.Version.substr(0, BABYLON.Engine.Version.lastIndexOf("."))) < 2.0)
-            throw "Babylon version too old";
-        var ret = new BABYLON.Mesh(parent.name + ".dot", scene, parent, source);
-        var cloning = source && source !== null;
-        ret.id = ret.name;
-        ret.billboardMode = 0;
-        ret.position.x = 0.64;
-        ret.position.y = -0.0004;
-        ret.position.z = 0;
-        ret.rotation.x = 0;
-        ret.rotation.y = 0;
-        ret.rotation.z = 0;
-        ret.scaling.x = 1;
-        ret.scaling.y = 1;
-        ret.scaling.z = 1;
-        ret.isVisible = true;
-        ret.setEnabled(true);
-        ret.checkCollisions = false;
-        ret.receiveShadows = false;
-        ret["castShadows"] = false; // typescript safe
-        if (!cloning) {
-            ret.setVerticesData(BABYLON.VertexBuffer.PositionKind, [
-                0.12, 0, 0, 0.12, 0.12, 0, 0, 0.12, 0, 0, 0, 0
-            ], false);
-            ret.setVerticesData(BABYLON.VertexBuffer.NormalKind, [
-                0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1
-            ], false);
-            ret.setIndices([
-                0, 1, 2, 3, 0, 2
-            ]);
-            ret.subMeshes = [];
-            new BABYLON.SubMesh(0, 0, 4, 0, 6, ret);
-            ret.computeWorldMatrix(true);
-        }
-        return ret;
-    }
-    function child_center(scene, parent, source) {
-        if (!BABYLON.Engine.Version || Number(BABYLON.Engine.Version.substr(0, BABYLON.Engine.Version.lastIndexOf("."))) < 2.0)
-            throw "Babylon version too old";
-        var ret = new BABYLON.Mesh(parent.name + ".center", scene, parent, source);
-        var cloning = source && source !== null;
-        ret.id = ret.name;
-        ret.billboardMode = 0;
-        ret.position.x = 0.3;
-        ret.position.y = 0.5296;
-        ret.position.z = 0;
-        ret.rotation.x = 0;
-        ret.rotation.y = 0;
-        ret.rotation.z = 0;
-        ret.scaling.x = 1;
-        ret.scaling.y = 1;
-        ret.scaling.z = 1;
-        ret.isVisible = true;
-        ret.setEnabled(true);
-        ret.checkCollisions = false;
-        ret.receiveShadows = false;
-        ret["castShadows"] = false; // typescript safe
-        if (!cloning) {
-            ret.setVerticesData(BABYLON.VertexBuffer.PositionKind, [
-                -0.1451, -0.06, 0, -0.1451, 0.06, 0, -0.27, -0.0004, 0, -0.0289, -0.06, 0, 0.1449, -0.06, 0, -0.0289, 0.06, 0, 0.1449, 0.06, 0, 0.27, 0, 0
-            ], false);
-            ret.setVerticesData(BABYLON.VertexBuffer.NormalKind, [
-                0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1
-            ], false);
-            ret.setIndices([
-                0, 1, 2, 3, 4, 5, 6, 4, 7, 1, 0, 3, 4, 6, 5, 5, 1, 3
-            ]);
-            ret.subMeshes = [];
-            new BABYLON.SubMesh(0, 0, 8, 0, 18, ret);
-            ret.computeWorldMatrix(true);
-        }
-        return ret;
-    }
-    var Down = (function (_super) {
-        __extends(Down, _super);
-        function Down(name, scene, materialsRootDir, source) {
-            if (materialsRootDir === void 0) { materialsRootDir = "./"; }
-            _super.call(this, name, scene, null, source, true);
-            DigitParts.defineMaterials(scene, materialsRootDir); //embedded version check
-            var cloning = source && source !== null;
-            this.id = this.name;
-            this.billboardMode = 0;
-            this.position.x = 0;
-            this.position.y = 0;
-            this.position.z = 0;
-            this.rotation.x = 0;
-            this.rotation.y = 0;
-            this.rotation.z = 0;
-            this.scaling.x = 1;
-            this.scaling.y = 0.9523;
-            this.scaling.z = 1;
-            this.isVisible = true;
-            this.setEnabled(true);
-            this.checkCollisions = false;
-            this.receiveShadows = false;
-            this["castShadows"] = false; // typescript safe
-            if (!cloning) {
-                this.setVerticesData(BABYLON.VertexBuffer.PositionKind, [
-                    0, -0.0034, 0, 0.0024, -0.0017, 0, 0, 0, 0, 0.8105, -0.6441, 0.02, 0.8105, 0.6359, 0.02, -0.0866, -0.0021, 0.02, -0.0895, -0.0041, 0.02, -0.0895, 0, 0.02, 0.75, -0.5368, 0, 0.75, 0.5299, 0, 0.0024, -0.0017, 0
-                ], false);
-                this.setVerticesData(BABYLON.VertexBuffer.NormalKind, [
-                    0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1
-                ], false);
-                this.setIndices([
-                    0, 1, 2, 3, 4, 5, 6, 5, 7, 8, 9, 10
-                ]);
-                this.setMaterialByID("DigitParts.Multimaterial#0");
-                this.subMeshes = [];
-                new BABYLON.SubMesh(0, 0, 8, 0, 9, this);
-                new BABYLON.SubMesh(1, 8, 3, 9, 3, this);
-                this.computeWorldMatrix(true);
-            }
-        }
-        Down.prototype.dispose = function (doNotRecurse) {
-            _super.prototype.dispose.call(this, doNotRecurse);
-            clean(1);
-        };
-        return Down;
-    }(DIALOG.Letter));
-    DigitParts.Down = Down;
-    var Up = (function (_super) {
-        __extends(Up, _super);
-        function Up(name, scene, materialsRootDir, source) {
-            if (materialsRootDir === void 0) { materialsRootDir = "./"; }
-            _super.call(this, name, scene, null, source, true);
-            DigitParts.defineMaterials(scene, materialsRootDir); //embedded version check
-            var cloning = source && source !== null;
-            this.id = this.name;
-            this.billboardMode = 0;
-            this.position.x = 0;
-            this.position.y = 0;
-            this.position.z = 0;
-            this.rotation.x = 0;
-            this.rotation.y = 0;
-            this.rotation.z = 0;
-            this.scaling.x = 1;
-            this.scaling.y = 0.9523;
-            this.scaling.z = 1;
-            this.isVisible = true;
-            this.setEnabled(true);
-            this.checkCollisions = false;
-            this.receiveShadows = false;
-            this["castShadows"] = false; // typescript safe
-            if (!cloning) {
-                this.setVerticesData(BABYLON.VertexBuffer.PositionKind, [
-                    0, 0.0034, 0, -0.0024, 0.0017, 0, 0, 0, 0, -0.8105, 0.6441, 0.02, -0.8105, -0.6359, 0.02, 0.0866, 0.0021, 0.02, 0.0895, 0.0041, 0.02, 0.0895, 0, 0.02, -0.75, 0.5368, 0, -0.75, -0.5299, 0, -0.0024, 0.0017, 0
-                ], false);
-                this.setVerticesData(BABYLON.VertexBuffer.NormalKind, [
-                    0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1
-                ], false);
-                this.setIndices([
-                    0, 1, 2, 3, 4, 5, 6, 5, 7, 8, 9, 10
-                ]);
-                this.setMaterialByID("DigitParts.Multimaterial#1");
-                this.subMeshes = [];
-                new BABYLON.SubMesh(0, 0, 8, 0, 9, this);
-                new BABYLON.SubMesh(1, 8, 3, 9, 3, this);
-                this.computeWorldMatrix(true);
-            }
-        }
-        Up.prototype.dispose = function (doNotRecurse) {
-            _super.prototype.dispose.call(this, doNotRecurse);
-            clean(2);
-        };
-        return Up;
-    }(DIALOG.Letter));
-    DigitParts.Up = Up;
-})(DigitParts || (DigitParts = {}));
+
 /// <reference path="./Letter.ts"/>
 var DIALOG;
 (function (DIALOG) {
@@ -2111,6 +2636,7 @@ var DIALOG;
     }());
     DIALOG.FontFactory = FontFactory;
 })(DIALOG || (DIALOG = {}));
+
 /// <reference path="./Panel.ts"/>
 /// <reference path="./FontFactory.ts"/>
 var DIALOG;
@@ -2345,328 +2871,30 @@ var DIALOG;
         };
         Object.defineProperty(DialogSys, "Version", {
             get: function () {
-                return "1.1.1";
+                return "1.1.2";
             },
             enumerable: true,
             configurable: true
         });
-        // constants for 2 camera management
-        DialogSys.ACTIVE_DIALOG_LAYER = 0x10000000;
-        DialogSys.SUSPENDED_DIALOG_LAYER = 0;
-        DialogSys.DEFAULT_LAYERMASK = 0x0FFFFFFF; // BJS does not explicitly have
-        // state equivalent static vars
-        DialogSys._dialogStack = new Array();
-        DialogSys.USE_CULLING_MAT_FOR_2D = true;
-        DialogSys.DEPTH_SCALING_3D = .05;
         return DialogSys;
     }());
+    // constants for 2 camera management
+    DialogSys.ACTIVE_DIALOG_LAYER = 0x10000000;
+    DialogSys.SUSPENDED_DIALOG_LAYER = 0;
+    DialogSys.DEFAULT_LAYERMASK = 0x0FFFFFFF; // BJS does not explicitly have
+    // state equivalent static vars
+    DialogSys._dialogStack = new Array();
+    DialogSys.USE_CULLING_MAT_FOR_2D = true;
+    DialogSys.DEPTH_SCALING_3D = .05;
     DIALOG.DialogSys = DialogSys;
 })(DIALOG || (DIALOG = {}));
-// File generated with Tower of Babel version: 2.0.0 on 03/24/15
-var CheckBoxFont;
-(function (CheckBoxFont) {
-    var meshLib = new Array(4);
-    var cloneCount = 1;
-    var originalVerts = 0;
-    var clonedVerts = 0;
-    var MeshFactory = (function () {
-        function MeshFactory(_scene, materialsRootDir) {
-            if (materialsRootDir === void 0) { materialsRootDir = "./"; }
-            this._scene = _scene;
-            CheckBoxFont.defineMaterials(_scene, materialsRootDir); //embedded version check
-        }
-        MeshFactory.prototype.getModuleName = function () { return "CheckBoxFont"; };
-        MeshFactory.prototype.instance = function (meshName, cloneSkeleton) {
-            var ret = null;
-            var src;
-            switch (meshName) {
-                case "unchecked2D":
-                    src = getViable(0);
-                    if (src === null) {
-                        ret = new unchecked2D("unchecked2D", this._scene);
-                        originalVerts += ret.getTotalVertices();
-                        meshLib[0].push(ret);
-                    }
-                    else {
-                        ret = new unchecked2D("unchecked2D" + "_" + cloneCount++, this._scene, null, src);
-                        clonedVerts += ret.getTotalVertices();
-                    }
-                    break;
-                case "checked2D":
-                    src = getViable(1);
-                    if (src === null) {
-                        ret = new checked2D("checked2D", this._scene);
-                        originalVerts += ret.getTotalVertices();
-                        meshLib[1].push(ret);
-                    }
-                    else {
-                        ret = new checked2D("checked2D" + "_" + cloneCount++, this._scene, null, src);
-                        clonedVerts += ret.getTotalVertices();
-                    }
-                    break;
-                case "checked3D":
-                    src = getViable(2);
-                    if (src === null) {
-                        ret = new checked3D("checked3D", this._scene);
-                        originalVerts += ret.getTotalVertices();
-                        meshLib[2].push(ret);
-                    }
-                    else {
-                        ret = new checked3D("checked3D" + "_" + cloneCount++, this._scene, null, src);
-                        clonedVerts += ret.getTotalVertices();
-                    }
-                    break;
-                case "unchecked3D":
-                    src = getViable(3);
-                    if (src === null) {
-                        ret = new unchecked3D("unchecked3D", this._scene);
-                        originalVerts += ret.getTotalVertices();
-                        meshLib[3].push(ret);
-                    }
-                    else {
-                        ret = new unchecked3D("unchecked3D" + "_" + cloneCount++, this._scene, null, src);
-                        clonedVerts += ret.getTotalVertices();
-                    }
-                    break;
-            }
-            if (ret !== null) {
-                if (cloneSkeleton && src && src.skeleton) {
-                    var skelName = src.skeleton.name + cloneCount;
-                    ret.skeleton = src.skeleton.clone(skelName, skelName);
-                }
-            }
-            else
-                BABYLON.Tools.Error("Mesh not found: " + meshName);
-            return ret;
-        };
-        return MeshFactory;
-    }());
-    CheckBoxFont.MeshFactory = MeshFactory;
-    function getViable(libIdx, isNode) {
-        var meshes = meshLib[libIdx];
-        if (!meshes || meshes === null) {
-            if (!meshes)
-                meshLib[libIdx] = new Array();
-            return null;
-        }
-        for (var i = meshes.length - 1; i >= 0; i--) {
-            if (meshes[i].geometry || isNode)
-                return meshes[i];
-        }
-        return null;
-    }
-    function clean(libIdx) {
-        var meshes = meshLib[libIdx];
-        if (!meshes || meshes === null)
-            return;
-        var stillViable = false;
-        for (var i = meshes.length - 1; i >= 0; i--) {
-            if (!meshes[i].geometry)
-                meshes[i] = null;
-            else
-                stillViable = true;
-        }
-        if (!stillViable)
-            meshLib[libIdx] = null;
-    }
-    function getStats() { return [cloneCount, originalVerts, clonedVerts]; }
-    CheckBoxFont.getStats = getStats;
-    var matLoaded = false;
-    function defineMaterials(scene, materialsRootDir) {
-        if (materialsRootDir === void 0) { materialsRootDir = "./"; }
-        if (!BABYLON.Engine.Version || Number(BABYLON.Engine.Version.substr(0, BABYLON.Engine.Version.lastIndexOf("."))) < 2.0)
-            throw "Babylon version too old";
-        if (matLoaded)
-            return;
-        if (materialsRootDir.lastIndexOf("/") + 1 !== materialsRootDir.length) {
-            materialsRootDir += "/";
-        }
-        var material;
-        var texture;
-        matLoaded = true;
-    }
-    CheckBoxFont.defineMaterials = defineMaterials;
-    var unchecked2D = (function (_super) {
-        __extends(unchecked2D, _super);
-        function unchecked2D(name, scene, materialsRootDir, source) {
-            if (materialsRootDir === void 0) { materialsRootDir = "./"; }
-            _super.call(this, name, scene, null, source, true);
-            CheckBoxFont.defineMaterials(scene, materialsRootDir); //embedded version check
-            var cloning = source && source !== null;
-            this.id = this.name;
-            this.billboardMode = 0;
-            this.position.x = 0;
-            this.position.y = 0;
-            this.position.z = 0;
-            this.rotation.x = 0;
-            this.rotation.y = 0;
-            this.rotation.z = 0;
-            this.scaling.x = 1;
-            this.scaling.y = 1;
-            this.scaling.z = 1;
-            this.isVisible = true;
-            this.setEnabled(true);
-            this.checkCollisions = false;
-            this.receiveShadows = false;
-            this["castShadows"] = false; // typescript safe
-            if (!cloning) {
-                this.setVerticesData(BABYLON.VertexBuffer.PositionKind, [
-                    -0.6, 0, 0, -0.05, 0, 0, -0.05, 0.05, 0, -0.6, 0, 0, -0.6, 0.65, 0, -0.65, 0.65, 0, -0.6, 0.6, 0, -0.05, 0.6, 0, -0.05, 0.65, 0, 0, 0, 0, 0, 0.65, 0, -0.05, 0.65, 0, -0.6, 0.05, 0, -0.65, 0, 0, -0.6, 0.65, 0, -0.05, 0, 0
-                ], false);
-                this.setVerticesData(BABYLON.VertexBuffer.NormalKind, [
-                    0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1
-                ], false);
-                this.setIndices([
-                    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0, 2, 13, 3, 5, 14, 6, 8, 15, 9, 11
-                ]);
-                this.subMeshes = [];
-                new BABYLON.SubMesh(0, 0, 16, 0, 24, this);
-                this.computeWorldMatrix(true);
-            }
-        }
-        unchecked2D.prototype.dispose = function (doNotRecurse) {
-            _super.prototype.dispose.call(this, doNotRecurse);
-            clean(0);
-        };
-        return unchecked2D;
-    }(DIALOG.Letter));
-    CheckBoxFont.unchecked2D = unchecked2D;
-    var checked2D = (function (_super) {
-        __extends(checked2D, _super);
-        function checked2D(name, scene, materialsRootDir, source) {
-            if (materialsRootDir === void 0) { materialsRootDir = "./"; }
-            _super.call(this, name, scene, null, source, true);
-            CheckBoxFont.defineMaterials(scene, materialsRootDir); //embedded version check
-            var cloning = source && source !== null;
-            this.id = this.name;
-            this.billboardMode = 0;
-            this.position.x = 0;
-            this.position.y = 0;
-            this.position.z = 0;
-            this.rotation.x = 0;
-            this.rotation.y = 0;
-            this.rotation.z = 0;
-            this.scaling.x = 1;
-            this.scaling.y = 1;
-            this.scaling.z = 1;
-            this.isVisible = true;
-            this.setEnabled(true);
-            this.checkCollisions = false;
-            this.receiveShadows = false;
-            this["castShadows"] = false; // typescript safe
-            if (!cloning) {
-                this.setVerticesData(BABYLON.VertexBuffer.PositionKind, [
-                    -0.1305, 0.1659, 0, -0.4841, 0.5195, 0, -0.5195, 0.4841, 0, -0.4841, 0.1305, 0, -0.1305, 0.4841, 0, -0.1659, 0.5195, 0, -0.6, 0, 0, -0.05, 0, 0, -0.05, 0.05, 0, -0.6, 0, 0, -0.6, 0.65, 0, -0.65, 0.65, 0, -0.6, 0.6, 0, -0.05, 0.6, 0, -0.05, 0.65, 0, 0, 0, 0, 0, 0.65, 0, -0.05, 0.65, 0, -0.1659, 0.1305, 0, -0.5195, 0.1659, 0, -0.6, 0.05, 0, -0.65, 0, 0, -0.6, 0.65, 0, -0.05, 0, 0
-                ], false);
-                this.setVerticesData(BABYLON.VertexBuffer.NormalKind, [
-                    0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1
-                ], false);
-                this.setIndices([
-                    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 0, 2, 19, 3, 5, 20, 6, 8, 21, 9, 11, 22, 12, 14, 23, 15, 17
-                ]);
-                this.subMeshes = [];
-                new BABYLON.SubMesh(0, 0, 24, 0, 36, this);
-                this.computeWorldMatrix(true);
-            }
-        }
-        checked2D.prototype.dispose = function (doNotRecurse) {
-            _super.prototype.dispose.call(this, doNotRecurse);
-            clean(1);
-        };
-        return checked2D;
-    }(DIALOG.Letter));
-    CheckBoxFont.checked2D = checked2D;
-    var checked3D = (function (_super) {
-        __extends(checked3D, _super);
-        function checked3D(name, scene, materialsRootDir, source) {
-            if (materialsRootDir === void 0) { materialsRootDir = "./"; }
-            _super.call(this, name, scene, null, source, true);
-            CheckBoxFont.defineMaterials(scene, materialsRootDir); //embedded version check
-            var cloning = source && source !== null;
-            this.id = this.name;
-            this.billboardMode = 0;
-            this.position.x = 0;
-            this.position.y = 0;
-            this.position.z = 0;
-            this.rotation.x = 0;
-            this.rotation.y = 0;
-            this.rotation.z = 0;
-            this.scaling.x = 1;
-            this.scaling.y = 1;
-            this.scaling.z = 1;
-            this.isVisible = true;
-            this.setEnabled(true);
-            this.checkCollisions = false;
-            this.receiveShadows = false;
-            this["castShadows"] = false; // typescript safe
-            if (!cloning) {
-                this.setVerticesData(BABYLON.VertexBuffer.PositionKind, [
-                    -0.1305, 0.1659, 0, -0.4841, 0.5195, 0, -0.5195, 0.4841, 0, -0.1659, 0.1305, 0, -0.1659, 0.1305, 1, -0.4841, 0.5195, 1, -0.5195, 0.4841, 1, -0.4841, 0.1305, 0, -0.1305, 0.4841, 0, -0.1659, 0.5195, 0, -0.5195, 0.1659, 0, -0.5195, 0.1659, 1, -0.4841, 0.1305, 1, -0.1305, 0.4841, 1, -0.1659, 0.5195, 1, -0.6, 0, 0, -0.05, 0, 0, -0.05, 0.05, 0, -0.6, 0.05, 0, -0.6, 0.05, 1, -0.6, 0, 1, -0.05, 0, 1, -0.05, 0.05, 1, -0.6, 0, 0, -0.6, 0.65, 0, -0.65, 0.65, 0, -0.6, 0, 1, -0.65, 0, 0, -0.6, 0.65, 1, -0.65, 0.65, 1, -0.6, 0.6, 0, -0.05, 0.6, 0, -0.05, 0.65, 0, -0.6, 0.6, 1, -0.6, 0.65, 0, -0.05, 0.65, 1, 0, 0, 0, 0, 0.65, 0, -0.05, 0.65, 0, 0, 0, 1, -0.05, 0, 0, 0, 0.65, 1, -0.05, 0.65, 1, -0.1305, 0.1659, 1, -0.65, 0, 1, -0.6, 0.65, 1, -0.05, 0.6, 1, -0.05, 0, 1
-                ], false);
-                this.setVerticesData(BABYLON.VertexBuffer.NormalKind, [
-                    0.8165, 0, -0.5773, 0, 0.8165, -0.5773, -0.8165, 0, -0.5773, 0, -0.8165, -0.5773, 0, -1, 0, 0, 1, 0, -1, 0, 0, 0, -0.8165, -0.5773, 0.8165, 0, -0.5773, 0, 0.8165, -0.5773, -0.8165, 0, -0.5773, -1, 0, 0, 0, -1, 0, 1, 0, 0, 0, 1, 0, -0.5773, -0.5773, -0.5773, 0.5773, -0.5773, -0.5773, 0.5773, 0.5773, -0.5773, -0.5773, 0.5773, -0.5773, -0.7071, 0.7071, 0, -0.7071, -0.7071, 0, 0.7071, -0.7071, 0, 0.7071, 0.7071, 0, 0.5773, -0.5773, -0.5773, 0.5773, 0.5773, -0.5773, -0.5773, 0.5773, -0.5773, 0.7071, -0.7071, 0, -0.5773, -0.5773, -0.5773, 0.7071, 0.7071, 0, -0.7071, 0.7071, 0, -0.5773, -0.5773, -0.5773, 0.5773, -0.5773, -0.5773, 0.5773, 0.5773, -0.5773, -0.7071, -0.7071, 0, -0.5773, 0.5773, -0.5773, 0.7071, 0.7071, 0, 0.5773, -0.5773, -0.5773, 0.5773, 0.5773, -0.5773, -0.5773, 0.5773, -0.5773, 0.7071, -0.7071, 0, -0.5773, -0.5773, -0.5773, 0.7071, 0.7071, 0, -0.7071, 0.7071, 0, 1, 0, 0, -0.7071, -0.7071, 0, -0.7071, 0.7071, 0, 0.7071, -0.7071, 0, -0.7071, -0.7071, 0
-                ], false);
-                this.setIndices([
-                    0, 1, 2, 0, 3, 4, 5, 1, 0, 2, 1, 5, 3, 2, 6, 7, 8, 9, 7, 10, 11, 8, 7, 12, 9, 8, 13, 10, 9, 14, 15, 16, 17, 15, 18, 19, 16, 15, 20, 17, 16, 21, 18, 17, 22, 23, 24, 25, 26, 23, 27, 28, 24, 23, 29, 25, 24, 27, 25, 29, 30, 31, 32, 33, 30, 34, 31, 30, 33, 35, 32, 31, 34, 32, 35, 36, 37, 38, 39, 36, 40, 41, 37, 36, 42, 38, 37, 40, 38, 42, 3, 0, 2, 43, 0, 4, 43, 5, 0, 6, 2, 5, 4, 3, 6, 10, 7, 9, 12, 7, 11, 13, 8, 12, 14, 9, 13, 11, 10, 14, 18, 15, 17, 20, 15, 19, 21, 16, 20, 22, 17, 21, 19, 18, 22, 27, 23, 25, 44, 26, 27, 26, 28, 23, 28, 29, 24, 44, 27, 29, 34, 30, 32, 45, 33, 34, 46, 31, 33, 46, 35, 31, 45, 34, 35, 40, 36, 38, 47, 39, 40, 39, 41, 36, 41, 42, 37, 47, 40, 42
-                ]);
-                this.subMeshes = [];
-                new BABYLON.SubMesh(0, 0, 48, 0, 180, this);
-                this.computeWorldMatrix(true);
-            }
-        }
-        checked3D.prototype.dispose = function (doNotRecurse) {
-            _super.prototype.dispose.call(this, doNotRecurse);
-            clean(2);
-        };
-        return checked3D;
-    }(DIALOG.Letter));
-    CheckBoxFont.checked3D = checked3D;
-    var unchecked3D = (function (_super) {
-        __extends(unchecked3D, _super);
-        function unchecked3D(name, scene, materialsRootDir, source) {
-            if (materialsRootDir === void 0) { materialsRootDir = "./"; }
-            _super.call(this, name, scene, null, source, true);
-            CheckBoxFont.defineMaterials(scene, materialsRootDir); //embedded version check
-            var cloning = source && source !== null;
-            this.id = this.name;
-            this.billboardMode = 0;
-            this.position.x = 0;
-            this.position.y = 0;
-            this.position.z = 0;
-            this.rotation.x = 0;
-            this.rotation.y = 0;
-            this.rotation.z = 0;
-            this.scaling.x = 1;
-            this.scaling.y = 1;
-            this.scaling.z = 1;
-            this.isVisible = true;
-            this.setEnabled(true);
-            this.checkCollisions = false;
-            this.receiveShadows = false;
-            this["castShadows"] = false; // typescript safe
-            if (!cloning) {
-                this.setVerticesData(BABYLON.VertexBuffer.PositionKind, [
-                    -0.6, 0, 0, -0.05, 0, 0, -0.05, 0.05, 0, -0.6, 0.05, 0, -0.6, 0.05, 1, -0.6, 0, 1, -0.05, 0, 1, -0.05, 0.05, 1, -0.6, 0, 0, -0.6, 0.65, 0, -0.65, 0.65, 0, -0.6, 0, 1, -0.65, 0, 0, -0.6, 0.65, 1, -0.65, 0.65, 1, -0.6, 0.6, 0, -0.05, 0.6, 0, -0.05, 0.65, 0, -0.6, 0.6, 1, -0.6, 0.65, 0, -0.05, 0.65, 1, 0, 0, 0, 0, 0.65, 0, -0.05, 0.65, 0, 0, 0, 1, -0.05, 0, 0, 0, 0.65, 1, -0.05, 0.65, 1, -0.65, 0, 1, -0.6, 0.65, 1, -0.05, 0.6, 1, -0.05, 0, 1
-                ], false);
-                this.setVerticesData(BABYLON.VertexBuffer.NormalKind, [
-                    -0.5773, -0.5773, -0.5773, 0.5773, -0.5773, -0.5773, 0.5773, 0.5773, -0.5773, -0.5773, 0.5773, -0.5773, -0.7071, 0.7071, 0, -0.7071, -0.7071, 0, 0.7071, -0.7071, 0, 0.7071, 0.7071, 0, 0.5773, -0.5773, -0.5773, 0.5773, 0.5773, -0.5773, -0.5773, 0.5773, -0.5773, 0.7071, -0.7071, 0, -0.5773, -0.5773, -0.5773, 0.7071, 0.7071, 0, -0.7071, 0.7071, 0, -0.5773, -0.5773, -0.5773, 0.5773, -0.5773, -0.5773, 0.5773, 0.5773, -0.5773, -0.7071, -0.7071, 0, -0.5773, 0.5773, -0.5773, 0.7071, 0.7071, 0, 0.5773, -0.5773, -0.5773, 0.5773, 0.5773, -0.5773, -0.5773, 0.5773, -0.5773, 0.7071, -0.7071, 0, -0.5773, -0.5773, -0.5773, 0.7071, 0.7071, 0, -0.7071, 0.7071, 0, -0.7071, -0.7071, 0, -0.7071, 0.7071, 0, 0.7071, -0.7071, 0, -0.7071, -0.7071, 0
-                ], false);
-                this.setIndices([
-                    0, 1, 2, 0, 3, 4, 1, 0, 5, 2, 1, 6, 3, 2, 7, 8, 9, 10, 11, 8, 12, 13, 9, 8, 14, 10, 9, 12, 10, 14, 15, 16, 17, 18, 15, 19, 16, 15, 18, 20, 17, 16, 19, 17, 20, 21, 22, 23, 24, 21, 25, 26, 22, 21, 27, 23, 22, 25, 23, 27, 3, 0, 2, 5, 0, 4, 6, 1, 5, 7, 2, 6, 4, 3, 7, 12, 8, 10, 28, 11, 12, 11, 13, 8, 13, 14, 9, 28, 12, 14, 19, 15, 17, 29, 18, 19, 30, 16, 18, 30, 20, 16, 29, 19, 20, 25, 21, 23, 31, 24, 25, 24, 26, 21, 26, 27, 22, 31, 25, 27
-                ]);
-                this.subMeshes = [];
-                new BABYLON.SubMesh(0, 0, 32, 0, 120, this);
-                this.computeWorldMatrix(true);
-            }
-        }
-        unchecked3D.prototype.dispose = function (doNotRecurse) {
-            _super.prototype.dispose.call(this, doNotRecurse);
-            clean(3);
-        };
-        return unchecked3D;
-    }(DIALOG.Letter));
-    CheckBoxFont.unchecked3D = unchecked3D;
-})(CheckBoxFont || (CheckBoxFont = {}));
+
+
+
+
+
+
+
 /// <reference path="./Panel.ts"/>
 /// <reference path="./Label.ts"/>
 /// <reference path="./CheckBoxFont.ts"/>
@@ -2676,16 +2904,17 @@ var DIALOG;
         __extends(CheckBox, _super);
         function CheckBox(letters, typeFace, _prohibitMerging) {
             if (typeFace === void 0) { typeFace = DIALOG.Label.DEFAULT_FONT_MODULE; }
-            _super.call(this, letters, typeFace, null, true, _prohibitMerging); // add space for box to replace later
+            var _this = _super.call(this, letters, typeFace, null, true, _prohibitMerging) || this;
             if (!CheckBox.factory) {
                 CheckBox.factory = new CheckBoxFont.MeshFactory(DIALOG.DialogSys._scene);
             }
-            var ref = this;
-            this.registerPickAction(function () {
+            var ref = _this;
+            _this.registerPickAction(function () {
                 if (!ref._panelEnabled)
                     return;
                 ref.setSelected(!this._selected);
             });
+            return _this;
         }
         /**
          * all meshes within 2D & 3D consume same space, so no layout required. to switch them out.
@@ -2752,131 +2981,13 @@ var DIALOG;
     }(DIALOG.Label));
     DIALOG.CheckBox = CheckBox;
 })(DIALOG || (DIALOG = {}));
-/// <reference path="./Panel.ts"/>
-var DIALOG;
-(function (DIALOG) {
-    /**
-     * A way to map a mesh into a panel.  Very similar to Letter, except it is an actual sub-class of BasePanel.
-     */
-    var MeshWrapperPanel = (function (_super) {
-        __extends(MeshWrapperPanel, _super);
-        function MeshWrapperPanel(_inside, _needBorders) {
-            // Panel's _layoutDir & _topLevel constructor parms, forced to default to LAYOUT_HORIZONTAL & false
-            _super.call(this, _inside.name + "_wrapper", _inside.getScene());
-            this._inside = _inside;
-            this._needBorders = _needBorders;
-            _inside.parent = this;
-        }
-        MeshWrapperPanel.prototype.setMaterial = function (mat) {
-            this._inside.material = mat;
-        };
-        // ======================================== Overrides ========================================
-        /**
-         * @override
-         */
-        MeshWrapperPanel.prototype.useGeometryForBorder = function () {
-            return this._needBorders;
-        };
-        /**
-         * @override
-         * No actual layout of sub-panels.  Need to set the _actual members, as super does though.
-         */
-        MeshWrapperPanel.prototype._layout = function (widthConstraint, heightConstraint) {
-            if (!this._actualAboveOriginX) {
-                this.visibility = 1;
-            }
-            this._actualAboveOriginX = this._maxAboveOrigin.x;
-            this._actualAboveOriginY = this._maxAboveOrigin.y;
-            this._actualBelowOriginX = this._minBelowOrigin.x;
-            this._actualBelowOriginY = this._minBelowOrigin.y;
-        };
-        /**
-         * @override
-         */
-        MeshWrapperPanel.prototype._calcRequiredSize = function () {
-            // done only once.  Deferred till now, since putting this instead of setVerticesData is never called in clones
-            if (!this._minWorld) {
-                var extend = BABYLON.Tools.ExtractMinAndMax(this._inside.getVerticesData(BABYLON.VertexBuffer.PositionKind), 0, this._inside.getTotalVertices());
-                this._minWorld = extend.minimum;
-                this._maxWorld = extend.maximum;
-            }
-            this._maxAboveOrigin.x = this._maxWorld.x * this._inside.scaling.x;
-            this._maxAboveOrigin.y = this._maxWorld.y * this._inside.scaling.y;
-            this._maxAboveOrigin.z = this._maxWorld.z * this._inside.scaling.z;
-            if (this._needBorders) {
-                this._maxAboveOrigin.x += this.horizontalMargin;
-                this._maxAboveOrigin.y += this.verticalMargin;
-            }
-            this._minBelowOrigin.x = this._minWorld.x * this._inside.scaling.x;
-            this._minBelowOrigin.y = this._minWorld.y * this._inside.scaling.y;
-            this._minBelowOrigin.z = this._minWorld.z * this._inside.scaling.z;
-            if (this._needBorders) {
-                this._minBelowOrigin.x -= this.horizontalMargin;
-                this._minBelowOrigin.y -= this.verticalMargin;
-            }
-        };
-        /**
-         * @override
-         * Change layermask of this._inside and any children
-         */
-        MeshWrapperPanel.prototype.setLayerMask = function (maskId) {
-            var insideKids = this._inside.getChildren();
-            for (var i = insideKids.length - 1; i >= 0; i--) {
-                insideKids[i].layerMask = maskId;
-                insideKids[i].setEnabled(maskId !== DIALOG.DialogSys.SUSPENDED_DIALOG_LAYER);
-            }
-            this._inside.layerMask = maskId;
-            this._inside.setEnabled(maskId !== DIALOG.DialogSys.SUSPENDED_DIALOG_LAYER);
-            this.layerMask = maskId;
-            this.setEnabled(maskId !== DIALOG.DialogSys.SUSPENDED_DIALOG_LAYER);
-        };
-        /**
-         * @override
-         * Do the entire hierarchy, in addition
-         */
-        MeshWrapperPanel.prototype.freezeWorldMatrixTree = function () {
-            this.freezeWorldMatrix();
-            this._inside.freezeWorldMatrix();
-            var insideKids = this._inside.getChildren();
-            for (var i = insideKids.length - 1; i >= 0; i--) {
-                insideKids[i].freezeWorldMatrix();
-            }
-        };
-        /**
-         * @override
-         * Do the entire hierarchy, in addition
-         */
-        MeshWrapperPanel.prototype.unfreezeWorldMatrixTree = function () {
-            _super.prototype.unfreezeWorldMatrix.call(this);
-            var insideKids = this._inside.getChildren();
-            for (var i = insideKids.length - 1; i >= 0; i--) {
-                insideKids[i].unfreezeWorldMatrix();
-            }
-        };
-        /** @override */
-        MeshWrapperPanel.prototype.addSubPanel = function (sub, index) {
-            BABYLON.Tools.Error("wrappers can have no sub-panels");
-        };
-        /** @override */ MeshWrapperPanel.prototype.getSubPanel = function () { return null; };
-        /** @override */ MeshWrapperPanel.prototype.removeAt = function (index, doNotDispose) { };
-        /** @override */ MeshWrapperPanel.prototype.removeAll = function (doNotDispose) { };
-        /** @override */
-        MeshWrapperPanel.prototype.setSubsFaceSize = function (size, relative) {
-            if (relative) {
-                this._xyScale *= size;
-            }
-            else {
-                this._xyScale = size;
-            }
-            this._inside.scaling.x = this._xyScale;
-            this._inside.scaling.y = this._xyScale;
-            this.invalidateLayout();
-            return this;
-        };
-        return MeshWrapperPanel;
-    }(DIALOG.BasePanel));
-    DIALOG.MeshWrapperPanel = MeshWrapperPanel;
-})(DIALOG || (DIALOG = {}));
+
+
+
+
+
+
+
 /// <reference path="../Panel.ts"/>
 /// <reference path="../MeshWrapperPanel.ts"/>
 var DIALOG;
@@ -2885,6 +2996,7 @@ var DIALOG;
     var DigitWtLogic = (function (_super) {
         __extends(DigitWtLogic, _super);
         function DigitWtLogic() {
+            var _this = this;
             if (!factory) {
                 factory = new DigitParts.MeshFactory(DIALOG.DialogSys._scene);
                 // there is only ever 1 version from factory of a node, so get now for measuring
@@ -2895,14 +3007,15 @@ var DIALOG;
                 inst.dispose(false);
             }
             // call super with a clone of DigitWtLogic._innerMesh
-            _super.call(this, factory.instance('Geometry'));
-            this.setMaterial(LCD.MAT);
+            _this = _super.call(this, factory.instance('Geometry')) || this;
+            _this.setMaterial(LCD.MAT);
             // need to set min/maxWorlds outselves, since done using children
-            this._minWorld = BABYLON.Vector3.Zero();
-            this._maxWorld = DigitWtLogic._maxWorld;
-            this._maxVisibility = 1;
+            _this._minWorld = BABYLON.Vector3.Zero();
+            _this._maxWorld = DigitWtLogic._maxWorld;
+            _this._maxVisibility = 1;
             // initialize to 0, but not a visible 0
-            this.setDigit('0', false);
+            _this.setDigit('0', false);
+            return _this;
         }
         DigitWtLogic.prototype.setDigit = function (val, show0, showDot) {
             var geo = this._inside;
@@ -2961,18 +3074,19 @@ var DIALOG;
          * @param {number} _nDigits - The # of digits to use.
          */
         function LCD(name, _nDigits, _alwaysDot, _fixed) {
-            _super.call(this, name, DIALOG.DialogSys._scene);
-            this._nDigits = _nDigits;
-            this._alwaysDot = _alwaysDot;
-            this._fixed = _fixed;
-            this.name = name;
+            var _this = _super.call(this, name, DIALOG.DialogSys._scene) || this;
+            _this._nDigits = _nDigits;
+            _this._alwaysDot = _alwaysDot;
+            _this._fixed = _fixed;
+            _this.name = name;
             LCD._initMaterial();
-            this.material = LCD.MAT;
+            _this.material = LCD.MAT;
             // add all meshes as subPanels, null or not
             for (var i = 0; i < _nDigits; i++) {
-                this.addSubPanel(new DigitWtLogic());
+                _this.addSubPanel(new DigitWtLogic());
             }
-            this.value = 0;
+            _this.value = 0;
+            return _this;
         }
         Object.defineProperty(LCD.prototype, "value", {
             get: function () { return this._value; },
@@ -3032,10 +3146,10 @@ var DIALOG;
          */
         function NumberScroller(label, _nDigits, minValue, maxValue, initialValue, increment, fixed) {
             if (increment === void 0) { increment = 1; }
-            _super.call(this, label, DIALOG.DialogSys._scene);
-            this.minValue = minValue;
-            this.maxValue = maxValue;
-            this.increment = increment;
+            var _this = _super.call(this, label, DIALOG.DialogSys._scene) || this;
+            _this.minValue = minValue;
+            _this.maxValue = maxValue;
+            _this.increment = increment;
             if (!NumberScroller.MAT) {
                 LCD._initMaterial();
                 var multiMaterial = new BABYLON.MultiMaterial("button", DIALOG.DialogSys._scene);
@@ -3049,35 +3163,36 @@ var DIALOG;
             }
             if (increment <= 0) {
                 BABYLON.Tools.Error('increment must positive');
-                return;
+                return _this;
             }
-            if (this.minValue + increment > this.maxValue) {
+            if (_this.minValue + increment > _this.maxValue) {
                 BABYLON.Tools.Error('min value + increment must be <= max value');
-                return;
+                return _this;
             }
-            if (initialValue < this.minValue || initialValue > this.maxValue) {
+            if (initialValue < _this.minValue || initialValue > _this.maxValue) {
                 BABYLON.Tools.Error('initialValue not within min & max values');
-                return;
+                return _this;
             }
-            var alwaysDot = Math.floor(this.minValue) !== this.minValue || Math.floor(this.maxValue) !== this.maxValue || Math.floor(this.increment) !== this.increment;
+            var alwaysDot = Math.floor(_this.minValue) !== _this.minValue || Math.floor(_this.maxValue) !== _this.maxValue || Math.floor(_this.increment) !== _this.increment;
             if (!alwaysDot && Math.floor(initialValue) !== initialValue) {
                 BABYLON.Tools.Error('initialValue must be integer, since minValue, maxValue, & increment are');
-                return;
+                return _this;
             }
             // do the display first, since not sure if mesh factory instanced
-            this._display = new LCD(name + '-lcd', _nDigits, alwaysDot, fixed);
-            this._display.setBorderVisible(true);
-            this._display.verticalAlignment = DIALOG.Panel.ALIGN_VCENTER;
-            this.value = initialValue;
-            this._display._calcRequiredSize();
+            _this._display = new LCD(name + '-lcd', _nDigits, alwaysDot, fixed);
+            _this._display.setBorderVisible(true);
+            _this._display.verticalAlignment = DIALOG.Panel.ALIGN_VCENTER;
+            _this.value = initialValue;
+            _this._display._calcRequiredSize();
             if (label && label != null && label.replace(' ', '').length > 0) {
                 var labelPanel = new DIALOG.Label(label);
                 labelPanel.verticalAlignment = DIALOG.Panel.ALIGN_BOTTOM;
-                this.addSubPanel(labelPanel);
+                _this.addSubPanel(labelPanel);
             }
-            this.addSubPanel(this._downButton = this._getButton('Down', this));
-            this.addSubPanel(this._display);
-            this.addSubPanel(this._upButton = this._getButton('Up', this));
+            _this.addSubPanel(_this._downButton = _this._getButton('Down', _this));
+            _this.addSubPanel(_this._display);
+            _this.addSubPanel(_this._upButton = _this._getButton('Up', _this));
+            return _this;
         }
         // ======================================== Overrides ========================================       
         /**
@@ -3150,6 +3265,13 @@ var DIALOG;
     }(DIALOG.BasePanel));
     DIALOG.NumberScroller = NumberScroller;
 })(DIALOG || (DIALOG = {}));
+
+
+
+
+
+
+
 /// <reference path="./Panel.ts"/>
 /// <reference path="./Label.ts"/>
 /// <reference path="./Button.ts"/>
@@ -3165,22 +3287,23 @@ var DIALOG;
          */
         function Menu(title, labels, layoutDir, topLevel) {
             if (layoutDir === void 0) { layoutDir = DIALOG.Panel.LAYOUT_VERTICAL; }
-            _super.call(this, title, DIALOG.DialogSys._scene, null, null, false, DIALOG.Panel.LAYOUT_VERTICAL, topLevel);
-            this._callbacks = new Array();
-            this.setBorderVisible(true);
+            var _this = _super.call(this, title, DIALOG.DialogSys._scene, null, null, false, DIALOG.Panel.LAYOUT_VERTICAL, topLevel) || this;
+            _this._callbacks = new Array();
+            _this.setBorderVisible(true);
             if (title && title != null && title.replace(' ', '').length > 0) {
                 var titlePanel = new DIALOG.Label(title);
                 titlePanel.horizontalAlignment = DIALOG.Panel.ALIGN_HCENTER;
-                _super.prototype.addSubPanel.call(this, titlePanel);
+                _super.prototype.addSubPanel.call(_this, titlePanel);
             }
-            this._menu = new DIALOG.BasePanel('menu-' + title, DIALOG.DialogSys._scene, null, null, false, layoutDir);
+            _this._menu = new DIALOG.BasePanel('menu-' + title, DIALOG.DialogSys._scene, null, null, false, layoutDir);
             for (var i = 0; i < labels.length; i++) {
                 var button = new DIALOG.Button(labels[i], DIALOG.Button.RADIO_BUTTON);
                 button.stretchHorizontal = layoutDir === DIALOG.Panel.LAYOUT_VERTICAL;
-                button.radioGroup = this;
-                this._menu.addSubPanel(button);
+                button.radioGroup = _this;
+                _this._menu.addSubPanel(button);
             }
-            _super.prototype.addSubPanel.call(this, this._menu);
+            _super.prototype.addSubPanel.call(_this, _this._menu);
+            return _this;
         }
         Menu.prototype.assignMenuCallback = function (itemIdx, func) {
             this._callbacks[itemIdx] = func;
@@ -3256,43 +3379,7 @@ var DIALOG;
     }(DIALOG.BasePanel));
     DIALOG.Menu = Menu;
 })(DIALOG || (DIALOG = {}));
-/// <reference path="./Panel.ts"/>
-var DIALOG;
-(function (DIALOG) {
-    var Spacer = (function (_super) {
-        __extends(Spacer, _super);
-        /**
-         * Sub-class of BasePanel containing no geometry.  Used to assign blank space.  Actual space
-         * that a unit occupies is relative to the total units that the top level panel requires in that
-         * dimension.  Best to put in spacer with 0,0 during dev.  Once rest is settled, then tune here.
-         *
-         * @param {number} vertUnits       - The amount of space in the vertical   dimension.
-         * @param {number} horizontalUnits - The amount of space in the horizontal dimension.
-         */
-        function Spacer(vertUnits, horizontalUnits) {
-            _super.call(this, null, DIALOG.DialogSys._scene);
-            this.verticalMargin = vertUnits;
-            this.horizontalMargin = horizontalUnits;
-            this.setEnabled(false);
-        }
-        // ======================================== Overrides ========================================
-        /**
-         * @override
-         */
-        Spacer.prototype.useGeometryForBorder = function () {
-            return false;
-        };
-        /**
-         * @override
-         * No meaning for spacers
-         */
-        Spacer.prototype.addSubPanel = function (sub, index) {
-            BABYLON.Tools.Error("spacers can have no sub-panels");
-        };
-        /** @override */ Spacer.prototype.getSubPanel = function () { return null; };
-        /** @override */ Spacer.prototype.removeAt = function (index, doNotDispose) { };
-        /** @override */ Spacer.prototype.removeAll = function (doNotDispose) { };
-        return Spacer;
-    }(DIALOG.BasePanel));
-    DIALOG.Spacer = Spacer;
-})(DIALOG || (DIALOG = {}));
+
+if (((typeof window != "undefined" && window.module) || (typeof module != "undefined")) && typeof module.exports != "undefined") {
+    module.exports = DIALOG;
+};

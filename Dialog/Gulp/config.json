@@ -1,0 +1,33 @@
+{
+  "build": {
+    "filename": "dialog.1.2.js",
+    "minFilename": "dialog.1.2.min.js",
+    "declarationFilename": "dialog.1.2.d.ts",
+    "outputDirectory": "..",
+    "srcOutputDirectory": "../out/",
+    "fontsDirectory": "../fonts/",
+    "blogDirectory" : "../../../Palmer-JC.github.io/lib"
+  },
+  "project": {
+    "typescript": [
+      "../src/**/*.ts",
+      "!../src/**/*.d.ts",
+      "../references/*.d.ts"
+    ],
+    "files": [
+      "../out/Panel.js",
+      "../out/Spacer.js",
+      "../out/Letter.js",
+      "../out/LCD/DigitParts.js",
+      "../out/CheckBoxFont.js",
+      "../out/MeshWrapperPanel.js",
+      "../out/Label.js",
+      "../out/Button.js",
+      "../out/FontFactory.js",
+      "../out/DialogSys.js",
+      "../out/CheckBox.js",
+      "../out/LCD/Controls.js",
+      "../out/Menu.js"
+    ]
+  }
+}
