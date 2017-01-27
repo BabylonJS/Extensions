@@ -1,0 +1,44 @@
+{
+  "build": {
+    "filename": "QueuedInterpolation.1.1.js",
+    "minFilename": "QueuedInterpolation.1.1.min.js",
+    "declarationFilename": "QueuedInterpolation.1.1.d.ts",
+    "outputDirectory": "..",
+    "srcOutputDirectory": "../out/"
+  },
+  "project": {
+    "typescript": [
+      "../src/**/*.ts",
+      "!../src/**/*.d.ts",
+      "../references/*.d.ts"
+    ],
+    "files": [
+      "../out/deformation/skeletonBased/MatrixComp.js",
+      "../out/deformation/skeletonBased/SkeletonPoseLibrary.js",
+      "../out/queue/TimelineControl.js",
+      "../out/queue/Pace.js",
+      "../out/queue/MotionEvent.js",
+      "../out/queue/NonMotionEvents.js",
+      "../out/queue/EventSeries.js",
+      "../out/queue/PovProcessor.js",
+      "../out/deformation/skeletonBased/Bone.js",
+      "../out/deformation/skeletonBased/Skeleton.js",
+      "../out/deformation/skeletonBased/Pose.js",
+      "../out/deformation/skeletonBased/PoseEvent.js",
+      "../out/deformation/skeletonBased/PoseProcessor.js",
+      "../out/deformation/shapeKeyBased/VertexDeformation.js",
+      "../out/deformation/shapeKeyBased/ShapeKeyGroup.js",
+      "../out/Mesh.js",
+      "../out/audio/AudioRecorder.js",
+      "../out/audio/AudioDecoder.js",
+      "../out/audio/Whoosh.js",
+      "../out/being/EyeBall.js",
+      "../out/being/Eyes.js",
+      "../out/being/Body.js",
+      "../out/entrances/GatherEntrance.js",
+      "../out/entrances/FireEntrance.js",
+      "../out/entrances/ExpandEntrance.js",
+      "../out/TOB-Runtime/MeshFactory.js"
+    ]
+  }
+}
