@@ -32,7 +32,6 @@ module QI{
             }
             return true;
         }
-
         // =================================== Library assignment ====================================
         /** Only one library can be assigned to a library at a time.
          *  Validation of compatiblity, and pre-processing for scaling differences performed.
@@ -88,6 +87,7 @@ module QI{
         // ====================================== pose methods =====================================
         /**
          * Should not be call here, but through the mesh so that the processor can note the change.
+         * @param {string} poseName - The name in the library of the pose.
          */
         public _assignPoseImmediately(poseName : string) : void {
             var pose = this._poseLibrary.poses[poseName];
@@ -98,7 +98,11 @@ module QI{
                 BABYLON.Tools.Error("QI.Skeleton:  pose(" + poseName + ") not found");
             }
         }
-
+        /**
+         * Derive the current state of the skeleton as a new Pose in the library.
+         * @param {string} name - What the new Pose is to be called.
+         * @returns {Pose} The new Pose Object
+         */
         public currentStateAsPose(name : string) : Pose {
             var basis = this._poseLibrary.poses["basis"];
 
@@ -109,19 +113,26 @@ module QI{
             return new Pose(name, this._poseLibrary, targets);
         }
         // ==================================== sub-pose methods ===================================
+        /** 
+         * Add a sub-pose with limited # of bones, to be added to any subsequent poses, until removed.
+         * @param {string} poseName - The name in the library of the sub-pose (.sp suffix)
+         */
         public addSubPose(poseName : string) : void {
-            // check subpose has not already been added
+            // check sub-pose has not already been added
             for(var i = 0, len = this._subPoses.length; i < len; i++){
-                if (this._subPoses[i].name === poseName)return;
+                if (this._subPoses[i].name === poseName) return;
             }
 
             var subPose = this._poseLibrary ? this._poseLibrary.poses[poseName] : null;
             if (!subPose) BABYLON.Tools.Error("QI.Skeleton:  sub-pose(" + poseName + ") not found");
-            else if (!subPose.isSubPose ) BABYLON.Tools.Error("QI.Skeleton:  pose(" + subPose.name + ") is not a subpose");
-
-            this._subPoses.push(subPose);
+            else if (!subPose.isSubPose ) BABYLON.Tools.Error("QI.Skeleton:  pose(" + subPose.name + ") is not a sub-pose");
+            else this._subPoses.push(subPose);
         }
 
+        /**
+         * Remove a sub-pose at the next posing of the skeleton.
+         * @param {string} poseName - The name in the library of the sub-pose (.sp suffix)
+         */ 
         public removeSubPose(poseName : string) : void {
             for (var i = 0; i < this._subPoses.length; i++){
                 if (this._subPoses[i].name === poseName){
@@ -131,6 +142,9 @@ module QI{
             }
         }
 
+        /**
+         * Remove all sub-poses at the next posing of the skeleton.
+         */
         public clearAllSubPoses() : void {
              this._subPoses = new Array<Pose>();
         }

@@ -16,7 +16,7 @@ class Sound:
         if hasattr(self, 'connectedMeshId'):
             options += ', maxDistance: ' + format_f(self.maxDistance)
 
-        file_handler.write('\n' + indent + 'sound = new B.Sound("' + self.name + '", soundsRootDir + "' + self.name + '", scene, ')
+        file_handler.write('\n' + indent + 'sound = new _B.Sound("' + self.name + '", soundsRootDir + "' + self.name + '", scene, ')
         file_handler.write('function () { scene._removePendingData(sound); }, ')
 
         file_handler.write('{' + options + '});\n')

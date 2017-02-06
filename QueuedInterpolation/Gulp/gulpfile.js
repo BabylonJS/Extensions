@@ -11,6 +11,8 @@ var replace = require("gulp-replace");
 var expect = require('gulp-expect-file');
 var optimisejs = require('gulp-optimize-js');
 
+var zip = require('gulp-zip');
+
 var config = require("./config.json");
 
 var extendsSearchRegex = /var\s__extends[\s\S]+?\};/g;
@@ -36,7 +38,8 @@ gulp.task('typescript-compile', function () {
     return merge2([
         tsResult.dts
             .pipe(concat(config.build.declarationFilename))
-            .pipe(gulp.dest(config.build.outputDirectory)),
+            .pipe(gulp.dest(config.build.outputDirectory))
+            .pipe(gulp.dest(config.build.dialogDirectory)),
         tsResult.js
             .pipe(gulp.dest(config.build.srcOutputDirectory))
     ])
@@ -60,7 +63,8 @@ gulp.task("merge-minify",function () {
         .pipe(rename(config.build.minFilename))
         .pipe(uglify())
         .pipe(optimisejs())
-        .pipe(gulp.dest(config.build.outputDirectory));
+        .pipe(gulp.dest(config.build.outputDirectory))
+        .pipe(gulp.dest(config.build.blogDirectory));
 });
 
 /**
@@ -68,4 +72,10 @@ gulp.task("merge-minify",function () {
  */
 gulp.task("build", function (cb) {
     runSequence("typescript-compile", "merge-minify", cb);
+});
+
+gulp.task("zip-tob" , function() {
+    return gulp.src('../Blender/src/**')
+    .pipe(zip('towerOfBabel.5.1.zip'))
+    .pipe(gulp.dest('../Blender'));
 });

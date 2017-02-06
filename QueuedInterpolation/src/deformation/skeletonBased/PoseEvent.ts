@@ -16,8 +16,8 @@ module QI{
          * @param {Vector3} rotatePOV - Incremental Mesh rotation to be performed or null.
          *                  flipBack-twirlClockwise-tiltRight
          *
-         * @param {string[]} subposes - subposes which should be substituted during event (default null)
-         * @param {boolean} revertSubposes - Any subposes should actually be subtracted during event(default false)
+         * @param {string[]} subposes - sub-poses which should be substituted during event (default null)
+         * @param {boolean} revertSubposes - Any sub-poses should actually be subtracted during event(default false)
          *
          * @param {IMotionEventOptions} options - Named options to keep args down to a manageable level.
          *
@@ -27,20 +27,17 @@ module QI{
          *      absoluteMovement - Movement arg is an absolute value, not POV (default false).
          *      absoluteRotation - Rotation arg is an absolute value, not POV (default false).
          *      pace - Any Object with the function: getCompletionMilestone(currentDurationRatio) (default MotionEvent.LINEAR)
-         *      sound - Sound to start with event.  WARNING: When event also has a sync partner, there could be issues.
+         *      sound - Sound to start with event.
+         *      requireCompletionOf - A way to serialize events from different queues e.g. shape key & skeleton.
          *
          *      noStepWiseMovement - Calc the full amount of movement from Node's original position / rotation,
          *                           rather than stepwise (default false).  No meaning when no rotation in event.
          *
-         *      mirrorAxes - Shapekeys Only:
-         *                   Axis [X,Y, or Z] to mirror against for an end state ratio, which is negative.  No meaning if ratio is positive.
-         *                   If null, shape key group setting used.
-         *
          *      subposes - Skeletons Only:
-         *                 Subposes which should be substituted during event (default null).
+         *                 Sub-poses which should be substituted during event (default null).
          *
          *      revertSubposes - Skeletons Only:
-         *                       Should any subposes previously applied should be subtracted during event(default false)?
+         *                       Should any sub-poses previously applied should be subtracted during event(default false)?
          */
         constructor(
             public poseName       : string,

@@ -49,6 +49,7 @@ class Camera(FCurveAnimatable):
         self.checkCollisions = camera.data.checkCollisions
         self.applyGravity = camera.data.applyGravity
         self.ellipsoid = camera.data.ellipsoid
+        self.trackToBoundingCenter = camera.data.trackToBoundingCenter
 
         self.Camera3DRig = camera.data.Camera3DRig
         self.interaxialDistance = camera.data.interaxialDistance
@@ -96,20 +97,21 @@ class Camera(FCurveAnimatable):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def to_script_file(self, file_handler, indent):
         # constructor args are not the same for each camera type
-        file_handler.write(indent + 'camera = new B.' + self.CameraType + '("' + self.name + '"')
+        file_handler.write(indent + 'camera = new _B.' + self.CameraType + '("' + self.name + '"')
         if self.CameraType == ARC_ROTATE_CAM:
-            file_handler.write(', ' + format_f(self.arcRotAlpha) + ', ' + format_f(self.arcRotBeta) + ', ' + format_f(self.arcRotRadius))
-            file_handler.write(', scene.getMeshByID("' + self.lockedTargetId + '")')
-
+            target = 'null' if self.trackToBoundingCenter else 'scene.getMeshByID("' + self.lockedTargetId + '")'
+            
+            file_handler.write(', ' + format_f(self.arcRotAlpha) + ', ' + format_f(self.arcRotBeta) + ', ' + format_f(self.arcRotRadius) + ', ' + target + ', scene);\n')
+            if self.trackToBoundingCenter:
+                file_handler.write(indent + 'camera.setTarget(scene.getMeshByID("' + self.lockedTargetId + '"), true);\n')
+ 
         else:
-            file_handler.write(', new B.Vector3(' + format_vector(self.position) + ')')
-
-        file_handler.write(', scene);\n')
+            file_handler.write(', new _B.Vector3(' + format_vector(self.position) + '), scene);\n')
 
         # always assign rig, even when none, Reason:  Could have VR camera with different Rig than default
         file_handler.write(indent + 'camera.setCameraRigMode(' + self.Camera3DRig + ',{interaxialDistance: ' + format_f(self.interaxialDistance) + '});\n')
 
-        file_handler.write(indent + 'camera.rotation = new B.Vector3(' + format_vector(self.rotation) + ');\n')
+        file_handler.write(indent + 'camera.rotation = new _B.Vector3(' + format_vector(self.rotation) + ');\n')
 
         file_handler.write(indent + 'camera.fov = ' + format_f(self.fov) + ';\n')
         file_handler.write(indent + 'camera.minZ = ' + format_f(self.minZ) + ';\n')
@@ -120,7 +122,7 @@ class Camera(FCurveAnimatable):
 
         file_handler.write(indent + 'camera.checkCollisions = ' + format_bool(self.checkCollisions) + ';\n')
         file_handler.write(indent + 'camera.applyGravity = ' + format_bool(self.applyGravity) + ';\n')
-        file_handler.write(indent + 'camera.ellipsoid = new B.Vector3(' + format_array3(self.ellipsoid) + ');\n')
+        file_handler.write(indent + 'camera.ellipsoid = new _B.Vector3(' + format_array3(self.ellipsoid) + ');\n')
 
         if self.CameraType == FOLLOW_CAM:
             file_handler.write(indent + 'camera.heightOffset = ' + format_f(self.followHeight) + ';\n')
@@ -165,6 +167,11 @@ bpy.types.Camera.checkCollisions = bpy.props.BoolProperty(
     description='',
     default = False
 )
+bpy.types.Camera.trackToBoundingCenter = bpy.props.BoolProperty(
+    name='Track to Bounding Center',
+    description='Arc rotate cam only,\nuseful when mesh is defined with "feet on the ground"',
+    default = False
+)
 bpy.types.Camera.applyGravity = bpy.props.BoolProperty(
     name='Apply Gravity',
     description='',
@@ -180,7 +187,7 @@ bpy.types.Camera.Camera3DRig = bpy.props.EnumProperty(
     description='',
     items = (
              (RIG_MODE_NONE                             , 'None'                  , 'No 3D effects'),
-             (RIG_MODE_STEREOSCOPIC_ANAGLYPH            , 'Anaaglph'              , 'Stereoscopic Anagylph'),
+             (RIG_MODE_STEREOSCOPIC_ANAGLYPH            , 'Anaglyph'              , 'Stereoscopic Anagylph'),
              (RIG_MODE_STEREOSCOPIC_SIDEBYSIDE_PARALLEL , 'side-by-side Parallel' , 'Stereoscopic side-by-side parallel'),
              (RIG_MODE_STEREOSCOPIC_SIDEBYSIDE_CROSSEYED, 'side-by-side crosseyed', 'Stereoscopic side-by-side crosseyed'),
              (RIG_MODE_STEREOSCOPIC_OVERUNDER           , 'over-under'            , 'Stereoscopic over-under'),
@@ -213,6 +220,10 @@ class CameraPanel(bpy.types.Panel):
         layout.prop(ob.data, 'applyGravity')
         layout.prop(ob.data, 'ellipsoid')
 
+        row = layout.row()
+        row.enabled = ob.data.CameraType == ARC_ROTATE_CAM
+        row.prop(ob.data, 'trackToBoundingCenter')
+        
         box = layout.box()
         box.label(text="3D Camera Rigs")
         box.prop(ob.data, 'Camera3DRig')

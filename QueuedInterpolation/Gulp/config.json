@@ -4,7 +4,9 @@
     "minFilename": "QueuedInterpolation.1.1.min.js",
     "declarationFilename": "QueuedInterpolation.1.1.d.ts",
     "outputDirectory": "..",
-    "srcOutputDirectory": "../out/"
+    "srcOutputDirectory": "../out/",
+    "dialogDirectory": "../../Dialog/References",
+    "blogDirectory" : "../../../Palmer-JC.github.io/lib"
   },
   "project": {
     "typescript": [
@@ -13,6 +15,7 @@
       "../references/*.d.ts"
     ],
     "files": [
+      "../../ShaderBuilder/Babylonx.ShaderBuilder.js",
       "../out/deformation/skeletonBased/MatrixComp.js",
       "../out/deformation/skeletonBased/SkeletonPoseLibrary.js",
       "../out/queue/TimelineControl.js",
@@ -32,12 +35,14 @@
       "../out/audio/AudioRecorder.js",
       "../out/audio/AudioDecoder.js",
       "../out/audio/Whoosh.js",
+      "../out/audio/Teleport.js",
       "../out/being/EyeBall.js",
       "../out/being/Eyes.js",
       "../out/being/Body.js",
       "../out/entrances/GatherEntrance.js",
       "../out/entrances/FireEntrance.js",
       "../out/entrances/ExpandEntrance.js",
+      "../out/entrances/ShaderBuilderEntrance.js",
       "../out/TOB-Runtime/MeshFactory.js"
     ]
   }

@@ -73,7 +73,8 @@ module QI{
                 }
             }
             this.poses[pose.name] = pose;
-            BABYLON.Tools.Log("QI.SkeletonPoseLibrary:  added pose (" + this.name + "." + pose.name + ")");
+            if (pose.isSubPose)  BABYLON.Tools.Log("QI.SkeletonPoseLibrary:  added sub-pose (" + this.name + "." + pose.name + "), using " + Object.keys(pose.targets).length + " bones");
+            else BABYLON.Tools.Log("QI.SkeletonPoseLibrary:  added pose (" + this.name + "." + pose.name + ")");
         }
 
         /**

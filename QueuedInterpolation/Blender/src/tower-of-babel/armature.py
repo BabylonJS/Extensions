@@ -58,7 +58,7 @@ class Bone:
     def to_script_file(self, file_handler, indent):
         parentBone = 'skeleton.bones[' + format_int(self.parentBoneIndex) + ']' if self.parentBone else 'null'
 
-        file_handler.write(indent + 'bone = new QI.Bone("' + self.name + '", skeleton,' + parentBone + ', M(' + format_matrix4(self.matrix) + ')' + ', M(' + format_matrix4(self.rest) + '));\n')
+        file_handler.write(indent + 'bone = new QI.Bone("' + self.name + '", skeleton,' + parentBone + ', _M(' + format_matrix4(self.matrix) + ')' + ', _M(' + format_matrix4(self.rest) + '));\n')
         file_handler.write(indent + 'bone.length = ' + format_f(self.length) + ';\n')
 
         if hasattr(self, 'animation'):
@@ -201,9 +201,9 @@ class Skeleton:
     # assume the following JS variables have already been declared: scene, skeleton, bone, animation
     def to_script_file(self, file_handler, indent, logInBrowserConsole):
         # specifying scene gets skeleton added to scene in constructor
-        if logInBrowserConsole: file_handler.write(indent + "B.Tools.Log('defining skeleton:  " + self.name + "');\n")
+        if logInBrowserConsole: file_handler.write(indent + "_B.Tools.Log('defining skeleton:  " + self.name + "');\n")
         file_handler.write(indent + 'skeleton = new QI.Skeleton("' + self.name + '", "' + format_int(self.id) + '", scene);\n') # MUST be String for inline
-        file_handler.write(indent + 'skeleton.dimensionsAtRest = new V(' + format_vector(self.dimensions) + ');\n')
+        file_handler.write(indent + 'skeleton.dimensionsAtRest = new _V(' + format_vector(self.dimensions) + ');\n')
 
         for bone in self.bones:
             bone.to_script_file(file_handler, indent)

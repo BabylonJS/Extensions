@@ -27,9 +27,14 @@ module QI{
         pace?: Pace;
 
         /**
-         * Sound to start with event.  WARNING: When event also has a sync partner, there could be issues.
+         * Sound to start with event.
          */
         sound?: BABYLON.Sound;
+
+        /**
+         * A way to serialize events from different queues e.g. shape key & skeleton.
+         */
+        requireCompletionOf?: MotionEvent;
 
         /**
          * Calc the full amount of movement from Node's original position / rotation,
@@ -52,7 +57,7 @@ module QI{
 
         /**
          * Skeletons Only:
-         * Should any subposes previously applied should be subtracted during event(default false)?
+         * Should any sub-poses previously applied should be subtracted during event(default false)?
          */
         revertSubposes?: boolean;
     }
@@ -70,7 +75,7 @@ module QI{
         // time and state management members
         private _startTime = -1;
         private _millisSoFar : number;
-        private _currentDurationRatio = MotionEvent._COMPLETE;
+        private _currentDurationRatio = MotionEvent._BLOCKED;
 
         // wallclock prorating members, used for acceleration / deceleration across EventSeries runs
         private _proratedMilliDuration : number;
@@ -98,20 +103,22 @@ module QI{
          *      absoluteMovement - Movement arg is an absolute value, not POV (default false).
          *      absoluteRotation - Rotation arg is an absolute value, not POV (default false).
          *      pace - Any Object with the function: getCompletionMilestone(currentDurationRatio) (default MotionEvent.LINEAR)
-         *      sound - Sound to start with event.  WARNING: When event also has a sync partner, there could be issues.
+         *      sound - Sound to start with event.
+         *      requireCompletionOf - A way to serialize events from different queues e.g. shape key & skeleton.
+         *
          *
          *      noStepWiseMovement - Calc the full amount of movement from Node's original position / rotation,
          *                           rather than stepwise (default false).  No meaning when no rotation in event.
-         *
+         * 
          *      mirrorAxes - Shapekeys Only:
          *                   Axis [X,Y, or Z] to mirror against for an end state ratio, which is negative.  No meaning if ratio is positive.
          *                   If null, shape key group setting used.
          *
          *      subposes - Skeletons Only:
-         *                 Subposes which should be substituted during event (default null).
+         *                 Sub-poses which should be substituted during event (default null).
          *
          *      revertSubposes - Skeletons Only:
-         *                       Should any subposes previously applied should be subtracted during event(default false)?
+         *                       Should any sub-poses previously applied should be subtracted during event(default false)?
          */
         constructor(
             private _milliDuration : number,
@@ -157,6 +164,7 @@ module QI{
                    ", move: " + (this.movePOV ? this.movePOV.toString() : "None") +
                    ", rotate: " + (this.rotatePOV ? this.rotatePOV.toString() : "None" +
                    ", sound: " + (this.options.sound ? this.options.sound.name : "None") +
+                   ", mustComplete event: " + (this.options.requireCompletionOf ? "Yes" : "No") +
                    ", wait: " + this.options.millisBefore +
                    ", non-linear pace: " + (this.options.pace !== MotionEvent.LINEAR) +
                    ", absoluteMovement: " + this.options.absoluteMovement +
@@ -176,40 +184,43 @@ module QI{
                 lateStartMilli /= 5;
                 this._startTime -= (lateStartMilli < this._milliDuration / 10) ? lateStartMilli : this._milliDuration / 10;
             }
-            this._currentDurationRatio = (this._syncPartner || (this.options.sound && !this.muteSound) ) ? MotionEvent._BLOCKED :
+            this._currentDurationRatio = (this._syncPartner || this.options.requireCompletionOf || (this.options.sound && !this.muteSound) ) ? MotionEvent._BLOCKED :
                                          ((this._proratedMillisBefore > 0) ? MotionEvent._WAITING : MotionEvent._READY);
         }
 
         /** called to determine how much of the Event should be performed right now */
         public getCompletionMilestone() : number {
-            if (this._currentDurationRatio === MotionEvent._COMPLETE){
+            if (this._currentDurationRatio === MotionEvent._COMPLETE) {
                 return MotionEvent._COMPLETE;
             }
 
-            // BLOCK only occurs when there is a sync partner or sound
-            if (this._currentDurationRatio === MotionEvent._BLOCKED){
-                if (this.options.sound && !this.muteSound){
-                    if (this.options.sound["_isReadyToPlay"]){
-                        this._startTime = TimelineControl.Now; // reset the start clocks
-                        this._currentDurationRatio = MotionEvent._WAITING;
-                    }
-                    else return MotionEvent._BLOCKED;
-                }
-
-                // change both to WAITING & start clock, once both are BLOCKED
+            // BLOCK only occurs when there is a sync partner, prior event from different queue, or sound
+            if (this._currentDurationRatio === MotionEvent._BLOCKED) {
+                // check sound and prior event first
+               
+                if (this.isSoundReady() && this.isPriorComplete()) {
+                    this._startTime = TimelineControl.Now; // reset the start clocks
+                    this._currentDurationRatio = MotionEvent._SYNC_BLOCKED;           
+                } else return MotionEvent._BLOCKED;
+            }
+            
+            // SYNC_BLOCKED occurs after a BLOCK has been satisfied
+            if (this._currentDurationRatio === MotionEvent._SYNC_BLOCKED) {
+                // change both to WAITING & start clock, once both are SYNC_BLOCKED
                 if (this._syncPartner){
-                    if (this._syncPartner.isBlocked() ){
+                    if (this._syncPartner.isSyncBlocked() ){
                         this._startTime = TimelineControl.Now; // reset the start clocks
-                        this._currentDurationRatio = MotionEvent._WAITING;
                         this._syncPartner._syncReady(this._startTime);
                     }
-                    else return MotionEvent._BLOCKED;
-                }
+                    else return MotionEvent._SYNC_BLOCKED;
+                } 
+                this._currentDurationRatio = MotionEvent._WAITING;
             }
-
+            
+            // go time, or at least time waiting from millis before
             this._millisSoFar = TimelineControl.Now - this._startTime;
 
-            if (this._currentDurationRatio === MotionEvent._WAITING){
+            if (this._currentDurationRatio === MotionEvent._WAITING) {
                 var overandAbove = this._millisSoFar - this._proratedMillisBefore;
                 if (overandAbove >= 0){
                     this._startTime = TimelineControl.Now - overandAbove;  // prorate start for time served
@@ -222,12 +233,22 @@ module QI{
                 }
                 else return MotionEvent._WAITING;
             }
-
+            
             this._currentDurationRatio = this._millisSoFar / this._proratedMilliDuration;
             if (this._currentDurationRatio > MotionEvent._COMPLETE)
                 this._currentDurationRatio = MotionEvent._COMPLETE;
 
             return this.pace.getCompletionMilestone(this._currentDurationRatio);
+        }
+        // ================================== blocking eval methods ===================================
+        /** Test to see if sound is ready.  Tolerant to sound not part of event */
+        public isSoundReady() : boolean {
+            return !this.options.sound || this.muteSound || this.options.sound["_isReadyToPlay"];
+        }
+        
+       /** Test to see if prior event is complete.  Tolerant to prior event not part of event */
+        public isPriorComplete() : boolean {
+            return !this.options.requireCompletionOf || this.options.requireCompletionOf.isComplete();
         }
         // =================================== pause resume methods ===================================
         /** support game pausing / resuming.  There is no need to actively pause a MotionEvent. */
@@ -255,6 +276,7 @@ module QI{
             this._syncPartner = syncPartner;
             syncPartner._syncPartner = this;
         }
+        
         /**
          *  Called by the first of the syncPartners to detect that both are waiting for each other.
          *  @param {number} startTime - passed from partner, so both are in sync as close as possible.
@@ -264,10 +286,11 @@ module QI{
             this._currentDurationRatio = MotionEvent._WAITING;
         }
         // ==================================== Getters & setters ====================================
-        public isBlocked  () : boolean { return this._currentDurationRatio === MotionEvent._BLOCKED ; }
-        public isWaiting  () : boolean { return this._currentDurationRatio === MotionEvent._WAITING ; }
-        public isComplete () : boolean { return this._currentDurationRatio === MotionEvent._COMPLETE; }
-        public isExecuting() : boolean { return this._currentDurationRatio >   MotionEvent._READY && this._currentDurationRatio < MotionEvent._COMPLETE; }
+        public isBlocked    () : boolean { return this._currentDurationRatio <=  MotionEvent._BLOCKED ; }
+        public isSyncBlocked() : boolean { return this._currentDurationRatio === MotionEvent._SYNC_BLOCKED ; }
+        public isWaiting    () : boolean { return this._currentDurationRatio === MotionEvent._WAITING ; }
+        public isComplete   () : boolean { return this._currentDurationRatio === MotionEvent._COMPLETE; }
+        public isExecuting  () : boolean { return this._currentDurationRatio >   MotionEvent._READY && this._currentDurationRatio < MotionEvent._COMPLETE; }
 
         public get milliDuration() : number { return this._milliDuration; }
         public get millisBefore() : number { return this.options.millisBefore; }
@@ -286,15 +309,17 @@ module QI{
             this._proratedMillisBefore = (this.millisBefore > 0 || !isRepeat) ? Math.abs(this.millisBefore) * factor : 0;
         }
         // ========================================== Enums  =========================================
-        private static _BLOCKED  = -20;
-        private static _WAITING  = -10;
-        private static _READY    =   0;
-        private static _COMPLETE =   1;
+        private static _BLOCKED      = -30;
+        private static _SYNC_BLOCKED = -20;
+        private static _WAITING      = -10;
+        private static _READY        =   0;
+        private static _COMPLETE     =   1;
 
-        public static get BLOCKED (): number { return MotionEvent._BLOCKED ; }
-        public static get WAITING (): number { return MotionEvent._WAITING ; }
-        public static get READY   (): number { return MotionEvent._READY   ; }
-        public static get COMPLETE(): number { return MotionEvent._COMPLETE; }
+        public static get BLOCKED     (): number { return MotionEvent._BLOCKED      ; }
+        public static get SYNC_BLOCKED(): number { return MotionEvent._SYNC_BLOCKED ; }
+        public static get WAITING     (): number { return MotionEvent._WAITING      ; }
+        public static get READY       (): number { return MotionEvent._READY        ; }
+        public static get COMPLETE    (): number { return MotionEvent._COMPLETE     ; }
     }
     //================================================================================================
     //================================================================================================

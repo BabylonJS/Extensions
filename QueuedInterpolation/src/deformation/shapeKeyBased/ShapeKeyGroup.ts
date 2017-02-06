@@ -147,7 +147,6 @@ module QI {
 
             var stateName = newStateName ? newStateName : this._getDerivedName(referenceIdx, endStateIdxs, endStateRatios, mirrorAxes);
             var stateKey  = new Float32Array(this._nPosElements);
-
             this._buildPosEndPoint(stateKey, referenceIdx, endStateIdxs, endStateRatios, mirrorAxes, (<QI.Mesh> this._node).debug);
             this._addShapeKey(stateName, stateKey);
         }
@@ -208,6 +207,40 @@ module QI {
             this._updateNormals(normals);
 
             return true;
+        }
+        
+        /**
+         * Go to a single pre-defined state immediately.  Much like Skeleton._assignPoseImmediately, can be done while
+         * mesh is not currently visible.  Should not be call here, but through the mesh.
+         * @param {string} stateName - Names of the end state to take.
+         * @param {Float32Array} positions - Array of the positions for the entire mesh, portion updated based on _affectedPositionElements
+         * @param {Float32Array} normals   - Array of the normals   for the entire mesh, portion updated based on _affectedVertices
+         */
+        public _deformImmediately(stateName : string, positions : Float32Array, normals :Float32Array) : void {
+            var idx = this._getIdxForState(stateName);
+            if (idx === -1) {
+                BABYLON.Tools.Error("ShapeKeyGroup: invalid end state name: " + stateName.toUpperCase());
+                return;
+            }
+            // interrupt any current deform, if any
+            if (this._currentStepInSeries instanceof VertexDeformation) this.stopCurrent(true);
+            
+            // assign the currFinal's so next deform knows where it is coming from
+            this._currFinalPositionVals = this._states [idx];
+            this._currFinalNormalVals   = this._normals[idx];
+            
+            for (var i = 0; i < this._nPosElements; i++){
+                positions[this._affectedPositionElements[i]] = this._currFinalPositionVals[i];
+            }
+            
+            var mIdx : number, kIdx : number;
+            for (var i = 0; i < this._nVertices; i++){
+                mIdx = 3 * this._affectedVertices[i] // offset for this vertex in the entire mesh
+                kIdx = 3 * i;                        // offset for this vertex in the shape key group
+                normals[mIdx    ] = this._currFinalNormalVals[kIdx    ];
+                normals[mIdx + 1] = this._currFinalNormalVals[kIdx + 1];
+                normals[mIdx + 2] = this._currFinalNormalVals[kIdx + 2];
+            }
         }
 
         /** Only public, so can be swapped out with SIMD version */

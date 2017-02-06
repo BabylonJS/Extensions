@@ -53,10 +53,7 @@ module QI{
          * The fire is now ready. Go for it.
          */
         private _showTime() : void {
-            // record permanent material, so can be returned when done
-            var materialHold = this._mesh.material;
-
-            // make the Fire Material & assign
+            // make the Fire Material
             var fire = new BABYLON.FireMaterial("Fire Entrance", this._mesh.getScene());
             fire.diffuseTexture = this._diffuse;
             fire.distortionTexture = this._distortion;
@@ -64,21 +61,32 @@ module QI{
             fire.speed = 1.0;
             fire.alpha = 0.5;
             fire.checkReadyOnlyOnce = true;
-            this._mesh.material = fire;
+
+            // get all child meshes, so all can be assigned fire material
+            var meshNKids = <Array<BABYLON.Mesh>> this._mesh.getDescendants();
+            meshNKids.push(this._mesh);
+            
+            // record permanent material, so can be returned when done
+            var materialsHold = new Array<BABYLON.Material>(meshNKids.length); 
+            for (var i = 0, len = meshNKids.length; i < len; i++) {
+               materialsHold[i] = meshNKids[i].material;
+               meshNKids[i].material = fire;
+            }
 
             // queue a return to actual material
             var ref = this;
             var events = [
-                // make root mesh visible
-                function(){ref._mesh.isVisible = true;},
+                // make all meshes visible
+                function(){ref._mesh.makeVisible(true);},
 
                 // let fire flame a little.  Start sound, if passed.
                 new Stall(ref.durations[0], PovProcessor.POV_GROUP_NAME, ref.soundEffect),
 
-                //  change back to original material; clean up fire resources
+                //  change back to original materials; clean up fire resources
                 function () {
-                    ref._mesh.material = materialHold; // resume with original material
-                    ref._mesh.makeVisible(true); // make any children visible
+                    for (var i = 0, len = meshNKids.length; i < len; i++) {
+                       meshNKids[i].material = materialsHold[i];
+                    }
                     // eliminate resources
                     fire.dispose();
                     ref._diffuse.dispose();

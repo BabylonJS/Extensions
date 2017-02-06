@@ -60,6 +60,9 @@ class Light(FCurveAnimatable):
         self.intensity = light.data.energy
         self.diffuse   = light.data.color if light.data.use_diffuse  else Color((0, 0, 0))
         self.specular  = light.data.color if light.data.use_specular else Color((0, 0, 0))
+        
+        #code generated for cameraLight is done in js_exporter
+        self.cameraLight = light.data.cameraLight
 
         # inclusion section
         if light.data.use_own_layer:
@@ -75,19 +78,19 @@ class Light(FCurveAnimatable):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def to_script_file(self, file_handler, indent):
         if self.light_type == POINT_LIGHT:
-            file_handler.write(indent + 'light = new B.PointLight("' + self.name + '", new B.Vector3(' + format_vector(self.position) + '), scene);\n')
+            file_handler.write(indent + 'light = new _B.PointLight("' + self.name + '", new _B.Vector3(' + format_vector(self.position) + '), scene);\n')
 
         elif self.light_type == DIRECTIONAL_LIGHT:
-            file_handler.write(indent + 'light = new B.DirectionalLight("' + self.name + '", new B.Vector3(' + format_vector(self.direction) + '), scene);\n')
-            file_handler.write(indent + 'light.position = new B.Vector3(' + format_vector(self.position) + ');\n')
+            file_handler.write(indent + 'light = new _B.DirectionalLight("' + self.name + '", new _B.Vector3(' + format_vector(self.direction) + '), scene);\n')
+            file_handler.write(indent + 'light.position = new _B.Vector3(' + format_vector(self.position) + ');\n')
 
         elif self.light_type == SPOT_LIGHT:
-            file_handler.write(indent + 'light = new B.SpotLight("' + self.name + '", new B.Vector3(' + format_vector(self.position) +
-                               '), new B.Vector3(' + format_vector(self.direction) + '), ' + format_f(self.angle) + ', ' + format_f(self.exponent) + ', scene);\n')
+            file_handler.write(indent + 'light = new _B.SpotLight("' + self.name + '", new _B.Vector3(' + format_vector(self.position) +
+                               '), new _B.Vector3(' + format_vector(self.direction) + '), ' + format_f(self.angle) + ', ' + format_f(self.exponent) + ', scene);\n')
 
         else:
-            file_handler.write(indent + 'light = new B.HemisphericLight("' + self.name + '", new B.Vector3(' + format_vector(self.direction) + '), scene);\n')
-            file_handler.write(indent + 'light.groundColor = new B.Color3(' + format_color(self.groundColor) + ');\n')
+            file_handler.write(indent + 'light = new _B.HemisphericLight("' + self.name + '", new _B.Vector3(' + format_vector(self.direction) + '), scene);\n')
+            file_handler.write(indent + 'light.groundColor = new _B.Color3(' + format_color(self.groundColor) + ');\n')
 
         file_handler.write(indent + 'light.intensity = ' + format_f(self.intensity) + ';\n')
 
@@ -97,8 +100,8 @@ class Light(FCurveAnimatable):
         if hasattr(self, 'parentId'):
             file_handler.write(indent + 'light.parent = scene.getLastEntryByID("' + self.parentId + '");\n')
 
-        file_handler.write(indent + 'light.diffuse = new B.Color3(' + format_color(self.diffuse) + ');\n')
-        file_handler.write(indent + 'light.specular = new B.Color3(' + format_color(self.specular) + ');\n')
+        file_handler.write(indent + 'light.diffuse = new _B.Color3(' + format_color(self.diffuse) + ');\n')
+        file_handler.write(indent + 'light.specular = new _B.Color3(' + format_color(self.specular) + ');\n')
 
         if hasattr(self, 'includedOnlyMeshesIds'):
             file_handler.write(indent + 'light._includedOnlyMeshesIds = [')
@@ -132,7 +135,7 @@ class ShadowGenerator:
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def to_script_file(self, file_handler, indent):
         file_handler.write(indent + 'light = scene.getLightByID("' + self.lightId + '");\n')
-        file_handler.write(indent + 'shadowGenerator = new B.ShadowGenerator(' + format_int(self.mapSize) + ', light);\n')
+        file_handler.write(indent + 'shadowGenerator = new _B.ShadowGenerator(' + format_int(self.mapSize) + ', light);\n')
         file_handler.write(indent + 'shadowGenerator.bias = ' + format_f(self.shadowBias) + ';\n')
         if hasattr(self, 'useVarianceShadowMap') :
             file_handler.write(indent + 'shadowGenerator.useVarianceShadowMap = true;\n')
@@ -173,14 +176,19 @@ bpy.types.Lamp.shadowBias = bpy.props.FloatProperty(
 
 bpy.types.Lamp.shadowBlurScale = bpy.props.IntProperty(
     name='Blur Scale',
-    description='',
+    description='Setting when using a Blur Variance shadow map',
     default = 2
 )
 
 bpy.types.Lamp.shadowBlurBoxOffset = bpy.props.IntProperty(
     name='Blur Box Offset',
-    description='',
+    description='Setting when using a Blur Variance shadow map',
     default = 0
+)
+bpy.types.Lamp.cameraLight = bpy.props.BoolProperty(
+    name='Camera Light (point type only)',
+    description='attach this light to move / rotate with the active camera using a scene.beforeCameraRender,\nor activeCameras[0] when more than 1 active',
+    default = False
 )
 #===============================================================================
 class LightPanel(bpy.types.Panel):
@@ -198,12 +206,29 @@ class LightPanel(bpy.types.Panel):
         ob = context.object
         layout = self.layout
         layout.prop(ob.data, 'shadowMap')
-        layout.prop(ob.data, 'shadowMapSize')
-        layout.prop(ob.data, 'shadowBias')
+        
+        usingShadows =  ob.data.shadowMap != NO_SHADOWS
+        row = layout.row()
+        row.enabled = usingShadows
+        row.prop(ob.data, 'shadowMapSize')
+        
+        row = layout.row()
+        row.enabled = usingShadows
+        row.prop(ob.data, 'shadowBias')
 
         box = layout.box()
         box.label(text="Blur Variance Shadows")
-        box.prop(ob.data, 'shadowBlurScale')
-        box.prop(ob.data, 'shadowBlurBoxOffset')
+        usingBlur = ob.data.shadowMap == BLUR_VARIANCE_SHADOWS
+        row = box.row()
+        row.enabled = usingBlur
+        row.prop(ob.data, 'shadowBlurScale')
+        row = box.row()
+        row.enabled = usingBlur
+        row.prop(ob.data, 'shadowBlurBoxOffset')
 
         layout.prop(ob.data, 'autoAnimate')
+        
+        row = layout.row()
+        row.enabled = ob.data.type == 'POINT'
+        row.prop(ob.data, 'cameraLight')
+        

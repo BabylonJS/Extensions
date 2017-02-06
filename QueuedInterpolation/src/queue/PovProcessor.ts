@@ -133,7 +133,7 @@ module QI {
             // ok, have a motion event to process
             try{
                 this._ratioComplete = this._currentStepInSeries.getCompletionMilestone();
-                if (this._ratioComplete < 0) return; // MotionEvent.BLOCKED or MotionEvent.WAITING
+                if (this._ratioComplete < 0) return; // MotionEvent.BLOCKED, Motion.SYNC_BLOCKED or MotionEvent.WAITING
 
                 // processing of a NonMotionEvent
                 if (this._currentStepInSeries instanceof NonMotionEvent) {
@@ -183,7 +183,7 @@ module QI {
         }
 
         public insertSeriesInFront(eSeries : EventSeries){
-            this._queue.splice(0, 0, eSeries);
+            this._queue.splice(0, 0, eSeries);      
         }
 
         /**
@@ -356,7 +356,7 @@ module QI {
         }
         // ========================================= Statics =========================================
         public static get Version(): string {
-            return "1.0.0";
+            return "1.1.0";
         }
 
         public static LerpToRef(start: BABYLON.Vector3, end: BABYLON.Vector3, amount: number, result: BABYLON.Vector3): void {

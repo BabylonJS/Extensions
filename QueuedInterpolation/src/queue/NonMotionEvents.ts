@@ -46,7 +46,7 @@ module QI{
             }
             var resume = !this._paused;
             var ratioComplete = this.getCompletionMilestone();
-            if (ratioComplete < 0) return; // MotionEvent.BLOCKED or MotionEvent.WAITING
+            if (ratioComplete < 0) return; // MotionEvent.BLOCKED, Motion.SYNC_BLOCKED or MotionEvent.WAITING
 
             this._incrementallyUpdate(ratioComplete);
 

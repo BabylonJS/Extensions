@@ -53,13 +53,13 @@ module QI{
             // check the queue first for the last pose set to run
             var lastPose : any;
             for (var i = this._queue.length - 1; i >= 0; i--){
-                lastPose = this._getLastEventInSeries(this._queue[i]);
+                lastPose = this._getLastPoseEventInSeries(this._queue[i]);
                 if (lastPose) return lastPose;
             }
 
             // queue could be empty, return last of current series if exists
             if (this._currentSeries){
-                lastPose = this._getLastEventInSeries(this._currentSeries);
+                lastPose = this._getLastPoseEventInSeries(this._currentSeries);
                 if (lastPose) return lastPose;
             }
 
@@ -67,7 +67,7 @@ module QI{
             return this._lastPoseRun;
         }
 
-        private _getLastEventInSeries(series : EventSeries) : string {
+        private _getLastPoseEventInSeries(series : EventSeries) : string {
             var events = series._events;
             for (var i = events.length - 1; i >= 0; i--){
                 if (events[i] instanceof PoseEvent) return (<PoseEvent> events[i]).poseName;

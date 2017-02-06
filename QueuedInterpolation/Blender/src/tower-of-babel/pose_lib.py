@@ -53,7 +53,7 @@ class PoseLibExporter:
         if libraryName == DEFAULT_LIB_NAME or len(libraryName) == 0:
             libraryName = nameSpace
 
-        file_handler.write(indent + 'var lib = QI.SkeletonPoseLibrary.createLibrary("' + libraryName + '",  new V('+ format_vector(dimensions) + '), "'  + roots[0].name + '", boneLengths);\n')
+        file_handler.write(indent + 'var lib = QI.SkeletonPoseLibrary.createLibrary("' + libraryName + '",  new _V('+ format_vector(dimensions) + '), "'  + roots[0].name + '", boneLengths);\n')
 
         self.basis = self.bjsSkeleton.getRestAsPose()
         self.recordPose(file_handler, 'basis', indent, self.basis)
@@ -91,7 +91,7 @@ class PoseLibExporter:
 
             if first == False:
                 file_handler.write(',')
-            file_handler.write('\n' + indent1 + '' + bone[0] + ': M(' + format_matrix4(bone[1]) + ')')
+            file_handler.write('\n' + indent1 + '' + bone[0] + ': _M(' + format_matrix4(bone[1]) + ')')
 #            loc, rot, scale = bone[1].decompose()
 
 #            file_handler.write('\n' + indent1 + '' + bone[0] + ': new QI.MatrixComp(')
@@ -118,12 +118,7 @@ class PoseLibExporter:
 #===============================================================================
 # convert each element in pose Library
 def poseLibToShapeKeys(operator, scene, skeleton, shapeKeyName = None):
-    selectedBones = getSelectedBones(skeleton)
-    if (len(selectedBones) == 0):
-        operator.report({'ERROR'}, 'At least one bone must be selected')
-        return
-    else:
-        operator.report({'INFO'}, 'Taking into account ' + str(len(selectedBones)) + ' bones')
+    #selectedBones = getSelectedBones(skeleton)       
 
     # clear all transform of all bones, to avoid strays when a vertex shares has vertex group of un-selected bone with a selected bone
     bpy.ops.object.mode_set(mode = 'POSE')
@@ -132,6 +127,8 @@ def poseLibToShapeKeys(operator, scene, skeleton, shapeKeyName = None):
     
     # better results still occur when posing all the bones, so comment this out
     #setSelectedBones(skeleton, selectedBones)
+    selectedBones = getAllBones(skeleton)
+    operator.report({'INFO'}, 'Taking into account ' + str(len(selectedBones)) + ' bones')
     
     # get the list meshes this rig controls (creates basis key if missing)
     meshes = getMeshesForRig(scene, skeleton, True)
@@ -150,6 +147,10 @@ def poseLibToShapeKeys(operator, scene, skeleton, shapeKeyName = None):
     else:
         applyPose(scene, meshes, shapeKeyName, selectedBones, meshStats)
          
+    # clear all transform of all bones, so last pose does not remain
+    bpy.ops.pose.select_all(action = 'SELECT')
+    bpy.ops.pose.transforms_clear()
+    
     # create report in shape within mesh order
     for m, mesh in enumerate(meshes):
         operator.report({'INFO'}, 'Total Vertices for ' + mesh.name + ':  ' + str(len(mesh.data.vertices)))
@@ -189,7 +190,7 @@ def applyPose(scene, meshes, name, selectedBones, meshStats):
             
             value   = v.co
             baseval = basis.data[v.index].co
-            if not similar_vertex(value, baseval):
+            if not similar_vertex(value, baseval, 0.00025):
                 key.data[v.index].co = value
                 nDiff += 1
 
@@ -202,6 +203,15 @@ def applyPose(scene, meshes, name, selectedBones, meshStats):
         # remove temp mesh
         bpy.data.meshes.remove(tmp)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# This also returns hidden bones, critical for finger shape keys
+def getAllBones(skeleton):
+    vGroupNames = []
+    for bone in skeleton.data.bones:
+        vGroupNames.append(bone.name)
+        
+    return vGroupNames
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# not in use
 def getSelectedBones(skeleton):
     vGroupNames = []
     for bone in skeleton.data.bones:

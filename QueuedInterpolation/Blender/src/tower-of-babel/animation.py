@@ -118,7 +118,7 @@ class Animation:
     # assigns the var 'animation', which the caller has already defined
     # .babylon writes 'values', but the babylonFileLoader reads it, changing it to 'value'
     def to_script_file(self, file_handler, indent):
-        file_handler.write(indent + 'animation = new B.Animation("' + self.name + '", "' +
+        file_handler.write(indent + 'animation = new _B.Animation("' + self.name + '", "' +
                                                                              self.propertyInBabylon + '", ' +
                                                                              format_int(self.framePerSecond) + ', ' +
                                                                              format_int(self.dataType) + ', ' +
@@ -131,9 +131,9 @@ class Animation:
             if self.dataType == ANIMATIONTYPE_MATRIX:
                 file_handler.write('M(' + format_matrix4(value_idx) + ')}')
             elif self.dataType == ANIMATIONTYPE_QUATERNION:
-               file_handler.write('new B.Quaternion(' + format_quaternion(value_idx) + ')}')
+               file_handler.write('new _B.Quaternion(' + format_quaternion(value_idx) + ')}')
             else:
-                file_handler.write('new B.Vector3(' + format_vector(value_idx) + ')}')
+                file_handler.write('new _B.Vector3(' + format_vector(value_idx) + ')}')
 
             if frame_idx + 1 < nFrames:
                 file_handler.write(',')

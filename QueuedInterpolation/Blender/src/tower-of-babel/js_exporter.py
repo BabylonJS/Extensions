@@ -26,6 +26,7 @@ class JSExporter:
         scene = context.scene
         self.scene = scene # reference for passing
         self.fatalError = None
+        self.cameraLight = None
         try:
             self.filepathMinusExtension = filepath.rpartition('.')[0]
             JSExporter.nameSpace = getNameSpace(self.filepathMinusExtension)
@@ -39,7 +40,7 @@ class JSExporter:
             if bpy.ops.object.mode_set.poll():
                 bpy.ops.object.mode_set(mode = 'OBJECT')
 
-            # assign texture location, purely temporary if inlining
+            # assign texture location, purely temporary if in-lining
             self.textureDir = path.dirname(filepath)
             if not scene.inlineTextures:
                 self.textureDir = path.join(self.textureDir, scene.textureDir)
@@ -106,7 +107,7 @@ class JSExporter:
                     while True and self.isInSelectedLayer(object, scene):
                         mesh = Mesh(object, scene, nextStartFace, forcedParent, nameID, self)
                         if mesh.hasUnappliedTransforms and hasattr(mesh, 'skeletonWeights'):
-                            self.fatalError = 'Mesh: ' + mesh.name + ' has unapplied transformations.  This will never work for a mesh with an armature.  Export cancelled'
+                            self.fatalError = 'Mesh: ' + mesh.name + ' has un-applied transformations.  This will never work for a mesh with an armature.  Export cancelled'
                             Logger.log(self.fatalError)
                             return
 
@@ -141,6 +142,13 @@ class JSExporter:
                     if object.is_visible(scene): # no isInSelectedLayer() required, is_visible() handles this for them
                         bulb = Light(object, self.meshesAndNodes)
                         self.lights.append(bulb)
+                        
+                        if bulb.cameraLight:
+                            if self.cameraLight == None:
+                                self.cameraLight = bulb
+                            else:
+                                Logger.warn('Only camera light allowed.  Setting ignored for : ' + object.name)
+                            
                         if object.data.shadowMap != 'NONE':
                             if bulb.light_type == DIRECTIONAL_LIGHT or bulb.light_type == SPOT_LIGHT:
                                 self.shadowGenerators.append(ShadowGenerator(object, self.meshesAndNodes, scene))
@@ -207,7 +215,7 @@ class JSExporter:
         file_handler.write(indent1 + 'function onTexturesLoaded(){\n')
         file_handler.write(indent2 + 'if (--pendingTextures > 0) return;\n')
         if JSExporter.logInBrowserConsole:
-            file_handler.write(indent2 + 'B.Tools.Log("Texture Load delay:  " + ((B.Tools.Now - texLoadStart) / 1000).toFixed(2) + " secs");\n')
+            file_handler.write(indent2 + '_B.Tools.Log("Texture Load delay:  " + ((_B.Tools.Now - texLoadStart) / 1000).toFixed(2) + " secs");\n')
         file_handler.write(indent2 + 'for (var i = 0, len = waitingMeshes.length; i < len; i++){\n')
         file_handler.write(indent2 + '    if (typeof waitingMeshes[i].grandEntrance == "function") waitingMeshes[i].grandEntrance();\n')
         file_handler.write(indent2 + '    else makeVisible(waitingMeshes[i]);\n')
@@ -236,7 +244,7 @@ class JSExporter:
         file_handler.write(indent2 + 'if (materialsRootDir.lastIndexOf("/") + 1  !== materialsRootDir.length) { materialsRootDir  += "/"; }\n')
 
         if JSExporter.logInBrowserConsole:
-            file_handler.write(indent2 + 'var loadStart = B.Tools.Now;\n')
+            file_handler.write(indent2 + 'var loadStart = _B.Tools.Now;\n')
         file_handler.write(indent2 + 'var material;\n')
         file_handler.write(indent2 + 'var texture;\n\n')
 
@@ -248,9 +256,9 @@ class JSExporter:
                 multimaterial.to_script_file(file_handler, indent2)
         file_handler.write(indent2 + 'if (pendingTextures === 0) matLoaded = true;\n')
         if JSExporter.logInBrowserConsole:
-            file_handler.write(indent2 + 'else texLoadStart = B.Tools.Now;\n')
+            file_handler.write(indent2 + 'else texLoadStart = _B.Tools.Now;\n')
         if JSExporter.logInBrowserConsole:
-            file_handler.write(indent2 + 'B.Tools.Log("' + JSExporter.nameSpace + '.defineMaterials completed:  " + ((B.Tools.Now - loadStart) / 1000).toFixed(2) + " secs");\n')
+            file_handler.write(indent2 + '_B.Tools.Log("' + JSExporter.nameSpace + '.defineMaterials completed:  " + ((_B.Tools.Now - loadStart) / 1000).toFixed(2) + " secs");\n')
         file_handler.write(indent1 + '}\n')
         file_handler.write(indent1 + JSExporter.nameSpace + '.defineMaterials = defineMaterials;\n')
 
@@ -260,7 +268,7 @@ class JSExporter:
             file_handler           .write(JSExporter.define_module_method    ('defineSkeletons', 'bonesLoaded'))
             typescript_file_handler.write(JSExporter.define_Typescript_method('defineSkeletons', 'bonesLoaded'))
 
-            file_handler.write(indent2 + 'var loadStart = B.Tools.Now;\n')
+            file_handler.write(indent2 + 'var loadStart = _B.Tools.Now;\n')
             file_handler.write(indent2 + 'var skeleton;\n')
             file_handler.write(indent2 + 'var bone;\n')
             file_handler.write(indent2 + 'var animation;\n\n')
@@ -268,7 +276,7 @@ class JSExporter:
                 skeleton.to_script_file(file_handler, indent2, JSExporter.logInBrowserConsole)
             file_handler.write(indent2 + 'bonesLoaded = true;\n')
             if JSExporter.logInBrowserConsole:
-                file_handler.write(indent2 + 'B.Tools.Log("' + JSExporter.nameSpace + '.defineSkeletons completed:  " + ((B.Tools.Now - loadStart) / 1000).toFixed(2) + " secs");\n')
+                file_handler.write(indent2 + '_B.Tools.Log("' + JSExporter.nameSpace + '.defineSkeletons completed:  " + ((_B.Tools.Now - loadStart) / 1000).toFixed(2) + " secs");\n')
             file_handler.write(indent1 + '}\n')
             file_handler.write(indent1 + JSExporter.nameSpace + '.defineSkeletons = defineSkeletons;\n')
 
@@ -281,7 +289,7 @@ class JSExporter:
             file_handler           .write(JSExporter.define_module_method    ('defineCameras'))
             typescript_file_handler.write(JSExporter.define_Typescript_method('defineCameras'))
 
-            file_handler.write(indent2 + 'var camera;\n\n') # intensionally vague, since sub-classes instances & different specifc propeties set
+            file_handler.write(indent2 + 'var camera;\n\n') # intensionally vague, since sub-classes instances & different specific properties set
             for camera in self.cameras:
                 if hasattr(camera, 'fatalProblem'): continue
                 camera.update_for_target_attributes(self.meshesAndNodes)
@@ -316,9 +324,19 @@ class JSExporter:
             file_handler           .write(JSExporter.define_module_method    ('defineLights'))
             typescript_file_handler.write(JSExporter.define_Typescript_method('defineLights'))
 
-            file_handler.write(indent2 + 'var light;\n\n') # intensionally vague, since sub-classes instances & different specifc propeties set
+            file_handler.write(indent2 + 'var light;\n\n') # intensionally vague, since sub-classes instances & different specific properties set
             for light in self.lights:
                 light.to_script_file(file_handler, indent2)
+                
+            if self.cameraLight is not None:
+                file_handler.write(indent2 + 'var camlight = scene.getLightByName("' + self.cameraLight.name + '");\n')
+                file_handler.write(indent2 + 'scene.beforeCameraRender = function () {\n')
+                file_handler.write(indent2 + '    var cam = (scene.activeCameras.length > 0) ? scene.activeCameras[0] : scene.activeCamera;\n')
+                file_handler.write(indent2 + '    // move the light to match where the camera is\n')
+                file_handler.write(indent2 + '    camlight.position = cam.position;\n')
+                file_handler.write(indent2 + '    camlight.rotation = cam.rotation;\n')
+                file_handler.write(indent2 + '};\n\n')
+                
             if self.hasShadows:
                 file_handler.write(indent2 + 'defineShadowGen(scene);\n')
             file_handler.write(indent1 + '}\n')

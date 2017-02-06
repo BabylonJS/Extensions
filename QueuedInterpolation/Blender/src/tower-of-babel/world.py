@@ -45,13 +45,13 @@ class World:
 
         indent = '        '
         file_handler.write(indent + 'scene.autoClear = ' + format_bool(self.autoClear) + ';\n')
-        file_handler.write(indent + 'scene.clearColor    = new B.Color3(' + format_color(self.clear_color) + ');\n')
-        file_handler.write(indent + 'scene.ambientColor  = new B.Color3(' + format_color(self.ambient_color) + ');\n')
-        file_handler.write(indent + 'scene.gravity = new B.Vector3(' + format_vector(self.gravity) + ');\n')
+        file_handler.write(indent + 'scene.clearColor    = new _B.Color3(' + format_color(self.clear_color) + ');\n')
+        file_handler.write(indent + 'scene.ambientColor  = new _B.Color3(' + format_color(self.ambient_color) + ');\n')
+        file_handler.write(indent + 'scene.gravity = new _V(' + format_vector(self.gravity) + ');\n')
 
         if hasattr(self, 'fogMode'):
             file_handler.write(indent + 'scene.fogMode = ' + self.fogMode + ';\n')
-            file_handler.write(indent + 'scene.fogColor = new B.Color3(' + format_color(self.fogColor) + ');\n')
+            file_handler.write(indent + 'scene.fogColor = new _B.Color3(' + format_color(self.fogColor) + ');\n')
             file_handler.write(indent + 'scene.fogStart = ' + self.fogStart + ';\n')
             file_handler.write(indent + 'scene.fogEnd = ' + self.fogEnd + ';\n')
             file_handler.write(indent + 'scene.fogDensity = ' + self.fogDensity + ';\n')
@@ -167,7 +167,7 @@ class World:
         file_handler.write('                    ret.skeleton = src.skeleton.clone(skelName, skelName);\n')
         file_handler.write('                }\n')
         file_handler.write('            }\n')
-        file_handler.write('            else B.Tools.Error("Mesh not found: " + meshName);\n')
+        file_handler.write('            else _B.Tools.Error("Mesh not found: " + meshName);\n')
         file_handler.write('            return ret;\n')
         file_handler.write('        };\n')
         file_handler.write('        return MeshFactory;\n')

@@ -8,7 +8,7 @@ module QI{
         /**
          * @param {string} groupName -  Used by QI.Mesh to place in the correct ShapeKeyGroup queue(s).
          * @param {string} _referenceStateName - Names of state key to be used as a reference, so that a endStateRatio can be used
-         * @param {Array} _endStateNames - Names of state keys to deform to
+         * @param {Array<string>} _endStateNames - Names of state keys to deform to
          * @param {Array} _endStateRatios - ratios of the end state to be obtained from reference state: -1 (mirror) to 1 (default 1's)
          *
          * args from super:
@@ -27,7 +27,9 @@ module QI{
          *      absoluteMovement - Movement arg is an absolute value, not POV (default false).
          *      absoluteRotation - Rotation arg is an absolute value, not POV (default false).
          *      pace - Any Object with the function: getCompletionMilestone(currentDurationRatio) (default MotionEvent.LINEAR)
-         *      sound - Sound to start with event.  WARNING: When event also has a sync partner, there could be issues.
+         *      sound - Sound to start with event.
+         *      requireCompletionOf - A way to serialize events from different queues e.g. shape key & skeleton.
+         *
          *
          *      noStepWiseMovement - Calc the full amount of movement from Node's original position / rotation,
          *                           rather than stepwise (default false).  No meaning when no rotation in event.
@@ -35,12 +37,6 @@ module QI{
          *      mirrorAxes - Shapekeys Only:
          *                   Axis [X,Y, or Z] to mirror against for an end state ratio, which is negative.  No meaning if ratio is positive.
          *                   If null, shape key group setting used.
-         *
-         *      subposes - Skeletons Only:
-         *                 Subposes which should be substituted during event (default null).
-         *
-         *      revertSubposes - Skeletons Only:
-         *                       Should any subposes previously applied should be subtracted during event(default false)?
          */
         constructor(
             groupName                   : string,
@@ -104,7 +100,7 @@ module QI{
         /**
          * @param {string} groupName -  Used by QI.Mesh to place in the correct ShapeKeyGroup queue(s).
          * @param {string} endStateName - Name of state key to deform to
-         * @param {number} endStateRatio - ratio of the end state to be obtained from reference state: -1 (mirror) to 1 (default 1)
+         * @param {number} endStateRatio - ratio of the end state to be obtained from reference state: -1 (mirror) to 1
          *
          * args from super
          * @param {number} milliDuration - The number of milli seconds the deformation is to be completed in
@@ -122,7 +118,9 @@ module QI{
          *      absoluteMovement - Movement arg is an absolute value, not POV (default false).
          *      absoluteRotation - Rotation arg is an absolute value, not POV (default false).
          *      pace - Any Object with the function: getCompletionMilestone(currentDurationRatio) (default MotionEvent.LINEAR)
-         *      sound - Sound to start with event.  WARNING: When event also has a sync partner, there could be issues.
+         *      sound - Sound to start with event.
+         *      requireCompletionOf - A way to serialize events from different queues e.g. shape key & skeleton.
+         *
          *
          *      noStepWiseMovement - Calc the full amount of movement from Node's original position / rotation,
          *                           rather than stepwise (default false).  No meaning when no rotation in event.
@@ -130,17 +128,11 @@ module QI{
          *      mirrorAxes - Shapekeys Only:
          *                   Axis [X,Y, or Z] to mirror against for an end state ratio, which is negative.  No meaning if ratio is positive.
          *                   If null, shape key group setting used.
-         *
-         *      subposes - Skeletons Only:
-         *                 Subposes which should be substituted during event (default null).
-         *
-         *      revertSubposes - Skeletons Only:
-         *                       Should any subposes previously applied should be subtracted during event(default false)?
          */
         constructor(
             groupName     : string,
             endStateName  : string,
-            endStateRatio : number = 1,
+            endStateRatio : number,
 
             // args from super
             milliDuration : number,
@@ -153,14 +145,11 @@ module QI{
     //================================================================================================
     //================================================================================================
     /**
-     * sub-class of Deformation, to immediately attain a shape.  To be truely immediate you need to
-     * queue on mesh & specify to clearQueue like:
+     * sub-class of Deformation, to immediately attain a shape.  To be truly immediate you should call
+     * deformImmediately() on the mesh.  This is a convenience method for performing it on a queue.
      *
-     * var event = new QI.MorphImmediate(...);
-     * var series = new QI.EventSeries([event]);
-     * mesh.queueEventSeries(series, true);
-     *
-     * If you specify a sound, then it will not perform event until sound is ready.
+     * If you specify a sound, then it will not perform event until sound is ready.  Same if millisBefore
+     * is specified.
      */
     export class MorphImmediate extends Deformation {
         /**
@@ -176,7 +165,9 @@ module QI{
          *      absoluteMovement - Movement arg is an absolute value, not POV (default false).
          *      absoluteRotation - Rotation arg is an absolute value, not POV (default false).
          *      pace - Any Object with the function: getCompletionMilestone(currentDurationRatio) (default MotionEvent.LINEAR)
-         *      sound - Sound to start with event.  WARNING: When event also has a sync partner, there could be issues.
+         *      sound - Sound to start with event.
+         *      requireCompletionOf - A way to serialize events from different queues e.g. shape key & skeleton.
+         *
          *
          *      noStepWiseMovement - Calc the full amount of movement from Node's original position / rotation,
          *                           rather than stepwise (default false).  No meaning when no rotation in event.
@@ -184,19 +175,13 @@ module QI{
          *      mirrorAxes - Shapekeys Only:
          *                   Axis [X,Y, or Z] to mirror against for an end state ratio, which is negative.  No meaning if ratio is positive.
          *                   If null, shape key group setting used.
-         *
-         *      subposes - Skeletons Only:
-         *                 Subposes which should be substituted during event (default null).
-         *
-         *      revertSubposes - Skeletons Only:
-         *                       Should any subposes previously applied should be subtracted during event(default false)?
          */
         constructor(
             groupName     : string,
             endStateName  : string,
             endStateRatio : number = 1,
             options?      : IMotionEventOptions){
-            super(groupName, endStateName, endStateRatio, 1, null, null, options);
+            super(groupName, endStateName, endStateRatio, 0.01, null, null, options);
         }
     }
     //================================================================================================
@@ -224,7 +209,9 @@ module QI{
          *      absoluteMovement - Movement arg is an absolute value, not POV (default false).
          *      absoluteRotation - Rotation arg is an absolute value, not POV (default false).
          *      pace - Any Object with the function: getCompletionMilestone(currentDurationRatio) (default MotionEvent.LINEAR)
-         *      sound - Sound to start with event.  WARNING: When event also has a sync partner, there could be issues.
+         *      sound - Sound to start with event.
+         *      requireCompletionOf - A way to serialize events from different queues e.g. shape key & skeleton.
+         *
          *
          *      noStepWiseMovement - Calc the full amount of movement from Node's original position / rotation,
          *                           rather than stepwise (default false).  No meaning when no rotation in event.
@@ -232,12 +219,6 @@ module QI{
          *      mirrorAxes - Shapekeys Only:
          *                   Axis [X,Y, or Z] to mirror against for an end state ratio, which is negative.  No meaning if ratio is positive.
          *                   If null, shape key group setting used.
-         *
-         *      subposes - Skeletons Only:
-         *                 Subposes which should be substituted during event (default null).
-         *
-         *      revertSubposes - Skeletons Only:
-         *                       Should any subposes previously applied should be subtracted during event(default false)?
          */
         constructor(
             groupName     : string,

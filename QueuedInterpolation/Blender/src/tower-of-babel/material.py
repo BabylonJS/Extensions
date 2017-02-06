@@ -30,7 +30,7 @@ class MultiMaterial:
         self.material_slots = material_slots
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def to_script_file(self, file_handler, indent):
-        file_handler.write(indent + 'multiMaterial = new B.MultiMaterial("' + self.name + '", scene);\n')
+        file_handler.write(indent + 'multiMaterial = new _B.MultiMaterial("' + self.name + '", scene);\n')
 
         for material in self.material_slots:
             file_handler.write(indent + 'multiMaterial.subMaterials.push(scene.getMaterialByID("' + material.name + '"));\n')
@@ -134,12 +134,12 @@ class Texture:
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def to_script_file(self, file_handler, indent):
         if hasattr(self,'encoded_URI'):
-            file_handler.write(indent + 'texture = B.Texture.CreateFromBase64String(\n')
+            file_handler.write(indent + 'texture = _B.Texture.CreateFromBase64String(\n')
             file_handler.write(indent + '"' + self.encoded_URI + '"\n')
-            file_handler.write(indent + ', "' + self.fileNoPath + '", scene, false, true, B.Texture.TRILINEAR_SAMPLINGMODE, onTexturesLoaded);\n')
+            file_handler.write(indent + ', "' + self.fileNoPath + '", scene, false, true, _B.Texture.TRILINEAR_SAMPLINGMODE, onTexturesLoaded);\n')
 
         else:
-            file_handler.write(indent + 'texture = new B.Texture(materialsRootDir + "' + self.fileNoPath + '", scene, false, true, B.Texture.TRILINEAR_SAMPLINGMODE, onTexturesLoaded);\n')
+            file_handler.write(indent + 'texture = new _B.Texture(materialsRootDir + "' + self.fileNoPath + '", scene, false, true, _B.Texture.TRILINEAR_SAMPLINGMODE, onTexturesLoaded);\n')
 
         file_handler.write(indent + 'pendingTextures++;\n')
 
@@ -320,11 +320,11 @@ class Material:
         indent2 = indent + '    '
         file_handler.write('\n')
         file_handler.write(indent + 'if (!scene.getMaterialByID("' + self.name + '")){\n')
-        file_handler.write(indent2 + 'material = new B.StandardMaterial("' + self.name + '", scene);\n')
-        file_handler.write(indent2 + 'material.ambientColor  = new B.Color3(' + format_color(self.ambient) + ');\n')
-        file_handler.write(indent2 + 'material.diffuseColor  = new B.Color3(' + format_color(self.diffuse) + ');\n')
-        file_handler.write(indent2 + 'material.emissiveColor = new B.Color3(' + format_color(self.emissive) + ');\n')
-        file_handler.write(indent2 + 'material.specularColor = new B.Color3(' + format_color(self.specular) + ');\n')
+        file_handler.write(indent2 + 'material = new _B.StandardMaterial("' + self.name + '", scene);\n')
+        file_handler.write(indent2 + 'material.ambientColor  = new _B.Color3(' + format_color(self.ambient) + ');\n')
+        file_handler.write(indent2 + 'material.diffuseColor  = new _B.Color3(' + format_color(self.diffuse) + ');\n')
+        file_handler.write(indent2 + 'material.emissiveColor = new _B.Color3(' + format_color(self.emissive) + ');\n')
+        file_handler.write(indent2 + 'material.specularColor = new _B.Color3(' + format_color(self.specular) + ');\n')
         file_handler.write(indent2 + 'material.specularPower = ' + format_f(self.specularPower) + ';\n')
         file_handler.write(indent2 + 'material.alpha =  '        + format_f(self.alpha        ) + ';\n')
         file_handler.write(indent2 + 'material.backFaceCulling = ' + format_bool(self.backFaceCulling) + ';\n')
