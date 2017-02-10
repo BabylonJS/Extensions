@@ -98,7 +98,7 @@ module QI {
 
             this._skeletonChangesMade = false;
             if (this._poseProcessor){
-               this._skeletonChangesMade = this._poseProcessor.incrementallyDeform();
+                this._skeletonChangesMade = this._poseProcessor.incrementallyDeform();
             }
 
             // perform any POV events on the mesh not assigned a shapekey group or the pose processor
@@ -208,13 +208,13 @@ module QI {
         }
 
         /**
-         * Cause the group to go out of scope.  All resources on heap, so GC should remove.
-         * @param {string} groupName - The name of the group to look up.
+         * Cause the group to go out of scope.  All resources on heap, so GC should remove it.
+         * @param {string} groupName - The name of the shapekey group on the mesh.
          */
         public removeShapeKeyGroup(groupName : string) : void {
             for (var g = 0, len = this._shapeKeyGroups.length; g < len; g++) {
                 if (this._shapeKeyGroups[g].getName() === groupName) {
-                    this._shapeKeyGroups = this._shapeKeyGroups.splice(g, 1);
+                    this._shapeKeyGroups.splice(g, 1);
                     return;
                 }
             }
@@ -318,7 +318,7 @@ module QI {
         }
 
         /**
-         * wrapper a single MotionEvent into an EventSeries, defualting on all EventSeries optional args
+         * wrapper a single MotionEvent into an EventSeries, defaulting on all EventSeries optional args
          * @param {MotionEvent} event - Event to wrapper.
          */
         public queueSingleEvent(event : MotionEvent) : void {
@@ -378,10 +378,18 @@ module QI {
             }
         }
         // ==================================== Shapekey Wrappers ====================================
+        /**
+         * Query for determining if a given shapekey has been defined for the mesh.
+         * @param {string} groupName - The name of the shapekey group on the mesh.
+         */
         public hasShapeKeyGroup(groupName : string) : boolean {
             return this.getShapeKeyGroup(groupName) !== null;
         }
 
+        /**
+         * Return a ShapeKeyGroup Object defined for the mesh.  Primarily for internal use.
+         * @param {string} groupName - The name of the shapekey group on the mesh.
+         */
         public getShapeKeyGroup(groupName : string) : ShapeKeyGroup {
             for (var g = 0, len = this._shapeKeyGroups.length; g < len; g++) {
                 if (this._shapeKeyGroups[g].getName() === groupName) {
@@ -390,43 +398,214 @@ module QI {
             }
             return null;
         }
+        
+        /**
+         * Convenience method for queuing a single deform with a single endstate relative to basis state.
+         * @param {string} groupName - The name of the shapekey group on the mesh.
+         * @param {string} endStateName - Name of state key to deform to
+         * @param {number} endStateRatio - ratio of the end state to be obtained from reference state: -1 (mirror) to 1
+         *
+         * @param {number} milliDuration - The number of milli seconds the deformation is to be completed in
+         * @param {Vector3} movePOV - Mesh movement relative to its current position/rotation to be performed at the same time  (default null)
+         *                  right-up-forward
+         *
+         * @param {Vector3} rotatePOV - Incremental Mesh rotation to be performed at the same time  (default null)
+         *                  flipBack-twirlClockwise-tiltRight
+         *
+         * @param {IMotionEventOptions} options - Named options to keep args down to a manageable level.
+         *
+         *      millisBefore - Fixed wait period prior to start, once this event and also syncPartner (if any) is ready (default 0).
+         *                     When negative, no delay if being repeated in an EventSeries.
+         *
+         *      absoluteMovement - Movement arg is an absolute value, not POV (default false).
+         *      absoluteRotation - Rotation arg is an absolute value, not POV (default false).
+         *      pace - Any Object with the function: getCompletionMilestone(currentDurationRatio) (default MotionEvent.LINEAR)
+         *      sound - Sound to start with event.  WARNING: When event also has a sync partner, there could be issues.
+         *
+         *      noStepWiseMovement - Calc the full amount of movement from Node's original position / rotation,
+         *                           rather than stepwise (default false).  No meaning when no rotation in event.
+         *
+         *      mirrorAxes - Shapekeys Only:
+         *                   Axis [X,Y, or Z] to mirror against for an end state ratio, which is negative.  No meaning if ratio is positive.
+         *                   If null, shape key group setting used.
+         * 
+         * @returns {Deformation} This is the event which gets queued.
+         */
+        public queueDeform(
+            groupName     : string,
+            endStateName  : string,
+            endStateRatio : number,
+            milliDuration : number,
+            movePOV       : BABYLON.Vector3 = null,
+            rotatePOV     : BABYLON.Vector3 = null,
+            options?      : IMotionEventOptions) : Deformation 
+        {    
+            var event = new Deformation(groupName, endStateName, endStateRatio, milliDuration, movePOV, rotatePOV, options);
+            this.queueSingleEvent(event);
+            return event;
+        }
 
-        public getLastPoseNameQueuedOrRun() : string {
-            return this._poseProcessor ? this._poseProcessor.getLastPoseNameQueuedOrRun() : null;
+        /**
+         * Go to a single pre-defined state immediately.  Much like assignPoseImmediately, can be done while
+         * mesh is not currently visible.
+         * @param {string} groupName - The name of the shapekey group on the mesh.
+         * @param {string} endStateName - Name of state key to deform to
+         */
+        public deformImmediately(groupName : string, stateName : string) : void {
+            var group = this.getShapeKeyGroup(groupName);
+            if (!group) {
+                BABYLON.Tools.Error("QI.Mesh: invalid shape key group: " + groupName.toUpperCase());
+                return;
+            }
+            group._deformImmediately(stateName, this._positions32F, this._normals32F);
+            super.updateVerticesData(BABYLON.VertexBuffer.PositionKind, this._positions32F);
+            super.updateVerticesData(BABYLON.VertexBuffer.NormalKind  , this._normals32F);
         }
         // ==================================== Skeleton Wrappers ====================================
+        /** 
+         * Assign the pose library to the mesh.  Only one library can be assigned at once, so any it
+         * is a bad idea to perform this while pose events are queued.
+         * @param {string} libraryName - The name given in Blender when library generated.
+         */
         public assignPoseLibrary(libraryName : string) : void {
             if (this.skeleton) {
                 (<Skeleton> this.skeleton).assignPoseLibrary(libraryName);
             }
         }
 
+        /**
+         * Go to a pose immediately.  This can done while the mesh is not currently visible.
+         * @param {string} poseName - The name of the pose; must be in the library assigned to the skeleton when run
+         */
         public assignPoseImmediately(poseName : string) : void {
              if (this.skeleton) {
                  (<Skeleton> this.skeleton)._assignPoseImmediately(poseName);
                  this._poseProcessor._lastPoseRun = poseName;
             }
         }
+        
+        /**
+         * Convenience method for queuing a single pose on the skeleton.
+         * @param {string} poseName - The name of the pose; must be in the library assigned to the skeleton when run
+         * @param {number} milliDuration - The number of milli seconds the deformation is to be completed in
+         * @param {Vector3} movePOV - Mesh movement relative to its current position/rotation to be performed at the same time (default null).
+         *                  right-up-forward
+         *
+         * @param {Vector3} rotatePOV - Incremental Mesh rotation to be performed or null.
+         *                  flipBack-twirlClockwise-tiltRight
+         *
+         * @param {string[]} subposes - sub-poses which should be substituted during event (default null)
+         * @param {boolean} revertSubposes - Any sub-poses should actually be subtracted during event(default false)
+         *
+         * @param {IMotionEventOptions} options - Named options to keep args down to a manageable level.
+         *
+         *      millisBefore - Fixed wait period prior to start, once this event and also syncPartner (if any) is ready (default 0).
+         *                     When negative, no delay if being repeated in an EventSeries.
+         *
+         *      absoluteMovement - Movement arg is an absolute value, not POV (default false).
+         *      absoluteRotation - Rotation arg is an absolute value, not POV (default false).
+         *      pace - Any Object with the function: getCompletionMilestone(currentDurationRatio) (default MotionEvent.LINEAR)
+         *      sound - Sound to start with event.  WARNING: When event also has a sync partner, there could be issues.
+         *
+         *      noStepWiseMovement - Calc the full amount of movement from Node's original position / rotation,
+         *                           rather than stepwise (default false).  No meaning when no rotation in event.
+         *
+         *      subposes - Skeletons Only:
+         *                 Sub-poses which should be substituted during event (default null).
+         *
+         *      revertSubposes - Skeletons Only:
+         *                       Should any sub-poses previously applied should be subtracted during event(default false)?
+         * 
+         * @returns {PoseEvent} This is the event which gets queued.
+         */
+        public queuePose(
+            poseName       : string,
+            milliDuration  : number,
+            movePOV        : BABYLON.Vector3 = null,
+            rotatePOV      : BABYLON.Vector3 = null,
+            options?       : IMotionEventOptions) : PoseEvent
+        {
+            var event = new PoseEvent(poseName, milliDuration, movePOV, rotatePOV, options);
+            this.queueSingleEvent(event);
+            return event;
+        }
 
-       public addSubPose(poseName : string, immediately? : boolean) : void {
+        /**
+         * assign a sub-pose onto the current state of the skeleton.  Not truly immediate, since it is still queued,
+         * unlike assignPoseImmediately().
+         * @param {string} poseName - The name in the library of the sub-pose (.sp suffix)
+         * 
+         * @returns {PoseEvent} This is the event which gets queued.
+         */
+        public assignSubPoseImmediately(poseName : string) : PoseEvent {
+            return this.addSubPose(poseName, 0.01); // 0.01 milli is close enough to immediate
+        }
+        
+        /** 
+         * Add a sub-pose with limited # of bones, to be added to any subsequent poses, until removed.
+         * @param {string} poseName - The name in the library of the sub-pose (.sp suffix)
+         * @param {number} standAloneMillis - optional, when present an event is generated to assignment to current pose.
+         * 
+         * @param {IMotionEventOptions} options - Named options to keep args down to a manageable level (when standalone)
+         *
+         *      millisBefore - Fixed wait period prior to start, once this event and also syncPartner (if any) is ready (default 0).
+         *                     When negative, no delay if being repeated in an EventSeries.
+         *
+         *      pace - Any Object with the function: getCompletionMilestone(currentDurationRatio) (default MotionEvent.LINEAR)
+         *      sound - Sound to start with event.  WARNING: When event also has a sync partner, there could be issues.
+         *
+         *      revertSubposes - Skeletons Only:
+         *                       Should any sub-poses previously applied should be subtracted during event(default false)?
+         *
+         * @returns {PoseEvent} This is the event which gets queued.  Null when no millis.
+         */
+       public addSubPose(poseName : string, standAloneMillis? : number, options? : IMotionEventOptions) : PoseEvent {
             if (this.skeleton) {
-                (<Skeleton> this.skeleton).addSubPose(poseName);
-                if (immediately) {
-                    this.queueSingleEvent(new PoseEvent(poseName, 1) ); // 1 milli is close enough to immediate
+                if (standAloneMillis) {
+                    var skel = <Skeleton> this.skeleton;
+                    var pose = new PoseEvent(this.getLastPoseNameQueuedOrRun(), standAloneMillis, null, null, options);
+                    var events = [
+                        function() { skel.addSubPose(poseName); },
+                        pose
+                    ];
+                    this.queueEventSeries(new EventSeries(events, 1, 1, PoseProcessor.INTERPOLATOR_GROUP_NAME) ); 
+                    return pose;
+                    
+                } else {
+                    (<Skeleton> this.skeleton).addSubPose(poseName);
+                    return null;
                 }
             }
         }
 
+        /**
+         * Remove a sub-pose at the next posing of the skeleton.
+         * @param {string} poseName - The name in the library of the sub-pose (.sp suffix)
+         */ 
         public removeSubPose(poseName : string) : void {
             if (this.skeleton){
                 (<Skeleton> this.skeleton).removeSubPose(poseName);
             }
         }
 
+        /**
+         * Remove all sub-poses at the next posing of the skeleton.
+         */
         public clearAllSubPoses(){
             if (this.skeleton){
                 (<Skeleton> this.skeleton).clearAllSubPoses();
             }
+        }
+        
+        /**
+         * @returns {string}- This is the name of which is the last one
+         * in the queue.  If there is none in the queue, then a check is done of the event currently
+         * running, if any.
+         *
+         * If a pose has not been found yet, then get the last recorded pose.
+         */
+        public getLastPoseNameQueuedOrRun() : string {
+            return this._poseProcessor ? this._poseProcessor.getLastPoseNameQueuedOrRun() : null;
         }
         // =================================== BJS side ShapeGroup ===================================
         /** Entry point called by TOB generated code, when everything is ready.
@@ -460,7 +639,7 @@ module QI {
         }
 
         /**
-         * make the whole heirarchy visible or not.  The queues are either paused or resumed as well.
+         * make the whole hierarchy visible or not.  The queues are either paused or resumed as well.
          * @param {boolean} visible - To be or not to be
          */
         public makeVisible(visible : boolean) : void {

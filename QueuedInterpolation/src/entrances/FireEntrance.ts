@@ -16,8 +16,16 @@ module QI{
          * @param {QI.Mesh} _mesh - Root level mesh to display.
          * @param {Array<number>} durations - The millis of various sections of entrance.  For Fire only 1.
          * @param {BABYLON.Sound} soundEffect - An optional instance of the sound to play as a part of entrance.
+         * @param {boolean} disposeSound - When true, dispose the sound effect on completion. (Default false)
          */
-        constructor(public _mesh: Mesh, public durations : Array<number>, public soundEffect? : BABYLON.Sound) { }
+        constructor(public _mesh: Mesh, public durations : Array<number>, public soundEffect? : BABYLON.Sound, disposeSound? : boolean) {
+            if (this.soundEffect && disposeSound) {
+                var ref = this;
+                this.soundEffect.onended = function() {
+                    ref.soundEffect.dispose();
+               };
+            }
+        }
 
         /** GrandEntrance implementation */
         public makeEntrance() : void {

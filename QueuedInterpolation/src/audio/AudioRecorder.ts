@@ -28,7 +28,7 @@ module QI {
 
         /**
          * static function to return a AudioRecorder instance, if supported.  Single instance class.
-         * @param {() => void} doneCallback - callback to return when sucessfully complete (optional)
+         * @param {() => void} doneCallback - callback to return when successfully complete (optional)
          */
         public static getInstance(doneCallback? : () => void) : AudioRecorder {
             if (AudioRecorder._instance) return AudioRecorder._instance;
@@ -42,7 +42,7 @@ module QI {
             }
 
             navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
-            if((navigator.mediaDevices && navigator.mediaDevices.getUserMedia) || navigator.getUserMedia){
+            if((navigator.mediaDevices && navigator.mediaDevices.getUserMedia) || navigator.getUserMedia) {
                 var getUserMedia = navigator.mediaDevices && navigator.mediaDevices.getUserMedia ?
                     navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices) :
                     function (constraints) {
@@ -55,7 +55,7 @@ module QI {
                      .then (function (streamReceived) { AudioRecorder.prepMic(streamReceived); })
                      .catch(function (reportError   ) { window.alert('QI.AudioRecorder: Error initializing audio capture:\n\t' + reportError + '\nNote: Firefox errors when mic not plugged in.'); });
 
-            }else{
+            } else {
                 window.alert('QI.AudioRecorder: Navigator.getUserMedia not supported.');
             }
 
@@ -86,7 +86,7 @@ module QI {
             instance._recorder = context.createScriptProcessor(bufferSize, 2, 2);
 
             // cannot reference using 'this' inside of callback
-            instance._recorder.onaudioprocess = function(e){
+            instance._recorder.onaudioprocess = function(e) {
                 if (!instance.recording) return;
                 var evt = <AudioProcessingEvent> e;
                 var left = evt.inputBuffer.getChannelData (0);
@@ -106,7 +106,7 @@ module QI {
             instance.initialized = true;
 
             // let webpage enable controls accordingly
-           if (instance._completionCallback){
+           if (instance._completionCallback) {
                instance._completionCallback();
                instance._completionCallback = null;
            }
@@ -118,7 +118,7 @@ module QI {
          * @param {() => void} doneCallback - Function to call when recording has completed (optional).
          */
         public recordStart(durationMS = Number.MAX_VALUE, doneCallback? : () => void) : void {
-            if (this.recording){ BABYLON.Tools.Warn('QI.AudioRecorder: already recording'); return; }
+            if (this.recording) { BABYLON.Tools.Warn('QI.AudioRecorder: already recording'); return; }
             this.recording = true;
             this._requestedDuration = durationMS;
             this._startTime = BABYLON.Tools.Now;
@@ -153,7 +153,7 @@ module QI {
             var result = new Float32Array(this._recordingLength);
             var offset = 0;
             var lng = channelBuffers.length;
-            for (var i = 0; i < lng; i++){
+            for (var i = 0; i < lng; i++) {
                 var buffer = channelBuffers[i];
                 result.set(buffer, offset);
                 offset += buffer.length;
@@ -170,7 +170,7 @@ module QI {
             this._leftchannel.length = this._rightchannel.length = 0;
             this._recordingLength = 0;
 
-            if (fullReset){
+            if (fullReset) {
                 // delete previous merged buffers, if they exist
                 this._leftBuffer = this._rightBuffer = null;
                 this.playbackReady = false;
@@ -179,11 +179,12 @@ module QI {
         // ==================================== Playback Methods =====================================
         /**
          * play recorded sound from internal buffers
+         * @param {number} downSampling - should either be 1, 2, or 4 (default 1)
          * @param {number} begin - sample in audio to start at (default 0)
          * @param {number} end - last sample + 1 in audio to use (audio length)
          */
-        public playback(begin = 0, end? : number) : void {
-            var newBuffer = this.getAudioBuffer(begin, end);
+        public playback(downSampling = 1, begin = 0, end? : number) : void {
+            var newBuffer = this.getAudioBuffer(downSampling, begin, end);
             if (!newBuffer) return;
 
             var context = BABYLON.Engine.audioEngine.audioContext;
@@ -196,24 +197,25 @@ module QI {
         /**
          * play sound from an external buffer
          * @param {AudioBuffer} audio - The external bufer
+         * @param {number} downSampling - should either be 1, 2, or 4 (default 1)
          * @param {number} begin - sample in audio to start at (default 0)
          * @param {number} end - last sample + 1 in audio to use (audio length)
          */
-        public static playbackExternal(audio : AudioBuffer, begin = 0, end? : number) : void {
-            if (begin > 0 || end){
-                 if (!end) end = audio.getChannelData(0).length;
-                var stereo = audio.numberOfChannels > 1;
+        public static playbackExternal(audio : AudioBuffer, downSampling = 1, begin = 0, end? : number) : void {
+            if (!end) end = audio.getChannelData(0).length;
+            var stereo = audio.numberOfChannels > 1;
 
-                var leftBuffer = audio.getChannelData(0).slice(begin, end);
-                var rightBuffer = stereo ? audio.getChannelData(1).slice(begin, end) : null;
-                var context = BABYLON.Engine.audioEngine.audioContext;
-                audio = context.createBuffer(stereo ? 2 : 1, leftBuffer.length, context.sampleRate);
-
-                audio.getChannelData(0).set(leftBuffer );
-                if (stereo) audio.getChannelData(1).set(rightBuffer);
-            }
+            var leftBuffer = AudioRecorder._downSampling(audio.getChannelData(0).slice(begin, end), downSampling);
+            var rightBuffer = stereo ? AudioRecorder._downSampling(audio.getChannelData(1).slice(begin, end), downSampling) : null;
+            var length = leftBuffer.length;
+            var sampleRate = audio.sampleRate / downSampling;
 
             var context = BABYLON.Engine.audioEngine.audioContext;
+            audio = context.createBuffer(stereo ? 2 : 1, leftBuffer.length, sampleRate);
+
+            audio.getChannelData(0).set(leftBuffer );
+            if (stereo) audio.getChannelData(1).set(rightBuffer);
+
             var newSource = context.createBufferSource();
             newSource.buffer = audio;
             newSource.connect(context.destination);
@@ -232,29 +234,31 @@ module QI {
          * Get the mic recorded data in the form of an AudioBuffer.  This can then be put into a
          * BABYLON.Sound via setAudioBuffer().  Also used internally, so can have .WAV / .TS methods work
          * from either an external sound or mic.
+         * @param {number} downSampling - should either be 1, 2, or 4 (default 1)
          * @param {number} begin - sample in audio to start at (default 0)
          * @param {number} end - last sample + 1 in audio to use (audio length)
          * @returns {AudioBuffer}
          */
-        public getAudioBuffer(begin = 0, end? : number) : AudioBuffer {
+        public getAudioBuffer(downSampling = 1, begin = 0, end? : number) : AudioBuffer {
             if (!this.playbackReady) {BABYLON.Tools.Warn('QI.AudioRecorder: playback when not playbackReady'); return null; }
 
             var leftBuffer  : Float32Array;
             var rightBuffer : Float32Array;
 
-            if (begin === 0 && !end){
-                leftBuffer  = this._leftBuffer;
-                rightBuffer = this._rightBuffer;
+            if (begin === 0 && !end) {
+                leftBuffer  = AudioRecorder._downSampling(this._leftBuffer, downSampling);
+                rightBuffer = AudioRecorder._downSampling(this._rightBuffer, downSampling);
 
-            }else{
+            } else {
                 // adjust args
                 if (!end) end = this._leftBuffer.length;
 
-                leftBuffer  = this._leftBuffer .slice(begin, end);
-                rightBuffer = this._rightBuffer.slice(begin, end);
+                leftBuffer  = AudioRecorder._downSampling(this._leftBuffer .slice(begin, end), downSampling);
+                rightBuffer = AudioRecorder._downSampling(this._rightBuffer.slice(begin, end), downSampling);
             }
+            
             var context = BABYLON.Engine.audioEngine.audioContext;
-            var ret = context.createBuffer(2, leftBuffer.length, context.sampleRate);
+            var ret = context.createBuffer(2, leftBuffer.length, context.sampleRate / downSampling);
 
             ret.getChannelData(0).set(leftBuffer );
             ret.getChannelData(1).set(rightBuffer);
@@ -263,7 +267,7 @@ module QI {
         // ==================================== To Script Methods ====================================
         /** revoke the last temp url */
         private static _cleanUrl() : void {
-            if (AudioRecorder._objectUrl){
+            if (AudioRecorder._objectUrl) {
                 (window.webkitURL || window.URL).revokeObjectURL(AudioRecorder._objectUrl);
                 AudioRecorder._objectUrl = null;
             }
@@ -273,12 +277,14 @@ module QI {
          * Save the last mircorphone recording as an inline Typescript or Javascript function string
          * @param {string} sndName - The name to give the sound, also the name of the function, and the filename
          * @param {boolean} stereo - 2 channels when true (default true)
+         * @param {number} downSampling - should either be 1, 2, or 4 (default 1)
          * @param {boolean} typeScript - Style of function to build, Typescript when True (default), else Javascript
          * @param {number} begin - sample in audio to start at (default 0)
          * @param {number} end - last sample + 1 in audio to use (audio length)
          */
-        public micToScript(sndName : string, stereo = true, typeScript = false, begin = 0, end? : number) : void {
-            AudioRecorder.saveToScript(sndName, this.getAudioBuffer(), stereo, typeScript, begin, end);
+        public micToScript(sndName : string, stereo = true, downSampling = 1, typeScript = false, begin = 0, end? : number) : void {
+            // not calling getAudioBuffer with args, since passed to & processed by saveToScript()
+            AudioRecorder.saveToScript(sndName, this.getAudioBuffer(), stereo, downSampling, typeScript, begin, end);
         }
 
         /**
@@ -286,26 +292,27 @@ module QI {
          * @param {string} sndName - The name to give the sound, also the name of the function, and the filename
          * @param {AudioBuffer} audio - buffer to encode
          * @param {boolean} stereo - 2 channels when true & audio has more than 1 channel (default true)
+         * @param {number} downSampling - should either be 1, 2, or 4 (default 1)
          * @param {boolean} typeScript - Style of function to build, Typescript when True (default), else Javascript
          * @param {number} begin - sample in audio to start at (default 0)
          * @param {number} end - last sample + 1 in audio to use (audio length)
          */
-        public static saveToScript(sndName : string, audio : AudioBuffer, stereo = true, typeScript = false, begin = 0, end? : number) : void {
+        public static saveToScript(sndName : string, audio : AudioBuffer, stereo = true, downSampling = 1, typeScript = false, begin = 0, end? : number) : void {
             AudioRecorder._cleanUrl();
 
-            if (sndName.length === 0){
+            if (sndName.length === 0) {
                 window.alert('QI.AudioRecorder: No name specified');
                 return;
             }
 
-            else if (sndName.indexOf('.') !== -1){
+            else if (sndName.indexOf('.') !== -1) {
                 window.alert('QI.AudioRecorder: Dot not allowed in a function name');
                 return;
             }
 
             var filename = sndName + (typeScript ? '.ts': '.js');
 
-            var blob = new Blob ( [ AudioRecorder._getScriptSource(sndName, audio, stereo, typeScript, begin, end) ], { type : 'text/plain;charset=utf-8' } );
+            var blob = new Blob ( [ AudioRecorder._getScriptSource(sndName, audio, stereo, downSampling, typeScript, begin, end) ], { type : 'text/plain;charset=utf-8' } );
 
             // turn blob into an object URL; saved as a member, so can be cleaned out later
             AudioRecorder._objectUrl = (window.webkitURL || window.URL).createObjectURL(blob);
@@ -322,48 +329,32 @@ module QI {
          * Encode an audio buffer into an inline Typescript or Javascript function string
          * @param {string} sndName - The name to give the sound, and also the name of the function
          * @param {AudioBuffer} audio - buffer to encode
-         * @param {boolean} stereo - 2 channels when true & audio has more than 1 channel (default true)
-         * @param {boolean} typeScript - Style of function to build, Typescript when True (default), else Javascript
-         * @param {number} begin - sample in audio to start at (default 0)
+         * @param {boolean} stereo - 2 channels when true & audio has more than 1 channel
+         * @param {number} downSampling - should either be 1, 2, or 4
+         * @param {boolean} typeScript - Style of function to build, Typescript when True, else Javascript
+         * @param {number} begin - sample in audio to start at
          * @param {number} end - last sample + 1 in audio to use (audio length)
          * @returns {string} - in-line source code
          */
-        private static _getScriptSource(sndName : string, audio : AudioBuffer, stereo = true, typeScript = false, begin = 0, end? : number) : string {
+        private static _getScriptSource(sndName : string, audio : AudioBuffer, stereo : boolean, downSampling : number, typeScript : boolean, begin : number, end? : number) : string {
             // adjust args
             if (!end) end = audio.getChannelData(0).length;
             stereo = stereo && audio.numberOfChannels > 1;
 
-            var leftBuffer = audio.getChannelData(0).slice(begin, end);
-            var rightBuffer = stereo ? audio.getChannelData(1).slice(begin, end) : null;
+            var leftBuffer = AudioRecorder._downSampling(audio.getChannelData(0).slice(begin, end), downSampling);
+            var rightBuffer = stereo ? AudioRecorder._downSampling(audio.getChannelData(1).slice(begin, end), downSampling) : null;
             var length = leftBuffer.length;
-            var sampleRate = audio.sampleRate;
+            var sampleRate = audio.sampleRate / downSampling;
 
-            var ret = typeScript ? 'public ' + sndName + '(scene: BABYLON.Scene) : BABYLON.Sound {\n' : 'function ' + sndName + '(scene) {\n';
-
-            ret += '    var toBuf = function(base64){\n';
-            ret += '        var bStr = window.atob(base64);\n\n';
-
-            ret += '        var len = bStr.length;\n';
-            ret += '        var ret = new Float32Array(len / 2);\n';
-            ret += '        var b1, b2, asShort, isNeg;\n';
-            ret += '        for(var i = 0, j = 0; i < len; i += 2, j++){\n';
-            ret += '            b1 = bStr.charCodeAt(i);\n';
-            ret += '            b2 = bStr.charCodeAt(i + 1);\n';
-            ret += '            isNeg = b1 >> 7 === 1;\n';
-            ret += '            b1 = b1 & 0x7F;\n';
-            ret += '            asShort = 256 * b1 + b2;\n';
-            ret += '            if (isNeg) asShort -= 0x8000;\n';
-            ret += '            ret[j] = asShort / 0x7FFF;\n';
-            ret += '        }\n';
-            ret += '        return ret;\n';
-            ret += '    }\n\n';
+            var ret = typeScript ? 'export function ' + sndName + '(scene: BABYLON.Scene) : BABYLON.Sound {\n' : 
+                                   'function ' + sndName + '(scene) {\n';
 
             ret += '    var context = BABYLON.Engine.audioEngine.audioContext;\n';
             ret += '    var audioBuffer = context.createBuffer(' + (stereo ? 2 : 1) + ', ' + length + ', ' + sampleRate + ');\n';
 
-            ret += '    audioBuffer.getChannelData(0).set(toBuf(\"' + AudioRecorder._floatTo16BitIntBase64(leftBuffer) + '\") );\n';
+            ret += '    audioBuffer.getChannelData(0).set(QI.decode16Bit(\"' + AudioRecorder._floatTo16BitIntBase64(leftBuffer) + '\") );\n';
             if (stereo){
-                ret += '    audioBuffer.getChannelData(1).set(toBuf(\"' + AudioRecorder._floatTo16BitIntBase64(rightBuffer) + '\") );\n';
+                ret += '    audioBuffer.getChannelData(1).set(QI.decode16Bit(\"' +  AudioRecorder._floatTo16BitIntBase64(rightBuffer) + '\") );\n';
             }
             ret += '    var snd = new BABYLON.Sound("' + sndName + '", null, scene);\n';
             ret += '    snd.setAudioBuffer(audioBuffer);\n';
@@ -377,23 +368,35 @@ module QI {
          */
         private static _floatTo16BitIntBase64(array : Float32Array) : string {
             var binary = '';
-            for (var i = 0, len = array.length; i < len; i++){
-                var asShort = (array[i] * 0x7FFF) & 0xFFFF;  // convert to: -32,768 - 32,767, then truncate
-                binary += String.fromCharCode((asShort & 0xFF00) >> 8); // append high order byte
-                binary += String.fromCharCode( asShort & 0x00FF);       // append low  order byte
+            for (var i = 0, len = array.length; i < len; i++) {
+                binary += AudioRecorder._to16Bit(array[i]);
             }
             return window.btoa(binary);
         }
+        
+        private static _to16Bit(val : number) : string {
+            var asShort = (val * 0x7FFF) & 0xFFFF;  // convert to: -32,768 - 32,767, then truncate
+            var binary = String.fromCharCode((asShort & 0xFF00) >> 8); // append high order byte
+            binary += String.fromCharCode( asShort & 0x00FF);       // append low  order byte
+            return binary;
+        }
+        
+/*        private static _to8Bit(val : number) : string {
+             var asByte = (val * 0x7F) & 0xFF;  // convert to: -128 - 127, then truncate
+             return String.fromCharCode(asByte);
+        } 
+*/
         // ====================================== To Wav Methods =====================================
         /**
          * Save the last mircorphone recording as a WAV file
          * @param {string} filename - valid file name (no path), & optional extension (added if missing)
          * @param {boolean} stereo - 2 channels when true (default true)
+         * @param {number} downSampling - should either be 1, 2, or 4 (default 1)
          * @param {number} begin - sample in audio to start at (default 0)
          * @param {number} end - last sample + 1 in audio to use (audio length)
          */
-        public micToWAV(filename : string, stereo = true, begin = 0, end? : number) : void {
-            AudioRecorder.saveToWAV(filename, this.getAudioBuffer(), stereo, begin, end);
+        public micToWAV(filename : string, stereo = true, downSampling = 1, begin = 0, end? : number) : void {
+            AudioRecorder.saveToWAV(filename, this.getAudioBuffer(), stereo, downSampling, begin, end);
         }
 
         /**
@@ -401,19 +404,20 @@ module QI {
          * @param {string} filename - valid file name (no path), & optional extension (added if missing)
          * @param {AudioBuffer} audio - buffer to save
          * @param {boolean} stereo - 2 channels when true & audio has more than 1 channel (default true)
+         * @param {number} downSampling - should either be 1, 2, or 4 (default 1)
          * @param {number} begin - sample in audio to start at (default 0)
          * @param {number} end - last sample + 1 in audio to use (audio length)
          */
-        public static saveToWAV(filename : string, audio : AudioBuffer, stereo = true, begin = 0, end? : number) : void {
-            if (filename.length === 0){
+        public static saveToWAV(filename : string, audio : AudioBuffer, stereo = true, downSampling = 1, begin = 0, end? : number) : void {
+            if (filename.length === 0) {
                 window.alert('QI.AudioRecorder: No name specified');
                 return;
             }
-            else if (filename.toLowerCase().lastIndexOf('.wav') !== filename.length - 4 || filename.length < 5){
+            else if (filename.toLowerCase().lastIndexOf('.wav') !== filename.length - 4 || filename.length < 5) {
                 filename += '.wav';
             }
 
-            var blob = new Blob ( [ AudioRecorder._encodeWAV(audio, stereo, begin, end) ], { type : 'audio/wav' } );
+            var blob = new Blob ( [ AudioRecorder._encodeWAV(audio, stereo, downSampling, begin, end) ], { type : 'audio/wav' } );
 
             // turn blob into an object URL; saved as a member, so can be cleaned out later
             AudioRecorder._objectUrl = (window.webkitURL || window.URL).createObjectURL(blob);
@@ -429,19 +433,20 @@ module QI {
         /**
          * Encode an audio buffer into a WAV formatted DataView
          * @param {AudioBuffer} audio - buffer to encode
-         * @param {boolean} stereo - 2 channels when true & audio has more than 1 channel (default true)
-         * @param {number} begin - sample in audio to start at (default 0)
+         * @param {boolean} stereo - 2 channels when true & audio has more than 1 channel
+         * @param {number} downSampling - should either be 1, 2, or 4
+         * @param {number} begin - sample in audio to start at
          * @param {number} end - last sample + 1 in audio to use (audio length)
          * @returns {DataView} - WAV formatted
          */
-        private static _encodeWAV(audio : AudioBuffer, stereo = true, begin = 0, end? : number) : DataView {
+        private static _encodeWAV(audio : AudioBuffer, stereo : boolean, downSampling : number, begin : number, end? : number) : DataView {
             // adjust args
             if (!end) end = audio.getChannelData(0).length;
             stereo = stereo && audio.numberOfChannels > 1;
 
-            var leftBuffer = audio.getChannelData(0).slice(begin, end);
-            var rightBuffer = stereo ? audio.getChannelData(1).slice(begin, end) : null;
-            var sampleRate = audio.sampleRate;
+            var leftBuffer = AudioRecorder._downSampling(audio.getChannelData(0).slice(begin, end), downSampling);
+            var rightBuffer = stereo ? AudioRecorder._downSampling(audio.getChannelData(1).slice(begin, end), downSampling) : null;
+            var sampleRate = audio.sampleRate / downSampling;
 
             // interleave both channels together, if stereo
             var interleaved = stereo ? AudioRecorder._interleave(leftBuffer, rightBuffer) : leftBuffer;
@@ -479,28 +484,11 @@ module QI {
             var index = headerSize;
             var volume = 1;
             // write each byte of data + volume byte
-            for (var i = 0; i < lng; i++){
+            for (var i = 0; i < lng; i++) {
                 view.setInt16(index, interleaved[i] * (0x7FFF * volume), true);
                 index += 2;
             }
             return view;
-        }
-
-        /**
-         * Combine left and right channels, alternating values, returned in a new Array
-         */
-        private static _interleave(left : Float32Array, right : Float32Array) : Float32Array {
-            var length = left.length + right.length;
-            var result = new Float32Array(length);
-
-            var inputIndex = 0;
-
-            for (var index = 0; index < length; ){
-                result[index++] = left [inputIndex];
-                result[index++] = right[inputIndex];
-                inputIndex++;
-            }
-            return result;
         }
 
         /**
@@ -511,9 +499,38 @@ module QI {
          */
         private static _writeUTFBytes(view : DataView, offset : number, str : string) : void {
             var lng = str.length;
-            for (var i = 0; i < lng; i++){
+            for (var i = 0; i < lng; i++) {
                 view.setUint8(offset + i, str.charCodeAt(i));
             }
         }
+        // ====================================== buffer Methods =====================================
+        /**
+         * Combine left and right channels, alternating values, returned in a new Array
+         */
+        private static _interleave(left : Float32Array, right : Float32Array) : Float32Array {
+            var length = left.length + right.length;
+            var result = new Float32Array(length);
+
+            var inputIndex = 0;
+
+            for (var index = 0; index < length; ) {
+                result[index++] = left [inputIndex];
+                result[index++] = right[inputIndex];
+                inputIndex++;
+            }
+            return result;
+        }
+        
+        private static _downSampling(buf : Float32Array, factor : number) : Float32Array {
+            if (factor === 1) return buf;
+            
+            var length = Math.floor(buf.length / factor);
+            var result = new Float32Array(length);
+
+            for (var i = 0, j = 0; i < length * factor; i += factor, j++) {
+                result[j] = buf[i];
+            }
+            return result;
+        }            
     }
 }

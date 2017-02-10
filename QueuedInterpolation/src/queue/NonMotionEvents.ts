@@ -92,23 +92,9 @@ module QI{
          *      millisBefore - Fixed wait period prior to start, once this event and also syncPartner (if any) is ready (default 0).
          *                     When negative, no delay if being repeated in an EventSeries.
          *
-         *      absoluteMovement - Movement arg is an absolute value, not POV (default false).
-         *      absoluteRotation - Rotation arg is an absolute value, not POV (default false).
          *      pace - Any Object with the function: getCompletionMilestone(currentDurationRatio) (default MotionEvent.LINEAR)
-         *      sound - Sound to start with event.  WARNING: When event also has a sync partner, there could be issues.
-         *
-         *      noStepWiseMovement - Calc the full amount of movement from Node's original position / rotation,
-         *                           rather than stepwise (default false).  No meaning when no rotation in event.
-         *
-         *      mirrorAxes - Shapekeys Only:
-         *                   Axis [X,Y, or Z] to mirror against for an end state ratio, which is negative.  No meaning if ratio is positive.
-         *                   If null, shape key group setting used.
-         *
-         *      subposes - Skeletons Only:
-         *                 Subposes which should be substituted during event (default null).
-         *
-         *      revertSubposes - Skeletons Only:
-         *                       Should any subposes previously applied should be subtracted during event(default false)?
+         *      sound - Sound to start with event.
+         *      requireCompletionOf - A way to serialize events from different queues e.g. shape key & skeleton.
          */
         constructor(public _object : Object, public _property : string, public _targetValue : any, milliDuration : number, options? : IMotionEventOptions) {
             super(milliDuration, null, null, options);
@@ -169,23 +155,9 @@ module QI{
          *      millisBefore - Fixed wait period prior to start, once this event and also syncPartner (if any) is ready (default 0).
          *                     When negative, no delay if being repeated in an EventSeries.
          *
-         *      absoluteMovement - Movement arg is an absolute value, not POV (default false).
-         *      absoluteRotation - Rotation arg is an absolute value, not POV (default false).
          *      pace - Any Object with the function: getCompletionMilestone(currentDurationRatio) (default MotionEvent.LINEAR)
-         *      sound - Sound to start with event.  WARNING: When event also has a sync partner, there could be issues.
-         *
-         *      noStepWiseMovement - Calc the full amount of movement from Node's original position / rotation,
-         *                           rather than stepwise (default false).  No meaning when no rotation in event.
-         *
-         *      mirrorAxes - Shapekeys Only:
-         *                   Axis [X,Y, or Z] to mirror against for an end state ratio, which is negative.  No meaning if ratio is positive.
-         *                   If null, shape key group setting used.
-         *
-         *      subposes - Skeletons Only:
-         *                 Subposes which should be substituted during event (default null).
-         *
-         *      revertSubposes - Skeletons Only:
-         *                       Should any subposes previously applied should be subtracted during event(default false)?
+         *      sound - Sound to start with event.
+         *      requireCompletionOf - A way to serialize events from different queues e.g. shape key & skeleton.
          */
         constructor(private _callback : (ratioComplete : number) => void, milliDuration : number, options? : IMotionEventOptions) {
             super(milliDuration, null, null, options);

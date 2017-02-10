@@ -9,7 +9,14 @@ module QI {
          * @param {Array<number>} durations - The millis of various sections of entrance.  For Fire only 1.
          * @param {BABYLON.Sound} soundEffect - An optional instance of the sound to play as a part of entrance.
          */
-        constructor(public _mesh: Mesh, public durations : Array<number>, public soundEffect? : BABYLON.Sound) { }
+        constructor(public _mesh: Mesh, public durations : Array<number>, public soundEffect? : BABYLON.Sound, disposeSound? : boolean) {
+            if (this.soundEffect && disposeSound) {
+                var ref = this;
+                this.soundEffect.onended = function() {
+                    ref.soundEffect.dispose();
+               };
+            }
+        }
 
         /** GrandEntrance implementation */
         public makeEntrance() : void {
@@ -31,7 +38,7 @@ module QI {
                 // make any children visible
                 function(){
                     ref._mesh.makeVisible(true);
-                    ref._mesh.getShapeKeyGroup(Mesh.COMPUTED_GROUP_NAME).dispose();
+                    ref._mesh.removeShapeKeyGroup(Mesh.COMPUTED_GROUP_NAME);
                 }
             ];
 
@@ -59,12 +66,19 @@ module QI {
             var computedGroup = mesh.makeComputedGroup();
 
             // determine the SCATTER key
+            var center = mesh.getBoundingInfo().boundingBox.center;
 
             var scatter = new Float32Array(nElements);
+            var amt : number;
             for (var i = 0; i < nElements; i += 3){
-                scatter[i    ] = mesh._originalPositions[i    ] + mesh._originalPositions[i    ] * Math.random();
-                scatter[i + 1] = mesh._originalPositions[i + 1] + mesh._originalPositions[i + 1] * Math.random();
-                scatter[i + 2] = mesh._originalPositions[i + 2] + mesh._originalPositions[i + 2] * Math.random();
+                amt = (mesh._originalPositions[i    ] - center.x) * Math.random();
+                scatter[i    ] = mesh._originalPositions[i    ] + amt;
+                
+                amt = (mesh._originalPositions[i + 1] - center.y) * Math.random();
+                scatter[i + 1] = mesh._originalPositions[i + 1] + amt;
+                
+                amt = (mesh._originalPositions[i + 2] - center.z) * Math.random();
+                scatter[i + 2] = mesh._originalPositions[i + 2] + amt;
             }
             computedGroup._addShapeKey(startingState, scatter);
             return startingState;

@@ -39,14 +39,19 @@ JUST_MAKE_VISIBLE = 'JUST_MAKE_VISIBLE' # not actually passed, since default & u
 GATHER            = 'QI.GatherEntrance'
 EXPAND            = 'QI.ExpandEntrance'
 FIRE              = 'QI.FireEntrance'
+TELEPORT          = 'QI.TeleportEntrance'
+POOF              = 'QI.PoofEntrance'
 CUSTOM            = 'Module.Class'
 
 GATHER_DUR        = '[250]'
-EXPAND_DUR        = '[150, 100]'
-FIRE_DUR          = '[250]'
+EXPAND_DUR        = '[250, 400]'
+FIRE_DUR          = '[400]'
+TELEPORT_DUR      = '[1500]'
+POOF_DUR          = '[1500]'
 CUSTOM_DUR        = '[250]'
 
 WHOOSH_SND        = 'QI.Whoosh(scene)'
+TELEPORT_SND      = 'QI.Teleport(scene)'
 #===============================================================================
 class Mesh(FCurveAnimatable):
     def __init__(self, object, scene, startFace, forcedParent, nameID, exporter):
@@ -57,8 +62,8 @@ class Mesh(FCurveAnimatable):
         # Tower of Babel specific members
         self.legalName = legal_js_identifier(self.name)
         if (len(self.legalName) == 0):
-            self.legalName = 'Unknown' + str(Main.nNonLegalNames)
-            Main.nNonLegalNames = Main.nNonLegalNames + 1
+            self.legalName = 'Unknown' + str(exporter.nNonLegalNames)
+            exporter.nNonLegalNames = exporter.nNonLegalNames + 1
         self.userSuppliedBaseClass = object.data.baseClass
 
         self.needEntrance = object.data.grandEntrance != JUST_MAKE_VISIBLE
@@ -66,6 +71,7 @@ class Mesh(FCurveAnimatable):
             self.entranceClass = object.data.entranceClass
             self.entranceDur   = object.data.entranceDur
             self.entranceSnd   = object.data.entranceSnd
+            self.disposeSound  = object.data.disposeSound
 
         self.isVisible = not object.hide_render
         self.isEnabled = not object.data.loadDisabled
@@ -640,6 +646,7 @@ class Mesh(FCurveAnimatable):
             # sound is optional so check before writing
             if len(self.entranceSnd) > 0:
                 file_handler.write(', ' + self.entranceSnd)
+                file_handler.write(', ' + format_bool(self.disposeSound))
             file_handler.write(');\n')
 
         if hasattr(self, 'physicsImpostor'):
@@ -662,8 +669,8 @@ class Mesh(FCurveAnimatable):
             file_handler.write(indent2A + var + '.numBoneInfluencers = ' + format_int(self.numBoneInfluencers) + ';\n\n')
 
         if exporter.logInBrowserConsole:
-            file_handler.write(indent2A + 'geo = B.Tools.Now;\n')
-        file_handler.write(indent2A + var + '.setVerticesData(B.VertexBuffer.PositionKind, new Float32Array([\n')
+            file_handler.write(indent2A + 'geo = _B.Tools.Now;\n')
+        file_handler.write(indent2A + var + '.setVerticesData(_B.VertexBuffer.PositionKind, new Float32Array([\n')
         file_handler.write(indent3A + format_vector_array(self.positions, indent3A) + '\n')
         file_handler.write(indent2A + ']),\n')
         file_handler.write(indent2A + format_bool(hasShapeKeys) + ');\n\n')
@@ -673,7 +680,7 @@ class Mesh(FCurveAnimatable):
         file_handler.write(indent2A + ']);\n\n')
 
         if len(self.normals) > 0:
-            file_handler.write(indent2A + var + '.setVerticesData(B.VertexBuffer.NormalKind, new Float32Array([\n')
+            file_handler.write(indent2A + var + '.setVerticesData(_B.VertexBuffer.NormalKind, new Float32Array([\n')
             file_handler.write(indent3A + format_vector_array(self.normals, indent3A) + '\n')
             file_handler.write(indent2A + ']),\n')
             file_handler.write(indent2A + format_bool(hasShapeKeys) + ');\n\n')
@@ -681,54 +688,54 @@ class Mesh(FCurveAnimatable):
             if self.useFlatShading:
                 file_handler.write(indent2A + var + '.convertToFlatShadedMesh();\n')
             else:
-                file_handler.write(indent2A + 'var positions = ' + var + '.getVerticesData(B.VertexBuffer.PositionKind);\n')
+                file_handler.write(indent2A + 'var positions = ' + var + '.getVerticesData(_B.VertexBuffer.PositionKind);\n')
                 file_handler.write(indent2A + 'var indices   = ' + var + '.getIndices();\n')
                 file_handler.write(indent2A + 'var normals   = new Float32Array(' + format_int(len(self.positions) * 3) + ');\n')
-                file_handler.write(indent2A + 'B.VertexData.ComputeNormals(positions, indices, normals);\n')
-                file_handler.write(indent2A + var + '.setVerticesData(B.VertexBuffer.NormalKind, normals,' + format_bool(hasShapeKeys) + ');\n\n')
+                file_handler.write(indent2A + '_B.VertexData.ComputeNormals(positions, indices, normals);\n')
+                file_handler.write(indent2A + var + '.setVerticesData(_B.VertexBuffer.NormalKind, normals,' + format_bool(hasShapeKeys) + ');\n\n')
 
         if len(self.uvs) > 0:
-            file_handler.write(indent2A + var + '.setVerticesData(B.VertexBuffer.UVKind, new Float32Array([\n')
+            file_handler.write(indent2A + var + '.setVerticesData(_B.VertexBuffer.UVKind, new Float32Array([\n')
             file_handler.write(indent3A + format_array(self.uvs, indent3A) + '\n')
             file_handler.write(indent2A + ']),\n')
             file_handler.write(indent2A + format_bool(False) + ');\n\n')
 
         if len(self.uvs2) > 0:
-            file_handler.write(indent2A + var + '.setVerticesData(B.VertexBuffer.UV2Kind, new Float32Array([\n')
+            file_handler.write(indent2A + var + '.setVerticesData(_B.VertexBuffer.UV2Kind, new Float32Array([\n')
             file_handler.write(indent3A + format_array(self.uvs2, indent3A) + '\n')
             file_handler.write(indent2A + ']),\n')
             file_handler.write(indent2A + format_bool(False) + ');\n\n')
 
         if len(self.colors) > 0:
-            file_handler.write(indent2A + var + '.setVerticesData(B.VertexBuffer.ColorKind, new Float32Array([\n')
+            file_handler.write(indent2A + var + '.setVerticesData(_B.VertexBuffer.ColorKind, new Float32Array([\n')
             file_handler.write(indent3A + format_array(self.colors, indent3A) + '\n')
             file_handler.write(indent2A + ']),\n')
             file_handler.write(indent2A + format_bool(False) + ');\n\n')
 
         if hasattr(self, 'skeletonWeights'):
-            file_handler.write(indent2A + var + '.setVerticesData(B.VertexBuffer.MatricesWeightsKind, new Float32Array([\n')
+            file_handler.write(indent2A + var + '.setVerticesData(_B.VertexBuffer.MatricesWeightsKind, new Float32Array([\n')
             file_handler.write(indent3A + format_array(self.skeletonWeights, indent3A) + '\n')
             file_handler.write(indent2A + ']),\n')
             file_handler.write(indent2A + format_bool(False) + ');\n\n')
 
-            file_handler.write(indent2A + var + '.setVerticesData(B.VertexBuffer.MatricesIndicesKind, new Float32Array([\n')
+            file_handler.write(indent2A + var + '.setVerticesData(_B.VertexBuffer.MatricesIndicesKind, new Float32Array([\n')
             file_handler.write(indent3A + format_array(self.skeletonIndices, indent3A) + '\n')
             file_handler.write(indent2A + ']),\n')
             file_handler.write(indent2A + format_bool(False) + ');\n\n')
 
         if hasattr(self, 'skeletonWeightsExtra'):
-            file_handler.write(indent2A + var + '.setVerticesData(B.VertexBuffer.MatricesWeightsExtraKind, new Float32Array([\n')
+            file_handler.write(indent2A + var + '.setVerticesData(_B.VertexBuffer.MatricesWeightsExtraKind, new Float32Array([\n')
             file_handler.write(indent3A + format_array(self.skeletonWeightsExtra, indent3A) + '\n')
             file_handler.write(indent2A + ']),\n')
             file_handler.write(indent2A + format_bool(False) + ');\n\n')
 
-            file_handler.write(indent2A + var + '.setVerticesData(B.VertexBuffer.MatricesIndicesExtraKind, new Float32Array([\n')
+            file_handler.write(indent2A + var + '.setVerticesData(_B.VertexBuffer.MatricesIndicesExtraKind, new Float32Array([\n')
             file_handler.write(indent3A + format_array(self.skeletonIndicesExtra, indent3A) + '\n')
             file_handler.write(indent2A + ']),\n')
             file_handler.write(indent2A + format_bool(False) + ');\n\n')
 
         if exporter.logInBrowserConsole:
-            file_handler.write(indent2A + 'geo = (B.Tools.Now - geo) / 1000;\n')
+            file_handler.write(indent2A + 'geo = (_B.Tools.Now - geo) / 1000;\n')
 
         if hasattr(self, 'materialId'): file_handler.write(indent2A + var + '.setMaterialByID("' + self.materialId + '");\n')
         # this can be in core, since submesh is same for both JS & TS
@@ -743,13 +750,13 @@ class Mesh(FCurveAnimatable):
 
         if (hasShapeKeys):
             if exporter.logInBrowserConsole:
-                file_handler.write(indent2A + 'shape = B.Tools.Now;\n')
+                file_handler.write(indent2A + 'shape = _B.Tools.Now;\n')
             file_handler.write(indent2A + 'var shapeKeyGroup;\n')
             for shapeKeyGroup in self.shapeKeyGroups:
                 shapeKeyGroup.to_script_file(file_handler, var, indent2A) # assigns the previously declared js variable 'shapeKeyGroup'
                 file_handler.write(indent2A + var + '.addShapeKeyGroup(shapeKeyGroup);\n')
             if exporter.logInBrowserConsole:
-                file_handler.write(indent2A + 'shape = (B.Tools.Now - shape) / 1000;\n')
+                file_handler.write(indent2A + 'shape = (_B.Tools.Now - shape) / 1000;\n')
 
         super().to_script_file(file_handler, var, indent2A) # Animations
 
@@ -759,8 +766,8 @@ class Mesh(FCurveAnimatable):
         # add hook for postConstruction(), if found in super class
         file_handler.write(indent2 + 'if (this.postConstruction) this.postConstruction();\n')
         if exporter.logInBrowserConsole:
-            file_handler.write(indent2 + 'load = (B.Tools.Now - load) / 1000;\n')
-            file_handler.write(indent2 + 'B.Tools.Log("defined mesh: " + ' + var + '.name + (cloning ? " (cloned)" : "") + " completed:  " + load.toFixed(2) + ", geometry:  " + geo.toFixed(2) + ", skey:  " + shape.toFixed(2) + " secs");\n')
+            file_handler.write(indent2 + 'load = (_B.Tools.Now - load) / 1000;\n')
+            file_handler.write(indent2 + '_B.Tools.Log("defined mesh: " + ' + var + '.name + (cloning ? " (cloned)" : "") + " completed:  " + load.toFixed(2) + ", geometry:  " + geo.toFixed(2) + ", skey:  " + shape.toFixed(2) + " secs");\n')
 
         if self.isVisible and isRootMesh:
             file_handler.write(indent2 + 'if (matLoaded){\n')
@@ -822,7 +829,7 @@ def mesh_node_common_script(file_handler, typescript_file_handler, meshOrNode, i
         for kid in kids:
             typescript_file_handler.write(indent + '    public ' + kid.legalName + ' : ' + get_base_class(kid) + ';\n')
 
-        typescript_file_handler.write(indent + '    constructor(name: string, scene: B.Scene, materialsRootDir: string = "./", source? : ' + meshOrNode.legalName + ');\n')
+        typescript_file_handler.write(indent + '    constructor(name: string, scene: BABYLON.Scene, materialsRootDir: string = "./", source? : ' + meshOrNode.legalName + ');\n')
 
         # define makeInstances, a node will not have this
         if isRootMesh and hasattr(meshOrNode, 'instances') and len(meshOrNode.instances) > 0:
@@ -847,7 +854,7 @@ def mesh_node_common_script(file_handler, typescript_file_handler, meshOrNode, i
     file_handler.write(indent2 + "var cloning = source && source !== null;\n")
 
     if logInBrowserConsole:
-        file_handler.write(indent2 + 'var load = B.Tools.Now;\n')
+        file_handler.write(indent2 + 'var load = _B.Tools.Now;\n')
         file_handler.write(indent2 + 'var geo = 0;\n')
         file_handler.write(indent2 + 'var shape = 0;\n')
 
@@ -883,7 +890,7 @@ def writePosRotScale(file_handler, object, var, indent):
         file_handler.write(indent + var + '.rotation.y  = ' + format_f(object.rotation.z) + ';\n')
         file_handler.write(indent + var + '.rotation.z  = ' + format_f(object.rotation.y) + ';\n')
     else:
-        file_handler.write(indent + var + '.rotationQuaternion  = new B.Quaternion(' + format_quaternion(object.rotationQuaternion) + ');\n')
+        file_handler.write(indent + var + '.rotationQuaternion  = new _B.Quaternion(' + format_quaternion(object.rotationQuaternion) + ');\n')
     file_handler.write(indent + var + '.scaling.x   = ' + format_f(object.scaling.x) + ';\n')
     file_handler.write(indent + var + '.scaling.y   = ' + format_f(object.scaling.z) + ';\n')
     file_handler.write(indent + var + '.scaling.z   = ' + format_f(object.scaling.y) + ';\n')
@@ -893,10 +900,10 @@ def writePosRotScale(file_handler, object, var, indent):
         file_handler.write(indent + var + '.freezeWorldMatrix();\n')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def get_base_class(meshOrNode):
-    if hasattr(meshOrNode, 'isNode'): return 'B.Mesh'
+    if hasattr(meshOrNode, 'isNode'): return '_B.Mesh'
 
     if len(meshOrNode.userSuppliedBaseClass) > 0: return meshOrNode.userSuppliedBaseClass
-    else: return 'QI.Mesh' if hasattr(meshOrNode, 'shapeKeyGroups') or hasattr(meshOrNode, 'skeletonWeights') or meshOrNode.needEntrance else 'B.Mesh'
+    else: return 'QI.Mesh' if hasattr(meshOrNode, 'shapeKeyGroups') or hasattr(meshOrNode, 'skeletonWeights') or meshOrNode.needEntrance else '_B.Mesh'
 #===============================================================================
 class MeshInstance:
      def __init__(self, instancedMesh, rotation, rotationQuaternion):
@@ -935,8 +942,8 @@ class Node(FCurveAnimatable):
         # Tower of Babel specific member
         self.legalName = legal_js_identifier(self.name)
         if (len(self.legalName) == 0):
-            self.legalName = 'Unknown' + str(Main.nNonLegalNames)
-            Main.nNonLegalNames = Main.nNonLegalNames + 1
+            self.legalName = 'Unknown' + str(exporter.nNonLegalNames)
+            exporter.nNonLegalNames = exporter.nNonLegalNames + 1
 
         if node.parent and node.parent.type != 'ARMATURE':
             self.parentId = node.parent.name
@@ -976,7 +983,7 @@ class Node(FCurveAnimatable):
                 file_handler.write(indent + '    };\n')
 
             file_handler.write(indent + '    return ' + self.legalName + ';\n')
-            file_handler.write(indent + '})(B.Mesh);\n')
+            file_handler.write(indent + '})(_B.Mesh);\n')
             file_handler.write(indent + exporter.nameSpace + '.' + self.legalName + ' = ' + self.legalName + ';\n')
         else:
             file_handler.write(indent + '    return ret;\n')
@@ -991,7 +998,7 @@ class SubMesh:
         self.indexCount = indexCount
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def to_script_file(self, file_handler, jsMeshVar, indent):
-        file_handler.write(indent + 'new B.SubMesh(' +
+        file_handler.write(indent + 'new _B.SubMesh(' +
                           format_int(self.materialIndex) + ', ' +
                           format_int(self.verticesStart) + ', ' +
                           format_int(self.verticesCount) + ', ' +
@@ -1029,6 +1036,16 @@ def changeEntrance(self, context):
         data.entranceClass = data.grandEntrance
         data.entranceDur   = FIRE_DUR
         data.entranceSnd   = WHOOSH_SND
+        
+    elif data.grandEntrance == TELEPORT:
+        data.entranceClass = data.grandEntrance
+        data.entranceDur   = TELEPORT_DUR
+        data.entranceSnd   = TELEPORT_SND
+
+    elif data.grandEntrance == POOF:
+        data.entranceClass = data.grandEntrance
+        data.entranceDur   = POOF_DUR
+        data.entranceSnd   = WHOOSH_SND
 
     elif data.grandEntrance == CUSTOM:
         data.entranceClass = data.grandEntrance
@@ -1043,6 +1060,8 @@ bpy.types.Mesh.grandEntrance = bpy.props.EnumProperty(
              (GATHER           , 'Gather'           , 'The reverse of an explosion'),
              (EXPAND           , 'Expand'           , 'Big bang from bounding box center'),
              (FIRE             , 'Fire'             , 'Arrive in fire ball'),
+             (TELEPORT         , 'Teleport'         , 'Fade in surrounded by rings'),
+             (POOF             , 'Poof'             , 'Appear in a puff of smoke'),
              (CUSTOM           , 'Custom'           , 'Use custom entrance class specified below')
             ),
     default = JUST_MAKE_VISIBLE,
@@ -1062,6 +1081,11 @@ bpy.types.Mesh.entranceSnd = bpy.props.StringProperty(
     name='Sound Effect',
     description='Code which returns a sound (can be empty).  You may\nmake reference to the variable "scene".',
     default = ''
+)
+bpy.types.Mesh.disposeSound = bpy.props.BoolProperty(
+    name='Dispose Sound',
+    description='When True, dispose the sound once played.',
+    default = True
 )
 bpy.types.Mesh.useFlatShading = bpy.props.BoolProperty(
     name='Use Flat Shading',
@@ -1214,6 +1238,9 @@ class MeshPanel(bpy.types.Panel):
         row = box.row()
         row.enabled = (not ob.parent or not isinstance(ob.parent.data, bpy.types.Mesh)) and ob.data.grandEntrance and ob.data.grandEntrance != JUST_MAKE_VISIBLE
         row.prop(ob.data, 'entranceSnd')
+        row = box.row()
+        row.enabled = (not ob.parent or not isinstance(ob.parent.data, bpy.types.Mesh)) and ob.data.grandEntrance and ob.data.grandEntrance != JUST_MAKE_VISIBLE
+        row.prop(ob.data, 'disposeSound')
 
         row = layout.row()
         row.prop(ob.data, 'useFlatShading')
