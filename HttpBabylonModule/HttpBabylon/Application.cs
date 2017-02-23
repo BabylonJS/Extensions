@@ -12,6 +12,8 @@ namespace HttpBabylon
 {
     public static class Application
     {
+        public static string CompressExtentions = ".babylon, .js";
+
         private static bool Started = false;
         public static void Start()
         {
@@ -106,7 +108,7 @@ namespace HttpBabylon
             application.PreRequestHandlerExecute += (object sender, EventArgs e) =>
             {
                 HttpContext context = application.Context;
-                if (!String.IsNullOrEmpty(context.Request.CurrentExecutionFilePathExtension) && context.Request.CurrentExecutionFilePathExtension.Equals(".babylon", StringComparison.OrdinalIgnoreCase))
+                if (!String.IsNullOrEmpty(context.Request.CurrentExecutionFilePathExtension) && Application.CompressExtentions.IndexOf(context.Request.CurrentExecutionFilePathExtension, StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     string serverPath = context.Request.PhysicalApplicationPath;
                     string babylonPath = context.Request.CurrentExecutionFilePath;
@@ -127,7 +129,7 @@ namespace HttpBabylon
         {
             FileInfo info = path;
             // Support Pre-Compressed Babylon Scene Files
-            if (info.Extension.Equals(".babylon", StringComparison.OrdinalIgnoreCase))
+            if (Application.CompressExtentions.IndexOf(info.Extension, StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 string RpcContentEncoding = context.Request.Headers["Accept-Encoding"] ?? "none";
                 if (RpcContentEncoding.Contains("gzip"))
