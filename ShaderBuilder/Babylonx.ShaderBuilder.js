@@ -483,7 +483,7 @@ void main(void) { \n\
             ;
             if (!this.Setting.Back)
                 this.Setting.Back = false;
-            if (!this.Setting.AlphaTesting) {
+            if (this.Setting.DisableAlphaTesting) {
                 material.needAlphaTesting = function () { return false; };
             }
             else {
@@ -636,8 +636,8 @@ void main(void) { \n\
             Shader.Me.Setting.Transparency = true;
             return this;
         };
-        ShaderBuilder.prototype.AlphaTesting = function () {
-            Shader.Me.Setting.AlphaTesting = true;
+        ShaderBuilder.prototype.DisableAlphaTesting = function () {
+            Shader.Me.Setting.DisableAlphaTesting = true;
             return this;
         };
         ShaderBuilder.prototype.PostEffect1 = function (id, effect) {
