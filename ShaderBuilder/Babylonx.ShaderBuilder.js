@@ -3,63 +3,63 @@ var BABYLONX;
     var ShaderMaterialHelperStatics = (function () {
         function ShaderMaterialHelperStatics() {
         }
-        ShaderMaterialHelperStatics.Dark = false;
-        ShaderMaterialHelperStatics.Light = true;
-        ShaderMaterialHelperStatics.PrecisionHighMode = 'highp';
-        ShaderMaterialHelperStatics.PrecisionMediumMode = 'mediump';
-        ShaderMaterialHelperStatics.face_back = "!gl_FrontFacing";
-        ShaderMaterialHelperStatics.face_front = "gl_FrontFacing";
-        ShaderMaterialHelperStatics.AttrPosition = 'position';
-        ShaderMaterialHelperStatics.AttrNormal = 'normal';
-        ShaderMaterialHelperStatics.AttrUv = 'uv';
-        ShaderMaterialHelperStatics.AttrUv2 = 'uv2';
-        ShaderMaterialHelperStatics.AttrTypeForPosition = 'vec3';
-        ShaderMaterialHelperStatics.AttrTypeForNormal = 'vec3';
-        ShaderMaterialHelperStatics.AttrTypeForUv = 'vec2';
-        ShaderMaterialHelperStatics.AttrTypeForUv2 = 'vec2';
-        ShaderMaterialHelperStatics.uniformView = "view";
-        ShaderMaterialHelperStatics.uniformWorld = "world";
-        ShaderMaterialHelperStatics.uniformWorldView = "worldView";
-        ShaderMaterialHelperStatics.uniformViewProjection = "viewProjection";
-        ShaderMaterialHelperStatics.uniformWorldViewProjection = "worldViewProjection";
-        ShaderMaterialHelperStatics.uniformStandardType = "mat4";
-        ShaderMaterialHelperStatics.uniformFlags = "flags";
-        ShaderMaterialHelperStatics.Mouse = "mouse";
-        ShaderMaterialHelperStatics.Screen = "screen";
-        ShaderMaterialHelperStatics.Camera = "camera";
-        ShaderMaterialHelperStatics.Look = "look";
-        ShaderMaterialHelperStatics.Time = "time";
-        ShaderMaterialHelperStatics.GlobalTime = "gtime";
-        ShaderMaterialHelperStatics.Position = "pos";
-        ShaderMaterialHelperStatics.WorldPosition = "wpos";
-        ShaderMaterialHelperStatics.Normal = "nrm";
-        ShaderMaterialHelperStatics.WorldNormal = "wnrm";
-        ShaderMaterialHelperStatics.Uv = "vuv";
-        ShaderMaterialHelperStatics.Uv2 = "vuv2";
-        ShaderMaterialHelperStatics.Center = 'center';
-        ShaderMaterialHelperStatics.ReflectMatrix = "refMat";
-        ShaderMaterialHelperStatics.Texture2D = "txtRef_";
-        ShaderMaterialHelperStatics.TextureCube = "cubeRef_";
         return ShaderMaterialHelperStatics;
-    })();
+    }());
+    ShaderMaterialHelperStatics.Dark = false;
+    ShaderMaterialHelperStatics.Light = true;
+    ShaderMaterialHelperStatics.PrecisionHighMode = 'highp';
+    ShaderMaterialHelperStatics.PrecisionMediumMode = 'mediump';
+    ShaderMaterialHelperStatics.face_back = "!gl_FrontFacing";
+    ShaderMaterialHelperStatics.face_front = "gl_FrontFacing";
+    ShaderMaterialHelperStatics.AttrPosition = 'position';
+    ShaderMaterialHelperStatics.AttrNormal = 'normal';
+    ShaderMaterialHelperStatics.AttrUv = 'uv';
+    ShaderMaterialHelperStatics.AttrUv2 = 'uv2';
+    ShaderMaterialHelperStatics.AttrTypeForPosition = 'vec3';
+    ShaderMaterialHelperStatics.AttrTypeForNormal = 'vec3';
+    ShaderMaterialHelperStatics.AttrTypeForUv = 'vec2';
+    ShaderMaterialHelperStatics.AttrTypeForUv2 = 'vec2';
+    ShaderMaterialHelperStatics.uniformView = "view";
+    ShaderMaterialHelperStatics.uniformWorld = "world";
+    ShaderMaterialHelperStatics.uniformWorldView = "worldView";
+    ShaderMaterialHelperStatics.uniformViewProjection = "viewProjection";
+    ShaderMaterialHelperStatics.uniformWorldViewProjection = "worldViewProjection";
+    ShaderMaterialHelperStatics.uniformStandardType = "mat4";
+    ShaderMaterialHelperStatics.uniformFlags = "flags";
+    ShaderMaterialHelperStatics.Mouse = "mouse";
+    ShaderMaterialHelperStatics.Screen = "screen";
+    ShaderMaterialHelperStatics.Camera = "camera";
+    ShaderMaterialHelperStatics.Look = "look";
+    ShaderMaterialHelperStatics.Time = "time";
+    ShaderMaterialHelperStatics.GlobalTime = "gtime";
+    ShaderMaterialHelperStatics.Position = "pos";
+    ShaderMaterialHelperStatics.WorldPosition = "wpos";
+    ShaderMaterialHelperStatics.Normal = "nrm";
+    ShaderMaterialHelperStatics.WorldNormal = "wnrm";
+    ShaderMaterialHelperStatics.Uv = "vuv";
+    ShaderMaterialHelperStatics.Uv2 = "vuv2";
+    ShaderMaterialHelperStatics.Center = 'center';
+    ShaderMaterialHelperStatics.ReflectMatrix = "refMat";
+    ShaderMaterialHelperStatics.Texture2D = "txtRef_";
+    ShaderMaterialHelperStatics.TextureCube = "cubeRef_";
     BABYLONX.ShaderMaterialHelperStatics = ShaderMaterialHelperStatics;
     var Normals = (function () {
         function Normals() {
         }
-        Normals.Default = ShaderMaterialHelperStatics.Normal;
-        Normals.Inverse = '-1.*' + ShaderMaterialHelperStatics.Normal;
-        Normals.Pointed = 'normalize(' + ShaderMaterialHelperStatics.Position + '-' + ShaderMaterialHelperStatics.Center + ')';
-        Normals.Flat = 'normalize(cross(dFdx(' + ShaderMaterialHelperStatics.Position + ' * -1.), dFdy(' + ShaderMaterialHelperStatics.Position + ')))';
-        Normals.Map = 'normalMap()';
         return Normals;
-    })();
+    }());
+    Normals.Default = ShaderMaterialHelperStatics.Normal;
+    Normals.Inverse = '-1.*' + ShaderMaterialHelperStatics.Normal;
+    Normals.Pointed = 'normalize(' + ShaderMaterialHelperStatics.Position + '-' + ShaderMaterialHelperStatics.Center + ')';
+    Normals.Flat = 'normalize(cross(dFdx(' + ShaderMaterialHelperStatics.Position + ' * -1.), dFdy(' + ShaderMaterialHelperStatics.Position + ')))';
+    Normals.Map = 'normalMap()';
     BABYLONX.Normals = Normals;
     var Speculars = (function () {
         function Speculars() {
         }
-        Speculars.Map = 'specularMap()';
         return Speculars;
-    })();
+    }());
+    Speculars.Map = 'specularMap()';
     BABYLONX.Speculars = Speculars;
     var ShaderMaterialHelper = (function () {
         function ShaderMaterialHelper() {
@@ -84,7 +84,7 @@ var BABYLONX;
             return {};
         };
         return ShaderMaterialHelper;
-    })();
+    }());
     BABYLONX.ShaderMaterialHelper = ShaderMaterialHelper;
     var Shader = (function () {
         function Shader() {
@@ -150,9 +150,9 @@ var BABYLONX;
             var z = Math.floor(a.b / c);
             return z * b * b + y * b + x;
         };
-        Shader._null = 'set null anyway';
         return Shader;
-    })();
+    }());
+    Shader._null = 'set null anyway';
     BABYLONX.Shader = Shader;
     var Helper = (function () {
         function Helper() {
@@ -165,23 +165,23 @@ var BABYLONX;
         Helper.Depth = function (far) {
             return 'max(0.,min(1.,(' + Shader.Print(far) + '-abs(length(camera-pos)))/' + Shader.Print(far) + ' ))';
         };
-        Helper.Red = 0;
-        Helper.Yellow = 1;
-        Helper.White = 2;
-        Helper.Cyan = 4;
-        Helper.Blue = 5;
-        Helper.Pink = 6;
-        Helper.Black = 7;
-        Helper.Green = 8;
         return Helper;
-    })();
+    }());
+    Helper.Red = 0;
+    Helper.Yellow = 1;
+    Helper.White = 2;
+    Helper.Cyan = 4;
+    Helper.Blue = 5;
+    Helper.Pink = 6;
+    Helper.Black = 7;
+    Helper.Green = 8;
     BABYLONX.Helper = Helper;
     var ShaderSetting = (function () {
         function ShaderSetting() {
             this.PrecisionMode = ShaderMaterialHelperStatics.PrecisionHighMode;
         }
         return ShaderSetting;
-    })();
+    }());
     BABYLONX.ShaderSetting = ShaderSetting;
     var ShaderBuilder = (function () {
         function ShaderBuilder() {
@@ -452,6 +452,7 @@ void main(void) { \n\
                     "float noise(vec3 m) {  return   0.5333333*simplex3d(m)   +0.2666667*simplex3d(2.0*m) +0.1333333*simplex3d(4.0*m) +0.0666667*simplex3d(8.0*m);   } ",
                     "vec2  rotate_xy(vec2 pr1,vec2  pr2,float alpha) {vec2 pp2 = vec2( pr2.x - pr1.x,   pr2.y - pr1.y );return  vec2( pr1.x + pp2.x * cos(alpha*3.14159265/180.) - pp2.y * sin(alpha*3.14159265/180.),pr1.y + pp2.x * sin(alpha*3.14159265/180.) + pp2.y * cos(alpha*3.14159265/180.));} \n vec3  r_y(vec3 n, float a,vec3 c) {vec3 c1 = vec3( c.x,  c.y,   c.z );c1.x = c1.x;c1.y = c1.z;vec2 p = rotate_xy(vec2(c1.x,c1.y), vec2( n.x,  n.z ), a);n.x = p.x;n.z = p.y;return n; } \n vec3  r_x(vec3 n, float a,vec3 c) {vec3 c1 = vec3( c.x,  c.y,   c.z );c1.x = c1.y;c1.y = c1.z;vec2 p = rotate_xy(vec2(c1.x,c1.y), vec2( n.y,  n.z ), a);n.y = p.x;n.z = p.y;return n; } \n vec3  r_z(vec3 n, float a,vec3 c) {  vec3 c1 = vec3( c.x,  c.y,   c.z );vec2 p = rotate_xy(vec2(c1.x,c1.y), vec2( n.x,  n.y ), a);n.x = p.x;n.y = p.y;return n; }",
                     "float getIdColor(vec4 a){    float b = 255.;float c = 255. / b;float x = floor(a.x*256. / c);float y = floor(a.y *256./ c);float z = floor(a.z*256. / c);return z * b * b + y * b + x;}"
+                    //"vec3 sundir(float da,float db,vec3 ps){ float h = floor(floor(" + ShaderMaterialHelperStatics.GlobalTime + ".y/100.)/100.);float m =     floor(" + ShaderMaterialHelperStatics.GlobalTime + ".y/100.) - h*100.;float s =      " + ShaderMaterialHelperStatics.GlobalTime + ".y  - h*10000. -m*100.;float si = s *100./60.;float mi = m*100./60.;float hi = h+mi/100.+si/10000.;float dm = 180./(db-da); vec3  gp = vec3(ps.x,ps.y,ps.z);gp = r_z(gp,  dm* hi -da*dm -90. ,vec3(0.));gp = r_x(gp,40. ,vec3(0.)); gp.x = gp.x*-1.; gp.z = gp.z*-1.; return gp; }",
                 ]);
                 this.Fragment.push(sresult);
             }
@@ -482,7 +483,13 @@ void main(void) { \n\
             ;
             if (!this.Setting.Back)
                 this.Setting.Back = false;
-            material.needAlphaTesting = function () { return true; };
+            if (!this.Setting.AlphaTesting) {
+                material.needAlphaTesting = function () { return false; };
+            }
+            else {
+                material.needAlphaTesting = function () { return true; };
+            }
+            ;
             material.setVector3("camera", { x: 18., y: 18., z: 18. });
             material.backFaceCulling = !this.Setting.Back;
             material.wireframe = this.Setting.Wire;
@@ -627,6 +634,10 @@ void main(void) { \n\
         };
         ShaderBuilder.prototype.Transparency = function () {
             Shader.Me.Setting.Transparency = true;
+            return this;
+        };
+        ShaderBuilder.prototype.AlphaTesting = function () {
+            Shader.Me.Setting.AlphaTesting = true;
             return this;
         };
         ShaderBuilder.prototype.PostEffect1 = function (id, effect) {
@@ -883,7 +894,8 @@ void main(void) { \n\
                         (option.alpha ? "    result =  result *(1.0-ir2#[Ind]) +f4#[Ind]* ir2#[Ind]   ;" : "    result = vec4(result.xyz*(1.0-ir2#[Ind]) +f4#[Ind].xyz* ir2#[Ind]   ,1.0); "),
                         "}",
                         "     }  "
-                    ].join("\n") : "")].join("\n");
+                    ].join("\n") : "")
+                ].join("\n");
             }
             sresult = Shader.Replace(sresult, '#[Ind]', "_" + Shader.Indexer + "_");
             this.Body = Shader.Def(this.Body, "");
@@ -1254,7 +1266,6 @@ void main(void) { \n\
             return this;
         };
         return ShaderBuilder;
-    })();
+    }());
     BABYLONX.ShaderBuilder = ShaderBuilder;
 })(BABYLONX || (BABYLONX = {}));
-//# sourceMappingURL=ShaderBuilder.js.map
