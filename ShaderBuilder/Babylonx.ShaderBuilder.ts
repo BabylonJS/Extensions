@@ -344,7 +344,7 @@ module BABYLONX {
         PrecisionMode: string;
 
         Transparency: boolean;
-        AlphaTesting: boolean;
+        DisableAlphaTesting: boolean;
         Back: boolean;
         Front: boolean;
         Wire: boolean;
@@ -795,7 +795,7 @@ void main(void) { \n\
             
             if (!this.Setting.Back) this.Setting.Back = false;
 
-            if (!this.Setting.AlphaTesting) {
+            if (this.Setting.DisableAlphaTesting) {
                 material.needAlphaTesting = function () { return false; };
             }
             else {
@@ -1001,8 +1001,8 @@ void main(void) { \n\
             return this;
         }
         
-        AlphaTesting() {
-            Shader.Me.Setting.AlphaTesting = true;
+        DisableAlphaTesting() {
+            Shader.Me.Setting.DisableAlphaTesting = true;
             return this;
         }
          
