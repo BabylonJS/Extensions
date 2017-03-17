@@ -344,6 +344,7 @@ module BABYLONX {
         PrecisionMode: string;
 
         Transparency: boolean;
+        DisableAlphaTesting: boolean;
         Back: boolean;
         Front: boolean;
         Wire: boolean;
@@ -790,12 +791,18 @@ void main(void) { \n\
             }
             else {
                 material.needAlphaBlending = function () { return true; };
-            };
+            }
+            
             if (!this.Setting.Back) this.Setting.Back = false;
 
+            if (this.Setting.DisableAlphaTesting) {
+                material.needAlphaTesting = function () { return false; };
+            }
+            else {
+                material.needAlphaTesting = function () { return true; };
+            }
 
-            material.needAlphaTesting = function () { return true; };
-
+         
             material.setVector3("camera", { x: 18., y: 18., z: 18. });
 
             material.backFaceCulling = !this.Setting.Back;
@@ -993,7 +1000,12 @@ void main(void) { \n\
             Shader.Me.Setting.Transparency = true;
             return this;
         }
-
+        
+        DisableAlphaTesting() {
+            Shader.Me.Setting.DisableAlphaTesting = true;
+            return this;
+        }
+         
         PostEffect1(id: number, effect: string) {
             if (Shader.Me.PostEffect1Effects == null)
                 Shader.Me.PostEffect1Effects = [];
