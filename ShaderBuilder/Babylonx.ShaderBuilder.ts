@@ -791,7 +791,7 @@ void main(void) { \n\
             }
             else {
                 material.needAlphaBlending = function () { return true; };
-            };
+            }
             
             if (!this.Setting.Back) this.Setting.Back = false;
 
@@ -800,7 +800,7 @@ void main(void) { \n\
             }
             else {
                 material.needAlphaTesting = function () { return true; };
-            };
+            }
 
          
             material.setVector3("camera", { x: 18., y: 18., z: 18. });
