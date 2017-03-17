@@ -10,9 +10,9 @@ module BABYLON {
             return ((<any>scene).manager) ? (<any>scene).manager as BABYLON.SceneManager : null;
         }
         public static CreateScene(name: string, engine: BABYLON.Engine): BABYLON.Scene {
-            var result: BABYLON.Scene = new BABYLON.Scene(engine);
-            BABYLON.SceneManager.parseSceneMetadata("/", name, result);
-            return result;
+            var scene: BABYLON.Scene = new BABYLON.Scene(engine);
+            BABYLON.SceneManager.parseSceneMetadata("/", name, scene);
+            return scene;
         }
         public static LoadScene(rootUrl: string, sceneFilename: string, engine: BABYLON.Engine, onsuccess?: (scene: BABYLON.Scene) => void, progressCallBack?: any, onerror?: (scene: BABYLON.Scene) => void): void {
             var onparse = (scene: BABYLON.Scene) => {
@@ -41,6 +41,8 @@ module BABYLON {
 
         private _ie: boolean = false;
         private _url: string = "";
+        private _time:number = 0;
+        private _timing:boolean = false;
         private _filename: string = "";
         private _render: () => void = null;
         private _running: boolean = false;
@@ -52,6 +54,7 @@ module BABYLON {
         private _navigation: Navigation = null;
 
         private static keymap: any = {};
+        private static prefabs: any = null;
         private static clientx: number = 0;
         private static clienty: number = 0;
         private static mousex: number = 0;
@@ -76,7 +79,7 @@ module BABYLON {
         private static g_horizontal: number = 0;
         private static engine: BABYLON.Engine = null;
         private static gamepad: BABYLON.Gamepad = null;
-        private static gamepads: BABYLON.Gamepads = null;
+        private static gamepads: BABYLON.Gamepads<BABYLON.Gamepad> = null;
         private static gamepadType: BABYLON.GamepadType = BABYLON.GamepadType.None;
         private static gamepadConnected: (pad: BABYLON.Gamepad, kind: BABYLON.GamepadType) => void = null;
         private static gamepadButtonPress: BABYLON.UserInputPress[] = [];
@@ -95,6 +98,7 @@ module BABYLON {
         private static keyButtonUp: BABYLON.UserInputAction[] = [];
         private static leftJoystick: BABYLON.VirtualJoystick = null;
         private static rightJoystick: BABYLON.VirtualJoystick = null;
+        private static virtualJoystick:boolean = false;
         private static previousPosition: { x: number, y: number } = null;
         private static preventDefault: boolean = false;
         private static rightHanded: boolean = true;
@@ -104,6 +108,8 @@ module BABYLON {
             if (scene == null) throw new Error("Null host scene obejct specified.");
             this._ie = document.all ? true : false
             this._url = rootUrl;
+            this._time = 0;
+            this._timing = false;
             this._filename = file;
             this._scene = scene;
             this._input = false;
@@ -112,6 +118,7 @@ module BABYLON {
 
             // Reset scene manager engine instance
             BABYLON.SceneManager.engine = this._scene.getEngine();
+            BABYLON.SceneManager.prefabs = {};
             BABYLON.SceneManager.rightHanded = this._scene.useRightHandedSystem;
 
             // Parse, create and store component instances
@@ -127,11 +134,46 @@ module BABYLON {
                     if (sceneController != null && sceneController instanceof BABYLON.SceneController) {
                         this.controller = (sceneController as BABYLON.SceneController);
                     } else {
-                        var msg2: string = "Failed to locate valid BABYLON.SceneController metadata instance";
-                        if (console) console.warn(msg2);
+                        BABYLON.Tools.Warn("Failed to locate valid BABYLON.SceneController metadata instance");
                     }
                 }
-                // Parse html markup
+                // Parse default navigation mesh
+                if (this._scene.metadata.properties.hasNavigationMesh != null && this._scene.metadata.properties.hasNavigationMesh === true) {
+                    this._navmesh = this._scene.getMeshByName("sceneNavigationMesh");
+                    if (this._navmesh != null) {
+                        var navigation: Navigation = this.getNavigationTool();
+                        var zoneNodes: any = navigation.buildNodes(this._navmesh);
+                        if (zoneNodes != null) {
+                            navigation.setZoneData(this.getNavigationZone(), zoneNodes);
+                        } else {
+                            BABYLON.Tools.Warn("Failed to set scene navigation zone");
+                        }
+                    } else {
+                        BABYLON.Tools.Warn("Failed to load scene navigation mesh(s)");
+                    }
+                }
+                // Parse default animation events
+                if (this._scene.metadata.properties.hasAnimationEvents != null && this._scene.metadata.properties.hasAnimationEvents === true) {
+                    var cameras: BABYLON.Camera[] = this._scene.getCamerasByTags("[ANIMEVENTS]");
+                    if (cameras != null) {
+                        cameras.forEach((camera) => {
+                            BABYLON.SceneManager.setupAnimationEvents(camera, this._scene);
+                        });
+                    }
+                    var lights: BABYLON.Light[] = this._scene.getLightsByTags("[ANIMEVENTS]");
+                    if (lights != null) {
+                        lights.forEach((light) => {
+                            BABYLON.SceneManager.setupAnimationEvents(light, this._scene);
+                        });
+                    }
+                    var meshes: BABYLON.Mesh[] = this._scene.getMeshesByTags("[ANIMEVENTS]");
+                    if (meshes != null) {
+                        meshes.forEach((mesh) => {
+                            BABYLON.SceneManager.setupAnimationEvents(mesh, this._scene);
+                        });
+                    }
+                }                
+                // Parse default html markup
                 if (this._scene.metadata.properties.interfaceMode != null) {
                     this._gui = this._scene.metadata.properties.interfaceMode;
                     if (this._scene.metadata.properties.userInterface != null) {
@@ -142,69 +184,6 @@ module BABYLON {
                                 this.drawSceneMarkup(this._markup);
                             }
                         }
-                    }
-                }
-                // Parse terrain heightmaps
-                if (this._scene.metadata.properties.hasTerrainMeshes != null && this._scene.metadata.properties.hasTerrainMeshes == true) {
-                    var terrains: BABYLON.Mesh[] = this._scene.getMeshesByTags("[TERRAIN]");
-                    if (terrains != null) {
-                        terrains.forEach((terrain) => {
-                            terrain.isVisible = true;
-                            terrain.visibility = 1;
-                            terrain.checkCollisions = false;
-                            if (terrain.metadata != null && terrain.metadata.properties != null) {
-                                if (terrain.metadata.properties.heightmapBase64) {
-                                    var tempBase64: string = terrain.metadata.properties.heightmapBase64;
-                                    var terrainWidth: number = terrain.metadata.properties.width;
-                                    var terrainLength: number = terrain.metadata.properties.length;
-                                    var terrainHeight: number = terrain.metadata.properties.height;
-                                    var physicsState: boolean = terrain.metadata.properties.physicsState;
-                                    var physicsMass: number = terrain.metadata.properties.physicsMass;
-                                    var physicsFriction: number = terrain.metadata.properties.physicsFriction;
-                                    var physicsRestitution: number = terrain.metadata.properties.physicsRestitution;
-                                    var physicsImpostor: number = terrain.metadata.properties.physicsImpostor;
-                                    var groundTessellation: number = terrain.metadata.properties.groundTessellation;
-                                    BABYLON.SceneManager.createGroundTerrain((terrain.name + "_Collider"), tempBase64, {
-                                        width: terrainWidth,
-                                        height: terrainLength,
-                                        minHeight: 0,
-                                        maxHeight: terrainHeight,
-                                        updatable: false,
-                                        subdivisions: groundTessellation,
-                                        onReady: (ground: BABYLON.Mesh) => {
-                                            ground.isVisible = false;
-                                            ground.visibility = 0.5;
-                                            ground.checkCollisions = true;
-                                            ground.position = BABYLON.Vector3.Zero();
-                                            ground.rotation = terrain.rotation.clone();
-                                            ground.scaling = terrain.scaling.clone();
-                                            ground.parent = terrain;
-                                            if (physicsState) ground.setPhysicsState(physicsImpostor, { mass: physicsMass, friction: physicsFriction, restitution: physicsRestitution });
-                                            terrain.metadata.properties.collisionMeshId = ground.id;
-                                            terrain.metadata.properties.heightmapBase64 = null;
-                                            tempBase64 = null;
-                                        }
-                                    }, this._scene);
-                                }
-                            }
-                        });
-                    } else {
-                        if (console) console.warn("Failed to load scene terrain mesh(s)");
-                    }
-                }
-                // Parse navigation mesh
-                if (this._scene.metadata.properties.hasNavigationMesh != null && this._scene.metadata.properties.hasNavigationMesh == true) {
-                    this._navmesh = this._scene.getMeshByName("sceneNavigationMesh");
-                    if (this._navmesh != null) {
-                        var navigation: Navigation = this.getNavigationTool();
-                        var zoneNodes: any = navigation.buildNodes(this._navmesh);
-                        if (zoneNodes != null) {
-                            navigation.setZoneData(this.getNavigationZone(), zoneNodes);
-                        } else {
-                            if (console) console.warn("Failed to set scene navigation zone");
-                        }
-                    } else {
-                        if (console) console.warn("Failed to load scene navigation mesh(s)");
                     }
                 }
             }
@@ -225,6 +204,10 @@ module BABYLON {
             var instance: BABYLON.SceneManager = this;
             this._render = function () {
                 if (instance != null) {
+                    if (instance._timing && BABYLON.SceneManager.engine != null) {
+                        instance._time += (1 / BABYLON.SceneManager.engine.getFps());
+                        if (instance._time >= Number.MAX_VALUE) instance._time = 0;
+                    }
                     if (instance._input) {
                         BABYLON.SceneManager.updateUserInput();
                     }
@@ -249,11 +232,16 @@ module BABYLON {
             return this._url;
         }
         public dispose(): void {
+            BABYLON.SceneManager.engine = null;
+            BABYLON.SceneManager.prefabs = {};
+            BABYLON.SceneManager.rightHanded = true;
             this.disableUserInput();
             this._gui = null;
             this._render = null;
             this._markup = null;
             this._navmesh = null;
+            this._time = 0;
+            this._timing = false;
             this._navigation = null;
             this.onrender = null;
             this.controller = null;
@@ -264,6 +252,29 @@ module BABYLON {
         }
         public isRunning(): boolean {
             return this._running
+        }
+        public isMobile():boolean {
+            var result:boolean = false;
+            if (navigator != null && navigator.userAgent != null) {
+                var n = navigator.userAgent;
+                if (n.match(/Android/i) || n.match(/webOS/i) || n.match(/iPhone/i) || n.match(/iPad/i) || n.match(/iPod/i) || n.match(/BlackBerry/i) || n.match(/Windows Phone/i)) {
+                    result = true;
+                }
+            } else {
+                BABYLON.Tools.Warn("Host navigator user agent is unavailable.");
+            }
+            return result;
+        }
+        public getTime():number {
+            return this._time;
+        }
+        public enableTime():void {
+            this._time = 0;
+            this._timing = true;
+        }
+        public disableTime():void {
+            this._time = 0;
+            this._timing = false;
         }
         public loadLevel(name: string, path: string = null): void {
             if (BABYLON.SceneManager.loader != null) {
@@ -276,17 +287,17 @@ module BABYLON {
                 throw new Error("No scene loader function registered.");
             }
         }
-        public toggleDebug(): void {
-            if (this._scene.debugLayer.isVisible()) {
-                this._scene.debugLayer.hide();
-            } else {
-                this._scene.debugLayer.show();
-            }
-        }
         public randomNumber(min:number, max:number):number {
             if (min === max) return min;
             var random:number = Math.random();
             return ((random * (max - min)) + min);
+        }
+        public importMeshes(filename:string, onsuccess:()=>void = null, onprogress:()=>void = null, onerror:(scene:BABYLON.Scene, message:string, exception:any)=>void = null):void {
+            BABYLON.SceneManager.ImportMesh("", this.getScenePath(), filename, this._scene, (meshes: BABYLON.AbstractMesh[], particleSystems: BABYLON.ParticleSystem[], skeletons: BABYLON.Skeleton[])=>{ if (onsuccess != null) onsuccess(); }, onprogress, onerror);
+        }
+        public safeDestroy(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, delay:number = 5, disable:boolean = false):void {
+            if (disable) owner.setEnabled(false);
+            window.setTimeout(()=>{ owner.dispose(); }, delay);
         }
         public getSceneName(): string {
             return this._filename;
@@ -303,21 +314,29 @@ module BABYLON {
             }
             return result;
         }
-        public getSceneMetadata(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): BABYLON.ObjectMetadata {
-            var result: BABYLON.ObjectMetadata = null;
-            if (owner.metadata != null && owner.metadata.api) {
-                var metadata: BABYLON.IObjectMetadata = owner.metadata as BABYLON.IObjectMetadata;
-                result = new BABYLON.ObjectMetadata(metadata);
-            }
-            return result;
+        public showFullscreen(element:HTMLElement = null): void {
+            var fullScreenElement:HTMLElement = (element != null) ? element : document.documentElement;
+            BABYLON.Tools.RequestFullscreen(fullScreenElement);
+            fullScreenElement.focus();
         }
-        public showFullscreen(): void {
-            BABYLON.Tools.RequestFullscreen(document.documentElement);
-            document.documentElement.focus();
+        public exitFullscreen(): void {
+            BABYLON.Tools.ExitFullscreen();
         }
 
+        // ************************************ //
+        // * Scene Execute When Ready Support * //
+        // ************************************ //
+        
+        public executeWhenReady(onExecuteWhenReady:()=>void):void {
+            // TODO: Implement Mesh Dependency Loader
+            console.log("[SceneManager] - Scene dependency loaded...");
+            if (onExecuteWhenReady) {
+                onExecuteWhenReady();
+            }
+        }        
+
         // ********************************** //
-        // *  Scene Manager Helper Support  * //
+        // * Scene Start Stop Pause Support * //
         // ********************************** //
 
         public start(): void {
@@ -355,12 +374,51 @@ module BABYLON {
             }
         }
 
+        // ******************************** //
+        // *  Scene Debug Helper Support  * //
+        // ******************************** //
+
+        public toggleDebug(popups:boolean = false): void {
+            if (this._scene.debugLayer.isVisible()) {
+                this._scene.debugLayer.hide();
+            } else {
+                this._scene.debugLayer.show(popups);
+            }
+        }
+        public traceLights():void {
+            if (this._scene.lights != null && this._scene.lights.length > 0) {
+                this._scene.lights.forEach((light) => {
+                    BABYLON.Tools.Log("Trace Light: " + light.name);
+                });
+            }
+        }
+        public traceCameras():void {
+            if (this._scene.cameras != null && this._scene.cameras.length > 0) {
+                this._scene.cameras.forEach((camera) => {
+                    BABYLON.Tools.Log("Trace Camera: " + camera.name);
+                });
+            }
+        }
+        public traceMeshes():void {
+            if (this._scene.meshes != null && this._scene.meshes.length > 0) {
+                this._scene.meshes.forEach((mesh) => {
+                    BABYLON.Tools.Log("Trace Mesh: " + mesh.name);
+                });
+            }
+        }
+        public dumpPrefabs(): void {
+            BABYLON.Tools.Log(BABYLON.SceneManager.prefabs);
+        }
+
         // ********************************* //
         // *  Scene Markup Helper Support  * //
         // ********************************* //
 
         public getGuiMode(): string {
             return this._gui;
+        }
+        public getGuiElement(): Element {
+            return document.getElementById("gui");
         }
         public getSceneMarkup(): string {
             return this._markup;
@@ -383,8 +441,7 @@ module BABYLON {
                     element.innerHTML = markup;
                 }
             } else {
-                var msg2: string = "Scene controller gui disabled.";
-                if (console) console.warn(msg2);
+                BABYLON.Tools.Warn("Scene controller gui disabled.");
             }
         }
         public clearSceneMarkup(): void {
@@ -394,22 +451,191 @@ module BABYLON {
                     element.innerHTML = "";
                 }
             } else {
-                var msg2: string = "Scene controller gui disabled.";
-                if (console) console.warn(msg2);
+                BABYLON.Tools.Warn("Scene controller gui disabled.");
             }
         }
 
         // ********************************** //
-        // *  Scene Collision Mesh Support  * //
+        // *   Scene Prefab Clone Support   * //
         // ********************************** //
 
-        public hasCollisionMesh(owner:BABYLON.AbstractMesh):boolean {
-            return (owner != null && owner.metadata != null && owner.metadata.properties != null && owner.metadata.properties.collisionMeshId != null && owner.metadata.properties.collisionMeshId !== ""); 
+        public hasPrefabMesh(prefabName:string): boolean {
+            var realPrefab:string = "Prefab." + prefabName;
+            return (BABYLON.SceneManager.prefabs[realPrefab] != null);
         }
-        public getCollisionMesh(owner:BABYLON.AbstractMesh):BABYLON.AbstractMesh {
+        public getPrefabMesh(prefabName:string): BABYLON.Mesh {
+            var result:BABYLON.Mesh = null;
+            var realPrefab:string = "Prefab." + prefabName;
+            if (this.hasPrefabMesh(prefabName)) {
+                result = BABYLON.SceneManager.prefabs[realPrefab] as BABYLON.Mesh;
+            }
+            return result;
+        }
+        public instantiatePrefab(prefabName:string, cloneName: string, newPosition:BABYLON.Vector3 = null, newRotation:BABYLON.Vector3 = null, newScaling:BABYLON.Vector3 = null, newParent: Node = null): BABYLON.Mesh {
+            var result:BABYLON.Mesh = null;
+            var realPrefab:string = "Prefab." + prefabName;
+            if (this.hasPrefabMesh(prefabName)) {
+                var prefab:BABYLON.Mesh = this.getPrefabMesh(prefabName);
+                if (prefab != null) {
+                    result = prefab.clone(cloneName, newParent, false, false);
+                    if (result != null) {
+                        result.name = BABYLON.SceneManager.ReplaceAll(result.name, "Prefab.", "");
+                        if (result.parent !== newParent) result.parent = newParent;
+                        result.position = (newPosition != null) ? newPosition : BABYLON.Vector3.Zero();
+                        if (newRotation != null) result.rotation = newRotation;
+                        if (newScaling != null) result.scaling = newScaling;
+                        // Recurse all prefab clones
+                        var clones:BABYLON.Mesh[] = [result];
+                        var children:BABYLON.AbstractMesh[] = result.getChildMeshes(false);
+                        if (children != null && children.length > 0) {
+                            children.forEach((child) => {
+                                child.name = BABYLON.SceneManager.ReplaceAll(child.name, "Prefab.", "");
+                                clones.push(child as BABYLON.Mesh);
+                            });
+                        }
+                        // Parse cloned mesh source
+                        clones.forEach((clone) => {
+                            if (clone.source != null) {
+                                // Check source skeleton
+                                if (clone.source.skeleton != null) {
+                                    var skeletonName:string = clone.source.skeleton.name + ".Skeleton";
+                                    var skeletonIdentity:string = skeletonName + "." + clone.source.skeleton.id;
+                                    clone.skeleton = clone.source.skeleton.clone(skeletonName, skeletonIdentity);
+                                }
+                            }
+                        });
+                        // Parse cloned mesh metadata
+                        BABYLON.SceneManager.parseMeshMetadata(clones, this._scene);
+                    } else {
+                        BABYLON.Tools.Warn("Failed to create prefab of: " + realPrefab);
+                    }
+                } else {
+                    BABYLON.Tools.Warn("Failed to lookup prefab map: " + realPrefab);
+                }
+            } else {
+                BABYLON.Tools.Warn("Unable to locate prefab master: " + realPrefab);
+            }
+            return result;
+        }
+
+        // *********************************** //
+        // *  Scene Animation State Support  * //
+        // *********************************** //
+
+        public playAnimation(name:string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, loop:boolean = false, decendants:boolean = true, onAnimationEnd:()=>void = null): BABYLON.Animatable[] {
+            var result:BABYLON.Animatable[] = null;
+            var attached:boolean = false;
+            // Play Primary Owner
+            var animation:BABYLON.IAnimationState = this.findSceneAnimationState(name, owner);
+            if (animation != null) {
+                attached = true;
+                var anim:BABYLON.Animatable = this._scene.beginAnimation(owner, animation.start, animation.stop, loop, animation.speed, onAnimationEnd);
+                if (anim != null) {
+                    if (result == null) result = [];
+                    result.push(anim);
+                }
+            }
+            // Play Deep Desecndents
+            if (decendants) {
+                var children:BABYLON.AbstractMesh[] = owner.getChildMeshes(false);
+                if (children != null && children.length > 0) {
+                    for (var i:number = 0; i < children.length; i++) {
+                        var child:BABYLON.AbstractMesh = children[i];
+                        var canimation:BABYLON.IAnimationState = this.findSceneAnimationState(name, child);
+                        if (canimation != null) {
+                            var chandler:()=>void = null;
+                            if (attached === false) {
+                                attached = true;
+                                chandler = onAnimationEnd;
+                            }
+                            var canim:BABYLON.Animatable = this._scene.beginAnimation(child, canimation.start, canimation.stop, loop, canimation.speed, chandler);
+                            if (canim != null) {
+                                if (result == null) result = [];
+                                result.push(canim);
+                            }
+                        }
+                    }
+                }
+            }
+            return result;
+        }
+        public getAnimationState(name:string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, decendants:boolean = true): BABYLON.IAnimationState {
+            var result:BABYLON.IAnimationState = null;
+            // Check Primary Owner
+            var animation:BABYLON.IAnimationState = this.findSceneAnimationState(name, owner);
+            if (animation != null) {
+                result = animation;
+            }
+            // Check Deep Desecndents
+            if (result == null && decendants) {
+                var children:BABYLON.AbstractMesh[] = owner.getChildMeshes(false);
+                if (children != null && children.length > 0) {
+                    for (var i:number = 0; i < children.length; i++) {
+                        var child:BABYLON.AbstractMesh = children[i];
+                        var canimation:BABYLON.IAnimationState = this.findSceneAnimationState(name, child);
+                        if (canimation != null) {
+                            result = canimation;
+                            break;
+                        }
+                    }
+                }
+            }
+            return result;
+        }
+
+        // *********************************** //
+        // *  Scene Owner Component Support  * //
+        // *********************************** //
+
+        public getOwnerMetadata(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): BABYLON.ObjectMetadata {
+            var result: BABYLON.ObjectMetadata = null;
+            if (owner.metadata != null && owner.metadata.api) {
+                var metadata: BABYLON.IObjectMetadata = owner.metadata as BABYLON.IObjectMetadata;
+                result = new BABYLON.ObjectMetadata(metadata);
+            }
+            return result;
+        }
+        public getOwnerChildMesh(name:string, owner:BABYLON.AbstractMesh, directDecendantsOnly:boolean = true, predicate:(node:BABYLON.Node)=>boolean = null):BABYLON.AbstractMesh {
             var result:BABYLON.AbstractMesh = null;
-            if (this.hasCollisionMesh(owner)) {
-                result = this._scene.getMeshByID(owner.metadata.properties.collisionMeshId);
+            var children:BABYLON.AbstractMesh[] = owner.getChildMeshes(directDecendantsOnly, predicate);
+            if (children != null && children.length > 0) {
+                for (var i:number = 0; i < children.length; i++) {
+                    var child:BABYLON.AbstractMesh = children[i];
+                    if (child.name === name) {
+                        result = child;
+                        break;
+                    }
+                }
+            }
+            if (result == null) result = owner;
+            return result;            
+        }
+        public getOwnerDetailMesh(owner:BABYLON.AbstractMesh, directDecendantsOnly:boolean = true, predicate:(node:BABYLON.Node)=>boolean = null):BABYLON.AbstractMesh {
+            var result:BABYLON.AbstractMesh = null;
+            var children:BABYLON.AbstractMesh[] = owner.getChildMeshes(directDecendantsOnly, predicate);
+            if (children != null && children.length > 0) {
+                for (var i:number = 0; i < children.length; i++) {
+                    var child:BABYLON.AbstractMesh = children[i];
+                    if (child.name === "Detail" || child.name.indexOf(":Detail") >= 0 || child.name.indexOf("_Detail") >= 0) {
+                        result = child;
+                        break;
+                    }
+                }
+            }
+            if (result == null) result = owner;
+            return result;            
+        }
+        public getOwnerCollisionMesh(owner:BABYLON.AbstractMesh, directDecendantsOnly:boolean = true, predicate:(node:BABYLON.Node)=>boolean = null):BABYLON.AbstractMesh {
+            var result:BABYLON.AbstractMesh = null;
+            var children:BABYLON.AbstractMesh[] = owner.getChildMeshes(directDecendantsOnly, predicate);
+            if (children != null && children.length > 0) {
+                for (var i:number = 0; i < children.length; i++) {
+                    var child:BABYLON.AbstractMesh = children[i];
+                    if (child.name === "Collider" || child.name.indexOf(":Collider") >= 0 || child.name.indexOf("_Collider") >= 0) {
+                        result = child;
+                        break;
+                    }
+                }
             }
             if (result == null) result = owner;
             return result;            
@@ -419,7 +645,7 @@ module BABYLON {
         // *  Scene Component Helper Support  * //
         // ************************************ //
 
-        public addSceneComponent(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, klass: string, enableUpdate: boolean = true, propertyBag: any = {}): BABYLON.SceneComponent {
+        public addSceneComponent(klass: string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, enableUpdate: boolean = true, propertyBag: any = {}): BABYLON.SceneComponent {
             var result: BABYLON.SceneComponent = null;
             if (owner == null) throw new Error("Null owner scene obejct specified.");
             if (klass == null || klass === "") throw new Error("Null scene obejct klass specified.");
@@ -427,6 +653,7 @@ module BABYLON {
                 var metadata: BABYLON.IObjectMetadata = {
                     api: true,
                     type: "Babylon",
+                    prefab: false,
                     objectName: "Scene Component",
                     objectId: "0",
                     tagName: "Untagged",
@@ -436,25 +663,26 @@ module BABYLON {
                     navAgent: null,
                     meshLink: null,
                     meshObstacle: null,
+                    animationStates: [],
+                    animationEvents: [],
+                    collisionEvent: null,
+                    collisionTags: [],
                     components: [],
                     properties: {}
                 };
                 owner.metadata = metadata;
             }
-            var ownercomps: BABYLON.IScriptComponent[] = null;
             if (owner.metadata != null && owner.metadata.api) {
                 if (owner.metadata.disposal == null || owner.metadata.disposal === false) {
                     owner.onDispose = () => { BABYLON.SceneManager.destroySceneComponents(owner); };
                     owner.metadata.disposal = true;
                 }
                 var metadata: BABYLON.IObjectMetadata = owner.metadata as BABYLON.IObjectMetadata;
-                if (metadata.components != null) {
-                    ownercomps = metadata.components;
-                } else {
-                    ownercomps = [];
+                if (metadata.components == null) {
+                    metadata.components = [];
                 }
-                if (ownercomps != null) {
-                    var SceneComponentClass = BABYLON.SceneManager.createComponentClass(klass);
+                if (metadata.components != null) {
+                    var SceneComponentClass = BABYLON.Tools.Instantiate(klass);
                     if (SceneComponentClass != null) {
                         result = new SceneComponentClass(owner, this._scene, enableUpdate, propertyBag);
                         if (result != null) {
@@ -468,7 +696,7 @@ module BABYLON {
                                 instance: result,
                                 tag: {}
                             };
-                            ownercomps.push(compscript);
+                            metadata.components.push(compscript);
                             result.register();
                         } else {
                             if (console) console.error("Failed to create component instance");
@@ -484,37 +712,23 @@ module BABYLON {
             }
             return result;
         }
-        public findSceneComponent(klass: string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): BABYLON.SceneComponent {
-            var result: BABYLON.SceneComponent = null;
-            if (owner.metadata != null && owner.metadata.api) {
-                var metadata: BABYLON.IObjectMetadata = owner.metadata as BABYLON.IObjectMetadata;
-                if (metadata.components != null && metadata.components.length > 0) {
-                    for (var ii: number = 0; ii < metadata.components.length; ii++) {
-                        var ownerscript: BABYLON.IScriptComponent = metadata.components[ii];
-                        if (ownerscript.instance != null && ownerscript.klass === klass) {
-                            result = ownerscript.instance;
-                            break;
-                        }
-                    }
+        public createSceneController(klass: string): BABYLON.SceneController {
+            if (this.controller == null) {
+                this.controller = this.addSceneComponent(klass, new BABYLON.Mesh("SceneController", this._scene)) as BABYLON.SceneController;
+                if (this.controller != null) {
+                    this.controller.ready();
+                    (<any>this.controller).onready();
                 }
+            } else {
+                throw new Error("Scene controller already exists.");
             }
-            return result;
+            return this.controller;
         }
-        public findSceneComponents(klass: string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): BABYLON.SceneComponent[] {
-            var result: BABYLON.SceneComponent[] = [];
-            if (owner.metadata != null && owner.metadata.api) {
-                var metadata: BABYLON.IObjectMetadata = owner.metadata as BABYLON.IObjectMetadata;
-                if (metadata.components != null && metadata.components.length > 0) {
-                    for (var ii: number = 0; ii < metadata.components.length; ii++) {
-                        var ownerscript: BABYLON.IScriptComponent = metadata.components[ii];
-                        if (ownerscript.instance != null && ownerscript.klass === klass) {
-                            result.push(ownerscript.instance);
-                        }
-                    }
-                }
-            }
-            return result;
-        }
+
+        // ************************************ //
+        // *  Scene Component Search Support  * //
+        // ************************************ //
+        
         public findSceneController(): BABYLON.SceneController {
             var meshes: BABYLON.AbstractMesh[] = this._scene.meshes;
             var result: BABYLON.SceneController = null;
@@ -538,16 +752,108 @@ module BABYLON {
             }
             return result;
         }
-        public createSceneController(klass: string): BABYLON.SceneController {
-            if (this.controller == null) {
-                this.controller = this.addSceneComponent(new BABYLON.Mesh("SceneController", this._scene), klass) as BABYLON.SceneController;
-                if (this.controller != null) {
-                    this.controller.ready();
+        public findSceneComponent(klass: string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): BABYLON.SceneComponent {
+            var result: BABYLON.SceneComponent = null;
+            if (owner == null) throw new Error("Null owner scene obejct specified.");
+            if (owner.metadata != null && owner.metadata.api) {
+                var metadata: BABYLON.IObjectMetadata = owner.metadata as BABYLON.IObjectMetadata;
+                if (metadata.components != null && metadata.components.length > 0) {
+                    for (var ii: number = 0; ii < metadata.components.length; ii++) {
+                        var ownerscript: BABYLON.IScriptComponent = metadata.components[ii];
+                        if (ownerscript.instance != null && ownerscript.klass === klass) {
+                            result = ownerscript.instance;
+                            break;
+                        }
+                    }
                 }
-            } else {
-                throw new Error("Scene controller already exists.");
             }
-            return this.controller;
+            return result;
+        }
+        public findSceneComponents(klass: string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): BABYLON.SceneComponent[] {
+            var result: BABYLON.SceneComponent[] = [];
+            if (owner == null) throw new Error("Null owner scene obejct specified.");
+            if (owner.metadata != null && owner.metadata.api) {
+                var metadata: BABYLON.IObjectMetadata = owner.metadata as BABYLON.IObjectMetadata;
+                if (metadata.components != null && metadata.components.length > 0) {
+                    for (var ii: number = 0; ii < metadata.components.length; ii++) {
+                        var ownerscript: BABYLON.IScriptComponent = metadata.components[ii];
+                        if (ownerscript.instance != null && ownerscript.klass === klass) {
+                            result.push(ownerscript.instance);
+                        }
+                    }
+                }
+            }
+            return result;
+        }
+        public findSceneAnimationState(name:string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): BABYLON.IAnimationState {
+            var result:BABYLON.IAnimationState = null;
+            if (owner != null && owner.metadata != null && owner.metadata.api) {
+                var metadata: BABYLON.IObjectMetadata = owner.metadata as BABYLON.IObjectMetadata;
+                if (metadata.animationStates != null && metadata.animationStates.length > 0) {
+                    var ii:number = 0;
+                    for(ii = 0; ii < metadata.animationStates.length; ii++) {
+                        if (metadata.animationStates[ii].name === name) {
+                            result = metadata.animationStates[ii];
+                            break;
+                        }
+                    }
+                }
+            }
+            return result;
+        }
+        public findSceneParticleSystem(name:string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): BABYLON.ParticleSystem {
+            var result:BABYLON.ParticleSystem = null;
+            if (owner == null) throw new Error("Null owner scene obejct specified.");
+            if (this._scene.particleSystems != null && this._scene.particleSystems.length > 0) {
+                var psystems:number = this._scene.particleSystems.length;
+                for (var ii:number = 0; ii < psystems; ii++) {
+                    var psystem:BABYLON.ParticleSystem = this._scene.particleSystems[ii];
+                    if (psystem.emitter === owner && psystem.name === name) {
+                        result = psystem;
+                        break;
+                    }
+                }
+            }
+            return result;
+        }
+        public findSceneParticleSystems(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): BABYLON.ParticleSystem[] {
+            var result:BABYLON.ParticleSystem[] = [];
+            if (owner == null) throw new Error("Null owner scene obejct specified.");
+            if (this._scene.particleSystems != null && this._scene.particleSystems.length > 0) {
+                this._scene.particleSystems.forEach((psystem) => {
+                    if (psystem.emitter === owner) {
+                        result.push(psystem);
+                    }
+                });
+            }
+            return result;
+        }
+        public findSceneLensFlareSystem(name:string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): BABYLON.LensFlareSystem {
+            var result:BABYLON.LensFlareSystem = null;
+            if (owner == null) throw new Error("Null owner scene obejct specified.");
+            if (this._scene.lensFlareSystems != null && this._scene.lensFlareSystems.length > 0) {
+                var fsystems:number = this._scene.lensFlareSystems.length;
+                for (var ii:number = 0; ii < fsystems; ii++) {
+                    var fsystem:BABYLON.LensFlareSystem = this._scene.lensFlareSystems[ii];
+                    if (fsystem.getEmitter() === owner && fsystem.name === name) {
+                        result = fsystem;
+                        break;
+                    }
+                }
+            }
+            return result;
+        }
+        public findSceneLensFlareSystems(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): BABYLON.LensFlareSystem[] {
+            var result:BABYLON.LensFlareSystem[] = [];
+            if (owner == null) throw new Error("Null owner scene obejct specified.");
+            if (this._scene.lensFlareSystems != null && this._scene.lensFlareSystems.length > 0) {
+                this._scene.lensFlareSystems.forEach((fsystem) => {
+                    if (fsystem.getEmitter() === owner) {
+                        result.push(fsystem);
+                    }
+                });
+            }
+            return result;
         }
 
         // ********************************* //
@@ -594,13 +900,15 @@ module BABYLON {
             BABYLON.SceneManager.keyButtonDown = [];
             BABYLON.SceneManager.keyButtonPress = [];
         }
-        public enableUserInput(options: { preventDefault?: boolean, useCapture?: boolean, virtualJoystick?: boolean, gamepadConnected?: (pad: BABYLON.Gamepad, kind: BABYLON.GamepadType) => void } = null): void {
+        public enableUserInput(options: { preventDefault?: boolean, useCapture?: boolean, enableVirtualJoystick?: boolean, disableRightStick?:boolean, gamepadConnected?: (pad: BABYLON.Gamepad, kind: BABYLON.GamepadType) => void } = null): void {
             var preventDefault: boolean = (options != null && options.preventDefault) ? options.preventDefault : false;
             var useCapture: boolean = (options != null && options.useCapture) ? options.useCapture : false;
-            var virtualJoystick: boolean = (options != null && options.virtualJoystick) ? options.virtualJoystick : false;
+            var enableVirtualJoystick: boolean = (options != null && options.enableVirtualJoystick) ? options.enableVirtualJoystick : false;
+            var disableRightJoystick: boolean = (options != null && options.disableRightStick) ? options.disableRightStick : false;
             var gamepadConnected: (pad: BABYLON.Gamepad, kind: BABYLON.GamepadType) => void = (options != null && options.gamepadConnected) ? options.gamepadConnected : null;
             if (!this._input) {
                 this.resetUserInput();
+                // Document element event listeners
                 document.documentElement.tabIndex = 1;
                 document.documentElement.addEventListener("keyup", BABYLON.SceneManager.inputKeyUpHandler, useCapture);
                 document.documentElement.addEventListener("keydown", BABYLON.SceneManager.inputKeyDownHandler, useCapture);
@@ -608,26 +916,28 @@ module BABYLON {
                 document.documentElement.addEventListener("pointerdown", BABYLON.SceneManager.inputPointerDownHandler, useCapture);
                 document.documentElement.addEventListener("pointermove", BABYLON.SceneManager.inputPointerMoveHandler, useCapture);
                 BABYLON.SceneManager.preventDefault = preventDefault;
+                // Note: Only Enable Gamepad Controllers Once
                 if (BABYLON.SceneManager.gamepads == null) {
                     BABYLON.SceneManager.gamepadConnected = gamepadConnected;
-                    BABYLON.SceneManager.gamepads = new BABYLON.Gamepads((pad: BABYLON.Gamepad) => { BABYLON.SceneManager.inputGamepadConnected(pad); });
+                    BABYLON.SceneManager.gamepads = new BABYLON.Gamepads<BABYLON.Gamepad>((pad: BABYLON.Gamepad) => { BABYLON.SceneManager.inputGamepadConnected(pad); });
                 }
-                if (virtualJoystick) {
-                    if (BABYLON.SceneManager.leftJoystick == null) {
-                        BABYLON.SceneManager.leftJoystick = new BABYLON.VirtualJoystick(true);
-                        BABYLON.SceneManager.leftJoystick.setAxisForUpDown(JoystickAxis.Z);
-                        BABYLON.SceneManager.leftJoystick.setAxisForLeftRight(JoystickAxis.X);
-                        BABYLON.SceneManager.leftJoystick.setJoystickSensibility(BABYLON.UserInputOptions.JoystickLeftSensibility);
-                    }
-                    if (BABYLON.SceneManager.rightJoystick == null) {
-                        BABYLON.SceneManager.rightJoystick = new BABYLON.VirtualJoystick(false);
-                        BABYLON.SceneManager.rightJoystick.setAxisForUpDown(JoystickAxis.X);
-                        BABYLON.SceneManager.rightJoystick.setAxisForLeftRight(JoystickAxis.Y);
-                        BABYLON.SceneManager.rightJoystick.reverseUpDown = true;
-                        BABYLON.SceneManager.rightJoystick.setJoystickSensibility(BABYLON.UserInputOptions.JoystickRightSensibility);
-                        BABYLON.SceneManager.rightJoystick.setJoystickColor(BABYLON.UserInputOptions.JoystickRightHandleColor);
+                // Note: Only Enable Virtual Joysticks Once
+                if (BABYLON.SceneManager.virtualJoystick === false) {
+                    BABYLON.SceneManager.virtualJoystick = enableVirtualJoystick;
+                    if (BABYLON.SceneManager.virtualJoystick === true) {
+                        if (BABYLON.SceneManager.leftJoystick == null) {
+                            BABYLON.SceneManager.leftJoystick = new BABYLON.VirtualJoystick(true);
+                            BABYLON.SceneManager.leftJoystick.setJoystickSensibility(BABYLON.UserInputOptions.JoystickLeftSensibility * 5);
+                        }
+                        if (disableRightJoystick === false && BABYLON.SceneManager.rightJoystick == null) {
+                            BABYLON.SceneManager.rightJoystick = new BABYLON.VirtualJoystick(false);
+                            BABYLON.SceneManager.rightJoystick.reverseUpDown = true;
+                            BABYLON.SceneManager.rightJoystick.setJoystickSensibility(BABYLON.UserInputOptions.JoystickRightSensibility * 5);
+                            BABYLON.SceneManager.rightJoystick.setJoystickColor(BABYLON.UserInputOptions.JoystickRightHandleColor);
+                        }
                     }
                 }
+
                 this._input = true;
                 document.documentElement.focus();
             }
@@ -793,11 +1103,22 @@ module BABYLON {
         // *  Scene Joystick State Support  * //
         // ********************************** //
 
-        public getLeftVirtualJoystick(): BABYLON.VirtualJoystick {
+        public getLeftJoystick(): BABYLON.VirtualJoystick {
             return (this._input) ? BABYLON.SceneManager.leftJoystick : null;
         }
-        public getRightVirtualJoystick(): BABYLON.VirtualJoystick {
+        public getRightJoystick(): BABYLON.VirtualJoystick {
             return (this._input) ? BABYLON.SceneManager.rightJoystick : null;
+        }
+        public getJoystickPress(button:number): boolean {
+            var result: boolean = false;
+            if (this._input) {
+                if (button === BABYLON.JoystickButton.Left && BABYLON.SceneManager.leftJoystick != null && BABYLON.SceneManager.leftJoystick.pressed === true) {
+                    result = true;
+                } else if (button === BABYLON.JoystickButton.Right && BABYLON.SceneManager.rightJoystick != null && BABYLON.SceneManager.rightJoystick.pressed === true) {
+                    result = true;
+                }
+            }
+            return result;
         }
         public disposeVirtualJoysticks(): void {
             if (this._input) {
@@ -809,6 +1130,7 @@ module BABYLON {
                     BABYLON.SceneManager.rightJoystick.releaseCanvas();
                     BABYLON.SceneManager.rightJoystick = null;
                 }
+                BABYLON.SceneManager.virtualJoystick = false;
             }
         }
 
@@ -816,6 +1138,43 @@ module BABYLON {
         // *   Update Camera Helper Support   * //
         // ************************************ //
 
+        public switchActiveCamera(camera:BABYLON.Camera, updatePosition:boolean = false, attachedCanvas:HTMLCanvasElement = null, disposeActiveCamera:boolean = false):void {
+            // TODO: Dunno About updatePostion and attachedCamera options - ???
+            if (camera !== this._scene.activeCamera) {
+                var oldCamera:any = this._scene.activeCamera;
+                var newCamera:any = camera;
+                if (updatePosition && oldCamera.position) {
+                    newCamera.position = oldCamera.position.clone();
+                }
+                if (oldCamera.rotation) {
+                    newCamera.rotation = oldCamera.rotation.clone();
+                }
+                if (oldCamera.ellipsoid) {
+                    newCamera.ellipsoid = oldCamera.ellipsoid.clone();
+                }
+                newCamera.fov = oldCamera.fov;
+                newCamera.minZ = oldCamera.minZ;
+                newCamera.maxZ = oldCamera.maxZ;
+                newCamera.checkCollisions = oldCamera.checkCollisions;
+                newCamera.applyGravity = oldCamera.applyGravity;
+                newCamera.speed = oldCamera.speed;
+                newCamera.postProcesses = oldCamera.postProcesses;
+                oldCamera.postProcesses = [];
+                if (attachedCanvas != null) {
+                    oldCamera.detachControl(attachedCanvas);
+                }
+                if (disposeActiveCamera === true) {
+                    if (oldCamera.dispose) oldCamera.dispose();
+                } else {
+                    if (oldCamera.setEnabled) oldCamera.setEnabled(false);
+                }
+                if (newCamera.setEnabled) newCamera.setEnabled(true);
+                this._scene.activeCamera = newCamera;
+                if (attachedCanvas != null) {
+                    this._scene.activeCamera.attachControl(attachedCanvas);
+                }
+            }
+        }
         public updateCameraPosition(camera: BABYLON.FreeCamera, horizontal: number, vertical: number, speed: number): void {
             if (camera != null) {
                 var local = camera._computeLocalCameraSpeed() * speed;
@@ -838,6 +1197,22 @@ module BABYLON {
                 this.updateCameraPosition(camera, horizontal, -vertical, movementSpeed);
                 this.updateCameraRotation(camera, mousex, mousey, rotationSpeed);
             }
+        }
+        public isHighDynamicRangeCamera(camera: BABYLON.Camera): boolean {
+            var result: boolean = false;
+            if (camera.metadata != null && camera.metadata.api) {
+                result = (camera.metadata.properties != null && camera.metadata.properties.hdr === true);
+            }
+            return result;
+        }
+        public getHighDynamicRangePipeline(camera: BABYLON.Camera): BABYLON.HDRRenderingPipeline {
+            var result: BABYLON.HDRRenderingPipeline = null;
+            if (camera.metadata != null && camera.metadata.api) {
+                if (camera.metadata.properties != null && camera.metadata.properties.hdrPipeline != null) {
+                    result = camera.metadata.properties.hdrPipeline;
+                }
+            }
+            return result;
         }
 
         // *********************************** //
@@ -1052,25 +1427,28 @@ module BABYLON {
             return true;
         }
         private static inputPointerMoveHandler(e: PointerEvent): any {
-            if (BABYLON.SceneManager.previousPosition != null) {
-                BABYLON.SceneManager.clientx = e.clientX;
-                BABYLON.SceneManager.clienty = e.clientY;
-                var offsetX = e.clientX - BABYLON.SceneManager.previousPosition.x;
-                var offsetY = e.clientY - BABYLON.SceneManager.previousPosition.y;
-                BABYLON.SceneManager.previousPosition = {
-                    x: e.clientX,
-                    y: e.clientY
-                };
-                var mousex: number = offsetX / BABYLON.UserInputOptions.PointerAngularSensibility;
-                var mousey: number = offsetY / BABYLON.UserInputOptions.PointerAngularSensibility;
-                if (mousex != 0) {
-                    BABYLON.SceneManager.k_mousex = mousex;
-                }
-                if (mousey != 0) {
-                    if (BABYLON.SceneManager.rightHanded) {
-                        BABYLON.SceneManager.k_mousey = -mousey;
-                    } else {
-                        BABYLON.SceneManager.k_mousey = mousey;
+            // Mouse Pointer Rotation When No Virtual Joystick Enabled
+            if (BABYLON.SceneManager.virtualJoystick === false) {
+                if (BABYLON.SceneManager.previousPosition != null) {
+                    BABYLON.SceneManager.clientx = e.clientX;
+                    BABYLON.SceneManager.clienty = e.clientY;
+                    var offsetX = e.clientX - BABYLON.SceneManager.previousPosition.x;
+                    var offsetY = e.clientY - BABYLON.SceneManager.previousPosition.y;
+                    BABYLON.SceneManager.previousPosition = {
+                        x: e.clientX,
+                        y: e.clientY
+                    };
+                    var mousex: number = offsetX * (BABYLON.UserInputOptions.PointerAngularSensibility / 10);
+                    var mousey: number = offsetY * (BABYLON.UserInputOptions.PointerAngularSensibility / 10);
+                    if (mousex != 0) {
+                        BABYLON.SceneManager.k_mousex = mousex;
+                    }
+                    if (mousey != 0) {
+                        if (BABYLON.SceneManager.rightHanded) {
+                            BABYLON.SceneManager.k_mousey = -mousey;
+                        } else {
+                            BABYLON.SceneManager.k_mousey = mousey;
+                        }
                     }
                 }
             }
@@ -1170,9 +1548,9 @@ module BABYLON {
         }
         private static inputLeftStickHandler(values: BABYLON.StickValues): void {
             if (BABYLON.SceneManager.gamepad != null) {
-                var LSValues = values;
-                var normalizedLX = LSValues.x / BABYLON.UserInputOptions.GamepadMovementSensibility;
-                var normalizedLY = LSValues.y / BABYLON.UserInputOptions.GamepadMovementSensibility;
+                var LSValues:BABYLON.StickValues = values;
+                var normalizedLX = LSValues.x * BABYLON.UserInputOptions.GamepadLStickSensibility;
+                var normalizedLY = LSValues.y * BABYLON.UserInputOptions.GamepadLStickSensibility;
                 LSValues.x = Math.abs(normalizedLX) >= BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedLX : 0;
                 LSValues.y = Math.abs(normalizedLY) >= BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedLY : 0;
                 BABYLON.SceneManager.g_horizontal = (BABYLON.UserInputOptions.GamepadLStickXInverted) ? -LSValues.x : LSValues.x;
@@ -1181,9 +1559,9 @@ module BABYLON {
         }
         private static inputRightStickHandler(values: BABYLON.StickValues): void {
             if (BABYLON.SceneManager.gamepad != null) {
-                var RSValues = values;
-                var normalizedRX = RSValues.x / BABYLON.UserInputOptions.GamepadAngularSensibility;
-                var normalizedRY = RSValues.y / BABYLON.UserInputOptions.GamepadAngularSensibility;
+                var RSValues:BABYLON.StickValues = values;
+                var normalizedRX = RSValues.x * BABYLON.UserInputOptions.GamepadRStickSensibility;
+                var normalizedRY = RSValues.y * BABYLON.UserInputOptions.GamepadRStickSensibility;
                 RSValues.x = Math.abs(normalizedRX) >= BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedRX : 0;
                 RSValues.y = Math.abs(normalizedRY) >= BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedRY : 0;
                 BABYLON.SceneManager.g_mousex = (BABYLON.UserInputOptions.GamepadRStickXInverted) ? -RSValues.x : RSValues.x;
@@ -1193,7 +1571,7 @@ module BABYLON {
         private static inputGamepadConnected(pad: BABYLON.Gamepad) {
             if (pad.index === 0) {
                 BABYLON.SceneManager.gamepad = pad;
-                console.log("[Scene Manager] - Gamepad Connected: " + BABYLON.SceneManager.gamepad.id);
+                BABYLON.Tools.Log("[Scene Manager] - Gamepad Connected: " + BABYLON.SceneManager.gamepad.id);
                 if ((<string>BABYLON.SceneManager.gamepad.id).search("Xbox 360") !== -1 || (<string>BABYLON.SceneManager.gamepad.id).search("Xbox One") !== -1 || (<string>BABYLON.SceneManager.gamepad.id).search("xinput") !== -1) {
                     BABYLON.SceneManager.gamepadType = BABYLON.GamepadType.Xbox360;
                     var xbox360Pad: BABYLON.Xbox360Pad = BABYLON.SceneManager.gamepad as BABYLON.Xbox360Pad;
@@ -1219,29 +1597,31 @@ module BABYLON {
             }
         }
         private static inputVirtualJoysticks(): void {
-            if (BABYLON.SceneManager.leftJoystick != null && BABYLON.SceneManager.rightJoystick != null) {
+            if (BABYLON.SceneManager.leftJoystick != null) {
+                // Update left virtual joystick values
                 var LSDelta:BABYLON.Vector3 = BABYLON.SceneManager.leftJoystick.deltaPosition;
-                var RSDelta:BABYLON.Vector3 = BABYLON.SceneManager.rightJoystick.deltaPosition;
                 if (!BABYLON.SceneManager.leftJoystick.pressed) {
                     LSDelta = LSDelta.scale(0.9);
                 }
+                var normalizedLX = LSDelta.x;
+                var normalizedLY = LSDelta.y;
+                LSDelta.x = Math.abs(normalizedLX) >= BABYLON.UserInputOptions.JoystickDeadStickValue ? 0 + normalizedLX : 0;
+                LSDelta.y = Math.abs(normalizedLY) >= BABYLON.UserInputOptions.JoystickDeadStickValue ? 0 + normalizedLY : 0;
+                BABYLON.SceneManager.j_horizontal = LSDelta.x;
+                BABYLON.SceneManager.j_vertical = LSDelta.y;
+            }
+            if (BABYLON.SceneManager.rightJoystick != null) {
+                // Update right virtual joystick values
+                var RSDelta:BABYLON.Vector3 = BABYLON.SceneManager.rightJoystick.deltaPosition;
                 if (!BABYLON.SceneManager.rightJoystick.pressed) {
                     RSDelta = RSDelta.scale(0.9);
                 }
-                // Update left virtual joystick values
-                var normalizedLX = LSDelta.x / BABYLON.UserInputOptions.JoystickMovementSensibility;
-                var normalizedLY = LSDelta.y / BABYLON.UserInputOptions.JoystickMovementSensibility;
-                LSDelta.x = Math.abs(normalizedLX) >= BABYLON.UserInputOptions.JoystickDeadStickValue ? 0 + normalizedLX : 0;
-                LSDelta.y = Math.abs(normalizedLY) >= BABYLON.UserInputOptions.JoystickDeadStickValue ? 0 + normalizedLY : 0;
-                BABYLON.SceneManager.j_horizontal = (BABYLON.UserInputOptions.JoystickLStickXInverted) ? -LSDelta.x : LSDelta.x;
-                BABYLON.SceneManager.j_vertical = (BABYLON.UserInputOptions.JoystickLStickYInverted) ? LSDelta.y : -LSDelta.y;
-                // Update right virtual joystick values
-                var normalizedRX = RSDelta.x / BABYLON.UserInputOptions.JoystickAngularSensibility;
-                var normalizedRY = RSDelta.y / BABYLON.UserInputOptions.JoystickAngularSensibility;
+                var normalizedRX = RSDelta.x;
+                var normalizedRY = RSDelta.y;
                 RSDelta.x = Math.abs(normalizedRX) >= BABYLON.UserInputOptions.JoystickDeadStickValue ? 0 + normalizedRX : 0;
                 RSDelta.y = Math.abs(normalizedRY) >= BABYLON.UserInputOptions.JoystickDeadStickValue ? 0 + normalizedRY : 0;
-                BABYLON.SceneManager.j_mousex = (BABYLON.UserInputOptions.JoystickRStickXInverted) ? -RSDelta.x : RSDelta.x;
-                BABYLON.SceneManager.j_mousey = (BABYLON.UserInputOptions.JoystickRStickYInverted) ? -RSDelta.y : RSDelta.y;
+                BABYLON.SceneManager.j_mousex = RSDelta.x;
+                BABYLON.SceneManager.j_mousey = RSDelta.y;
             }
         }
 
@@ -1257,31 +1637,31 @@ module BABYLON {
             BABYLON.SceneManager.x_mousex = 0;
             BABYLON.SceneManager.x_mousey = 0;
             // Update user input state by order of precedence
-            if (BABYLON.SceneManager.k_horizontal !== 0) {
-                BABYLON.SceneManager.x_horizontal = BABYLON.SceneManager.k_horizontal;
-            } else if (BABYLON.SceneManager.j_horizontal !== 0) {
+            if (BABYLON.SceneManager.j_horizontal !== 0) {
                 BABYLON.SceneManager.x_horizontal = BABYLON.SceneManager.j_horizontal;
+            } else if (BABYLON.SceneManager.k_horizontal !== 0) {
+                BABYLON.SceneManager.x_horizontal = BABYLON.SceneManager.k_horizontal;
             } else if (BABYLON.SceneManager.g_horizontal !== 0) {
                 BABYLON.SceneManager.x_horizontal = BABYLON.SceneManager.g_horizontal;
             }
-            if (BABYLON.SceneManager.k_vertical !== 0) {
-                BABYLON.SceneManager.x_vertical = BABYLON.SceneManager.k_vertical;
-            } else if (BABYLON.SceneManager.j_vertical !== 0) {
+            if (BABYLON.SceneManager.j_vertical !== 0) {
                 BABYLON.SceneManager.x_vertical = BABYLON.SceneManager.j_vertical;
+            } else if (BABYLON.SceneManager.k_vertical !== 0) {
+                BABYLON.SceneManager.x_vertical = BABYLON.SceneManager.k_vertical;
             } else if (BABYLON.SceneManager.g_vertical !== 0) {
                 BABYLON.SceneManager.x_vertical = BABYLON.SceneManager.g_vertical;
             }
-            if (BABYLON.SceneManager.k_mousex !== 0) {
-                BABYLON.SceneManager.x_mousex = BABYLON.SceneManager.k_mousex;
-            } else if (BABYLON.SceneManager.j_mousex !== 0) {
+            if (BABYLON.SceneManager.j_mousex !== 0) {
                 BABYLON.SceneManager.x_mousex = BABYLON.SceneManager.j_mousex;
+            } else if (BABYLON.SceneManager.k_mousex !== 0) {
+                BABYLON.SceneManager.x_mousex = BABYLON.SceneManager.k_mousex;
             } else if (BABYLON.SceneManager.g_mousex !== 0) {
                 BABYLON.SceneManager.x_mousex = BABYLON.SceneManager.g_mousex;
             }
-            if (BABYLON.SceneManager.k_mousey !== 0) {
-                BABYLON.SceneManager.x_mousey = BABYLON.SceneManager.k_mousey;
-            } else if (BABYLON.SceneManager.j_mousey !== 0) {
+            if (BABYLON.SceneManager.j_mousey !== 0) {
                 BABYLON.SceneManager.x_mousey = BABYLON.SceneManager.j_mousey;
+            } else if (BABYLON.SceneManager.k_mousey !== 0) {
+                BABYLON.SceneManager.x_mousey = BABYLON.SceneManager.k_mousey;
             } else if (BABYLON.SceneManager.g_mousey !== 0) {
                 BABYLON.SceneManager.x_mousey = BABYLON.SceneManager.g_mousey;
             }
@@ -1303,9 +1683,10 @@ module BABYLON {
                 scenex.manager = manager;
                 if (manager.controller != null) {
                     manager.controller.ready();
+                    (<any>manager.controller).onready();
                 }
             } else {
-                if (console) console.warn("Scene already has already been parsed.");
+                BABYLON.Tools.Warn("Scene already has already been parsed.");
             }
         }
         private static parseMeshMetadata(meshes: BABYLON.AbstractMesh[], scene: BABYLON.Scene): void {
@@ -1325,22 +1706,26 @@ module BABYLON {
                     });
                 }
             } else {
-                if (console) console.warn("No scene manager detected for current scene");
+                BABYLON.Tools.Warn("No scene manager detected for current scene");
             }
         }
         private static parseSceneCameras(cameras: BABYLON.Camera[], scene: BABYLON.Scene, ticklist: BABYLON.IScriptComponent[]): void {
             if (cameras != null && cameras.length > 0) {
                 cameras.forEach((camera) => {
                     if (camera.metadata != null && camera.metadata.api) {
+                        // Setup metadata cloning
+                        camera.metadata.clone = () => { return BABYLON.SceneManager.CloneMetadata(camera.metadata); };
+                        // Camera component cleanup
                         if (camera.metadata.disposal == null || camera.metadata.disposal === false) {
                             camera.onDispose = () => { BABYLON.SceneManager.destroySceneComponents(camera); };
                             camera.metadata.disposal = true;
                         }
+                        // Camera component scripts
                         var metadata: BABYLON.IObjectMetadata = camera.metadata as BABYLON.IObjectMetadata;
                         if (metadata.components != null && metadata.components.length > 0) {
                             metadata.components.forEach((camerascript) => {
-                                if (camerascript.klass != null && camerascript.klass !== "" && camerascript.klass !== "BABYLON.ScriptComponent" && camerascript.klass !== "BABYLON.SceneController") {
-                                    var CameraComponentClass = BABYLON.SceneManager.createComponentClass(camerascript.klass);
+                                if (camerascript.klass != null && camerascript.klass !== "" && camerascript.klass !== "BABYLON.ScriptComponent" && camerascript.klass !== "BABYLON.SceneController" && camerascript.klass !== "BABYLON.OrthoController" && camerascript.klass !== "BABYLON.ShaderController" && camerascript.klass !== "BABYLON.UniversalShaderMaterial") {
+                                    var CameraComponentClass = BABYLON.Tools.Instantiate(camerascript.klass);
                                     if (CameraComponentClass != null) {
                                         camerascript.instance = new CameraComponentClass(camera, scene, camerascript.update, camerascript.properties);
                                         if (camerascript.instance != null) {
@@ -1350,6 +1735,8 @@ module BABYLON {
                                 }
                             });
                         }
+                        // Camera rigging options
+                        BABYLON.SceneManager.setupCameraRigOptions(camera, scene, ticklist);
                     }
                 });
             }
@@ -1358,15 +1745,19 @@ module BABYLON {
             if (lights != null && lights.length > 0) {
                 lights.forEach((light) => {
                     if (light.metadata != null && light.metadata.api) {
+                        // Setup metadata cloning
+                        light.metadata.clone = () => { return BABYLON.SceneManager.CloneMetadata(light.metadata); };
+                        // Light component cleanup
                         if (light.metadata.disposal == null || light.metadata.disposal === false) {
                             light.onDispose = () => { BABYLON.SceneManager.destroySceneComponents(light); };
                             light.metadata.disposal = true;
                         }
+                        // Light component scripts
                         var metadata: BABYLON.IObjectMetadata = light.metadata as BABYLON.IObjectMetadata;
                         if (metadata.components != null && metadata.components.length > 0) {
                             metadata.components.forEach((lightscript) => {
-                                if (lightscript.klass != null && lightscript.klass !== "" && lightscript.klass !== "BABYLON.ScriptComponent" && lightscript.klass !== "BABYLON.SceneController") {
-                                    var LightComponentClass = BABYLON.SceneManager.createComponentClass(lightscript.klass);
+                                if (lightscript.klass != null && lightscript.klass !== "" && lightscript.klass !== "BABYLON.ScriptComponent" && lightscript.klass !== "BABYLON.SceneController" && lightscript.klass !== "BABYLON.OrthoController" && lightscript.klass !== "BABYLON.ShaderController" && lightscript.klass !== "BABYLON.UniversalShaderMaterial") {
+                                    var LightComponentClass = BABYLON.Tools.Instantiate(lightscript.klass);
                                     if (LightComponentClass != null) {
                                         lightscript.instance = new LightComponentClass(light, scene, lightscript.update, lightscript.properties);
                                         if (lightscript.instance != null) {
@@ -1384,27 +1775,257 @@ module BABYLON {
             if (meshes != null && meshes.length > 0) {
                 meshes.forEach((mesh) => {
                     if (mesh.metadata != null && mesh.metadata.api) {
-                        if (mesh.metadata.disposal == null || mesh.metadata.disposal === false) {
-                            mesh.onDispose = () => { BABYLON.SceneManager.destroySceneComponents(mesh); };
-                            mesh.metadata.disposal = true;
-                        }
-                        var metadata: BABYLON.IObjectMetadata = mesh.metadata as BABYLON.IObjectMetadata;
-                        if (metadata.components != null && metadata.components.length > 0) {
-                            metadata.components.forEach((meshscript) => {
-                                if (meshscript.klass != null && meshscript.klass !== "" && meshscript.klass !== "BABYLON.ScriptComponent" && meshscript.klass !== "BABYLON.SceneController") {
-                                    var MeshComponentClass = BABYLON.SceneManager.createComponentClass(meshscript.klass);
-                                    if (MeshComponentClass != null) {
-                                        meshscript.instance = new MeshComponentClass(mesh, scene, meshscript.update, meshscript.properties);
-                                        if (meshscript.instance != null) {
-                                            ticklist.push(meshscript);
+                        // Setup metadata cloning
+                        mesh.metadata.clone = () => { return BABYLON.SceneManager.CloneMetadata(mesh.metadata); };
+                        // Setup prefab masters
+                        if (mesh.metadata.prefab === true) {
+                            mesh.setEnabled(false);
+                            BABYLON.SceneManager.prefabs[mesh.name] = mesh;
+                        } else {
+                            // Mesh component cleanup
+                            if (mesh.metadata.disposal == null || mesh.metadata.disposal === false) {
+                                mesh.onDispose = () => { BABYLON.SceneManager.destroySceneComponents(mesh); };
+                                mesh.metadata.disposal = true;
+                            }
+                            // Mesh component physics
+                            if (mesh.metadata.properties != null && mesh.metadata.properties.physicsTag != null) {
+                                var physicsTag: string = mesh.metadata.properties.physicsTag;
+                                var physicsMass: number = mesh.metadata.properties.physicsMass;
+                                var physicsFriction: number = mesh.metadata.properties.physicsFriction;
+                                var physicsRestitution: number = mesh.metadata.properties.physicsRestitution;
+                                var physicsImpostor: number = mesh.metadata.properties.physicsImpostor;
+                                var physicsRotation: number = mesh.metadata.properties.physicsRotation;
+                                var physicsCollisions: boolean = mesh.metadata.properties.physicsCollisions;
+                                var physicsEnginePlugin: number = mesh.metadata.properties.physicsEnginePlugin;
+                                mesh.physicsImpostor = new BABYLON.PhysicsImpostor(mesh, physicsImpostor, {mass:physicsMass, friction:physicsFriction, restitution:physicsRestitution}, scene);
+                                BABYLON.SceneManager.setupPhysicsImpostor(mesh, physicsEnginePlugin, physicsFriction, physicsCollisions, physicsRotation);
+                            }
+                            // Mesh component scripts
+                            var metadata: BABYLON.IObjectMetadata = mesh.metadata as BABYLON.IObjectMetadata;
+                            if (metadata.components != null && metadata.components.length > 0) {
+                                metadata.components.forEach((meshscript) => {
+                                    if (meshscript.klass != null && meshscript.klass !== "" && meshscript.klass !== "BABYLON.ScriptComponent" && meshscript.klass !== "BABYLON.SceneController" && meshscript.klass !== "BABYLON.OrthoController" && meshscript.klass !== "BABYLON.ShaderController" && meshscript.klass !== "BABYLON.UniversalShaderMaterial") {
+                                        var MeshComponentClass = BABYLON.Tools.Instantiate(meshscript.klass);
+                                        if (MeshComponentClass != null) {
+                                            meshscript.instance = new MeshComponentClass(mesh, scene, meshscript.update, meshscript.properties);
+                                            if (meshscript.instance != null) {
+                                                ticklist.push(meshscript);
+                                            }
                                         }
                                     }
-                                }
-                            });
+                                });
+                            }
                         }
                     }
                 });
             }
+        }
+        private static setupCameraRigOptions(camera:BABYLON.Camera, scene:BABYLON.Scene, ticklist: BABYLON.IScriptComponent[]):void {
+            if (camera.metadata != null && camera.metadata.properties != null) {
+                // Check Orthographic Camera Mode
+                if (camera.mode === BABYLON.Camera.ORTHOGRAPHIC_CAMERA) {
+                    var size:number = camera.metadata.properties.orthographicSize || 5;
+                    var klass:string = "BABYLON.OrthoController";
+                    var resize:boolean = (scene.metadata != null && scene.metadata.properties != null && scene.metadata.properties.resizeCameras) ? scene.metadata.properties.resizeCameras : true;
+                    var metadata: BABYLON.IObjectMetadata = camera.metadata as BABYLON.IObjectMetadata;
+                    if (metadata.components == null) {
+                        metadata.components = [];
+                    }
+                    var OrthoComponentClass = BABYLON.Tools.Instantiate(klass);
+                    if (OrthoComponentClass != null) {
+                        var bag:any = { orthoSize: size, resizeCameras: resize };
+                        var ortho:BABYLON.SceneComponent = new OrthoComponentClass(camera, scene, false, bag);
+                        if (ortho != null) {
+                            var compscript: BABYLON.IScriptComponent = {
+                                order: 1000,
+                                name: "BabylonScriptComponent",
+                                klass: klass,
+                                update: false,
+                                controller: false,
+                                properties: bag,
+                                instance: ortho,
+                                tag: {}
+                            };
+                            metadata.components.push(compscript);
+                            ortho.register();
+                        }
+                    }
+                }
+                // Check VR Device Orientation Camera
+                if (camera.metadata.properties.cameraType) {
+                    var cameraType:string = camera.metadata.properties.cameraType;
+                    if (cameraType === "WebVRFreeCamera" || cameraType === "WebVRGamepadCamera") {
+                        var wvrDeviceCamera:BABYLON.WebVRFreeCamera = camera as BABYLON.WebVRFreeCamera;
+                        var cameraTrackPosition:number = camera.metadata.properties.wvrTrackPosition;
+                        var cameraPositionScale:number = camera.metadata.properties.wvrPositionScale;
+                        var cameraDisplayName:number = camera.metadata.properties.wvrDisplayName;
+                        // WebVR Camera Rig Options
+                    } else if (cameraType === "VRDeviceOrientationFreeCamera" || cameraType === "VRDeviceOrientationGamepadCamera") {
+                        var cameraBridge:number = camera.metadata.properties.vrCameraBridge;
+                        var cameraEyeToScreen:number = camera.metadata.properties.vrEyeToScreen;
+                        var cameraInterpupillary:number = camera.metadata.properties.vrInterpupillary;
+                        var cameraScreenCenter:number = camera.metadata.properties.vrScreenCenter;
+                        var cameraVerticalRes:number = camera.metadata.properties.vrVerticalRes;
+                        var cameraHorizontalRes:number = camera.metadata.properties.vrHorizontalRes;
+                        var cameraVerticalScreen:number = camera.metadata.properties.vrVerticalScreen;
+                        var cameraHorizontalScreen:number = camera.metadata.properties.vrHorizontalScreen;
+                        var cameraLensCenterOffset:number = camera.metadata.properties.vrLensCenterOffset;
+                        var cameraLensSeperation:number = camera.metadata.properties.vrLensSeparation;
+                        var cameraPostProcessScale:number = camera.metadata.properties.vrPostProcessScale;
+                        var cameraCompensateDistortion:boolean = camera.metadata.properties.vrCompensateDistortion;
+                        // VR Device Camera Options
+                        var vrDeviceCamera:BABYLON.VRDeviceOrientationFreeCamera = camera as BABYLON.VRDeviceOrientationFreeCamera;
+                        var viewWidth:number = 0.5 - cameraBridge;
+                        var viewOffset:number = 0.5 + cameraBridge;
+                        var viewMetrics:VRCameraMetrics = BABYLON.VRCameraMetrics.GetDefault();
+                        viewMetrics.eyeToScreenDistance = cameraEyeToScreen;
+                        viewMetrics.interpupillaryDistance = cameraInterpupillary;
+                        viewMetrics.lensSeparationDistance = cameraLensSeperation;
+                        viewMetrics.lensCenterOffset = cameraLensCenterOffset;
+                        viewMetrics.hResolution = cameraHorizontalRes;
+                        viewMetrics.vResolution = cameraVerticalRes;
+                        viewMetrics.vScreenCenter = cameraScreenCenter;
+                        viewMetrics.vScreenSize = cameraVerticalScreen;
+                        viewMetrics.hScreenSize = cameraHorizontalScreen;
+                        viewMetrics.postProcessScaleFactor = cameraPostProcessScale;
+                        viewMetrics.compensateDistortion = cameraCompensateDistortion;
+                        // Set Camera Rig Properties
+                        vrDeviceCamera.setCameraRigMode(BABYLON.Camera.RIG_MODE_VR, { vrCameraMetrics: viewMetrics, interaxialDistance: camera.interaxialDistance });
+                        vrDeviceCamera._rigCameras[0].viewport = new BABYLON.Viewport(0, 0, viewWidth, 1);
+                        vrDeviceCamera._rigCameras[1].viewport = new BABYLON.Viewport(viewOffset, 0, viewWidth, 1);
+                        scene.clearColor = new BABYLON.Color4(0,0,0,1);
+                    }
+                }
+                // Check High Dynamic Rendering Pipeline
+                if (camera.metadata.properties.hdr === true) {
+                    var hdrRatio:number = camera.metadata.properties.hdrRatio;
+                    var hdrExposure:number = camera.metadata.properties.hdrExposure;
+                    var hdrGaussCoeff:number = camera.metadata.properties.hdrGaussCoeff;
+                    var hdrGaussMean:number = camera.metadata.properties.hdrGaussMean;
+                    var hdrGaussStandDev:number = camera.metadata.properties.hdrGaussStandDev;
+                    var hdrGaussMultiplier:number = camera.metadata.properties.hdrGaussMultiplier;
+                    var hdrBrightThreshold:number = camera.metadata.properties.hdrBrightThreshold;
+                    var hdrMinimumLuminance:number = camera.metadata.properties.hdrMinimumLuminance;
+                    var hdrMaximumLuminance:number = camera.metadata.properties.hdrMaximumLuminance;
+                    var hdrLuminanceIncrease:number = camera.metadata.properties.hdrLuminanceIncrease;
+                    var hdrLuminanceDecrease:number = camera.metadata.properties.hdrLuminanceDecrease;
+                    var pipeline:BABYLON.HDRRenderingPipeline = new BABYLON.HDRRenderingPipeline((camera.name + ":Pipeline"), scene, hdrRatio, null, [camera]);
+                    pipeline.exposure = hdrExposure;
+                    pipeline.gaussCoeff = hdrGaussCoeff;
+                    pipeline.gaussMean = hdrGaussMean;
+                    pipeline.gaussStandDev = hdrGaussStandDev;
+                    pipeline.gaussMultiplier = hdrGaussMultiplier;
+                    pipeline.brightThreshold = hdrBrightThreshold;
+                    pipeline.minimumLuminance = hdrMinimumLuminance;
+                    pipeline.maximumLuminance = hdrMaximumLuminance;
+                    pipeline.luminanceIncreaserate = hdrLuminanceIncrease;
+                    pipeline.luminanceDecreaseRate = hdrLuminanceDecrease;
+                    camera.metadata.properties.hdrPipeline = pipeline;
+                }
+                // Check Attached Rendering Canvas Control
+                if (camera.metadata.properties.attachCanvasControl === true) {
+                    var preventDefault:boolean = camera.metadata.properties.preventDefaultEvents || false;
+                    camera.attachControl(scene.getEngine().getRenderingCanvas(), !preventDefault);
+                }
+            }
+        }
+        private static setupAnimationEvents(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, scene: BABYLON.Scene) : void {
+            if (owner != null && owner.metadata != null && owner.metadata.api) {
+                var metadata: BABYLON.IObjectMetadata = owner.metadata as BABYLON.IObjectMetadata;
+                if (metadata.animationEvents != null && metadata.animationEvents.length > 0 && metadata.components != null && metadata.components.length > 0) {
+                    var track:BABYLON.Animation = BABYLON.SceneManager.locateOwnerAnimationTrack(0, owner, false);
+                    if (track != null) {
+                        metadata.animationEvents.forEach((evt) => {
+                            if (evt.functionName != null && evt.functionName !== "") {
+                                var functionName:string = evt.functionName.toLowerCase();
+                                track.addEvent(new BABYLON.AnimationEvent(evt.frame, ()=>{
+                                    metadata.components.forEach((ownerscript) => {
+                                        if (ownerscript.instance != null) {
+                                            var ownerinstance:any = (<any>ownerscript.instance);
+                                            if (ownerinstance._handlers != null && ownerinstance._handlers[functionName]) {
+                                                var handler:(evt:BABYLON.IAnimationStateEvent)=>void = ownerinstance._handlers[functionName];
+                                                if (handler) handler(evt);
+                                            }
+                                        }
+                                    });
+                                }));
+                            }
+                        });
+                    }
+                }
+            }            
+        }
+        private static setupPhysicsImpostor(physicsMesh:AbstractMesh, plugin:number, friction:number, collisions:boolean, rotation:number):void {
+            if (physicsMesh.physicsImpostor != null) {
+                physicsMesh.physicsImpostor.executeNativeFunction((word:any, body:any) =>{
+                    if (plugin === 0) {
+                        // Cannon Physics Engine Plugin
+                        body.linearDamping = friction;
+                        body.angularDamping = friction;
+                        body.collisionResponse = collisions;
+                        body.angularVelocity.x = 0;
+                        body.angularVelocity.y = 0;
+                        body.angularVelocity.z = 0;
+                        body.velocity.x = 0;
+                        body.velocity.y = 0;
+                        body.velocity.z = 0;
+                        if (rotation === 1) {
+                            body.fixedRotation = true;
+                            body.updateMassProperties();
+                        }
+                    } else if (plugin === 1) {
+                        // TODO: Oimo Physics Engine Plugin
+                        //body.linearDamping = friction;
+                        //body.angularDamping = friction;
+                        //body.collisionResponse = collisions;
+                        //body.angularVelocity.x = 0;
+                        //body.angularVelocity.y = 0;
+                        //body.angularVelocity.z = 0;
+                        //body.velocity.x = 0;
+                        //body.velocity.y = 0;
+                        //body.velocity.z = 0;
+                        if (rotation === 1) {
+                            //body.fixedRotation = true;
+                            //body.updateMassProperties();
+                        }
+                    }
+                });
+            }
+        }
+        public static locateOwnerAnimationTrack(index:number, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, directDecendantsOnly:boolean = true, predicate:(node:BABYLON.Node)=>boolean = null):BABYLON.Animation {
+            var result:BABYLON.Animation = null;
+            if (owner instanceof BABYLON.AbstractMesh) {
+                var mesh:BABYLON.AbstractMesh = owner as BABYLON.AbstractMesh;
+                if (mesh.skeleton != null && mesh.skeleton.bones != null && mesh.skeleton.bones.length > 0 && mesh.skeleton.bones[0]) {
+                    var bone:BABYLON.Bone = mesh.skeleton.bones[0];
+                    if (bone.animations != null && bone.animations.length > index && bone.animations[index] != null) {
+                        result = bone.animations[index];
+                    }
+                }
+            }
+            if (result == null && owner.animations != null && owner.animations.length > index && owner.animations[index] != null) {
+                result = owner.animations[index];
+            }
+            if (result == null && owner instanceof BABYLON.AbstractMesh) {
+                var children:BABYLON.AbstractMesh[] = owner.getChildMeshes(directDecendantsOnly, predicate);
+                if (children != null && children.length > 0) {
+                    for (var i:number = 0; i < children.length; i++) {
+                        var child:BABYLON.AbstractMesh = children[i];
+                        if (child.skeleton != null && child.skeleton.bones != null && child.skeleton.bones.length > 0 && child.skeleton.bones[0]) {
+                            var cbone:BABYLON.Bone = child.skeleton.bones[0];
+                            if (cbone.animations != null && cbone.animations.length > index && cbone.animations[index] != null) {
+                                result = cbone.animations[index];
+                                break;
+                            }
+                        }
+                        if (result == null && child.animations != null && child.animations.length > 0 && child.animations.length > index && child.animations[index] != null) {
+                            result = child.animations[index];
+                            break;
+                        }
+                    }
+                }
+            }
+            return result;            
         }
         private static destroySceneComponents(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, destroyMetadata: boolean = true): void {
             if (owner != null && owner.metadata != null && owner.metadata.api) {
@@ -1424,153 +2045,154 @@ module BABYLON {
                     if (owner.metadata.properties != null) {
                         owner.metadata.properties = null;
                     }
+                    if (owner.metadata.animationStates != null) {
+                        owner.metadata.animationStates = null;
+                    }
+                    if (owner.metadata.animationEvents != null) {
+                        owner.metadata.animationEvents = null;
+                    }
+                    if (owner.metadata.collisionEvent != null) {
+                        owner.metadata.collisionEvent = null;
+                    }
+                    if (owner.metadata.collisionTags != null) {
+                        owner.metadata.collisionTags = null;
+                    }
                     owner.metadata = null;
                 }
             }
         }
 
         // *********************************** //
-        // * Private Ground Creation Support * //
+        // *   Public Helper Tools Support   * //
         // *********************************** //
 
-        private static createGroundTerrain(name: string, url: string, options: { width?: number, height?: number, subdivisions?: number, minHeight?: number, maxHeight?: number, updatable?: boolean, onReady?: (mesh: GroundMesh) => void }, scene: Scene): GroundMesh {
-            var width = options.width || 10.0;
-            var height = options.height || 10.0;
-            var subdivisions = options.subdivisions || 1 | 0;
-            var minHeight = options.minHeight || 0.0;
-            var maxHeight = options.maxHeight || 10.0;
-            var updatable = options.updatable;
-            var onReady = options.onReady;
-
-            var ground = new GroundMesh(name, scene);
-            ground._subdivisionsX = subdivisions;
-            ground._subdivisionsY = subdivisions;
-            ground._width = width;
-            ground._height = height;
-            ground._maxX = ground._width / 2.0;
-            ground._maxZ = ground._height / 2.0;
-            ground._minX = -ground._maxX;
-            ground._minZ = -ground._maxZ;
-
-            ground._setReady(false);
-
-            var onload = img => {
-                // Getting height map data
-                var canvas = document.createElement("canvas");
-                var context = canvas.getContext("2d");
-                var bufferWidth = img.width;
-                var bufferHeight = img.height;
-                canvas.width = bufferWidth;
-                canvas.height = bufferHeight;
-
-                context.drawImage(img, 0, 0);
-
-                // Create VertexData from map data
-                // Cast is due to wrong definition in lib.d.ts from ts 1.3 - https://github.com/Microsoft/TypeScript/issues/949
-                var buffer = <Uint8Array>(<any>context.getImageData(0, 0, bufferWidth, bufferHeight).data);
-                var vertexData = BABYLON.SceneManager.parseTerrainHeightmap({
-                    width, height,
-                    subdivisions,
-                    minHeight, maxHeight,
-                    buffer, bufferWidth, bufferHeight
-                });
-
-                vertexData.applyToMesh(ground, updatable);
-
-                ground._setReady(true);
-
-                //execute ready callback, if set
-                if (onReady) {
-                    onReady(ground);
-                }
-            };
-
-            Tools.LoadImage(url, onload, () => { }, scene.database);
-
-            return ground;
-        }
-        private static parseTerrainHeightmap(options: { width: number, height: number, subdivisions: number, minHeight: number, maxHeight: number, buffer: Uint8Array, bufferWidth: number, bufferHeight: number }): VertexData {
-            var indices = [];
-            var positions = [];
-            var normals = [];
-            var uvs = [];
-            var row, col;
-
-            // Heightmap
-            var floatView = new Float32Array(options.buffer.buffer);
-
-            // Vertices
-            for (row = 0; row <= options.subdivisions; row++) {
-                for (col = 0; col <= options.subdivisions; col++) {
-                    var position = new Vector3((col * options.width) / options.subdivisions - (options.width / 2.0), 0, ((options.subdivisions - row) * options.height) / options.subdivisions - (options.height / 2.0));
-
-                    // Compute height
-                    var heightMapX = (((position.x + options.width / 2) / options.width) * (options.bufferWidth - 1)) | 0;
-                    var heightMapY = ((1.0 - (position.z + options.height / 2) / options.height) * (options.bufferHeight - 1)) | 0;
-
-                    // Unpack height
-                    var pos = (heightMapX + heightMapY * options.bufferWidth);
-                    var gradient = floatView[pos];
-
-                    position.y = options.minHeight + (options.maxHeight - options.minHeight) * gradient;
-
-                    // Add  vertex
-                    positions.push(position.x, position.y, position.z);
-                    normals.push(0, 0, 0);
-                    uvs.push(col / options.subdivisions, 1.0 - row / options.subdivisions);
-                }
-            }
-
-            // Indices
-            for (row = 0; row < options.subdivisions; row++) {
-                for (col = 0; col < options.subdivisions; col++) {
-                    indices.push(col + 1 + (row + 1) * (options.subdivisions + 1));
-                    indices.push(col + 1 + row * (options.subdivisions + 1));
-                    indices.push(col + row * (options.subdivisions + 1));
-
-                    indices.push(col + (row + 1) * (options.subdivisions + 1));
-                    indices.push(col + 1 + (row + 1) * (options.subdivisions + 1));
-                    indices.push(col + row * (options.subdivisions + 1));
-                }
-            }
-
-            // Normals
-            VertexData.ComputeNormals(positions, indices, normals);
-
-            // Result
-            var vertexData = new VertexData();
-
-            vertexData.indices = indices;
-            vertexData.positions = positions;
-            vertexData.normals = normals;
-            vertexData.uvs = uvs;
-
-            return vertexData;
+        public static ReplaceAll(source:string, find:string, replace:string):string {
+            return source.replace(new RegExp(find, 'g'), replace);            
         }
 
-        // ********************************** //
-        // * Private Class Creation Support * //
-        // ********************************** //
+        public static CloneValue(source:any, destinationObject:any): any {
+            if (!source)
+                return null;
 
-        private static createComponentClass(klass: string): any {
-            return BABYLON.SceneManager.createObjectFromString(klass, "function");
+            if (source instanceof Mesh) {
+                return null;
+            }
+
+            if (source instanceof SubMesh) {
+                return source.clone(destinationObject);
+            } else if (source.clone) {
+                return source.clone();
+            }
+            return source;
         }
-        private static createObjectFromString(str: string, type: string): any {
-            type = type || "object";  // can pass "function"
-            var arr = str.split(".");
-            var fn = (window || this);
-            for (var i = 0, len = arr.length; i < len; i++) {
-                try {
-                    fn = fn[arr[i]];
-                } catch (ex) {
-                    break;
+
+        public static CloneMetadata(source:BABYLON.IObjectMetadata): BABYLON.IObjectMetadata {
+            var result:BABYLON.IObjectMetadata = null;
+            if (source != null) {
+                
+                var new_properties:any = {};
+                BABYLON.SceneManager.DeepCopyProperties(source.properties, new_properties);
+                
+                var new_navagent:any = {};
+                BABYLON.SceneManager.DeepCopyProperties(source.navAgent, new_navagent);
+
+                var new_meshlink:any = {};
+                BABYLON.SceneManager.DeepCopyProperties(source.meshLink, new_meshlink);
+
+                var new_meshobstacle:any = {};
+                BABYLON.SceneManager.DeepCopyProperties(source.meshObstacle, new_meshobstacle);
+
+                var new_animationstates:any[] = [];
+                if (source.animationStates != null && source.animationStates.length > 0) {
+                    source.animationStates.forEach((state) => {
+                        var new_state_properties:any = {};
+                        BABYLON.SceneManager.DeepCopyProperties(state, new_state_properties);
+                        new_animationstates.push(new_state_properties);
+                    });
+                }
+
+                var new_animationevents:any[] = [];
+                if (source.animationEvents != null && source.animationEvents.length > 0) {
+                    source.animationEvents.forEach((evt) => {
+                        var new_event_properties:any = {};
+                        BABYLON.SceneManager.DeepCopyProperties(evt, new_event_properties);
+                        new_animationstates.push(new_event_properties);
+                    });
+                }
+
+                var new_components:BABYLON.IScriptComponent[] = [];
+                if (source.components != null && source.components.length > 0) {
+                    source.components.forEach((comp) => {
+                        var new_comp_properties:any = {};
+                        BABYLON.SceneManager.DeepCopyProperties(comp.properties, new_comp_properties);
+                        new_components.push({ name: comp.name, klass: comp.klass, order:comp.order, tag: comp.tag, update: comp.update, controller: comp.controller, properties: new_comp_properties, instance: null });
+                    });
+                }
+
+                result = {
+                    api: true,
+                    type: source.type,
+                    prefab: false,
+                    objectName: source.objectName,
+                    objectId: source.objectId,
+                    tagName: source.tagName,
+                    layerIndex: source.layerIndex,
+                    layerName: source.layerName,
+                    areaIndex: source.areaIndex,
+                    navAgent: new_navagent,
+                    meshLink: new_meshlink,
+                    meshObstacle: new_meshobstacle,
+                    animationStates: new_animationstates,
+                    animationEvents: new_animationstates,
+                    collisionEvent: null,
+                    collisionTags: [],
+                    components: new_components,
+                    properties: new_properties
+                };
+            }
+            return result;
+        }
+
+        public static DeepCopyProperties(source:any, destination:any, doNotCopyList?: string[], mustCopyList?: string[]): void {
+            for (var prop in source) {
+
+                if (prop[0] === "_" && (!mustCopyList || mustCopyList.indexOf(prop) === -1)) {
+                    continue;
+                }
+
+                if (doNotCopyList && doNotCopyList.indexOf(prop) !== -1) {
+                    continue;
+                }
+                var sourceValue = source[prop];
+                var typeOfSourceValue = typeof sourceValue;
+
+                if (typeOfSourceValue === "function") {
+                    continue;
+                }
+
+                if (typeOfSourceValue === "object") {
+                    if (sourceValue instanceof Array) {
+                        destination[prop] = [];
+
+                        if (sourceValue.length > 0) {
+                            if (typeof sourceValue[0] == "object") {
+                                for (var index = 0; index < sourceValue.length; index++) {
+                                    var clonedValue = BABYLON.SceneManager.CloneValue(sourceValue[index], destination);
+                                    if (destination[prop].indexOf(clonedValue) === -1) { // Test if auto inject was not done
+                                        destination[prop].push(clonedValue);
+                                    }
+                                }
+                            } else {
+                                destination[prop] = sourceValue.slice(0);
+                            }
+                        }
+                    } else {
+                        destination[prop] = BABYLON.SceneManager.CloneValue(sourceValue, destination);
+                    }
+                } else {
+                    destination[prop] = sourceValue;
                 }
             }
-            if (typeof fn !== type) {
-                fn = null;
-                if (console) console.warn(type + " not found: " + str);
-            }
-            return fn;
         }
     }
 }
