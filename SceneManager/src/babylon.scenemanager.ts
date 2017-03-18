@@ -734,12 +734,12 @@ module BABYLON {
             var result: BABYLON.SceneController = null;
             if (meshes != null && meshes.length > 0) {
                 for (var ii: number = 0; ii < meshes.length; ii++) {
-                    var mesh: AbstractMesh = meshes[ii];
+                    var mesh: BABYLON.AbstractMesh = meshes[ii];
                     if (mesh.metadata != null && mesh.metadata.api) {
                         var metadata: BABYLON.IObjectMetadata = mesh.metadata as BABYLON.IObjectMetadata;
                         if (metadata.components != null && metadata.components.length > 0) {
                             for (var iii: number = 0; iii < metadata.components.length; iii++) {
-                                var meshscript: IScriptComponent = metadata.components[iii];
+                                var meshscript: BABYLON.IScriptComponent = metadata.components[iii];
                                 if (meshscript.instance != null && meshscript.controller === true) {
                                     result = meshscript.instance as BABYLON.SceneController;
                                     break;
@@ -1955,7 +1955,7 @@ module BABYLON {
                 }
             }            
         }
-        private static setupPhysicsImpostor(physicsMesh:AbstractMesh, plugin:number, friction:number, collisions:boolean, rotation:number):void {
+        private static setupPhysicsImpostor(physicsMesh:BABYLON.AbstractMesh, plugin:number, friction:number, collisions:boolean, rotation:number):void {
             if (physicsMesh.physicsImpostor != null) {
                 physicsMesh.physicsImpostor.executeNativeFunction((word:any, body:any) =>{
                     if (plugin === 0) {

@@ -205,7 +205,7 @@
     }
 
     export abstract class LightComponent extends BABYLON.SceneComponent {
-        private _light: BABYLON.Light  = null;
+        private _light: BABYLON.Light = null;
         public constructor(owner: BABYLON.Light, scene: BABYLON.Scene, enableUpdate: boolean = true, propertyBag: any = {}) {
             super(owner, scene, enableUpdate, propertyBag);
             this._light = owner;
@@ -223,7 +223,7 @@
         public onIntersectionStay: (mesh:BABYLON.AbstractMesh) => void = null;
         public onIntersectionExit: (mesh:BABYLON.AbstractMesh) => void = null;
 
-        private _list:ICollisionState[] = [];
+        private _list:BABYLON.ICollisionState[] = [];
         private _mesh:BABYLON.AbstractMesh = null;
         private _collider:BABYLON.AbstractMesh = null;
         private _intersecting:boolean = false;
@@ -308,7 +308,7 @@
                 });
             }
         }
-        private processPhysicsCollisions(collider: PhysicsImpostor, collidedAgainst:PhysicsImpostor) : void {
+        private processPhysicsCollisions(collider: BABYLON.PhysicsImpostor, collidedAgainst:BABYLON.PhysicsImpostor) : void {
             if (collider.object != null && collidedAgainst.object != null) {
                 var colliderAny:any = collider.object;
                 if (colliderAny != null && colliderAny.metadata != null && colliderAny.metadata.collisionTags != null && colliderAny.metadata.collisionEvent != null) {

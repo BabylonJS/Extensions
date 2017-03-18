@@ -34,7 +34,7 @@ module BABYLON {
             return this._manager;
         }
     }
-    class UniversalShaderMaterialDefines extends MaterialDefines {
+    class UniversalShaderMaterialDefines extends BABYLON.MaterialDefines {
         public ALBEDO = false;
         public AMBIENT = false;
         public OPACITY = false;
@@ -150,7 +150,7 @@ module BABYLON {
         @serialize()
         public specularIntensity: number = 1.0;
 
-        private _lightingInfos: Vector4 = new Vector4(this.directIntensity, this.emissiveIntensity, this.environmentIntensity, this.specularIntensity);
+        private _lightingInfos: BABYLON.Vector4 = new BABYLON.Vector4(this.directIntensity, this.emissiveIntensity, this.environmentIntensity, this.specularIntensity);
         
         /**
          * Debug Control allowing disabling the bump map on this material.
@@ -172,7 +172,7 @@ module BABYLON {
         @serialize()
         public overloadedShadeIntensity: number = 1.0;
 
-        private _overloadedShadowInfos: Vector4 = new Vector4(this.overloadedShadowIntensity, this.overloadedShadeIntensity, 0.0, 0.0);
+        private _overloadedShadowInfos: BABYLON.Vector4 = new BABYLON.Vector4(this.overloadedShadowIntensity, this.overloadedShadeIntensity, 0.0, 0.0);
 
         /**
          * The camera exposure used on this material.
@@ -194,7 +194,7 @@ module BABYLON {
          * This allows special effects like sepia, black and white to sixties rendering style. 
          */
         @serializeAsTexture()
-        public cameraColorGradingTexture: BaseTexture = null;
+        public cameraColorGradingTexture: BABYLON.BaseTexture = null;
         
         /**
          * The color grading curves provide additional color adjustmnent that is applied after any color grading transform (3D LUT). 
@@ -203,18 +203,18 @@ module BABYLON {
          * corresponding to low luminance, medium luminance, and high luminance areas respectively.
          */
         @serializeAsColorCurves()
-        public cameraColorCurves: ColorCurves = null;
+        public cameraColorCurves: BABYLON.ColorCurves = null;
          
-        private _cameraInfos: Vector4 = new Vector4(1.0, 1.0, 0.0, 0.0);
+        private _cameraInfos: BABYLON.Vector4 = new BABYLON.Vector4(1.0, 1.0, 0.0, 0.0);
 
-        private _microsurfaceTextureLods: Vector2 = new Vector2(0.0, 0.0);
+        private _microsurfaceTextureLods: BABYLON.Vector2 = new BABYLON.Vector2(0.0, 0.0);
 
         /**
          * Debug Control allowing to overload the ambient color.
          * This as to be use with the overloadedAmbientIntensity parameter.
          */
         @serializeAsColor3()
-        public overloadedAmbient: Color3 = BABYLON.Color3.White();
+        public overloadedAmbient: BABYLON.Color3 = BABYLON.Color3.White();
 
         /**
          * Debug Control indicating how much the overloaded ambient color is used against the default one.
@@ -227,7 +227,7 @@ module BABYLON {
          * This as to be use with the overloadedAlbedoIntensity parameter.
          */
         @serializeAsColor3()
-        public overloadedAlbedo: Color3 = BABYLON.Color3.White();
+        public overloadedAlbedo: BABYLON.Color3 = BABYLON.Color3.White();
         
         /**
          * Debug Control indicating how much the overloaded albedo color is used against the default one.
@@ -240,7 +240,7 @@ module BABYLON {
          * This as to be use with the overloadedReflectivityIntensity parameter.
          */
         @serializeAsColor3()
-        public overloadedReflectivity: Color3 = new BABYLON.Color3(0.3, 0.3, 0.3);
+        public overloadedReflectivity: BABYLON.Color3 = new BABYLON.Color3(0.3, 0.3, 0.3);
         
         /**
          * Debug Control indicating how much the overloaded reflectivity color is used against the default one.
@@ -253,7 +253,7 @@ module BABYLON {
          * This as to be use with the overloadedEmissiveIntensity parameter.
          */
         @serializeAsColor3()
-        public overloadedEmissive: Color3 = BABYLON.Color3.White();
+        public overloadedEmissive: BABYLON.Color3 = BABYLON.Color3.White();
         
         /**
          * Debug Control indicating how much the overloaded emissive color is used against the default one.
@@ -261,14 +261,14 @@ module BABYLON {
         @serialize()
         public overloadedEmissiveIntensity: number = 0.0;
 
-        private _overloadedIntensity: Vector4 = new Vector4(this.overloadedAmbientIntensity, this.overloadedAlbedoIntensity, this.overloadedReflectivityIntensity, this.overloadedEmissiveIntensity);
+        private _overloadedIntensity: BABYLON.Vector4 = new BABYLON.Vector4(this.overloadedAmbientIntensity, this.overloadedAlbedoIntensity, this.overloadedReflectivityIntensity, this.overloadedEmissiveIntensity);
         
         /**
          * Debug Control allowing to overload the reflection color.
          * This as to be use with the overloadedReflectionIntensity parameter.
          */
         @serializeAsColor3()
-        public overloadedReflection: Color3 = BABYLON.Color3.White();
+        public overloadedReflection: BABYLON.Color3 = BABYLON.Color3.White();
         
         /**
          * Debug Control indicating how much the overloaded reflection color is used against the default one.
@@ -289,19 +289,19 @@ module BABYLON {
         @serialize()
         public overloadedMicroSurfaceIntensity: number = 0.0;
 
-        private _overloadedMicroSurface: Vector3 = new Vector3(this.overloadedMicroSurface, this.overloadedMicroSurfaceIntensity, this.overloadedReflectionIntensity);
+        private _overloadedMicroSurface: BABYLON.Vector3 = new BABYLON.Vector3(this.overloadedMicroSurface, this.overloadedMicroSurfaceIntensity, this.overloadedReflectionIntensity);
 
         /**
          * AKA Diffuse Texture in standard nomenclature.
          */
         @serializeAsTexture()
-        public albedoTexture: BaseTexture;
+        public albedoTexture: BABYLON.BaseTexture;
         
         /**
          * AKA Occlusion Texture in other nomenclature.
          */
         @serializeAsTexture()
-        public ambientTexture: BaseTexture;
+        public ambientTexture: BABYLON.BaseTexture;
 
         /**
          * AKA Occlusion Texture Intensity in other nomenclature.
@@ -310,25 +310,25 @@ module BABYLON {
         public ambientTextureStrength: number = 1.0;
 
         @serializeAsTexture()
-        public opacityTexture: BaseTexture;
+        public opacityTexture: BABYLON.BaseTexture;
 
         @serializeAsTexture()
-        public reflectionTexture: BaseTexture;
+        public reflectionTexture: BABYLON.BaseTexture;
 
         @serializeAsTexture()
-        public emissiveTexture: BaseTexture;
+        public emissiveTexture: BABYLON.BaseTexture;
         
         /**
          * AKA Specular texture in other nomenclature.
          */
         @serializeAsTexture()
-        public reflectivityTexture: BaseTexture;
+        public reflectivityTexture: BABYLON.BaseTexture;
 
         /**
          * Used to switch from specular/glossiness to metallic/roughness workflow.
          */
         @serializeAsTexture()
-        public metallicTexture: BaseTexture;
+        public metallicTexture: BABYLON.BaseTexture;
 
         /**
          * Specifies the metallic scalar of the metallic/roughness workflow.
@@ -345,34 +345,34 @@ module BABYLON {
         public roughness: number;
 
         @serializeAsTexture()
-        public bumpTexture: BaseTexture;
+        public bumpTexture: BABYLON.BaseTexture;
 
         @serializeAsTexture()
-        public lightmapTexture: BaseTexture;
+        public lightmapTexture: BABYLON.BaseTexture;
 
         @serializeAsTexture()
-        public refractionTexture: BaseTexture;
+        public refractionTexture: BABYLON.BaseTexture;
 
         @serializeAsColor3("ambient")
-        public ambientColor = new Color3(0, 0, 0);
+        public ambientColor = new BABYLON.Color3(0, 0, 0);
         
         /**
          * AKA Diffuse Color in other nomenclature.
          */
         @serializeAsColor3("albedo")
-        public albedoColor = new Color3(1, 1, 1);
+        public albedoColor = new BABYLON.Color3(1, 1, 1);
         
         /**
          * AKA Specular Color in other nomenclature.
          */
         @serializeAsColor3("reflectivity")
-        public reflectivityColor = new Color3(1, 1, 1);
+        public reflectivityColor = new BABYLON.Color3(1, 1, 1);
 
         @serializeAsColor3("reflection")
-        public reflectionColor = new Color3(0.5, 0.5, 0.5);
+        public reflectionColor = new BABYLON.Color3(0.5, 0.5, 0.5);
 
         @serializeAsColor3("emissive")
-        public emissiveColor = new Color3(0, 0, 0);
+        public emissiveColor = new BABYLON.Color3(0, 0, 0);
         
         /**
          * AKA Glossiness in other nomenclature.
@@ -393,10 +393,10 @@ module BABYLON {
         public invertRefractionY = false;
 
         @serializeAsFresnelParameters()
-        public opacityFresnelParameters: FresnelParameters;
+        public opacityFresnelParameters: BABYLON.FresnelParameters;
 
         @serializeAsFresnelParameters()
-        public emissiveFresnelParameters: FresnelParameters;
+        public emissiveFresnelParameters: BABYLON.FresnelParameters;
 
         /**
          * This parameters will make the material used its opacity to control how much it is refracting aginst not.
@@ -523,10 +523,10 @@ module BABYLON {
         @serialize()
         public invertNormalMapY = false;
 
-        private _renderTargets = new SmartArray<RenderTargetTexture>(16);
-        private _worldViewProjectionMatrix = Matrix.Zero();
-        private _globalAmbientColor = new Color3(0, 0, 0);
-        private _tempColor = new Color3();
+        private _renderTargets = new BABYLON.SmartArray<BABYLON.RenderTargetTexture>(16);
+        private _worldViewProjectionMatrix = BABYLON.Matrix.Zero();
+        private _globalAmbientColor = new BABYLON.Color3(0, 0, 0);
+        private _tempColor = new BABYLON.Color3();
         private _renderId: number;
 
         private _defines = new UniversalShaderMaterialDefines();
@@ -617,7 +617,7 @@ module BABYLON {
          * @param name The material name
          * @param scene The scene the material will be use in.
          */
-        constructor(name: string, scene: Scene, shaderPath: any, options: any, controller:string = null) {
+        constructor(name: string, scene: BABYLON.Scene, shaderPath: any, options: any, controller:string = null) {
             super(name, scene);
             this._started = false;
             this._instance = null;
@@ -668,7 +668,7 @@ module BABYLON {
             }
 
             // Render target textures
-            this.getRenderTargetTextures = (): SmartArray<RenderTargetTexture> => {
+            this.getRenderTargetTextures = (): BABYLON.SmartArray<BABYLON.RenderTargetTexture> => {
                 this._renderTargets.reset();
 
                 if (this.reflectionTexture && this.reflectionTexture.isRenderTarget) {
@@ -738,7 +738,7 @@ module BABYLON {
             return this.albedoTexture != null && this.albedoTexture.hasAlpha && this.useAlphaFromAlbedoTexture;
         }
 
-        public getAlphaTestTexture(): BaseTexture {
+        public getAlphaTestTexture(): BABYLON.BaseTexture {
             return this.albedoTexture;
         }
 
@@ -832,7 +832,7 @@ module BABYLON {
             return this;
         }
 
-        private _checkCache(scene: Scene, mesh?: AbstractMesh, useInstances?: boolean): boolean {
+        private _checkCache(scene: BABYLON.Scene, mesh?: BABYLON.AbstractMesh, useInstances?: boolean): boolean {
             if (!mesh) {
                 return true;
             }
@@ -848,11 +848,11 @@ module BABYLON {
             return false;
         }
 
-        private convertColorToLinearSpaceToRef(color: Color3, ref: Color3): void {
+        private convertColorToLinearSpaceToRef(color: BABYLON.Color3, ref: BABYLON.Color3): void {
             UniversalShaderMaterial.convertColorToLinearSpaceToRef(color, ref, this.useScalarInLinearSpace);
         }
 
-        private static convertColorToLinearSpaceToRef(color: Color3, ref: Color3, useScalarInLinear: boolean): void {
+        private static convertColorToLinearSpaceToRef(color: BABYLON.Color3, ref: BABYLON.Color3, useScalarInLinear: boolean): void {
             if (!useScalarInLinear) {
                 color.toLinearSpaceToRef(ref);
             } else {
@@ -862,12 +862,12 @@ module BABYLON {
             }
         }
 
-        private static _scaledAlbedo = new Color3();
-        private static _scaledReflectivity = new Color3();
-        private static _scaledEmissive = new Color3();
-        private static _scaledReflection = new Color3();
+        private static _scaledAlbedo = new BABYLON.Color3();
+        private static _scaledReflectivity = new BABYLON.Color3();
+        private static _scaledEmissive = new BABYLON.Color3();
+        private static _scaledReflection = new BABYLON.Color3();
 
-        public static BindLights(scene: Scene, mesh: AbstractMesh, effect: Effect, defines: MaterialDefines, useScalarInLinearSpace: boolean, maxSimultaneousLights: number, usePhysicalLightFalloff: boolean) {
+        public static BindLights(scene: BABYLON.Scene, mesh: BABYLON.AbstractMesh, effect: BABYLON.Effect, defines: BABYLON.MaterialDefines, useScalarInLinearSpace: boolean, maxSimultaneousLights: number, usePhysicalLightFalloff: boolean) {
             var lightIndex = 0;
             var depthValuesAlreadySet = false;
             for (var index = 0; index < scene.lights.length; index++) {
@@ -908,7 +908,7 @@ module BABYLON {
             }
         }
 
-        public isReady(mesh?: AbstractMesh, useInstances?: boolean): boolean {
+        public isReady(mesh?: BABYLON.AbstractMesh, useInstances?: boolean): boolean {
             if (this.isFrozen) {
                 if (this._wasPreviouslyReady) {
                     return true;
@@ -1043,11 +1043,11 @@ module BABYLON {
                                 break;
                         }
 
-                        if (this.reflectionTexture instanceof HDRCubeTexture && (<HDRCubeTexture>this.reflectionTexture)) {
+                        if (this.reflectionTexture instanceof BABYLON.HDRCubeTexture && (<BABYLON.HDRCubeTexture>this.reflectionTexture)) {
                             this._defines.USESPHERICALFROMREFLECTIONMAP = true;
                             needNormals = true;
 
-                            if ((<HDRCubeTexture>this.reflectionTexture).isPMREM) {
+                            if ((<BABYLON.HDRCubeTexture>this.reflectionTexture).isPMREM) {
                                 this._defines.USEPMREMREFLECTION = true;
                             }
                         }
@@ -1141,7 +1141,7 @@ module BABYLON {
                         if (this.refractionTexture instanceof HDRCubeTexture) {
                             this._defines.REFRACTIONMAPINLINEARSPACE = true;
 
-                            if ((<HDRCubeTexture>this.refractionTexture).isPMREM) {
+                            if ((<BABYLON.HDRCubeTexture>this.refractionTexture).isPMREM) {
                                 this._defines.USEPMREMREFRACTION = true;
                             }
                         }
@@ -1248,7 +1248,7 @@ module BABYLON {
                 this._defines.RADIANCEOVERALPHA = true;
             }
 
-            if ((this.metallic !== undefined && this.metallic !== null) || (this.roughness !== undefined && this.roughness !== null)) {
+            if ((this.metallic !== undefined && this.metallic != null) || (this.roughness !== undefined && this.roughness != null)) {
                 this._defines.METALLICWORKFLOW = true;
             }
 
@@ -1290,7 +1290,7 @@ module BABYLON {
                 scene.resetCachedMaterial();
 
                 // Fallbacks
-                var fallbacks = new EffectFallbacks();
+                var fallbacks = new BABYLON.EffectFallbacks();
                 if (this._defines.REFLECTION) {
                     fallbacks.addFallback(0, "REFLECTION");
                 }
@@ -1413,7 +1413,7 @@ module BABYLON {
             super.unbind();
         }
 
-        public bindOnlyWorldMatrix(world: Matrix): void {
+        public bindOnlyWorldMatrix(world: BABYLON.Matrix): void {
             var scene = this.getScene();
             this._effect.setMatrix("world", world);
             if (this._options.uniforms.indexOf("worldView") !== -1) {
@@ -1428,7 +1428,7 @@ module BABYLON {
         private _myScene: BABYLON.Scene = null;
         private _myShadowGenerator: BABYLON.ShadowGenerator = null;
 
-        public bind(world: Matrix, mesh?: Mesh): void {
+        public bind(world: BABYLON.Matrix, mesh?: BABYLON.Mesh): void {
             this._myScene = this.getScene();
 
             // Matrices        
@@ -1444,7 +1444,7 @@ module BABYLON {
 
                 if (StandardMaterial.FresnelEnabled) {
                     if (this.opacityFresnelParameters && this.opacityFresnelParameters.isEnabled) {
-                        this._effect.setColor4("opacityParts", new Color3(this.opacityFresnelParameters.leftColor.toLuminance(), this.opacityFresnelParameters.rightColor.toLuminance(), this.opacityFresnelParameters.bias), this.opacityFresnelParameters.power);
+                        this._effect.setColor4("opacityParts", new BABYLON.Color3(this.opacityFresnelParameters.leftColor.toLuminance(), this.opacityFresnelParameters.rightColor.toLuminance(), this.opacityFresnelParameters.bias), this.opacityFresnelParameters.power);
                     }
 
                     if (this.emissiveFresnelParameters && this.emissiveFresnelParameters.isEnabled) {
@@ -1490,33 +1490,33 @@ module BABYLON {
                         this._effect.setFloat2("vReflectionInfos", this.reflectionTexture.level, 0);
 
                         if (this._defines.USESPHERICALFROMREFLECTIONMAP) {
-                            this._effect.setFloat3("vSphericalX", (<HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.x.x,
-                                (<HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.x.y,
-                                (<HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.x.z);
-                            this._effect.setFloat3("vSphericalY", (<HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.y.x,
-                                (<HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.y.y,
-                                (<HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.y.z);
-                            this._effect.setFloat3("vSphericalZ", (<HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.z.x,
-                                (<HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.z.y,
-                                (<HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.z.z);
-                            this._effect.setFloat3("vSphericalXX", (<HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.xx.x,
-                                (<HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.xx.y,
-                                (<HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.xx.z);
-                            this._effect.setFloat3("vSphericalYY", (<HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.yy.x,
-                                (<HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.yy.y,
-                                (<HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.yy.z);
-                            this._effect.setFloat3("vSphericalZZ", (<HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.zz.x,
-                                (<HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.zz.y,
-                                (<HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.zz.z);
-                            this._effect.setFloat3("vSphericalXY", (<HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.xy.x,
-                                (<HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.xy.y,
-                                (<HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.xy.z);
-                            this._effect.setFloat3("vSphericalYZ", (<HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.yz.x,
-                                (<HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.yz.y,
-                                (<HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.yz.z);
-                            this._effect.setFloat3("vSphericalZX", (<HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.zx.x,
-                                (<HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.zx.y,
-                                (<HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.zx.z);
+                            this._effect.setFloat3("vSphericalX", (<BABYLON.HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.x.x,
+                                (<BABYLON.HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.x.y,
+                                (<BABYLON.HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.x.z);
+                            this._effect.setFloat3("vSphericalY", (<BABYLON.HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.y.x,
+                                (<BABYLON.HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.y.y,
+                                (<BABYLON.HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.y.z);
+                            this._effect.setFloat3("vSphericalZ", (<BABYLON.HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.z.x,
+                                (<BABYLON.HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.z.y,
+                                (<BABYLON.HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.z.z);
+                            this._effect.setFloat3("vSphericalXX", (<BABYLON.HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.xx.x,
+                                (<BABYLON.HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.xx.y,
+                                (<BABYLON.HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.xx.z);
+                            this._effect.setFloat3("vSphericalYY", (<BABYLON.HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.yy.x,
+                                (<BABYLON.HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.yy.y,
+                                (<BABYLON.HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.yy.z);
+                            this._effect.setFloat3("vSphericalZZ", (<BABYLON.HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.zz.x,
+                                (<BABYLON.HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.zz.y,
+                                (<BABYLON.HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.zz.z);
+                            this._effect.setFloat3("vSphericalXY", (<BABYLON.HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.xy.x,
+                                (<BABYLON.HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.xy.y,
+                                (<BABYLON.HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.xy.z);
+                            this._effect.setFloat3("vSphericalYZ", (<BABYLON.HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.yz.x,
+                                (<BABYLON.HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.yz.y,
+                                (<BABYLON.HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.yz.z);
+                            this._effect.setFloat3("vSphericalZX", (<BABYLON.HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.zx.x,
+                                (<BABYLON.HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.zx.y,
+                                (<BABYLON.HDRCubeTexture>this.reflectionTexture).sphericalPolynomial.zx.z);
                         }
                     }
 
@@ -1748,7 +1748,7 @@ module BABYLON {
             this._myScene = null;
         }
 
-        public getAnimatables(): IAnimatable[] {
+        public getAnimatables(): BABYLON.IAnimatable[] {
             var results = [];
 
             if (this.albedoTexture && this.albedoTexture.animations && this.albedoTexture.animations.length > 0) {
@@ -1881,8 +1881,8 @@ module BABYLON {
             super.dispose(forceDisposeEffect, forceDisposeTextures);
         }
 
-        public clone(name: string): UniversalShaderMaterial {
-            return SerializationHelper.Clone(() => new UniversalShaderMaterial(name, this.getScene(), this._shaderPath, this._options, this._controller), this);
+        public clone(name: string): BABYLON.UniversalShaderMaterial {
+            return SerializationHelper.Clone(() => new BABYLON.UniversalShaderMaterial(name, this.getScene(), this._shaderPath, this._options, this._controller), this);
         }
 
         public serialize(): any {
@@ -1972,8 +1972,8 @@ module BABYLON {
         }
 
         // Statics
-        public static Parse(source: any, scene: Scene, rootUrl: string): UniversalShaderMaterial {
-            var material = SerializationHelper.Parse(() => new UniversalShaderMaterial(source.name, scene, source.shaderPath, source.options, source.controller), source, scene, rootUrl);
+        public static Parse(source: any, scene: BABYLON.Scene, rootUrl: string): BABYLON.UniversalShaderMaterial {
+            var material = SerializationHelper.Parse(() => new BABYLON.UniversalShaderMaterial(source.name, scene, source.shaderPath, source.options, source.controller), source, scene, rootUrl);
 
             // Custom shader properties
             var name: string;
