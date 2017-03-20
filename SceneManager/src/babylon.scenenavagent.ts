@@ -35,7 +35,7 @@ module BABYLON {
             if (this.hasAgentInfo) {
                 // TODO: Create SetDestination Navigation AI With Obsticale Avoidance
             } else {
-                if (console) console.warn("Null navigation agent metadata. Set agent destination ignored.");
+                BABYLON.Tools.Warn("Null navigation agent metadata. Set agent destination ignored.");
             }
         }
     }
