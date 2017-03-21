@@ -18,7 +18,8 @@ var tsProject = typescript.createProject(tsConfig);
 var files = [
     "./temp/babylon.scenecomponents.js",
     "./temp/babylon.scenemanager.js",
-    "./temp/babylon.scenenavagent.js"
+    "./temp/babylon.scenenavagent.js",
+    "./temp/babylon.sceneshaders.js"
 ]
 
 gulp.task("compile", function () {

@@ -7,7 +7,7 @@
     "gulp": "^3.8.11",
     "gulp-uglify": "~1.5.3",
     "gulp-sourcemaps": "~1.9.1",
-    "typescript": "^1.7.5",
+    "typescript": "^2.2.1",
     "gulp-typescript": "~2.13.0",
     "through2": "~0.6.5",
     "gulp-util": "~3.0.4",
