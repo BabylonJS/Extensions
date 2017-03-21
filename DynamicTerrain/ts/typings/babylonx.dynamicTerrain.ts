@@ -496,6 +496,36 @@ module BABYLON {
         public get centerWorld(): Vector3 {
             return this._centerWorld;
         }
+        /**
+         * The array of the limit values to change the LOD factor.  
+         * Returns an array of integers or an empty array. 
+         * This array is always sorted in the descending order once set.   
+         */
+        public get LODLimits(): number[] {
+            return this._LODLimits;
+        }
+        public set LODLimits(ar: number[]) {
+            ar.sort((a,b) => {
+                return b - a;
+            });
+            this._LODLimits = ar;
+        }
+        /**
+         * The passed map number of subdivisions on the X axis. 
+         * Positive Integer.  
+         */
+        public get mapSubX(): number {
+            return this._mapSubX;
+        }
+        /**
+         * The passed map number of subdivisions on the Z axis. 
+         * Positive Integer.  
+         */
+        public get mapSubZ(): number {
+            return this._mapSubZ;
+        }
+
+
         // ===============================================================
         // User custom functions.
         // These following can be overwritten bu the user to fit his needs.
