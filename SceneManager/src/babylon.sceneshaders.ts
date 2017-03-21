@@ -106,6 +106,8 @@ module BABYLON {
         public METALLICROUGHNESSGSTOREINGREEN = false;
 
         public MAX_TEXTURE_IMAGE_UNITS = 0;
+        public MAX_VERTEX_UNIFORM_VECTORS = 0;
+        public MAX_FRAGMENT_UNIFORM_VECTORS = 0;
 
         constructor() {
             super();
@@ -534,6 +536,7 @@ module BABYLON {
 
         private _useLogarithmicDepth: boolean;
 
+
         // Custom shader properties
         private _shaderPath: any;
         private _options: any;
@@ -611,6 +614,22 @@ module BABYLON {
             return this._renderId;
         }
 
+        // Max shader information
+        private _maxTexturesImageUnits:number = 0;
+        public get maxTexturesImageUnits(): number {
+            return this._maxTexturesImageUnits;
+        }
+
+        private _maxVertexUniformVectors:number = 0;
+        public get maxVertexUniformVectors(): number {
+            return this._maxVertexUniformVectors;
+        }
+
+        private _maxFragmentUniformVectors:number = 0;
+        public get maxFragmentUniformVectors(): number {
+            return this._maxFragmentUniformVectors;
+        }
+
         /**
          * Instantiates a new UniversalShaderMaterial instance.
          * 
@@ -624,6 +643,12 @@ module BABYLON {
             this._controller = controller;
             this._shaderPath = shaderPath;
             this._cachedDefines.BonesPerMesh = -1;
+
+            // Default engine capabilities
+            var caps:BABYLON.EngineCapabilities = scene.getEngine().getCaps();
+            this._maxTexturesImageUnits = caps.maxTexturesImageUnits;
+            this._maxVertexUniformVectors = caps.maxVertexUniformVectors;
+            this._maxFragmentUniformVectors = caps.maxFragmentUniformVectors;
 
             // Default shader uniforms
             var uniforms = ["world", "view", "projection", "viewProjection", 
@@ -922,8 +947,10 @@ module BABYLON {
 
             this._defines.reset();
 
-            // Max texture image units
-            this._defines.MAX_TEXTURE_IMAGE_UNITS = engine.getCaps().maxTexturesImageUnits;
+            // Max shader information
+            this._defines.MAX_TEXTURE_IMAGE_UNITS = this._maxTexturesImageUnits;
+            this._defines.MAX_VERTEX_UNIFORM_VECTORS = this._maxVertexUniformVectors;
+            this._defines.MAX_FRAGMENT_UNIFORM_VECTORS = this._maxFragmentUniformVectors;
 
             // Custom shader properties
             var index = 0;
