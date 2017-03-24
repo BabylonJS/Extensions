@@ -401,8 +401,8 @@ module BABYLON {
             var z0 = this._mapData[2];
 
             // reset x and z in the map space so they are between 0 and the axis map size
-            // x = x - Math.floor((x - x0) / this._mapSizeX) * this._mapSizeX;
-            // z = z - Math.floor((z - z0) / this._mapSizeZ) * this._mapSizeZ;
+            x = x - Math.floor((x - x0) / this._mapSizeX) * this._mapSizeX;
+            z = z - Math.floor((z - z0) / this._mapSizeZ) * this._mapSizeZ;
 
             var col = Math.floor((x - x0) * this._mapSubX / this._mapSizeX);
             var row = Math.floor((z - z0) * this._mapSubZ / this._mapSizeZ);
