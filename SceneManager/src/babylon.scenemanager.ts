@@ -52,6 +52,10 @@ module BABYLON {
         private _scene: BABYLON.Scene = null;
         private _navmesh: BABYLON.AbstractMesh = null;
         private _navigation: Navigation = null;
+        private _loadQueueIndex:number = 0;
+        private _loadQueueCount:number = 0;
+        private _loadQueueScenes:string[] = null;
+        private _localReadyState:any = null;
 
         private static keymap: any = {};
         private static prefabs: any = null;
@@ -115,6 +119,14 @@ module BABYLON {
             this._input = false;
             this._navmesh = null;
             this._navigation = null;
+            this._loadQueueIndex = 0;
+            this._loadQueueCount = 0;
+            this._loadQueueScenes = null;
+
+            // Reset local ready state
+            this._localReadyState = { state: "localReadyState" };
+            this._scene._addPendingData(this._localReadyState);
+            console.log("[SceneManager] - Loading scene assets: " + this._filename);
 
             // Reset scene manager engine instance
             BABYLON.SceneManager.engine = this._scene.getEngine();
@@ -327,13 +339,54 @@ module BABYLON {
         // * Scene Execute When Ready Support * //
         // ************************************ //
         
-        public executeWhenReady(onExecuteWhenReady:()=>void):void {
-            // TODO: Implement Mesh Dependency Loader
-            console.log("[SceneManager] - Scene dependency loaded...");
-            if (onExecuteWhenReady) {
-                onExecuteWhenReady();
-            }
+        public getLoadingStatus():string {
+            var waiting:number = this._scene.getWaitingItemsCount();
+            return (waiting > 0) ? "Streaming items..." + waiting + " remaining" : "Loading scene...";
         }        
+        private _executeWhenReady():void {
+            if (this._scene.metadata != null && this._scene.metadata.imports != null) {
+                this._loadQueueIndex = 0;
+                this._loadQueueScenes = this._scene.metadata.imports;
+                if (this._loadQueueScenes.length > 0) {
+                    this._loadQueueCount = this._loadQueueScenes.length
+                    this._loadQueueImports();
+                } else {
+                    this._executeLocalReady();
+                }
+            } else {
+                this._executeLocalReady();
+            }
+        }
+        private _executeLocalReady():void{
+            if (this.controller != null) {
+                this.controller.ready();
+                (<any>this.controller).onready();
+            }
+            if (this._localReadyState != null) {
+                this._scene._removePendingData(this._localReadyState);
+                this._localReadyState = null;
+            }
+        }
+        private _loadQueueImports()
+        {
+            var ctr:number = this._loadQueueIndex + 1;
+            if (ctr > this._loadQueueCount) {
+                this._loadQueueIndex = 0;
+                this._loadQueueCount = 0;
+                this._loadQueueScenes = null;
+                this._executeLocalReady();
+            } else {
+                var sceneName:string = this._loadQueueScenes[this._loadQueueIndex];
+                console.log("[SceneManager] - Importing scene meshes: " + sceneName);
+                this._loadQueueIndex++;
+                this.importMeshes(sceneName, ()=>{
+                    this._loadQueueImports();
+                }, null, (scene:BABYLON.Scene, message:string, exception:any)=>{
+                    BABYLON.Tools.Warn(message);
+                    this._loadQueueImports();
+                });
+            }
+        }
 
         // ********************************** //
         // * Scene Start Stop Pause Support * //
@@ -715,10 +768,7 @@ module BABYLON {
         public createSceneController(klass: string): BABYLON.SceneController {
             if (this.controller == null) {
                 this.controller = this.addSceneComponent(klass, new BABYLON.Mesh("SceneController", this._scene)) as BABYLON.SceneController;
-                if (this.controller != null) {
-                    this.controller.ready();
-                    (<any>this.controller).onready();
-                }
+                this._executeLocalReady();
             } else {
                 throw new Error("Scene controller already exists.");
             }
@@ -1681,10 +1731,7 @@ module BABYLON {
             if (scenex.manager == null) {
                 var manager: BABYLON.SceneManager = new BABYLON.SceneManager(rootUrl, sceneFilename, scene);
                 scenex.manager = manager;
-                if (manager.controller != null) {
-                    manager.controller.ready();
-                    (<any>manager.controller).onready();
-                }
+                scenex.manager._executeWhenReady();
             } else {
                 BABYLON.Tools.Warn("Scene already has already been parsed.");
             }

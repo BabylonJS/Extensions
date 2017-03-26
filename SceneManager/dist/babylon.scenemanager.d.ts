@@ -371,6 +371,10 @@ declare module BABYLON {
         private _scene;
         private _navmesh;
         private _navigation;
+        private _loadQueueIndex;
+        private _loadQueueCount;
+        private _loadQueueScenes;
+        private _localReadyState;
         private static keymap;
         private static prefabs;
         private static clientx;
@@ -438,7 +442,10 @@ declare module BABYLON {
         getScenePath(): string;
         showFullscreen(element?: HTMLElement): void;
         exitFullscreen(): void;
-        executeWhenReady(onExecuteWhenReady: () => void): void;
+        getLoadingStatus(): string;
+        private _executeWhenReady();
+        private _executeLocalReady();
+        private _loadQueueImports();
         start(): void;
         stop(): void;
         toggle(): void;
