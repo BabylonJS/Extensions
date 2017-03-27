@@ -58,20 +58,39 @@ module BABYLON {
         private _terrainHalfSizeZ: number = 0.0;
         private _centerWorld: Vector3 = BABYLON.Vector3.Zero();             // terrain world center position
         private _centerLocal: Vector3 = BABYLON.Vector3.Zero();             // terrain local center position
+        private _mapSizeX: number = 0.0;                                    // map x size
+        private _mapSizeZ: number = 0.0;                                    // map z size
         private _terrain: Mesh;                                             // reference to the ribbon
+        // tmp vectors
+        private _v1: Vector3 = Vector3.Zero();
+        private _v2: Vector3 = Vector3.Zero();
+        private _v3: Vector3 = Vector3.Zero();
+        private _v4: Vector3 = Vector3.Zero();
+        private _vAvB: Vector3 = Vector3.Zero();
+        private _vAvC: Vector3 = Vector3.Zero();
+        private _norm: Vector3 = Vector3.Zero();
 
         /**
          * constructor
          * @param name 
          * @param options 
          * @param scene 
+         * @param {*} mapData the array of the map 3D data : x, y, z successive float values
+         * @param {*} mapSubX the data map number of x subdivisions : integer
+         * @param {*} mapSubZ the data map number of z subdivisions : integer
+         * @param {*} terrainSub the wanted terrain number of subdivisions : integer, multiple of 2.
+         * @param {*} mapUVs the array of the map UV data (optional) : u,v successive values, each between 0 and 1.
+         * @param {*} mapColors the array of the map Color data (optional) : r,g,b successive values, each between 0 and 1.
+         * @param {*} invertSide boolean, to invert the terrain mesh upside down. Default false.
+         * @param {*} camera the camera to link the terrain to. Optional, by default the scene active camera
          */
         constructor(name: string, options: {
             terrainSub?: number, 
             mapData?: number[]| Float32Array,
             mapSubX?: number, mapSubZ?: number,
             mapUVs?: number[] | Float32Array,
-            mapColors?: number[] | Float32Array ,
+            mapColors?: number[] | Float32Array,
+            invertSide?: boolean,
             camera?: Camera   
         }, scene: Scene) {
             
@@ -109,7 +128,7 @@ module BABYLON {
             for (var j = 0; j <= this._terrainSub; j++) {
                 terrainPath = [];
                 for (var i = 0; i <= this._terrainSub; i++) {
-                    index = ((j * 3 + this._mapSubHookZ) % this._mapSubZ) * this._mapSubX + (i * 3 + this._mapSubHookX) % this._mapSubX;
+                    index = this._mod(j * 3 + this._mapSubHookZ, this._mapSubZ) * this._mapSubX + this._mod(i * 3 + this._mapSubHookX, this._mapSubX);
                     posIndex = index * 3;
                     colIndex = index * 3;
                     uvIndex = index * 2;
@@ -148,10 +167,13 @@ module BABYLON {
                 }
                 this._terrainData.push(terrainPath);
             }
-            this._averageSubSizeX = this._mapData[3] - this._mapData[0];                            
-            this._averageSubSizeZ = this._mapData[this._mapSubX * 3 + 2] - this._mapData[2];       
+ 
+            this._mapSizeX = this._mapData[(this._mapSubX - 1) * 3] - this._mapData[0];
+            this._mapSizeZ = this._mapData[(this._mapSubZ - 1) * this._mapSubX * 3 + 2] - this._mapData[2];
+            this._averageSubSizeX = this._mapSizeX / this._mapSubX;
+            this._averageSubSizeZ = this._mapSizeZ / this._mapSubZ;
             this._ribbonOptions.pathArray = this._terrainData;
-            this._ribbonOptions.sideOrientation = BABYLON.Mesh.BACKSIDE;
+            this._ribbonOptions.sideOrientation = (options.invertSide) ? Mesh.FRONTSIDE : Mesh.BACKSIDE;
             this._ribbonOptions.colors = this._terrainColor;
             this._ribbonOptions.uvs = this._terrainUV;
             this._ribbonOptions.updatable = true;
@@ -163,6 +185,11 @@ module BABYLON {
             this.update(true);
             this._terrain.position.x = this._terrainCamera.globalPosition.x - this._terrainHalfSizeX;
             this._terrain.position.z = this._terrainCamera.globalPosition.z - this._terrainHalfSizeZ;
+                // initialize deltaSub to make
+            var deltaNbSubX = (this._terrain.position.x - this._mapData[0]) / this._averageSubSizeX;
+            var deltaNbSubZ = (this._terrain.position.z - this._mapData[2]) / this._averageSubSizeZ
+            this._deltaSubX = (deltaNbSubX > 0) ? Math.floor(deltaNbSubX) : Math.ceil(deltaNbSubX);
+            this._deltaSubZ = (deltaNbSubZ > 0) ? Math.floor(deltaNbSubZ) : Math.ceil(deltaNbSubZ);
             this._scene.registerBeforeRender(() => {
                 this.beforeUpdate(this._refreshEveryFrame);
                 this.update(this._refreshEveryFrame);
@@ -206,8 +233,8 @@ module BABYLON {
                 this._needsUpdate = true;
             }
             if (this._needsUpdate || this._updateLOD || this._updateForced) {
-                this._deltaSubX = (this._deltaSubX + this._mapSubX) % this._mapSubX;
-                this._deltaSubZ = (this._deltaSubZ + this._mapSubZ) % this._mapSubZ; 
+                this._deltaSubX = this._mod(this._deltaSubX, this._mapSubX);
+                this._deltaSubZ = this._mod(this._deltaSubZ, this._mapSubZ); 
                 this._updateTerrain();
             }
             this._updateForced = false;
@@ -235,6 +262,7 @@ module BABYLON {
             var posIndex = 0;       // current position index in the map data array
             var colIndex = 0;       // current index in the map color array
             var uvIndex = 0;        // current index in the map uv array
+            var terIndex = 0;       // current vertex index in the terrain array if used as a data map
             
             if (this._updateLOD || this._updateForced) {
                 this.updateTerrainSize();
@@ -266,28 +294,29 @@ module BABYLON {
                     }
 
                     // map current index
-                    index = ((this._deltaSubZ + stepJ + this._mapSubX + this._mapSubHookZ) % this._mapSubZ) * this._mapSubX + (this._deltaSubX + stepI + this._mapSubHookX + this._mapSubX) % this._mapSubX;
+                    index = this._mod(this._deltaSubZ + stepJ + this._mapSubHookZ, this._mapSubZ) * this._mapSubX + this._mod(this._deltaSubX + stepI + this._mapSubHookX, this._mapSubX);
+                    terIndex = this._mod(this._deltaSubZ + stepJ, this._terrainIdx) * this._terrainIdx + this._mod(this._deltaSubX + stepI, this._terrainIdx);
             
                     // related index in the array of positions (data map)
                     if (this._datamap) {
                         posIndex = 3 * index;
                     }
                     else {
-                        posIndex = 3 * ( ((this._deltaSubZ + stepJ + this._terrainIdx) % this._terrainIdx) * this._terrainIdx + (this._deltaSubX + stepI + this._terrainIdx) % this._terrainIdx );
+                        posIndex = 3 * terIndex;
                     }
                     // related index in the UV map
                     if (this._uvmap) {
                         uvIndex = 2 * index;
                     }
                     else {
-                        uvIndex = 2 * ( ((this._deltaSubZ + stepJ + this._terrainIdx) % this._terrainIdx) * this._terrainIdx + (this._deltaSubX + stepI + this._terrainIdx) % this._terrainIdx );
+                        uvIndex = 2 * terIndex;
                     }
                     // related index in the color map
                     if (this._colormap) {
                         colIndex = 3 * index;
                     }
                     else {
-                        colIndex = 3 * ( ((this._deltaSubZ + stepJ + this._terrainIdx) % this._terrainIdx) * this._terrainIdx + (this._deltaSubX + stepI + this._terrainIdx) % this._terrainIdx );
+                        colIndex = 3 * terIndex;
                     }
 
                     // geometry
@@ -329,6 +358,11 @@ module BABYLON {
             MeshBuilder.CreateRibbon(null, this._ribbonOptions);
         };
 
+        // private modulo, for dealing with negative indexes
+        private _mod(a: number, b: number): number {
+            return ((a % b) + b) % b;
+        }
+
         /**
          * Updates the mesh terrain size according to the LOD limits and the camera position.
          * Returns nothing.
@@ -355,6 +389,62 @@ module BABYLON {
             this._terrainHalfSizeX = tsx * 0.5;
             this._terrainHalfSizeZ = tsz * 0.5;
         }
+
+        /**
+         * Returns the altitude (float) at the coordinates (x, z) of the map.  
+         * @param x 
+         * @param z 
+         */
+        public getHeightFromMap(x: number, z: number) {
+
+            var x0 = this._mapData[0];
+            var z0 = this._mapData[2];
+
+            // reset x and z in the map space so they are between 0 and the axis map size
+            x = x - Math.floor((x - x0) / this._mapSizeX) * this._mapSizeX;
+            z = z - Math.floor((z - z0) / this._mapSizeZ) * this._mapSizeZ;
+
+            var col = Math.floor((x - x0) * this._mapSubX / this._mapSizeX);
+            var row = Math.floor((z - z0) * this._mapSubZ / this._mapSizeZ);
+            // starting indexes of the positions of 4 vertices defining a quad on the map
+            var idx1 = 3 * (row * this._mapSubX + col);
+            var idx2 = idx1 + 3;
+            var idx3 = 3 * ((row + 1) * this._mapSubX + col);
+            var idx4 = idx3 + 3;
+
+            this._v1.copyFromFloats(this._mapData[idx1], this._mapData[idx1 + 1], this._mapData[idx1 + 2]);
+            this._v2.copyFromFloats(this._mapData[idx2], this._mapData[idx2 + 1], this._mapData[idx2 + 2]);
+            this._v3.copyFromFloats(this._mapData[idx3], this._mapData[idx3 + 1], this._mapData[idx3 + 2]);
+            this._v4.copyFromFloats(this._mapData[idx4], this._mapData[idx4 + 1], this._mapData[idx4 + 2]);
+
+            var vA = this._v1;
+            var vB;
+            var vC;
+            var v;
+
+            var cd = (this._v4.z - this._v1.z) / (this._v4.x - this._v1.x);
+            var h = this._v1.z - cd * this._v1.x;
+            if (z < cd * x + h) {
+                vB = this._v4;
+                vC = this._v2;
+                v = vA;
+            } 
+            else {
+                vB = this._v3;
+                vC = this._v4;
+                v = vB;
+            }
+            vB.subtractToRef(vA, this._vAvB);
+            vC.subtractToRef(vA, this._vAvC);
+            Vector3.CrossToRef(this._vAvB, this._vAvC, this._norm);
+            this._norm.normalize();
+            var d = -(this._norm.x * v.x + this._norm.y * v.y + this._norm.z * v.z);
+            var y = -(this._norm.x * x + this._norm.z * z + d) / this._norm.y;
+
+            return y;
+        }
+
+
 
         // Getters / Setters
         /**
