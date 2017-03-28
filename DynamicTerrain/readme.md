@@ -19,7 +19,7 @@ The map must be passed to the dynamic terrain constructor as well as the number 
 ```javascript
 var mapCoords = [some_big_flat_array_of_coordinates];
 var mapWidthPointNb = 2000;     // 2000 points in the map width
-var mapHeightPointNb = 1000;    // 1000 points in the map width
+var mapHeightPointNb = 1000;    // 1000 points in the map height
 var terrainSub = 100;           // the terrain wil be 100x100 vertices only
 var mapParams = {
     mapData: mapCoords,
