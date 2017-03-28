@@ -8,6 +8,7 @@ declare module BABYLON {
         private _mapSubZ;
         private _mapUVs;
         private _mapColors;
+        private _mapNormals;
         private _scene;
         private _subToleranceX;
         private _subToleranceZ;
@@ -73,7 +74,8 @@ declare module BABYLON {
          * @param {*} mapSubZ the data map number of z subdivisions : integer
          * @param {*} terrainSub the wanted terrain number of subdivisions : integer, multiple of 2.
          * @param {*} mapUVs the array of the map UV data (optional) : u,v successive values, each between 0 and 1.
-         * @param {*} mapColors the array of the map Color data (optional) : r,g,b successive values, each between 0 and 1.
+         * @param {*} mapColors the array of the map Color data (optional) : x, y, z successive float values.
+         * @param {*} mapNormals the array of the map normal data (optional) : r,g,b successive values, each between 0 and 1.
          * @param {*} invertSide boolean, to invert the terrain mesh upside down. Default false.
          * @param {*} camera the camera to link the terrain to. Optional, by default the scene active camera
          */
@@ -84,6 +86,7 @@ declare module BABYLON {
             mapSubZ?: number;
             mapUVs?: number[] | Float32Array;
             mapColors?: number[] | Float32Array;
+            mapNormals?: number[] | Float32Array;
             invertSide?: boolean;
             camera?: Camera;
         }, scene: Scene);
@@ -105,7 +108,15 @@ declare module BABYLON {
          * @param x
          * @param z
          */
-        getHeightFromMap(x: number, z: number): number;
+        getHeightFromMap(x: number, z: number, options?: {
+            normal: Vector3;
+        }): number;
+        /**
+         * Returns true if the World coordinates (x, z) are in the current terrain.
+         * @param x
+         * @param z
+         */
+        contains(x: number, z: number): boolean;
         /**
          * boolean : if the terrain must be recomputed every frame.
          */
