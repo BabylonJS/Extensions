@@ -381,7 +381,7 @@ var BABYLON;
             }
             // ribbon update    
             this._terrain.updateVerticesData(BABYLON.VertexBuffer.PositionKind, this._positions, false, false);
-            if (this._computeNormals) {
+            if (this._computeNormals && !this._mapNormals) {
                 BABYLON.VertexData.ComputeNormals(this._positions, this._indices, this._normals);
                 this._terrain.updateVerticesData(BABYLON.VertexBuffer.NormalKind, this._normals, false, false);
             }
