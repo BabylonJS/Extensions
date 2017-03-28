@@ -10,6 +10,7 @@ module BABYLON {
         private _mapSubZ: number;                       // map number of subdivisions on Z axis
         private _mapUVs: number[] | Float32Array;       // UV data of the map
         private _mapColors: number[] | Float32Array;    // Color data of the map
+        private _mapNormals: number[] | Float32Array;   // Normal data of the map
         private _scene: Scene;                          // current scene
         private _subToleranceX: number = 1;             // how many cells flought over thy the camera on the terrain x axis before update
         private _subToleranceZ: number = 1;             // how many cells flought over thy the camera on the terrain z axis before update
@@ -85,7 +86,8 @@ module BABYLON {
          * @param {*} mapSubZ the data map number of z subdivisions : integer
          * @param {*} terrainSub the wanted terrain number of subdivisions : integer, multiple of 2.
          * @param {*} mapUVs the array of the map UV data (optional) : u,v successive values, each between 0 and 1.
-         * @param {*} mapColors the array of the map Color data (optional) : r,g,b successive values, each between 0 and 1.
+         * @param {*} mapColors the array of the map Color data (optional) : x, y, z successive float values.
+         * @param {*} mapNormals the array of the map normal data (optional) : r,g,b successive values, each between 0 and 1.
          * @param {*} invertSide boolean, to invert the terrain mesh upside down. Default false.
          * @param {*} camera the camera to link the terrain to. Optional, by default the scene active camera
          */
@@ -95,6 +97,7 @@ module BABYLON {
             mapSubX?: number, mapSubZ?: number,
             mapUVs?: number[] | Float32Array,
             mapColors?: number[] | Float32Array,
+            mapNormals?: number[] | Float32Array,
             invertSide?: boolean,
             camera?: Camera   
         }, scene: Scene) {
@@ -107,6 +110,7 @@ module BABYLON {
             this._mapSubZ = options.mapSubZ || this._terrainIdx;
             this._mapUVs = options.mapUVs;            // if not defined, it will be still populated by default values
             this._mapColors = options.mapColors;
+            this._mapNormals = options.mapNormals;
             this._scene = scene;
             this._terrainCamera = options.camera || scene.activeCamera;
             
@@ -263,26 +267,27 @@ module BABYLON {
 
         // private : updates the underlying ribbon
         private _updateTerrain(): void {
-            var stepJ = 0;
-            var stepI = 0;
-            var LODLimitDown = 0;
-            var LODLimitUp = 0;
+            var stepJ = 0|0;
+            var stepI = 0|0;
+            var LODLimitDown = 0|0;
+            var LODLimitUp = 0|0;
             var LODValue = this._LODValue;
             var lodI = LODValue;
             var lodJ = LODValue;
-            var l = 0;
-            var index = 0;          // current vertex index in the map data array
-            var posIndex = 0;       // current position index in the map data array
-            var colIndex = 0;       // current index in the map color array
-            var uvIndex = 0;        // current index in the map uv array
-            var terIndex = 0;       // current vertex index in the terrain map array when used as a data map
-            var ribbonInd = 0;      // current ribbon vertex index
-            var ribbonPosInd = 0;   // current ribbon position index (same than normal index)
-            var ribbonUVInd = 0;    // current ribbon UV index
-            var ribbonColInd = 0;   // current ribbon color index
-            var ribbonPosInd1 = 0;
-            var ribbonPosInd2 = 0;
-            var ribbonPosInd3 = 0;
+            var l = 0|0;
+            var index = 0|0;          // current vertex index in the map data array
+            var posIndex = 0|0;       // current position index in the map data array
+            var colIndex = 0|0;       // current index in the map color array
+            var uvIndex = 0|0;        // current index in the map uv array
+            var terIndex = 0|0;       // current vertex index in the terrain map array when used as a data map
+            var ribbonInd = 0|0;      // current ribbon vertex index
+            var ribbonPosInd = 0|0;   // current ribbon position index (same than normal index)
+            var ribbonUVInd = 0|0;    // current ribbon UV index
+            var ribbonColInd = 0|0;   // current ribbon color index
+            var ribbonPosInd1 = 0|0;
+            var ribbonPosInd2 = 0|0;
+            var ribbonPosInd3 = 0|0;
+                // note : all the indexes are explicitly set as integers for the js optimizer (store them all in the stack)
             
             if (this._updateLOD || this._updateForced) {
                 this.updateTerrainSize();
@@ -290,7 +295,7 @@ module BABYLON {
             Vector3.FromFloatsToRef(Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE, this._bbMin); 
             Vector3.FromFloatsToRef(-Number.MAX_VALUE, -Number.MAX_VALUE, -Number.MAX_VALUE, this._bbMax);
 
-            for (var j = 0; j <= this._terrainSub; j++) {
+            for (var j = 0|0; j <= this._terrainSub; j++) {
                 // LOD Z
                 LODValue = this._LODValue;
                 for (l = 0; l < this._LODLimits.length; l++) {
@@ -303,7 +308,7 @@ module BABYLON {
                 }
 
                 var color;
-                for (var i = 0; i <= this._terrainSub; i++) {
+                for (var i = 0|0; i <= this._terrainSub; i++) {
                     // LOD X
                     LODValue = this._LODValue;
                     for (l = 0; l < this._LODLimits.length; l++) {
@@ -353,6 +358,12 @@ module BABYLON {
                     this._positions[ribbonPosInd1] = this._averageSubSizeX * stepI;
                     this._positions[ribbonPosInd2] = this._mapData[posIndex + 1];
                     this._positions[ribbonPosInd3] = this._averageSubSizeZ * stepJ;
+
+                    if (this._mapNormals) {
+                        this._normals[ribbonPosInd1] = this._mapNormals[posIndex];
+                        this._normals[ribbonPosInd2] = this._mapNormals[posIndex + 1];
+                        this._normals[ribbonPosInd3] = this._mapNormals[posIndex + 2];
+                    }
 
                     // bbox internal update
                     if (this._positions[ribbonPosInd1] < this._bbMin.x) {
@@ -419,9 +430,8 @@ module BABYLON {
             }
 
             // ribbon update    
-            //this._ribbonOptions.instance = this._terrain;
             this._terrain.updateVerticesData(VertexBuffer.PositionKind, this._positions, false, false);
-            if (this._computeNormals) {
+            if (this._computeNormals && !this._mapNormals) {
                 VertexData.ComputeNormals(this._positions, this._indices, this._normals);
                 this._terrain.updateVerticesData(VertexBuffer.NormalKind, this._normals, false, false);
             } 
@@ -442,12 +452,12 @@ module BABYLON {
          */
         public updateTerrainSize(): void { 
             var remainder = this._terrainSub;                   // the remaining cells at the general current LOD value
-            var nb = 0;                                         // nb of cells in the current LOD limit interval
-            var next = 0;                                       // next cell index, if it exists
+            var nb = 0|0;                                       // nb of cells in the current LOD limit interval
+            var next = 0|0;                                     // next cell index, if it exists
             var lod = this._LODValue + 1;                       // lod value in the current LOD limit interval
             var tsx = 0.0;                                      // current sum of cell sizes on x
             var tsz = 0.0;                                      // current sum of cell sizes on z
-            for (var l = 0; l < this._LODLimits.length; l++) {
+            for (var l = 0|0; l < this._LODLimits.length; l++) {
                 lod = this._LODValue + l + 1; 
                 next = (l >= this._LODLimits.length - 1) ? 0 : this._LODLimits[l + 1];
                 nb = 2 * (this._LODLimits[l] - next);
@@ -468,7 +478,7 @@ module BABYLON {
          * @param x 
          * @param z 
          */
-        public getHeightFromMap(x: number, z: number) {
+        public getHeightFromMap(x: number, z: number, options?: {normal: Vector3} ) {
 
             var x0 = this._mapData[0];
             var z0 = this._mapData[2];
@@ -511,13 +521,29 @@ module BABYLON {
             vC.subtractToRef(vA, this._vAvC);
             Vector3.CrossToRef(this._vAvB, this._vAvC, this._norm);
             this._norm.normalize();
+            if (options.normal) {
+                options.normal.copyFrom(this._norm);
+            }
             var d = -(this._norm.x * v.x + this._norm.y * v.y + this._norm.z * v.z);
             var y = -(this._norm.x * x + this._norm.z * z + d) / this._norm.y;
 
             return y;
         }
 
-
+        /**
+         * Returns true if the World coordinates (x, z) are in the current terrain.
+         * @param x 
+         * @param z 
+         */
+        public contains(x: number, z: number): boolean {
+            if (x < this._positions[0] || x > this._positions[3 * this._terrainIdx]) {
+                return false;
+            }
+            if (z < this._positions[2] || z > this._positions[3 * this._terrainIdx * this._terrainIdx + 2]) {
+                return false;
+            }
+            return true;
+        }
 
         // Getters / Setters
         /**
