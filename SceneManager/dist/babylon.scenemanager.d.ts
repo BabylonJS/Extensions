@@ -452,7 +452,7 @@ declare module BABYLON {
         stepFrame(): void;
         pauseAudio(): void;
         resumeAudio(): void;
-        toggleDebug(popups?: boolean): void;
+        toggleDebug(popups?: boolean, tab?: number, parent?: HTMLElement): void;
         traceLights(): void;
         traceCameras(): void;
         traceMeshes(): void;
@@ -557,11 +557,11 @@ declare module BABYLON {
         private static parseSceneCameras(cameras, scene, ticklist);
         private static parseSceneLights(lights, scene, ticklist);
         private static parseSceneMeshes(meshes, scene, ticklist);
+        private static setupPhysicsImpostor(physicsMesh, plugin, friction, collisions, rotation);
         private static setupCameraRigOptions(camera, scene, ticklist);
         private static setupAnimationEvents(owner, scene);
-        private static setupPhysicsImpostor(physicsMesh, plugin, friction, collisions, rotation);
         static locateOwnerAnimationTrack(index: number, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, directDecendantsOnly?: boolean, predicate?: (node: BABYLON.Node) => boolean): BABYLON.Animation;
-        private static destroySceneComponents(owner, destroyMetadata?);
+        static destroySceneComponents(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, destroyMetadata?: boolean): void;
         static ReplaceAll(source: string, find: string, replace: string): string;
         static CloneValue(source: any, destinationObject: any): any;
         static CloneMetadata(source: BABYLON.IObjectMetadata): BABYLON.IObjectMetadata;
