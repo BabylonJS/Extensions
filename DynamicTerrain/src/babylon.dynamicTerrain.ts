@@ -180,8 +180,8 @@ module BABYLON {
                 terrainData.push(terrainPath);
             }
  
-            this._mapSizeX = this._mapData[(this._mapSubX - 1) * 3] - this._mapData[0];
-            this._mapSizeZ = this._mapData[(this._mapSubZ - 1) * this._mapSubX * 3 + 2] - this._mapData[2];
+            this._mapSizeX = Math.abs(this._mapData[(this._mapSubX - 1) * 3] - this._mapData[0]);
+            this._mapSizeZ = Math.abs(this._mapData[(this._mapSubZ - 1) * this._mapSubX * 3 + 2] - this._mapData[2]);
             this._averageSubSizeX = this._mapSizeX / this._mapSubX;
             this._averageSubSizeZ = this._mapSizeZ / this._mapSubZ;
             var ribbonOptions = {
