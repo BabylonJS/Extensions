@@ -31,3 +31,28 @@ If we call `P[i, j]` the point P at the row `j` on the map height and at the col
 - for any column `i` in the map, `P[i, 0].z` is lower than `P[i, 1].z`, what is lower than `P[i, 2].z`, etc
 - the distance between each column is quite constant
 - the distance between each row is quite constant, not necesseraly the same than the distance between each column.  
+
+Example : here we populate a big `Float32Array` with successive 3D float coordinates.  
+We use a _simplex_ function from a third party library to set each point altitude.  
+This array is the data map. It's defined by 1000 points on its width and 800 points on its height. 
+The distance between the points is constant on the width and is different than the constant distance between the points on the height.   
+```javascript
+    var mapSubX = 1000;             // map number of points on the width
+    var mapSubZ = 800;              // map number of points on the height
+    var seed = 0.3;                 // set the noise seed
+    noise.seed(seed);               // generate the simplex noise
+    var mapData = new Float32Array(mapSubX * mapSubZ * 3);  // x3 because 3 values per point : x, y, z
+    for (var l = 0; l < mapSubZ; l++) {                 // loop on height points
+        for (var w = 0; w < mapSubX; w++) {             // loop on width points
+            var x = (w - mapSubX * 0.5) * 5.0;          // distance inter-points = 5 on the width
+            var z = (l - mapSubZ * 0.5) * 2.0;          // distance inter-points = 2 on the width
+            var y = noise.simplex2(x * noiseScale, z * noiseScale); // altitude
+                   
+            mapData[3 * (l * mapSubX + w)] = x;
+            mapData[3 * (l * mapSubX + w) + 1] = y;
+            mapData[3 * (l * mapSubX + w) + 2] = z;           
+        }
+    }
+```
+
+_add a PG here_
