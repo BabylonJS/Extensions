@@ -149,6 +149,21 @@ module BABYLON {
                         BABYLON.Tools.Warn("Failed to locate valid BABYLON.SceneController metadata instance");
                     }
                 }
+
+                // Parse default html markup
+                if (this._scene.metadata.properties.interfaceMode != null) {
+                    this._gui = this._scene.metadata.properties.interfaceMode;
+                    if (this._scene.metadata.properties.userInterface != null) {
+                        var ui: any = this._scene.metadata.properties.userInterface;
+                        if (window && ui.embedded && ui.base64 != null) {
+                            this._markup = window.atob(ui.base64);
+                            if (this._scene.metadata.properties.autoDraw === true && this._gui != null && this._gui !== "" && this._gui !== "None" && this._markup != null && this._markup !== "") {
+                                this.drawSceneMarkup(this._markup);
+                            }
+                        }
+                    }
+                }
+                
                 // Parse default navigation mesh
                 if (this._scene.metadata.properties.hasNavigationMesh != null && this._scene.metadata.properties.hasNavigationMesh === true) {
                     this._navmesh = this._scene.getMeshByName("sceneNavigationMesh");
@@ -162,40 +177,6 @@ module BABYLON {
                         }
                     } else {
                         BABYLON.Tools.Warn("Failed to load scene navigation mesh(s)");
-                    }
-                }
-                // Parse default animation events
-                if (this._scene.metadata.properties.hasAnimationEvents != null && this._scene.metadata.properties.hasAnimationEvents === true) {
-                    var cameras: BABYLON.Camera[] = this._scene.getCamerasByTags("[ANIMEVENTS]");
-                    if (cameras != null) {
-                        cameras.forEach((camera) => {
-                            BABYLON.SceneManager.setupAnimationEvents(camera, this._scene);
-                        });
-                    }
-                    var lights: BABYLON.Light[] = this._scene.getLightsByTags("[ANIMEVENTS]");
-                    if (lights != null) {
-                        lights.forEach((light) => {
-                            BABYLON.SceneManager.setupAnimationEvents(light, this._scene);
-                        });
-                    }
-                    var meshes: BABYLON.Mesh[] = this._scene.getMeshesByTags("[ANIMEVENTS]");
-                    if (meshes != null) {
-                        meshes.forEach((mesh) => {
-                            BABYLON.SceneManager.setupAnimationEvents(mesh, this._scene);
-                        });
-                    }
-                }                
-                // Parse default html markup
-                if (this._scene.metadata.properties.interfaceMode != null) {
-                    this._gui = this._scene.metadata.properties.interfaceMode;
-                    if (this._scene.metadata.properties.userInterface != null) {
-                        var ui: any = this._scene.metadata.properties.userInterface;
-                        if (window && ui.embedded && ui.base64 != null) {
-                            this._markup = window.atob(ui.base64);
-                            if (this._scene.metadata.properties.autoDraw === true && this._gui != null && this._gui !== "" && this._gui !== "None" && this._markup != null && this._markup !== "") {
-                                this.drawSceneMarkup(this._markup);
-                            }
-                        }
                     }
                 }
             }
@@ -431,11 +412,11 @@ module BABYLON {
         // *  Scene Debug Helper Support  * //
         // ******************************** //
 
-        public toggleDebug(popups:boolean = false): void {
+        public toggleDebug(popups:boolean = false, tab:number = 0, parent:HTMLElement = null): void {
             if (this._scene.debugLayer.isVisible()) {
                 this._scene.debugLayer.hide();
             } else {
-                this._scene.debugLayer.show(popups);
+                this._scene.debugLayer.show({ popup: popups, initialTab: tab, parentElement: parent });
             }
         }
         public traceLights():void {
@@ -1784,6 +1765,8 @@ module BABYLON {
                         }
                         // Camera rigging options
                         BABYLON.SceneManager.setupCameraRigOptions(camera, scene, ticklist);
+                        // Camera animation events
+                        BABYLON.SceneManager.setupAnimationEvents(camera, scene);
                     }
                 });
             }
@@ -1814,6 +1797,8 @@ module BABYLON {
                                 }
                             });
                         }
+                        // Light animation events
+                        BABYLON.SceneManager.setupAnimationEvents(light, scene);
                     }
                 });
             }
@@ -1862,6 +1847,45 @@ module BABYLON {
                                     }
                                 });
                             }
+                            // Mesh animation events
+                            BABYLON.SceneManager.setupAnimationEvents(mesh, scene);
+                        }
+                    }
+                });
+            }
+        }
+        private static setupPhysicsImpostor(physicsMesh:BABYLON.AbstractMesh, plugin:number, friction:number, collisions:boolean, rotation:number):void {
+            if (physicsMesh.physicsImpostor != null) {
+                physicsMesh.physicsImpostor.executeNativeFunction((word:any, body:any) =>{
+                    if (plugin === 0) {
+                        // Cannon Physics Engine Plugin
+                        body.linearDamping = friction;
+                        body.angularDamping = friction;
+                        body.collisionResponse = collisions;
+                        body.angularVelocity.x = 0;
+                        body.angularVelocity.y = 0;
+                        body.angularVelocity.z = 0;
+                        body.velocity.x = 0;
+                        body.velocity.y = 0;
+                        body.velocity.z = 0;
+                        if (rotation === 1) {
+                            body.fixedRotation = true;
+                            body.updateMassProperties();
+                        }
+                    } else if (plugin === 1) {
+                        // TODO: Oimo Physics Engine Plugin
+                        //body.linearDamping = friction;
+                        //body.angularDamping = friction;
+                        //body.collisionResponse = collisions;
+                        //body.angularVelocity.x = 0;
+                        //body.angularVelocity.y = 0;
+                        //body.angularVelocity.z = 0;
+                        //body.velocity.x = 0;
+                        //body.velocity.y = 0;
+                        //body.velocity.z = 0;
+                        if (rotation === 1) {
+                            //body.fixedRotation = true;
+                            //body.updateMassProperties();
                         }
                     }
                 });
@@ -2002,43 +2026,6 @@ module BABYLON {
                 }
             }            
         }
-        private static setupPhysicsImpostor(physicsMesh:BABYLON.AbstractMesh, plugin:number, friction:number, collisions:boolean, rotation:number):void {
-            if (physicsMesh.physicsImpostor != null) {
-                physicsMesh.physicsImpostor.executeNativeFunction((word:any, body:any) =>{
-                    if (plugin === 0) {
-                        // Cannon Physics Engine Plugin
-                        body.linearDamping = friction;
-                        body.angularDamping = friction;
-                        body.collisionResponse = collisions;
-                        body.angularVelocity.x = 0;
-                        body.angularVelocity.y = 0;
-                        body.angularVelocity.z = 0;
-                        body.velocity.x = 0;
-                        body.velocity.y = 0;
-                        body.velocity.z = 0;
-                        if (rotation === 1) {
-                            body.fixedRotation = true;
-                            body.updateMassProperties();
-                        }
-                    } else if (plugin === 1) {
-                        // TODO: Oimo Physics Engine Plugin
-                        //body.linearDamping = friction;
-                        //body.angularDamping = friction;
-                        //body.collisionResponse = collisions;
-                        //body.angularVelocity.x = 0;
-                        //body.angularVelocity.y = 0;
-                        //body.angularVelocity.z = 0;
-                        //body.velocity.x = 0;
-                        //body.velocity.y = 0;
-                        //body.velocity.z = 0;
-                        if (rotation === 1) {
-                            //body.fixedRotation = true;
-                            //body.updateMassProperties();
-                        }
-                    }
-                });
-            }
-        }
         public static locateOwnerAnimationTrack(index:number, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, directDecendantsOnly:boolean = true, predicate:(node:BABYLON.Node)=>boolean = null):BABYLON.Animation {
             var result:BABYLON.Animation = null;
             if (owner instanceof BABYLON.AbstractMesh) {
@@ -2074,7 +2061,7 @@ module BABYLON {
             }
             return result;            
         }
-        private static destroySceneComponents(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, destroyMetadata: boolean = true): void {
+        public static destroySceneComponents(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, destroyMetadata: boolean = true): void {
             if (owner != null && owner.metadata != null && owner.metadata.api) {
                 var metadata: BABYLON.IObjectMetadata = owner.metadata as BABYLON.IObjectMetadata;
                 if (metadata.components != null && metadata.components.length > 0) {
