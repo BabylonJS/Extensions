@@ -8,6 +8,7 @@ declare module BABYLON {
         private _mapSubZ;
         private _mapUVs;
         private _mapColors;
+        private _mapNormals;
         private _scene;
         private _subToleranceX;
         private _subToleranceZ;
@@ -19,9 +20,11 @@ declare module BABYLON {
         private _cameraLODCorrection;
         private _oldCorrection;
         private _terrainCamera;
-        private _terrainData;
-        private _terrainUV;
-        private _terrainColor;
+        private _indices;
+        private _positions;
+        private _normals;
+        private _colors;
+        private _uvs;
         private _deltaX;
         private _deltaZ;
         private _signX;
@@ -35,10 +38,11 @@ declare module BABYLON {
         private _updateLOD;
         private _updateForced;
         private _refreshEveryFrame;
+        private _useCustomVertexFunction;
+        private _computeNormals;
         private _datamap;
         private _uvmap;
         private _colormap;
-        private _ribbonOptions;
         private _vertex;
         private _averageSubSizeX;
         private _averageSubSizeZ;
@@ -48,12 +52,32 @@ declare module BABYLON {
         private _terrainHalfSizeZ;
         private _centerWorld;
         private _centerLocal;
+        private _mapSizeX;
+        private _mapSizeZ;
         private _terrain;
+        private _v1;
+        private _v2;
+        private _v3;
+        private _v4;
+        private _vAvB;
+        private _vAvC;
+        private _norm;
+        private _bbMin;
+        private _bbMax;
         /**
          * constructor
          * @param name
          * @param options
          * @param scene
+         * @param {*} mapData the array of the map 3D data : x, y, z successive float values
+         * @param {*} mapSubX the data map number of x subdivisions : integer
+         * @param {*} mapSubZ the data map number of z subdivisions : integer
+         * @param {*} terrainSub the wanted terrain number of subdivisions : integer, multiple of 2.
+         * @param {*} mapUVs the array of the map UV data (optional) : u,v successive values, each between 0 and 1.
+         * @param {*} mapColors the array of the map Color data (optional) : x, y, z successive float values.
+         * @param {*} mapNormals the array of the map normal data (optional) : r,g,b successive values, each between 0 and 1.
+         * @param {*} invertSide boolean, to invert the terrain mesh upside down. Default false.
+         * @param {*} camera the camera to link the terrain to. Optional, by default the scene active camera
          */
         constructor(name: string, options: {
             terrainSub?: number;
@@ -62,6 +86,8 @@ declare module BABYLON {
             mapSubZ?: number;
             mapUVs?: number[] | Float32Array;
             mapColors?: number[] | Float32Array;
+            mapNormals?: number[] | Float32Array;
+            invertSide?: boolean;
             camera?: Camera;
         }, scene: Scene);
         /**
@@ -71,11 +97,26 @@ declare module BABYLON {
          */
         update(force: boolean): void;
         private _updateTerrain();
+        private _mod(a, b);
         /**
          * Updates the mesh terrain size according to the LOD limits and the camera position.
          * Returns nothing.
          */
         updateTerrainSize(): void;
+        /**
+         * Returns the altitude (float) at the coordinates (x, z) of the map.
+         * @param x
+         * @param z
+         */
+        getHeightFromMap(x: number, z: number, options?: {
+            normal: Vector3;
+        }): number;
+        /**
+         * Returns true if the World coordinates (x, z) are in the current terrain.
+         * @param x
+         * @param z
+         */
+        contains(x: number, z: number): boolean;
         /**
          * boolean : if the terrain must be recomputed every frame.
          */
@@ -177,10 +218,20 @@ declare module BABYLON {
          */
         readonly mapSubZ: number;
         /**
+         * Boolean : must the normals be recomputed on each terrain update (default : true)
+         */
+        computeNormals: boolean;
+        /**
+         * Boolean : will the custom function updateVertex() be called on each terrain update ?
+         * Default false
+         */
+        useCustomVertexFunction: boolean;
+        /**
          * Custom function called for each terrain vertex and passed the :
          * - current vertex {position: Vector3, uvs: Vector2, color: Color4, lodX: integer, lodZ: integer, worldPosition: Vector3, mapIndex: integer}
          * - i : the vertex index on the terrain x axis
          * - j : the vertex index on the terrain x axis
+         * This function is called only if the property useCustomVertexFunction is set to true.
          */
         updateVertex(vertex: any, i: any, j: any): void;
         /**

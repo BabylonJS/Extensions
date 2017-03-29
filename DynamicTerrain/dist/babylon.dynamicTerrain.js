@@ -11,7 +11,8 @@ var BABYLON;
          * @param {*} mapSubZ the data map number of z subdivisions : integer
          * @param {*} terrainSub the wanted terrain number of subdivisions : integer, multiple of 2.
          * @param {*} mapUVs the array of the map UV data (optional) : u,v successive values, each between 0 and 1.
-         * @param {*} mapColors the array of the map Color data (optional) : r,g,b successive values, each between 0 and 1.
+         * @param {*} mapColors the array of the map Color data (optional) : x, y, z successive float values.
+         * @param {*} mapNormals the array of the map normal data (optional) : r,g,b successive values, each between 0 and 1.
          * @param {*} invertSide boolean, to invert the terrain mesh upside down. Default false.
          * @param {*} camera the camera to link the terrain to. Optional, by default the scene active camera
          */
@@ -26,9 +27,6 @@ var BABYLON;
             this._LODValue = 1; // current LOD value : initial + camera correction
             this._cameraLODCorrection = 0; // LOD correction (integer) according to the camera altitude
             this._oldCorrection = 0; // former correction
-            this._terrainData = []; // terrain ribbon path array : array of arrays of Vector3
-            this._terrainUV = []; // terrain ribbon UV array : array of Vector2
-            this._terrainColor = []; // terrain ribbon color array : array of Color4
             this._deltaX = 0.0; // camera / terrain x position delta
             this._deltaZ = 0.0; // camera-/ terrain z position delta
             this._signX = 0; // x delta sign
@@ -42,14 +40,15 @@ var BABYLON;
             this._updateLOD = false; // boolean : ribbon recomputation + LOD change
             this._updateForced = false; // boolean : forced ribbon recomputation
             this._refreshEveryFrame = false; // boolean : to force the terrain computation every frame
+            this._useCustomVertexFunction = false; // boolean : to allow the call to updateVertex()
+            this._computeNormals = true; // boolean : to skip or not the normal computation
             this._datamap = false; // boolean : true if an data map is passed as parameter
             this._uvmap = false; // boolean : true if an UV map is passed as parameter
             this._colormap = false; // boolean : true if an color map is passed as parameter
-            this._ribbonOptions = {}; // ribbon "options" parameter object
             this._vertex = {
-                position: null,
-                uvs: null,
-                color: null,
+                position: BABYLON.Vector3.Zero(),
+                uvs: BABYLON.Vector2.Zero(),
+                color: new BABYLON.Color4(1.0, 1.0, 1.0, 1.0),
                 lodX: 1,
                 lodZ: 1,
                 worldPosition: BABYLON.Vector3.Zero(),
@@ -73,6 +72,8 @@ var BABYLON;
             this._vAvB = BABYLON.Vector3.Zero();
             this._vAvC = BABYLON.Vector3.Zero();
             this._norm = BABYLON.Vector3.Zero();
+            this._bbMin = BABYLON.Vector3.Zero();
+            this._bbMax = BABYLON.Vector3.Zero();
             this.name = name;
             this._terrainSub = options.terrainSub || 60;
             this._mapData = options.mapData;
@@ -81,6 +82,7 @@ var BABYLON;
             this._mapSubZ = options.mapSubZ || this._terrainIdx;
             this._mapUVs = options.mapUVs; // if not defined, it will be still populated by default values
             this._mapColors = options.mapColors;
+            this._mapNormals = options.mapNormals;
             this._scene = scene;
             this._terrainCamera = options.camera || scene.activeCamera;
             // initialize the map arrays if not passed as parameters
@@ -102,6 +104,9 @@ var BABYLON;
             var u = 0.0; // current u of UV
             var v = 0.0; // current v of UV
             var lg = this._terrainIdx + 1; // augmented length for the UV to finish before
+            var terrainData = [];
+            var terrainColor = [];
+            var terrainUV = [];
             for (var j = 0; j <= this._terrainSub; j++) {
                 terrainPath = [];
                 for (var i = 0; i <= this._terrainSub; i++) {
@@ -128,7 +133,7 @@ var BABYLON;
                     else {
                         color = new BABYLON.Color4(1.0, 1.0, 1.0, 1.0);
                     }
-                    this._terrainColor.push(color);
+                    terrainColor.push(color);
                     // uvs
                     if (this._uvmap) {
                         uv = new BABYLON.Vector2(this._mapUVs[uvIndex], this._mapUVs[uvIndex + 1]);
@@ -140,22 +145,27 @@ var BABYLON;
                         this._mapUVs[2 * terIndex + 1] = v;
                         uv = new BABYLON.Vector2(u, v);
                     }
-                    this._terrainUV.push(uv);
+                    terrainUV.push(uv);
                 }
-                this._terrainData.push(terrainPath);
+                terrainData.push(terrainPath);
             }
-            this._mapSizeX = this._mapData[(this._mapSubX - 1) * 3] - this._mapData[0];
-            this._mapSizeZ = this._mapData[(this._mapSubZ - 1) * this._mapSubX * 3 + 2] - this._mapData[2];
+            this._mapSizeX = Math.abs(this._mapData[(this._mapSubX - 1) * 3] - this._mapData[0]);
+            this._mapSizeZ = Math.abs(this._mapData[(this._mapSubZ - 1) * this._mapSubX * 3 + 2] - this._mapData[2]);
             this._averageSubSizeX = this._mapSizeX / this._mapSubX;
             this._averageSubSizeZ = this._mapSizeZ / this._mapSubZ;
-            this._ribbonOptions.pathArray = this._terrainData;
-            this._ribbonOptions.sideOrientation = (options.invertSide) ? BABYLON.Mesh.FRONTSIDE : BABYLON.Mesh.BACKSIDE;
-            this._ribbonOptions.colors = this._terrainColor;
-            this._ribbonOptions.uvs = this._terrainUV;
-            this._ribbonOptions.updatable = true;
-            this._ribbonOptions.instance = null;
-            var terrain = BABYLON.MeshBuilder.CreateRibbon("terrain", this._ribbonOptions, this._scene);
-            this._terrain = terrain;
+            var ribbonOptions = {
+                pathArray: terrainData,
+                sideOrientation: (options.invertSide) ? BABYLON.Mesh.FRONTSIDE : BABYLON.Mesh.BACKSIDE,
+                colors: terrainColor,
+                uvs: terrainUV,
+                updatable: true
+            };
+            this._terrain = BABYLON.MeshBuilder.CreateRibbon("terrain", ribbonOptions, this._scene);
+            this._indices = this._terrain.getIndices();
+            this._positions = this._terrain.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+            this._normals = this._terrain.getVerticesData(BABYLON.VertexBuffer.NormalKind);
+            this._uvs = this._terrain.getVerticesData(BABYLON.VertexBuffer.UVKind);
+            this._colors = this._terrain.getVerticesData(BABYLON.VertexBuffer.ColorKind);
             // update it immediatly and register the update callback function in the render loop
             this.update(true);
             this._terrain.position.x = this._terrainCamera.globalPosition.x - this._terrainHalfSizeX;
@@ -219,23 +229,33 @@ var BABYLON;
         };
         // private : updates the underlying ribbon
         DynamicTerrain.prototype._updateTerrain = function () {
-            var stepJ = 0;
-            var stepI = 0;
-            var LODLimitDown = 0;
-            var LODLimitUp = 0;
+            var stepJ = 0 | 0;
+            var stepI = 0 | 0;
+            var LODLimitDown = 0 | 0;
+            var LODLimitUp = 0 | 0;
             var LODValue = this._LODValue;
             var lodI = LODValue;
             var lodJ = LODValue;
-            var l = 0;
-            var index = 0; // current vertex index in the map data array
-            var posIndex = 0; // current position index in the map data array
-            var colIndex = 0; // current index in the map color array
-            var uvIndex = 0; // current index in the map uv array
-            var terIndex = 0; // current vertex index in the terrain array if used as a data map
+            var l = 0 | 0;
+            var index = 0 | 0; // current vertex index in the map data array
+            var posIndex = 0 | 0; // current position index in the map data array
+            var colIndex = 0 | 0; // current index in the map color array
+            var uvIndex = 0 | 0; // current index in the map uv array
+            var terIndex = 0 | 0; // current vertex index in the terrain map array when used as a data map
+            var ribbonInd = 0 | 0; // current ribbon vertex index
+            var ribbonPosInd = 0 | 0; // current ribbon position index (same than normal index)
+            var ribbonUVInd = 0 | 0; // current ribbon UV index
+            var ribbonColInd = 0 | 0; // current ribbon color index
+            var ribbonPosInd1 = 0 | 0;
+            var ribbonPosInd2 = 0 | 0;
+            var ribbonPosInd3 = 0 | 0;
+            // note : all the indexes are explicitly set as integers for the js optimizer (store them all in the stack)
             if (this._updateLOD || this._updateForced) {
                 this.updateTerrainSize();
             }
-            for (var j = 0; j <= this._terrainSub; j++) {
+            BABYLON.Vector3.FromFloatsToRef(Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE, this._bbMin);
+            BABYLON.Vector3.FromFloatsToRef(-Number.MAX_VALUE, -Number.MAX_VALUE, -Number.MAX_VALUE, this._bbMax);
+            for (var j = 0 | 0; j <= this._terrainSub; j++) {
                 // LOD Z
                 LODValue = this._LODValue;
                 for (l = 0; l < this._LODLimits.length; l++) {
@@ -246,9 +266,8 @@ var BABYLON;
                     }
                     lodJ = LODValue;
                 }
-                var data = this._terrainData[j];
                 var color;
-                for (var i = 0; i <= this._terrainSub; i++) {
+                for (var i = 0 | 0; i <= this._terrainSub; i++) {
                     // LOD X
                     LODValue = this._LODValue;
                     for (l = 0; l < this._LODLimits.length; l++) {
@@ -283,39 +302,93 @@ var BABYLON;
                     else {
                         colIndex = 3 * terIndex;
                     }
-                    // geometry
-                    data[i].y = this._mapData[posIndex + 1];
-                    data[i].x = this._averageSubSizeX * stepI;
-                    data[i].z = this._averageSubSizeZ * stepJ;
+                    // ribbon indexes
+                    ribbonPosInd = 3 * ribbonInd;
+                    ribbonColInd = 4 * ribbonInd;
+                    ribbonUVInd = 2 * ribbonInd;
+                    ribbonPosInd1 = ribbonPosInd;
+                    ribbonPosInd2 = ribbonPosInd + 1;
+                    ribbonPosInd3 = ribbonPosInd + 2;
+                    ribbonInd += 1;
+                    // geometry                  
+                    this._positions[ribbonPosInd1] = this._averageSubSizeX * stepI;
+                    this._positions[ribbonPosInd2] = this._mapData[posIndex + 1];
+                    this._positions[ribbonPosInd3] = this._averageSubSizeZ * stepJ;
+                    if (this._mapNormals) {
+                        this._normals[ribbonPosInd1] = this._mapNormals[posIndex];
+                        this._normals[ribbonPosInd2] = this._mapNormals[posIndex + 1];
+                        this._normals[ribbonPosInd3] = this._mapNormals[posIndex + 2];
+                    }
+                    // bbox internal update
+                    if (this._positions[ribbonPosInd1] < this._bbMin.x) {
+                        this._bbMin.x = this._positions[ribbonPosInd1];
+                    }
+                    if (this._positions[ribbonPosInd1] > this._bbMax.x) {
+                        this._bbMax.x = this._positions[ribbonPosInd1];
+                    }
+                    if (this._positions[ribbonPosInd2] < this._bbMin.y) {
+                        this._bbMin.y = this._positions[ribbonPosInd2];
+                    }
+                    if (this._positions[ribbonPosInd2] > this._bbMax.y) {
+                        this._bbMax.y = this._positions[ribbonPosInd2];
+                    }
+                    if (this._positions[ribbonPosInd3] < this._bbMin.z) {
+                        this._bbMin.z = this._positions[ribbonPosInd3];
+                    }
+                    if (this._positions[ribbonPosInd3] > this._bbMax.z) {
+                        this._bbMax.z = this._positions[ribbonPosInd3];
+                    }
                     // color
                     var terrainIndex = j * this._terrainIdx + i;
                     if (this._colormap) {
-                        this._terrainColor[terrainIndex].r = this._mapColors[colIndex];
-                        this._terrainColor[terrainIndex].g = this._mapColors[colIndex + 1];
-                        this._terrainColor[terrainIndex].b = this._mapColors[colIndex + 2];
+                        this._colors[ribbonColInd] = this._mapColors[colIndex];
+                        this._colors[ribbonColInd + 1] = this._mapColors[colIndex + 1];
+                        this._colors[ribbonColInd + 2] = this._mapColors[colIndex + 2];
                     }
                     // uv : the array _mapUVs is always populated
-                    this._terrainUV[terrainIndex].x = this._mapUVs[uvIndex];
-                    this._terrainUV[terrainIndex].y = this._mapUVs[uvIndex + 1];
+                    this._uvs[ribbonUVInd] = this._mapUVs[uvIndex];
+                    this._uvs[ribbonUVInd + 1] = this._mapUVs[uvIndex + 1];
                     // call to user custom function with the current updated vertex object
-                    this._vertex.position = data[i];
-                    this._vertex.worldPosition.x = this._mapData[posIndex];
-                    this._vertex.worldPosition.y = this._vertex.position.y;
-                    this._vertex.worldPosition.z = this._mapData[posIndex + 2];
-                    this._vertex.lodX = lodI;
-                    this._vertex.lodZ = lodJ;
-                    this._vertex.color = this._terrainColor[terrainIndex];
-                    this._vertex.uvs = this._terrainUV[terrainIndex];
-                    this._vertex.mapIndex = index;
-                    this.updateVertex(this._vertex, i, j);
+                    if (this._useCustomVertexFunction) {
+                        this._vertex.position.copyFromFloats(this._positions[ribbonPosInd1], this._positions[ribbonPosInd2], this._positions[ribbonPosInd3]);
+                        this._vertex.worldPosition.x = this._mapData[posIndex];
+                        this._vertex.worldPosition.y = this._vertex.position.y;
+                        this._vertex.worldPosition.z = this._mapData[posIndex + 2];
+                        this._vertex.lodX = lodI;
+                        this._vertex.lodZ = lodJ;
+                        this._vertex.color.r = this._colors[ribbonColInd];
+                        this._vertex.color.g = this._colors[ribbonColInd + 1];
+                        this._vertex.color.b = this._colors[ribbonColInd + 2];
+                        this._vertex.color.a = this._colors[ribbonColInd + 3];
+                        this._vertex.uvs.x = this._uvs[ribbonUVInd];
+                        this._vertex.uvs.y = this._uvs[ribbonUVInd + 1];
+                        this._vertex.mapIndex = index;
+                        this.updateVertex(this._vertex, i, j); // the user can modify the array values here
+                        this._colors[ribbonColInd] = this._vertex.color.r;
+                        this._colors[ribbonColInd + 1] = this._vertex.color.g;
+                        this._colors[ribbonColInd + 2] = this._vertex.color.b;
+                        this._colors[ribbonColInd + 3] = this._vertex.color.a;
+                        this._uvs[ribbonUVInd] = this._vertex.uvs.x;
+                        this._uvs[ribbonUVInd + 1] = this._vertex.uvs.y;
+                        this._positions[ribbonPosInd1] = this._vertex.position.x;
+                        this._positions[ribbonPosInd2] = this._vertex.position.y;
+                        this._positions[ribbonPosInd3] = this._vertex.position.z;
+                    }
                     stepI += lodI;
                 }
                 stepI = 0;
                 stepJ += lodJ;
             }
             // ribbon update    
-            this._ribbonOptions.instance = this._terrain;
-            BABYLON.MeshBuilder.CreateRibbon(null, this._ribbonOptions);
+            this._terrain.updateVerticesData(BABYLON.VertexBuffer.PositionKind, this._positions, false, false);
+            if (this._computeNormals && !this._mapNormals) {
+                BABYLON.VertexData.ComputeNormals(this._positions, this._indices, this._normals);
+                this._terrain.updateVerticesData(BABYLON.VertexBuffer.NormalKind, this._normals, false, false);
+            }
+            this._terrain.updateVerticesData(BABYLON.VertexBuffer.UVKind, this._uvs, false, false);
+            this._terrain.updateVerticesData(BABYLON.VertexBuffer.ColorKind, this._colors, false, false);
+            this._terrain._boundingInfo = new BABYLON.BoundingInfo(this._bbMin, this._bbMax);
+            this._terrain._boundingInfo.update(this._terrain._worldMatrix);
         };
         ;
         // private modulo, for dealing with negative indexes
@@ -328,12 +401,12 @@ var BABYLON;
          */
         DynamicTerrain.prototype.updateTerrainSize = function () {
             var remainder = this._terrainSub; // the remaining cells at the general current LOD value
-            var nb = 0; // nb of cells in the current LOD limit interval
-            var next = 0; // next cell index, if it exists
+            var nb = 0 | 0; // nb of cells in the current LOD limit interval
+            var next = 0 | 0; // next cell index, if it exists
             var lod = this._LODValue + 1; // lod value in the current LOD limit interval
             var tsx = 0.0; // current sum of cell sizes on x
             var tsz = 0.0; // current sum of cell sizes on z
-            for (var l = 0; l < this._LODLimits.length; l++) {
+            for (var l = 0 | 0; l < this._LODLimits.length; l++) {
                 lod = this._LODValue + l + 1;
                 next = (l >= this._LODLimits.length - 1) ? 0 : this._LODLimits[l + 1];
                 nb = 2 * (this._LODLimits[l] - next);
@@ -353,7 +426,7 @@ var BABYLON;
          * @param x
          * @param z
          */
-        DynamicTerrain.prototype.getHeightFromMap = function (x, z) {
+        DynamicTerrain.prototype.getHeightFromMap = function (x, z, options) {
             var x0 = this._mapData[0];
             var z0 = this._mapData[2];
             // reset x and z in the map space so they are between 0 and the axis map size
@@ -390,9 +463,26 @@ var BABYLON;
             vC.subtractToRef(vA, this._vAvC);
             BABYLON.Vector3.CrossToRef(this._vAvB, this._vAvC, this._norm);
             this._norm.normalize();
+            if (options.normal) {
+                options.normal.copyFrom(this._norm);
+            }
             var d = -(this._norm.x * v.x + this._norm.y * v.y + this._norm.z * v.z);
             var y = -(this._norm.x * x + this._norm.z * z + d) / this._norm.y;
             return y;
+        };
+        /**
+         * Returns true if the World coordinates (x, z) are in the current terrain.
+         * @param x
+         * @param z
+         */
+        DynamicTerrain.prototype.contains = function (x, z) {
+            if (x < this._positions[0] || x > this._positions[3 * this._terrainIdx]) {
+                return false;
+            }
+            if (z < this._positions[2] || z > this._positions[3 * this._terrainIdx * this._terrainIdx + 2]) {
+                return false;
+            }
+            return true;
         };
         Object.defineProperty(DynamicTerrain.prototype, "refreshEveryFrame", {
             // Getters / Setters
@@ -642,6 +732,33 @@ var BABYLON;
             enumerable: true,
             configurable: true
         });
+        Object.defineProperty(DynamicTerrain.prototype, "computeNormals", {
+            /**
+             * Boolean : must the normals be recomputed on each terrain update (default : true)
+             */
+            get: function () {
+                return this._computeNormals;
+            },
+            set: function (val) {
+                this._computeNormals = val;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(DynamicTerrain.prototype, "useCustomVertexFunction", {
+            /**
+             * Boolean : will the custom function updateVertex() be called on each terrain update ?
+             * Default false
+             */
+            get: function () {
+                return this._useCustomVertexFunction;
+            },
+            set: function (val) {
+                this._useCustomVertexFunction = val;
+            },
+            enumerable: true,
+            configurable: true
+        });
         // ===============================================================
         // User custom functions.
         // These following can be overwritten bu the user to fit his needs.
@@ -650,6 +767,7 @@ var BABYLON;
          * - current vertex {position: Vector3, uvs: Vector2, color: Color4, lodX: integer, lodZ: integer, worldPosition: Vector3, mapIndex: integer}
          * - i : the vertex index on the terrain x axis
          * - j : the vertex index on the terrain x axis
+         * This function is called only if the property useCustomVertexFunction is set to true.
          */
         DynamicTerrain.prototype.updateVertex = function (vertex, i, j) {
             return;
