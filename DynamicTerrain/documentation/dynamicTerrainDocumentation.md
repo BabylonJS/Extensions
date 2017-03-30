@@ -78,7 +78,7 @@ PG example : http://www.babylonjs-playground.com/#FJNR5#3
 The dynamic terrain is the green mesh flying on the data map.  
 We can notice that the green terrain is linked to the scene active camera on its center and moves with it when we zoom in or out.    
 Actually, the terrain adjusts itself automatically to the exact next points of the map as the camera moves over it.   
-More visible with wireframes : http://www.babylonjs-playground.com/#FJNR5#3  
+More visible with wireframes : http://www.babylonjs-playground.com/#FJNR5#4  
 
 ## The Dynamic Terrain in detail
 ### LOD
@@ -88,13 +88,14 @@ It's a feature allowing to reduce the rendering precision of some mesh when it's
 
 The dynamic terrain provides also a LOD feature but in a different way : the terrain number of vertices always keep constant but only the part of data map covered by the terrain changes.  
 By default, one terrain quad fits one map quad.  
-This factor can be modified with the property `.initialLOD` (default 1).  
+This factor can be modified with the property `.initialLOD` (equal to 1, by default).  
 
 Examples :   
 The default initial LOD is 1, so 1 terrain quad is 1 map quad : http://www.babylonjs-playground.com/#FJNR5#4   
 The initial LOD is set to 10, so 1 terrain quad is now 10x10 map quads (10 on each axis) : http://www.babylonjs-playground.com/#FJNR5#6  
 In consequence, the terrain mesh is far bigger, far less detailed regarding to the map data, but keeps the same amount of vertices (100 x 100).  
 Setting an initial LOD to 10 is probably not a pertinent value, it's done only in the purpose of the explanation.  
+In brief, the initial LOD value is the number of map quads on each axis, X and Z, per terrain quad.  
 
 ### Camera LOD  
 Back to the terrain with the default initial LOD value.  
@@ -118,6 +119,23 @@ Example : http://www.babylonjs-playground.com/#FJNR5#8
 In this example, the LOD value is incremented by 1 each time the altitude is +16 higher.  
 If we get the camera higher by zooming out when looking at the ground, we can see that the terrain size increases since there are less details.  
 
+This function is passed the object camera linked to the terrain and must return a positive integer or zero. By default, zero is return.  
 
+This function is called on each terrain update.  
+Nevertheless, we can set this value at any time with the property `.cameraLODCorrection`.  
+Example : 
+```javascript
+terrain.cameraLODCorrection = 3;    // adds +3 to the initial LOD
+```
+In this example, the camera LOD correction value of 3, forces the global LOD factor to be 4 : 3 (camera) + 1 (initial value). This means each terrain quad is now 16 (4 x 4) map quads.  
+In general, we don't need to set this value manually. It's better to update it automatically with the method `updateCameraLod(camera)`, so the property is rather read than set.  
 
+### Global LOD
+The global LOD factor is the current sum of the initial value and the current camera LOD correction value.  
+As said before, it's the current factor of the number of map quad per axis in each terrain quad.  
+It's accessible with the property `.LODValue`.   
+```javascript
+var lod = terrain.LODValue;
+```
+It's a positive integer (>= 1).  
 
