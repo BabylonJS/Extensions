@@ -144,3 +144,85 @@ var lod = terrain.LODValue;
 It's a positive integer (>= 1).  
 Let's simply remember that the bigger the LOD value, the lower the terrain details.  
 
+
+_the following to be detailed soon ..._
+### Perimetric LOD
+LOD in the distance around the terrain perimeter.  
+```javascript
+terrain.LODLimits = [4, 2, 1, 1];   
+// increment the LOD factor under the 4-th, 
+// then once again under the second, 
+// then twice again under the first rows and columns
+```
+
+## Terrain update
+### According to the camera movement
+The terrain is updated each time the camera crosses a terrain quad either on the X axis, either on the Z axis.  
+However, we can set a higher tolerance on each axis to update the camera only after more terrain quads crossed over.   
+```javascript
+terrain.subToleranceX = 2; // the terrain will be updated only after 2 quads crossed over by the camera on X
+terrain.subToleranceZ = 6; // the terrain will be updated only after 6 quads crossed over by the camera on Z
+```
+The computation charge is constant each terrain update and depends only on the terrain vertex number.  
+The tolerance can make the computation often less often.  This may be useful when the camera moves rarely or by little amount in the terrain area (a character walking on the ground, for instance).  
+
+### User custom function
+Let's enable it (disabled by default) at any time.  
+```javascrit
+terrain.useCustomVertexFunction = true;
+```
+This will be called on next terrain updates 
+```javascript
+    // passed parameters :
+    // - the current vertex
+    // - the i-th and j-th indexes (column, row)
+    terrain.updateVertex = function(vertex, i, j) {
+        fade = grad * BABYLON.Vector3.DistanceSquared(vertex.position, terrain.centerLocal) / maxD2;
+        BABYLON.Color4.LerpToRef(vertex.color, skyColor, fade, vertex.color);
+
+        if (vertex.position.y > 3.0) {
+            vertex.color.b = vertex.position.y / 30.0;
+            vertex.color.r = vertex.color.b;
+        }
+    };
+```
+The vertex properties are :
+* position : Vector3, local position in the terrain mesh system
+* worldPosition :  Vector3, global position in the World
+* color : Vector4
+* uvs : Vector2
+* lodX : integer, the current LOD on X axis for this vertex
+* lodZ : integer, the current LOD on Z axis for this vertex
+* mapIndec : integer, the current index in the map array
+
+### After or Before Terrain Update
+```javascript
+    var maxD2 = 0.0;
+    terrain.beforeUpdate = function() {
+        maxD2 = terrain.terrainHalfSizeX * terrain.terrainHalfSizeZ;
+    };
+
+    terrain.afterUpdate = function() {
+        maxD2 = 0.0;
+    };
+```
+### Force Update On Every Frame
+Unless specific need, we shouldn't do this.  
+```javascript
+terrain.refreshEveryFrame = true; // false, by default
+```
+
+## Useful Functions
+```javascript
+if (terrain.contains(x, z)) {
+    // do stuff
+}
+
+var y = terrain.getHeightFromMap(x, z); // returns y at (x, z) in the World
+
+
+var normal = BABYLON.Vector.Zero();
+y = terrain.getHeightFromMap(x, z, normal); // update also normal with the terrain normal at (x, z)
+```
+
+## Other Properties
