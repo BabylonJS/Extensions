@@ -237,16 +237,19 @@ declare module BABYLON {
         /**
          * Custom function called each frame and passed the terrain camera reference.
          * This should return a positive integer or zero.
+         * Returns zero by default.
          */
         updateCameraLOD(terrainCamera: Camera): number;
         /**
          * Custom function called before each terrain update.
          * The value of reference is passed.
+         * Does nothing by default.
          */
         beforeUpdate(refreshEveryFrame: boolean): void;
         /**
          * Custom function called after each terrain update.
          * The value of refreshEveryFrame is passed.
+         * Does nothing by default.
          */
         afterUpdate(refreshEveryFrame: boolean): void;
     }

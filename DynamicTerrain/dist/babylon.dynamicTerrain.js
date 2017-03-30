@@ -775,15 +775,17 @@ var BABYLON;
         /**
          * Custom function called each frame and passed the terrain camera reference.
          * This should return a positive integer or zero.
+         * Returns zero by default.
          */
         DynamicTerrain.prototype.updateCameraLOD = function (terrainCamera) {
             // LOD value increases with camera altitude
-            var camLOD = Math.abs((terrainCamera.globalPosition.y / 16.0) | 0);
+            var camLOD = 0;
             return camLOD;
         };
         /**
          * Custom function called before each terrain update.
          * The value of reference is passed.
+         * Does nothing by default.
          */
         DynamicTerrain.prototype.beforeUpdate = function (refreshEveryFrame) {
             return;
@@ -791,6 +793,7 @@ var BABYLON;
         /**
          * Custom function called after each terrain update.
          * The value of refreshEveryFrame is passed.
+         * Does nothing by default.
          */
         DynamicTerrain.prototype.afterUpdate = function (refreshEveryFrame) {
             return;
