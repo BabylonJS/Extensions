@@ -130,6 +130,10 @@ terrain.cameraLODCorrection = 3;    // adds +3 to the initial LOD
 In this example, the camera LOD correction value of 3, forces the global LOD factor to be 4 : 3 (camera) + 1 (initial value). This means each terrain quad is now 16 (4 x 4) map quads.  
 In general, we don't need to set this value manually. It's better to update it automatically with the method `updateCameraLod(camera)`, so the property is rather read than set.  
 
+This feature is useful only when the expected camera movements can get the terrain very distant, so too tiny, in the field of view.  
+It's not really necessary to use it if the terrain keeps quite the same size in the fied of view.  
+Example : a character walking on the terrain ground.  
+
 ### Global LOD
 The global LOD factor is the current sum of the initial value and the current camera LOD correction value.  
 As said before, it's the current factor of the number of map quad per axis in each terrain quad.  
@@ -138,4 +142,5 @@ It's accessible with the property `.LODValue`.
 var lod = terrain.LODValue;
 ```
 It's a positive integer (>= 1).  
+Let's simply remember that the bigger the LOD value, the lower the terrain details.  
 
