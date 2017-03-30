@@ -1,8 +1,8 @@
 # Dynamic Terrain
 ## Installation
-Just download the javascript file (`dynamicTerrain.js` or, recommended, the minified version `dynamicTerrain.min.js`) from the BabylonJS [extension repository](https://github.com/BabylonJS/Extensions) folder `DynamicTerrain/dist` :   https://github.com/BabylonJS/Extensions/tree/master/DynamicTerrain/dist    
+Let's just download the javascript file (`dynamicTerrain.js` or, recommended, the minified version `dynamicTerrain.min.js`) from the BabylonJS [extension repository](https://github.com/BabylonJS/Extensions) folder `DynamicTerrain/dist` :   https://github.com/BabylonJS/Extensions/tree/master/DynamicTerrain/dist    
 
-Then in your code, declare this script in a html tag **after** the script tag declaring Babylon.js :
+Then in our code, let's declare this script in a html tag **after** the script tag declaring Babylon.js :
 ```html
 <script src="babylon.js"></script>
 <script src="dynamicTerrain.min.js"></script>
@@ -16,7 +16,7 @@ According to the current camera position in the World, the dynamic terrain morph
 ## Getting started
 
 ### The data map
-The first thing you need to create a dynamic terrain is a data map.  
+The first thing we need to create a dynamic terrain is a data map.  
 The data map is a simple flat array of successive 3D coordinates _(x, y, z)_ in the World.  
 It's defined by the number of points on the map width, called`mapSubX` by the dynamic terrain, and the number of points on the map height, called `mapSubZ`.   
 
@@ -58,4 +58,66 @@ The distance between the points is constant on the width and is different from t
     }
 ```
 
-_add a PG here_
+PG example : http://www.babylonjs-playground.com/#FJNR5#1  
+In this example, the data map is generated in a Float32Array. The very useful library [perlin.js](https://github.com/josephg/noisejs) is used to compute the altitude of each point with a _simplex2_ noise function.  
+In order to better understand how this map is generated, we use it as a ribbon mesh geometry here. The ribbon is displayed in wireframe mode. In this example, the ribbon is thus a really big mesh (1000 x 800 = 800K vertices !). So you shouldn't try to render so big meshes in your scene if you want to keep a decent framerate. Moreover, remember that the logical map could also be bigger than 800K points.  
+
+### The Dynamic Terrain
+Once we've got the data map, we can create the dynamic terrain.  
+```javascript
+        var terrainSub = 100;               // 100 terrain subdivisions
+        var params = {
+            mapData: mapData,               // data map declaration : what data to use ?
+            mapSubX: mapSubX,               // how are these data stored by rows and columns
+            mapSubZ: mapSubZ,
+            terrainSub: terrainSub          // how many terrain subdivisions wanted
+        }
+        var terrain = new BABYLON.DynamicTerrain("t", params, scene);
+```
+PG example : http://www.babylonjs-playground.com/#FJNR5#3  
+The dynamic terrain is the green mesh flying on the data map.  
+We can notice that the green terrain is linked to the scene active camera on its center and moves with it when we zoom in or out.    
+Actually, the terrain adjusts itself automatically to the exact next points of the map as the camera moves over it.   
+More visible with wireframes : http://www.babylonjs-playground.com/#FJNR5#3  
+
+## The Dynamic Terrain in detail
+### LOD
+### Initial LOD
+LOD is an acronym for Level Of Detail.  
+It's a feature allowing to reduce the rendering precision of some mesh when it's far away from the camera in order to lower the necessary computation : the less vertices, the less CPU/GPU needed.  
+
+The dynamic terrain provides also a LOD feature but in a different way : the terrain number of vertices always keep constant but only the part of data map covered by the terrain changes.  
+By default, one terrain quad fits one map quad.  
+This factor can be modified with the property `.initialLOD` (default 1).  
+
+Examples :   
+The default initial LOD is 1, so 1 terrain quad is 1 map quad : http://www.babylonjs-playground.com/#FJNR5#4   
+The initial LOD is set to 10, so 1 terrain quad is now 10x10 map quads (10 on each axis) : http://www.babylonjs-playground.com/#FJNR5#6  
+In consequence, the terrain mesh is far bigger, far less detailed regarding to the map data, but keeps the same amount of vertices (100 x 100).  
+Setting an initial LOD to 10 is probably not a pertinent value, it's done only in the purpose of the explanation.  
+
+### Camera LOD  
+Back to the terrain with the default initial LOD value.  
+We can notice that when the camera is at some high altitude the green terrain seems far away, quite little in the screen area, as this is the common behavior : distant things appear tinier.  
+http://www.babylonjs-playground.com/#FJNR5#7   
+
+However we don't expect that, when getting in higher altitude, the ground would get tinier : it becomes less detailed to our eyes and we can see a larger area of the ground in the same time.  
+
+The dynamic terrain provides a way to do this by increasing the LOD factor with the camera altitude (or any other behavior we may want like changing the LOD with the camera speed instead).  
+
+We just have to overwrite the method `updateCameraLOD(camera)` and make it return an integer that will be added to the current LOD value.  
+```javascript
+    // Terrain camera LOD : custom function
+    terrain.updateCameraLOD = function(terrainCamera) {
+        // LOD value increases with camera altitude
+        var camLOD = Math.abs((terrainCamera.globalPosition.y / 16.0)|0);
+        return camLOD;
+    };
+```
+Example : http://www.babylonjs-playground.com/#FJNR5#8    
+In this example, the LOD value is incremented by 1 each time the altitude is +16 higher.  
+If we get the camera higher by zooming out when looking at the ground, we can see that the terrain size increases since there are less details.  
+
+
+
+

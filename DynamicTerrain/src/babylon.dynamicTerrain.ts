@@ -751,23 +751,26 @@ module BABYLON {
 
         /**
          * Custom function called each frame and passed the terrain camera reference.
-         * This should return a positive integer or zero.
+         * This should return a positive integer or zero.  
+         * Returns zero by default.  
          */
          public updateCameraLOD(terrainCamera: Camera): number {
             // LOD value increases with camera altitude
-            var camLOD = Math.abs((terrainCamera.globalPosition.y / 16.0)|0);
+            var camLOD = 0;
             return camLOD;
         }
         /**
          * Custom function called before each terrain update.
-         * The value of reference is passed.
+         * The value of reference is passed.  
+         * Does nothing by default.  
          */
         public beforeUpdate(refreshEveryFrame: boolean): void {
             return;
         }
         /**
          * Custom function called after each terrain update.
-         * The value of refreshEveryFrame is passed.
+         * The value of refreshEveryFrame is passed.  
+         * Does nothing by default.  
          */
         public afterUpdate(refreshEveryFrame: boolean): void {
             return;
