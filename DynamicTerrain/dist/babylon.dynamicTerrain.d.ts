@@ -12,8 +12,6 @@ declare module BABYLON {
         private _scene;
         private _subToleranceX;
         private _subToleranceZ;
-        private _mapSubHookX;
-        private _mapSubHookZ;
         private _LODLimits;
         private _initialLOD;
         private _LODValue;
@@ -135,16 +133,6 @@ declare module BABYLON {
          * Integer greater or equal to 1. Default 1.
          */
         subToleranceZ: number;
-        /**
-         * Index in the map subdivisions on the X axis to hook the terrain to.
-         * Positive integer (default 0)
-         */
-        mapSubHookX: number;
-        /**
-         * Index in the map subdivisions on the Z axis to hook the terrain to.
-         * Positive integer (default 0)
-         */
-        mapSubHookZ: number;
         /**
          * Initial LOD factor value.
          * Integer greater or equal to 1. Default 1.

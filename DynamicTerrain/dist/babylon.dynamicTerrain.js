@@ -20,8 +20,6 @@ var BABYLON;
             var _this = this;
             this._subToleranceX = 1; // how many cells flought over thy the camera on the terrain x axis before update
             this._subToleranceZ = 1; // how many cells flought over thy the camera on the terrain z axis before update
-            this._mapSubHookX = 0; // x index on the map where the terrain is hooked to
-            this._mapSubHookZ = 0; // z index on the map where the terrain is hooked to
             this._LODLimits = []; // array of LOD limits
             this._initialLOD = 1; // initial LOD value (integer > 0)
             this._LODValue = 1; // current LOD value : initial + camera correction
@@ -110,7 +108,7 @@ var BABYLON;
             for (var j = 0; j <= this._terrainSub; j++) {
                 terrainPath = [];
                 for (var i = 0; i <= this._terrainSub; i++) {
-                    index = this._mod(j * 3 + this._mapSubHookZ, this._mapSubZ) * this._mapSubX + this._mod(i * 3 + this._mapSubHookX, this._mapSubX);
+                    index = this._mod(j * 3, this._mapSubZ) * this._mapSubX + this._mod(i * 3, this._mapSubX);
                     posIndex = index * 3;
                     colIndex = index * 3;
                     uvIndex = index * 2;
@@ -279,7 +277,7 @@ var BABYLON;
                         lodI = LODValue;
                     }
                     // map current index
-                    index = this._mod(this._deltaSubZ + stepJ + this._mapSubHookZ, this._mapSubZ) * this._mapSubX + this._mod(this._deltaSubX + stepI + this._mapSubHookX, this._mapSubX);
+                    index = this._mod(this._deltaSubZ + stepJ, this._mapSubZ) * this._mapSubX + this._mod(this._deltaSubX + stepI, this._mapSubX);
                     terIndex = this._mod(this._deltaSubZ + stepJ, this._terrainIdx) * this._terrainIdx + this._mod(this._deltaSubX + stepI, this._terrainIdx);
                     // related index in the array of positions (data map)
                     if (this._datamap) {
@@ -532,34 +530,6 @@ var BABYLON;
             },
             set: function (val) {
                 this._subToleranceZ = (val > 0) ? val : 1;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(DynamicTerrain.prototype, "mapSubHookX", {
-            /**
-             * Index in the map subdivisions on the X axis to hook the terrain to.
-             * Positive integer (default 0)
-             */
-            get: function () {
-                return this._mapSubHookX;
-            },
-            set: function (val) {
-                this._mapSubHookX = (val >= 0) ? val : 0;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(DynamicTerrain.prototype, "mapSubHookZ", {
-            /**
-             * Index in the map subdivisions on the Z axis to hook the terrain to.
-             * Positive integer (default 0)
-             */
-            get: function () {
-                return this._mapSubHookZ;
-            },
-            set: function (val) {
-                this._mapSubHookZ = (val >= 0) ? val : 0;
             },
             enumerable: true,
             configurable: true
