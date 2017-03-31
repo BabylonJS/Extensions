@@ -31,6 +31,9 @@ module BABYLON {
         public static RegisterLoader(handler: (root: string, name: string) => void): void {
             BABYLON.SceneManager.loader = handler;
         }
+        public static RegisterReady(handler: (scene: BABYLON.Scene, manager: BABYLON.SceneManager) => void): void {
+            BABYLON.SceneManager.ready = handler;
+        }
 
         // *********************************** //
         // * Babylon Scene Manager Component * //
@@ -107,6 +110,7 @@ module BABYLON {
         private static preventDefault: boolean = false;
         private static rightHanded: boolean = true;
         private static loader: (root: string, name: string) => void = null;
+        private static ready: (scene: BABYLON.Scene, manager: BABYLON.SceneManager) => void = null;
 
         public constructor(rootUrl: string, file: string, scene: BABYLON.Scene) {
             if (scene == null) throw new Error("Null host scene obejct specified.");
@@ -338,7 +342,10 @@ module BABYLON {
                 this._executeLocalReady();
             }
         }
-        private _executeLocalReady():void{
+        private _executeLocalReady():void {
+            if (BABYLON.SceneManager.ready != null) {
+                BABYLON.SceneManager.ready(this._scene, this);
+            }
             if (this.controller != null) {
                 this.controller.ready();
                 (<any>this.controller).onready();
@@ -348,8 +355,7 @@ module BABYLON {
                 this._localReadyState = null;
             }
         }
-        private _loadQueueImports()
-        {
+        private _loadQueueImports() {
             var ctr:number = this._loadQueueIndex + 1;
             if (ctr > this._loadQueueCount) {
                 this._loadQueueIndex = 0;
@@ -749,7 +755,10 @@ module BABYLON {
         public createSceneController(klass: string): BABYLON.SceneController {
             if (this.controller == null) {
                 this.controller = this.addSceneComponent(klass, new BABYLON.Mesh("SceneController", this._scene)) as BABYLON.SceneController;
-                this._executeLocalReady();
+                if (this.controller != null) {
+                    this.controller.ready();
+                    (<any>this.controller).onready();
+                }
             } else {
                 throw new Error("Scene controller already exists.");
             }
