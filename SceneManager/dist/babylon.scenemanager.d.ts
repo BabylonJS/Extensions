@@ -356,6 +356,7 @@ declare module BABYLON {
         static LoadScene(rootUrl: string, sceneFilename: string, engine: BABYLON.Engine, onsuccess?: (scene: BABYLON.Scene) => void, progressCallBack?: any, onerror?: (scene: BABYLON.Scene) => void): void;
         static ImportMesh(meshesNames: any, rootUrl: string, sceneFilename: string, scene: BABYLON.Scene, onsuccess?: (meshes: BABYLON.AbstractMesh[], particleSystems: BABYLON.ParticleSystem[], skeletons: BABYLON.Skeleton[]) => void, progressCallBack?: () => void, onerror?: (scene: BABYLON.Scene, message: string, exception?: any) => void): void;
         static RegisterLoader(handler: (root: string, name: string) => void): void;
+        static RegisterReady(handler: (scene: BABYLON.Scene, manager: BABYLON.SceneManager) => void): void;
         onrender: () => void;
         controller: BABYLON.SceneController;
         private _ie;
@@ -425,6 +426,7 @@ declare module BABYLON {
         private static preventDefault;
         private static rightHanded;
         private static loader;
+        private static ready;
         constructor(rootUrl: string, file: string, scene: BABYLON.Scene);
         readonly ie: boolean;
         readonly url: string;
