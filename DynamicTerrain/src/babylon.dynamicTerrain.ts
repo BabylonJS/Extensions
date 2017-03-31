@@ -209,7 +209,8 @@ module BABYLON {
                 this.beforeUpdate(this._refreshEveryFrame);
                 this.update(this._refreshEveryFrame);
                 this.afterUpdate(this._refreshEveryFrame);
-            });         
+            });  
+            this.update(true); // recompute everything once the initial deltas are calculated       
         }
 
         /**

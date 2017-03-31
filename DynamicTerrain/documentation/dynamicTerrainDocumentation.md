@@ -243,34 +243,41 @@ They can be changed at any time according to our needs.
 _the following to be detailed soon ..._
 
 ### User custom function
-Let's enable it (disabled by default) at any time.  
+The Dynamic Terrain provides the ability to update each of its vertex on the whole terrain update.  
+Let's enable it (disabled by default) at any time. It can be enabled/disabled at any moment.   
 ```javascrit
 terrain.useCustomVertexFunction = true;
 ```
-This will be called on next terrain updates 
+This will be called on next terrain updates, not necesseraly each frame.   
 ```javascript
     // passed parameters :
     // - the current vertex
     // - the i-th and j-th indexes (column, row)
     terrain.updateVertex = function(vertex, i, j) {
-        fade = grad * BABYLON.Vector3.DistanceSquared(vertex.position, terrain.centerLocal) / maxD2;
-        BABYLON.Color4.LerpToRef(vertex.color, skyColor, fade, vertex.color);
-
-        if (vertex.position.y > 3.0) {
+        // reset the vertex color in case it was formerly modified
+        vertex.color.g = 1.0;
+        vertex.color.r = 1.0;
+        vertex.color.b = 1.0;
+        // change it above a given altitude
+        if (vertex.position.y > 2.0) {
             vertex.color.b = vertex.position.y / 30.0;
             vertex.color.r = vertex.color.b;
         }
     };
 ```
-The vertex properties are : 
+Let's slowly rotate the camera or zoom in/out : http://www.babylonjs-playground.com/#FJNR5#17   
+
+The accessible vertex properties are : 
 
 * position : Vector3, local position in the terrain mesh system (updatable)
-* color : Vector4   (updatable)
+* color : Vector4   (updatable), default (1.0, 1.0, 1.0, 1.0)
 * uvs : Vector2     (updatable)
 * worldPosition :  Vector3, global position in the World
 * lodX : integer, the current LOD on X axis for this vertex
 * lodZ : integer, the current LOD on Z axis for this vertex
 * mapIndex : integer, the current index in the map array
+
+Another colored example according to the position on the map : http://www.babylonjs-playground.com/#FJNR5#18  
 
 ### After or Before Terrain Update
 ```javascript

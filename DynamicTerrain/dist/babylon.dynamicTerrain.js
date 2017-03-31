@@ -178,6 +178,7 @@ var BABYLON;
                 _this.update(_this._refreshEveryFrame);
                 _this.afterUpdate(_this._refreshEveryFrame);
             });
+            this.update(true); // recompute everything once the initial deltas are calculated       
         }
         /**
          * Updates the terrain position and shape according to the camera position.
