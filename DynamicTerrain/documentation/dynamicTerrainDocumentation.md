@@ -279,8 +279,19 @@ The accessible vertex properties are :
 
 Another colored example according to the position on the map : http://www.babylonjs-playground.com/#FJNR5#18  
 
+This feature is disabled by default because it may have an impact on the CPU.  
+Indeed, when a terrain is 100x100 quads, it has 10K vertices and this custom function is then called 10K times.   
+So let's remember to make it as fast as possible and to not allocate any object within it, else the garbage collector will have to work, consuming our precious FPS.  
+Let's also remember that the custom user function is called only on terrain updates, not necesseraly each frame. There's a way to force the terrain update on every frame that we'll see further.  
+
+
 ### After or Before Terrain Update
+The Dynamic Terrain is updated automatically according to the camera position and all the LOD or tolerance parameters we've set so far.  
+Sometimes it's necessery to do something just before or just after the terrain update although we can't predict in the main logic when this update is triggered.  
+Therefore, the Dynamic Terrain provides two functions that we can over-write what are called just before and just after the terrain update : `beforeUpdate()` and `afterUpdate()`
+
 ```javascript
+    // compute the squared maximum distance in the terrain
     var maxD2 = 0.0;
     terrain.beforeUpdate = function() {
         maxD2 = terrain.terrainHalfSizeX * terrain.terrainHalfSizeZ;
@@ -290,24 +301,34 @@ Another colored example according to the position on the map : http://www.babylo
         maxD2 = 0.0;
     };
 ```
+This may be useful to compute some variable values once for all before they are used then by the user custom function `updateVertex()` instead of computing them inside it.  
+
+
 ### Force Update On Every Frame
 Unless specific need, we shouldn't do this.  
 ```javascript
 terrain.refreshEveryFrame = true; // false, by default
 ```
+This can be changed at any time at will.  
+
 
 ## Useful Functions
+If we need to know if a set of 2D map coordinates _(x, z)_ is currently inside the terrain, we can use the method `contains(x, z)` what returns a boolean. 
 ```javascript
 if (terrain.contains(x, z)) {
     // do stuff
 }
+```
 
+If we need to know what is the altitude on the map of any point located at the coordinatets _(x, z)_ in the World, even if this point is not one of the point defining the map, we can use the method `getHeightFromMap(x ,z)`.  
+```javascript
 var y = terrain.getHeightFromMap(x, z); // returns y at (x, z) in the World
+```
 
-
+This method can also returns the value of the terrain normal vector at the coordinates _(x, z)_. This value is set to a Vector3 passed as a reference : `getHeightFromMap(x, z, ref)`.  
+```javacript
 var normal = BABYLON.Vector.Zero();
 y = terrain.getHeightFromMap(x, z, normal); // update also normal with the terrain normal at (x, z)
-
 ```
 
 ## Other Properties
