@@ -14,8 +14,6 @@ module BABYLON {
         private _scene: Scene;                          // current scene
         private _subToleranceX: number = 1;             // how many cells flought over thy the camera on the terrain x axis before update
         private _subToleranceZ: number = 1;             // how many cells flought over thy the camera on the terrain z axis before update
-        private _mapSubHookX: number = 0;               // x index on the map where the terrain is hooked to
-        private _mapSubHookZ: number = 0;               // z index on the map where the terrain is hooked to
         private _LODLimits: number[] = [];              // array of LOD limits
         private _initialLOD: number = 1;                // initial LOD value (integer > 0)
         private _LODValue: number = 1;                  // current LOD value : initial + camera correction
@@ -140,7 +138,7 @@ module BABYLON {
             for (var j = 0; j <= this._terrainSub; j++) {
                 terrainPath = [];
                 for (var i = 0; i <= this._terrainSub; i++) {
-                    index = this._mod(j * 3 + this._mapSubHookZ, this._mapSubZ) * this._mapSubX + this._mod(i * 3 + this._mapSubHookX, this._mapSubX);
+                    index = this._mod(j * 3, this._mapSubZ) * this._mapSubX + this._mod(i * 3, this._mapSubX);
                     posIndex = index * 3;
                     colIndex = index * 3;
                     uvIndex = index * 2;
@@ -211,7 +209,8 @@ module BABYLON {
                 this.beforeUpdate(this._refreshEveryFrame);
                 this.update(this._refreshEveryFrame);
                 this.afterUpdate(this._refreshEveryFrame);
-            });         
+            });  
+            this.update(true); // recompute everything once the initial deltas are calculated       
         }
 
         /**
@@ -321,7 +320,7 @@ module BABYLON {
                     }
 
                     // map current index
-                    index = this._mod(this._deltaSubZ + stepJ + this._mapSubHookZ, this._mapSubZ) * this._mapSubX + this._mod(this._deltaSubX + stepI + this._mapSubHookX, this._mapSubX);
+                    index = this._mod(this._deltaSubZ + stepJ, this._mapSubZ) * this._mapSubX + this._mod(this._deltaSubX + stepI, this._mapSubX);
                     terIndex = this._mod(this._deltaSubZ + stepJ, this._terrainIdx) * this._terrainIdx + this._mod(this._deltaSubX + stepI, this._terrainIdx);
             
                     // related index in the array of positions (data map)
@@ -582,26 +581,6 @@ module BABYLON {
             this._subToleranceZ = (val > 0) ? val : 1;
         }
         /**
-         * Index in the map subdivisions on the X axis to hook the terrain to.
-         * Positive integer (default 0)
-         */
-        public get mapSubHookX(): number {
-            return this._mapSubHookX;
-        }
-        public set mapSubHookX(val: number) {
-            this._mapSubHookX = (val >= 0) ? val : 0;
-        }
-        /**
-         * Index in the map subdivisions on the Z axis to hook the terrain to.
-         * Positive integer (default 0)
-         */
-        public get mapSubHookZ(): number {
-            return this._mapSubHookZ;
-        }
-        public set mapSubHookZ(val: number) {
-            this._mapSubHookZ = (val >= 0) ? val : 0;
-        }
-        /**
          * Initial LOD factor value.
          * Integer greater or equal to 1. Default 1.
          */
@@ -751,23 +730,26 @@ module BABYLON {
 
         /**
          * Custom function called each frame and passed the terrain camera reference.
-         * This should return a positive integer or zero.
+         * This should return a positive integer or zero.  
+         * Returns zero by default.  
          */
          public updateCameraLOD(terrainCamera: Camera): number {
             // LOD value increases with camera altitude
-            var camLOD = Math.abs((terrainCamera.globalPosition.y / 16.0)|0);
+            var camLOD = 0;
             return camLOD;
         }
         /**
          * Custom function called before each terrain update.
-         * The value of reference is passed.
+         * The value of reference is passed.  
+         * Does nothing by default.  
          */
         public beforeUpdate(refreshEveryFrame: boolean): void {
             return;
         }
         /**
          * Custom function called after each terrain update.
-         * The value of refreshEveryFrame is passed.
+         * The value of refreshEveryFrame is passed.  
+         * Does nothing by default.  
          */
         public afterUpdate(refreshEveryFrame: boolean): void {
             return;
