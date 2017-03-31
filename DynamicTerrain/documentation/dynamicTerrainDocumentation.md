@@ -93,7 +93,7 @@ It's a feature allowing to reduce the rendering precision of some mesh when it's
 
 The dynamic terrain provides also a LOD feature but in a different way : the terrain number of vertices always keep constant but only the part of data map covered by the terrain changes.  
 By default, one terrain quad fits one map quad.  
-This factor can be modified with the property `.initialLOD` (equal to 1, by default).  
+This factor can be modified with the property `.initialLOD` (equal to 1, by default) at any time.  
 
 Examples :   
 The default initial LOD is 1, so 1 terrain quad is 1 map quad : http://www.babylonjs-playground.com/#FJNR5#4   
@@ -142,7 +142,7 @@ Example : a character walking on the terrain ground.
 ### Global LOD
 The global LOD factor is the current sum of the initial value and the current camera LOD correction value.  
 As said before, it's the current factor of the number of map quad per axis in each terrain quad.  
-It's accessible with the property `.LODValue`.   
+It's readable with the property `.LODValue`.   
 ```javascript
 var lod = terrain.LODValue;
 ```
@@ -150,7 +150,6 @@ It's a positive integer (>= 1).
 Let's simply remember that the bigger the LOD value, the lower the terrain details.  
 
 
-_the following to be detailed soon ..._
 ### Perimetric LOD
 The perimetric LOD is the LOD in the distance around the terrain perimeter.  
 When our camera is close enough to the ground and looking at distant things in the landscape, we expect that these things don't require too many vertices to be rendered, because they are far from us and don't need to be as detailed as near objects.  
@@ -207,22 +206,41 @@ terrain.LODLimits = [4, 2, 1, 1];
 // then once again under the second, 
 // then twice again under the first rows and columns
 ```
-Example with a bigger terrain : rotate slowly the camera or zoom in/out to see the perimetric LOD in action  
+Example with a bigger terrain : let's rotate slowly the camera or let's zoom in/out to see the perimetric LOD in action  
 http://www.babylonjs-playground.com/#FJNR5#14  
 
 Of course, the perimetric LOD and the camera LOD correction can work together :  http://www.babylonjs-playground.com/#FJNR5#15  
+
+### LOD Summary
+
+* the initial LOD is the factor of the central terrain quad to apply to the map quad (default 1),
+* the cameraLODcorrection is the quantity to add to this initial LOD to adjust to the camera position or distance (default 0),
+* the LOD limits are the limits in the perimetric terrain subdivision from where to increase the initial LOD (default `[]`), the camera LOD correction applies the same way on all the quads, so even on the already increased perimetric quads.  
+* these three properties can be set at any time ! It's called _dynamic_ terrain, isn't it ?
+* the global LOD value is the current LOD factor value of the central quads.  
 
 
 ## Terrain update
 ### According to the camera movement
 The terrain is updated each time the camera crosses a terrain quad either on the X axis, either on the Z axis.  
-However, we can set a higher tolerance on each axis to update the camera only after more terrain quads crossed over.   
+However, we can set a higher tolerance on each axis to update the camera only after more terrain quads crossed over with the properties `.subToleranceX` and `.subToleranceZ`.   
 ```javascript
-terrain.subToleranceX = 2; // the terrain will be updated only after 2 quads crossed over by the camera on X
-terrain.subToleranceZ = 6; // the terrain will be updated only after 6 quads crossed over by the camera on Z
+terrain.subToleranceX = 10; // the terrain will be updated only after 10 quads crossed over by the camera on X
+terrain.subToleranceZ = 5;  // the terrain will be updated only after 5 quads crossed over by the camera on Z
 ```
-The computation charge is constant each terrain update and depends only on the terrain vertex number.  
-The tolerance can make the computation often less often.  This may be useful when the camera moves rarely or by little amount in the terrain area (a character walking on the ground, for instance).  
+http://www.babylonjs-playground.com/#FJNR5#16   
+In this example, the terrain is updated each time the camera flies over 10 quads on the X axis or 5 quads on the Z axis.  
+As a consequence, the terrain is moved by bunches of 10 or 5 quads each time it's updated.  
+
+The computation charge is constant on each terrain update and depends only on the terrain vertex number.  
+The tolerance can make the computation occur less often.  
+This may be useful when the camera moves rarely or by little amount in the terrain area (a character walking on the ground, for instance) or simply if we need more CPU to do other things than updating the terrain.  
+
+The default values of both these properties are 1 (minimal authorized value).   
+They can be changed at any time according to our needs.   
+
+
+_the following to be detailed soon ..._
 
 ### User custom function
 Let's enable it (disabled by default) at any time.  
@@ -244,14 +262,15 @@ This will be called on next terrain updates
         }
     };
 ```
-The vertex properties are :
-* position : Vector3, local position in the terrain mesh system
+The vertex properties are : 
+
+* position : Vector3, local position in the terrain mesh system (updatable)
+* color : Vector4   (updatable)
+* uvs : Vector2     (updatable)
 * worldPosition :  Vector3, global position in the World
-* color : Vector4
-* uvs : Vector2
 * lodX : integer, the current LOD on X axis for this vertex
 * lodZ : integer, the current LOD on Z axis for this vertex
-* mapIndec : integer, the current index in the map array
+* mapIndex : integer, the current index in the map array
 
 ### After or Before Terrain Update
 ```javascript
@@ -281,6 +300,37 @@ var y = terrain.getHeightFromMap(x, z); // returns y at (x, z) in the World
 
 var normal = BABYLON.Vector.Zero();
 y = terrain.getHeightFromMap(x, z, normal); // update also normal with the terrain normal at (x, z)
+
 ```
 
 ## Other Properties
+
+```javascript
+var mesh = terrain.mesh;                // the terrain underlying BJS mesh
+
+var quadSizeX = terrain.averageSubSizeX; // terrain real quad X size
+var quadSizeZ = terrain.averageSubSizeZ; // terrain real quad Z size
+
+
+var terrainSizeX = terrain.terrainSizeX; // terrain current X size
+var terrainSizeZ = terrain.terrainSizeZ; // terrain current X size
+
+var terrainHalfSizeX = terrain.terrainHalfSizeX; // terrain current X half size
+var terrainHalfSizeZ = terrain.terrainHalfSizeZ; // terrain current Z half size
+
+var terrainCenter = terrain.centerLocal;        // Vector3 position of the terrain center in its local space
+var terrainWorldCenter = terrain.centerWorld;   // Vector3 position of the terrain center in the World space
+
+var mapPointsX = terrain.mapSubX;   // the passed map number of points on width at terrain construction time
+var mapPointsZ = terrain.mapSubZ;   // the passed map number of points on height at terrain construction time
+
+```
+
+## Advanced Terrain
+### Color map
+### UV map
+### Normal map
+```javascript
+terrain.computeNormals = false;   // default true, to skip the normal computation
+```
+### Without Data Map
