@@ -79,6 +79,11 @@ The dynamic terrain is the green mesh flying on the data map.
 We can notice that the green terrain is linked to the scene active camera on its center and moves with it when we zoom in or out.    
 Actually, the terrain adjusts itself automatically to the exact next points of the map as the camera moves over it.   
 More visible with wireframes : http://www.babylonjs-playground.com/#FJNR5#4  
+The terrain is defined by its number of subdivisions what is the same on both its axes X and Z.  
+It's better to choose a multiple of 2 as the number of terrain subdivisions.  
+Once created, this number never changes, neither the terrain number of vertices, but only its shape.  
+This means the computation charge to update the terrain is always constant and depends only on this subdivision value.  
+
 
 ## The Dynamic Terrain in detail
 ### LOD
@@ -147,13 +152,66 @@ Let's simply remember that the bigger the LOD value, the lower the terrain detai
 
 _the following to be detailed soon ..._
 ### Perimetric LOD
-LOD in the distance around the terrain perimeter.  
+The perimetric LOD is the LOD in the distance around the terrain perimeter.  
+When our camera is close enough to the ground and looking at distant things in the landscape, we expect that these things don't require too many vertices to be rendered, because they are far from us and don't need to be as detailed as near objects.  
+
+Let's get of the map rendering and let's create a smaller terrain of 20 subdivisions only : http://www.babylonjs-playground.com/#FJNR5#9   
+The camera is located high in altitude in order to understand better how to set the perimetric LOD.  
+
+The property to change the perimetric LOD is `.LODLimits`.  It's an array of integers (or an empty array, by default).  
+Let's set a first limit to 4 :  
+```javascript
+terrain.LODLimits = [4]; 
+```
+http://www.babylonjs-playground.com/#FJNR5#10   
+
+How is now the terrain after a forced update (note : the terrain automatically update with the camera movement on X or Z, so we force it here in case the camera won't move at all) ?  
+
+We can notice that the center of the center has kept the original size of subdivisions, but all the quads located in the first 4 subdivisions from the terrain edges are now bigger.  
+Actually their LOD factor is increased by 1 either on the X axis, either on the Z axis, either on both axes, depending on their location on the global terrain grid.  
+When it's increased by 1 on both their axes (in the grid corners), their LOD value is 2. This means one of this terrain quad fits exactly 2 x 2 map quads, since the central terrain quads keep fitting each 1 map quad only.  
+
+When we move the camera closer to the ground and orientate it to look at some distant hills, we can see that the distant quads are bigger, so depict a larger area of the map (so less detailed) than the close ones.  
+
+Let's add now another limit : 
+```javascript
+terrain.LODLimits = [2, 4]; 
+```
+http://www.babylonjs-playground.com/#FJNR5#11  
+
+Same principle but with an extra step : 
+The quads in the first 4 subdivisions have all their LOD increased by 1.  
+The quads in the first 2 subdivisions have their LOD increased again by 1 from their current value, so increased by 2 relatively to the central ones.  
+We can set as many limits as we want : 
+```javascript
+terrain.LODLimits = [1, 2, 4]; 
+```
+http://www.babylonjs-playground.com/#FJNR5#12  
+
+We can even repeat a limit as many times we want. In this case, the LOD is incremented as many times as this limit is repeated : 
+```javascript
+terrain.LODLimits = [1, 1, 1, 1, 2, 4]; 
+```
+http://www.babylonjs-playground.com/#FJNR5#13   
+
+Notes : 
+
+* We can change the value of the property `.LODLimits` at any time, it's taken in account on the next terrain update. So it's not a fixed value. We could image to have different LOD behavior depending on the camera position, speed or on the landscape itself.
+* The array is always stored internally being sorted in the descending order (ex `[4, 2]`). So let's remember this when we have to read this property value.  
+* Some of the terrain quads aren't squared, but rectangular. Actually each terrain vertex is given current `lodX` and `lodZ` values what we can read from a custom user function if needed (to be seen further).  
+
+A simple way to remember how this works :  
 ```javascript
 terrain.LODLimits = [4, 2, 1, 1];   
 // increment the LOD factor under the 4-th, 
 // then once again under the second, 
 // then twice again under the first rows and columns
 ```
+Example with a bigger terrain : rotate slowly the camera or zoom in/out to see the perimetric LOD in action  
+http://www.babylonjs-playground.com/#FJNR5#14  
+
+Of course, the perimetric LOD and the camera LOD correction can work together :  http://www.babylonjs-playground.com/#FJNR5#15  
+
 
 ## Terrain update
 ### According to the camera movement
