@@ -2,7 +2,7 @@
 Babylon JS Cloner System (BCS)
  
 <p>
-	A Typescript based project for sytematically duplicating Babylon meshes 
+	A Typescript based project for cloning and distributing Babylon meshes 
 </p>
 Definitions: 
 <ul><li>
