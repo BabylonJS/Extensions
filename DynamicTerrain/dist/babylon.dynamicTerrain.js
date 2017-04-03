@@ -681,24 +681,93 @@ var BABYLON;
             enumerable: true,
             configurable: true
         });
+        Object.defineProperty(DynamicTerrain.prototype, "mapData", {
+            /**
+             * The data of the map.
+             * A flat array (Float32Array recommeded) of successive 3D float coordinates (x, y, z).
+             * This property can be set only if a mapData array was passed at construction time.
+             */
+            get: function () {
+                return this._mapData;
+            },
+            set: function (val) {
+                this._mapData = val;
+                this._mapSizeX = Math.abs(this._mapData[(this._mapSubX - 1) * 3] - this._mapData[0]);
+                this._mapSizeZ = Math.abs(this._mapData[(this._mapSubZ - 1) * this._mapSubX * 3 + 2] - this._mapData[2]);
+                this._averageSubSizeX = this._mapSizeX / this._mapSubX;
+                this._averageSubSizeZ = this._mapSizeZ / this._mapSubZ;
+            },
+            enumerable: true,
+            configurable: true
+        });
         Object.defineProperty(DynamicTerrain.prototype, "mapSubX", {
             /**
-             * The passed map number of subdivisions on the X axis.
+             * The number of points on the map width.
              * Positive Integer.
              */
             get: function () {
                 return this._mapSubX;
+            },
+            set: function (val) {
+                this._mapSubX = val;
             },
             enumerable: true,
             configurable: true
         });
         Object.defineProperty(DynamicTerrain.prototype, "mapSubZ", {
             /**
-             * The passed map number of subdivisions on the Z axis.
+             * The number of points on the map height .
              * Positive Integer.
              */
             get: function () {
                 return this._mapSubZ;
+            },
+            set: function (val) {
+                this._mapSubZ = val;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(DynamicTerrain.prototype, "mapColors", {
+            /**
+             * The map of colors.
+             * A flat array of successive floats between 0 and 1 as r,g,b values.
+             * This property can be set only if a mapColors array was passed at construction time.
+             */
+            get: function () {
+                return this._mapColors;
+            },
+            set: function (val) {
+                this._mapColors = val;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(DynamicTerrain.prototype, "mapUVs", {
+            /**
+             * The map of UVs.
+             * A flat array of successive floats between 0 and 1 as (u, v) values.
+             * This property can be set only if a mapUVs array was passed at construction time.
+             */
+            get: function () {
+                return this._mapUVs;
+            },
+            set: function (val) {
+                this._mapUVs = val;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(DynamicTerrain.prototype, "mapNormals", {
+            /**
+             * The map of normals.
+             * A flat array of successive floats as normal vector coordinates (x, y, z) on each map point.
+             */
+            get: function () {
+                return this._mapNormals;
+            },
+            set: function (val) {
+                this._mapNormals = val;
             },
             enumerable: true,
             configurable: true

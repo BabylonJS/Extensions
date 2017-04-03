@@ -679,18 +679,71 @@ module BABYLON {
             this._LODLimits = ar;
         }
         /**
-         * The passed map number of subdivisions on the X axis. 
+         * The data of the map.
+         * A flat array (Float32Array recommeded) of successive 3D float coordinates (x, y, z).  
+         * This property can be set only if a mapData array was passed at construction time.  
+         */
+        public get mapData(): Float32Array|number[] {
+            return this._mapData;
+        }
+        public set mapData(val: Float32Array|number[]) {
+            this._mapData = val;
+            this._mapSizeX = Math.abs(this._mapData[(this._mapSubX - 1) * 3] - this._mapData[0]);
+            this._mapSizeZ = Math.abs(this._mapData[(this._mapSubZ - 1) * this._mapSubX * 3 + 2] - this._mapData[2]);
+            this._averageSubSizeX = this._mapSizeX / this._mapSubX;
+            this._averageSubSizeZ = this._mapSizeZ / this._mapSubZ;
+        }
+        /**
+         * The number of points on the map width. 
          * Positive Integer.  
          */
         public get mapSubX(): number {
             return this._mapSubX;
         }
+        public set mapSubX(val: number) {
+            this._mapSubX = val;
+        }
         /**
-         * The passed map number of subdivisions on the Z axis. 
+         * The number of points on the map height . 
          * Positive Integer.  
          */
         public get mapSubZ(): number {
             return this._mapSubZ;
+        }
+        public set mapSubZ(val: number) {
+            this._mapSubZ = val;
+        }
+        /**
+         * The map of colors.
+         * A flat array of successive floats between 0 and 1 as r,g,b values.  
+         * This property can be set only if a mapColors array was passed at construction time.  
+         */
+        public get mapColors(): Float32Array|number[] {
+            return this._mapColors;
+        }
+        public set mapColors(val: Float32Array|number[]) {
+            this._mapColors = val;
+        }
+        /**
+         * The map of UVs.
+         * A flat array of successive floats between 0 and 1 as (u, v) values. 
+         * This property can be set only if a mapUVs array was passed at construction time.   
+         */
+        public get mapUVs(): Float32Array|number[] {
+            return this._mapUVs;
+        }
+        public set mapUVs(val: Float32Array|number[]) {
+            this._mapUVs = val;
+        }
+        /**
+         * The map of normals.
+         * A flat array of successive floats as normal vector coordinates (x, y, z) on each map point.  
+         */
+        public get mapNormals(): Float32Array|number[] {
+            return this._mapNormals;
+        }
+        public set mapNormals(val: Float32Array|number[]) {
+            this._mapNormals = val;
         }
         /**
          * Boolean : must the normals be recomputed on each terrain update (default : true)

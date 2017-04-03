@@ -84,6 +84,27 @@ It's better to choose a multiple of 2 as the number of terrain subdivisions.
 Once created, this number never changes, neither the terrain number of vertices, but only its shape.  
 This means the computation charge to update the terrain is always constant and depends only on this subdivision value.  
 
+The terrain is a logical object providing several features. It embeddeds a BJS mesh accessible with the property `.mesh` :
+```javascript
+var terrainMesh : terrain.mesh;
+terrain.Mesh.diffuseTexture = myTerrainTexture;
+```
+
+Although a data map must be passed at construction time, this map can be changed thereafter as well as the properties `.mapSubX` and `mapSubZ`.  
+```javascript
+terrain.mapData = map2;
+terrain.mapSubX = mapSubX2;
+terrain.mapSubZ = mapSubZ2;
+```
+This is useful if we have to download dynamically new chuncks of data as the camera moves in the World.  
+Example : 
+```javascript
+// change the terrain map on the fly
+if (camera.position.z > someLimit) {
+    terrain.mapData = map2;
+}
+```
+
 
 ## The Dynamic Terrain in detail
 ### LOD
@@ -240,8 +261,6 @@ The default values of both these properties are 1 (minimal authorized value).
 They can be changed at any time according to our needs.   
 
 
-_the following to be detailed soon ..._
-
 ### User custom function
 The Dynamic Terrain provides the ability to update each of its vertex on the whole terrain update.  
 Let's enable it (disabled by default) at any time. It can be enabled/disabled at any moment.   
@@ -277,7 +296,8 @@ The accessible vertex properties are :
 * lodZ : integer, the current LOD on Z axis for this vertex
 * mapIndex : integer, the current index in the map array
 
-Another colored example according to the position on the map : http://www.babylonjs-playground.com/#FJNR5#18  
+Another colored example according to the position on the map : http://www.babylonjs-playground.com/#FJNR5#18   
+Of course, it works also with alpha : http://www.babylonjs-playground.com/#FJNR5#19   
 
 This feature is disabled by default because it may have an impact on the CPU.  
 Indeed, when a terrain is 100x100 quads, it has 10K vertices and this custom function is then called 10K times.   
@@ -353,6 +373,7 @@ var mapPointsX = terrain.mapSubX;   // the passed map number of points on width 
 var mapPointsZ = terrain.mapSubZ;   // the passed map number of points on height at terrain construction time
 
 ```
+_the following to be detailed soon ..._
 
 ## Advanced Terrain
 ### Color map
