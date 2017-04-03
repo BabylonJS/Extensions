@@ -359,7 +359,6 @@ var mesh = terrain.mesh;                // the terrain underlying BJS mesh
 var quadSizeX = terrain.averageSubSizeX; // terrain real quad X size
 var quadSizeZ = terrain.averageSubSizeZ; // terrain real quad Z size
 
-
 var terrainSizeX = terrain.terrainSizeX; // terrain current X size
 var terrainSizeZ = terrain.terrainSizeZ; // terrain current X size
 
@@ -373,13 +372,116 @@ var mapPointsX = terrain.mapSubX;   // the passed map number of points on width 
 var mapPointsZ = terrain.mapSubZ;   // the passed map number of points on height at terrain construction time
 
 ```
-_the following to be detailed soon ..._
 
 ## Advanced Terrain
 ### Color map
+A color map can be passed to the terrain at construction time.  
+This color map is a flat array of successive floats between 0 and 1 of each map point _(r, g, b)_ values.  
+This array must have the same size than the data array.   
+Let's get back the very first example of the data array generation and let's populate a color array `mapColors`
+```javascript
+    var mapSubX = 1000;             // map number of points on the width
+    var mapSubZ = 800;              // map number of points on the height
+    var seed = 0.3;                 // set the noise seed
+    noise.seed(seed);               // generate the simplex noise, don't care about this
+    var mapData = new Float32Array(mapSubX * mapSubZ * 3);  // x3 because 3 values per point : x, y, z
+    var mapColors = new Float32Array(mapSubX * mapSubZ * 3); // x3 because 3 values per point : r, g, b
+    for (var l = 0; l < mapSubZ; l++) {                 // loop on height points
+        for (var w = 0; w < mapSubX; w++) {             // loop on width points
+            var x = (w - mapSubX * 0.5) * 5.0;          // distance inter-points = 5 on the width
+            var z = (l - mapSubZ * 0.5) * 2.0;          // distance inter-points = 2 on the width
+            var y = noise.simplex2(x, z);               // altitude
+                   
+            mapData[3 * (l * mapSubX + w)] = x;
+            mapData[3 * (l * mapSubX + w) + 1] = y;
+            mapData[3 * (l * mapSubX + w) + 2] = z;    
+
+            // colors of the map
+            mapColors[3 * (l * mapSubX + w)] = (0.5 + Math.random() * 0.2);
+            mapColors[3 * (l * mapSubX + w) + 1] = (0.5 + Math.random() * 0.4);
+            mapColors[3 * (l * mapSubX + w) + 2] = (0.5);       
+        }
+    }
+```
+And let's pass this color array to the terrain at construction time with the optional parameter property `.mapColors` :
+```javascript
+var terrainSub = 100;               // 100 terrain subdivisions
+var params = {
+    mapData: mapData,               // data map declaration : what data to use ?
+    mapSubX: mapSubX,               // how are these data stored by rows and columns
+    mapSubZ: mapSubZ,
+    mapColors: mapColors,           // the array of map colors
+    terrainSub: terrainSub          // how many terrain subdivisions wanted
+}
+var terrain = new BABYLON.DynamicTerrain("t", params, scene);
+```
+http://www.babylonjs-playground.com/#FJNR5#20  
+Obviously this still works with the user custom function called with `updateVertex()` : http://www.babylonjs-playground.com/#FJNR5#21  
+
 ### UV map
+If we assign a material and a texture to the terrain mesh, it's by default set to the current terrain size and shifted according to the camera movements.  
+http://www.babylonjs-playground.com/#FJNR5#22  
+Before going further, let's note that the texturing works with both the color map and the user custom function : http://www.babylonjs-playground.com/#FJNR5#23  
+
+Like for the colors, we could have a set of UVs relative to the map as a flat array of successive floats between 0 and 1 being the u and v values for each map point.  
+This array must be sized _mapSubX x mapSubZ x 2_ (because two floats per map point : u and v) and must be passed to the terrain at construction time with the optional parameter property `.mapUVs`
+```javascript
+var terrainSub = 100;               // 100 terrain subdivisions
+var params = {
+    mapData: mapData,               // data map declaration : what data to use ?
+    mapSubX: mapSubX,               // how are these data stored by rows and columns
+    mapSubZ: mapSubZ,
+    mapUVs: mapUVs,                 // the array of map UVs
+    terrainSub: terrainSub          // how many terrain subdivisions wanted
+}
+var terrain = new BABYLON.DynamicTerrain("t", params, scene);
+```
+
 ### Normal map
+By default, as the terrain morphs from the current map data, all its normals are recomputed each update.  
+The normal computation charge is directly related to the terrain number of vertices (10K for a 100x100 terrain).  
+If we don't need the normal computation (ex : a terrain that would have only an emissive color or a wireframed terrain), we can disable at any time it with the property `.computeNormals`.  
 ```javascript
 terrain.computeNormals = false;   // default true, to skip the normal computation
 ```
+If we have to manage a very large terrain and we still need to display the reflected light with right normals, we could pre-compute all the normals from the map data and store them in a normal flat array like we did for map point coordinates.  
+This flat array of successive floats as normal vector coordinates _(x, y, z)_ for each map point can then be passed to the terrain. It simply must be exactly the same size than the map data array.  
+In this case, the terrain normals aren't computed any longer and the map normal array is instead.  
+This array is passed with the optional parameter property `.mapNormals`.  
+```javascript
+var normalArray = [n1.x, n1.y, n1.z, n2.x, n2.y, n2.z, ...];
+var terrainSub = 100;               // 100 terrain subdivisions
+var params = {
+    mapData: mapData,               // data map declaration : what data to use ?
+    mapSubX: mapSubX,               // how are these data stored by rows and columns
+    mapSubZ: mapSubZ,
+    mapNormals: normalArray,        // the array of map normals
+    terrainSub: terrainSub          // how many terrain subdivisions wanted
+}
+var terrain = new BABYLON.DynamicTerrain("t", params, scene);
+```
+
+### Map change on the fly
+The terrain can be assigned another map at any time.  
+Example : 
+```javascript
+// change the terrain map on the fly
+if (camera.position.z > someLimit) {
+    terrain.mapData = map2;
+}
+```
+This can be useful if new data are dynamically downloaded as the camera moves in the World.  
+Not only the map data can be changed, but also the color, uv or normal data.  
+```javascript
+// change the terrain map on the fly
+if (camera.position.z > someLimit) {
+    terrain.mapData = map2;
+    terrain.mapColors = colors2;
+    terrain.mapUVs = uvs2;
+    terrain.mapNormals = normals2;
+}
+```
+
+_the following to be detailed soon ..._
+
 ### Without Data Map
