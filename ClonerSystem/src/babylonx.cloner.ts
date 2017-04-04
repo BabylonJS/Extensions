@@ -3,75 +3,6 @@
 ///<reference path="../lib/babylon.d.ts" />
 ///<reference path="../lib/babylon.marbleProceduralTexture.d.ts" />
 module BABYLONX {
-    export class Demomeshes { 
-        static objInstances: number;
-        private _scene;
-        constructor(scene) {
-            Demomeshes.objInstances = 0 | (Demomeshes.objInstances + 1);
-            this._scene=scene; 
-        }
-       createCube(size = { w: 1, h: 1, d: 1 },  color = "#FF0000") {
-            var options = { width: size.w, depth: size.d, height: size.h };
-            var cube = BABYLON.MeshBuilder.CreateBox("cube"+ Demomeshes.objInstances, options, this._scene);
-            var mat = new BABYLON.StandardMaterial("mcube" + Demomeshes.objInstances, this._scene);
-            mat.diffuseColor =  BABYLON.Color3.FromHexString(color);
-            mat.specularColor = BABYLON.Color3.Green();
-            //mat.wireframe=true; 
-            cube.material = mat; 
-            var marbleTexture = new BABYLON.MarbleProceduralTexture("marble"+ Demomeshes.objInstances, 512, this._scene);
-            marbleTexture.numberOfTilesHeight = .5;
-            marbleTexture.numberOfTilesWidth = .5;
-            marbleTexture.jointColor = new BABYLON.Color3(0, 0, 1);
-            //marbleTexture.marbleColor=new BABYLON.Color3(1,0,0);
-            marbleTexture.amplitude = 9.0;
-            mat.diffuseTexture = marbleTexture;
-            //mat.alpha=.3;
-            //mat.diffuseTexture.hasAlpha=true;  
-            Demomeshes.objInstances++;
-            return cube;
-       }
-        createCylinder(height = 1, color = "#00ff00",top=0.5,bottom=0.5) {
-            var mat = new BABYLON.StandardMaterial("cmat" + Demomeshes.objInstances, this._scene);
-            var cone = BABYLON.MeshBuilder.CreateCylinder("cone" + Demomeshes.objInstances, { height: height, diameterTop:top,diameterBottom: bottom, tessellation: 32 }, this._scene);
-            //var cone = BABYLON.MeshBuilder.CreateCylinder("cone" + Demomeshes.objInstances, { height: height, tessellation: 32 }, this._scene);
-            mat.diffuseColor = BABYLON.Color3.FromHexString(color);
-            mat.specularColor = BABYLON.Color3.Green();
-            cone.material = mat;
-            var marbleTexture = new BABYLON.MarbleProceduralTexture("marble"+ Demomeshes.objInstances, 512, this._scene);
-            marbleTexture.numberOfTilesHeight = 1.0; 
-            marbleTexture.numberOfTilesWidth = .5;
-            //marbleTexture.jointColor=new BABYLON.Color3(0,0,1);
-            //marbleTexture.marbleColor=new BABYLON.Color3(1,0,0);
-            marbleTexture.amplitude = 9.2;
-            mat.diffuseTexture = marbleTexture;
-            Demomeshes.objInstances++;
-            //cone.rotation.x=Math.PI/4;
-            return cone; 
-        }
-        createIcoSphere(radius=6) {
-            var mesh = BABYLON.MeshBuilder.CreateIcoSphere("m", {radius: radius}, this._scene);
-            mesh.updateFacetData();
-            return mesh;
-        }
-        createSphere(diameter= 1, color = "#0000ff",segments=32) {
-            var mat = new BABYLON.StandardMaterial("stdmat" + Demomeshes.objInstances, this._scene);
-            var sphere = BABYLON.MeshBuilder.CreateSphere("sphere" + Demomeshes.objInstances, { diameter: diameter,segments:segments }, this._scene);
-            //mat.diffuseTexture= new BABYLON.Texture("testtexture.png",this.scene);
-            var marbleTexture = new BABYLON.MarbleProceduralTexture("marble", 512, this._scene);
-            marbleTexture.numberOfTilesHeight = 1.0;
-            marbleTexture.numberOfTilesWidth = .5;
-            //marbleTexture.jointColor=new BABYLON.Color3(0,0,1);
-            //marbleTexture.marbleColor=new BABYLON.Color3(1,0,0);
-            marbleTexture.amplitude = 9.2;
-            mat.diffuseTexture = marbleTexture;
-            mat.diffuseColor = BABYLON.Color3.FromHexString(color);
-            mat.specularColor = BABYLON.Color3.Green();
-            sphere.material = mat;
-            Demomeshes.objInstances++;
-            return sphere;
-
-        }
-    }
     export class Demoscene {
         static objInstances: number;
         private _engine;
@@ -79,15 +10,18 @@ module BABYLONX {
         private _canvas;
         private _camera;
         private _light;
-        constructor() {
+        constructor(engine, canvas) {
             Demoscene.objInstances = 0 | (Demoscene.objInstances + 1);
+            if (engine == undefined || canvas == undefined) {
+                this.init();
+            } else {
+                this._canvas = canvas;
+                this._engine = engine;
+                this._scene = new BABYLON.Scene(engine);
+                this.cameras();
+                this.lights();
+            }
         }
-        initWithEngine(engine,canvas) {
-            this._scene = new BABYLON.Scene(engine);
-            this._canvas = canvas;
-            this.cameras();
-            this.lights();
-       }
         init() {
             this.dom();
             this._engine = new BABYLON.Engine(this._canvas, true, { stencil: true });
@@ -120,14 +54,15 @@ module BABYLONX {
         }
         objects() {
         }
-        createCubeInternal(cube, color) {
+        createCube(size = { w: 1, h: 1, d: 1 }, color = "#FF0000") {
+            var options = { width: size.w, depth: size.d, height: size.h };
+            var cube = BABYLON.MeshBuilder.CreateBox("cube" + Demoscene.objInstances, options, this._scene);
             var mat = new BABYLON.StandardMaterial("mcube" + Demoscene.objInstances, this._scene);
-
-            mat.diffuseColor = color;// BABYLON.Color3.FromHexString(color);
+            mat.diffuseColor = BABYLON.Color3.FromHexString(color);
             mat.specularColor = BABYLON.Color3.Green();
-            //mat.wireframe=true;
+            //mat.wireframe=true; 
             cube.material = mat;
-            var marbleTexture = new BABYLON.MarbleProceduralTexture("marble", 512, this.scene);
+            var marbleTexture = new BABYLON.MarbleProceduralTexture("marble" + Demoscene.objInstances, 512, this._scene);
             marbleTexture.numberOfTilesHeight = .5;
             marbleTexture.numberOfTilesWidth = .5;
             marbleTexture.jointColor = new BABYLON.Color3(0, 0, 1);
@@ -139,22 +74,14 @@ module BABYLONX {
             Demoscene.objInstances++;
             return cube;
         }
-        createCubeX(scene ,size = { w: 1, h: 1, d: 1 },  color = "#FF0000") {
-            var options = { width: size.w, depth: size.d, height: size.h };
-            var cube = BABYLON.MeshBuilder.CreateBox("cube", options, scene);
-            return this.createCubeInternal(cube, BABYLON.Color3.FromHexString(color));
-        }
-        createCube(size = 1, color = BABYLON.Color3.Red()) {
-            var cube = BABYLON.Mesh.CreateBox("cube" + Demoscene.objInstances, size, this._scene);
-            return this.createCubeInternal(cube, color);
-        }
-        createCone(height = 1, color = BABYLON.Color3.Green()) {
+        createCylinder(height = 1, color = "#00ff00", top = 0.5, bottom = 0.5) {
             var mat = new BABYLON.StandardMaterial("cmat" + Demoscene.objInstances, this._scene);
-            var cone = BABYLON.MeshBuilder.CreateCylinder("cone" + Demoscene.objInstances, { height: 1, diameterTop: 0, tessellation: 32 }, this._scene);
-            mat.diffuseColor = color;
+            var cone = BABYLON.MeshBuilder.CreateCylinder("cone" + Demoscene.objInstances, { height: height, diameterTop: top, diameterBottom: bottom, tessellation: 32 }, this._scene);
+            //var cone = BABYLON.MeshBuilder.CreateCylinder("cone" + Demoscene.objInstances, { height: height, tessellation: 32 }, this._scene);
+            mat.diffuseColor = BABYLON.Color3.FromHexString(color);
             mat.specularColor = BABYLON.Color3.Green();
             cone.material = mat;
-            var marbleTexture = new BABYLON.MarbleProceduralTexture("marble", 512, this.scene);
+            var marbleTexture = new BABYLON.MarbleProceduralTexture("marble" + Demoscene.objInstances, 512, this._scene);
             marbleTexture.numberOfTilesHeight = 1.0;
             marbleTexture.numberOfTilesWidth = .5;
             //marbleTexture.jointColor=new BABYLON.Color3(0,0,1);
@@ -165,41 +92,23 @@ module BABYLONX {
             //cone.rotation.x=Math.PI/4;
             return cone;
         }
-        createCylinder(height = 1, color = BABYLON.Color3.Green()) {
-            var mat = new BABYLON.StandardMaterial("cmat" + Demoscene.objInstances, this._scene);
-            //var cone = BABYLON.MeshBuilder.CreateCylinder("cone" + Demoscene.objInstances, { height: height, diameterTop: height/2,diameterBottom: height/2, tessellation: 32 }, this._scene);
-            var cone = BABYLON.MeshBuilder.CreateCylinder("cone" + Demoscene.objInstances, { height: height, tessellation: 32 }, this._scene);
-            mat.diffuseColor = color;
-            mat.specularColor = BABYLON.Color3.Green();
-            cone.material = mat;
-            var marbleTexture = new BABYLON.MarbleProceduralTexture("marble", 512, this.scene);
-            marbleTexture.numberOfTilesHeight = 1.0;
-            marbleTexture.numberOfTilesWidth = .5;
-            //marbleTexture.jointColor=new BABYLON.Color3(0,0,1);
-            //marbleTexture.marbleColor=new BABYLON.Color3(1,0,0);
-            marbleTexture.amplitude = 9.2;
-            mat.diffuseTexture = marbleTexture;
-            Demoscene.objInstances++;
-            //cone.rotation.x=Math.PI/4;
-            return cone;
-        }
-        createIcoSphere(scene, radius=6) {
-            var mesh = BABYLON.MeshBuilder.CreateIcoSphere("m", {radius: radius}, scene);
+        createIcoSphere(radius = 6) {
+            var mesh = BABYLON.MeshBuilder.CreateIcoSphere("m", { radius: radius }, this._scene);
             mesh.updateFacetData();
             return mesh;
         }
-        createSphere(diameter= 1, color = BABYLON.Color3.Blue(),segments=32) {
+        createSphere(diameter = 1, color = "#0000ff", segments = 32) {
             var mat = new BABYLON.StandardMaterial("stdmat" + Demoscene.objInstances, this._scene);
-            var sphere = BABYLON.MeshBuilder.CreateSphere("sphere" + Demoscene.objInstances, { diameter: diameter,segments:segments }, this._scene);
+            var sphere = BABYLON.MeshBuilder.CreateSphere("sphere" + Demoscene.objInstances, { diameter: diameter, segments: segments }, this._scene);
             //mat.diffuseTexture= new BABYLON.Texture("testtexture.png",this.scene);
-            var marbleTexture = new BABYLON.MarbleProceduralTexture("marble", 512, this._scene);
+            var marbleTexture = new BABYLON.MarbleProceduralTexture("marble" + Demoscene.objInstances, 512, this._scene);
             marbleTexture.numberOfTilesHeight = 1.0;
             marbleTexture.numberOfTilesWidth = .5;
             //marbleTexture.jointColor=new BABYLON.Color3(0,0,1);
             //marbleTexture.marbleColor=new BABYLON.Color3(1,0,0);
             marbleTexture.amplitude = 9.2;
             mat.diffuseTexture = marbleTexture;
-            mat.diffuseColor = color;
+            mat.diffuseColor = BABYLON.Color3.FromHexString(color);
             mat.specularColor = BABYLON.Color3.Green();
             sphere.material = mat;
             Demoscene.objInstances++;
@@ -207,12 +116,22 @@ module BABYLONX {
 
         }
 
-        renderloop() {
+       renderloop() {
             this._scene.render();
         }
         get scene() {
             return this._scene;
         }
+        get engine() {
+            return this._engine;
+        }
+        get camera() {
+            return this._camera;
+        }
+        get light() {
+            return this._light;
+        }
+
     }
 
     export class CMesh extends BABYLON.Mesh {
