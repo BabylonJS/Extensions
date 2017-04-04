@@ -561,6 +561,15 @@ module BABYLON {
             return this._terrain;
         }
         /**
+         * The camera the terrain is linked to
+         */
+        public get camera(): Camera {
+            return this._terrainCamera;
+        }
+        public set camera(val: Camera) {
+            this._terrainCamera = val;
+        }
+        /**
          * Number of cells flought over by the cam on the X axis before the terrain is updated.
          * Integer greater or equal to 1.
          */

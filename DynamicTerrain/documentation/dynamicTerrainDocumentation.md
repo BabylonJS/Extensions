@@ -373,6 +373,7 @@ var terrainWorldCenter = terrain.centerWorld;   // Vector3 position of the terra
 var mapPointsX = terrain.mapSubX;   // the passed map number of points on width at terrain construction time
 var mapPointsZ = terrain.mapSubZ;   // the passed map number of points on height at terrain construction time
 
+var camera = terrain.camera;        // the camera the terrain is linked to. By default, the scene active camera
 ```
 
 ## Advanced Terrain
@@ -438,6 +439,43 @@ var params = {
 }
 var terrain = new BABYLON.DynamicTerrain("t", params, scene);
 ```
+Example :  
+Here we populate a data map with no altitude (y = 0) and, in the same time, a UV map as a flat array by simply setting the u and v values in the 2D texture relatively to the _(x, z)_ coordinates of each map point.  
+```javascript
+    var mapData = new Float32Array(mapSubX * mapSubZ * 3); // x3 float values per point : x, y and z
+    var mapUVs = new Float32Array(mapSubX * mapSubZ * 2); // x2 because 2 values per point : u, v
+    for (var l = 0; l < mapSubZ; l++) {
+        for (var w = 0; w < mapSubX; w++) {
+            var x = (w - mapSubX * 0.5) * 2.0;
+            var z = (l - mapSubZ * 0.5) * 2.0;
+                   
+            mapData[3 *(l * mapSubX + w)] = x;
+            mapData[3 * (l * mapSubX + w) + 1] = 0.0;
+            mapData[3 * (l * mapSubX + w) + 2] = z;
+
+            mapUVs[2 * (l * mapSubX + w)] = w / mapSubX;        // u
+            mapUVs[2 * (l * mapSubX + w) + 1] = l / mapSubZ;    // v
+
+        }
+    }
+```
+Then we pass the populated array `mapUVs` to the Dynamic Terrain constructor with the optional parameter property `mapUVs` : 
+```javascript
+        var params = {
+            mapData: mapData,               // data map declaration : what data to use ?
+            mapSubX: mapSubX,               // how are these data stored by rows and columns
+            mapSubZ: mapSubZ,
+            mapUVs: mapUVs,                 // array of the map UVs
+            terrainSub: terrainSub          // how many terrain subdivisions wanted
+        }
+        var terrain = new BABYLON.DynamicTerrain("t", params, scene);
+```
+http://www.babylonjs-playground.com/#FJNR5#28   
+A FreeCamera was set instead of an ArcRotate one to move easily on the map. The map texture is also changed to the file _earth.jpg_.  
+As we can notice now, the texture is no longer bound to the terrain itself but to the map : the image is stretched in this example along the whole map.  
+
+_A height map and normal array generator up to come soon_
+
 
 ### Normal map
 By default, as the terrain morphs from the current map data, all its normals are recomputed each update.  
@@ -505,7 +543,7 @@ The array `ribNormals` is then passed in the Dynamic Terrain constructor with th
         }
         var terrain = new BABYLON.DynamicTerrain("t", params, scene);
 ```
-http://www.babylonjs-playground.com/#FJNR5#24  
+http://www.babylonjs-playground.com/#FJNR5#27    
 When a `mapNormals` array is passed, the terrain normals aren't computed any longer, they are just got from this array.  
 As the normal computation is often an intensive operation for heavy meshes (heavy in term of vertex number), skipping this process can bring a real CPU gain.  
 Example :  
@@ -535,6 +573,59 @@ if (camera.position.z > someLimit) {
 }
 ```
 
-_the following to be detailed soon ..._
 
-### Without Data Map
+### Without Data Map  
+The Dynamic Terrain is a right tool to render a part of a map of 3D data.  
+We usually don't need to modify the map data because they are just what we want to render on the screen.  
+However the Dynamic Terrain is ... _dynamic_.  
+This means that it can be used for other purposes than just render a 3D map.  
+For instance, it can be generated without any data map :
+```javascript
+    var terrainSub = 140;        // terrain subdivisions
+    var terrainOptions = { terrainSub: terrainSub };
+    var terrain = new BABYLON.DynamicTerrain("dt", terrainOptions, scene);
+```
+Actually, we could even not pass the `terrainSub` and the terrain would still be generated with a size of 60x60.  
+
+A Dynamic Terrain generated without any data map looks like a simple planar ribbon initially : http://www.babylonjs-playground.com/#FJNR5#29   
+
+Of course we always add to it some LOD behavior (perimetric or camera LOD) like to any standard terrain created with a data map.  
+But it may be interesting to use in this case the user custom function and to modify the terrain vertex positions, something we wouldn't probably want to do with a data map generated terrain.  
+
+```javascript
+    terrain.useCustomVertexFunction = true;
+
+    terrain.updateVertex = function(vertex, i, j) {
+        vertex.position.y = 2.0 * Math.sin(i / 5.0)  *  Math.cos(j / 5.0);
+    };     
+```
+
+http://www.babylonjs-playground.com/#FJNR5#30   
+
+Let's remember that, when enabled, the method `updateVertex` is called only on each terrain update (so when the camera moves), not necesseraly every frame.  
+
+If we need to give the terrain an extra animation, we can set its property `.refreshEveryFrame` to true and add, for instance, a movement depending on the time :
+```javascript
+    var t = 0.0;
+    terrain.useCustomVertexFunction = true;
+    terrain.refreshEveryFrame = true;
+
+    // user custom function : now the altitude depends on t too.
+    terrain.updateVertex = function(vertex, i, j) {
+        vertex.position.y = 2.0 * Math.sin((i + t) / 5.0)  *  Math.cos((j + t) / 5.0);
+    };
+    // scene animation
+    scene.registerBeforeRender(function() {
+        t += 0.01;
+    });
+```
+
+http://www.babylonjs-playground.com/#FJNR5#32   
+
+**Important note :**   
+We used here the parameters `i`, `j` and the vertex `position` property.  
+
+* `i` is the vertex index on the terrain X axis, it's an integer valued between 0 and `terrainSub`, both included.
+* `j` is the vertex index on the terrain Z axis, it's an integer valued between 0 and `terrainSub`, both included.
+* the vertex coordinates `x` and `z` are always positive, this means the terrain is NOT centered in its local space but starts from the system origin at i = 0 and j = 0 : the first terrain vertex is at (0, 0) in the plane (xOz), the other vertices have then positive x and z coordinate values only.  
+
