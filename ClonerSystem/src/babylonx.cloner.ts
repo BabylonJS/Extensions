@@ -82,8 +82,9 @@ module BABYLONX {
         constructor() {
             Demoscene.objInstances = 0 | (Demoscene.objInstances + 1);
         }
-        initWithEngine(engine) {
+        initWithEngine(engine,canvas) {
             this._scene = new BABYLON.Scene(engine);
+            this._canvas = canvas;
             this.cameras();
             this.lights();
        }
