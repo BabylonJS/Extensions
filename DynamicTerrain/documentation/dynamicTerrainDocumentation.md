@@ -550,7 +550,7 @@ Example :
 This terrain is 300x300 so 90K vertices what is really a huge mesh to compute every update.  
 With a normal map, so with pre-computed normals : http://www.babylonjs-playground.com/#FJNR5#25   
 Without, so normal computation each update : http://www.babylonjs-playground.com/#FJNR5#26  
-Let's simply check the FPS difference to feel the gain.  
+Let's simply check the FPS difference when rotating the camera to feel the gain.  
 
 ### Map change on the fly
 The terrain can be assigned another map at any time.  
@@ -589,7 +589,7 @@ Actually, we could even not pass the `terrainSub` and the terrain would still be
 
 A Dynamic Terrain generated without any data map looks like a simple planar ribbon initially : http://www.babylonjs-playground.com/#FJNR5#29   
 
-Of course we always add to it some LOD behavior (perimetric or camera LOD) like to any standard terrain created with a data map.  
+Of course we can always add to it some LOD behavior (perimetric or camera LOD) like to any standard terrain created with a data map.  
 But it may be interesting to use in this case the user custom function and to modify the terrain vertex positions, something we wouldn't probably want to do with a data map generated terrain.  
 
 ```javascript
@@ -612,7 +612,7 @@ If we need to give the terrain an extra animation, we can set its property `.ref
 
     // user custom function : now the altitude depends on t too.
     terrain.updateVertex = function(vertex, i, j) {
-        vertex.position.y = 2.0 * Math.sin((i + t) / 5.0)  *  Math.cos((j + t) / 5.0);
+        vertex.position.y = 2.0 * Math.sin((vertex.position.x + t) / 5.0)  *  Math.cos((vertex.position.z + t) / 5.0);
     };
     // scene animation
     scene.registerBeforeRender(function() {
@@ -620,7 +620,9 @@ If we need to give the terrain an extra animation, we can set its property `.ref
     });
 ```
 
-http://www.babylonjs-playground.com/#FJNR5#32   
+http://www.babylonjs-playground.com/#FJNR5#33    
+
+The CPU load required by the method `updateVertex()` is depending of course on what it does, but also on the terrain number of vertices.  
 
 **Important note :**   
 We used here the parameters `i`, `j` and the vertex `position` property.  
