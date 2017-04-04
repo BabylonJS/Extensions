@@ -432,8 +432,8 @@ module BABYLON {
             this._terrain.updateVerticesData(VertexBuffer.PositionKind, this._positions, false, false);
             if (this._computeNormals && !this._mapNormals) {
                 VertexData.ComputeNormals(this._positions, this._indices, this._normals);
-                this._terrain.updateVerticesData(VertexBuffer.NormalKind, this._normals, false, false);
             } 
+            this._terrain.updateVerticesData(VertexBuffer.NormalKind, this._normals, false, false);
             this._terrain.updateVerticesData(VertexBuffer.UVKind, this._uvs, false, false);
             this._terrain.updateVerticesData(VertexBuffer.ColorKind, this._colors, false, false);            
             this._terrain._boundingInfo = new BoundingInfo(this._bbMin, this._bbMax);
