@@ -591,6 +591,20 @@ var BABYLONX;
         get mcount() {
             return this._mcount;
         }
+        get state() {
+            return {
+                mcount: {
+                    x: this._mcount.x,
+                    y: this._mcount.y,
+                    z: this._mcount.z,
+                },
+                size: {
+                    x: this._size.x,
+                    y: this._size.y,
+                    z: this._size.z
+                }
+            };
+        }
         set size(s) {
             this._size = s;
             this.update();
