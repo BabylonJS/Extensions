@@ -124,6 +124,10 @@ declare module BABYLON {
          */
         readonly mesh: Mesh;
         /**
+         * The camera the terrain is linked to
+         */
+        camera: Camera;
+        /**
          * Number of cells flought over by the cam on the X axis before the terrain is updated.
          * Integer greater or equal to 1.
          */

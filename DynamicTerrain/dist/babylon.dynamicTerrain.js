@@ -507,6 +507,19 @@ var BABYLON;
             enumerable: true,
             configurable: true
         });
+        Object.defineProperty(DynamicTerrain.prototype, "camera", {
+            /**
+             * The camera the terrain is linked to
+             */
+            get: function () {
+                return this._terrainCamera;
+            },
+            set: function (val) {
+                this._terrainCamera = val;
+            },
+            enumerable: true,
+            configurable: true
+        });
         Object.defineProperty(DynamicTerrain.prototype, "subToleranceX", {
             /**
              * Number of cells flought over by the cam on the X axis before the terrain is updated.
