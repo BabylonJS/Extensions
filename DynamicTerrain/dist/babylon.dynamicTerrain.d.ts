@@ -108,7 +108,7 @@ declare module BABYLON {
          */
         getHeightFromMap(x: number, z: number, options?: {
             normal: Vector3;
-        }): number;
+        }): any;
         /**
          * Returns true if the World coordinates (x, z) are in the current terrain.
          * @param x
@@ -123,6 +123,10 @@ declare module BABYLON {
          * Mesh : the logical terrain underlying mesh
          */
         readonly mesh: Mesh;
+        /**
+         * The camera the terrain is linked to
+         */
+        camera: Camera;
         /**
          * Number of cells flought over by the cam on the X axis before the terrain is updated.
          * Integer greater or equal to 1.
@@ -196,15 +200,38 @@ declare module BABYLON {
          */
         LODLimits: number[];
         /**
-         * The passed map number of subdivisions on the X axis.
-         * Positive Integer.
+         * The data of the map.
+         * A flat array (Float32Array recommeded) of successive 3D float coordinates (x, y, z).
+         * This property can be set only if a mapData array was passed at construction time.
          */
-        readonly mapSubX: number;
+        mapData: Float32Array | number[];
         /**
-         * The passed map number of subdivisions on the Z axis.
+         * The number of points on the map width.
          * Positive Integer.
          */
-        readonly mapSubZ: number;
+        mapSubX: number;
+        /**
+         * The number of points on the map height .
+         * Positive Integer.
+         */
+        mapSubZ: number;
+        /**
+         * The map of colors.
+         * A flat array of successive floats between 0 and 1 as r,g,b values.
+         * This property can be set only if a mapColors array was passed at construction time.
+         */
+        mapColors: Float32Array | number[];
+        /**
+         * The map of UVs.
+         * A flat array of successive floats between 0 and 1 as (u, v) values.
+         * This property can be set only if a mapUVs array was passed at construction time.
+         */
+        mapUVs: Float32Array | number[];
+        /**
+         * The map of normals.
+         * A flat array of successive floats as normal vector coordinates (x, y, z) on each map point.
+         */
+        mapNormals: Float32Array | number[];
         /**
          * Boolean : must the normals be recomputed on each terrain update (default : true)
          */

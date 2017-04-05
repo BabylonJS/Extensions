@@ -382,8 +382,8 @@ var BABYLON;
             this._terrain.updateVerticesData(BABYLON.VertexBuffer.PositionKind, this._positions, false, false);
             if (this._computeNormals && !this._mapNormals) {
                 BABYLON.VertexData.ComputeNormals(this._positions, this._indices, this._normals);
-                this._terrain.updateVerticesData(BABYLON.VertexBuffer.NormalKind, this._normals, false, false);
             }
+            this._terrain.updateVerticesData(BABYLON.VertexBuffer.NormalKind, this._normals, false, false);
             this._terrain.updateVerticesData(BABYLON.VertexBuffer.UVKind, this._uvs, false, false);
             this._terrain.updateVerticesData(BABYLON.VertexBuffer.ColorKind, this._colors, false, false);
             this._terrain._boundingInfo = new BABYLON.BoundingInfo(this._bbMin, this._bbMax);
@@ -431,13 +431,15 @@ var BABYLON;
             // reset x and z in the map space so they are between 0 and the axis map size
             x = x - Math.floor((x - x0) / this._mapSizeX) * this._mapSizeX;
             z = z - Math.floor((z - z0) / this._mapSizeZ) * this._mapSizeZ;
-            var col = Math.floor((x - x0) * this._mapSubX / this._mapSizeX);
-            var row = Math.floor((z - z0) * this._mapSubZ / this._mapSizeZ);
+            var col1 = Math.floor((x - x0) * this._mapSubX / this._mapSizeX);
+            var row1 = Math.floor((z - z0) * this._mapSubZ / this._mapSizeZ);
+            var col2 = (col1 + 1) % this._mapSubX;
+            var row2 = (row1 + 1) % this._mapSubZ;
             // starting indexes of the positions of 4 vertices defining a quad on the map
-            var idx1 = 3 * (row * this._mapSubX + col);
-            var idx2 = idx1 + 3;
-            var idx3 = 3 * ((row + 1) * this._mapSubX + col);
-            var idx4 = idx3 + 3;
+            var idx1 = 3 * (row1 * this._mapSubX + col1);
+            var idx2 = 3 * (row1 * this._mapSubX + col2);
+            var idx3 = 3 * ((row2) * this._mapSubX + col1);
+            var idx4 = 3 * ((row2) * this._mapSubX + col2);
             this._v1.copyFromFloats(this._mapData[idx1], this._mapData[idx1 + 1], this._mapData[idx1 + 2]);
             this._v2.copyFromFloats(this._mapData[idx2], this._mapData[idx2 + 1], this._mapData[idx2 + 2]);
             this._v3.copyFromFloats(this._mapData[idx3], this._mapData[idx3 + 1], this._mapData[idx3 + 2]);
@@ -446,7 +448,12 @@ var BABYLON;
             var vB;
             var vC;
             var v;
-            var cd = (this._v4.z - this._v1.z) / (this._v4.x - this._v1.x);
+            var xv4v1 = this._v4.x - this._v1.x;
+            var zv4v1 = this._v4.z - this._v1.z;
+            if (xv4v1 == 0 || zv4v1 == 0) {
+                return this._v1.y;
+            }
+            var cd = zv4v1 / xv4v1;
             var h = this._v1.z - cd * this._v1.x;
             if (z < cd * x + h) {
                 vB = this._v4;
@@ -462,11 +469,14 @@ var BABYLON;
             vC.subtractToRef(vA, this._vAvC);
             BABYLON.Vector3.CrossToRef(this._vAvB, this._vAvC, this._norm);
             this._norm.normalize();
-            if (options.normal) {
+            if (options && options.normal) {
                 options.normal.copyFrom(this._norm);
             }
             var d = -(this._norm.x * v.x + this._norm.y * v.y + this._norm.z * v.z);
-            var y = -(this._norm.x * x + this._norm.z * z + d) / this._norm.y;
+            var y = v.y;
+            if (this._norm.y != 0.0) {
+                y = -(this._norm.x * x + this._norm.z * z + d) / this._norm.y;
+            }
             return y;
         };
         /**
@@ -503,6 +513,19 @@ var BABYLON;
              */
             get: function () {
                 return this._terrain;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(DynamicTerrain.prototype, "camera", {
+            /**
+             * The camera the terrain is linked to
+             */
+            get: function () {
+                return this._terrainCamera;
+            },
+            set: function (val) {
+                this._terrainCamera = val;
             },
             enumerable: true,
             configurable: true
@@ -681,24 +704,94 @@ var BABYLON;
             enumerable: true,
             configurable: true
         });
+        Object.defineProperty(DynamicTerrain.prototype, "mapData", {
+            /**
+             * The data of the map.
+             * A flat array (Float32Array recommeded) of successive 3D float coordinates (x, y, z).
+             * This property can be set only if a mapData array was passed at construction time.
+             */
+            get: function () {
+                return this._mapData;
+            },
+            set: function (val) {
+                this._mapData = val;
+                this._mapSizeX = Math.abs(this._mapData[(this._mapSubX - 1) * 3] - this._mapData[0]);
+                this._mapSizeZ = Math.abs(this._mapData[(this._mapSubZ - 1) * this._mapSubX * 3 + 2] - this._mapData[2]);
+                this._averageSubSizeX = this._mapSizeX / this._mapSubX;
+                this._averageSubSizeZ = this._mapSizeZ / this._mapSubZ;
+                this.update(true);
+            },
+            enumerable: true,
+            configurable: true
+        });
         Object.defineProperty(DynamicTerrain.prototype, "mapSubX", {
             /**
-             * The passed map number of subdivisions on the X axis.
+             * The number of points on the map width.
              * Positive Integer.
              */
             get: function () {
                 return this._mapSubX;
+            },
+            set: function (val) {
+                this._mapSubX = val;
             },
             enumerable: true,
             configurable: true
         });
         Object.defineProperty(DynamicTerrain.prototype, "mapSubZ", {
             /**
-             * The passed map number of subdivisions on the Z axis.
+             * The number of points on the map height .
              * Positive Integer.
              */
             get: function () {
                 return this._mapSubZ;
+            },
+            set: function (val) {
+                this._mapSubZ = val;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(DynamicTerrain.prototype, "mapColors", {
+            /**
+             * The map of colors.
+             * A flat array of successive floats between 0 and 1 as r,g,b values.
+             * This property can be set only if a mapColors array was passed at construction time.
+             */
+            get: function () {
+                return this._mapColors;
+            },
+            set: function (val) {
+                this._mapColors = val;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(DynamicTerrain.prototype, "mapUVs", {
+            /**
+             * The map of UVs.
+             * A flat array of successive floats between 0 and 1 as (u, v) values.
+             * This property can be set only if a mapUVs array was passed at construction time.
+             */
+            get: function () {
+                return this._mapUVs;
+            },
+            set: function (val) {
+                this._mapUVs = val;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(DynamicTerrain.prototype, "mapNormals", {
+            /**
+             * The map of normals.
+             * A flat array of successive floats as normal vector coordinates (x, y, z) on each map point.
+             */
+            get: function () {
+                return this._mapNormals;
+            },
+            set: function (val) {
+                this._mapNormals = val;
             },
             enumerable: true,
             configurable: true

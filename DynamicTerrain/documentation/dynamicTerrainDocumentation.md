@@ -84,6 +84,29 @@ It's better to choose a multiple of 2 as the number of terrain subdivisions.
 Once created, this number never changes, neither the terrain number of vertices, but only its shape.  
 This means the computation charge to update the terrain is always constant and depends only on this subdivision value.  
 
+The terrain is a logical object providing several features. It embeddeds a BJS mesh accessible with the property `.mesh` :
+```javascript
+var terrainMesh : terrain.mesh;
+terrain.Mesh.diffuseTexture = myTerrainTexture;
+```
+
+Although a data map must be passed at construction time, this map can be changed thereafter as well as the properties `.mapSubX` and `mapSubZ`.  
+```javascript
+terrain.mapData = map2;
+terrain.mapSubX = mapSubX2;
+terrain.mapSubZ = mapSubZ2;
+```
+This is useful if we have to download dynamically new chuncks of data as the camera moves in the World.  
+Example : 
+```javascript
+// change the terrain map on the fly
+if (camera.position.z > someLimit) {
+    terrain.mapData = map2;
+}
+```
+If the map data aren't updated or if a new data array isn't passed to the terrain when it reaches the map edges, then the terrain goes on moving as if the current map where repeated on the current axis.   
+This means that from the terrain perspective and unless we give it a speficic behavior regarding the map bounds, the data map is infinitely repeated or tiled in every direction of the ground.  
+In short, by default, the terrain sees the map as infinite.  
 
 ## The Dynamic Terrain in detail
 ### LOD
@@ -240,8 +263,6 @@ The default values of both these properties are 1 (minimal authorized value).
 They can be changed at any time according to our needs.   
 
 
-_the following to be detailed soon ..._
-
 ### User custom function
 The Dynamic Terrain provides the ability to update each of its vertex on the whole terrain update.  
 Let's enable it (disabled by default) at any time. It can be enabled/disabled at any moment.   
@@ -277,7 +298,8 @@ The accessible vertex properties are :
 * lodZ : integer, the current LOD on Z axis for this vertex
 * mapIndex : integer, the current index in the map array
 
-Another colored example according to the position on the map : http://www.babylonjs-playground.com/#FJNR5#18  
+Another colored example according to the position on the map : http://www.babylonjs-playground.com/#FJNR5#18   
+Of course, it works also with alpha : http://www.babylonjs-playground.com/#FJNR5#19   
 
 This feature is disabled by default because it may have an impact on the CPU.  
 Indeed, when a terrain is 100x100 quads, it has 10K vertices and this custom function is then called 10K times.   
@@ -339,7 +361,6 @@ var mesh = terrain.mesh;                // the terrain underlying BJS mesh
 var quadSizeX = terrain.averageSubSizeX; // terrain real quad X size
 var quadSizeZ = terrain.averageSubSizeZ; // terrain real quad Z size
 
-
 var terrainSizeX = terrain.terrainSizeX; // terrain current X size
 var terrainSizeZ = terrain.terrainSizeZ; // terrain current X size
 
@@ -352,13 +373,265 @@ var terrainWorldCenter = terrain.centerWorld;   // Vector3 position of the terra
 var mapPointsX = terrain.mapSubX;   // the passed map number of points on width at terrain construction time
 var mapPointsZ = terrain.mapSubZ;   // the passed map number of points on height at terrain construction time
 
+var camera = terrain.camera;        // the camera the terrain is linked to. By default, the scene active camera
 ```
 
 ## Advanced Terrain
 ### Color map
+A color map can be passed to the terrain at construction time.  
+This color map is a flat array of successive floats between 0 and 1 of each map point _(r, g, b)_ values.  
+This array must have the same size than the data array.   
+Let's get back the very first example of the data array generation and let's populate a color array `mapColors`
+```javascript
+    var mapSubX = 1000;             // map number of points on the width
+    var mapSubZ = 800;              // map number of points on the height
+    var seed = 0.3;                 // set the noise seed
+    noise.seed(seed);               // generate the simplex noise, don't care about this
+    var mapData = new Float32Array(mapSubX * mapSubZ * 3);  // x3 because 3 values per point : x, y, z
+    var mapColors = new Float32Array(mapSubX * mapSubZ * 3); // x3 because 3 values per point : r, g, b
+    for (var l = 0; l < mapSubZ; l++) {                 // loop on height points
+        for (var w = 0; w < mapSubX; w++) {             // loop on width points
+            var x = (w - mapSubX * 0.5) * 5.0;          // distance inter-points = 5 on the width
+            var z = (l - mapSubZ * 0.5) * 2.0;          // distance inter-points = 2 on the width
+            var y = noise.simplex2(x, z);               // altitude
+                   
+            mapData[3 * (l * mapSubX + w)] = x;
+            mapData[3 * (l * mapSubX + w) + 1] = y;
+            mapData[3 * (l * mapSubX + w) + 2] = z;    
+
+            // colors of the map
+            mapColors[3 * (l * mapSubX + w)] = (0.5 + Math.random() * 0.2);
+            mapColors[3 * (l * mapSubX + w) + 1] = (0.5 + Math.random() * 0.4);
+            mapColors[3 * (l * mapSubX + w) + 2] = (0.5);       
+        }
+    }
+```
+And let's pass this color array to the terrain at construction time with the optional parameter property `.mapColors` :
+```javascript
+var terrainSub = 100;               // 100 terrain subdivisions
+var params = {
+    mapData: mapData,               // data map declaration : what data to use ?
+    mapSubX: mapSubX,               // how are these data stored by rows and columns
+    mapSubZ: mapSubZ,
+    mapColors: mapColors,           // the array of map colors
+    terrainSub: terrainSub          // how many terrain subdivisions wanted
+}
+var terrain = new BABYLON.DynamicTerrain("t", params, scene);
+```
+http://www.babylonjs-playground.com/#FJNR5#20  
+Obviously this still works with the user custom function called with `updateVertex()` : http://www.babylonjs-playground.com/#FJNR5#21  
+
 ### UV map
+If we assign a material and a texture to the terrain mesh, it's by default set to the current terrain size and shifted according to the camera movements.  
+http://www.babylonjs-playground.com/#FJNR5#22  
+Before going further, let's note that the texturing works with both the color map and the user custom function : http://www.babylonjs-playground.com/#FJNR5#23  
+
+Like for the colors, we could have a set of UVs relative to the map as a flat array of successive floats between 0 and 1 being the u and v values for each map point.  
+This array must be sized _mapSubX x mapSubZ x 2_ (because two floats per map point : u and v) and must be passed to the terrain at construction time with the optional parameter property `.mapUVs`
+```javascript
+var terrainSub = 100;               // 100 terrain subdivisions
+var params = {
+    mapData: mapData,               // data map declaration : what data to use ?
+    mapSubX: mapSubX,               // how are these data stored by rows and columns
+    mapSubZ: mapSubZ,
+    mapUVs: mapUVs,                 // the array of map UVs
+    terrainSub: terrainSub          // how many terrain subdivisions wanted
+}
+var terrain = new BABYLON.DynamicTerrain("t", params, scene);
+```
+Example :  
+Here we populate a data map with no altitude (y = 0) and, in the same time, a UV map as a flat array by simply setting the u and v values in the 2D texture relatively to the _(x, z)_ coordinates of each map point.  
+```javascript
+    var mapData = new Float32Array(mapSubX * mapSubZ * 3); // x3 float values per point : x, y and z
+    var mapUVs = new Float32Array(mapSubX * mapSubZ * 2); // x2 because 2 values per point : u, v
+    for (var l = 0; l < mapSubZ; l++) {
+        for (var w = 0; w < mapSubX; w++) {
+            var x = (w - mapSubX * 0.5) * 2.0;
+            var z = (l - mapSubZ * 0.5) * 2.0;
+                   
+            mapData[3 *(l * mapSubX + w)] = x;
+            mapData[3 * (l * mapSubX + w) + 1] = 0.0;
+            mapData[3 * (l * mapSubX + w) + 2] = z;
+
+            mapUVs[2 * (l * mapSubX + w)] = w / mapSubX;        // u
+            mapUVs[2 * (l * mapSubX + w) + 1] = l / mapSubZ;    // v
+
+        }
+    }
+```
+Then we pass the populated array `mapUVs` to the Dynamic Terrain constructor with the optional parameter property `mapUVs` : 
+```javascript
+        var params = {
+            mapData: mapData,               // data map declaration : what data to use ?
+            mapSubX: mapSubX,               // how are these data stored by rows and columns
+            mapSubZ: mapSubZ,
+            mapUVs: mapUVs,                 // array of the map UVs
+            terrainSub: terrainSub          // how many terrain subdivisions wanted
+        }
+        var terrain = new BABYLON.DynamicTerrain("t", params, scene);
+```
+http://www.babylonjs-playground.com/#FJNR5#28   
+A FreeCamera was set instead of an ArcRotate one to move easily on the map. The map texture is also changed to the file _earth.jpg_.  
+As we can notice now, the texture is no longer bound to the terrain itself but to the map : the image is stretched in this example along the whole map.  
+
+_A height map and normal array generator up to come soon_
+
+
 ### Normal map
+By default, as the terrain morphs from the current map data, all its normals are recomputed each update.  
+The normal computation charge is directly related to the terrain number of vertices (10K for a 100x100 terrain).  
+If we don't need the normal computation (ex : a terrain that would have only an emissive color or a wireframed terrain), we can disable at any time it with the property `.computeNormals`.  
 ```javascript
 terrain.computeNormals = false;   // default true, to skip the normal computation
 ```
-### Without Data Map
+If we have to manage a very large terrain and we still need to display the reflected light with right normals, we could pre-compute all the normals from the map data and store them in a normal flat array like we did for map point coordinates.  
+This flat array of successive floats as normal vector coordinates _(x, y, z)_ for each map point can then be passed to the terrain. It simply must be exactly the same size than the map data array.  
+In this case, the terrain normals aren't computed any longer and the map normal array is instead.  
+This array is passed with the optional parameter property `.mapNormals`.  
+```javascript
+var normalArray = [n1.x, n1.y, n1.z, n2.x, n2.y, n2.z, ...];
+var terrainSub = 100;               // 100 terrain subdivisions
+var params = {
+    mapData: mapData,               // data map declaration : what data to use ?
+    mapSubX: mapSubX,               // how are these data stored by rows and columns
+    mapSubZ: mapSubZ,
+    mapNormals: normalArray,        // the array of map normals
+    terrainSub: terrainSub          // how many terrain subdivisions wanted
+}
+var terrain = new BABYLON.DynamicTerrain("t", params, scene);
+```
+
+How to get a normal map ?  
+Let's get back our first example when the data map was depicted by a huge wireframe ribbon.  
+So let's build back this ribbon, let's get its normal array from its `vertexData` object and then let's just dispose it.  
+
+```javascript
+    var mapData = new Float32Array(mapSubX * mapSubZ * 3); // 3 float values per point : x, y and z
+    var paths = [];                             // array for the ribbon model
+    for (var l = 0; l < mapSubZ; l++) {
+        var path = [];                          // only for the ribbon
+        for (var w = 0; w < mapSubX; w++) {
+            var x = (w - mapSubX * 0.5) * 2.0;
+            var z = (l - mapSubZ * 0.5) * 2.0;
+            var y = noise.simplex2(x * noiseScale, z * noiseScale);
+                   
+            mapData[3 *(l * mapSubX + w)] = x;
+            mapData[3 * (l * mapSubX + w) + 1] = y;
+            mapData[3 * (l * mapSubX + w) + 2] = z;
+
+            path.push(new BABYLON.Vector3(x, y, z));
+        }
+        paths.push(path);
+    }
+
+    // beware of the ribbon side orientation to get normals orientated upward
+    var map = BABYLON.MeshBuilder.CreateRibbon("m", {pathArray: paths, sideOrientation: 1}, scene);
+    var ribNormals = map.getVerticesData(BABYLON.VertexBuffer.NormalKind);
+    map.dispose();
+```
+Beware of the ribbon side orientation, because the normals could be orientation downward. If we aren't sure, let's just log the normal array in the console and check if every second value from three (y coordinate) is positive.  
+In this former snippet, we simply create a ribbon from the map data, then we store its normals in an array called `ribNormals` and we finally dispose this ribbon as it's not needed any more.  
+The array `ribNormals` is then passed in the Dynamic Terrain constructor with the optional parameter property `mapNormals` :  
+```javascript
+        var terrainSub = 100;               // 100 terrain subdivisions
+        var params = {
+            mapData: mapData,               // data map declaration : what data to use ?
+            mapSubX: mapSubX,               // how are these data stored by rows and columns
+            mapSubZ: mapSubZ,
+            mapNormals: ribNormals,         // map normal array
+            terrainSub: terrainSub          // how many terrain subdivisions wanted
+        }
+        var terrain = new BABYLON.DynamicTerrain("t", params, scene);
+```
+http://www.babylonjs-playground.com/#FJNR5#27    
+When a `mapNormals` array is passed, the terrain normals aren't computed any longer, they are just got from this array.  
+As the normal computation is often an intensive operation for heavy meshes (heavy in term of vertex number), skipping this process can bring a real CPU gain.  
+Example :  
+This terrain is 300x300 so 90K vertices what is really a huge mesh to compute every update.  
+With a normal map, so with pre-computed normals : http://www.babylonjs-playground.com/#FJNR5#25   
+Without, so normal computation each update : http://www.babylonjs-playground.com/#FJNR5#26  
+Let's simply check the FPS difference when rotating the camera to feel the gain.  
+
+### Map change on the fly
+The terrain can be assigned another map at any time.  
+Example : 
+```javascript
+// change the terrain map on the fly
+if (camera.position.z > someLimit) {
+    terrain.mapData = map2;
+}
+```
+This can be useful if new data are dynamically downloaded as the camera moves in the World.  
+Not only the map data can be changed, but also the color, uv or normal data.  
+```javascript
+// change the terrain map on the fly
+if (camera.position.z > someLimit) {
+    terrain.mapData = map2;
+    terrain.mapColors = colors2;
+    terrain.mapUVs = uvs2;
+    terrain.mapNormals = normals2;
+}
+```
+
+
+### Without Data Map  
+The Dynamic Terrain is a right tool to render a part of a map of 3D data.  
+We usually don't need to modify the map data because they are just what we want to render on the screen.  
+However the Dynamic Terrain is ... _dynamic_.  
+This means that it can be used for other purposes than just render a 3D map.  
+For instance, it can be generated without any data map :
+```javascript
+    var terrainSub = 140;        // terrain subdivisions
+    var terrainOptions = { terrainSub: terrainSub };
+    var terrain = new BABYLON.DynamicTerrain("dt", terrainOptions, scene);
+```
+Actually, we could even not pass the `terrainSub` and the terrain would still be generated with a size of 60x60.  
+
+A Dynamic Terrain generated without any data map looks like a simple planar ribbon initially : http://www.babylonjs-playground.com/#FJNR5#29   
+
+Of course we can always add to it some LOD behavior (perimetric or camera LOD) like to any standard terrain created with a data map.  
+But it may be interesting to use in this case the user custom function and to modify the terrain vertex positions, something we wouldn't probably want to do with a data map generated terrain.  
+
+```javascript
+    terrain.useCustomVertexFunction = true;
+
+    terrain.updateVertex = function(vertex, i, j) {
+        vertex.position.y = 2.0 * Math.sin(i / 5.0)  *  Math.cos(j / 5.0);
+    };     
+```
+
+http://www.babylonjs-playground.com/#FJNR5#30   
+
+Let's remember that, when enabled, the method `updateVertex` is called only on each terrain update (so when the camera moves), not necesseraly every frame.  
+
+If we need to give the terrain an extra animation, we can set its property `.refreshEveryFrame` to true and add, for instance, a movement depending on the time :
+```javascript
+    var t = 0.0;
+    terrain.useCustomVertexFunction = true;
+    terrain.refreshEveryFrame = true;
+
+    // user custom function : now the altitude depends on t too.
+    terrain.updateVertex = function(vertex, i, j) {
+        vertex.position.y = 2.0 * Math.sin((vertex.position.x + t) / 5.0)  *  Math.cos((vertex.position.z + t) / 5.0);
+    };
+    // scene animation
+    scene.registerBeforeRender(function() {
+        t += 0.01;
+    });
+```
+
+http://www.babylonjs-playground.com/#FJNR5#33    
+
+The CPU load required by the method `updateVertex()` is depending of course on what it does, but also on the terrain number of vertices.  
+
+**Important note :**   
+We used here the parameters `i`, `j` and the vertex `position` property.  
+
+* `i` is the vertex index on the terrain X axis, it's an integer valued between 0 and `terrainSub`, both included.
+* `j` is the vertex index on the terrain Z axis, it's an integer valued between 0 and `terrainSub`, both included.
+* the vertex coordinates `x` and `z` are always positive, this means the terrain is NOT centered in its local space but starts from the system origin at i = 0 and j = 0 : the first terrain vertex is at (0, 0) in the plane (xOz), the other vertices have then positive x and z coordinate values only.  
+
+
+## Examples 
+Some documented examples are here :   
+https://github.com/BabylonJS/Extensions/tree/master/DynamicTerrain/documentation/dynamicTerrainExamples.md   

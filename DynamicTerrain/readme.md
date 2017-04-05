@@ -35,4 +35,7 @@ var terrainMesh = terrain.mesh;
 terrainMesh.diffuseTexture = myNiceTexture;
 ```
 
-The whole documentation is accessible here : https://github.com/BabylonJS/Extensions/tree/master/DynamicTerrain/documentation/dynamicTerrainDocumentation.md
+The whole documentation is accessible here : https://github.com/BabylonJS/Extensions/tree/master/DynamicTerrain/documentation/dynamicTerrainDocumentation.md   
+
+Some documented examples are here :   
+https://github.com/BabylonJS/Extensions/tree/master/DynamicTerrain/documentation/dynamicTerrainExamples.md   
