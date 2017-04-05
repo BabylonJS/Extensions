@@ -631,3 +631,7 @@ We used here the parameters `i`, `j` and the vertex `position` property.
 * `j` is the vertex index on the terrain Z axis, it's an integer valued between 0 and `terrainSub`, both included.
 * the vertex coordinates `x` and `z` are always positive, this means the terrain is NOT centered in its local space but starts from the system origin at i = 0 and j = 0 : the first terrain vertex is at (0, 0) in the plane (xOz), the other vertices have then positive x and z coordinate values only.  
 
+
+## Examples 
+Some documented examples are here :   
+https://github.com/BabylonJS/Extensions/tree/master/DynamicTerrain/documentation/dynamicTerrainExamples.md   
