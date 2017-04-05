@@ -74,3 +74,8 @@ terrain.LODLimits = [4, 3, 2, 1, 1];
 Let's don't worry if this feature seems complex to understand and let's just remember that it extends the terrain visible size on its perimeter and reduces the rendered map details in the same time.  
 
 PG : http://www.babylonjs-playground.com/#J6FMJ#4  
+
+
+
+
+The whole documentation is accessible here : https://github.com/BabylonJS/Extensions/tree/master/DynamicTerrain/documentation/dynamicTerrainDocumentation.md  
