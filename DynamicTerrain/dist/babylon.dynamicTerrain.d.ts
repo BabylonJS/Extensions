@@ -108,7 +108,7 @@ declare module BABYLON {
          */
         getHeightFromMap(x: number, z: number, options?: {
             normal: Vector3;
-        }): number;
+        }): any;
         /**
          * Returns true if the World coordinates (x, z) are in the current terrain.
          * @param x
