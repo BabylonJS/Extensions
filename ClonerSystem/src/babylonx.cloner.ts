@@ -39,9 +39,9 @@ module BABYLONX {
             this._camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2 + .2, Math.PI / 2, 10, new BABYLON.Vector3(-2.0, 10.19, 22.73), this._scene);
             this._camera.setTarget(new BABYLON.Vector3(0, 0, 0));
             this._camera.attachControl(this._canvas, true);
-            this._camera.wheelPrecision = 8;
+            this._camera.wheelPrecision = 9;
             this._camera.radius = 25;
-            this._camera.alpha = 1.66;
+            this._camera.alpha = Math.PI/2;
             this._camera.beta = 1.2;
         }
         lights() {
@@ -54,6 +54,16 @@ module BABYLONX {
         }
         objects() {
         }
+        createCubePlain(size = { w: 1, h: 1, d: 1 }, color = "#FF0000", specular = "#0000FF") {
+            var options = { width: size.w, depth: size.d, height: size.h };
+            var cube = BABYLON.MeshBuilder.CreateBox("cube" + Demoscene.objInstances, options, this._scene);
+            var mat = new BABYLON.StandardMaterial("mcube" + Demoscene.objInstances, this._scene);
+            mat.diffuseColor = BABYLON.Color3.FromHexString(color);
+            mat.specularColor = BABYLON.Color3.FromHexString(specular);
+            cube.material = mat;
+            Demoscene.objInstances++;
+            return cube;
+        }
         createCube(size = { w: 1, h: 1, d: 1 }, color = "#FF0000") {
             var options = { width: size.w, depth: size.d, height: size.h };
             var cube = BABYLON.MeshBuilder.CreateBox("cube" + Demoscene.objInstances, options, this._scene);
@@ -63,10 +73,10 @@ module BABYLONX {
             //mat.wireframe=true; 
             cube.material = mat;
             var marbleTexture = new BABYLON.MarbleProceduralTexture("marble" + Demoscene.objInstances, 512, this._scene);
-            marbleTexture.numberOfTilesHeight = .5;
-            marbleTexture.numberOfTilesWidth = .5;
+            marbleTexture.numberOfTilesHeight = 5;
+            marbleTexture.numberOfTilesWidth = 5;
             marbleTexture.jointColor = new BABYLON.Color3(0, 0, 1);
-            //marbleTexture.marbleColor=new BABYLON.Color3(1,0,0);
+            //marbleTexture.marbleColor=new BABYLON.Color3(1,0,0); 
             marbleTexture.amplitude = 9.0;
             mat.diffuseTexture = marbleTexture;
             //mat.alpha=.3;
@@ -115,7 +125,80 @@ module BABYLONX {
             return sphere;
 
         }
+        assignMaterial(mesh,color) {
+            var mat = new BABYLON.StandardMaterial("mcube" + Demoscene.objInstances, this._scene);
+            mat.diffuseColor = BABYLON.Color3.FromHexString(color);
+            mat.specularColor = BABYLON.Color3.White();
+            mesh.material = mat;
+            Demoscene.objInstances++;
+        }
+        assignMarbleMaterial(mesh, marblecolor,jointclolor="#0000FF") {
+            var mat = new BABYLON.StandardMaterial("mmat" + Demoscene.objInstances, this._scene);
+            mat.diffuseColor = BABYLON.Color3.FromHexString(marblecolor);
+            //mat.specularColor = BABYLON.Color3.FromHexString(jointclolor);
+            //mat.wireframe=true; 
+            mesh.material = mat;
+            var marbleTexture = new BABYLON.MarbleProceduralTexture("marble" + Demoscene.objInstances, 512, this._scene);
+            marbleTexture.numberOfTilesHeight = .5;
+            marbleTexture.numberOfTilesWidth = .45;
+            marbleTexture.jointColor = BABYLON.Color3.FromHexString(marblecolor); new BABYLON.Color3(0, 0, 1);
+            //marbleTexture.marbleColor=new BABYLON.Color3(1,0,0);
+            marbleTexture.amplitude = 9;
+            mat.diffuseTexture = marbleTexture;
+            //mat.alpha=.3;
+            //mat.diffuseTexture.hasAlpha=true;  
+            Demoscene.objInstances++;
+        }
+        assignMetalMaterial(mesh) {
+            var hdrTexture = new BABYLON.HDRCubeTexture("assets/roombwblur.hdr", this._scene, 512);
+            var metal = new BABYLON.PBRMaterial("xmetal" + Demoscene.objInstances, this._scene);
+            metal.reflectionTexture = hdrTexture;
+            metal.microSurface = 1;
+            metal.reflectivityColor = new BABYLON.Color3(0.9, 0.9, 0.9);
+            metal.albedoColor = new BABYLON.Color3(0.02, 0.02, 0.62);
+            metal.environmentIntensity = 0.7;
+            metal.cameraExposure = 0.66;
+            metal.cameraContrast = 1.66;
+            mesh.material = metal;
+            Demoscene.objInstances++;
+        }
+       assignGlassMaterial(mesh) {
+            var hdrTexture = new BABYLON.HDRCubeTexture("assets/roombwblur.hdr", this._scene, 512);
+            var glass = new BABYLON.PBRMaterial("glass", this._scene);
+            glass.reflectionTexture = hdrTexture;
+            glass.alpha = 0.935;
+            glass.environmentIntensity = 0.657;
+            glass.cameraExposure = 10.6
+            glass.cameraContrast = 1;//0.66;
+            glass.microSurface = 1;
+            glass.reflectivityColor = new BABYLON.Color3(.93, .3, .3);//(0.2, 0.42, 0.42);
+            glass.albedoColor = new BABYLON.Color3(0, 0, 0);//new BABYLON.Color3(0.0095, 0.0095, 0.0095);
+            mesh.material = glass;
+            //mesh.material.diffuseColor = new BABYLON.Color3(.5, .0, .0);
+            //mesh.material.specularColor = new BABYLON.Color3(.5, .0, .0);
+            //mesh.material.emissiveColor = new BABYLON.Color3(.5, .0, .0);
 
+
+
+/*
+            var loader = new BABYLON.AssetsManager(this._scene);
+            var textureTask = loader.addTextureTask("image task", "assets/roombwblur.hdr");
+            var glass = new BABYLON.PBRMaterial("glass", this._scene);
+           textureTask.onSuccess = function (task) {
+                //var hdrTexture = new BABYLON.HDRCubeTexture("assets/roombwblur.hdr", this._scene, 512);
+                glass.reflectionTexture = task.texture;
+                glass.alpha = 0.35;
+                glass.environmentIntensity = 0.657;
+                glass.cameraExposure = 20.6
+                glass.cameraContrast = 1;//0.66;
+                glass.microSurface = 1;
+                glass.reflectivityColor = new BABYLON.Color3(.3, .3, .3);//(0.2, 0.42, 0.42);
+                glass.albedoColor = new BABYLON.Color3(0, 0, 0);//new BABYLON.Color3(0.0095, 0.0095, 0.0095);
+                mesh.material = glass;
+            }
+            loader.load();
+            */
+        }
        renderloop() {
             this._scene.render();
         }
@@ -136,6 +219,7 @@ module BABYLONX {
 
     export class CMesh extends BABYLON.Mesh {
         private _cloner = null;
+        _index: number = 0;
         constructor(name, scene, parent, cloner = null) {
             super(name, scene, parent);
             this._cloner = cloner;
@@ -170,12 +254,7 @@ module BABYLONX {
             return c;
         }
     }
-    enum EFFECTOR_STRENGTHXX {
-        ALL = 7,
-        POSITION = 1,
-        ROTATION = 2,
-        SCALE = 4
-    }
+
     export class RandomEffector {
         private _seed: number;
         private _s: number;
@@ -187,7 +266,7 @@ module BABYLONX {
         private _uniformScale = false;
         private _clients = [];
         constructor(seed = 42) {
-            this._seed = this._s = seed;  
+            this._seed = this._s = seed;
             this._rfunction = function () {
                 this._s = Math.sin(this._s) * 10000; return this._s - Math.floor(this._s);
             };
@@ -206,7 +285,7 @@ module BABYLONX {
             var m1 = this._position.multiplyByFloats((-.5 + this.random()) * this._strength, (-.5 + this.random()) * this._strength, (-.5 + this.random()) * this._strength);
             return vec.add(m1);
         }
-        updateScale(vec: BABYLON.Vector3) {
+        updateScale(vec: BABYLON.Vector3) { 
             let a = this.random();
             let b = a;
             let c = a;
@@ -223,15 +302,20 @@ module BABYLONX {
         }
         updateClients() {
             this._clients.forEach(function (c) { c.update() })
+            return this;
         }
-        get strength():number {
+        get strength(): number {
             return this._strength;
         }
-        set strength(s:number) {
+        set strength(s: number) {
             this._strength = s;
 
         }
-        set position(p:{x:number,y:number,z:number}) {
+        str(s: number) {
+            this.strength = s;
+            return this;
+        }
+        set position(p: { x: number, y: number, z: number }) {
             this._position.x = p.x;
             this._position.y = p.y;
             this._position.z = p.z;
@@ -239,7 +323,7 @@ module BABYLONX {
         get position() {
             return this._position;
         }
-        set scale(s: { x: number, y: number, z: number}) {
+        set scale(s: { x: number, y: number, z: number }) {
             this._scale.x = this._scale.y = this._scale.z = s.x;
             if (this._uniformScale == false) {
                 this._scale.y = s.y;
@@ -250,7 +334,7 @@ module BABYLONX {
         get scale() {
             return this._scale;
         }
-        set rotation(s: { x: number, y: number, z: number}) {
+        set rotation(s: { x: number, y: number, z: number }) {
             this._rotation.x = s.x * Math.PI / 180;
             this._rotation.y = s.y * Math.PI / 180;
             this._rotation.z = s.z * Math.PI / 180;
@@ -258,7 +342,16 @@ module BABYLONX {
         get rotation() {
             return this._rotation;
         }
-        set seed(s:number) {
+        rot(s: { x: number, y: number, z: number }) {
+            this.rotation = s;
+            return this;
+        }
+        pos(p: { x: number, y: number, z: number }) {
+            this.position = p;
+            return this;
+        }
+        
+        set seed(s: number) {
             this._seed = this._s = s;
         }
         get seed() {
@@ -270,6 +363,98 @@ module BABYLONX {
         get uniformScale() {
             return this._uniformScale;
         }
+        getRandomColor() {
+            return this.random();
+        }
+        getRandomInt({ min = 0, max = 10 } = {}) {
+            return min+Math.floor(this.random()*(max-min));
+        }
+    }
+    export class RandomNumberGen {
+        private _min;
+        private _max;
+        private _generator;
+        constructor({ min = 0, max = 10, seed = 1234 } = {}) {
+            this._min = min;
+            this._max = max;
+            this._generator = new RandomEffector(seed);
+            return this;
+        }
+        nextInt() {
+            return this._generator.getRandomInt({
+                min: this._min, max: this._max
+            });
+        }
+    }
+    export class RainbowPalette {
+        static getColor(index, frame) {
+            let pi2 = Math.PI;
+            let off = Math.sin(frame * 0.01);
+            let aa = Math.sin((index + 0.05 + off) * pi2);
+            let bb = Math.sin((index + 0.34 + off) * pi2);
+            let cc = Math.sin((index + 0.66 + off) * pi2);
+            return {
+                r: aa * aa, g: bb * bb, b: cc * cc
+            }
+        }
+    }
+    export class ColorEffector {
+        _autoanimate: boolean = true;
+        _reverse: boolean = false;
+        _framerate: number = 1/50;
+        static cubicPulse(c:number, w:number, x:number) {
+            x = Math.abs(x - c);
+            if (x < w) return 0.0;
+            return 1.0 - x * x * (3.0 - 2.0 * x);
+        }
+        static smoothstep(min, max, value) {
+            var x = Math.max(0, Math.min(1, (value - min) / (max - min)));
+            return x * x * (3 - 2 * x);
+        };
+        constructor() {
+            return this;
+        }
+        auto(ani: boolean) {
+            this._autoanimate = ani;
+            return this;
+        }
+        reverse(rev) {
+            this._reverse = rev;
+            return this;
+        }
+        framerate(fr: number) {
+            fr = fr < 0 ? 1 : fr;
+            this._framerate = 1/fr;
+            return this;
+        }
+        animate(index, frame) {
+            return ColorEffector.getColor(this._reverse ? index : (1 - index), frame, this._autoanimate ? frame *this._framerate/Math.PI:0);
+        }
+        static getColor(index:number, frame:number,offset:number=0) {
+            let pi2 = Math.PI;
+            let aa = Math.sin((index + 0.05 + offset) * pi2);
+            let bb = Math.sin((index + 0.34 + offset) * pi2);
+            let cc = Math.sin((index + 0.66 + offset) * pi2);
+            //let aa = 1-ColorEffector.cubicPulse(aaa * aaa, 0.05,index );//* Math.sin((index + 0.05 + offset) * pi2);
+            //let bb = 1-ColorEffector.cubicPulse(bbb * bbb, 0.05,index );//ColorEffector.cubicPulse(index, 0.02, 1+Math.sin(frame * 0.01)) *Math.sin((index + 0.34 + offset) * pi2);
+            //let cc = 1-ColorEffector.cubicPulse(ccc * ccc, 0.05,index);//ColorEffector.cubicPulse(index, 0.02, 1+Math.sin(frame * 0.01)) *Math.sin((index + 0.66 + offset) * pi2);
+            //frame = 66;
+            let fx = (frame % 120) / 120;//  Math.abs(Math.cos(Math.sin(frame * 0.1)));
+            let ping = Math.abs(index - fx)>1/140?.99:0;
+            let ix = Math.max(0,Math.min((ping),1));//-1+index*2;
+            let a = ping;//ix;//ColorEffector.smoothstep(ix - .31, ix, fx) - ColorEffector.smoothstep(ix, ix + .31, fx);
+            
+            //let a = 1-ColorEffector.cubicPulse(index, .1, fx);
+            return {
+                r: aa * aa, g: bb * bb, b: cc * cc,a:a
+            }
+        }
+        get autoanimate() {
+            return this._autoanimate;
+        }
+        set autoanimate(auto: boolean) {
+            this._autoanimate = auto;
+        }
 
     }
     export class Cloner {
@@ -279,6 +464,9 @@ module BABYLONX {
         _mesh;
         _scene;
         _clones;
+        _frame: number;
+        _index: number;
+       
         _count: number;
         _effectors = [];
         setEnabled(enabled) {
@@ -321,7 +509,6 @@ module BABYLONX {
         getScene() { 
             return this._scene;
         }  
-
     }
     export class RadialCloner extends Cloner {
         static instance_nr;
@@ -333,12 +520,18 @@ module BABYLONX {
         private _endangle: number;
         private _offset: number;
         private _align: boolean;
-        private _frame: number;
         private _formula: string;
+        private _colorize: ColorEffector;
 
 
-
-        constructor(mesh, scene, { count = 3, offset = 0, radius = 3, align = true, startangle = 0, endangle = 360, useInstances = true, plane = { x: 1, y: 0, z: 1 } } = {}) {
+        /**
+         * 
+         * @param mesh mesh to clone
+         * @param scene
+         * @param param2 all optional: count, offset, radius startangle, endangle, useInstances, plane,colorize
+         * if colorize function is provided, useInstances is set to false!
+         */
+        constructor(mesh, scene, { count = 3, offset = 0, radius = 3, align = true, startangle = 0, endangle = 360, useInstances = true, plane = { x: 1, y: 0, z: 1 }, colorize = null} = {}) {
             super();
             RadialCloner.instance_nr = 0 | (RadialCloner.instance_nr + 1);
             this._instance_nr = RadialCloner.instance_nr;
@@ -355,12 +548,19 @@ module BABYLONX {
             this._offset = offset;
             this._align = align;
             this._frame = 0;
+            this._index = 0;
+            this._colorize = colorize;
+            if (colorize != null) this._useInstances = false;
             this._formula = "2-Math.pow(Math.abs(Math.sin(frame/10+Math.PI*i/2)),0.1)*1.5"
             this._formula = "scaling=1-Math.sin(frame/6+2*ix*Math.PI)/2"
 
 
             //this._rootNode=new CMesh("root",this._scene,this);
             this._rootNode = new CMesh(`rootRC_${this._instance_nr}`, this._scene, null, this);
+            this._scene.registerBeforeRender(() => {
+                this._frame++;
+                this._index = 0;
+            });
             this.createClones();
             this.update();
 
@@ -376,11 +576,21 @@ module BABYLONX {
             for (let i = start; i < this._count; i++) {
                 //create Node for each clone, RADIAL=>parent = rootnode 
                 var n = new CMesh(`n_rc${this._instance_nr}_${i}`, this._scene, this._rootNode);
-                //n.index = i;
+                n._index = i;
                 this._clones.push(n);
                 //create clone
                 let cix = i % this._mesh.length;
-                n.createClone(this._mesh[cix], this._useInstances, `${this._mesh[cix].name}_rc${this._instance_nr}_${i}`);
+                let c = n.createClone(this._mesh[cix], this._useInstances, `${this._mesh[cix].name}_rc${this._instance_nr}_${i}`);
+                if (this._colorize != null) {
+                    c.registerBeforeRender(() => {
+                        let color = this._colorize.animate(c.parent._index / this._count, this._frame);
+                        c.material.diffuseColor.r = color.r;
+                        c.material.diffuseColor.g = color.g;
+                        c.material.diffuseColor.b = color.b;
+                        //if (color.r < 0.5)
+                        c.material.alpha = color.a;
+                    });
+                }
             }
         }
         calcRot() {
@@ -913,9 +1123,10 @@ module BABYLONX {
         private _iModeRelative;
         private _growth;
         private _instance_nr;
+        private _countNumberGen = null;
 
 
-        constructor(mesh, scene, { count = 3, offset = 0, growth = 1, useInstances = true, P = { x: 0, y: 2, z: 0 }, S = { x: 1, y: 1, z: 1 }, R = { x: 0, y: 0, z: 0 }, iModeRelative = false } = {}) {
+        constructor(mesh, scene, { count =null, offset = 0, growth = 1, useInstances = true, P = { x: 0, y: 2, z: 0 }, S = { x: 1, y: 1, z: 1 }, R = { x: 0, y: 0, z: 0 }, iModeRelative = false } = {}) {
             super();
             LinearCloner.instance_nr = 0 | (LinearCloner.instance_nr + 1);
             this._mesh = mesh;
@@ -925,7 +1136,8 @@ module BABYLONX {
             this._scene = scene,
                 this._useInstances = useInstances;
             this._clones = [];
-            this._count = Number(count);
+            this._countNumberGen = count instanceof RandomNumberGen ? count : null;
+            this._count = count instanceof RandomNumberGen ? count.nextInt():Number(count);
             this._offset = offset;
             this._P = new BABYLON.Vector3(P.x, P.y, P.z);
             this._S = new BABYLON.Vector3(S.x, S.y, S.z);
@@ -939,7 +1151,8 @@ module BABYLONX {
 
         }
         createClone(parent, dummyUseInstances = null, dummyName = null) {
-            var c = new LinearCloner(this._mesh, this._scene, { count: this._count, offset: this._offset, growth: this._growth, useInstances: this._useInstances, P: { x: this._P.x, y: this._P.y, z: this._P.z }, S: { x: this._S.x, y: this._S.y, z: this._S.z }, R: { x: this._R.x, y: this._R.y, z: this._R.z }, iModeRelative: this._iModeRelative })
+            let cnt = this._countNumberGen != null ? this._countNumberGen.nextInt() : this._count;
+            var c = new LinearCloner(this._mesh, this._scene, { count: cnt, offset: this._offset, growth: this._growth, useInstances: this._useInstances, P: { x: this._P.x, y: this._P.y, z: this._P.z }, S: { x: this._S.x, y: this._S.y, z: this._S.z }, R: { x: this._R.x, y: this._R.y, z: this._R.z }, iModeRelative: this._iModeRelative })
             parent._cloner = c;
             c.root.parent = parent;
             return c.root;
@@ -952,7 +1165,8 @@ module BABYLONX {
                 this._clones.push(n);
                 //create clone
                 let cix = i % this._mesh.length;
-                n.createClone(this._mesh[cix], this._useInstances, `${this._mesh[cix].name}_lc${this._instance_nr}_${i}`);
+                let c = n.createClone(this._mesh[cix], this._useInstances, `${this._mesh[cix].name}_lc${this._instance_nr}_${i}`);
+                //c.material.diffuseColor.g = 1-i / this._count;
             }
         }
         
@@ -1011,11 +1225,27 @@ module BABYLONX {
                 this._clones[i].getChildren()[0].rotation = this.eRotate(vRot);//   this._clones[i].rotation);
             }
         }
+        calcColor() {
+            /*
+            if (this._effectors.length > 0) {
+                let e = this._effectors[0];
+                for (let i = 1; i < this._count; i++) {
+                    let cr = e.effector.getRandomColor();
+                    let cg = e.effector.getRandomColor();
+                    let cb = e.effector.getRandomColor();
+                    this._clones[i].getChildren()[0].material.diffuseColor.r = cr;
+                    this._clones[i].getChildren()[0].material.diffuseColor.g = cg;
+                    this._clones[i].getChildren()[0].material.diffuseColor.b = cb;
+                }
+            }
+            */
+        }
         update() {
             if (this._count > 0) {
                 this.calcRot();
                 this.calcPos();
                 this.calcSize();
+                this.calcColor();
             }
 
 
