@@ -3,9 +3,10 @@ from .package_level import *
 
 import bpy
 #===============================================================================
-# extract data in Mesh order, no optimization from group analyse yet; mapped into a copy of position
+# extract data in Mesh order, no optimization from group analysis yet; mapped into a copy of position
+# 
 class RawShapeKey:
-    def __init__(self, keyBlock, group, state, keyOrderMap, basis):
+    def __init__(self, keyBlock, group, state, keyOrderMap, basis, allowVertReduction = True):
         self.group = group
         self.state = state
         self.vertices = []
@@ -22,18 +23,20 @@ class RawShapeKey:
             if not similar_vertex(value, basis.data[pair[0]].co):
                 nDifferent += 1
 
-        if state != 'BASIS':
+        # only log when groups / allowVertReduction
+        if state != 'BASIS' and allowVertReduction:
             Logger.log('shape key "' + group + '-' + state + '":  n verts different from basis: ' + str(nDifferent), 3)
 #===============================================================================
 class ShapeKeyGroup:
     def __init__(self, group, rawShapeKeys, basisVerts):
         self.group = group
+        self.basisVerts = basisVerts
         self.stateNames = []
         self.stateVertices = []
         self.affectedIndices = []
 
         nRawKeys = len(rawShapeKeys)
-        nSize = len(basisVerts)
+        nSize = len(self.basisVerts)
 
         sameForAll = []
         for i in range(nSize):
@@ -51,7 +54,7 @@ class ShapeKeyGroup:
                     continue;
 
                 # check vertex not different from Basis
-                if not same_vertex(key.vertices[i],  basisVerts[i]):
+                if not similar_vertex(key.vertices[i],  self.basisVerts[i]):
                     sameForAll[i] = False
                     break;
 
@@ -75,18 +78,24 @@ class ShapeKeyGroup:
             affectedVertices = []
             for idx in affectedWholeVertices:
                 # clone vert, so key can be deleted in pass 1, and not affect pass2
-                affectedVertices.append(key.vertices[idx].copy())
+                # encode as a difference to basis, so more compact
+                vert = key.vertices[idx].copy()
+                vert.x -= self.basisVerts[idx].x
+                vert.y -= self.basisVerts[idx].y
+                vert.z -= self.basisVerts[idx].z
+                affectedVertices.append(vert)
 
             self.stateNames.append(key.state)
             self.stateVertices.append(affectedVertices)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def to_script_file(self, file_handler, var, indent):
         indent2 = indent + '    '
-        file_handler.write(indent  + 'shapeKeyGroup = new QI.ShapeKeyGroup(' + var + ', "' + self.group + '", new Uint32Array([\n')
-        file_handler.write(indent2 + format_array(self.affectedIndices, indent2) + '\n')
-        file_handler.write(indent  + ']));\n')
+        
+        writeSortedInt32Array(file_handler, 'ai', indent, self.affectedIndices)
+
+        file_handler.write(indent  + 'shapeKeyGroup = new QI.ShapeKeyGroup(' + var + ', "' + self.group + '", ai);\n')
 
         for state_idx in range(len(self.stateVertices)):
-            file_handler.write(indent  + 'shapeKeyGroup._addShapeKey("' + self.stateNames[state_idx] + '", new Float32Array([\n')
+            file_handler.write(indent  + 'shapeKeyGroup._addShapeKey("' + self.stateNames[state_idx] + '", true, new Float32Array([\n')
             file_handler.write(indent2 + format_vector_array(self.stateVertices[state_idx], indent2) + '\n')
             file_handler.write(indent  + ']));\n')
