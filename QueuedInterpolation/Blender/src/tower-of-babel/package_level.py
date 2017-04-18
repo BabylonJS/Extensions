@@ -8,6 +8,8 @@ MAX_FLOAT_PRECISION_INT = 4
 MAX_FLOAT_PRECISION = '%.' + str(MAX_FLOAT_PRECISION_INT) + 'f'
 VERTEX_OUTPUT_PER_LINE = 50
 STRIP_LEADING_ZEROS_DEFAULT = True # false for .babylon
+MIN_CONTIGUOUS_INDEXES = 10
+MIN_CONTIGUOUS_ZEROS = 9
 #===============================================================================
 #  module level formatting methods, called from multiple classes
 #===============================================================================
@@ -123,16 +125,18 @@ def format_matrix4(matrix):
 def format_array3(array):
     return format_f(array[0]) + ',' + format_f(array[1]) + ',' + format_f(array[2])
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-def format_array(array, indent = ''):
+def format_array(array, indent = '', beginIdx = 0, firstNotIncludedIdx = -1):
     ret = ''
     first = True
     nOnLine = 0
-    for element in array:
+    
+    endIdx = len(array) if firstNotIncludedIdx == -1 else firstNotIncludedIdx
+    for idx in range(beginIdx, endIdx):
         if (first != True):
             ret +=','
         first = False;
 
-        ret += format_f(element)
+        ret += format_f(array[idx])
         nOnLine += 1
 
         if nOnLine >= VERTEX_OUTPUT_PER_LINE:
@@ -281,7 +285,7 @@ def write_bool(file_handler, name, bool, noComma = False):
 #===============================================================================
 # module level methods for writing JSON (.js) files
 #===============================================================================
-def write_js_module_header(file_handler, moduleName):
+def write_js_module_header(file_handler, moduleName, hasSkeletons):
     file_handler.write('// File generated with Tower of Babel version: ' + format_exporter_version() + ' on ' + strftime("%x") + '\n')
 
     # module open  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -296,3 +300,139 @@ def write_js_module_header(file_handler, moduleName):
     file_handler.write('    var _M = _B.Matrix.FromValues;\n')
     file_handler.write('    var _Q = _B.Quaternion;\n')
     file_handler.write('    var _V = _B.Vector3;\n')
+    
+    # add function to unpack contiguous indexes (referenced in writeSortedInt32Array)
+    file_handler.write('    function CONTIG(array, offset, begin, end) {\n')
+    file_handler.write('        for(var i = 0, len = 1 + end - begin; i < len; i++) {\n')
+    file_handler.write('            array[offset + i] = begin + i;\n')
+    file_handler.write('        }\n')
+    file_handler.write('    }\n')
+    
+    if hasSkeletons:
+        file_handler.write('    function UNPACK(compressed) {\n')
+        file_handler.write('        var len = compressed.length * 4;\n')
+        file_handler.write('        ret = new Float32Array(compressed.length * 4);\n')
+        file_handler.write('        for(var i = 0; i < len; i += 4) {\n')
+        file_handler.write('            ret[i    ] = compressed & 0x000000FF;\n')
+        file_handler.write('            ret[i + 1] = (compressed & 0x0000FF00) >> 8;\n')
+        file_handler.write('            ret[i + 2] = (compressed & 0x00FF0000) >> 16;\n')
+        file_handler.write('            ret[i + 3] = compressed >> 24;\n')
+        file_handler.write('        }\n')
+        file_handler.write('        return ret;\n')
+        file_handler.write('    }\n')
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# returns an array of the offsets, begin values, & ending values of contiguous indexes
+def findContigousRanges(array, isSorted):
+    ret = []
+    inRange = False
+    minNumber = 1 if isSorted else MIN_CONTIGUOUS_INDEXES # need at least 10 contiguous when not sorted
+    
+    offset = beginVal = -1
+
+    #  loop from first to end - 1 (range is not inclusive)
+    for i in range(len(array) - 1):
+        if array[i] + 1 == array[i + 1]:
+            if not inRange:
+                offset = i
+                beginVal = array[i]
+                inRange = True
+                
+        elif inRange:
+            if 1 + i - offset >=  minNumber:
+                ret.append([offset, beginVal, array[i]])
+            inRange = False
+    
+    # test to see if ran out of numbers while still in a range 
+    if inRange:
+        ret.append([offset, beginVal, array[len(array) - 1]])
+        
+    return ret
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+def writeInt32Array(file_handler, var, indent, array, isSorted):
+    sz = len(array)
+    ranges = findContigousRanges(array, isSorted)
+    nRanges = len(ranges)
+    
+    if nRanges == 0:
+        file_handler.write(indent  + var + ' = new Uint32Array([' + format_array(array, indent) + ']);\n');
+        return;
+        
+    file_handler.write(indent  + var + ' = new Uint32Array(' + format_int(sz) + ');\n');
+    
+    # test for gap at beginning
+    firstBegin = ranges[0][0]
+    if firstBegin != 0:
+        file_handler.write(indent  + var + '.set([' + format_array(array, indent, 0, firstBegin) + ']);\n')
+
+    for i in range(nRanges):
+        offset = ranges[i][0]
+        begin  = ranges[i][1]
+        end    = ranges[i][2] 
+        file_handler.write(indent  + 'CONTIG('+ var + ', ' +  format_int(offset) + ', ' + format_int(begin) + ', ' + format_int(end) + ');\n');
+        
+        lastIdx = offset + (end - begin)
+        
+        # test for a gap between ranges or at end
+        nextOffset = ranges[i + 1][0] if i + 1 < nRanges else sz
+        if nextOffset - lastIdx > 1:
+            file_handler.write(indent  + var + '.set([' + format_array(array, indent, lastIdx + 1, nextOffset) + '], ' + format_int(lastIdx + 1) + ');\n');
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+def vectorArrayToArray(vectorArray):
+    ret = []
+    for vector in vectorArray:
+        ret.append(vector.x)
+        ret.append(vector.z)
+        ret.append(vector.y)
+    return ret
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# returns an array of the begin indexes, & ending indexes of contiguous zero values
+def findContigousZeroRanges(array):
+    ret = []
+    inRange = False
+
+    #  loop from first to end (range is not inclusive)
+    for i in range(len(array)):
+        if format_f(array[i]) == '0':
+            if not inRange:
+                beginIdx = i
+                inRange = True
+                
+        elif inRange:
+            if 1 + i - beginIdx >=  MIN_CONTIGUOUS_ZEROS:
+                ret.append([beginIdx, i - 1])
+            inRange = False
+    
+    # test to see if ran out of numbers while still in a range 
+    if inRange:
+        ret.append([beginIdx, len(array) - 1])
+        
+    return ret
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+def writeFloat32Array(file_handler, var, indent, vectorArray):
+    array = vectorArrayToArray(vectorArray)
+    sz = len(array)
+    zeroRanges = findContigousZeroRanges(array)
+    nRanges = len(zeroRanges)
+    
+    if nRanges == 0:
+        file_handler.write(indent  + var + ' = new Float32Array([' + format_array(array, indent) + ']);\n');
+        return;
+        
+    file_handler.write(indent  + var + ' = new Float32Array(' + format_int(sz) + ');\n');
+    
+    # test for values at beginning
+    firstGapBegin = zeroRanges[0][0]
+    if firstGapBegin != 0:
+        file_handler.write(indent  + var + '.set([' + format_array(array, indent, 0, firstGapBegin) + ']);\n')
+
+    for i in range(1, nRanges):
+        prevZerosEnd    = zeroRanges[i - 1][1]
+        nextZerosbegin  = zeroRanges[i    ][0]
+        file_handler.write(indent  + var + '.set([' + format_array(array, indent, prevZerosEnd + 1, nextZerosbegin) + '], ' + format_int(prevZerosEnd + 1) + ');\n');
+        
+    # test for values at end
+    lastGapEnd = zeroRanges[nRanges - 1][1]
+    if lastGapEnd + 1 < sz:
+        file_handler.write(indent  + var + '.set([' + format_array(array, indent, lastGapEnd + 1, sz - 1) + '], ' + format_int(lastGapEnd + 1) + ');\n');
