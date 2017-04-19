@@ -12,5 +12,8 @@ Texture Editor is a Tool where you can design materials for your BABYLON meshes.
 * Full procedural, images can be mixed optionally
 
 TextureEditor is in alpha/beta-stage, which means that most of the planned features are implemented, but not fully tested.
-## Known issues
+### Known issues
 TextureEditor works well on Chrome and Edge, but has some problemes on firefox.
+
+## Start
+You can start the application HERE: https://rawgit.com/BabylonJS/Extensions/master/TextureEditor/textureEditor01Alpha.html
