@@ -153,15 +153,20 @@ module BABYLONX {
         }
     }
     export class TexGen {
+        /* Original from Author: Christian Petry Homepage: www.petry-christian.de
+         * Adapted by: Author: Johann Langhofer Homepage: johann.langhofer.net
+        */
         private _brick_color = "#b90000";
         private _grout_color = "#e4ff66";
         private _gradient_color = "#000000";
+        private _grout_space = 1;
         private _brick_gradient = 3;
         private _number = 0;
         private _width = 32;
         private _height = 32;
         private _numWidth = 8;
         private _numHeight = 8;
+        private _rotation = 0;
         private _ctx;
 
         rational_tanh(x) {
@@ -469,15 +474,43 @@ module BABYLONX {
             ctx.restore();
 
         }
+        rotate(ctx, rotation) {
+            var max_w = 250;
+            var max_h = 250;
+            ctx.beginPath();
+            ctx.rect(0, 0, max_w, max_h);
+            ctx.translate(max_w / 2, max_h / 2);
+            ctx.rotate(rotation);
+            ctx.translate(-max_w / 2, -max_h / 2);
+
+            var pat = ctx.createPattern(ctx.canvas, "repeat");
+
+            ctx.clearRect(-max_w / 2, -max_h / 2, max_w / 2, max_h / 2);
+            ctx.fillStyle = pat;
+            ctx.fill();
+            ctx.translate(max_w / 2, max_h / 2);
+            ctx.rotate(-rotation);
+            ctx.translate(-max_w / 2, -max_h / 2);
+       }
         createPattern(ctx, options) {
-            if (options.number != null) {
+            var max_w = 250;
+            var max_h = 250;
+           if (options.number != null) {
                 this._number = Number(options.number);
             }
             switch (this._number) {
                 case 0: this.createStraightPattern(ctx, options); break;
                 case 1: this.createWideBlockPattern(ctx, options); break;
                 case 2: this.createBlockPattern(ctx, options); break;
+                case 3: this.createCirclePattern(ctx, options); break;
+                case 4: this.createEdgesPattern(ctx, options); break;
             }
+            
+            if (this._rotation != 0) {
+                this.rotate(ctx, this._rotation);
+            }
+            
+
         }
         createStraightPattern(ctx, options) {
             this._ctx = ctx;
@@ -485,7 +518,7 @@ module BABYLONX {
             this._height = options.height || this._height;
             this._numWidth = options.numWidth || this._numWidth;
             this._numHeight = options.numHeight || this._numHeight;
-            var groutspace = options.groutspace || 1;
+            this._grout_space = options.groutspace || this._grout_space;
             this._brick_gradient = options.brick_gradient || this._brick_gradient;
             this._brick_color = options.brick_color || this._brick_color;
             this._grout_color = options.grout_color || this._grout_color;
@@ -494,10 +527,10 @@ module BABYLONX {
             for (var y = 0; y < this._numHeight + 1; y++) {
                 for (var x = 0; x < this._numWidth + 1; x++) {
                     if (x % 2 == 1) {
-                        this.drawBrickRectangle(ctx, groutspace, this._brick_gradient, this._brick_color, this._grout_color, this._gradient_color, x * this._width, y * this._height - half_height, this._width, this._height);
+                        this.drawBrickRectangle(ctx, this._grout_space, this._brick_gradient, this._brick_color, this._grout_color, this._gradient_color, x * this._width, y * this._height - half_height, this._width, this._height);
                     }
                     else
-                        this.drawBrickRectangle(ctx, groutspace, this._brick_gradient, this._brick_color, this._grout_color, this._gradient_color, x * this._width, y * this._height, this._width, this._height);
+                        this.drawBrickRectangle(ctx, this._grout_space, this._brick_gradient, this._brick_color, this._grout_color, this._gradient_color, x * this._width, y * this._height, this._width, this._height);
                 }
             }
         }
@@ -508,7 +541,7 @@ module BABYLONX {
             this._numWidth = options.numWidth || this._numWidth;
             this._numHeight = options.numHeigth || this._numHeight;
             this._grout_color = options.grout_color || this._grout_color;
-            var groutspace = options.groutspace || 1;
+            this._grout_space = options.groutspace || this._grout_space;
             this._brick_gradient = options.brick_gradient || this._brick_gradient;
             this._brick_color = options.brick_color || this._brick_color;
 
@@ -523,11 +556,11 @@ module BABYLONX {
             for (var y = 0; y < count_y + 1; y += 2) {
                 for (var x = 0; x < count_x + 1; x += 3) {
                     if ((x + y) % 4 == 0) {
-                        this.drawBrickRectangle(ctx, groutspace, this._brick_gradient, this._brick_color, this._grout_color, this._grout_color, x * width, y * height, width, height * 2);
-                        this.drawBrickRectangle(ctx, groutspace, this._brick_gradient, this._brick_color, this._grout_color, this._grout_color, x * width + width, y * height, width, height);
+                        this.drawBrickRectangle(ctx, this._grout_space, this._brick_gradient, this._brick_color, this._grout_color, this._gradient_color, x * width, y * height, width, height * 2);
+                        this.drawBrickRectangle(ctx, this._grout_space, this._brick_gradient, this._brick_color, this._grout_color, this._gradient_color, x * width + width, y * height, width, height);
                     } else {
-                        this.drawBrickRectangle(ctx, groutspace, this._brick_gradient, this._brick_color, this._grout_color, this._grout_color, x * width, y * height, width * 2, height);
-                        this.drawBrickRectangle(ctx, groutspace, this._brick_gradient, this._brick_color, this._grout_color, this._grout_color, x * width, y * height + height, width * 2, height);
+                        this.drawBrickRectangle(ctx, this._grout_space, this._brick_gradient, this._brick_color, this._grout_color, this._gradient_color, x * width, y * height, width * 2, height);
+                        this.drawBrickRectangle(ctx, this._grout_space, this._brick_gradient, this._brick_color, this._grout_color, this._gradient_color, x * width, y * height + height, width * 2, height);
                     }
                 }
             }
@@ -539,7 +572,7 @@ module BABYLONX {
             this._numWidth = options.numWidth || this._numWidth;
             this._numHeight = options.numHeigth || this._numHeight;
             this._grout_color = options.grout_color || this._grout_color;
-            var groutspace = options.groutspace || 1;
+            this._grout_space = options.groutspace || this._grout_space;
             this._brick_gradient = options.brick_gradient || this._brick_gradient;
             this._brick_color = options.brick_color || this._brick_color;
 
@@ -553,11 +586,67 @@ module BABYLONX {
 
             for (var y = 0; y < count_y + 1; y += 2) {
                 for (var x = 0; x < count_x + 1; x += 3) {
-                    this.drawBrickRectangle(ctx, groutspace, this._brick_gradient, this._brick_color, this._grout_color, this._grout_color, x * width, y * height, width, height * 2);
-                    this.drawBrickRectangle(ctx, groutspace, this._brick_gradient, this._brick_color, this._grout_color, this._grout_color, x * width + width, y * height, width * 2, height);
-                    this.drawBrickRectangle(ctx, groutspace, this._brick_gradient, this._brick_color, this._grout_color, this._grout_color, x * width + width, y * height + height, width * 2, height);
+                    this.drawBrickRectangle(ctx, this._grout_space, this._brick_gradient, this._brick_color, this._grout_color, this.gradient_color, x * width, y * height, width, height * 2);
+                    this.drawBrickRectangle(ctx, this._grout_space, this._brick_gradient, this._brick_color, this._grout_color, this.gradient_color, x * width + width, y * height, width * 2, height);
+                    this.drawBrickRectangle(ctx, this._grout_space, this._brick_gradient, this._brick_color, this._grout_color, this.gradient_color, x * width + width, y * height + height, width * 2, height);
                 }
             }
+        }
+        createCirclePattern(ctx, options) {
+            this._ctx = ctx;
+            this._width = options.width || this._width;
+            this._height = options.height || this._height;
+            this._numWidth = options.numWidth || this._numWidth;
+            this._numHeight = options.numHeigth || this._numHeight;
+            this._grout_color = options.grout_color || this._grout_color;
+            this._grout_space = options.groutspace || this._grout_space;
+            this._brick_gradient = options.brick_gradient || this._brick_gradient;
+            this._brick_color = options.brick_color || this._brick_color;
+
+            var width = this._width / 3.0 + 0.5;
+            var height = this._height / 3.0 + 0.5;
+            var count_y = this._numHeight * 3;
+            var count_x = this._numWidth * 3;
+            for (var y = 0; y < count_y + 1; y += 3) {
+                for (var x = 0; x < count_x + 1; x += 3) {
+                    this.drawBrickRectangle(ctx, this._grout_space, this.brick_gradient, this.brick_color, this.grout_color, this.gradient_color, x * width, y * height, width * 2, height);
+                    this.drawBrickRectangle(ctx, this._grout_space, this.brick_gradient, this.brick_color, this.grout_color, this.gradient_color, x * width + width, y * height + 2 * height, width * 2, height);
+
+                    this.drawBrickRectangle(ctx, this._grout_space, this.brick_gradient, this.brick_color, this.grout_color, this.gradient_color, x * width, y * height + height, width, height * 2);
+                    this.drawBrickRectangle(ctx, this._grout_space, this.brick_gradient, this.brick_color, this.grout_color, this.gradient_color, x * width + 2 * width, y * height, width, height * 2);
+
+                    this.drawBrickRectangle(ctx, this._grout_space, this.brick_gradient, this.brick_color, this.grout_color, this.gradient_color, x * width + width, y * height + height, width, height);
+                }
+            }
+
+        }
+        createEdgesPattern(ctx, options) {
+            this._ctx = ctx;
+            this._width = options.width || this._width;
+            this._height = options.height || this._height;
+            this._numWidth = options.numWidth || this._numWidth;
+            this._numHeight = options.numHeigth || this._numHeight;
+            this._grout_color = options.grout_color || this._grout_color;
+            this._grout_space = options.groutspace || this._grout_space;
+            this._brick_gradient = options.brick_gradient || this._brick_gradient;
+            this._brick_color = options.brick_color || this._brick_color;
+
+            var width = this._width / 2.0 + 0.5;
+            var height = this._height / 2.0 + 0.5;
+            var count_y = this._numHeight * 2;
+            var count_x = this._numWidth * 2;
+            ctx.translate(-width, -height);
+            for (var y = 0; y < count_y + 2; y++) {
+                for (var x = 0; x < count_x + 2; x++) {
+                    if (y % 4 == x % 4)
+                        this.drawBrickRectangle(ctx, this._grout_space, this.brick_gradient, this.brick_color, this.grout_color, this.gradient_color, x * width, y * height, width * 2, height);
+                    else if (y % 4 == (x % 4 + 1)
+                        || (y % 4 == 0 && x % 4 == 3))
+                        this.drawBrickRectangle(ctx, this._grout_space, this.brick_gradient, this.brick_color, this.grout_color, this.gradient_color, x * width, y * height, width, height * 2);
+
+                }
+            }
+            ctx.translate(width, height);
         }
         set brick_gradient(g) {
             this._brick_gradient = g;
@@ -579,6 +668,13 @@ module BABYLONX {
         }
         get grout_color() {
             return this._grout_color;
+        }
+        get grout_space() {
+            return this._grout_space;
+        }
+        set grout_space(n) {
+            this._grout_space = n;
+            this.createPattern(this._ctx, {});
         }
         set gradient_color(c) {
             this._gradient_color = c;
@@ -620,6 +716,13 @@ module BABYLONX {
         }
         set numHeight(n) {
             this._numHeight = n;
+            this.createPattern(this._ctx, {});
+        }
+        get rotation() {
+            return this._rotation;
+        }
+        set rotation(r) {
+            this._rotation = r;
             this.createPattern(this._ctx, {});
         }
 

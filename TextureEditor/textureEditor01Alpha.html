@@ -648,7 +648,8 @@
                         "width": 32,
                         "height": 32,
                         "numWidth": 8,
-                        "numHeight": 8
+                        "numHeight": 8,
+                        "rotation": 0
                     }
                 },
                 "preset1": {
@@ -661,7 +662,8 @@
                         "width": 32,
                         "height": 32,
                         "numWidth": 8,
-                        "numHeight": 8
+                        "numHeight": 8,
+                        "rotation": 0
                     }
                 },
                 "preset2": {
@@ -674,7 +676,8 @@
                         "width": 32,
                         "height": 32,
                         "numWidth": 8,
-                        "numHeight": 8
+                        "numHeight": 8,
+                        "rotation": 0
                     }
                 },
                 "preset3": {
@@ -687,7 +690,8 @@
                         "width": 100,
                         "height": 70,
                         "numWidth": 8,
-                        "numHeight": 8
+                        "numHeight": 8,
+                        "rotation": 0
                     }
                 },
                 "preset5": {
@@ -700,7 +704,8 @@
                         "width": 83,
                         "height": 86,
                         "numWidth": 17,
-                        "numHeight": 15
+                        "numHeight": 15,
+                        "rotation": 0
                     }
                 }
             },
@@ -720,15 +725,17 @@
             controller.add(obj, 'strength').min(.005).max(5).step(.005);
         }
         function addPatternParams(controller, obj) {
-            controller.add(obj, "number").min(0).max(2).step(1);
-            controller.add(obj, "brick_gradient").name("gradient").min(1).max(10).step(1);
+            controller.add(obj, "number").min(0).max(4).step(1);
+            controller.add(obj, "brick_gradient").name("gradient").min(1).max(20).step(1);
             controller.addColor(obj, 'brick_color');
             controller.addColor(obj, 'grout_color');
             controller.addColor(obj, 'gradient_color');
+            controller.add(obj, "grout_space").min(1).max(20).step(1);
             controller.add(obj, "width").min(1).max(256).step(1);
             controller.add(obj, "height").min(1).max(256).step(1);
             controller.add(obj, "numWidth").min(1).max(64).step(1);
             controller.add(obj, "numHeight").min(1).max(64).step(1);
+            controller.add(obj, "rotation").min(0,0).max(Math.PI*2.0).step(.01);
         }
         function addNoiseParams(controller, obj) {
             controller.addColor(obj, 'color1');
