@@ -65,7 +65,6 @@ declare module BABYLON {
         constructor(owner: BABYLON.AbstractMesh, scene: BABYLON.Scene, enableUpdate?: boolean, propertyBag?: any);
         readonly mesh: BABYLON.AbstractMesh;
         getChildMesh(name: string, directDecendantsOnly?: boolean, predicate?: (node: BABYLON.Node) => boolean): BABYLON.AbstractMesh;
-        getDetailMesh(directDecendantsOnly?: boolean, predicate?: (node: BABYLON.Node) => boolean): BABYLON.AbstractMesh;
         getCollisionMesh(directDecendantsOnly?: boolean, predicate?: (node: BABYLON.Node) => boolean): BABYLON.AbstractMesh;
         setPhysicsCollisions(collisionTags: string[], collisionHandler: (collider: BABYLON.IPhysicsEnabledObject) => void): void;
         clearPhysicsCollisions(): void;
@@ -78,7 +77,6 @@ declare module BABYLON {
     abstract class SceneController extends BABYLON.MeshComponent {
         ready(): void;
         constructor(owner: BABYLON.AbstractMesh, scene: BABYLON.Scene, enableUpdate?: boolean, propertyBag?: any);
-        private onready();
     }
     class OrthoController extends BABYLON.CameraComponent {
         start(): void;
@@ -356,7 +354,7 @@ declare module BABYLON {
         static LoadScene(rootUrl: string, sceneFilename: string, engine: BABYLON.Engine, onsuccess?: (scene: BABYLON.Scene) => void, progressCallBack?: any, onerror?: (scene: BABYLON.Scene) => void): void;
         static ImportMesh(meshesNames: any, rootUrl: string, sceneFilename: string, scene: BABYLON.Scene, onsuccess?: (meshes: BABYLON.AbstractMesh[], particleSystems: BABYLON.ParticleSystem[], skeletons: BABYLON.Skeleton[]) => void, progressCallBack?: () => void, onerror?: (scene: BABYLON.Scene, message: string, exception?: any) => void): void;
         static RegisterLoader(handler: (root: string, name: string) => void): void;
-        static RegisterReady(handler: (scene: BABYLON.Scene, manager: BABYLON.SceneManager) => void): void;
+        static ExecuteWhenReady(handler: (scene: BABYLON.Scene, manager: BABYLON.SceneManager) => void): void;
         onrender: () => void;
         controller: BABYLON.SceneController;
         private _ie;
@@ -471,7 +469,6 @@ declare module BABYLON {
         getAnimationState(name: string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, decendants?: boolean): BABYLON.IAnimationState;
         getOwnerMetadata(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): BABYLON.ObjectMetadata;
         getOwnerChildMesh(name: string, owner: BABYLON.AbstractMesh, directDecendantsOnly?: boolean, predicate?: (node: BABYLON.Node) => boolean): BABYLON.AbstractMesh;
-        getOwnerDetailMesh(owner: BABYLON.AbstractMesh, directDecendantsOnly?: boolean, predicate?: (node: BABYLON.Node) => boolean): BABYLON.AbstractMesh;
         getOwnerCollisionMesh(owner: BABYLON.AbstractMesh, directDecendantsOnly?: boolean, predicate?: (node: BABYLON.Node) => boolean): BABYLON.AbstractMesh;
         addSceneComponent(klass: string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, enableUpdate?: boolean, propertyBag?: any): BABYLON.SceneComponent;
         createSceneController(klass: string): BABYLON.SceneController;
@@ -667,21 +664,21 @@ declare module BABYLON {
          * Color Grading 2D Lookup Texture.
          * This allows special effects like sepia, black and white to sixties rendering style.
          */
-        cameraColorGradingTexture: BABYLON.BaseTexture;
+        cameraColorGradingTexture: BaseTexture;
         /**
          * The color grading curves provide additional color adjustmnent that is applied after any color grading transform (3D LUT).
          * They allow basic adjustment of saturation and small exposure adjustments, along with color filter tinting to provide white balance adjustment or more stylistic effects.
          * These are similar to controls found in many professional imaging or colorist software. The global controls are applied to the entire image. For advanced tuning, extra controls are provided to adjust the shadow, midtone and highlight areas of the image;
          * corresponding to low luminance, medium luminance, and high luminance areas respectively.
          */
-        cameraColorCurves: BABYLON.ColorCurves;
+        cameraColorCurves: ColorCurves;
         private _cameraInfos;
         private _microsurfaceTextureLods;
         /**
          * Debug Control allowing to overload the ambient color.
          * This as to be use with the overloadedAmbientIntensity parameter.
          */
-        overloadedAmbient: BABYLON.Color3;
+        overloadedAmbient: Color3;
         /**
          * Debug Control indicating how much the overloaded ambient color is used against the default one.
          */
@@ -690,7 +687,7 @@ declare module BABYLON {
          * Debug Control allowing to overload the albedo color.
          * This as to be use with the overloadedAlbedoIntensity parameter.
          */
-        overloadedAlbedo: BABYLON.Color3;
+        overloadedAlbedo: Color3;
         /**
          * Debug Control indicating how much the overloaded albedo color is used against the default one.
          */
@@ -699,7 +696,7 @@ declare module BABYLON {
          * Debug Control allowing to overload the reflectivity color.
          * This as to be use with the overloadedReflectivityIntensity parameter.
          */
-        overloadedReflectivity: BABYLON.Color3;
+        overloadedReflectivity: Color3;
         /**
          * Debug Control indicating how much the overloaded reflectivity color is used against the default one.
          */
@@ -708,7 +705,7 @@ declare module BABYLON {
          * Debug Control allowing to overload the emissive color.
          * This as to be use with the overloadedEmissiveIntensity parameter.
          */
-        overloadedEmissive: BABYLON.Color3;
+        overloadedEmissive: Color3;
         /**
          * Debug Control indicating how much the overloaded emissive color is used against the default one.
          */
@@ -718,7 +715,7 @@ declare module BABYLON {
          * Debug Control allowing to overload the reflection color.
          * This as to be use with the overloadedReflectionIntensity parameter.
          */
-        overloadedReflection: BABYLON.Color3;
+        overloadedReflection: Color3;
         /**
          * Debug Control indicating how much the overloaded reflection color is used against the default one.
          */
@@ -736,26 +733,26 @@ declare module BABYLON {
         /**
          * AKA Diffuse Texture in standard nomenclature.
          */
-        albedoTexture: BABYLON.BaseTexture;
+        albedoTexture: BaseTexture;
         /**
          * AKA Occlusion Texture in other nomenclature.
          */
-        ambientTexture: BABYLON.BaseTexture;
+        ambientTexture: BaseTexture;
         /**
          * AKA Occlusion Texture Intensity in other nomenclature.
          */
         ambientTextureStrength: number;
-        opacityTexture: BABYLON.BaseTexture;
-        reflectionTexture: BABYLON.BaseTexture;
-        emissiveTexture: BABYLON.BaseTexture;
+        opacityTexture: BaseTexture;
+        reflectionTexture: BaseTexture;
+        emissiveTexture: BaseTexture;
         /**
          * AKA Specular texture in other nomenclature.
          */
-        reflectivityTexture: BABYLON.BaseTexture;
+        reflectivityTexture: BaseTexture;
         /**
          * Used to switch from specular/glossiness to metallic/roughness workflow.
          */
-        metallicTexture: BABYLON.BaseTexture;
+        metallicTexture: BaseTexture;
         /**
          * Specifies the metallic scalar of the metallic/roughness workflow.
          * Can also be used to scale the metalness values of the metallic texture.
@@ -766,9 +763,14 @@ declare module BABYLON {
          * Can also be used to scale the roughness values of the metallic texture.
          */
         roughness: number;
-        bumpTexture: BABYLON.BaseTexture;
-        lightmapTexture: BABYLON.BaseTexture;
-        refractionTexture: BABYLON.BaseTexture;
+        /**
+         * Used to enable roughness/glossiness fetch from a separate chanel depending on the current mode.
+         * Gray Scale represents roughness in metallic mode and glossiness in specular mode.
+         */
+        microSurfaceTexture: BaseTexture;
+        bumpTexture: BaseTexture;
+        lightmapTexture: BaseTexture;
+        refractionTexture: BaseTexture;
         ambientColor: Color3;
         /**
          * AKA Diffuse Color in other nomenclature.
@@ -792,8 +794,8 @@ declare module BABYLON {
          * Controls if refraction needs to be inverted on Y. This could be usefull for procedural texture.
          */
         invertRefractionY: boolean;
-        opacityFresnelParameters: BABYLON.FresnelParameters;
-        emissiveFresnelParameters: BABYLON.FresnelParameters;
+        opacityFresnelParameters: FresnelParameters;
+        emissiveFresnelParameters: FresnelParameters;
         /**
          * This parameters will make the material used its opacity to control how much it is refracting aginst not.
          * Materials half opaque for instance using refraction could benefit from this control.
@@ -830,6 +832,18 @@ declare module BABYLON {
          * Specifies if the metallic texture contains the roughness information in its green channel.
          */
         useRoughnessFromMetallicTextureGreen: boolean;
+        /**
+         * Specifies if the metallic texture contains the metallness information in its blue channel.
+         */
+        useMetallnessFromMetallicTextureBlue: boolean;
+        /**
+         * Specifies if the metallic texture contains the ambient occlusion information in its red channel.
+         */
+        useAmbientOcclusionFromMetallicTextureRed: boolean;
+        /**
+         * Specifies if the ambient texture contains the ambient occlusion information in its red channel only.
+         */
+        useAmbientInGrayScale: boolean;
         /**
          * In case the reflectivity map does not contain the microsurface information in its alpha channel,
          * The material will try to infer what glossiness each pixel should be.
@@ -879,6 +893,10 @@ declare module BABYLON {
          * If sets to true, y component of normal map value will invert (y = 1.0 - y).
          */
         invertNormalMapY: boolean;
+        /**
+         * If sets to true and backfaceCulling is false, normals will be flipped on the backside.
+         */
+        twoSidedLighting: boolean;
         private _renderTargets;
         private _worldViewProjectionMatrix;
         private _globalAmbientColor;
@@ -890,6 +908,7 @@ declare module BABYLON {
         private _shaderPath;
         private _options;
         private _textures;
+        private _textureArrays;
         private _floats;
         private _floatsArrays;
         private _colors3;
@@ -913,6 +932,9 @@ declare module BABYLON {
         readonly controller: string;
         readonly textures: {
             [name: string]: BABYLON.Texture;
+        };
+        readonly textureArray: {
+            [name: string]: BABYLON.Texture[];
         };
         readonly floats: {
             [name: string]: number;
@@ -950,6 +972,8 @@ declare module BABYLON {
         readonly cachedWorldViewMatrix: BABYLON.Matrix;
         readonly shaderPath: any;
         readonly renderId: number;
+        private _webglVersion;
+        readonly webglVersion: number;
         private _maxTexturesImageUnits;
         readonly maxTexturesImageUnits: number;
         private _maxVertexUniformVectors;
@@ -972,7 +996,15 @@ declare module BABYLON {
         private _checkAttribute(attribName);
         private _checkUniform(uniformName);
         private _checkSampler(samplerName);
+        private _checkCache(scene, mesh?, useInstances?);
+        private convertColorToLinearSpaceToRef(color, ref);
+        private static convertColorToLinearSpaceToRef(color, ref, useScalarInLinear);
+        private static _scaledAlbedo;
+        private static _scaledReflectivity;
+        private static _scaledEmissive;
+        private static _scaledReflection;
         setTexture(name: string, texture: BABYLON.Texture): BABYLON.UniversalShaderMaterial;
+        setTextureArray(name: string, textures: BABYLON.Texture[]): BABYLON.UniversalShaderMaterial;
         setFloat(name: string, value: number): BABYLON.UniversalShaderMaterial;
         setFloats(name: string, value: number[]): BABYLON.UniversalShaderMaterial;
         setColor3(name: string, value: BABYLON.Color3): BABYLON.UniversalShaderMaterial;
@@ -984,20 +1016,13 @@ declare module BABYLON {
         setMatrix3x3(name: string, value: Float32Array): BABYLON.UniversalShaderMaterial;
         setMatrix2x2(name: string, value: Float32Array): BABYLON.UniversalShaderMaterial;
         setArray3(name: string, value: number[]): BABYLON.UniversalShaderMaterial;
-        private _checkCache(scene, mesh?, useInstances?);
-        private convertColorToLinearSpaceToRef(color, ref);
-        private static convertColorToLinearSpaceToRef(color, ref, useScalarInLinear);
-        private static _scaledAlbedo;
-        private static _scaledReflectivity;
-        private static _scaledEmissive;
-        private static _scaledReflection;
-        static BindLights(scene: BABYLON.Scene, mesh: BABYLON.AbstractMesh, effect: BABYLON.Effect, defines: BABYLON.MaterialDefines, useScalarInLinearSpace: boolean, maxSimultaneousLights: number, usePhysicalLightFalloff: boolean): void;
-        isReady(mesh?: BABYLON.AbstractMesh, useInstances?: boolean): boolean;
+        static BindLights(scene: Scene, mesh: AbstractMesh, effect: Effect, defines: MaterialDefines, useScalarInLinearSpace: boolean, maxSimultaneousLights: number, usePhysicalLightFalloff: boolean): void;
+        isReady(mesh?: AbstractMesh, useInstances?: boolean): boolean;
         unbind(): void;
         bindOnlyWorldMatrix(world: BABYLON.Matrix): void;
         private _myScene;
         private _myShadowGenerator;
-        bind(world: BABYLON.Matrix, mesh?: BABYLON.Mesh): void;
+        bind(world: Matrix, mesh?: Mesh): void;
         getAnimatables(): BABYLON.IAnimatable[];
         dispose(forceDisposeEffect?: boolean, forceDisposeTextures?: boolean): void;
         clone(name: string): BABYLON.UniversalShaderMaterial;

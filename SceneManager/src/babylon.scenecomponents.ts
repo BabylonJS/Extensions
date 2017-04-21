@@ -165,7 +165,7 @@
         }
         private setupOrthographicCamera(size:number, updateOnResize:boolean):void {
             var result:boolean = false;
-            if (this._camera.mode === BABYLON.Camera.ORTHOGRAPHIC_CAMERA) {
+            if (this.camera != null && this._camera.mode === BABYLON.Camera.ORTHOGRAPHIC_CAMERA) {
                 this._orthoSize = size;
                 this.updateOrthographicSize();
                 if (this._orthoUpdate === false) {
@@ -177,7 +177,7 @@
             }
         }
         private updateOrthographicSize():void {
-            if (this._orthoSize !== 0) {
+            if (this.camera != null && this._orthoSize !== 0) {
                 var client:ClientRect = this.scene.getEngine().getRenderingCanvasClientRect();
                 var aspect:number = client.width / client.height;
                 var vertical:number = this._orthoSize;
@@ -238,9 +238,6 @@
         }
         public getChildMesh(name:string, directDecendantsOnly:boolean = true, predicate:(node:BABYLON.Node)=>boolean = null):BABYLON.AbstractMesh {
             return this.manager.getOwnerChildMesh(name, this._mesh, directDecendantsOnly, predicate);            
-        }
-        public getDetailMesh(directDecendantsOnly:boolean = true, predicate:(node:BABYLON.Node)=>boolean = null):BABYLON.AbstractMesh {
-            return this.manager.getOwnerDetailMesh(this._mesh, directDecendantsOnly, predicate);            
         }
         public getCollisionMesh(directDecendantsOnly:boolean = true, predicate:(node:BABYLON.Node)=>boolean = null):BABYLON.AbstractMesh {
             return this.manager.getOwnerCollisionMesh(this._mesh, directDecendantsOnly, predicate);            
@@ -333,26 +330,6 @@
         public ready(): void { }
         public constructor(owner: BABYLON.AbstractMesh, scene: BABYLON.Scene, enableUpdate: boolean = true, propertyBag: any = {}) {
             super(owner, scene, enableUpdate, propertyBag);
-        }
-        private onready():void {
-            if (this.scene.metadata != null && this.scene.metadata.properties != null) {
-                if (this.scene.metadata.properties.timeManagement === true) {
-                    this.manager.enableTime();
-                }
-                if (this.scene.metadata.properties.enableUserInput === true) {
-                    var joystick:number = this.scene.metadata.properties.virtualJoystickMode;
-                    if (joystick !== 0 && this.scene.metadata.properties.virtualJoystickAttached === true) {
-                        joystick = 0;
-                        BABYLON.Tools.Warn("Virtual joystick camera attached, disabled manual joystick input.");
-                    }
-                    this.manager.enableUserInput( { 
-                        preventDefault: this.scene.metadata.properties.preventDefault,
-                        useCapture: this.scene.metadata.properties.useCapture,
-                        enableVirtualJoystick: (joystick === 1 || (joystick === 2 && this.manager.isMobile())),
-                        disableRightStick: this.scene.metadata.properties.disableRightJoystick
-                    });
-                }
-            }
         }
     }
 
