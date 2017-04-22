@@ -1,0 +1,1953 @@
+﻿<!DOCTYPE html>
+<html>
+ 
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    <title>BABYLON.js TextureEditor</title>
+    <!-- Babylon.js -->
+    <script src="lib/dat.gui.js"></script>
+    <script src="lib/filereader.js"></script>
+    <script src="lib/babylon.js"></script>
+    <script src="lib/Babylonx.ShaderBuilder.js"></script>
+    <script src="lib/noise.js"></script>
+    <script src="../CompoundShader/src/babylonx.CompoundShader.js"></script>
+    <script src="src/TextureEditor.js"></script>
+    
+    <style>
+        html,
+        body {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0px;
+            background-color: #333344;
+        }
+        
+        #mixCanvas {
+               visibility: hidden;
+            position: absolute;
+            left: 0px;
+            top: 0px;
+
+            width: 250px;
+            height: 250px;
+            padding: 0px;
+        }
+       #renderCanvas {
+           position: absolute;
+            width: 500px;
+            height: 500px;
+            padding: 0px;
+            left: 800px;
+            top: 80px;
+             border-width:2px;
+            border-color:white;
+            border-style:solid;
+        }
+       #genSource{
+            position: absolute;
+            left: 20px;
+            top: 50px;
+       }
+       #genSave{
+            position: absolute;
+            left: 90px;
+            top: 50px;
+       }
+
+       #genSourceLabel{
+            position: absolute;
+            left: 20px;
+            top: 30px;
+            color: white;
+       }
+       #genSourceParameters{
+            position: absolute;
+            left: 20px;
+            top: 350px;
+            color: white;
+       }
+        #genSourceCanvas {
+               
+            position: absolute;
+            left: 20px;
+            top: 80px;
+            border:medium;
+            width: 250px;
+            height: 250px;
+            padding: 0px;
+             border-width:2px;
+            border-color:white;
+            border-style:solid;
+       }
+       #mixSource{
+            position: absolute;
+            left: 540px;
+            top: 50px;
+       }
+       #mixSave{
+            position: absolute;
+            left: 610px;
+            top: 50px;
+       }
+       #mixSourceLabel{
+            position: absolute;
+            left: 540px;
+            top: 30px;
+            color: white;
+       }
+       #saveButton{
+            position: absolute;
+            left: 810px;
+            top: 50px;
+            
+
+       }
+       #mixSourceParameters{
+            position: absolute;
+            left: 540px;
+            top: 350px;
+            color: white;
+       }
+         #mixSourceCanvas {
+               
+            position: absolute;
+            left: 540px;
+            top: 80px;
+            border:medium;
+            width: 250px;
+            height: 250px;
+            padding: 0px;
+            border-width:2px;
+            border-color:white;
+            border-style:solid;
+        }
+         #imgMultiply{
+             position: absolute;
+            left: 32px;
+            top: 80px;
+
+         }
+         #imgBJS{
+             position: absolute;
+            left: 1150px;
+            top:30px;
+
+         }
+        #meshLabel{
+            position: absolute;
+            left: 800px;
+            top: 30px;
+            color: white;
+       }
+        #mesh{
+            position: absolute;
+            left: 800px;
+            top: 50px;
+
+         }
+         #shaderParams{
+             position: absolute;
+            left: 280px;
+            top: 350px;
+            width:250px;
+
+         }
+      
+        .dg {
+            color: #00AA00;
+            text-shadow: none !important;
+        }
+
+    </style>
+</head>
+ 
+<body bgcolor="#333344" oncontextmenu="return false; ">
+    <div id="shaderParams"></div>
+    <div id="vertexDiv"></div>
+    <div id="fragmentDiv"></div>
+    <button id="genSave" onclick="saveGenImg()">Save Image</button>
+    <button id="mixSave" onclick="saveMixImg()">Save Image</button>
+    <label id="genSourceLabel" for="genSource">Generator (drop for images)</label>
+   <select id="genSource" name="GeneratorSource"  onchange="genChangeFunc();">
+       <option value="Image" disabled>Image</option>
+        <option value="Pattern">Pattern</option>
+        <option value="Noise" selected="selected">Noise</option>
+     </select>  
+    <label id="mixSourceLabel" for="mixSource">Mix (drop for images)</label>
+    
+   
+    <select id="mixSource" name="MixSource" onchange="mixChangeFunc();">
+        <option value="Image" disabled>Image</option>
+        <option value="Pattern">Pattern</option>
+        <option value="Noise" >Noise</option>
+        <option value="Solid">Solid</option>
+        <option value="None" selected="selected">None</option>
+    </select>
+    <label id="meshLabel" for="mesh">Mesh</label>
+    <select id="mesh" name="Mesh" onchange="meshChangeFunc();">
+        <option value="Box" selected="selected" >Box</option>
+        <option value="Sphere">Sphere</option>
+        <option value="Torus">Torus</option>
+        <option value="Cylinder">Cylinder</option>
+        <option value="Knot">Knot</option>
+    </select>
+   
+    <canvas id="genSourceCanvas" width="250" height="250"></canvas>
+    <canvas id="mixSourceCanvas" width="250" height="250"></canvas>
+    <img id="imgMultiply" src="assets/compound.png" alt="multiply" height="255" width="750">
+    <img id="imgBJS" src="assets/bjs.png" alt="multiply"  height="42" width="150">
+
+
+    <label id="genSourceParameters"></label>
+    <label id="mixSourceParameters"></label>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        var genCanvas = document.getElementById("genSourceCanvas");
+        var mixCanvas = document.getElementById("mixSourceCanvas");
+        ///var input = document.createElement('input');
+        //input.type = 'file';
+        //input.click();
+        FileReaderJS.setupDrop(document.getElementById("imgMultiply"), {
+            readAsDefault: "DataURL",
+            on: {
+                load: function (e, file) {
+                    var left = e.currentTarget.originalEvent.x < 405;
+                    console.log(e.currentTarget.originalEvent.x);
+                    var img = new Image();
+                    img.onload = function (val) {
+                        //document.body.appendChild(img);
+                        if (left) {
+                            createGenGui();
+                            guiGen.add({ image: file.name }, "image");
+                            genCtx.drawImage(img, 0, 0, img.width, img.height, 0, 0, 250, 250);
+                            var selectBox = document.getElementById("genSource");
+                            selectBox.selectedIndex = 0;
+                        } else {
+                            createMixGui();
+                            guiMix.add({ image: file.name }, "image");
+                            mixCtx.drawImage(img, 0, 0, img.width, img.height, 0, 0, 250, 250);
+                            var selectBox = document.getElementById("mixSource");
+                            selectBox.selectedIndex = 0;
+                        }
+
+                    };
+                    img.src = e.target.result;
+                }
+            }
+        });
+        var texgen = new BABYLONX.TexGen();
+        var noisegen = new BABYLONX.NoiseGen();
+        var texmix = new BABYLONX.TexGen();
+        var noisemix = new BABYLONX.NoiseGen({ octaves: 1 });
+        var solidmix = { color: "#FF00FF" };
+        var guiGen = null;
+        var guiMix = null;
+
+        var buildCubeMesh = function (scene, sx, sy, sz, uvsx, uvsy, uvsxmirror, uvsymirror) {
+
+            var mesh = new BABYLON.Mesh('resource_cube', scene);
+            var uvsizeX = uvsxmirror ? uvsx : 0;
+            var uvsizeX0 = uvsxmirror ? 0 : uvsx;
+            //var uvsizeY0 = uvsymirror ? uvsy : 0;
+            var uvsizeY = 1;//uvsy;//uvsymirror ? 0 : uvsy;
+            // loop through steps and fill arrays along the way
+            var positions = [
+    sx * 1, sy * -1, sz * 1,
+    sx * 1, sy * 1, sz * 1,
+   sx * -1, sy * 1, sz * 1,
+    sx * -1, sy * -1, sz * 1,
+    sx * 1, sy * -1, sz * -1,
+    sx * 1, sy * 1, sz * -1,
+    sx * 1, sy * 1, sz * 1,
+    sx * 1, sy * -1, sz * 1,
+    sx * -1, sy * -1, sz * -1,
+    sx * -1, sy * 1, sz * -1,
+    sx * 1, sy * 1, sz * -1,
+    sx * 1, sy * -1, sz * -1,
+    sx * -1, sy * -1, sz * 1,
+    sx * -1, sy * 1, sz * 1,
+    sx * -1, sy * 1, sz * -1,
+    sx * -1, sy * -1, sz * -1,
+    sx * 1, sy * 1, sz * 1,
+    sx * 1, sy * 1, sz * -1,
+    sx * -1, sy * 1, sz * -1,
+    sx * -1, sy * 1, sz * 1,
+    sx * 1, sy * -1, sz * -1,
+    sx * 1, sy * -1, sz * 1,
+    sx * -1, sy * -1, sz * 1,
+    sx * -1, sy * -1, sz * -1,
+            ];
+            var uv = [
+    uvsizeX, 0,
+    uvsizeX, uvsizeY,
+    uvsizeX0, uvsizeY,
+    uvsizeX0, 0,
+    uvsizeX, 0,
+    uvsizeX, uvsizeY,
+    uvsizeX0, uvsizeY,
+    uvsizeX0, 0,
+    uvsizeX, 0,
+    uvsizeX, uvsizeY,
+    uvsizeX0, uvsizeY,
+    uvsizeX0, 0,
+    uvsizeX, 0,
+    uvsizeX, uvsizeY,
+    uvsizeX0, uvsizeY,
+    uvsizeX0, 0,
+    uvsizeX, 0,
+    uvsizeX, uvsizeY,
+    uvsizeX0, uvsizeY,
+    uvsizeX0, 0,
+    uvsizeX, 0,
+    uvsizeX, uvsizeY,
+    uvsizeX0, uvsizeY,
+    uvsizeX0, 0,
+            ];
+            var indices = [
+    23, 22, 20,
+    22, 21, 20,
+    19, 18, 16,
+    18, 17, 16,
+    15, 14, 12,
+    14, 13, 12,
+    11, 10, 8,
+    10, 9, 8,
+    7, 6, 4,
+    6, 5, 4,
+    3, 2, 0,
+    2, 1, 0,
+            ];
+
+            // build mesh based on arrays
+            mesh.setVerticesData(BABYLON.VertexBuffer.PositionKind, positions, false);
+            mesh.setVerticesData(BABYLON.VertexBuffer.UVKind, uv, false);
+            mesh.setIndices(indices);
+            mesh.convertToFlatShadedMesh();
+
+            return mesh;
+ 
+        }
+
+        var pres = {
+            "preset": "Default",
+            "closed": false,
+            "remembered": {
+                "Default": {
+                    "0": {
+                        "color1": "#c0dec9",
+                        "color2": "#282226",
+                        "octaves": 6,
+                        "persistence": 0.9,
+                        "scale": 36.3,
+                        "seed": 1,
+                        "percentage": 0.6,
+                        "type": 2
+                    },
+                    "1": {
+                        "number": 0,
+                        "brick_gradient": 3,
+                        "brick_color": "#b90000",
+                        "grout_color": "#e4ff66",
+                        "gradient_color": "#000000",
+                        "width": 32,
+                        "height": 32,
+                        "numWidth": 8,
+                        "numHeight": 8
+                    },
+                    "2": {
+                        "number": 0,
+                        "brick_gradient": 3,
+                        "brick_color": "#b90000",
+                        "grout_color": "#e4ff66",
+                        "gradient_color": "#000000",
+                        "width": 32,
+                        "height": 32,
+                        "numWidth": 8,
+                        "numHeight": 8
+                    },
+                    "3": {
+                        "color1": "#c0dec9",
+                        "color2": "#282226",
+                        "octaves": 6,
+                        "persistence": 0.9,
+                        "scale": 36.3,
+                        "seed": 1,
+                        "percentage": 0.6,
+                        "type": 2
+                    },
+                    "4": {
+                        "color": "#FF00FF"
+                    }
+                }
+            },
+            "folders": {
+                "Generator": {
+                    "preset": "Default",
+                    "closed": true,
+                    "folders": {
+                        "Pattern": {
+                            "preset": "Default",
+                            "closed": true,
+                            "folders": {}
+                        },
+                        "Noise": {
+                            "preset": "Default",
+                            "closed": true,
+                            "folders": {}
+                        }
+                    }
+                },
+                "Mix": {
+                    "preset": "Default",
+                    "closed": true,
+                    "folders": {
+                        "Pattern": {
+                            "preset": "Default",
+                            "closed": true,
+                            "folders": {}
+                        },
+                        "Noise": {
+                            "preset": "Default",
+                            "closed": true,
+                            "folders": {}
+                        },
+                        "Solid": {
+                            "preset": "Default",
+                            "closed": true,
+                            "folders": {}
+                        }
+                    }
+                }
+            }
+        }
+        var presetNoise = {
+            "preset": "preset3",
+            "remembered": {
+                "Default": {
+                    "0": {
+                        "color1": "#c0dec9",
+                        "color2": "#282226",
+                        "octaves": 6,
+                        "persistence": 0.9,
+                        "scale": 36.3,
+                        "seed": 1,
+                        "percentage": 0.6,
+                        "type": 2
+                    }
+                },
+                "preset1": {
+                    "0": {
+                        "color1": "#c0dec9",
+                        "color2": "#282226",
+                        "octaves": 1,
+                        "persistence": 0.9,
+                        "scale": 129.8,
+                        "seed": 1,
+                        "percentage": 0.7000000000000001,
+                        "type": 1
+                    }
+                },
+                "preset2": {
+                    "0": {
+                        "color1": "#64ff92",
+                        "color2": "#152d00",
+                        "octaves": 2,
+                        "persistence": 0.9,
+                        "scale": 189.3,
+                        "seed": 4,
+                        "percentage": 0.9,
+                        "type": 0
+                    }
+                },
+                "preset3": {
+                    "0": {
+                        "color1": "#c0dec9",
+                        "color2": "#282226",
+                        "octaves": 6,
+                        "persistence": 0.9,
+                        "scale": 36.3,
+                        "seed": 1,
+                        "percentage": 0.6,
+                        "type": 2
+                    }
+                },
+                "preset4": {
+                    "0": {
+                        "color1": "#1b1b1b",
+                        "color2": "#d7a326",
+                        "octaves": 7,
+                        "persistence": 0.9,
+                        "scale": 10.8,
+                        "seed": 10,
+                        "percentage": 0.9,
+                        "type": 2
+                    }
+                },
+                "preset5": {
+                    "0": {
+                        "color1": "#201f20",
+                        "color2": "#45d726",
+                        "octaves": 8,
+                        "persistence": 0.1,
+                        "scale": 10.8,
+                        "seed": 8,
+                        "percentage": 0.9,
+                        "type": 1
+                    }
+                },
+                "preset6": {
+                    "0": {
+                        "color1": "#201f20",
+                        "color2": "#45d726",
+                        "octaves": 2,
+                        "persistence": 0.1,
+                        "scale": 140.6,
+                        "seed": 11,
+                        "percentage": 0.1,
+                        "type": 0
+                    }
+                },
+                "preset7": {
+                    "0": {
+                        "color1": "#072d16",
+                        "color2": "#fff5d4",
+                        "octaves": 1,
+                        "persistence": 0.1,
+                        "scale": 243.4,
+                        "seed": 6,
+                        "percentage": 0.9,
+                        "type": 1
+                    }
+                },
+                "preset8": {
+                    "0": {
+                        "color1": "#c0dec9",
+                        "color2": "#282226",
+                        "octaves": 6,
+                        "persistence": 0.9,
+                        "scale": 167.64000000000001,
+                        "seed": 1,
+                        "percentage": 0.01,
+                        "type": 2
+                    }
+                },
+                "preset9": {
+                    "0": {
+                        "color1": "#c9cfcf",
+                        "color2": "#152d00",
+                        "octaves": 1,
+                        "persistence": 0.6000000000000001,
+                        "scale": 10.8,
+                        "seed": 4,
+                        "percentage": 1.35,
+                        "type": 1
+                    }
+                },
+                "preset10": {
+                    "0": {
+                        "color1": "#000000",
+                        "color2": "#ff2f2f",
+                        "octaves": 3,
+                        "persistence": 0.9,
+                        "scale": 135.19,
+                        "seed": 8,
+                        "percentage": 0.48,
+                        "type": 2
+                    }
+                },
+                "preset11": {
+                    "0": {
+                        "color1": "#fff7d4",
+                        "color2": "#09693c",
+                        "octaves": 5,
+                        "persistence": 0.9,
+                        "scale": 1,
+                        "seed": 10,
+                        "percentage": 0.8300000000000001,
+                        "type": 1
+                    }
+                },
+                "preset12": {
+                    "0": {
+                        "color1": "#f7f3e2",
+                        "color2": "#692509",
+                        "octaves": 16,
+                        "persistence": 0.7000000000000001,
+                        "scale": 1,
+                        "seed": 12,
+                        "percentage": 0.89,
+                        "type": 0
+                    }
+                },
+                "preset13": {
+                    "0": {
+                        "color1": "#ebcf55",
+                        "color2": "#69094c",
+                        "octaves": 20,
+                        "persistence": 0.1,
+                        "scale": 102.74000000000001,
+                        "seed": 6,
+                        "percentage": 0.07,
+                        "type": 2
+                    }
+                },
+                "preset14": {
+                    "0": {
+                        "color1": "#000000",
+                        "color2": "#c82b2b",
+                        "octaves": 3,
+                        "persistence": 0.7000000000000001,
+                        "scale": 14.65,
+                        "seed": 1,
+                        "percentage": 1.1300000000000001,
+                        "type": 1
+                    }
+                },
+                "preset15": {
+                    "0": {
+                        "color1": "#cda600",
+                        "color2": "#f7f0f0",
+                        "octaves": 6,
+                        "persistence": 0.4,
+                        "scale": 64.89,
+                        "seed": 11,
+                        "percentage": 1.9000000000000001,
+                        "type": 2
+                    }
+                },
+                "preset16": {
+                    "0": {
+                        "color1": "#2015d7",
+                        "color2": "#ffffff",
+                        "octaves": 1,
+                        "persistence": 0.6000000000000001,
+                        "scale": 48.660000000000004,
+                        "seed": 4,
+                        "percentage": 1.4000000000000001,
+                        "type": 1
+                    }
+                }
+
+            },
+            "closed": false,
+            "folders": {}
+        };
+        var presetPattern = {
+            "preset": "preset5",
+            "remembered": {
+                "Default": {
+                    "0": {
+                        "number": 0,
+                        "brick_gradient": 3,
+                        "brick_color": "#b90000",
+                        "grout_color": "#e4ff66",
+                        "gradient_color": "#000000",
+                        "width": 32,
+                        "height": 32,
+                        "numWidth": 8,
+                        "numHeight": 8,
+                        "rotation": 0
+                    }
+                },
+                "preset1": {
+                    "0": {
+                        "number": 1,
+                        "brick_gradient": 3,
+                        "brick_color": "#b90000",
+                        "grout_color": "#e4ff66",
+                        "gradient_color": "#000000",
+                        "width": 32,
+                        "height": 32,
+                        "numWidth": 8,
+                        "numHeight": 8,
+                        "rotation": 0
+                    }
+                },
+                "preset2": {
+                    "0": {
+                        "number": 2,
+                        "brick_gradient": 3,
+                        "brick_color": "#1b1110",
+                        "grout_color": "#ffae66",
+                        "gradient_color": "#000000",
+                        "width": 32,
+                        "height": 32,
+                        "numWidth": 8,
+                        "numHeight": 8,
+                        "rotation": 0
+                    }
+                },
+                "preset3": {
+                    "0": {
+                        "number": 2,
+                        "brick_gradient": 3,
+                        "brick_color": "#328496",
+                        "grout_color": "#e4ff66",
+                        "gradient_color": "#000000",
+                        "width": 100,
+                        "height": 70,
+                        "numWidth": 8,
+                        "numHeight": 8,
+                        "rotation": 0
+                    }
+                },
+                "preset5": {
+                    "0": {
+                        "number": 0,
+                        "brick_gradient": 10,
+                        "brick_color": "#00b982",
+                        "grout_color": "#e4ff66",
+                        "gradient_color": "#000000",
+                        "width": 83,
+                        "height": 86,
+                        "numWidth": 17,
+                        "numHeight": 15,
+                        "rotation": 0
+                    }
+                }
+            },
+            "closed": false,
+            "folders": {}
+        }
+       
+        function addShaderParams(controller, obj) {
+            controller.add(obj, 'stepx').min(0.001).max(0.01).step(0.001);
+            controller.add(obj, 'stepy').min(0.001).max(0.01).step(0.001);
+            controller.add(obj, 'invR').onChange(function (value) { obj.iR = value ? -1.0 : 1.0 })
+            controller.add(obj, 'invG').onChange(function (value) { obj.iG = value ? -1.0 : 1.0 })
+            controller.add(obj, 'balance').min(0.0).max(1.0).step(0.1)
+            controller.add(obj, 'invH').onChange(function (value) { obj.iH = value ? -1.0 : 1.0 })
+            controller.add(obj, 'filter').name("Sobel/Scharr").onChange(function (value) { obj.fSobel = value ? 1.0 : 0.0 })
+            controller.add(obj, 'level').min(1).max(20).step(.1);
+            controller.add(obj, 'strength').min(.005).max(5).step(.005);
+        }
+        function addPatternParams(controller, obj) {
+            controller.add(obj, "number").min(0).max(4).step(1);
+            controller.add(obj, "brick_gradient").name("gradient").min(1).max(20).step(1);
+            controller.addColor(obj, 'brick_color');
+            controller.addColor(obj, 'grout_color');
+            controller.addColor(obj, 'gradient_color');
+            controller.add(obj, "grout_space").min(1).max(20).step(1);
+            controller.add(obj, "width").min(1).max(256).step(1);
+            controller.add(obj, "height").min(1).max(256).step(1);
+            controller.add(obj, "numWidth").min(1).max(64).step(1);
+            controller.add(obj, "numHeight").min(1).max(64).step(1);
+            controller.add(obj, "rotation").min(0,0).max(Math.PI*2.0).step(.01);
+        }
+        function addNoiseParams(controller, obj) {
+            controller.addColor(obj, 'color1');
+            controller.addColor(obj, 'color2');
+            controller.add(obj, 'octaves').min(1).max(20).step(1);
+            controller.add(obj, 'persistence').min(.1).max(.9).step(.1);
+            controller.add(obj, 'scale').min(1).max(500).step(.01);
+            controller.add(obj, 'seed').min(1).max(12).step(1);
+            controller.add(obj, 'percentage').min(.01).max(1.9).step(.01);
+            controller.add(obj, 'type').name("Perlin/Fractal/Turbulence").min(0).max(2).step(1);
+        }
+
+
+        var source = { input: 1, image: false, pattern: false, noise: true };
+        var presets = {
+
+            "preset": "preset9",
+            "remembered": {
+                "Default": {
+                    "0": {
+                        "input": 1
+                    },
+                    "1": {
+                        "number": 0,
+                        "brick_gradient": 3,
+                        "brick_color": "#b90000",
+                        "grout_color": "#e4ff66",
+                        "gradient_color": "#000000",
+                        "width": 32,
+                        "height": 32,
+                        "numWidth": 8,
+                        "numHeight": 8
+                    },
+                    "2": {
+                        "stepx": 0.005,
+                        "stepy": 0.005,
+                        "invR": false,
+                        "invG": false,
+                        "balance": 1,
+                        "invH": false,
+                        "filter": true,
+                        "level": 7,
+                        "strength": 0.5
+                    },
+                    "3": {
+                        "color1": "#c0dec9",
+                        "color2": "#282226",
+                        "octaves": 6,
+                        "persistence": 0.9,
+                        "scale": 36.3,
+                        "seed": 1,
+                        "percentage": 0.6,
+                        "type": 2
+                    }
+                },
+                "preset1": {
+                    "0": {
+                        "input": 1
+                    },
+                    "1": {
+                        "number": 0,
+                        "brick_gradient": 1,
+                        "brick_color": "#b90000",
+                        "grout_color": "#e4ff66",
+                        "gradient_color": "#000000",
+                        "width": 32,
+                        "height": 32,
+                        "numWidth": 8,
+                        "numHeight": 8
+                    },
+                    "2": {
+                        "stepx": 0.005,
+                        "stepy": 0.005,
+                        "invR": false,
+                        "invG": false,
+                        "balance": 1,
+                        "invH": false,
+                        "filter": true,
+                        "level": 7,
+                        "strength": 0.5
+                    },
+                    "3": {
+                        "color1": "#c0dec9",
+                        "color2": "#282226",
+                        "octaves": 1,
+                        "persistence": 0.9,
+                        "scale": 129.8,
+                        "seed": 1,
+                        "percentage": 0.7000000000000001,
+                        "type": 1
+                    }
+                },
+                "preset2": {
+                    "0": {
+                        "input": 1
+                    },
+                    "1": {
+                        "number": 0,
+                        "brick_gradient": 1,
+                        "brick_color": "#b90000",
+                        "grout_color": "#e4ff66",
+                        "gradient_color": "#000000",
+                        "width": 32,
+                        "height": 32,
+                        "numWidth": 8,
+                        "numHeight": 8
+                    },
+                    "2": {
+                        "stepx": 0.005,
+                        "stepy": 0.005,
+                        "invR": false,
+                        "invG": false,
+                        "balance": 1,
+                        "invH": false,
+                        "filter": true,
+                        "level": 7,
+                        "strength": 0.5
+                    },
+                    "3": {
+                        "color1": "#64ff92",
+                        "color2": "#152d00",
+                        "octaves": 2,
+                        "persistence": 0.9,
+                        "scale": 189.3,
+                        "seed": 4,
+                        "percentage": 0.9,
+                        "type": 0
+                    }
+                },
+                "preset3": {
+                    "0": {
+                        "input": 1
+                    },
+                    "1": {
+                        "number": 0,
+                        "brick_gradient": 1,
+                        "brick_color": "#b90000",
+                        "grout_color": "#e4ff66",
+                        "gradient_color": "#000000",
+                        "width": 32,
+                        "height": 32,
+                        "numWidth": 8,
+                        "numHeight": 8
+                    },
+                    "2": {
+                        "stepx": 0.005,
+                        "stepy": 0.005,
+                        "invR": false,
+                        "invG": false,
+                        "balance": 1,
+                        "invH": false,
+                        "filter": true,
+                        "level": 7,
+                        "strength": 0.5
+                    },
+                    "3": {
+                        "color1": "#000000",
+                        "color2": "#ff2f2f",
+                        "octaves": 7,
+                        "persistence": 0.9,
+                        "scale": 10.8,
+                        "seed": 10,
+                        "percentage": 0.9,
+                        "type": 0
+                    }
+                },
+                "preset4": {
+                    "0": {
+                        "input": 1
+                    },
+                    "1": {
+                        "number": 0,
+                        "brick_gradient": 1,
+                        "brick_color": "#b90000",
+                        "grout_color": "#e4ff66",
+                        "gradient_color": "#000000",
+                        "width": 32,
+                        "height": 32,
+                        "numWidth": 8,
+                        "numHeight": 8
+                    },
+                    "2": {
+                        "stepx": 0.005,
+                        "stepy": 0.005,
+                        "invR": false,
+                        "invG": false,
+                        "balance": 1,
+                        "invH": false,
+                        "filter": true,
+                        "level": 7,
+                        "strength": 0.5
+                    },
+                    "3": {
+                        "color1": "#1b1b1b",
+                        "color2": "#d7a326",
+                        "octaves": 7,
+                        "persistence": 0.9,
+                        "scale": 10.8,
+                        "seed": 10,
+                        "percentage": 0.9,
+                        "type": 2
+                    }
+                },
+                "preset5": {
+                    "0": {
+                        "input": 1
+                    },
+                    "1": {
+                        "number": 0,
+                        "brick_gradient": 1,
+                        "brick_color": "#b90000",
+                        "grout_color": "#e4ff66",
+                        "gradient_color": "#000000",
+                        "width": 32,
+                        "height": 32,
+                        "numWidth": 8,
+                        "numHeight": 8
+                    },
+                    "2": {
+                        "stepx": 0.005,
+                        "stepy": 0.005,
+                        "invR": false,
+                        "invG": false,
+                        "balance": 1,
+                        "invH": false,
+                        "filter": true,
+                        "level": 7,
+                        "strength": 0.5
+                    },
+                    "3": {
+                        "color1": "#201f20",
+                        "color2": "#45d726",
+                        "octaves": 8,
+                        "persistence": 0.1,
+                        "scale": 10.8,
+                        "seed": 8,
+                        "percentage": 0.9,
+                        "type": 1
+                    }
+                },
+                "preset6": {
+                    "0": {
+                        "input": 1
+                    },
+                    "1": {
+                        "number": 0,
+                        "brick_gradient": 1,
+                        "brick_color": "#b90000",
+                        "grout_color": "#e4ff66",
+                        "gradient_color": "#000000",
+                        "width": 32,
+                        "height": 32,
+                        "numWidth": 8,
+                        "numHeight": 8
+                    },
+                    "2": {
+                        "stepx": 0.005,
+                        "stepy": 0.005,
+                        "invR": false,
+                        "invG": false,
+                        "balance": 1,
+                        "invH": false,
+                        "filter": true,
+                        "level": 7,
+                        "strength": 0.5
+                    },
+                    "3": {
+                        "color1": "#201f20",
+                        "color2": "#45d726",
+                        "octaves": 2,
+                        "persistence": 0.1,
+                        "scale": 140.6,
+                        "seed": 11,
+                        "percentage": 0.1,
+                        "type": 0
+                    }
+                },
+                "preset7": {
+                    "0": {
+                        "input": 1
+                    },
+                    "1": {
+                        "number": 0,
+                        "brick_gradient": 1,
+                        "brick_color": "#b90000",
+                        "grout_color": "#e4ff66",
+                        "gradient_color": "#000000",
+                        "width": 32,
+                        "height": 32,
+                        "numWidth": 8,
+                        "numHeight": 8
+                    },
+                    "2": {
+                        "stepx": 0.005,
+                        "stepy": 0.005,
+                        "invR": false,
+                        "invG": false,
+                        "balance": 1,
+                        "invH": false,
+                        "filter": true,
+                        "level": 7,
+                        "strength": 0.5
+                    },
+                    "3": {
+                        "color1": "#072d16",
+                        "color2": "#fff5d4",
+                        "octaves": 1,
+                        "persistence": 0.1,
+                        "scale": 243.4,
+                        "seed": 6,
+                        "percentage": 0.9,
+                        "type": 1
+                    }
+                },
+                "preset8": {
+                    "0": {
+                        "input": 1
+                    },
+                    "1": {
+                        "number": 0,
+                        "brick_gradient": 1,
+                        "brick_color": "#b90000",
+                        "grout_color": "#e4ff66",
+                        "gradient_color": "#000000",
+                        "width": 32,
+                        "height": 32,
+                        "numWidth": 8,
+                        "numHeight": 8
+                    },
+                    "2": {
+                        "stepx": 0.005,
+                        "stepy": 0.005,
+                        "invR": false,
+                        "invG": false,
+                        "balance": 1,
+                        "invH": false,
+                        "filter": true,
+                        "level": 7,
+                        "strength": 0.5
+                    },
+                    "3": {
+                        "color1": "#c0dec9",
+                        "color2": "#282226",
+                        "octaves": 6,
+                        "persistence": 0.9,
+                        "scale": 167.64000000000001,
+                        "seed": 1,
+                        "percentage": 0.01,
+                        "type": 2
+                    }
+                },
+                "preset9": {
+                    "0": {
+                        "input": 1
+                    },
+                    "1": {
+                        "number": 0,
+                        "brick_gradient": 1,
+                        "brick_color": "#b90000",
+                        "grout_color": "#e4ff66",
+                        "gradient_color": "#000000",
+                        "width": 32,
+                        "height": 32,
+                        "numWidth": 8,
+                        "numHeight": 8
+                    },
+                    "2": {
+                        "stepx": 0.005,
+                        "stepy": 0.005,
+                        "invR": false,
+                        "invG": false,
+                        "balance": 1,
+                        "invH": false,
+                        "filter": true,
+                        "level": 7,
+                        "strength": 0.5
+                    },
+                    "3": {
+                        "color1": "#c9cfcf",
+                        "color2": "#152d00",
+                        "octaves": 1,
+                        "persistence": 0.6000000000000001,
+                        "scale": 10.8,
+                        "seed": 4,
+                        "percentage": 1.35,
+                        "type": 1
+                    }
+                },
+                "preset10": {
+                    "0": {
+                        "input": 1
+                    },
+                    "1": {
+                        "number": 0,
+                        "brick_gradient": 1,
+                        "brick_color": "#b90000",
+                        "grout_color": "#e4ff66",
+                        "gradient_color": "#000000",
+                        "width": 32,
+                        "height": 32,
+                        "numWidth": 8,
+                        "numHeight": 8
+                    },
+                    "2": {
+                        "stepx": 0.005,
+                        "stepy": 0.005,
+                        "invR": false,
+                        "invG": false,
+                        "balance": 1,
+                        "invH": false,
+                        "filter": true,
+                        "level": 7,
+                        "strength": 0.5
+                    },
+                    "3": {
+                        "color1": "#000000",
+                        "color2": "#ff2f2f",
+                        "octaves": 3,
+                        "persistence": 0.9,
+                        "scale": 135.19,
+                        "seed": 8,
+                        "percentage": 0.48,
+                        "type": 2
+                    }
+                },
+                "preset11": {
+                    "0": {
+                        "input": 1
+                    },
+                    "1": {
+                        "number": 0,
+                        "brick_gradient": 1,
+                        "brick_color": "#b90000",
+                        "grout_color": "#e4ff66",
+                        "gradient_color": "#000000",
+                        "width": 32,
+                        "height": 32,
+                        "numWidth": 8,
+                        "numHeight": 8
+                    },
+                    "2": {
+                        "stepx": 0.005,
+                        "stepy": 0.005,
+                        "invR": false,
+                        "invG": false,
+                        "balance": 1,
+                        "invH": false,
+                        "filter": true,
+                        "level": 7,
+                        "strength": 0.5
+                    },
+                    "3": {
+                        "color1": "#fff7d4",
+                        "color2": "#09693c",
+                        "octaves": 5,
+                        "persistence": 0.9,
+                        "scale": 1,
+                        "seed": 10,
+                        "percentage": 0.8300000000000001,
+                        "type": 1
+                    }
+                },
+                "preset12": {
+                    "0": {
+                        "input": 1
+                    },
+                    "1": {
+                        "number": 0,
+                        "brick_gradient": 1,
+                        "brick_color": "#b90000",
+                        "grout_color": "#e4ff66",
+                        "gradient_color": "#000000",
+                        "width": 32,
+                        "height": 32,
+                        "numWidth": 8,
+                        "numHeight": 8
+                    },
+                    "2": {
+                        "stepx": 0.005,
+                        "stepy": 0.005,
+                        "invR": false,
+                        "invG": false,
+                        "balance": 1,
+                        "invH": false,
+                        "filter": true,
+                        "level": 7,
+                        "strength": 0.5
+                    },
+                    "3": {
+                        "color1": "#f7f3e2",
+                        "color2": "#692509",
+                        "octaves": 16,
+                        "persistence": 0.7000000000000001,
+                        "scale": 1,
+                        "seed": 12,
+                        "percentage": 0.89,
+                        "type": 0
+                    }
+                },
+                "preset13": {
+                    "0": {
+                        "input": 1
+                    },
+                    "1": {
+                        "number": 0,
+                        "brick_gradient": 1,
+                        "brick_color": "#b90000",
+                        "grout_color": "#e4ff66",
+                        "gradient_color": "#000000",
+                        "width": 32,
+                        "height": 32,
+                        "numWidth": 8,
+                        "numHeight": 8
+                    },
+                    "2": {
+                        "stepx": 0.005,
+                        "stepy": 0.005,
+                        "invR": false,
+                        "invG": false,
+                        "balance": 1,
+                        "invH": false,
+                        "filter": true,
+                        "level": 7,
+                        "strength": 0.5
+                    },
+                    "3": {
+                        "color1": "#ebcf55",
+                        "color2": "#69094c",
+                        "octaves": 20,
+                        "persistence": 0.1,
+                        "scale": 102.74000000000001,
+                        "seed": 6,
+                        "percentage": 0.07,
+                        "type": 2
+
+                    }
+                },
+                "preset14": {
+                    "0": {
+                        "input": 1
+                    },
+                    "1": {
+                        "number": 0,
+                        "brick_gradient": 1,
+                        "brick_color": "#b90000",
+                        "grout_color": "#e4ff66",
+                        "gradient_color": "#000000",
+                        "width": 32,
+                        "height": 32,
+                        "numWidth": 8,
+                        "numHeight": 8
+                    },
+                    "2": {
+                        "stepx": 0.005,
+                        "stepy": 0.005,
+                        "invR": false,
+                        "invG": false,
+                        "balance": 1,
+                        "invH": false,
+                        "filter": true,
+                        "level": 7,
+                        "strength": 0.5
+                    },
+                    "3": {
+                        "color1": "#000000",
+                        "color2": "#c82b2b",
+                        "octaves": 3,
+                        "persistence": 0.7000000000000001,
+                        "scale": 14.65,
+                        "seed": 1,
+                        "percentage": 1.1300000000000001,
+                        "type": 1
+                    }
+                },
+                "preset15": {
+                    "0": {
+                        "input": 1
+                    },
+                    "1": {
+                        "number": 0,
+                        "brick_gradient": 1,
+                        "brick_color": "#b90000",
+                        "grout_color": "#e4ff66",
+                        "gradient_color": "#000000",
+                        "width": 32,
+                        "height": 32,
+                        "numWidth": 8,
+                        "numHeight": 8
+                    },
+                    "2": {
+                        "stepx": 0.005,
+                        "stepy": 0.005,
+                        "invR": false,
+                        "invG": false,
+                        "balance": 1,
+                        "invH": false,
+                        "filter": true,
+                        "level": 7,
+                        "strength": 0.5
+                    },
+                    "3": {
+                        "color1": "#cda600",
+                        "color2": "#f7f0f0",
+                        "octaves": 6,
+                        "persistence": 0.4,
+                        "scale": 64.89,
+                        "seed": 11,
+                        "percentage": 1.9000000000000001,
+                        "type": 2
+                    }
+                }
+            },
+            "closed": false,
+            "folders": {
+                "Source": {
+                    "preset": "Default",
+                    "closed": true,
+                    "folders": {}
+                },
+                "Pattern": {
+                    "preset": "Default",
+                    "closed": true,
+                    "folders": {}
+                },
+                "Shader": {
+                    "preset": "Default",
+                    "closed": true,
+                    "folders": {}
+                },
+                "Noise": {
+                    "preset": "Default",
+                    "closed": true,
+                    "folders": {}
+                }
+            }
+
+
+        }
+
+        var canvas = document.getElementById("renderCanvas");
+        var engine = new BABYLON.Engine(canvas, true, { stencil: true });
+        var scene = new BABYLON.Scene(engine);
+        var assetsManager = new BABYLON.AssetsManager(scene);
+
+        var camera = new BABYLON.ArcRotateCamera("Camera",-Math.PI/4, Math.PI / 4, 8, new BABYLON.Vector3(0,0,0), scene);
+        camera.attachControl(canvas, true);
+        camera.wheelPrecision = 20;
+        camera.radius = 8;
+        //camera.targetScreenOffset.y = 4;
+        //camera.targetScreenOffset.x = 5;
+        //camera.position.x = 15;
+        
+        var light = new BABYLON.HemisphericLight("hemi", new BABYLON.Vector3(0, 1, 0), scene);
+        light.groundColor = new BABYLON.Color3(.641, .641, .641);
+        var light0 = new BABYLON.PointLight("Omni0", new BABYLON.Vector3(1, 10, 1), scene);
+        light0.diffuse = new BABYLON.Color3(1, 0, 0);
+        light0.specular = new BABYLON.Color3(1, 1, 1);
+
+        BABYLONX.ShaderBuilder.InitializeEngine();
+        
+        var dynTexGen = new BABYLON.DynamicTexture("DynamicTextureGen", genCanvas, scene, false);
+        dynTexGen.hasAlpha = true;
+        var genCtx = dynTexGen.getContext();
+
+        var dynTexMix = new BABYLON.DynamicTexture("DynamicTextureMix", mixCanvas, scene, false);
+        dynTexMix.hasAlpha = true;
+        var mixCtx = dynTexMix.getContext();
+
+        //var imgTex = new BABYLON.Texture("textures/floor.png", scene);
+        //imgTex.hasAlpha = true;
+
+
+        var shaderparams = { stepx: 0.005, stepy: 0.005, invR: false, invG: false, balance: 0.9, invH: false, iR: 1.0, iG: 1.0, iB: 1.0, iH: 1.0, filter: true, fSobel: 1, level: 1, strength: 1, dz: 100, level: 7, strength: .5, filterdz: 500.0 }
+        shaderparams.texGen = dynTexGen;
+        shaderparams.texMix = dynTexMix;
+        var guiShader = new dat.GUI({ autoPlace: false });//, width: 250 });
+        guiShader.remember(shaderparams);
+        var customContainer = document.getElementById('shaderParams');
+        customContainer.appendChild(guiShader.domElement);
+        addShaderParams(guiShader, shaderparams)
+
+
+        //texgen.createPattern(mixCtx, {});
+        noisegen.setPerlinNoise(genCtx, {});
+        createGenGui(presetNoise);
+        guiGen.remember(noisegen);
+        addNoiseParams(guiGen, noisegen);
+        guiGen.preset = "preset9";
+
+
+        function createGenGui(preset) {
+            var labelGen = document.getElementById("genSourceParameters");
+            if (guiGen != null) {
+                labelGen.removeChild(guiGen.domElement);
+            }
+            if(preset!=null)
+                guiGen = new dat.GUI({ autoPlace: false,load:preset })
+            else
+                guiGen = new dat.GUI({ autoPlace: false });//,load:presets })
+            labelGen.appendChild(guiGen.domElement);
+        }
+
+
+
+         function createSolid(ctx, hex) {
+            ctx.fillStyle = hex;
+            ctx.fillRect(0, 0, 250, 250);
+         }
+         function deleteMixGui() {
+             var labelMix = document.getElementById("mixSourceParameters");
+             if (guiMix != null) {
+                 labelMix.removeChild(guiMix.domElement);
+                 guiMix = null;
+             }
+         }
+         function createMixGui(preset) {
+            var labelMix = document.getElementById("mixSourceParameters");
+            if (guiMix != null) {
+                labelMix.removeChild(guiMix.domElement);
+            }
+            if (preset != null)
+         guiMix = new dat.GUI({ autoPlace: false,load:preset })
+            else
+                guiMix = new dat.GUI({ autoPlace: false })
+            labelMix.appendChild(guiMix.domElement);
+        }
+
+        function mixImageGui(path) {
+            createMixGui();
+            labelMix.appendChild(guiMix.domElement);
+            guiMix.add({ image: path }, "image");
+            
+        }
+
+        function genChangeFunc() {
+            var selectBox = document.getElementById("genSource");
+            var selectedValue = selectBox.options[selectBox.selectedIndex].value;
+            if (selectedValue == "Pattern") {
+                texgen.createPattern(genCtx, {});
+                createGenGui(presetPattern);
+                guiGen.remember(texgen);
+                addPatternParams(guiGen, texgen);
+            } else if (selectedValue == "Noise") {
+                 noisegen.setPerlinNoise(genCtx, {});
+                 //createGenGui();
+                 createGenGui(presetNoise);
+                 guiGen.remember(noisegen);
+                 addNoiseParams(guiGen, noisegen);
+             } else if (selectedValue == "Image") {
+            }
+            //alert(selectedValue);
+        }
+        function mixChangeFunc() {
+            var selectBox = document.getElementById("mixSource");
+            var selectedValue = selectBox.options[selectBox.selectedIndex].value;
+            if (selectedValue == "Pattern") {
+                texmix.createPattern(mixCtx, {});
+                createMixGui(presetPattern);
+                guiMix.remember(texmix);
+                addPatternParams(guiMix, texmix);
+            } else if (selectedValue == "Noise") {
+                noisemix.setPerlinNoise(mixCtx, {});
+                createMixGui(presetNoise);
+                guiMix.remember(noisemix);
+                addNoiseParams(guiMix, noisemix);
+            } else if (selectedValue == "None") {
+                createSolid(mixCtx, "#000000");
+                deleteMixGui();
+            } else if (selectedValue == "Solid") {
+                createSolid(mixCtx, solidmix.color);
+                createMixGui();
+                guiMix.addColor(solidmix, "color").onChange(function (value) {
+                    createSolid(mixCtx, value);
+                });
+            }
+        }
+        function meshChangeFunc() {
+            var selectBox = document.getElementById("mesh");
+            var selectedValue = selectBox.options[selectBox.selectedIndex].value;
+            box.dispose();
+            if (selectedValue == "Box") {
+                box = buildCubeMesh(scene, 1.5, 1.5, 1.5, 1, 1, false, false);
+                //box.material = //compoundShader2().BuildMaterial(scene);
+                
+            } else if (selectedValue == "Sphere") {
+                box = BABYLON.Mesh.CreateSphere("sph", 32, 4, scene);
+                //box.material = new BABYLONX.CompoundShader(scene, dynTexGen, dynTexMix, shaderparams).material; compoundShader2().BuildMaterial(scene);
+                
+            } else if (selectedValue == "Cylinder") {
+                box = BABYLON.MeshBuilder.CreateCylinder("cone", { diameterBottom:4,diameterTop: 4, tessellation: 32 }, scene);
+                //box.material = compoundShader2().BuildMaterial(scene);
+                
+            } else if (selectedValue == "Knot") {
+                box = BABYLON.MeshBuilder.CreateTorusKnot("tk", { radialSegments: 128, tubularSegments :64}, scene);// BABYLON.MeshBuilder.CreatePlane("plane", { size: 5 }, scene);
+                //box.material = compoundShader2().BuildMaterial(scene);
+            } else {
+                box = BABYLON.MeshBuilder.CreateTorus("torus", { diameter: 4, thickness: 1, tessellation: 32 }, scene);
+                //box.material = compoundShader2().BuildMaterial(scene);
+                
+            }
+            box.material =new BABYLONX.CompoundShader(scene, dynTexGen, dynTexMix, shaderparams).material;
+            updateList[0].mesh = box;
+        }
+        function dataURLtoBlob(dataurl) {
+            var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+                bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+            while (n--) {
+                u8arr[n] = bstr.charCodeAt(n);
+            }
+            return new Blob([u8arr], { type: mime });
+        }
+        var downloadCanvas = function (filename, imageurl) {
+            var link = document.createElement("a");
+            //var imgData = _canvasObject.toDataURL({
+            //    format: 'png',
+            //    multiplier: 4
+            //});
+            var imgData = imageurl;
+            var strDataURI = imgData.substr(22, imgData.length);
+            var blob = dataURLtoBlob(imgData);
+            var objurl = URL.createObjectURL(blob);
+
+            link.download = filename;
+
+            link.href = objurl;
+
+            link.click();
+        }
+        var saveGenImg = function () {
+            //var imageurl = facesTexture.getContext().canvas.toDataURL("image/png", .5);
+            //downloadCanvas(document.getElementById("project").value + "_faces.png", imageurl);
+            var imageurl = genCtx.canvas.toDataURL("image/jpeg", .5);
+            downloadCanvas("generator.jpg", imageurl);
+        }
+        var saveMixImg = function () {
+            //var imageurl = facesTexture.getContext().canvas.toDataURL("image/png", .5);
+            //downloadCanvas(document.getElementById("project").value + "_faces.png", imageurl);
+            var imageurl = mixCtx.canvas.toDataURL("image/jpeg", .5);
+            downloadCanvas("mix.jpg", imageurl);
+        }
+
+
+        function save() {
+            saveGenImg();
+         }
+
+
+        /**
+        uniforms used: dyTxt,stepx, stepy,invR,invG,balance,invH,fSobel,filterdz
+        path = path to texture, mixed with the shader or null
+        */
+        var compoundShader = function (mix) {
+            var opacity1 = 1.0;
+            var opacity2 = 1.0;
+            var sbCommon1 = new BABYLONX.ShaderBuilder()
+                .SetUniform('dyTxt', 'sampler2D')
+                .SetUniform('mxTxt', 'sampler2D')
+                .SetUniform('stepx', 'float')
+                .SetUniform('stepy', 'float')
+                .SetUniform('invR', 'float')
+                .SetUniform('invG', 'float')
+                .SetUniform('balance', 'float')
+                .SetUniform('invH', 'float')
+                .SetUniform('fSobel', 'float')
+                .SetUniform('level', 'float')
+                .SetUniform('strength', 'float');
+            var sbCommon2 = {
+                result: BABYLONX.Helper()
+                    
+                   .Map({ index: 'dyTxt' })
+                   //.Map({ path: path, alpha: true }, 1.)
+                    //.Transparency()
+                   .InLine(`
+                        float    invertR=invR;
+                        float    invertG=invG;
+
+                        float    invertH=invH;
+                        //float pulse=*sin(time) *sin(time);
+                        //float level=7.;
+                        //float strength=1.5;
+                        //float dz= filterdz;//500.;
+                        float dz=1.0/strength*(1.+pow(2.0, level));
+ 
+
+
+                        //int type=1.-fSobel;
+                        float type=fSobel;
+
+
+
+
+                        vec2 step=vec2(stepx,stepy);//  vec2(0.01, 0.01);
+                        vec2 vUv=vec2(vuv);
+                        vec2 tlv = vec2(vUv.x - step.x, vUv.y + step.y );
+                        vec2 lv  = vec2(vUv.x - step.x, vUv.y 		   );
+                        vec2 blv = vec2(vUv.x - step.x, vUv.y - step.y);
+                        vec2 tv  = vec2(vUv.x 		  , vUv.y + step.y );
+                        vec2 bv  = vec2(vUv.x 		  , vUv.y - step.y);
+                        vec2 trv = vec2(vUv.x + step.x, vUv.y + step.y );
+                        vec2 rv  = vec2(vUv.x + step.x, vUv.y 		   );
+                        vec2 brv = vec2(vUv.x +step.x, vUv.y -step.y);
+
+                        
+                        tlv = vec2(tlv.x >= 0.0 ? tlv.x : (1.0 + tlv.x), 	tlv.y >= 0.0	? tlv.y : (1.0  + tlv.y));
+                        tlv = vec2(tlv.x < 1.0  ? tlv.x : (tlv.x - 1.0 ), 	tlv.y < 1.0   	? tlv.y : (tlv.y - 1.0 ));
+                        lv  = vec2( lv.x >= 0.0 ?  lv.x : (1.0 + lv.x),  	lv.y  >= 0.0 	?  lv.y : (1.0  +  lv.y));
+                        lv  = vec2( lv.x < 1.0  ?  lv.x : ( lv.x - 1.0 ),   lv.y  < 1.0  	?  lv.y : ( lv.y - 1.0 ));
+                        blv = vec2(blv.x >= 0.0 ? blv.x : (1.0 + blv.x), 	blv.y >= 0.0 	? blv.y : (1.0  + blv.y));
+                        blv = vec2(blv.x < 1.0  ? blv.x : (blv.x - 1.0 ), 	blv.y < 1.0 	? blv.y : (blv.y - 1.0 ));
+                        tv  = vec2( tv.x >= 0.0 ?  tv.x : (1.0 + tv.x),  	tv.y  >= 0.0 	?  tv.y : (1.0  +  tv.y));
+                        tv  = vec2( tv.x < 1.0  ?  tv.x : ( tv.x - 1.0 ),   tv.y  < 1.0 	?  tv.y : ( tv.y - 1.0 ));
+                        bv  = vec2( bv.x >= 0.0 ?  bv.x : (1.0 + bv.x),  	bv.y  >= 0.0 	?  bv.y : (1.0  +  bv.y));
+                        bv  = vec2( bv.x < 1.0  ?  bv.x : ( bv.x - 1.0 ),   bv.y  < 1.0 	?  bv.y : ( bv.y - 1.0 ));
+                        trv = vec2(trv.x >= 0.0 ? trv.x : (1.0 + trv.x), 	trv.y >= 0.0 	? trv.y : (1.0  + trv.y));
+                        trv = vec2(trv.x < 1.0  ? trv.x : (trv.x - 1.0 ), 	trv.y < 1.0   	? trv.y : (trv.y - 1.0 ));
+                        rv  = vec2( rv.x >= 0.0 ?  rv.x : (1.0 + rv.x),  	rv.y  >= 0.0 	?  rv.y : (1.0  +  rv.y));
+                        rv  = vec2( rv.x < 1.0  ?  rv.x : ( rv.x - 1.0 ),   rv.y  < 1.0   	?  rv.y : ( rv.y - 1.0 ));
+                        brv = vec2(brv.x >= 0.0 ? brv.x : (1.0 + brv.x), 	brv.y >= 0.0 	? brv.y : (1.0  + brv.y));
+                        brv = vec2(brv.x < 1.0  ? brv.x : (brv.x - 1.0 ), 	brv.y < 1.0   	? brv.y : (brv.y - 1.0 ));
+                        
+
+                        float tl = abs(texture2D(dyTxt, tlv).r);
+                        float l  = abs(texture2D(dyTxt, lv).r);
+                        float bl = abs(texture2D(dyTxt, blv).r);
+                        float t  = abs(texture2D(dyTxt, tv).r);
+                        float b  = abs(texture2D(dyTxt, bv).r);
+                        float tr = abs(texture2D(dyTxt, trv).r);
+                        float r  = abs(texture2D(dyTxt, rv).r);
+                        float br = abs(texture2D(dyTxt, brv).r);
+                        float dx = 0.0, dy = 0.0;
+                        //if(type == 0){	// Sobel
+                        if(type > 0.5) {	// Sobel
+	                        dx = tl +l*2.0 +bl -tr -r*2.0 -br;
+	                        dy = tl + t*2.0 + tr - bl - b*2.0 - br;
+                        }
+                        else{				// Scharr
+	                        dx = tl*3.0 + l*10.0 + bl*3.0 - tr*3.0 - r*10.0 - br*3.0;
+	                        dy = tl*3.0 + t*10.0 + tr*3.0 - bl*3.0 - b*10.0 - br*3.0;
+                        }
+                        vec4 normal = vec4(normalize(vec3(dx * invertR * invertH * 255.0, dy * invertG * invertH * 255.0, dz)), texture2D(dyTxt, vUv).a);
+                                vec4 res=vec4(normal.xyz * 0.5 +0.5, 1.0);
+                                vec3 nrm1 = vec3(normalize(nrm-(normalize(res.xyz) *2.0-1.) *0.5));
+                        //result = vec4(normal.xy * 0.5 +0.5, normal.zw);
+                        //*
+                        vec4 specular = vec4(normal.xy * 0.5 +0.5, normal.zw);
+
+
+                        vec4 textureColor =texture2D(dyTxt, vuv);
+                        textureColor.a = 1.;
+
+
+                        result= clamp(2.*textureColor*specular*balance, 0.0, 1.);
+                        //result= vec4(vec3(vuv.x,vuv.y,0.),1.);
+                        //result.w=0.7;
+                        //*/
+                            `)
+                    
+                   .Light({ phonge: .025195, specular: 15.5, normal: 'nrm1', direction: 'camera' })
+                       //.Light({ darkColorMode:true,specularPower: .01, phonge: 1., color: { r: 0.8, g: 0.8, b: 0.8, a: 1. }, specular: 1.0, normal: BABYLONX.Normals.Flat, direction: 'camera' })
+                       .Build(), opacity: opacity2
+            }
+            var shader;
+            if (mix != null) {
+                
+                    // this is a string, can be: a path, texture or  a color
+                    if(mix.startsWith('#')) {
+                        var color = BABYLON.Color3.FromHexString(mix);
+                        shader=sbCommon1.Multi([{result: BABYLONX.Helper().Solid({ r: color.r, g:color.g, b:color.b })
+                        .InLine`
+                        result=vec4((1.0-balance) *result.xyz, 1.0);
+                        `
+                        .Build(), opacity: opacity1
+                        }, sbCommon2], false);
+                    } else if (mix=="texture") {
+                        shader = sbCommon1.Multi([{
+                            result: BABYLONX.Helper().Map({ index: 'mxTxt', uv: 'vec2(vuv*5.)' })
+                                 .InLine`
+                            result=vec4((1.0-balance) *result.xyz, 1.0);
+                           `
+                              .Build(), opacity: opacity1
+                        }, sbCommon2], false);
+                    } else {
+                        shader=sbCommon1.Multi([{result: BABYLONX.Helper().Map({ path: mix , uv: 'vec2(vuv*1.)'})
+                            .InLine`
+                            result=vec4((1.0-balance) *result.xyz, 1.0);
+                          `
+                          .Build(), opacity: opacity1},sbCommon2],false);
+                    }
+                 
+            } else {
+                //NO MIX object available
+                shader=sbCommon1.Multi([sbCommon2]);
+            }
+            
+            return shader;
+
+        }
+        var compoundShader2 = function (scene, params) {
+            var opacity1 = 1.0;
+            var opacity2 = 1.0;
+            var shader = new BABYLONX.ShaderBuilder()
+                .SetUniform('dyTxt', 'sampler2D')
+                .SetUniform('mxTxt', 'sampler2D')
+                .SetUniform('stepx', 'float')
+                .SetUniform('stepy', 'float')
+                .SetUniform('invR', 'float')
+                .SetUniform('invG', 'float')
+                .SetUniform('balance', 'float')
+                .SetUniform('invH', 'float')
+                .SetUniform('fSobel', 'float')
+                .SetUniform('level', 'float')
+                .SetUniform('strength', 'float')
+                 .Multi([{
+                    result: BABYLONX.Helper().Map({ index: 'mxTxt'})
+                    .InLine`result=vec4((1.0-balance) *result.xyz, 1.0);`
+                    .Build(), opacity: opacity1
+                 },
+                 {
+                    result: BABYLONX.Helper()
+                   .Map({ index: 'dyTxt' })
+                   //.Map({ path: path, alpha: true }, 1.)
+                    //.Transparency()
+                   .InLine(`
+                        float    invertR=invR;
+                        float    invertG=invG;
+
+                        float    invertH=invH;
+                        //float pulse=*sin(time) *sin(time);
+                        //float level=7.;
+                        //float strength=1.5;
+                        //float dz= filterdz;//500.;
+                        float dz=1.0/strength*(1.+pow(2.0, level));
+
+
+
+                        //int type=1.-fSobel;
+                        float type=fSobel;
+
+
+
+
+                        vec2 step=vec2(stepx,stepy);//  vec2(0.01, 0.01);
+                        vec2 vUv=vec2(vuv);
+                        vec2 tlv = vec2(vUv.x - step.x, vUv.y + step.y );
+                        vec2 lv  = vec2(vUv.x - step.x, vUv.y 		   );
+                        vec2 blv = vec2(vUv.x - step.x, vUv.y - step.y);
+                        vec2 tv  = vec2(vUv.x 		  , vUv.y + step.y );
+                        vec2 bv  = vec2(vUv.x 		  , vUv.y - step.y);
+                        vec2 trv = vec2(vUv.x + step.x, vUv.y + step.y );
+                        vec2 rv  = vec2(vUv.x + step.x, vUv.y 		   );
+                        vec2 brv = vec2(vUv.x +step.x, vUv.y -step.y);
+
+
+                        tlv = vec2(tlv.x >= 0.0 ? tlv.x : (1.0 + tlv.x), 	tlv.y >= 0.0	? tlv.y : (1.0  + tlv.y));
+                        tlv = vec2(tlv.x < 1.0  ? tlv.x : (tlv.x - 1.0 ), 	tlv.y < 1.0   	? tlv.y : (tlv.y - 1.0 ));
+                        lv  = vec2( lv.x >= 0.0 ?  lv.x : (1.0 + lv.x),  	lv.y  >= 0.0 	?  lv.y : (1.0  +  lv.y));
+                        lv  = vec2( lv.x < 1.0  ?  lv.x : ( lv.x - 1.0 ),   lv.y  < 1.0  	?  lv.y : ( lv.y - 1.0 ));
+                        blv = vec2(blv.x >= 0.0 ? blv.x : (1.0 + blv.x), 	blv.y >= 0.0 	? blv.y : (1.0  + blv.y));
+                        blv = vec2(blv.x < 1.0  ? blv.x : (blv.x - 1.0 ), 	blv.y < 1.0 	? blv.y : (blv.y - 1.0 ));
+                        tv  = vec2( tv.x >= 0.0 ?  tv.x : (1.0 + tv.x),  	tv.y  >= 0.0 	?  tv.y : (1.0  +  tv.y));
+                        tv  = vec2( tv.x < 1.0  ?  tv.x : ( tv.x - 1.0 ),   tv.y  < 1.0 	?  tv.y : ( tv.y - 1.0 ));
+                        bv  = vec2( bv.x >= 0.0 ?  bv.x : (1.0 + bv.x),  	bv.y  >= 0.0 	?  bv.y : (1.0  +  bv.y));
+                        bv  = vec2( bv.x < 1.0  ?  bv.x : ( bv.x - 1.0 ),   bv.y  < 1.0 	?  bv.y : ( bv.y - 1.0 ));
+                        trv = vec2(trv.x >= 0.0 ? trv.x : (1.0 + trv.x), 	trv.y >= 0.0 	? trv.y : (1.0  + trv.y));
+                        trv = vec2(trv.x < 1.0  ? trv.x : (trv.x - 1.0 ), 	trv.y < 1.0   	? trv.y : (trv.y - 1.0 ));
+                        rv  = vec2( rv.x >= 0.0 ?  rv.x : (1.0 + rv.x),  	rv.y  >= 0.0 	?  rv.y : (1.0  +  rv.y));
+                        rv  = vec2( rv.x < 1.0  ?  rv.x : ( rv.x - 1.0 ),   rv.y  < 1.0   	?  rv.y : ( rv.y - 1.0 ));
+                        brv = vec2(brv.x >= 0.0 ? brv.x : (1.0 + brv.x), 	brv.y >= 0.0 	? brv.y : (1.0  + brv.y));
+                        brv = vec2(brv.x < 1.0  ? brv.x : (brv.x - 1.0 ), 	brv.y < 1.0   	? brv.y : (brv.y - 1.0 ));
+
+
+                        float tl = abs(texture2D(dyTxt, tlv).r);
+                        float l  = abs(texture2D(dyTxt, lv).r);
+                        float bl = abs(texture2D(dyTxt, blv).r);
+                        float t  = abs(texture2D(dyTxt, tv).r);
+                        float b  = abs(texture2D(dyTxt, bv).r);
+                        float tr = abs(texture2D(dyTxt, trv).r);
+                        float r  = abs(texture2D(dyTxt, rv).r);
+                        float br = abs(texture2D(dyTxt, brv).r);
+                        float dx = 0.0, dy = 0.0;
+                        //if(type == 0){	// Sobel
+                        if(type > 0.5) {	// Sobel
+	                        dx = tl +l*2.0 +bl -tr -r*2.0 -br;
+	                        dy = tl + t*2.0 + tr - bl - b*2.0 - br;
+                        }
+                        else{				// Scharr
+	                        dx = tl*3.0 + l*10.0 + bl*3.0 - tr*3.0 - r*10.0 - br*3.0;
+	                        dy = tl*3.0 + t*10.0 + tr*3.0 - bl*3.0 - b*10.0 - br*3.0;
+                        }
+                        vec4 normal = vec4(normalize(vec3(dx * invertR * invertH * 255.0, dy * invertG * invertH * 255.0, dz)), texture2D(dyTxt, vUv).a);
+                                vec4 res=vec4(normal.xyz * 0.5 +0.5, 1.0);
+                                vec3 nrm1 = vec3(normalize(nrm-(normalize(res.xyz) *2.0-1.) *0.5));
+                        //result = vec4(normal.xy * 0.5 +0.5, normal.zw);
+                        //*
+                        vec4 specular = vec4(normal.xy * 0.5 +0.5, normal.zw);
+
+
+                        vec4 textureColor =texture2D(dyTxt, vuv);
+                        textureColor.a = 1.;
+
+
+                        result= clamp(2.*textureColor*specular*balance, 0.0, 1.);
+                        //result= vec4(vec3(vuv.x,vuv.y,0.),1.);
+                        //result.w=0.7;
+                        //*/
+                            `)
+                   .Light({ phonge: .025195, specular: 15.5, normal: 'nrm1', direction: 'camera' })
+                       //.Light({ darkColorMode:true,specularPower: .01, phonge: 1., color: { r: 0.8, g: 0.8, b: 0.8, a: 1. }, specular: 1.0, normal: BABYLONX.Normals.Flat, direction: 'camera' })
+                       .Build(), opacity: opacity2
+                 }], false).BuildMaterial(scene);
+            shader.setTexture('dyTxt', params.texGen);
+            shader.setTexture('mxTxt', params.texMix);
+            shader.setFloat('stepx', params.stepx);
+            shader.setFloat('stepy', params.stepy);
+            shader.setFloat('invR', params.iR);
+            shader.setFloat('invG', params.iG);
+            shader.setFloat('balance', params.balance);
+            shader.setFloat('invH', params.iH);
+            shader.setFloat('fSobel', params.fSobel);
+            shader.setFloat('level', params.level);
+            shader.setFloat('strength', params.strength);
+            shader.setFloat('time', frame * .1);
+
+            return shader;
+
+        }
+
+
+       var saved= `{
+            "preset": "Default",
+            "closed": false,
+            "remembered": {
+                "Default": {
+                    "0": {
+                        "stepx": 0.005,
+                        "stepy": 0.005,
+                        "invR": false,
+                        "invG": false,
+                        "balance": 0.9,
+                        "invH": false,
+                        "filter": true,
+                        "level": 7,
+                        "strength": 0.5
+                    }
+                }
+            },
+        "folders": {}
+       }  `;
+
+
+
+        //USE_CASES
+
+        var updateList = [];
+        var box = buildCubeMesh(scene, 1.5, 1.5, 1.5, 1, 1, false, false);
+        //var box = BABYLON.MeshBuilder.CreateTorus("torus", {diameter:4, thickness: 1, tessellation:32 }, scene);
+        //var box = BABYLON.Mesh.CreateSphere("sph", 32, 4, scene);
+        //box.material = compoundShader2(scene, shaderparams);
+
+        box.material = new BABYLONX.CompoundShader(scene, dynTexGen, dynTexMix, shaderparams).material;
+        
+
+        updateList.push({ mesh: box, mix: dynTexMix, src: dynTexGen });
+        //var ps = BABYLON.Effect.ShadersStore["ShaderBuilder_1PixelShader"];
+        //console.log(ps);
+
+        //var cube1 = demo.createCube({ w: 5, h: 5, d: 5 }, "#DCDCDC");
+        var frame = 0;
+        scene.registerBeforeRender(function () {
+            frame++;
+            //sphere.rotation.y += 0.02;
+            //rc.root.rotation.y += .01;
+                new BABYLONX.ShaderMaterialHelper().SetUniforms(
+                      scene.meshes,
+                      camera.position,
+                      camera.target,
+                       { x: 0, y: 0 },
+                       { x: 100, y: 100 },
+                  frame);
+
+                dynTexGen.update();
+                dynTexMix.update();
+                box.material.shader.updateParams(shaderparams);
+                function updateShaderUniforms(mesh,mix,src) {
+                    
+                    mesh.material.setTexture('dyTxt', shaderparams.texGen);
+                    mesh.material.setTexture('mxTxt', shaderparams.texMix);
+                     mesh.material.setFloat('stepx', shaderparams.stepx);
+                    mesh.material.setFloat('stepy', shaderparams.stepy);
+                    mesh.material.setFloat('invR', shaderparams.iR);
+                    mesh.material.setFloat('invG', shaderparams.iG);
+                    mesh.material.setFloat('balance', shaderparams.balance);
+                    mesh.material.setFloat('invH', shaderparams.iH);
+                    mesh.material.setFloat('fSobel', shaderparams.fSobel);
+                   mesh.material.setFloat('level', shaderparams.level);
+                    mesh.material.setFloat('strength', shaderparams.strength);
+                    mesh.material.setFloat('time', frame * .1);
+                }
+                updateList.forEach(function (e) {
+                    //updateShaderUniforms(e.mesh,e.mix,e.src);
+                })
+            
+               
+        });
+          
+        engine.runRenderLoop(function () {
+            scene.render();
+        });
+
+    </script>
+</body>
+
+
+
+</html>
