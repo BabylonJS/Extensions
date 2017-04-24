@@ -1287,7 +1287,7 @@ module BABYLON {
             return this._navigation.findPath(agent.position, destination, zone, group);
         }
         public setNavigationPath(agent: BABYLON.AbstractMesh, path: BABYLON.Vector3[], speed?: number, loop?: boolean, callback?: () => void): void {
-            if (path && path.length > 1) {
+            if (path && path.length > 0) {
                 var length = 0;
                 var direction = [{
                     frame: 0,
