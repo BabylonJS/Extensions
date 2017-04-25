@@ -31,7 +31,7 @@ module BABYLON {
         public static RegisterLoader(handler: (root: string, name: string) => void): void {
             BABYLON.SceneManager.loader = handler;
         }
-        public static RegisterReady(handler: (scene: BABYLON.Scene, manager: BABYLON.SceneManager) => void): void {
+        public static ExecuteWhenReady(handler: (scene: BABYLON.Scene, manager: BABYLON.SceneManager) => void): void {
             BABYLON.SceneManager.ready = handler;
         }
 
@@ -130,7 +130,7 @@ module BABYLON {
             // Reset local ready state
             this._localReadyState = { state: "localReadyState" };
             this._scene._addPendingData(this._localReadyState);
-            console.log("[SceneManager] - Loading scene assets: " + this._filename);
+            BABYLON.Tools.Log("Loading scene assets: " + this._filename);
 
             // Reset scene manager engine instance
             BABYLON.SceneManager.engine = this._scene.getEngine();
@@ -348,7 +348,24 @@ module BABYLON {
             }
             if (this.controller != null) {
                 this.controller.ready();
-                (<any>this.controller).onready();
+            }
+            if (this._scene.metadata != null && this._scene.metadata.properties != null) {
+                if (this._scene.metadata.properties.timeManagement === true) {
+                    this.enableTime();
+                }
+                if (this._scene.metadata.properties.enableUserInput === true) {
+                    var joystick:number = this._scene.metadata.properties.virtualJoystickMode;
+                    if (joystick !== 0 && this._scene.metadata.properties.virtualJoystickAttached === true) {
+                        joystick = 0;
+                        BABYLON.Tools.Warn("Virtual joystick camera attached, disabled manual joystick input.");
+                    }
+                    this.enableUserInput( { 
+                        preventDefault: this._scene.metadata.properties.preventDefault,
+                        useCapture: this._scene.metadata.properties.useCapture,
+                        enableVirtualJoystick: (joystick === 1 || (joystick === 2 && this.isMobile())),
+                        disableRightStick: this._scene.metadata.properties.disableRightJoystick
+                    });
+                }
             }
             if (this._localReadyState != null) {
                 this._scene._removePendingData(this._localReadyState);
@@ -364,7 +381,7 @@ module BABYLON {
                 this._executeLocalReady();
             } else {
                 var sceneName:string = this._loadQueueScenes[this._loadQueueIndex];
-                console.log("[SceneManager] - Importing scene meshes: " + sceneName);
+                BABYLON.Tools.Log("Importing scene meshes: " + sceneName);
                 this._loadQueueIndex++;
                 this.importMeshes(sceneName, ()=>{
                     this._loadQueueImports();
@@ -650,28 +667,13 @@ module BABYLON {
             if (result == null) result = owner;
             return result;            
         }
-        public getOwnerDetailMesh(owner:BABYLON.AbstractMesh, directDecendantsOnly:boolean = true, predicate:(node:BABYLON.Node)=>boolean = null):BABYLON.AbstractMesh {
-            var result:BABYLON.AbstractMesh = null;
-            var children:BABYLON.AbstractMesh[] = owner.getChildMeshes(directDecendantsOnly, predicate);
-            if (children != null && children.length > 0) {
-                for (var i:number = 0; i < children.length; i++) {
-                    var child:BABYLON.AbstractMesh = children[i];
-                    if (child.name === "Detail" || child.name.indexOf(":Detail") >= 0 || child.name.indexOf("_Detail") >= 0) {
-                        result = child;
-                        break;
-                    }
-                }
-            }
-            if (result == null) result = owner;
-            return result;            
-        }
         public getOwnerCollisionMesh(owner:BABYLON.AbstractMesh, directDecendantsOnly:boolean = true, predicate:(node:BABYLON.Node)=>boolean = null):BABYLON.AbstractMesh {
             var result:BABYLON.AbstractMesh = null;
             var children:BABYLON.AbstractMesh[] = owner.getChildMeshes(directDecendantsOnly, predicate);
             if (children != null && children.length > 0) {
                 for (var i:number = 0; i < children.length; i++) {
                     var child:BABYLON.AbstractMesh = children[i];
-                    if (child.name === "Collider" || child.name.indexOf(":Collider") >= 0 || child.name.indexOf("_Collider") >= 0) {
+                    if (child.name === "Collider" || child.name.indexOf("_Collider") >= 0 || child.name.indexOf(":Collider") >= 0) {
                         result = child;
                         break;
                     }
@@ -757,7 +759,6 @@ module BABYLON {
                 this.controller = this.addSceneComponent(klass, new BABYLON.Mesh("SceneController", this._scene)) as BABYLON.SceneController;
                 if (this.controller != null) {
                     this.controller.ready();
-                    (<any>this.controller).onready();
                 }
             } else {
                 throw new Error("Scene controller already exists.");
@@ -1286,7 +1287,7 @@ module BABYLON {
             return this._navigation.findPath(agent.position, destination, zone, group);
         }
         public setNavigationPath(agent: BABYLON.AbstractMesh, path: BABYLON.Vector3[], speed?: number, loop?: boolean, callback?: () => void): void {
-            if (path && path.length > 1) {
+            if (path && path.length > 0) {
                 var length = 0;
                 var direction = [{
                     frame: 0,
@@ -1611,7 +1612,7 @@ module BABYLON {
         private static inputGamepadConnected(pad: BABYLON.Gamepad) {
             if (pad.index === 0) {
                 BABYLON.SceneManager.gamepad = pad;
-                BABYLON.Tools.Log("[Scene Manager] - Gamepad Connected: " + BABYLON.SceneManager.gamepad.id);
+                BABYLON.Tools.Log("Gamepad Connected: " + BABYLON.SceneManager.gamepad.id);
                 if ((<string>BABYLON.SceneManager.gamepad.id).search("Xbox 360") !== -1 || (<string>BABYLON.SceneManager.gamepad.id).search("Xbox One") !== -1 || (<string>BABYLON.SceneManager.gamepad.id).search("xinput") !== -1) {
                     BABYLON.SceneManager.gamepadType = BABYLON.GamepadType.Xbox360;
                     var xbox360Pad: BABYLON.Xbox360Pad = BABYLON.SceneManager.gamepad as BABYLON.Xbox360Pad;
@@ -1866,36 +1867,40 @@ module BABYLON {
         private static setupPhysicsImpostor(physicsMesh:BABYLON.AbstractMesh, plugin:number, friction:number, collisions:boolean, rotation:number):void {
             if (physicsMesh.physicsImpostor != null) {
                 physicsMesh.physicsImpostor.executeNativeFunction((word:any, body:any) =>{
-                    if (plugin === 0) {
-                        // Cannon Physics Engine Plugin
-                        body.linearDamping = friction;
-                        body.angularDamping = friction;
-                        body.collisionResponse = collisions;
-                        body.angularVelocity.x = 0;
-                        body.angularVelocity.y = 0;
-                        body.angularVelocity.z = 0;
-                        body.velocity.x = 0;
-                        body.velocity.y = 0;
-                        body.velocity.z = 0;
-                        if (rotation === 1) {
-                            body.fixedRotation = true;
-                            body.updateMassProperties();
+                    if (body) {
+                        if (plugin === 0) {
+                            // Cannon Physics Engine Plugin
+                            body.linearDamping = friction;
+                            body.angularDamping = friction;
+                            body.collisionResponse = collisions;
+                            body.angularVelocity.x = 0;
+                            body.angularVelocity.y = 0;
+                            body.angularVelocity.z = 0;
+                            body.velocity.x = 0;
+                            body.velocity.y = 0;
+                            body.velocity.z = 0;
+                            if (rotation === 1) {
+                                body.fixedRotation = true;
+                                body.updateMassProperties();
+                            }
+                        } else if (plugin === 1) {
+                            // TODO: Oimo Physics Engine Plugin
+                            //body.linearDamping = friction;
+                            //body.angularDamping = friction;
+                            //body.collisionResponse = collisions;
+                            //body.angularVelocity.x = 0;
+                            //body.angularVelocity.y = 0;
+                            //body.angularVelocity.z = 0;
+                            //body.velocity.x = 0;
+                            //body.velocity.y = 0;
+                            //body.velocity.z = 0;
+                            if (rotation === 1) {
+                                //body.fixedRotation = true;
+                                //body.updateMassProperties();
+                            }
                         }
-                    } else if (plugin === 1) {
-                        // TODO: Oimo Physics Engine Plugin
-                        //body.linearDamping = friction;
-                        //body.angularDamping = friction;
-                        //body.collisionResponse = collisions;
-                        //body.angularVelocity.x = 0;
-                        //body.angularVelocity.y = 0;
-                        //body.angularVelocity.z = 0;
-                        //body.velocity.x = 0;
-                        //body.velocity.y = 0;
-                        //body.velocity.z = 0;
-                        if (rotation === 1) {
-                            //body.fixedRotation = true;
-                            //body.updateMassProperties();
-                        }
+                    } else {
+                        BABYLON.Tools.Warn("[Physics Native Function]: Null imposter body encountered for physcis mesh " + physicsMesh.name + ". Check physics mesh has no parent transform.");
                     }
                 });
             }
@@ -1989,7 +1994,7 @@ module BABYLON {
                     var hdrMaximumLuminance:number = camera.metadata.properties.hdrMaximumLuminance;
                     var hdrLuminanceIncrease:number = camera.metadata.properties.hdrLuminanceIncrease;
                     var hdrLuminanceDecrease:number = camera.metadata.properties.hdrLuminanceDecrease;
-                    var pipeline:BABYLON.HDRRenderingPipeline = new BABYLON.HDRRenderingPipeline((camera.name + ":Pipeline"), scene, hdrRatio, null, [camera]);
+                    var pipeline:BABYLON.HDRRenderingPipeline = new BABYLON.HDRRenderingPipeline((camera.name + "_Pipeline"), scene, hdrRatio, null, [camera]);
                     pipeline.exposure = hdrExposure;
                     pipeline.gaussCoeff = hdrGaussCoeff;
                     pipeline.gaussMean = hdrGaussMean;
