@@ -1280,9 +1280,9 @@ module BABYLON {
         public getNavigationZone(): string {
             return "scene";
         }
-        public getNavigationPoint(position:BABYLON.Vector3, length:number = Number.MAX_VALUE): BABYLON.Vector3 {
+        public getNavigationPoint(position:BABYLON.Vector3, raise:number = 2.0, length:number = Number.MAX_VALUE): BABYLON.Vector3 {
             if (this._navmesh == null || position == null) return null;
-            var pos = new BABYLON.Vector3(position.x, (position.y + 1.0), position.z);
+            var pos = new BABYLON.Vector3(position.x, (position.y + raise), position.z);
             var ray = new BABYLON.Ray(position, new BABYLON.Vector3(0.0, -1.0, 0.0), length);
             var info = this._scene.pickWithRay(ray, (mesh) => { return (mesh === this._navmesh); });
             return (info.hit && info.pickedPoint) ? info.pickedPoint : null;
