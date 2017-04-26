@@ -1282,9 +1282,8 @@ module BABYLON {
         }
         public getNavigationPoint(position:BABYLON.Vector3, length:number = Number.MAX_VALUE): BABYLON.Vector3 {
             if (this._navmesh == null || position == null) return null;
-            var len = (length > 100) ? length : 100;
             var pos = new BABYLON.Vector3(position.x, (position.y + 1.0), position.z);
-            var ray = new BABYLON.Ray(position, new BABYLON.Vector3(0.0, -1.0, 0.0), (len + 1.0));
+            var ray = new BABYLON.Ray(position, new BABYLON.Vector3(0.0, -1.0, 0.0), length);
             var info = this._scene.pickWithRay(ray, (mesh) => { return (mesh === this._navmesh); });
             return (info.hit && info.pickedPoint) ? info.pickedPoint : null;
         }
