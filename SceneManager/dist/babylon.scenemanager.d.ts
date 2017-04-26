@@ -527,7 +527,7 @@ declare module BABYLON {
         getNavigationMesh(): BABYLON.AbstractMesh;
         getNavigationTool(): Navigation;
         getNavigationZone(): string;
-        getNavigationPoint(position: BABYLON.Vector3, length?: number): BABYLON.Vector3;
+        getNavigationPoint(position: BABYLON.Vector3, raise?: number, length?: number): BABYLON.Vector3;
         getNavigationPath(agent: BABYLON.AbstractMesh, destination: BABYLON.Vector3): BABYLON.Vector3[];
         setNavigationPath(agent: BABYLON.AbstractMesh, path: BABYLON.Vector3[], speed?: number, loop?: boolean, callback?: () => void): void;
         getNavigationAgent(agent: BABYLON.AbstractMesh): BABYLON.NavigationAgent;
