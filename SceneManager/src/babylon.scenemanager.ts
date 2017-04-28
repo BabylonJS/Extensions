@@ -538,7 +538,7 @@ module BABYLON {
                     if (result != null) {
                         result.name = BABYLON.SceneManager.ReplaceAll(result.name, "Prefab.", "");
                         if (result.parent !== newParent) result.parent = newParent;
-                        result.position = (newPosition != null) ? newPosition : BABYLON.Vector3.Zero();
+                        if (newPosition != null) result.position = newPosition;
                         if (newRotation != null) result.rotation = newRotation;
                         if (newScaling != null) result.scaling = newScaling;
                         // Recurse all prefab clones
