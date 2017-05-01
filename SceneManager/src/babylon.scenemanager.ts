@@ -538,7 +538,7 @@ module BABYLON {
                     if (result != null) {
                         result.name = BABYLON.SceneManager.ReplaceAll(result.name, "Prefab.", "");
                         if (result.parent !== newParent) result.parent = newParent;
-                        result.position = (newPosition != null) ? newPosition : BABYLON.Vector3.Zero();
+                        if (newPosition != null) result.position = newPosition;
                         if (newRotation != null) result.rotation = newRotation;
                         if (newScaling != null) result.scaling = newScaling;
                         // Recurse all prefab clones
@@ -1279,6 +1279,13 @@ module BABYLON {
         }
         public getNavigationZone(): string {
             return "scene";
+        }
+        public getNavigationPoint(position:BABYLON.Vector3, raise:number = 2.0, length:number = Number.MAX_VALUE): BABYLON.Vector3 {
+            if (this._navmesh == null || position == null) return null;
+            var pos = new BABYLON.Vector3(position.x, (position.y + raise), position.z);
+            var ray = new BABYLON.Ray(position, new BABYLON.Vector3(0.0, -1.0, 0.0), length);
+            var info = this._scene.pickWithRay(ray, (mesh) => { return (mesh === this._navmesh); });
+            return (info.hit && info.pickedPoint) ? info.pickedPoint : null;
         }
         public getNavigationPath(agent: BABYLON.AbstractMesh, destination: BABYLON.Vector3): BABYLON.Vector3[] {
             if (this._navigation == null || this._navmesh == null) return null;
