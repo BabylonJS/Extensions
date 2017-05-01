@@ -9,7 +9,7 @@ MAX_FLOAT_PRECISION = '%.' + str(MAX_FLOAT_PRECISION_INT) + 'f'
 VERTEX_OUTPUT_PER_LINE = 50
 STRIP_LEADING_ZEROS_DEFAULT = True # false for .babylon
 MIN_CONTIGUOUS_INDEXES = 10
-MIN_CONTIGUOUS_ZEROS = 9
+MIN_REPEATS = 8
 #===============================================================================
 #  module level formatting methods, called from multiple classes
 #===============================================================================
@@ -301,10 +301,18 @@ def write_js_module_header(file_handler, moduleName, hasSkeletons):
     file_handler.write('    var _Q = _B.Quaternion;\n')
     file_handler.write('    var _V = _B.Vector3;\n')
     
-    # add function to unpack contiguous indexes (referenced in writeSortedInt32Array)
+    # add function to unpack contiguous indexes (referenced in writeInt32Array)
     file_handler.write('    function CONTIG(array, offset, begin, end) {\n')
     file_handler.write('        for(var i = 0, len = 1 + end - begin; i < len; i++) {\n')
     file_handler.write('            array[offset + i] = begin + i;\n')
+    file_handler.write('        }\n')
+    file_handler.write('    }\n')
+    
+    
+    # add function to unpack repeated values (referenced in writeFloat32Array)
+    file_handler.write('    function REPEAT(array, offset, nRepeats, val) {\n')
+    file_handler.write('        for(var i = 0; i < nRepeats; i++) {\n')
+    file_handler.write('            array[offset + i] = val;\n')
     file_handler.write('        }\n')
     file_handler.write('    }\n')
     
@@ -387,34 +395,40 @@ def vectorArrayToArray(vectorArray):
         ret.append(vector.y)
     return ret
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# returns an array of the begin indexes, & ending indexes of contiguous zero values
-def findContigousZeroRanges(array):
+# returns an array of the begin indexes, num repeats, & repeated values as strings
+def findRepeatRanges(array):
     ret = []
     inRange = False
+    repeat = '-9999999'
 
     #  loop from first to end (range is not inclusive)
     for i in range(len(array)):
-        if format_f(array[i]) == '0':
+        next = format_f(array[i])
+        if next == repeat:
             if not inRange:
-                beginIdx = i
+                offset = i - 1
                 inRange = True
                 
         elif inRange:
-            if 1 + i - beginIdx >=  MIN_CONTIGUOUS_ZEROS:
-                ret.append([beginIdx, i - 1])
+            nRepeats = i - offset
+            if nRepeats >=  MIN_REPEATS:
+                ret.append([offset, nRepeats, repeat])
             inRange = False
-    
+            
+        repeat = next
+            
     # test to see if ran out of numbers while still in a range 
     if inRange:
-        ret.append([beginIdx, len(array) - 1])
+        nRepeats = len(array) - offset
+        ret.append([offset, nRepeats, repeat])
         
     return ret
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-def writeFloat32Array(file_handler, var, indent, vectorArray):
-    array = vectorArrayToArray(vectorArray)
+def writeFloat32Array(file_handler, var, indent, array, isVectorArray):
+    if isVectorArray: array = vectorArrayToArray(array)
     sz = len(array)
-    zeroRanges = findContigousZeroRanges(array)
-    nRanges = len(zeroRanges)
+    repeatRanges = findRepeatRanges(array)
+    nRanges = len(repeatRanges)
     
     if nRanges == 0:
         file_handler.write(indent  + var + ' = new Float32Array([' + format_array(array, indent) + ']);\n');
@@ -423,16 +437,22 @@ def writeFloat32Array(file_handler, var, indent, vectorArray):
     file_handler.write(indent  + var + ' = new Float32Array(' + format_int(sz) + ');\n');
     
     # test for values at beginning
-    firstGapBegin = zeroRanges[0][0]
-    if firstGapBegin != 0:
-        file_handler.write(indent  + var + '.set([' + format_array(array, indent, 0, firstGapBegin) + ']);\n')
+    firstRangeBegin = repeatRanges[0][0]
+    if firstRangeBegin != 0:
+        file_handler.write(indent  + var + '.set([' + format_array(array, indent, 0, firstRangeBegin) + ']);\n')
 
-    for i in range(1, nRanges):
-        prevZerosEnd    = zeroRanges[i - 1][1]
-        nextZerosbegin  = zeroRanges[i    ][0]
-        file_handler.write(indent  + var + '.set([' + format_array(array, indent, prevZerosEnd + 1, nextZerosbegin) + '], ' + format_int(prevZerosEnd + 1) + ');\n');
+    for i in range(nRanges):
+        offset   = repeatRanges[i][0]
+        nRepeats = repeatRanges[i][1]
+        valueStr = repeatRanges[i][2] 
         
-    # test for values at end
-    lastGapEnd = zeroRanges[nRanges - 1][1]
-    if lastGapEnd + 1 < sz:
-        file_handler.write(indent  + var + '.set([' + format_array(array, indent, lastGapEnd + 1, sz - 1) + '], ' + format_int(lastGapEnd + 1) + ');\n');
+        # write range unless the repeat is a zero
+        if valueStr != '0':
+            file_handler.write(indent  + 'REPEAT('+ var + ', ' +  format_int(offset) + ', ' + format_int(nRepeats) + ', ' + valueStr + ');\n');
+            
+        lastIdx = offset + nRepeats - 1
+        
+        # test for a gap between ranges or at end
+        nextOffset = repeatRanges[i + 1][0] if i + 1 < nRanges else sz
+        if nextOffset - lastIdx > 1:
+            file_handler.write(indent  + var + '.set([' + format_array(array, indent, lastIdx + 1, nextOffset) + '], ' + format_int(lastIdx + 1) + ');\n');

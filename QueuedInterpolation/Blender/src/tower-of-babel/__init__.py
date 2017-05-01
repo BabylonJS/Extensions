@@ -1,7 +1,7 @@
 bl_info = {
     'name': 'Tower of Babel',
     'author': 'David Catuhe, Jeff Palmer',
-    'version': (5, 1, 0),
+    'version': (5, 3, 0),
     'blender': (2, 76, 0),
     'location': 'File > Export > Tower of Babel [.js + .d.ts]',
     'description': 'Translate to inline JavaScript modules',
@@ -24,6 +24,7 @@ if "bpy" in locals():
     imp.reload(material)
     imp.reload(mesh)
     imp.reload(package_level)
+    imp.reload(particle_hair)
     imp.reload(sound)
     imp.reload(world)
 
@@ -44,6 +45,7 @@ else:
     from . import material
     from . import mesh
     from . import package_level
+    from . import particle_hair
     from . import sound
     from . import world
 

@@ -75,6 +75,7 @@ class JSExporter:
             self.materials = []
             self.multiMaterials = []
             self.sounds = []
+            self.needPhysics = False
 
             # Scene level sound
             if scene.attachedSound != '':
@@ -110,6 +111,8 @@ class JSExporter:
                             self.fatalError = 'Mesh: ' + mesh.name + ' has un-applied transformations.  This will never work for a mesh with an armature.  Export cancelled'
                             Logger.log(self.fatalError)
                             return
+                        
+                        if hasattr(mesh, 'physicsImpostor'): self.needPhysics = True
 
                         if hasattr(mesh, 'instances'):
                             self.meshesAndNodes.append(mesh)
@@ -187,7 +190,7 @@ class JSExporter:
         file_handler            = open(self.filepathMinusExtension + '.js'  , 'w', encoding='utf8')
         typescript_file_handler = open(self.filepathMinusExtension + '.d.ts', 'w', encoding='utf8')
 
-        write_js_module_header(file_handler, JSExporter.nameSpace)
+        write_js_module_header(file_handler, JSExporter.nameSpace, self.hasSkeletons)
         typescript_file_handler.write('declare module ' + JSExporter.nameSpace + '{\n')
 
         # Pose Libraries - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -202,7 +205,7 @@ class JSExporter:
 
         # World - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         if self.scene.includeInitScene:
-            self.world.initScene_script(file_handler, typescript_file_handler, self)
+            self.world.initScene_script(file_handler, typescript_file_handler, self.needPhysics, self)
         if self.scene.includeMeshFactory:
             self.world.meshFactory_script(file_handler, typescript_file_handler, self.meshesAndNodes, self)
 
@@ -231,6 +234,22 @@ class JSExporter:
         file_handler.write(indent2 + '    children[i].isVisible = true;\n')
         file_handler.write(indent2 + '}\n')
         file_handler.write(indent1 + '}\n')
+        
+        # called by read ahead js files
+        file_handler.write('\n' + indent1 + 'var aheadQueued = false;')
+
+        callArgs = []
+        callArgs.append(OptionalArgument('materialsRootDir', 'string', '"./"'))
+        file_handler           .write(JSExporter.define_module_method    ('matReadAhead', 'aheadQueued', callArgs))
+        typescript_file_handler.write(JSExporter.define_Typescript_method('matReadAhead', 'aheadQueued', callArgs))
+        file_handler.write(indent2 + 'var txBuffer;\n\n')
+
+        for material in self.materials:
+            material.to_script_file(file_handler, indent2, True)
+
+        file_handler.write(indent2 + 'aheadQueued = true;\n')
+        file_handler.write(indent1 + '}\n')
+        file_handler.write(indent1 + JSExporter.nameSpace + '.matReadAhead = matReadAhead;\n')
 
 
         # always need defineMaterials, since called by meshes
@@ -245,11 +264,13 @@ class JSExporter:
 
         if JSExporter.logInBrowserConsole:
             file_handler.write(indent2 + 'var loadStart = _B.Tools.Now;\n')
+        file_handler.write(indent2 + 'matReadAhead(scene, materialsRootDir);\n')
         file_handler.write(indent2 + 'var material;\n')
-        file_handler.write(indent2 + 'var texture;\n\n')
+        file_handler.write(indent2 + 'var texture;\n')
+        file_handler.write(indent2 + 'var txBuffer;\n\n')
 
         for material in self.materials:
-            material.to_script_file(file_handler, indent2)
+            material.to_script_file(file_handler, indent2, False)
         if self.hasMultiMat:
             file_handler.write(indent2 + 'var multiMaterial;\n')
             for multimaterial in self.multiMaterials:
@@ -378,10 +399,15 @@ class JSExporter:
         typescript_file_handler.close()
         Logger.log('========= Writing of files completed =========', 0)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    def getMaterial(self, baseMaterialId):
+    # material can be deleted when part of a particle hair system
+    def getMaterial(self, baseMaterialId, delete = False):
         fullName = JSExporter.nameSpace + '.' + baseMaterialId
-        for material in self.materials:
+        for idx, material in enumerate(self.materials):
             if material.name == fullName:
+                if delete:
+                    self.materials.pop(idx)
+                    Logger.log(material.name + ' removed from export', 2)
+                    
                 return material
 
         return None
@@ -440,6 +466,6 @@ class JSExporter:
         else:
             ret += ') {\n'
 
-        ret += '        ' + JSExporter.versionCheckCode
+        #ret += '        ' + JSExporter.versionCheckCode
         if len(loadCheckVar) > 0 : ret += '        if (' + loadCheckVar + ') return;\n'
         return ret

@@ -11,7 +11,7 @@ import mathutils
 ARC_ROTATE_CAM = 'ArcRotateCamera'
 DEV_ORIENT_CAM = 'DeviceOrientationCamera'
 FOLLOW_CAM = 'FollowCamera'
-FREE_CAM = 'FreeCamera'
+UNIVERSAL_CAM = 'UniversalCamera'
 GAMEPAD_CAM = 'GamepadCamera'
 TOUCH_CAM = 'TouchCamera'
 V_JOYSTICKS_CAM = 'VirtualJoysticksCamera'
@@ -129,11 +129,8 @@ class Camera(FCurveAnimatable):
             file_handler.write(indent + 'camera.radius = ' + format_f(self.followDistance) + ';\n')
             file_handler.write(indent + 'camera.rotationOffset = ' + format_f(self.followRotation) + ';\n')
 
-        if hasattr(self, 'lockedTargetId') and (self.CameraType == FOLLOW_CAM or self.CameraType == FREE_CAM):
-            if self.CameraType == FOLLOW_CAM:
-                file_handler.write(indent + 'camera.target = scene.getMeshByID("' + self.lockedTargetId + '");\n')
-            else:
-                file_handler.write(indent + 'camera.lockedTarget = scene.getMeshByID("' + self.lockedTargetId + '");\n')
+        if hasattr(self, 'lockedTargetId') and (self.CameraType == FOLLOW_CAM or self.CameraType == UNIVERSAL_CAM):
+            file_handler.write(indent + 'camera.lockedTarget = scene.getMeshByID("' + self.lockedTargetId + '");\n')
 
         if hasattr(self, 'parentId'):
             file_handler.write(indent + 'camera.parent = scene.getLastEntryByID("' + self.parentId + '");\n')
@@ -153,14 +150,14 @@ bpy.types.Camera.CameraType = bpy.props.EnumProperty(
              (V_JOYSTICKS_CAM        , 'Virtual Joysticks'       , 'Use Virtual Joysticks Camera'),
              (TOUCH_CAM              , 'Touch'                   , 'Use Touch Camera'),
              (GAMEPAD_CAM            , 'Gamepad'                 , 'Use Gamepad Camera'),
-             (FREE_CAM               , 'Free'                    , 'Use Free Camera'),
+             (UNIVERSAL_CAM          , 'Universal'               , 'Use Universal Camera'),
              (FOLLOW_CAM             , 'Follow'                  , 'Use Follow Camera'),
              (DEV_ORIENT_CAM         , 'Device Orientation'      , 'Use Device Orientation Camera'),
              (ARC_ROTATE_CAM         , 'Arc Rotate'              , 'Use Arc Rotate Camera'),
              (VR_DEV_ORIENT_FREE_CAM , 'VR Dev Orientation Free' , 'Use VR Dev Orientation Free Camera'),
              (WEB_VR_FREE_CAM        , 'Web VR Free'             , 'Use Web VR Free Camera')
             ),
-    default = FREE_CAM
+    default = UNIVERSAL_CAM
 )
 bpy.types.Camera.checkCollisions = bpy.props.BoolProperty(
     name='Check Collisions',

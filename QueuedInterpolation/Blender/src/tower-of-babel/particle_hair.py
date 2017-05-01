@@ -2,6 +2,7 @@ from .logger import *
 from .package_level import *
 
 import bpy
+from math import sqrt
 from mathutils import Color, Vector
 
 #===============================================================================
@@ -9,7 +10,7 @@ class Hair():
     def __init__(self, particle_sys, mesh, bjsMesh, exporter):
         self.name = particle_sys.name
         self.legalName = legal_js_identifier(self.name)
-        Logger.log('processing begun of particle hair:  ' + self.name)
+        Logger.log('processing begun of particle hair:  ' + self.name, 2)
         
         self.bjsMesh = bjsMesh
         
@@ -26,9 +27,6 @@ class Hair():
         else:
             self.color = Color((1, 1, 1))
         
-        # add a restore point onto the undo stack, before converting to a mesh    
-#        bpy.ops.ed.undo_push()
-        
         # find the modifier name & temporarily convert it
         for mod in [m for m in mesh.modifiers if m.type == 'PARTICLE_SYSTEM']:
             bpy.ops.object.modifier_convert( modifier = mod.name )
@@ -36,72 +34,76 @@ class Hair():
         
         scene = exporter.scene
         # get the new active mesh is the converted hair
-        hairMesh = scene.objects.active
-        self.nStrands = int(len(hairMesh.data.vertices) / 65)
-        roots = []
-        
-        verts = hairMesh.data.vertices
-        for idx, vert in enumerate(hairMesh.data.vertices):
-            print('vert: ' + str(idx) + ' location: ' + format_vector(vert.co) )
+        hairMesh = scene.objects.active 
+        nVertsBefore = len(hairMesh.data.vertices)       
+#        verts = hairMesh.data.vertices
+#        edges = hairMesh.data.edges
+#        for idx, vert in enumerate(verts):
+#            print('vert: ' + str(idx) + ' location: ' + format_vector(vert.co) )
 
-        for idx, edge in enumerate(hairMesh.data.edges):
-            print('edge: ' + str(idx) + ' locations: ' + str(edge.vertices[0]) + ' and ' + str(edge.vertices[1]))
+#        for idx, edge in enumerate(edges):
+#            print('edge: ' + str(idx) + ' locations: ' + str(edge.vertices[0]) + ' and ' + str(edge.vertices[1]))
 
-        # get the root vertex of each strand while it is still known what it is
-        for idx in range(self.nStrands):
-            roots.append(hairMesh.data.vertices[idx * 65].co.copy())
-        
         # perform a limited Dissolve
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.mesh.select_all(action='SELECT')
-        #bmesh.ops.dissolve_limit 
         bpy.ops.mesh.dissolve_limited(angle_limit=0.087) # 5%
         bpy.ops.object.mode_set(mode='OBJECT')
+        
+        verts = hairMesh.data.vertices
+        edges = hairMesh.data.edges
         
         self.strandNumVerts = []
         self.rootRelativePositions = []
         longestStrand = -1
 
-        Logger.log('# of Strands: ' + str(self.nStrands) + ', reduced from ' + str(self.nStrands * 65) + ' to ' + str(len(hairMesh.data.vertices)))
         # determine the number of verts per stand after the dissolve & save rootRelative Positions
-        strand = 0
-        strandStart = -1
-        currRoot = nextRoot = roots[strand]
-        for idx, vert in enumerate(hairMesh.data.vertices):
-            v = vert.co
-            if same_vertex(nextRoot, v):
+        nVerts = 0
+        tailVertIdx = -1
+        root = None
+        self.longestStrand = -1
+        for idx, edge in enumerate(edges):
+            if tailVertIdx != edge.vertices[0]:
                 # write out the stand length unless first strand
-                if strandStart != -1:
-                    self.strandNumVerts.append(idx - strandStart)
+                if tailVertIdx != -1:
+                    self.strandNumVerts.append(nVerts)
+                    strandLength = self.length(tail.x - root.x, tail.z - root.z, tail.y - root.y)
+                    if self.longestStrand < strandLength:
+                        self.longestStrand = strandLength
                 
-                currRoot = nextRoot
+                root = verts[edge.vertices[0]].co
+                nVerts = 2
                 
-                # prepare to now start looking for the next strand unless this is the last
-                if strand + 1 < self.nStrands:
-                    strand += 1
-                    nextRoot = roots[strand]
-                else:
-                    nextRoot = Vector((-1, -1, -1))
-                    
-                strandStart = idx
-                self.rootRelativePositions.append(v.x)
-                self.rootRelativePositions.append(v.z)
-                self.rootRelativePositions.append(v.y)
+                # need to write both vertices at the beginning of a strand
+                self.rootRelativePositions.append(root.x)
+                self.rootRelativePositions.append(root.z)
+                self.rootRelativePositions.append(root.y)
             
-            else:    
-                self.rootRelativePositions.append(v.x - currRoot.x)
-                self.rootRelativePositions.append(v.z - currRoot.z)
-                self.rootRelativePositions.append(v.y - currRoot.y)
+            else: 
+                nVerts += 1 
+                  
+            # always write the tail vertex
+            tail = verts[edge.vertices[1]].co
+            self.rootRelativePositions.append(tail.x - root.x)
+            self.rootRelativePositions.append(tail.z - root.z)
+            self.rootRelativePositions.append(tail.y - root.y)
             
-        self.strandNumVerts.append(len(hairMesh.data.vertices) - strandStart)
+            # always record tail vertex index for next test
+            tailVertIdx = edge.vertices[1]
+
+        # write out the last strand length 
+        self.strandNumVerts.append(nVerts)
             
-#        bpy.ops.ed.undo()
-        #bpy.ops.particle.copy_particle_systems()
-        
+        bpy.ops.object.delete(use_global=False)
+
+        nStrands = len(self.strandNumVerts)
+        nVerts = len(verts)
+        Logger.log('# of Strands: ' + str(nStrands) + ', reduced from ' + str(nVertsBefore) + ' to ' + str(nVerts), 3)
+        Logger.log('Avg # verts per strand reduced from ' + str(nVertsBefore / nStrands) + ' to ' + str(nVerts / nStrands), 3)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-#    def length(self, deltaX, deltaY : number, deltaZ : number) : number {
-#            return Math.sqrt( (deltaX * deltaX) + (deltaY * deltaY) + (deltaZ * deltaZ) );
-#        }
+    def length(self, deltaX, deltaY, deltaZ):
+        return sqrt( (deltaX * deltaX) + (deltaY * deltaY) + (deltaZ * deltaZ) )
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # does not need exporter some args, but need same call signature as Mesh
     def to_script_file(self, file_handler, typescript_file_handler, kids, indent, exporter):
@@ -121,7 +123,7 @@ class Hair():
         
         file_handler.write(indent2 + 'var strandNumVerts = [' + format_array(self.strandNumVerts, indent2) + '];\n')
         file_handler.write(indent2 + 'var rootRelativePositions = [' + format_array(self.rootRelativePositions, indent2) + '];\n')
-        file_handler.write(indent2 + 'ret.assemble(strandNumVerts, rootRelativePositions);\n')
+        file_handler.write(indent2 + 'ret.assemble(strandNumVerts, rootRelativePositions, ' + format_int(self.longestStrand) + ');\n')
         file_handler.write(indent2 + 'return ret;\n')
         file_handler.write(indent + '}\n')
 

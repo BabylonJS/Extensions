@@ -4,6 +4,7 @@ from .package_level import *
 from .f_curve_animatable import *
 from .armature import *
 from .material import *
+from .particle_hair import *
 from .shape_key_group import *
 
 import bpy
@@ -14,7 +15,7 @@ import shutil
 # output related constants
 MAX_VERTEX_ELEMENTS = 65535
 MAX_VERTEX_ELEMENTS_32Bit = 16777216
-COMPRESS_MATRIX_INDICES = False # this is True for .babylon exporter & False for TOB
+COMPRESS_MATRIX_INDICES = True
 
 # used in Mesh & Node constructors, defined in BABYLON.AbstractMesh
 BILLBOARDMODE_NONE = 0
@@ -34,6 +35,7 @@ CYLINDER_IMPOSTER = 7
 CONVEX_HULL_IMPOSTER = 8
 
 DEFAULT_SHAPE_KEY_GROUP = 'GROUPSONLY'
+SHAPE_KEY_GROUPS_ALLOWED = True
 
 JUST_MAKE_VISIBLE = 'JUST_MAKE_VISIBLE' # not actually passed, since default & unnecessary for meshes not QI.Mesh
 GATHER            = 'QI.GatherEntrance'
@@ -175,7 +177,7 @@ class Mesh(FCurveAnimatable):
             self.physicsRestitution = object.rigid_body.restitution
 
         # process all of the materials required
-        maxVerts = MAX_VERTEX_ELEMENTS # change for multi-materials
+        maxVerts = MAX_VERTEX_ELEMENTS if scene.force64Kmeshes else MAX_VERTEX_ELEMENTS_32Bit # change for multi-materials or shapekeys
         recipe = BakingRecipe(object)
         self.billboardMode = BILLBOARDMODE_ALL if recipe.isBillboard else BILLBOARDMODE_NONE
 
@@ -225,6 +227,18 @@ class Mesh(FCurveAnimatable):
         self.colors     = [] # not always used
         self.indices    = []
         self.subMeshes  = []
+        
+        if forcedParent is None and len(object.particle_systems) > 0:
+            if len(object.particle_systems) > 1:
+                Logger.warn('Only 1 particle system supported per mesh, ignored. ', 2)
+            
+            elif object.particle_systems[0].settings.type != 'HAIR':
+                Logger.warn('Only HAIR particle systems supported.  Use convert, ignored. ', 2)
+            else:
+                # hair temporary conversion of particle system only works when mesh is the active mesh
+                exporter.scene.objects.active = object
+                exporter.meshesAndNodes.append(Hair(object.particle_systems[0], object, self, exporter))
+                exporter.scene.objects.active = object
 
         hasUV = len(mesh.tessface_uv_textures) > 0
         if hasUV:
@@ -440,7 +454,7 @@ class Mesh(FCurveAnimatable):
             self.subMeshes.append(SubMesh(materialIndex, subMeshVerticesStart, subMeshIndexStart, verticesCount - subMeshVerticesStart, indicesCount - subMeshIndexStart))
 
         if verticesCount > MAX_VERTEX_ELEMENTS:
-            Logger.warn('Due to multi-materials / Shapekeys & this meshes size, 32bit indices must be used.  This may not run on all hardware.', 2)
+            Logger.warn('Due to multi-materials, Shapekeys, or exporter settings & this meshes size, 32bit indices must be used.  This may not run on all hardware.', 2)
 
         BakedMaterial.meshBakingClean(object)
 
@@ -474,7 +488,7 @@ class Mesh(FCurveAnimatable):
         # shape keys for mesh
         if hasShapeKeys:
             Mesh.sort(keyOrderMap)
-            rawShapeKeys = []
+            self.rawShapeKeys = []
             groupNames = []
             Logger.log('Shape Keys:', 2)
 
@@ -486,29 +500,30 @@ class Mesh(FCurveAnimatable):
                 # the Basis shape key is a member of all groups, processed in 2nd pass
                 if keyName == 'Basis': continue
 
-                if keyName.find('-') <= 0:
+                if keyName.find('-') <= 0 and SHAPE_KEY_GROUPS_ALLOWED:
                     if object.data.defaultShapeKeyGroup != DEFAULT_SHAPE_KEY_GROUP:
                         keyName = object.data.defaultShapeKeyGroup + '-' + keyName
                     else: continue
 
-                temp = keyName.upper().partition('-')
-                rawShapeKeys.append(RawShapeKey(block, temp[0], temp[2], keyOrderMap, basis))
+                temp = keyName.upper().partition('-') if SHAPE_KEY_GROUPS_ALLOWED else keyName
+                self.rawShapeKeys.append(RawShapeKey(block, temp[0], temp[2], keyOrderMap, basis))
 
-                # check for a new group, add to groupNames if so
-                newGroup = True
-                for group in groupNames:
-                    if temp[0] == group:
-                        newGroup = False
-                        break
-                if newGroup:
-                   groupNames.append(temp[0])
+                if SHAPE_KEY_GROUPS_ALLOWED:
+                    # check for a new group, add to groupNames if so
+                    newGroup = True
+                    for group in groupNames:
+                        if temp[0] == group:
+                            newGroup = False
+                            break
+                    if newGroup:
+                       groupNames.append(temp[0])
 
-            # process into ShapeKeyGroups, when rawShapeKeys found
+            # process into ShapeKeyGroups, when rawShapeKeys found and groups allowed (implied)
             if len(groupNames) > 0:
                 self.shapeKeyGroups = []
                 basis = RawShapeKey(basis, None, 'BASIS', keyOrderMap, basis)
                 for group in groupNames:
-                    self.shapeKeyGroups.append(ShapeKeyGroup(group, rawShapeKeys, basis.vertices))
+                    self.shapeKeyGroups.append(ShapeKeyGroup(group,self.rawShapeKeys, basis.vertices))
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def setFactoryIdx(self, factoryIdx):
         self.factoryIdx = factoryIdx
@@ -516,7 +531,7 @@ class Mesh(FCurveAnimatable):
     def find_zero_area_faces(self):
         nFaces = int(len(self.indices) / 3)
         nZeroAreaFaces = 0
-        for f in range(0, nFaces):
+        for f in range(nFaces):
             faceOffset = f * 3
             p1 = self.positions[self.indices[faceOffset    ]]
             p2 = self.positions[self.indices[faceOffset + 1]]
@@ -675,9 +690,9 @@ class Mesh(FCurveAnimatable):
         file_handler.write(indent2A + ']),\n')
         file_handler.write(indent2A + format_bool(hasShapeKeys) + ');\n\n')
 
-        file_handler.write(indent2A + var + '.setIndices([\n')
-        file_handler.write(indent3A + format_array(self.indices, indent3A) + '\n')
-        file_handler.write(indent2A + ']);\n\n')
+        file_handler.write(indent2A + 'var _i;//indices & affected indices for shapekeys\n')
+        writeInt32Array(file_handler, '_i', indent2A, self.indices, False)
+        file_handler.write(indent2A + var + '.setIndices(_i);\n\n')
 
         if len(self.normals) > 0:
             file_handler.write(indent2A + var + '.setVerticesData(_B.VertexBuffer.NormalKind, new Float32Array([\n')
@@ -698,41 +713,33 @@ class Mesh(FCurveAnimatable):
             file_handler.write(indent2A + var + '.setVerticesData(_B.VertexBuffer.UVKind, new Float32Array([\n')
             file_handler.write(indent3A + format_array(self.uvs, indent3A) + '\n')
             file_handler.write(indent2A + ']),\n')
-            file_handler.write(indent2A + format_bool(False) + ');\n\n')
+            file_handler.write(indent2A + 'false);\n\n')
 
         if len(self.uvs2) > 0:
             file_handler.write(indent2A + var + '.setVerticesData(_B.VertexBuffer.UV2Kind, new Float32Array([\n')
             file_handler.write(indent3A + format_array(self.uvs2, indent3A) + '\n')
             file_handler.write(indent2A + ']),\n')
-            file_handler.write(indent2A + format_bool(False) + ');\n\n')
+            file_handler.write(indent2A + 'false);\n\n')
 
         if len(self.colors) > 0:
             file_handler.write(indent2A + var + '.setVerticesData(_B.VertexBuffer.ColorKind, new Float32Array([\n')
             file_handler.write(indent3A + format_array(self.colors, indent3A) + '\n')
             file_handler.write(indent2A + ']),\n')
-            file_handler.write(indent2A + format_bool(False) + ');\n\n')
+            file_handler.write(indent2A + 'false);\n\n')
 
         if hasattr(self, 'skeletonWeights'):
-            file_handler.write(indent2A + var + '.setVerticesData(_B.VertexBuffer.MatricesWeightsKind, new Float32Array([\n')
-            file_handler.write(indent3A + format_array(self.skeletonWeights, indent3A) + '\n')
-            file_handler.write(indent2A + ']),\n')
-            file_handler.write(indent2A + format_bool(False) + ');\n\n')
+            writeFloat32Array(file_handler, '_i', indent2A, self.skeletonWeights, False)
+            file_handler.write(indent2A + var + '.setVerticesData(_B.VertexBuffer.MatricesWeightsKind, _i, false);\n\n')
 
-            file_handler.write(indent2A + var + '.setVerticesData(_B.VertexBuffer.MatricesIndicesKind, new Float32Array([\n')
-            file_handler.write(indent3A + format_array(self.skeletonIndices, indent3A) + '\n')
-            file_handler.write(indent2A + ']),\n')
-            file_handler.write(indent2A + format_bool(False) + ');\n\n')
+            writeFloat32Array(file_handler, '_i', indent2A, self.skeletonIndices, False)
+            file_handler.write(indent2A + var + '.setVerticesData(_B.VertexBuffer.MatricesIndicesKind, UNPACK(_i), false);\n\n') # UNPACK defined in package_level
 
         if hasattr(self, 'skeletonWeightsExtra'):
-            file_handler.write(indent2A + var + '.setVerticesData(_B.VertexBuffer.MatricesWeightsExtraKind, new Float32Array([\n')
-            file_handler.write(indent3A + format_array(self.skeletonWeightsExtra, indent3A) + '\n')
-            file_handler.write(indent2A + ']),\n')
-            file_handler.write(indent2A + format_bool(False) + ');\n\n')
+            writeFloat32Array(file_handler, '_i', indent2A, self.skeletonWeightsExtra, False)
+            file_handler.write(indent2A + var + '.setVerticesData(_B.VertexBuffer.MatricesWeightsExtraKind, _i, false);\n\n')
 
-            file_handler.write(indent2A + var + '.setVerticesData(_B.VertexBuffer.MatricesIndicesExtraKind, new Float32Array([\n')
-            file_handler.write(indent3A + format_array(self.skeletonIndicesExtra, indent3A) + '\n')
-            file_handler.write(indent2A + ']),\n')
-            file_handler.write(indent2A + format_bool(False) + ');\n\n')
+            writeFloat32Array(file_handler, '_i', indent2A, self.skeletonIndicesExtra, False)
+            file_handler.write(indent2A + var + '.setVerticesData(_B.VertexBuffer.MatricesIndicesExtraKind, UNPACK(_i), false);\n\n') # UNPACK defined in package_level
 
         if exporter.logInBrowserConsole:
             file_handler.write(indent2A + 'geo = (_B.Tools.Now - geo) / 1000;\n')
@@ -754,7 +761,7 @@ class Mesh(FCurveAnimatable):
             file_handler.write(indent2A + 'var shapeKeyGroup;\n')
             for shapeKeyGroup in self.shapeKeyGroups:
                 shapeKeyGroup.to_script_file(file_handler, var, indent2A) # assigns the previously declared js variable 'shapeKeyGroup'
-                file_handler.write(indent2A + var + '.addShapeKeyGroup(shapeKeyGroup);\n')
+                file_handler.write(indent2A + var + '.addShapeKeyGroup(shapeKeyGroup);\n\n')
             if exporter.logInBrowserConsole:
                 file_handler.write(indent2A + 'shape = (_B.Tools.Now - shape) / 1000;\n')
 
@@ -816,7 +823,6 @@ class Mesh(FCurveAnimatable):
 #  module level since called from Mesh & Node
 def mesh_node_common_script(file_handler, typescript_file_handler, meshOrNode, isRoot, kids, indent, logInBrowserConsole):
     isRootMesh = not hasattr(meshOrNode, 'parentId')
-    hasShapeKeys = hasattr(meshOrNode, 'shapeKeyGroups')
     baseClass = get_base_class(meshOrNode)
     var = ''
     indent2 = ''
@@ -1215,9 +1221,6 @@ class MeshPanel(bpy.types.Panel):
     def poll(cls, context):
         ob = context.object
         return ob is not None and isinstance(ob.data, bpy.types.Mesh)
-
-    def set_entranceDur(self, value):
-        print ('suck dick ' + value)
 
     def draw(self, context):
         ob = context.object

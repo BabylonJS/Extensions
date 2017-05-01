@@ -132,32 +132,43 @@ class Texture:
             self.wrapU = CLAMP_ADDRESSMODE
             self.wrapV = CLAMP_ADDRESSMODE
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    def to_script_file(self, file_handler, indent):
+    def to_script_file(self, file_handler, indent, doReadAhead):
+        indent2 = indent + '    '
         if hasattr(self,'encoded_URI'):
-            file_handler.write(indent + 'texture = _B.Texture.CreateFromBase64String(\n')
-            file_handler.write(indent + '"' + self.encoded_URI + '"\n')
-            file_handler.write(indent + ', "' + self.fileNoPath + '", scene, false, true, _B.Texture.TRILINEAR_SAMPLINGMODE, onTexturesLoaded);\n')
-
+            if not doReadAhead:
+                file_handler.write(indent2 + 'texture = _B.Texture.CreateFromBase64String(\n')
+                file_handler.write(indent2 + '"' + self.encoded_URI + '"\n')
+                file_handler.write(indent2 + ', "' + self.fileNoPath + '", scene, false, true, _B.Texture.TRILINEAR_SAMPLINGMODE, onTexturesLoaded);\n')
+                self.writeAttributes(file_handler, indent2, 'texture')
+                file_handler.write(indent2 + 'pendingTextures++;\n')
+            return None
+        
         else:
-            file_handler.write(indent + 'texture = new _B.Texture(materialsRootDir + "' + self.fileNoPath + '", scene, false, true, _B.Texture.TRILINEAR_SAMPLINGMODE, onTexturesLoaded);\n')
+            if doReadAhead:
+                file_handler.write(indent + 'txtBuffer = new QI.TextureBuffer(scene, materialsRootDir, "' + self.fileNoPath + '");\n')
+                self.writeAttributes(file_handler, indent, 'txtBuffer')
+                file_handler.write(indent + 'pendingTextures++;\n')
+                file_handler.write(indent + 'QI.Preloader.addtextureBuffer(txtBuffer);\n\n')
+            return self.fileNoPath
 
-        file_handler.write(indent + 'pendingTextures++;\n')
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    def writeAttributes(self, file_handler, indent, var):
+        file_handler.write(indent + var + '.hasAlpha = ' + format_bool(self.hasAlpha) + ';\n')
+        file_handler.write(indent + var + '.level = ' + format_f(self.level) + ';\n')
 
-        file_handler.write(indent + 'texture.hasAlpha = ' + format_bool(self.hasAlpha) + ';\n')
-        file_handler.write(indent + 'texture.level = ' + format_f(self.level) + ';\n')
+        file_handler.write(indent + var + '.coordinatesIndex = ' + format_int(self.coordinatesIndex) + ';\n')
+        file_handler.write(indent + var + '.coordinatesMode = ' + format_int(self.coordinatesMode) + ';\n')
+        file_handler.write(indent + var + '.uOffset = ' + format_f(self.uOffset) + ';\n')
+        file_handler.write(indent + var + '.vOffset = ' + format_f(self.vOffset) + ';\n')
+        file_handler.write(indent + var + '.uScale = ' + format_f(self.uScale) + ';\n')
+        file_handler.write(indent + var + '.vScale = ' + format_f(self.vScale) + ';\n')
+        file_handler.write(indent + var + '.uAng = ' + format_f(self.uAng) + ';\n')
+        file_handler.write(indent + var + '.vAng = ' + format_f(self.vAng) + ';\n')
+        file_handler.write(indent + var + '.wAng = ' + format_f(self.wAng) + ';\n')
 
-        file_handler.write(indent + 'texture.coordinatesIndex = ' + format_int(self.coordinatesIndex) + ';\n')
-        file_handler.write(indent + 'texture.coordinatesMode = ' + format_int(self.coordinatesMode) + ';\n')
-        file_handler.write(indent + 'texture.uOffset = ' + format_f(self.uOffset) + ';\n')
-        file_handler.write(indent + 'texture.vOffset = ' + format_f(self.vOffset) + ';\n')
-        file_handler.write(indent + 'texture.uScale = ' + format_f(self.uScale) + ';\n')
-        file_handler.write(indent + 'texture.vScale = ' + format_f(self.vScale) + ';\n')
-        file_handler.write(indent + 'texture.uAng = ' + format_f(self.uAng) + ';\n')
-        file_handler.write(indent + 'texture.vAng = ' + format_f(self.vAng) + ';\n')
-        file_handler.write(indent + 'texture.wAng = ' + format_f(self.wAng) + ';\n')
+        file_handler.write(indent + var + '.wrapU = ' + format_int(self.wrapU) + ';\n')
+        file_handler.write(indent + var + '.wrapV = ' + format_int(self.wrapV) + ';\n')
 
-        file_handler.write(indent + 'texture.wrapU = ' + format_int(self.wrapU) + ';\n')
-        file_handler.write(indent + 'texture.wrapV = ' + format_int(self.wrapV) + ';\n')
 #===============================================================================
 # need to evaluate the need to bake a mesh before even starting; class also stores specific types of bakes
 class BakingRecipe:
@@ -316,26 +327,45 @@ class Material:
         # first pass of textures, either appending image type or recording types of bakes to do
         self.textures = []
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    def to_script_file(self, file_handler, indent):
+    def to_script_file(self, file_handler, indent, doReadAhead):
         indent2 = indent + '    '
-        file_handler.write('\n')
-        file_handler.write(indent + 'if (!scene.getMaterialByID("' + self.name + '")){\n')
-        file_handler.write(indent2 + 'material = new _B.StandardMaterial("' + self.name + '", scene);\n')
-        file_handler.write(indent2 + 'material.ambientColor  = new _B.Color3(' + format_color(self.ambient) + ');\n')
-        file_handler.write(indent2 + 'material.diffuseColor  = new _B.Color3(' + format_color(self.diffuse) + ');\n')
-        file_handler.write(indent2 + 'material.emissiveColor = new _B.Color3(' + format_color(self.emissive) + ');\n')
-        file_handler.write(indent2 + 'material.specularColor = new _B.Color3(' + format_color(self.specular) + ');\n')
-        file_handler.write(indent2 + 'material.specularPower = ' + format_f(self.specularPower) + ';\n')
-        file_handler.write(indent2 + 'material.alpha =  '        + format_f(self.alpha        ) + ';\n')
-        file_handler.write(indent2 + 'material.backFaceCulling = ' + format_bool(self.backFaceCulling) + ';\n')
-        file_handler.write(indent2 + 'material.checkReadyOnlyOnce = ' + format_bool(self.checkReadyOnlyOnce) + ';\n')
-        file_handler.write(indent2 + 'material.maxSimultaneousLights = ' + format_int(self.maxSimultaneousLights) + ';\n')
+        
+        if not doReadAhead:
+            file_handler.write('\n')
+            file_handler.write(indent + 'if (!scene.getMaterialByID("' + self.name + '")){\n')
+            file_handler.write(indent2 + 'material = new _B.StandardMaterial("' + self.name + '", scene);\n')
+            file_handler.write(indent2 + 'material.ambientColor  = new _B.Color3(' + format_color(self.ambient) + ');\n')
+            file_handler.write(indent2 + 'material.diffuseColor  = new _B.Color3(' + format_color(self.diffuse) + ');\n')
+            file_handler.write(indent2 + 'material.emissiveColor = new _B.Color3(' + format_color(self.emissive) + ');\n')
+            file_handler.write(indent2 + 'material.specularColor = new _B.Color3(' + format_color(self.specular) + ');\n')
+            file_handler.write(indent2 + 'material.specularPower = ' + format_f(self.specularPower) + ';\n')
+            file_handler.write(indent2 + 'material.alpha =  '        + format_f(self.alpha        ) + ';\n')
+            file_handler.write(indent2 + 'material.backFaceCulling = ' + format_bool(self.backFaceCulling) + ';\n')
+            file_handler.write(indent2 + 'material.checkReadyOnlyOnce = ' + format_bool(self.checkReadyOnlyOnce) + ';\n')
+            file_handler.write(indent2 + 'material.maxSimultaneousLights = ' + format_int(self.maxSimultaneousLights) + ';\n')
 
         for texSlot in self.textures:
-            texSlot.to_script_file(file_handler, indent2)
-            file_handler.write(indent2 + 'material.' + texSlot.slot + ' = texture;\n')
+            fileNoPath = texSlot.to_script_file(file_handler, indent, doReadAhead)
+            isInline = fileNoPath is None
+            
+            if not doReadAhead:
+                if isInline:
+                    file_handler.write(indent2 + 'material.' + texSlot.slot + ' = texture;\n')
+                else:
+                    file_handler.write(indent + 'txtBuffer = QI.Preloader.findTextureBuffer("' + fileNoPath + '");\n')
+                    file_handler.write(indent + 'txtBuffer.applyWhenReady(material, ' + self.getQIBufferType(texSlot.slot) + ', onTexturesLoaded);\n')
 
-        file_handler.write(indent + '}\n')
+        if not doReadAhead:
+            file_handler.write(indent + '}\n')
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    def getQIBufferType(self, bjs_type):
+        if bjs_type == 'diffuseTexture'   : return 'QI.TextureBuffer.DIFFUSE_TEX'
+        if bjs_type == 'bumpTexture'      : return 'QI.TextureBuffer.BUMP_TEX'
+        if bjs_type == 'ambientTexture'   : return 'QI.TextureBuffer.AMBIENT_TEX'
+        if bjs_type == 'opacityTexture'   : return 'QI.TextureBuffer.OPACITY_TEX'
+        if bjs_type == 'emissiveTexture'  : return 'QI.TextureBuffer.EMISSIVE_TEX'
+        if bjs_type == 'specularTexture'  : return 'QI.TextureBuffer.SPECULAR_TEX'
+        if bjs_type == 'reflectionTexture': return 'QI.TextureBuffer.REFLECTION_TEX'
 #===============================================================================
 class StdMaterial(Material):
     def __init__(self, material_slot, exporter, mesh):

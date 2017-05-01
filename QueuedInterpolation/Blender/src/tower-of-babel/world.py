@@ -37,7 +37,7 @@ class World:
 
         Logger.log('Python World class constructor completed')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    def initScene_script(self, file_handler, typescript_file_handler, exporter):
+    def initScene_script(self, file_handler, typescript_file_handler, needPhysics, exporter):
         callArgs = []
         callArgs.append(OptionalArgument('resourcesRootDir', 'string', '"./"'))
         file_handler.write(exporter.define_module_method('initScene', '', callArgs))
@@ -48,6 +48,9 @@ class World:
         file_handler.write(indent + 'scene.clearColor    = new _B.Color3(' + format_color(self.clear_color) + ');\n')
         file_handler.write(indent + 'scene.ambientColor  = new _B.Color3(' + format_color(self.ambient_color) + ');\n')
         file_handler.write(indent + 'scene.gravity = new _V(' + format_vector(self.gravity) + ');\n')
+
+        if needPhysics:
+            file_handler.write(indent + 'scene.physicsEnabled = true;\n')
 
         if hasattr(self, 'fogMode'):
             file_handler.write(indent + 'scene.fogMode = ' + self.fogMode + ';\n')
