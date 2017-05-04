@@ -1,5 +1,5 @@
 /// <reference path="./VertexDeformation.ts"/>
-/// <reference path="../../Mesh.ts"/>
+/// <reference path="../../meshes/Mesh.ts"/>
 
 /// <reference path="../../queue/PovProcessor.ts"/>
 /// <reference path="../../queue/MotionEvent.ts"/>
@@ -48,11 +48,14 @@ module QI {
          * @param {String} _name - Name of the Key Group, upper case only
          * @param {Uint32Array} _affectedPositionElements - index of either an x, y, or z of positions.  Not all 3 of a vertex need be present.  Ascending order.
          */
-        constructor(_mesh : BABYLON.Mesh, _name : string, private _affectedPositionElements : Uint32Array){
+        constructor(_mesh : BABYLON.Mesh, _name : string, private _affectedPositionElements : Uint32Array) {
             super(_mesh, true);
             this._name = _name; // override dummy
 
-            if (!(this._affectedPositionElements instanceof Uint32Array) ) BABYLON.Tools.Error("ShapeKeyGroup: invalid affectedPositionElements arg");
+            if (!(this._affectedPositionElements instanceof Uint32Array) ) {
+                BABYLON.Tools.Error("ShapeKeyGroup: invalid affectedPositionElements arg");
+                return;
+            }
             this._nPosElements = this._affectedPositionElements.length;
 
             // initialize 2 position reusables, the size needed
@@ -65,7 +68,7 @@ module QI {
             var nextVertIdx : number;
 
             // go through each position element
-            for (var i = 0; i < this._nPosElements; i++){
+            for (var i = 0; i < this._nPosElements; i++) {
                 // the vertex index is 1/3 the position element index
                 nextVertIdx = Math.floor(this._affectedPositionElements[i] / 3);
 
@@ -85,12 +88,12 @@ module QI {
             // fish out the basis state from the mesh vertex data
             var basisState = new Float32Array(this._nPosElements);
             var OriginalPositions = _mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind);
-            for (var i = 0; i < this._nPosElements; i++){
+            for (var i = 0; i < this._nPosElements; i++) {
                 basisState[i] = OriginalPositions[this._affectedPositionElements[i]];
             }
 
             // push 'BASIS' to _states & _stateNames, then initialize _currFinalVals to 'BASIS' state
-            this._addShapeKey(ShapeKeyGroup.BASIS, basisState);
+            this._addShapeKey(ShapeKeyGroup.BASIS, false, basisState);
             this._currFinalPositionVals  = this._states [0];
             this._currFinalNormalVals    = this._normals[0];
         }
@@ -110,11 +113,11 @@ module QI {
          * add a derived key using a single end state from the arguments;  wrapper for addComboDerivedKey().
          * @param {string} referenceStateName - Name of the reference state to be based on
          * @param {string} endStateName - Name of the end state to be based on
-         * @param {number} endStateRatio - Unvalidated, but if -1 < or > 1, then can never be called, since Deformation validates
+         * @param {number} endStateRatio - Not validated, but if -1 < or > 1, then can never be called, since Deformation validates
          * @param {string} mirrorAxis - axis [X,Y, or Z] to mirror against for an end state ratio, which is negative.  No meaning if positive.  If null, shape key group setting used.
          */
         public addDerivedKey(referenceStateName : string, endStateName : string, endStateRatio : number, mirrorAxis : string = null) : void {
-            if (endStateRatio === 1){
+            if (endStateRatio === 1) {
                 BABYLON.Tools.Warn("ShapeKeyGroup: deriving a shape key where the endStateRatio is 1 is pointless, ignored");
                 return;
             }
@@ -125,7 +128,7 @@ module QI {
          * add a derived key from the arguments
          * @param {string} referenceStateName - Name of the reference state to be based on, probably 'Basis'
          * @param {Array} endStateNames - Names of the end states to be based on
-         * @param {Array} endStateRatios - Unvalidated, but if -1 < or > 1, then can never be called, since Deformation validates
+         * @param {Array} endStateRatios - Not validated, but if -1 < or > 1, then can never be called, since Deformation validates
          * @param {string} mirrorAxes - axis [X,Y, or Z] to mirror against for an end state ratio, which is negative.  No meaning if positive.  If null, shape key group setting used.
          * @param {String} newStateName - The name of the new state.  If not set, then it will be computed.
          */
@@ -134,40 +137,57 @@ module QI {
             if (newStateName && this.hasKey(newStateName) ) return;
 
             var referenceIdx = this._getIdxForState(referenceStateName);
-            if (referenceIdx === -1) BABYLON.Tools.Error("ShapeKeyGroup: invalid reference state");
-
+            if (referenceIdx === -1) {
+                BABYLON.Tools.Error("ShapeKeyGroup: invalid reference state");
+                return;
+            }
             var endStateIdxs = new Array<number>();
             var endStateIdx : number;
-            for (var i = 0; i < endStateNames.length; i++){
+            for (var i = 0; i < endStateNames.length; i++) {
                 endStateIdx = this._getIdxForState(endStateNames[i]);
-                if (endStateIdx === -1) BABYLON.Tools.Error("ShapeKeyGroup: invalid end state name: " + endStateNames[i].toUpperCase());
-
+                if (endStateIdx === -1) {
+                    BABYLON.Tools.Error("ShapeKeyGroup: invalid end state name: " + endStateNames[i].toUpperCase());
+                    return;
+                }
                 endStateIdxs.push(endStateIdx);
             }
 
             var stateName = newStateName ? newStateName : this._getDerivedName(referenceIdx, endStateIdxs, endStateRatios, mirrorAxes);
             var stateKey  = new Float32Array(this._nPosElements);
             this._buildPosEndPoint(stateKey, referenceIdx, endStateIdxs, endStateRatios, mirrorAxes, (<QI.Mesh> this._node).debug);
-            this._addShapeKey(stateName, stateKey);
+            this._addShapeKey(stateName, false, stateKey);
         }
 
-        /** called in construction code from TOB.  Unlikely to be called by application code. */
-        public _addShapeKey(stateName : string, stateKey : Float32Array) : void {
-            if (typeof stateName !== 'string' || stateName.length === 0) BABYLON.Tools.Error("ShapeKeyGroup: invalid stateName arg");
+        /** 
+         * Called in construction code from TOB.  Unlikely to be called by application code. 
+         * @param {string} stateName - Name of the end state to be added.
+         * @param {boolean} basisRelativeVals - when true, values are relative to basis, which is usually much more compact
+         * @param {Float32Array} stateKey - Array of the positions for the _affectedPositionElements
+         */
+        public _addShapeKey(stateName : string, basisRelativeVals : boolean, stateKey : Float32Array) : void {
+            if (typeof stateName !== 'string' || stateName.length === 0) {
+                BABYLON.Tools.Error("ShapeKeyGroup: invalid stateName arg");
+                return;
+            }
             if (this.hasKey(stateName) ){
                 BABYLON.Tools.Warn("ShapeKeyGroup: stateName " + stateName + " is a duplicate, ignored");
                 return;
             }
-
             this._states.push(stateKey);
             this._stateNames.push(stateName);
+            
+            if (basisRelativeVals) {
+                var basis = this._states[0];
+                for (var i = 0; i < this._nPosElements; i++) {
+                    stateKey[i] += basis[i];
+                }
+            }
 
             var coorespondingNormals = new Float32Array(this._nVertices * 3);
             this._buildNormEndPoint(coorespondingNormals, stateKey);
             this._normals.push(coorespondingNormals);
 
-            if ((<QI.Mesh> this._node).debug)
-            BABYLON.Tools.Log("Shape key: " + stateName + " added to group: " + this._name + " on QI.Mesh: " + this._node.name);
+            if ((<QI.Mesh> this._node).debug) BABYLON.Tools.Log("Shape key: " + stateName + " added to group: " + this._name + " on QI.Mesh: " + this._node.name);
         }
 
         /**
@@ -176,8 +196,10 @@ module QI {
          */
         public deleteShapeKey(stateName : string) : void {
             var idx = this._getIdxForState(stateName);
-            if (idx === -1) BABYLON.Tools.Error("ShapeKeyGroup: invalid reference state");
-
+            if (idx === -1) {
+                BABYLON.Tools.Error("ShapeKeyGroup: invalid reference state");
+                return;
+            }
             this._stateNames.splice(idx, 1);
             this._states.splice(idx, 1);
             this._normals.splice(idx, 1);
@@ -216,7 +238,7 @@ module QI {
          * @param {Float32Array} positions - Array of the positions for the entire mesh, portion updated based on _affectedPositionElements
          * @param {Float32Array} normals   - Array of the normals   for the entire mesh, portion updated based on _affectedVertices
          */
-        public _deformImmediately(stateName : string, positions : Float32Array, normals :Float32Array) : void {
+        public _deformImmediately(stateName : string, positions : Float32Array, normals : Float32Array) : void {
             var idx = this._getIdxForState(stateName);
             if (idx === -1) {
                 BABYLON.Tools.Error("ShapeKeyGroup: invalid end state name: " + stateName.toUpperCase());
@@ -336,8 +358,10 @@ module QI {
 
             var deformation : VertexDeformation = <VertexDeformation> event;
             var referenceIdx = this._getIdxForState(deformation.getReferenceStateName() );
-            if (referenceIdx === -1) BABYLON.Tools.Error("ShapeKeyGroup: invalid reference state");
-
+            if (referenceIdx === -1) {
+                BABYLON.Tools.Error("ShapeKeyGroup: invalid reference state");
+                return;
+            }
             var endStateNames  = deformation.getEndStateNames();
             var endStateRatios = deformation.getEndStateRatios();
             this._stalling = endStateRatios === null;
@@ -348,7 +372,10 @@ module QI {
                 var allZeros : boolean = true;
                 for (var i = 0; i < endStateNames.length; i++){
                    endStateIdx = this._getIdxForState(endStateNames[i]);
-                   if (endStateIdx === -1) BABYLON.Tools.Error("ShapeKeyGroup: invalid end state name: " + endStateNames[i].toUpperCase());
+                   if (endStateIdx === -1) {
+                       BABYLON.Tools.Error("ShapeKeyGroup: invalid end state name: " + endStateNames[i].toUpperCase());
+                       return;
+                   }
                    endStateIdxs.push(endStateIdx);
 
                    allZeros = allZeros && endStateRatios[i] === 0;
@@ -447,8 +474,8 @@ module QI {
                 for(j = 0; j < nEndStates; j++){
                     stepDelta = (this._states[endStateIdxs[j]][i] - refEndState[i]) * endStateRatios[j];
 
-                    // reverse sign on appropriate elements of referenceDelta when ratio neg & mirroring
-                    if (endStateRatios[j] < 0 && mirroring[j] !== (i + 1) % 3){
+                    // reverse sign on appropriate elements of referenceDelta when ratio neg & mirroring, except when Z since left handed
+                    if (endStateRatios[j] < 0 && mirroring[j] !== (i + 1) % 3 && mirroring[j] !== 3){
                         stepDelta *= -1;
                     }
                     deltaToRefState += stepDelta;
@@ -519,6 +546,68 @@ module QI {
         public mirrorAxisOnX  () : void {this._mirrorAxis =  1;}
         public mirrorAxisOnY  () : void {this._mirrorAxis =  2;}
         public mirrorAxisOnZ  () : void {this._mirrorAxis =  3;}
+        // ========================================= statics =========================================
+        /**
+         * Only public for QI.MeshconsolidateShapeKeyGroups(), where this should be called from.
+         */
+        public static _buildConsolidatedGroup(mesh : Mesh, newGroupName : string, thoseToMerge : Array<ShapeKeyGroup>) : ShapeKeyGroup {
+            var nVerts = mesh._originalPositions.length;
+            var nSources = thoseToMerge.length;
+            
+            // determine which vertices are used in the consolidated group
+            var nPosElements = 0;
+            var affectedBool = new Array<boolean>(nVerts);
+            for (var i = 0; i < nSources; i++) {
+                var sourceGrp = thoseToMerge[i];
+                
+                for (var j = 0; j < sourceGrp._nPosElements; j++) {
+                    var vert = sourceGrp._affectedPositionElements[j];
+                    
+                    if (!affectedBool[vert]){
+                        affectedBool[vert] = true;
+                        nPosElements++;
+                    }
+                }
+            }
+            
+            // assemble affectedPositionElements & instance consolidated
+            var affectedPositionElements = new Uint32Array(nPosElements);
+            var idx = 0;
+            for (var i = 0; i < nVerts; i++) {
+                if (affectedBool[i]) affectedPositionElements[idx++] = i;
+            }
+            var ret = new ShapeKeyGroup(mesh, newGroupName, affectedPositionElements);
+            mesh.addShapeKeyGroup(ret);
+            
+            // transfer each key from source group
+            for (var i = 0; i < nSources; i++) {
+                var sourceGrp = thoseToMerge[i];
+                
+                // need to determine where the source group maps into the larger group
+                var map = new Array(sourceGrp._nPosElements);
+                var srcIdx = 0;
+                for (var destIdx = 0; destIdx < nPosElements; destIdx++) {
+                    if (affectedPositionElements[destIdx] === sourceGrp._affectedPositionElements[srcIdx]) {
+                        map[srcIdx++] = destIdx;
+                    }
+                }
+                
+                // key zero is basis
+                for (var k = 1, nKeys = sourceGrp._states.length; k < nKeys; k++) {
+                    var key = new Float32Array(nPosElements);
+                    key.set(ret._states[0]); // initialize with basis, in a c++ loop
+                    
+                    var origKey = sourceGrp._states[k];
+                    
+                    for (var j = 0; j < sourceGrp._nPosElements; j++) {
+                        key[map[j]] = origKey[j];
+                    }
+                    ret._addShapeKey(sourceGrp._name + "_" + sourceGrp._stateNames[k], false, key);
+                } 
+            }
+            
+            return ret;
+        }
     }
 
 /*    // SIMD
