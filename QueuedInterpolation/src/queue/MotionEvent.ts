@@ -261,7 +261,7 @@ module QI{
             // back into a start time which reflects the millisSoFar
             this._startTime = TimelineControl.Now - this._millisSoFar;
 
-            if (this.options.sound && !this.muteSound) this.options.sound.play();
+            if (this.options.sound && !this.muteSound && this.options.sound.isPaused) this.options.sound.play();
         }
 
         public pause() : void {
