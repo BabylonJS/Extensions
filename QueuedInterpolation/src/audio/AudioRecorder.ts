@@ -67,7 +67,7 @@ module QI {
          */
         private static prepMic(stream : any) : void {
             var instance = AudioRecorder._instance;
-            var context = BABYLON.Engine.audioEngine.audioContext;
+            var context = BABYLON.Engine.audioEngine["_audioContext"];
 
             // assign a gain node
             instance._volume = context.createGain(); //instance.audioEngine.masterGain;
