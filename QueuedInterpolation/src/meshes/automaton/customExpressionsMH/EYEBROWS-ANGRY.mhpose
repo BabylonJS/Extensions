@@ -1,0 +1,16 @@
+{
+    "license": "Apache 2.0", 
+    "name": "EYEBROWS-ANGRY", 
+    "copyright": "(c) Jeff Palmer, 2017", 
+    "tags": [
+        "QI.Automaton"
+    ], 
+    "author": "Jeff Palmer", 
+    "unit_poses": {
+        "NoseWrinkler": 0.5, 
+        "RightBrowDown": 0.4, 
+        "LeftBrowDown": 0.4
+    }, 
+    "homepage": "https://github.com/Palmer-JC/", 
+    "description": "QI.Automaton"
+}

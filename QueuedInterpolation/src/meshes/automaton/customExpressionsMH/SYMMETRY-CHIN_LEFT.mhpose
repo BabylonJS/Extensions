@@ -1,0 +1,14 @@
+{
+    "license": "APACHE 2.0", 
+    "name": "SYMMETRY-CHIN_LEFT", 
+    "copyright": "(c) Jeff Palmer, 2017", 
+    "tags": [
+        "QI.Automaton"
+    ], 
+    "author": "Jeff Palmer", 
+    "unit_poses": {
+        "ChinLeft": 1.0
+    }, 
+    "homepage": "https://github.com/Palmer-JC/", 
+    "description": "QI.Automaton"
+}

@@ -1,0 +1,15 @@
+{
+    "license": "Apache 2.0",
+    "name": "EYEBROWS-RAISED", 
+    "copyright": "(c) Jeff Palmer, 2017", 
+    "tags": [        
+        "QI.Automaton"
+    ], 
+    "author": "Jeff Palmer", 
+    "unit_poses": {
+        "RightInnerBrowUp": 0.45,
+        "RightOuterBrowUp": 0.65
+    }, 
+    "homepage": "https://github.com/Palmer-JC/", 
+    "description": "QI.Automaton"
+}

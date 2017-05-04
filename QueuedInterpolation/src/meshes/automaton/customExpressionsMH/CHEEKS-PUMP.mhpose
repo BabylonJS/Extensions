@@ -1,0 +1,14 @@
+{
+    "license": "Apache 2.0", 
+    "name": "CHEEKS-PUMP", 
+    "copyright": "(c) Jeff Palmer, 2017", 
+    "tags": [
+        "QI.Automaton"
+    ], 
+    "author": "Jeff Palmer", 
+    "unit_poses": {
+        "CheeksPump": 1.0
+    }, 
+    "homepage": "https://github.com/Palmer-JC/", 
+    "description": "QI.Automaton"
+}

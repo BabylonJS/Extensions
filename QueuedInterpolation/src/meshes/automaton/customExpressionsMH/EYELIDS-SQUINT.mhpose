@@ -1,0 +1,18 @@
+{
+    "license": "Apache 2.0", 
+    "name": "EYELIDS-SQUINT", 
+    "copyright": "(c) Jeff Palmer, 2017", 
+    "tags": [
+        "QI.Automaton"
+    ], 
+    "author": "Jeff Palmer", 
+    "unit_poses": {
+        "LeftUpperLidClosed": 0.4, 
+        "LeftLowerLidUp": 0.55, 
+
+        "RightUpperLidClosed": 0.4, 
+        "RightLowerLidUp": 0.55
+    }, 
+    "homepage": "https://github.com/Palmer-JC/", 
+    "description": "QI.Automaton"
+}

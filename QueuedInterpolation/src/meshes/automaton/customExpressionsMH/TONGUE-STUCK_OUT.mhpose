@@ -1,0 +1,16 @@
+{
+    "license": "Apache 2.0", 
+    "name": "TONGUE-STUCK_OUT", 
+    "copyright": "(c) Jeff Palmer, 2017", 
+    "tags": [
+        "QI.Automaton"
+    ], 
+    "author": "Jeff Palmer", 
+    "unit_poses": {
+        "TongueUshape": 1.0, 
+        "TonguePointUp": 0.5, 
+        "TongueOut": 0.9
+    }, 
+    "homepage": "https://github.com/Palmer-JC/", 
+    "description": "QI.Automaton"
+}

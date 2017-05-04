@@ -1,0 +1,15 @@
+{
+    "license": "APACHE 2.0", 
+    "name": "SYMMETRY-RIGHT_UP", 
+    "copyright": "(c) Jeff Palmer, 2017", 
+    "tags": [
+        "QI.Automaton"
+    ], 
+    "author": "Jeff Palmer", 
+    "unit_poses": {
+        "MouthRightPullUp": 1.0, 
+        "RightCheekUp": 1.0
+    }, 
+    "homepage": "https://github.com/Palmer-JC/", 
+    "description": "QI.Automaton"
+}

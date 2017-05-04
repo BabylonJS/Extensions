@@ -1,0 +1,15 @@
+{
+    "license": "Apache 2.0", 
+    "name": "MOUTH-WIDE", 
+    "copyright": "(c) Jeff Palmer, 2017", 
+    "tags": [
+        "QI.Automaton"
+    ], 
+    "author": "Jeff Palmer", 
+    "unit_poses": {
+        "MouthRightPullSide": 1.0, 
+        "MouthLeftPullSide" : 1.0
+    }, 
+    "homepage": "https://github.com/Palmer-JC/", 
+    "description": "QI.Automaton"
+}
