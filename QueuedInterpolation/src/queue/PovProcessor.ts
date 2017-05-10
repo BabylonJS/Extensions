@@ -14,11 +14,12 @@ module QI {
         private _isCamera   : boolean;
 
         // event series queue & reference vars for current series & step within
-        public  _queue = new Array<EventSeries>();
-        public  _currentSeries : EventSeries = null;
-        public  _currentStepInSeries : MotionEvent = null;
+        protected  _queue = new Array<EventSeries>();
+        protected  _currentSeries : EventSeries = null;
+        protected  _currentStepInSeries : MotionEvent = null;
+        protected _runOfStep : number;
         private _endOfLastFrameTs = -1;
-        public  _ratioComplete : number;
+        protected  _ratioComplete : number;
 
         // rotation control members
         private _rotationProperty : string;
@@ -44,13 +45,13 @@ module QI {
 
         // misc
         private _activeLockedCamera : BABYLON.Camera;
-        public _name = PovProcessor.POV_GROUP_NAME;  // for multi group event series as in MORPH
+        public _name = PovProcessor.POV_GROUP_NAME;  // for multi group event series as in MORPH; public for QI.Mesh
 
         /**
          * @param {BABYLON.Node} _node - Node (mesh, camera, or spot / directional light) to attach before render to
          * @param {boolean} skipRegistration - When true, to not actually register before render function (MORPH sub-classing), ignore when not mesh
          */
-        constructor(public _node : BABYLON.Node, private skipRegistration = false){
+        constructor(public _node : BABYLON.Node, private skipRegistration = false) {
             var scene = this._node.getScene();
             TimelineControl.initialize(scene); // only does something the first call
             this._isproperty = this._node === null;
@@ -77,7 +78,7 @@ module QI {
             var ref = this;
 
             // using scene level before render, so always runs & only once per frame;  non-mesh nodes, have no choice anyway
-            if (!skipRegistration){
+            if (!skipRegistration) {
                 this._registeredFN = function(){ref._incrementallyMove();};
                 scene.registerBeforeRender(this._registeredFN);
 //                (<BABYLON.Mesh> this._node).registerBeforeRender(this._registeredFN);
@@ -96,33 +97,33 @@ module QI {
          */
         public _incrementallyMove() : void {
             // test for active instance pausing, either instance of entire system
-            if (this._instancePaused || TimelineControl.isSystemPaused){
+            if (this._instancePaused || TimelineControl.isSystemPaused) {
                 if (this._currentStepInSeries) this._currentStepInSeries.pause();
                 return;
             }
 
             // system resume test
-            if (this._lastResumeTime < TimelineControl.SystemResumeTime){
+            if (this._lastResumeTime < TimelineControl.SystemResumeTime) {
                 this._lastResumeTime = TimelineControl.SystemResumeTime;
                 this.resumeInstancePlay(); // does nothing when this._currentStepInSeries === null
             }
 
             // series level of processing; get another series from the queue when none or last is done
-            if (this._currentSeries === null || !this._currentSeries.hasMoreEvents() ){
+            if (this._currentSeries === null || !this._currentSeries.hasMoreEvents() ) {
                 if (! this._nextEventSeries()) return;
             }
 
             // ok, have an active event series, now get the next motion event in series if required
-            while (this._currentStepInSeries === null || this._currentStepInSeries.isComplete() ){
+            while (this._currentStepInSeries === null || this._currentStepInSeries.isComplete() ) {
                 var next : any = this._currentSeries.nextEvent(this._name);
 
                 // being blocked, not ready for us, only occurs in a multi-group series in MORPH
                 if (next === null) return;
 
-                if (next instanceof BABYLON.Action && this._isMesh){
+                if (next instanceof BABYLON.Action && this._isMesh) {
                     (<BABYLON.Action> next).execute(BABYLON.ActionEvent.CreateNew(<BABYLON.Mesh> this._node));
                 }
-                else if (typeof (next) === "function"){
+                else if (typeof (next) === "function") {
                     next.call();
                 }
                 else{
@@ -135,18 +136,21 @@ module QI {
                 this._ratioComplete = this._currentStepInSeries.getCompletionMilestone();
                 if (this._ratioComplete < 0) return; // MotionEvent.BLOCKED, Motion.SYNC_BLOCKED or MotionEvent.WAITING
 
+                // not used in here, but in ShapeKeyGroup
+                this._runOfStep++;
+                
                 // processing of a NonMotionEvent
                 if (this._currentStepInSeries instanceof NonMotionEvent) {
                     (<NonMotionEvent> this._currentStepInSeries)._incrementallyUpdate(this._ratioComplete);
                     return;
                 }
 
-                if (this._doingRotation){
+                if (this._doingRotation) {
                     PovProcessor.LerpToRef(this._rotationStart, this._rotationEnd, this._ratioComplete, <BABYLON.Vector3> this._node[this._rotationProperty]);
                 }
 
-                if (this._doingMovePOV){
-                    if (this._doingRotation && !this._currentStepInSeries.options.noStepWiseMovement && ! this._currentStepInSeries.options.absoluteMovement){
+                if (this._doingMovePOV) {
+                    if (this._doingRotation && !this._currentStepInSeries.options.noStepWiseMovement && ! this._currentStepInSeries.options.absoluteMovement) {
                         // some of these amounts, could be negative, if has a Pace with a hiccup
                         var amtRight   = (this._fullAmtRight   * this._ratioComplete) - this._amtRightSoFar;
                         var amtUp      = (this._fullAmtUp      * this._ratioComplete) - this._amtUpSoFar;
@@ -182,7 +186,10 @@ module QI {
             this._queue.push(eSeries);
         }
 
-        public insertSeriesInFront(eSeries : EventSeries){
+        /**
+         * Place this series next to be run.
+         */
+        public insertSeriesInFront(eSeries : EventSeries) : void {
             this._queue.splice(0, 0, eSeries);      
         }
 
@@ -222,13 +229,13 @@ module QI {
             }else
                 this._currentSeries = null;
 
-            // clean out current step in any case, aids un-neccessary resumePlay of a completed step
+            // clean out current step in any case, aids unnecessary resumePlay of a completed step
             this._currentStepInSeries = null;
 
             return ret;
         }
 
-        /* returns true when either something is running (could be blocked or waiting) or something queueed */
+        /* returns true when either something is running (could be blocked or waiting) or something queued */
         public isActive() : boolean{
             return this._currentSeries !== null || this._queue.length > 0;
         }
@@ -286,6 +293,9 @@ module QI {
                 if(target && target === this._node)
                      this._activeLockedCamera = activeCamera;
             }
+            
+            // will not be changed until any wait or block is done
+            this._runOfStep = 0;
         }
         // ================================== Point of View Movement =================================
         /**

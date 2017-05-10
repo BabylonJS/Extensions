@@ -39,14 +39,14 @@ module QI {
          * Perform the method without regard for the mode.  MUST be overridden
          * @param{number} currentDurationRatio - How much time has elapse / how long it is supposed to take
          */
-        public _compute(currentDurationRatio : number) : number {
+        protected _compute(currentDurationRatio : number) : number {
             return 0;
         }
     }
     //================================================================================================
     export class CirclePace extends Pace {
         /** @override */
-        public _compute(currentDurationRatio: number) : number {
+        protected _compute(currentDurationRatio: number) : number {
             currentDurationRatio = Math.max(0, Math.min(1, currentDurationRatio));
             return (1.0 - Math.sqrt(1.0 - (currentDurationRatio * currentDurationRatio)));
         }
@@ -54,7 +54,7 @@ module QI {
     //================================================================================================
     export class CubicPace extends Pace {
         /** @override */
-        public _compute(currentDurationRatio: number): number {
+        protected _compute(currentDurationRatio: number): number {
             return (currentDurationRatio * currentDurationRatio * currentDurationRatio);
         }
     }
@@ -65,7 +65,7 @@ module QI {
         }
 
         /** @override */
-        public  _compute(currentDurationRatio : number): number {
+        protected  _compute(currentDurationRatio : number): number {
             var num2;
             var num3 = Math.max(0.0, this.oscillations);
             var num = Math.max(0.0, this.springiness);
@@ -85,7 +85,7 @@ module QI {
         }
 
         /** @override */
-        public _compute(currentDurationRatio : number) : number {
+        protected _compute(currentDurationRatio : number) : number {
             if (this.exponent <= 0) {
                 return currentDurationRatio;
             }
@@ -100,7 +100,7 @@ module QI {
         }
 
         /** @override */
-        public _compute(currentDurationRatio : number) : number {
+        protected _compute(currentDurationRatio : number) : number {
             var y = Math.max(0.0, this.power);
             return Math.pow(currentDurationRatio, y);
         }
@@ -108,28 +108,28 @@ module QI {
     //================================================================================================
     export class QuadraticPace extends Pace {
         /** @override */
-        public _compute(currentDurationRatio) : number {
+        protected _compute(currentDurationRatio) : number {
             return (currentDurationRatio * currentDurationRatio);
         }
     }
     //================================================================================================
     export class QuarticPace extends Pace {
         /** @override */
-        public _compute(currentDurationRatio : number) : number {
+        protected _compute(currentDurationRatio : number) : number {
             return (currentDurationRatio * currentDurationRatio * currentDurationRatio * currentDurationRatio);
         }
     }
     //================================================================================================
     export class QuinticPace extends Pace {
         /** @override */
-        public _compute(currentDurationRatio : number) : number {
+        protected _compute(currentDurationRatio : number) : number {
             return (currentDurationRatio * currentDurationRatio * currentDurationRatio * currentDurationRatio * currentDurationRatio);
         }
     }
     //================================================================================================
     export class SinePace extends Pace {
         /** @override */
-        public _compute(currentDurationRatio : number) : number {
+        protected _compute(currentDurationRatio : number) : number {
             return (1.0 - Math.sin(1.5707963267948966 * (1.0 - currentDurationRatio)));
         }
     }
@@ -140,7 +140,7 @@ module QI {
         }
 
         /** @override */
-        public _compute(currentDurationRatio : number): number {
+        protected _compute(currentDurationRatio : number): number {
             return BABYLON.BezierCurve.interpolate(currentDurationRatio, this.x1, this.y1, this.x2, this.y2);
         }
     }
