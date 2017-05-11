@@ -37,7 +37,7 @@ gulp.task('typescript-compile', function () {
 
     return merge2([
         tsResult.dts
-            .pipe(concat(config.build.declarationFilename))
+            .pipe(concat(config.build.QI_declarationFilename))
             .pipe(gulp.dest(config.build.outputDirectory))
             .pipe(gulp.dest(config.build.dialogDirectory)),
         tsResult.js
@@ -46,21 +46,45 @@ gulp.task('typescript-compile', function () {
 });
 
 /**
- * Build tasks to concat minify uglify optimize the js
+ * Build tasks to concat minify uglify optimize the QI js
  */
-gulp.task("merge-minify",function () {
+gulp.task("QI-merge-minify",function () {
     return merge2(
-        gulp.src(config.project.files).        
-            pipe(expect.real({ errorOnFailure: true }, config.project.files))
+        gulp.src(config.project.QI_files).        
+            pipe(expect.real({ errorOnFailure: true }, config.project.QI_files))
         )
-        .pipe(concat(config.build.filename))
+        .pipe(concat(config.build.QI_filename))
         .pipe(cleants())
         .pipe(replace(extendsSearchRegex, ""))
         .pipe(replace(decorateSearchRegex, ""))
         .pipe(addModuleExports("QI"))
+        .pipe(gulp.dest(config.build.blogDirectory))
         .pipe(gulp.dest(config.build.outputDirectory))
         
-        .pipe(rename(config.build.minFilename))
+        .pipe(rename(config.build.QI_minFilename))
+        .pipe(uglify())
+        .pipe(optimisejs())
+        .pipe(gulp.dest(config.build.outputDirectory))
+        .pipe(gulp.dest(config.build.blogDirectory));
+});
+// = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
+/**
+ * Build tasks to concat minify uglify optimize the TOB_runtime js
+ */
+gulp.task("TOB-merge-minify",function () {
+    return merge2(
+        gulp.src(config.project.TOB_runtime_files).        
+            pipe(expect.real({ errorOnFailure: true }, config.project.TOB_runtime_files))
+        )
+        .pipe(concat(config.build.TOB_filename))
+        .pipe(cleants())
+        .pipe(replace(extendsSearchRegex, ""))
+        .pipe(replace(decorateSearchRegex, ""))
+        .pipe(addModuleExports("TOWER_OF_BABEL"))
+        .pipe(gulp.dest(config.build.blogDirectory))
+        .pipe(gulp.dest(config.build.outputDirectory))
+        
+        .pipe(rename(config.build.TOB_minFilename))
         .pipe(uglify())
         .pipe(optimisejs())
         .pipe(gulp.dest(config.build.outputDirectory))
@@ -71,11 +95,11 @@ gulp.task("merge-minify",function () {
  * Build the releasable files.
  */
 gulp.task("build", function (cb) {
-    runSequence("typescript-compile", "merge-minify", cb);
+    runSequence("typescript-compile", "QI-merge-minify", "TOB-merge-minify", cb);
 });
 
 gulp.task("zip-tob" , function() {
     return gulp.src('../Blender/src/**')
-    .pipe(zip('towerOfBabel.5.1.zip'))
+    .pipe(zip('towerOfBabel.5.3.zip'))
     .pipe(gulp.dest('../Blender'));
 });

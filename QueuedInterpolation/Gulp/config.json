@@ -1,8 +1,13 @@
 {
   "build": {
-    "filename": "QueuedInterpolation.1.1.js",
-    "minFilename": "QueuedInterpolation.1.1.min.js",
-    "declarationFilename": "QueuedInterpolation.1.1.d.ts",
+    "QI_filename": "QueuedInterpolation.1.1.js",
+    "QI_minFilename": "QueuedInterpolation.1.1.min.js",
+    "QI_declarationFilename": "QueuedInterpolation.1.1.d.ts",
+    
+    "TOB_filename": "TOB-runtime.1.1.js",
+    "TOB_minFilename": "TOB-runtime.1.1.min.js",
+    "TOB_declarationFilename": "TOB-runtime.1.1.d.ts",
+    
     "outputDirectory": "..",
     "srcOutputDirectory": "../out/",
     "dialogDirectory": "../../Dialog/References",
@@ -14,7 +19,7 @@
       "!../src/**/*.d.ts",
       "../references/*.d.ts"
     ],
-    "files": [
+    "QI_files": [
       "../../ShaderBuilder/Babylonx.ShaderBuilder.js",
       "../out/deformation/skeletonBased/MatrixComp.js",
       "../out/deformation/skeletonBased/SkeletonPoseLibrary.js",
@@ -31,19 +36,28 @@
       "../out/deformation/skeletonBased/PoseProcessor.js",
       "../out/deformation/shapeKeyBased/VertexDeformation.js",
       "../out/deformation/shapeKeyBased/ShapeKeyGroup.js",
-      "../out/Mesh.js",
+      "../out/meshes/Mesh.js",
+      "../out/meshes/Hair.js",
       "../out/audio/AudioRecorder.js",
       "../out/audio/AudioDecoder.js",
       "../out/audio/Whoosh.js",
       "../out/audio/Teleport.js",
-      "../out/being/EyeBall.js",
-      "../out/being/Eyes.js",
-      "../out/being/Body.js",
+      "../out/meshes/automaton/Automaton.js",
       "../out/entrances/GatherEntrance.js",
       "../out/entrances/FireEntrance.js",
       "../out/entrances/ExpandEntrance.js",
       "../out/entrances/ShaderBuilderEntrance.js",
-      "../out/TOB-Runtime/MeshFactory.js"
+      
+      "../out/TOB-Runtime/MeshFactory.js",
+      "../out/TOB-Runtime/readAhead/Preloader.js",
+      "../out/TOB-Runtime/readAhead/Preloadable.js",
+      "../out/TOB-Runtime/readAhead/TextureBuffer.js"
+    ],
+    "TOB_runtime_files": [
+      "../out/TOB-Runtime/MeshFactory.js",
+      "../out/TOB-Runtime/readAhead/Preloader.js",
+      "../out/TOB-Runtime/readAhead/Preloadable.js",
+      "../out/TOB-Runtime/readAhead/TextureBuffer.js"
     ]
   }
 }
