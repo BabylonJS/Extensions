@@ -107,7 +107,7 @@ class TextureReduction:
         self.plane.select = True
         bpy.ops.object.delete()
 
-        bpy.data.materials.remove(tempMat)
+        bpy.data.materials.remove(tempMat, do_unlink = True)
         tSlot.texture = None
 
         # re-select original mesh
