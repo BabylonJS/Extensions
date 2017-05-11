@@ -145,10 +145,13 @@ class Texture:
         
         else:
             if doReadAhead:
-                file_handler.write(indent + 'txtBuffer = new QI.TextureBuffer(scene, materialsRootDir, "' + self.fileNoPath + '");\n')
-                self.writeAttributes(file_handler, indent, 'txtBuffer')
-                file_handler.write(indent + 'pendingTextures++;\n')
-                file_handler.write(indent + 'QI.Preloader.addtextureBuffer(txtBuffer);\n\n')
+                file_handler.write(indent + 'fName = "' + self.fileNoPath + '";\n')
+                file_handler.write(indent + 'if (!TOWER_OF_BABEL.Preloader.findTextureBuffer(fName)) {\n')
+                file_handler.write(indent2 + 'txtBuffer = new TOWER_OF_BABEL.TextureBuffer(materialsRootDir, fName);\n')
+                self.writeAttributes(file_handler, indent2, 'txtBuffer')
+                file_handler.write(indent2 + 'pendingTextures++;\n')
+                file_handler.write(indent2 + 'TOWER_OF_BABEL.Preloader.addtextureBuffer(txtBuffer);\n')
+                file_handler.write(indent + '}\n\n')
             return self.fileNoPath
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -332,7 +335,8 @@ class Material:
         
         if not doReadAhead:
             file_handler.write('\n')
-            file_handler.write(indent + 'if (!scene.getMaterialByID("' + self.name + '")){\n')
+            file_handler.write(indent + 'material = scene.getMaterialByID("' + self.name + '");\n')
+            file_handler.write(indent + 'if (!material){\n')
             file_handler.write(indent2 + 'material = new _B.StandardMaterial("' + self.name + '", scene);\n')
             file_handler.write(indent2 + 'material.ambientColor  = new _B.Color3(' + format_color(self.ambient) + ');\n')
             file_handler.write(indent2 + 'material.diffuseColor  = new _B.Color3(' + format_color(self.diffuse) + ');\n')
@@ -352,20 +356,20 @@ class Material:
                 if isInline:
                     file_handler.write(indent2 + 'material.' + texSlot.slot + ' = texture;\n')
                 else:
-                    file_handler.write(indent + 'txtBuffer = QI.Preloader.findTextureBuffer("' + fileNoPath + '");\n')
+                    file_handler.write(indent + 'txtBuffer = TOWER_OF_BABEL.Preloader.findTextureBuffer("' + fileNoPath + '");\n')
                     file_handler.write(indent + 'txtBuffer.applyWhenReady(material, ' + self.getQIBufferType(texSlot.slot) + ', onTexturesLoaded);\n')
 
         if not doReadAhead:
-            file_handler.write(indent + '}\n')
+            file_handler.write(indent + '} else material.markDirty();\n')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def getQIBufferType(self, bjs_type):
-        if bjs_type == 'diffuseTexture'   : return 'QI.TextureBuffer.DIFFUSE_TEX'
-        if bjs_type == 'bumpTexture'      : return 'QI.TextureBuffer.BUMP_TEX'
-        if bjs_type == 'ambientTexture'   : return 'QI.TextureBuffer.AMBIENT_TEX'
-        if bjs_type == 'opacityTexture'   : return 'QI.TextureBuffer.OPACITY_TEX'
-        if bjs_type == 'emissiveTexture'  : return 'QI.TextureBuffer.EMISSIVE_TEX'
-        if bjs_type == 'specularTexture'  : return 'QI.TextureBuffer.SPECULAR_TEX'
-        if bjs_type == 'reflectionTexture': return 'QI.TextureBuffer.REFLECTION_TEX'
+        if bjs_type == 'diffuseTexture'   : return 'TOWER_OF_BABEL.TextureBuffer.DIFFUSE_TEX'
+        if bjs_type == 'bumpTexture'      : return 'TOWER_OF_BABEL.TextureBuffer.BUMP_TEX'
+        if bjs_type == 'ambientTexture'   : return 'TOWER_OF_BABEL.TextureBuffer.AMBIENT_TEX'
+        if bjs_type == 'opacityTexture'   : return 'TOWER_OF_BABEL.TextureBuffer.OPACITY_TEX'
+        if bjs_type == 'emissiveTexture'  : return 'TOWER_OF_BABEL.TextureBuffer.EMISSIVE_TEX'
+        if bjs_type == 'specularTexture'  : return 'TOWER_OF_BABEL.TextureBuffer.SPECULAR_TEX'
+        if bjs_type == 'reflectionTexture': return 'TOWER_OF_BABEL.TextureBuffer.REFLECTION_TEX'
 #===============================================================================
 class StdMaterial(Material):
     def __init__(self, material_slot, exporter, mesh):
@@ -425,7 +429,7 @@ class StdMaterial(Material):
 
             if mtex.use_map_normal:
                 Logger.log('Bump texture found "' + mtex.name + '"', 3)
-                self.textures.append(Texture('bumpTexture', 1.0 / mtex.normal_factor, mtex, mesh, exporter))
+                self.textures.append(Texture('bumpTexture', mtex.normal_factor, mtex, mesh, exporter))
 
             if mtex.use_map_color_spec:
                 Logger.log('Specular texture found "' + mtex.name + '"', 3)

@@ -505,8 +505,13 @@ class Mesh(FCurveAnimatable):
                         keyName = object.data.defaultShapeKeyGroup + '-' + keyName
                     else: continue
 
-                temp = keyName.upper().partition('-') if SHAPE_KEY_GROUPS_ALLOWED else keyName
-                self.rawShapeKeys.append(RawShapeKey(block, temp[0], temp[2], keyOrderMap, basis))
+                group = None
+                state = keyName
+                if SHAPE_KEY_GROUPS_ALLOWED:
+                    temp = keyName.upper().partition('-')
+                    group = temp[0]
+                    state = temp[2]
+                self.rawShapeKeys.append(RawShapeKey(block, group, state, keyOrderMap, basis))
 
                 if SHAPE_KEY_GROUPS_ALLOWED:
                     # check for a new group, add to groupNames if so

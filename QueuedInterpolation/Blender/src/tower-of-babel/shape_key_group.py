@@ -6,7 +6,7 @@ import bpy
 # extract data in Mesh order, no optimization from group analysis yet; mapped into a copy of position
 # 
 class RawShapeKey:
-    def __init__(self, keyBlock, group, state, keyOrderMap, basis, allowVertReduction = True):
+    def __init__(self, keyBlock, group, state, keyOrderMap, basis):
         self.group = group
         self.state = state
         self.vertices = []
@@ -24,7 +24,7 @@ class RawShapeKey:
                 nDifferent += 1
 
         # only log when groups / allowVertReduction
-        if state != 'BASIS' and allowVertReduction:
+        if state != 'BASIS' and group is not None:
             Logger.log('shape key "' + group + '-' + state + '":  n verts different from basis: ' + str(nDifferent), 3)
 #===============================================================================
 class ShapeKeyGroup:

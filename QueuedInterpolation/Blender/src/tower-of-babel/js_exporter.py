@@ -235,14 +235,13 @@ class JSExporter:
         file_handler.write(indent2 + '}\n')
         file_handler.write(indent1 + '}\n')
         
-        # called by read ahead js files
-        file_handler.write('\n' + indent1 + 'var aheadQueued = false;')
-
-        callArgs = []
-        callArgs.append(OptionalArgument('materialsRootDir', 'string', '"./"'))
-        file_handler           .write(JSExporter.define_module_method    ('matReadAhead', 'aheadQueued', callArgs))
-        typescript_file_handler.write(JSExporter.define_Typescript_method('matReadAhead', 'aheadQueued', callArgs))
-        file_handler.write(indent2 + 'var txBuffer;\n\n')
+        # not using define_module_method, since scene arg is not wanted
+        typescript_file_handler.write('\n    export function matReadAhead(materialsRootDir) : void;')
+        file_handler.write('\n' + indent1 + 'var aheadQueued = false;\n')
+        file_handler.write(indent1 + 'function matReadAhead(materialsRootDir) {\n')
+        file_handler.write(indent2 + 'if (aheadQueued) return;\n')
+        file_handler.write(indent2 + 'var txBuffer;\n')
+        file_handler.write(indent2 + 'var fName;\n\n')
 
         for material in self.materials:
             material.to_script_file(file_handler, indent2, True)
@@ -261,10 +260,11 @@ class JSExporter:
         typescript_file_handler.write(JSExporter.define_Typescript_method('defineMaterials', 'matLoaded', callArgs))
 
         file_handler.write(indent2 + 'if (materialsRootDir.lastIndexOf("/") + 1  !== materialsRootDir.length) { materialsRootDir  += "/"; }\n')
+        file_handler.write(indent2 + 'TOWER_OF_BABEL.Preloader.SCENE = scene;\n')
 
         if JSExporter.logInBrowserConsole:
             file_handler.write(indent2 + 'var loadStart = _B.Tools.Now;\n')
-        file_handler.write(indent2 + 'matReadAhead(scene, materialsRootDir);\n')
+        file_handler.write(indent2 + 'matReadAhead(materialsRootDir);\n')
         file_handler.write(indent2 + 'var material;\n')
         file_handler.write(indent2 + 'var texture;\n')
         file_handler.write(indent2 + 'var txBuffer;\n\n')

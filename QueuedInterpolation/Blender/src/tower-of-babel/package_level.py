@@ -21,7 +21,10 @@ def format_exporter_version(bl_info = None):
     if bl_info is None:
         bl_info = get_bl_info()
     exporterVersion = bl_info['version']
-    return str(exporterVersion[0]) + '.' + str(exporterVersion[1]) +  '.' + str(exporterVersion[2])
+    if exporterVersion[2] >= 0:
+        return str(exporterVersion[0]) + '.' + str(exporterVersion[1]) +  '.' + str(exporterVersion[2])
+    else:
+        return str(exporterVersion[0]) + '.' + str(exporterVersion[1]) +  '-beta'
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def blenderMajorMinorVersion():
     # in form of '2.77 (sub 0)'
@@ -155,7 +158,7 @@ def format_vector(vector, switchYZ = True):
 def format_vector_non_swapping(vector):
     return format_f(vector.x, False) + ',' + format_f(vector.y, False) + ',' + format_f(vector.z, False)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-def format_vector_array(vectorArray, indent = ''):
+def format_vector_array(vectorArray, indent = '', switchYZ = True):
     ret = ''
     first = True
     nOnLine = 0
@@ -164,7 +167,7 @@ def format_vector_array(vectorArray, indent = ''):
             ret +=','
         first = False;
 
-        ret += format_vector(vector)
+        ret += format_vector(vector, switchYZ)
         nOnLine += 3
 
         if nOnLine >= VERTEX_OUTPUT_PER_LINE:
@@ -285,7 +288,7 @@ def write_bool(file_handler, name, bool, noComma = False):
 #===============================================================================
 # module level methods for writing JSON (.js) files
 #===============================================================================
-def write_js_module_header(file_handler, moduleName, hasSkeletons):
+def write_js_module_header(file_handler, moduleName, hasSkeletons = False):
     file_handler.write('// File generated with Tower of Babel version: ' + format_exporter_version() + ' on ' + strftime("%x") + '\n')
 
     # module open  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -320,11 +323,11 @@ def write_js_module_header(file_handler, moduleName, hasSkeletons):
         file_handler.write('    function UNPACK(compressed) {\n')
         file_handler.write('        var len = compressed.length * 4;\n')
         file_handler.write('        ret = new Float32Array(compressed.length * 4);\n')
-        file_handler.write('        for(var i = 0; i < len; i += 4) {\n')
-        file_handler.write('            ret[i    ] = compressed & 0x000000FF;\n')
-        file_handler.write('            ret[i + 1] = (compressed & 0x0000FF00) >> 8;\n')
-        file_handler.write('            ret[i + 2] = (compressed & 0x00FF0000) >> 16;\n')
-        file_handler.write('            ret[i + 3] = compressed >> 24;\n')
+        file_handler.write('        for(var i = 0, j = 0; i < len; i += 4, j++) {\n')
+        file_handler.write('            ret[i    ] =  compressed[j] & 0x000000FF;\n')
+        file_handler.write('            ret[i + 1] = (compressed[j] & 0x0000FF00) >> 8;\n')
+        file_handler.write('            ret[i + 2] = (compressed[j] & 0x00FF0000) >> 16;\n')
+        file_handler.write('            ret[i + 3] =  compressed[j] >> 24;\n')
         file_handler.write('        }\n')
         file_handler.write('        return ret;\n')
         file_handler.write('    }\n')
