@@ -1,14 +1,14 @@
-/// <reference path="./deformation/shapeKeyBased/VertexDeformation.ts"/>
-/// <reference path="./deformation/shapeKeyBased/ShapeKeyGroup.ts"/>
+/// <reference path="../deformation/shapeKeyBased/VertexDeformation.ts"/>
+/// <reference path="../deformation/shapeKeyBased/ShapeKeyGroup.ts"/>
 
-/// <reference path="./deformation/skeletonBased/Pose.ts"/>
-/// <reference path="./deformation/skeletonBased/PoseProcessor.ts"/>
-/// <reference path="./deformation/skeletonBased/Skeleton.ts"/>
+/// <reference path="../deformation/skeletonBased/Pose.ts"/>
+/// <reference path="../deformation/skeletonBased/PoseProcessor.ts"/>
+/// <reference path="../deformation/skeletonBased/Skeleton.ts"/>
 
-/// <reference path="./queue/MotionEvent.ts"/>
-/// <reference path="./queue/EventSeries.ts"/>
-/// <reference path="./queue/PovProcessor.ts"/>
-/// <reference path="./queue/TimelineControl.ts"/>
+/// <reference path="../queue/MotionEvent.ts"/>
+/// <reference path="../queue/EventSeries.ts"/>
+/// <reference path="../queue/PovProcessor.ts"/>
+/// <reference path="../queue/TimelineControl.ts"/>
 
 module QI {
     /** An interface used so both implementing classes & Mesh do not have to reference each other.
@@ -159,19 +159,19 @@ module QI {
         }
 
         /** @override */
-        public convertToFlatShadedMesh() : void {
+        public convertToFlatShadedMesh() : BABYLON.Mesh {
             if (this._shapeKeyGroups.length > 0){
                  BABYLON.Tools.Error("QI.Mesh:  Flat shading must be done on export with shape keys");
                  return null;
 
-            }else super.convertToFlatShadedMesh();
+            }else return super.convertToFlatShadedMesh();
         }
 
         /** @override
          * wrappered is so positions & normals vertex buffer & initial data can be captured
          */
-        public setVerticesData(kind: any, data: any, updatable?: boolean) : void {
-            super.setVerticesData(kind, data, updatable || kind === BABYLON.VertexBuffer.PositionKind || kind === BABYLON.VertexBuffer.NormalKind);
+        public setVerticesData(kind: string, data: number[] | Float32Array, updatable?: boolean, stride?: number) : BABYLON.Mesh {
+            super.setVerticesData(kind, data, updatable || kind === BABYLON.VertexBuffer.PositionKind || kind === BABYLON.VertexBuffer.NormalKind, stride);
 
             if (kind === BABYLON.VertexBuffer.PositionKind){
                 this._positions32F = this.setPositionsForCPUSkinning(); // get positions from here, so can morph & CPU skin at the same time
@@ -191,6 +191,8 @@ module QI {
                 // exporter assigns skeleton before setting any vertex data, so should be ok
                 if (!this._poseProcessor) this._poseProcessor = new PoseProcessor(<Skeleton> this.skeleton, this, true);
             }
+            
+            return this;
         }
 
         /** @override */
@@ -206,6 +208,36 @@ module QI {
         public addShapeKeyGroup(shapeKeyGroup : ShapeKeyGroup) : void {
             this._shapeKeyGroups.push(shapeKeyGroup);
         }
+       
+        /**
+         * create a new shapekey group from a list of others.  Useful to export smaller more focused groups
+         * upon load.
+         * @param {string} newGroupName - The name the consolidated group to create
+         * @param {Array<string>} thoseToMerge - Names of the groups to merge
+         * @param {boolean} keepOrig - Do not delete original groups when true. (default: false)
+         * @returns {ShapeKeyGroup} The consolidate group
+         */
+        public consolidateShapeKeyGroups(newGroupName : string, thoseToMerge : Array<string>, keepOrig? : boolean) : ShapeKeyGroup {
+            var nGroups = thoseToMerge.length;
+            // gather all the groups
+            var groups = new Array<ShapeKeyGroup>(nGroups);
+            for (var i = 0; i < nGroups; i++) {
+                groups[i] = this.getShapeKeyGroup(thoseToMerge[i]);
+                if (!groups[i]) {
+                    BABYLON.Tools.Error("QI.Mesh: no shape key group with name: " + thoseToMerge[i]);
+                    return null;
+                }
+            }
+            var ret = ShapeKeyGroup._buildConsolidatedGroup(this, newGroupName, groups);
+            
+            // remove original groups
+            if (!keepOrig) { 
+                for (var i = 0; i < nGroups; i++) {
+                    this.removeShapeKeyGroup(thoseToMerge[i]);
+                }
+            }
+            return ret;
+        }
 
         /**
          * Cause the group to go out of scope.  All resources on heap, so GC should remove it.
@@ -218,7 +250,36 @@ module QI {
                     return;
                 }
             }
-            BABYLON.Tools.Warn("QI.Mesh:  no shape key group with name: " + groupName);
+            BABYLON.Tools.Warn("QI.Mesh: no shape key group with name: " + groupName);
+        }
+        
+        /**
+         * When there are overlaps of vertices of shapekey groups, the last one processed wins
+         * if both are active in a given frame.  eg. Automaton's WINK & FACE groups.  Can be
+         * run multiple times, but of course order your calls in the opposite order.
+         * @param {string} groupName - Group to process last.
+         */
+        public setShapeKeyGroupLast(groupName : string) : void {
+            var currIdx = -1;
+            var len = this._shapeKeyGroups.length;
+        
+            for (var g = 0; g < len; g++) {
+                if (this._shapeKeyGroups[g]._name === groupName) {
+                    currIdx = g;
+                    break;
+                }
+            }
+            if (currIdx === -1) {
+                BABYLON.Tools.Error("QI.Mesh: no shape key group with name: " + groupName);
+                return;
+            }
+            
+            // test for not being last already
+            if (currIdx + 1 < len) {
+                var chosen = this._shapeKeyGroups[currIdx];
+                this._shapeKeyGroups.splice(currIdx, 1);
+                this._shapeKeyGroups.splice(len, 0, chosen);
+            }
         }
         
         /**
@@ -319,7 +380,7 @@ module QI {
 
         /**
          * wrapper a single MotionEvent into an EventSeries, defaulting on all EventSeries optional args
-         * @param {MotionEvent} event - Event to wrapper.
+         * @param {MotionEvent or function} event - Event or function to wrapper.
          */
         public queueSingleEvent(event : MotionEvent) : void {
             this.queueEventSeries(new EventSeries([event]));
@@ -658,6 +719,30 @@ module QI {
                     children[i].isVisible = visible;
                 }
             }
+        }
+        
+        /**
+         * Used by some GrandEntrances to get the center of the entire mesh with children too.
+         * 
+         */
+        public getSizeCenterWtKids() : {size : BABYLON.Vector3, center : BABYLON.Vector3} {
+            var boundingBox = this.getBoundingInfo().boundingBox;
+            var minmin = boundingBox.minimumWorld.clone();
+            var maxmax = boundingBox.maximumWorld.clone();
+            
+            var children = this.getChildMeshes();
+            for (var i = 0, len = children.length; i < len; i++) {
+                boundingBox = children[i].getBoundingInfo().boundingBox;
+                if (minmin.x > boundingBox.minimumWorld.x) minmin.x = boundingBox.minimumWorld.x;
+                if (minmin.y > boundingBox.minimumWorld.y) minmin.y = boundingBox.minimumWorld.y;
+                if (minmin.z > boundingBox.minimumWorld.z) minmin.z = boundingBox.minimumWorld.z;
+                
+                if (maxmax.x < boundingBox.maximumWorld.x) maxmax.x = boundingBox.maximumWorld.x;
+                if (maxmax.y < boundingBox.maximumWorld.y) maxmax.y = boundingBox.maximumWorld.y;
+                if (maxmax.z < boundingBox.maximumWorld.z) maxmax.z = boundingBox.maximumWorld.z;
+            }
+            
+            return {size: maxmax.subtract(minmin), center: maxmax.addInPlace(minmin).scaleInPlace(0.5)};
         }
         // ============================ Mesh-instance wide play - pause ==============================
         private _instancePaused = true; // do not allow anything to run till visible; managed by grand entrance

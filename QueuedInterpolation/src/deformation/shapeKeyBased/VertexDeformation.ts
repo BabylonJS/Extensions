@@ -90,6 +90,16 @@ module QI{
         public getEndStateNames() : Array<string> { return this._endStateNames; }
         public getEndStateRatio(idx : number) :number {return this._endStateRatios[idx]; }
         public getEndStateRatios() : Array<number> {return this._endStateRatios; }
+        public getClassName(): string { return "VertexDeformation"; } 
+        public toString() : string {
+            var ret = super.toString();
+            ret + ", reference state: " + this._referenceStateName;
+                for(var i = 0, len = this._endStateNames.length; i < len; i++) {
+                    ret += ", [ " + this._endStateNames[i] + " @ " + this._endStateRatios[i] + "]";
+                }
+
+            return ret;
+        }
     }
     //================================================================================================
     //================================================================================================
@@ -141,6 +151,7 @@ module QI{
             options?      : IMotionEventOptions){
             super(groupName, "BASIS", [endStateName], [endStateRatio], milliDuration, movePOV, rotatePOV, options);
         }
+        public getClassName(): string { return "Deformation"; } 
     }
     //================================================================================================
     //================================================================================================
@@ -183,6 +194,7 @@ module QI{
             options?      : IMotionEventOptions){
             super(groupName, endStateName, endStateRatio, 0.01, null, null, options);
         }
+        public getClassName(): string { return "MorphImmediate"; } 
     }
     //================================================================================================
     //================================================================================================
@@ -230,5 +242,6 @@ module QI{
             options?      : IMotionEventOptions){
             super(groupName, "BASIS", 1, milliDuration, movePOV, rotatePOV, options);
         }
-    }
+         public getClassName(): string { return "BasisReturn"; } 
+   }
 }

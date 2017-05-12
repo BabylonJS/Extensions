@@ -1,4 +1,4 @@
-/// <reference path="../Mesh.ts"/>
+/// <reference path="../meshes/Mesh.ts"/>
 
 module QI{
     /**
@@ -101,22 +101,16 @@ module QI{
             // create the host mesh and build shader
             var scene = this._mesh.getScene();
             
-            var boundingBox = this._mesh.getBoundingInfo().boundingBox;
-            var height = boundingBox.extendSize.y * 2;
-            var diameter = Math.max(boundingBox.extendSize.x, boundingBox.extendSize.z) * 2 * TeleportEntrance._RADUIS_MULT;
+            var dimensions = this._mesh.getSizeCenterWtKids();
+            var diameter = Math.max(dimensions.size.x, dimensions.size.z) * TeleportEntrance._RADUIS_MULT;
             
-            var effectHostMesh = BABYLON.Mesh.CreateCylinder(this._mesh + "_tp", height, diameter, diameter, 30, 6,scene);
-            
-            var minY = boundingBox.minimumWorld.y;
-            var maxY = boundingBox.maximumWorld.y;
-            var center = boundingBox.center.clone();
-            center.y = (maxY - minY) * 0.7; // use a vertical center slightly higher Y.
-            effectHostMesh.position = center;
+            var effectHostMesh = BABYLON.Mesh.CreateCylinder(this._mesh + "_tp", dimensions.size.y, diameter, diameter, 30, 6,scene);            
+            effectHostMesh.position = dimensions.center;
             
             var magic1 = '16.'; // 16.
             var magic2 = '0.1'; // 0.1  oscillation related
             
-            var heightStr = BABYLONX.Shader.Print(height);
+            var heightStr = BABYLONX.Shader.Print(dimensions.size.y);
             var vertex = 'sin(' + magic1 + '* pos.y /' + heightStr + ' - sin(pos.x * ' + magic2 + ' / ' + heightStr + ') + 1. * speed * time * ' + magic2 + '),'
                   + 'sin(' + magic1 + ' * pos.y / ' + heightStr + ' + cos(pos.z * ' + magic2 + ' / ' + heightStr + ') + 1. * speed * time * ' + magic2 + ') * 0.2 ,'
                   + '0.';
@@ -176,20 +170,18 @@ module QI{
             // create the host mesh and build shader
             var scene = this._mesh.getScene();
             
-            var boundingBox = this._mesh.getBoundingInfo().boundingBox;
-            var height = boundingBox.extendSize.y * 2;
-            var radius = Math.max(Math.max(boundingBox.extendSize.x, boundingBox.extendSize.y), boundingBox.extendSize.z);
-            var diameter = radius * 2;
+            var dimensions = this._mesh.getSizeCenterWtKids();
+            var diameter = (dimensions.size.x + dimensions.size.y + dimensions.size.z) / 3;
+            var radius = diameter / 2;
             var radiusStr = radius.toFixed(1);
             
             var effectHostMesh =  BABYLON.Mesh.CreateSphere(this._mesh + "_tp", 40, diameter ,scene);
-            effectHostMesh.position = boundingBox.center.clone();
+            effectHostMesh.position = dimensions.center;
             
             var color = {r:0.8, g:0.8, b:0.8, a:1.};
-            var bump = '0.2';
+            var bump = '0.1';
             var seed = new Date().getMilliseconds().toFixed(1);
             
-            var heightStr = BABYLONX.Shader.Print(height);
             var vertex = 'nrm * pow(min(20.6, pow(ssp * stt * 1.3 * 2.123423 + sin(ssp * stt)  *0.01 ,0.4)), 1.) + ';
             vertex    += 'nrm * pow(ssp * stt * 0.03 * 2.123423, ';
             vertex    += '(abs((ssp * stt * 0.003)) * 0.2)) * 3. * vec3(noise(pos * 0.003 + nrm + vec3(0., -1., 0.) * (ssp * stt * 0.001) + ';
@@ -259,8 +251,8 @@ module QI{
                 }
                 mat.setFloat('time', ratioComplete * PoofEntrance._MAX_TIME);
             
-                // section for scaling mesh back to original , but not till .85
-                if (ratioComplete >= .85) {
+                // section for scaling mesh back to original , but not till .25
+                if (ratioComplete >= .25) {
                     ref._mesh.scaling = ref._originalScale;
                 }
             };

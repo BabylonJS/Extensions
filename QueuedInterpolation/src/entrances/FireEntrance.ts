@@ -1,4 +1,4 @@
-/// <reference path="../Mesh.ts"/>
+/// <reference path="../meshes/Mesh.ts"/>
 
 module QI{
     /**

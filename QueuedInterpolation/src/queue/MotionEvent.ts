@@ -159,7 +159,8 @@ module QI{
         }
 
         public toString() : string {
-            return "group: " + this._groupName +
+            return "group: " + this._groupName + 
+                   ", type: " + this.getClassName() + 
                    ", duration: " + this._milliDuration +
                    ", move: " + (this.movePOV ? this.movePOV.toString() : "None") +
                    ", rotate: " + (this.rotatePOV ? this.rotatePOV.toString() : "None" +
@@ -172,6 +173,7 @@ module QI{
                    ", noStepWiseMovement: " + this.options.noStepWiseMovement
             );
         }
+         public getClassName(): string { return "PoseEvent"; } 
         // =================================== run time processing ===================================
         /**
          * Indicate readiness by caller to start processing event.
@@ -337,5 +339,6 @@ module QI{
             super(milliDuration,  null, null, {sound : sound});
             this._groupName = groupName;
         }
+         public getClassName(): string { return "Stall"; } 
     }
 }

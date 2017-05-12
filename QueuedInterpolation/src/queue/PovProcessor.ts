@@ -181,7 +181,7 @@ module QI {
          * any current MotionEvent.
          * @param {boolean} stopCurrentSeries - When true, stop any current MotionEvent too.
          */
-        public queueEventSeries(eSeries : EventSeries, clearQueue? : boolean, stopCurrentSeries? : boolean) :void {
+        public queueEventSeries(eSeries : EventSeries, clearQueue? : boolean, stopCurrentSeries? : boolean) : void {
             if (clearQueue) this.clearQueue(stopCurrentSeries);
             this._queue.push(eSeries);
         }
@@ -204,7 +204,7 @@ module QI {
          * Clear out any events
          * @param {boolean} stopCurrentSeries - When true, stop the current MotionSeries too.
          */
-        public clearQueue(stopCurrentSeries? : boolean) :void {
+        public clearQueue(stopCurrentSeries? : boolean) : void {
             this._queue = new Array<EventSeries>();
             if (stopCurrentSeries) this._currentSeries = null;
         }
@@ -215,7 +215,7 @@ module QI {
          * @param {boolean} series - When true, stop the current MotionSeries.  Note this will also stop
          * the current step.
          */
-        public stopCurrent(step? : boolean, series? : boolean) :void {
+        public stopCurrent(step? : boolean, series? : boolean) : void {
             if (step) this._currentStepInSeries = null;
             if (series) this._currentSeries = null;
         }
@@ -235,9 +235,29 @@ module QI {
             return ret;
         }
 
-        /* returns true when either something is running (could be blocked or waiting) or something queued */
-        public isActive() : boolean{
+        /** returns true when either something is running (could be blocked or waiting) or something queued */
+        public isActive() : boolean {
             return this._currentSeries !== null || this._queue.length > 0;
+        }
+        
+        /**
+         * primarily for diagnostic purposes
+         */
+        public getQueueState() : string {
+            var ret = this._name + " queue state:  number series queued: " + this._queue.length;
+            
+            if (this._node instanceof Mesh) {
+                ret += ", paused : " + (<QI.Mesh> this._node).isPaused();
+                ret += ", mesh visible : " + (<QI.Mesh> this._node).isVisible;
+            }
+            for (var i = 0, len = this._queue.length; i < len; i++) {
+                ret += "\n\tSeries " + i + "- " + this._queue[i].toString();
+            }
+            
+            if (this._currentSeries) {
+                ret += "\n\n\t Current processing: \n" + this._currentSeries.toString();
+            }
+            return ret;
         }
         // ======================================== event prep =======================================
         /**
@@ -306,7 +326,7 @@ module QI {
          * @param {number} amountUp
          * @param {number} amountForward
          */
-        public movePOV(amountRight: number, amountUp: number, amountForward: number): void {
+        public movePOV(amountRight: number, amountUp: number, amountForward: number) : void {
             this._node["position"].addInPlace(this.calcMovePOV(amountRight, amountUp, amountForward));
         }
 
@@ -318,7 +338,7 @@ module QI {
          * @param {number} amountUp
          * @param {number} amountForward
          */
-        public calcMovePOV(amountRight: number, amountUp: number, amountForward: number): BABYLON.Vector3 {
+        public calcMovePOV(amountRight: number, amountUp: number, amountForward: number) : BABYLON.Vector3 {
             var rot = <BABYLON.Vector3> this._node[this._rotationProperty];
             BABYLON.Matrix.RotationYawPitchRollToRef(rot.y, rot.x, rot.z, this._rotationMatrix);
 
@@ -347,7 +367,7 @@ module QI {
          * @param {number} twirlClockwise
          * @param {number} tiltRight
          */
-        public calcRotatePOV(flipBack: number, twirlClockwise: number, tiltRight: number): BABYLON.Vector3 {
+        public calcRotatePOV(flipBack: number, twirlClockwise: number, tiltRight: number) : BABYLON.Vector3 {
             var defForwardMult = this._isMesh ? ((<BABYLON.Mesh> this._node).definedFacingForward ? 1 : -1 ) : 1;
             return new BABYLON.Vector3(flipBack * defForwardMult, twirlClockwise, tiltRight * defForwardMult);
         }
@@ -365,17 +385,17 @@ module QI {
             if (this._currentStepInSeries !== null) this._currentStepInSeries.resumePlay();
         }
         // ========================================= Statics =========================================
-        public static get Version(): string {
+        public static get Version() : string {
             return "1.1.0";
         }
 
-        public static LerpToRef(start: BABYLON.Vector3, end: BABYLON.Vector3, amount: number, result: BABYLON.Vector3): void {
+        public static LerpToRef(start: BABYLON.Vector3, end: BABYLON.Vector3, amount: number, result: BABYLON.Vector3) : void {
             result.x = start.x + ((end.x - start.x) * amount);
             result.y = start.y + ((end.y - start.y) * amount);
             result.z = start.z + ((end.z - start.z) * amount);
         }
 
-        public static SlerpToRef(left: BABYLON.Quaternion, right: BABYLON.Quaternion, amount: number, result : BABYLON.Quaternion): BABYLON.Quaternion {
+        public static SlerpToRef(left: BABYLON.Quaternion, right: BABYLON.Quaternion, amount: number, result : BABYLON.Quaternion) : BABYLON.Quaternion {
             var num2 : number;
             var num3 : number;
             var num = amount;
@@ -407,7 +427,7 @@ module QI {
         }
 
 
-        public static formatQuat(d : BABYLON.Quaternion): string {
+        public static formatQuat(d : BABYLON.Quaternion) : string {
             return "{X: " +  d.x.toFixed(4) + " Y:" + d.y.toFixed(4) + " Z:" + d.z.toFixed(4) + " W:" + d.w.toFixed(4) + "}";
         }
     }

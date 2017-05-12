@@ -1,4 +1,4 @@
-/// <reference path="../Mesh.ts"/>
+/// <reference path="../meshes/Mesh.ts"/>
 
 module QI {
     export class GatherEntrance implements GrandEntrance {
@@ -80,7 +80,7 @@ module QI {
                 amt = (mesh._originalPositions[i + 2] - center.z) * Math.random();
                 scatter[i + 2] = mesh._originalPositions[i + 2] + amt;
             }
-            computedGroup._addShapeKey(startingState, scatter);
+            computedGroup._addShapeKey(startingState, false, scatter);
             return startingState;
         }
     }

@@ -22,9 +22,10 @@ module QI{
                 this.targets[boneName] = MatrixComp.fromMatrix(targets[boneName]);
             }
 
-            this.library._addPose(this);
-            this.isSubPose = name.indexOf(".sp") != -1;
-
+           // library would like to know is this is a sub-pose, so determine before adding
+           this.isSubPose = name.indexOf(".sp") != -1;
+           this.library._addPose(this);
+ 
             if (this.isSubPose && Object.keys(this.targets).length === library.nBones){
                 BABYLON.Tools.Error("QI.Pose:  sub-pose(" + this.name + "), must have fewer bones than found in library(" + library.name + ")");
                 return;
@@ -42,6 +43,9 @@ module QI{
                     }else{
                         // get the ratio of the Basis (Rest) pose
                         this.targets[boneName].setBasisDiffs(basis[boneName]);
+                        if (name === "sitting2"){ // remove
+                            console.log(boneName + ": " + this.targets[boneName].rotationBasisDiff.toString());
+                        }
                     }
                 }
             }

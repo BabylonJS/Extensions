@@ -31,6 +31,7 @@ module QI{
             }
         }
 
+        public getClassName(): string { return "NonMotionEvent"; } 
 
         private _beforeRender() : void {
             if (TimelineControl.isSystemPaused) {
@@ -108,6 +109,8 @@ module QI{
             }else throw "Datatype not supported";
         }
 
+        public getClassName(): string { return "PropertyEvent"; } 
+
         /**
          * Not part of constructor in case being run from a queue.  start value might be changed by the
          * time actually run, especially if another PropertyEvent in front of this one.
@@ -163,6 +166,8 @@ module QI{
             super(milliDuration, null, null, options);
         }
 
+        public getClassName(): string { return "RecurringCallbackEvent"; } 
+        
         public _incrementallyUpdate(ratioComplete : number) : void {
             this._callback(ratioComplete);
         }

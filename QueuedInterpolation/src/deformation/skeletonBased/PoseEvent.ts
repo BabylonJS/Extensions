@@ -61,5 +61,6 @@ module QI{
             }
             return ret + super.toString();
         }
+         public getClassName(): string { return "PoseEvent"; } 
     }
 }

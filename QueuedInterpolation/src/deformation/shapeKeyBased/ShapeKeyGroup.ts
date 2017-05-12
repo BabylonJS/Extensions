@@ -48,7 +48,7 @@ module QI {
          * @param {String} _name - Name of the Key Group, upper case only
          * @param {Uint32Array} _affectedPositionElements - index of either an x, y, or z of positions.  Not all 3 of a vertex need be present.  Ascending order.
          */
-        constructor(_mesh : BABYLON.Mesh, _name : string, private _affectedPositionElements : Uint32Array) {
+        constructor(_mesh : Mesh, _name : string, private _affectedPositionElements : Uint32Array) {
             super(_mesh, true);
             this._name = _name; // override dummy
 
@@ -222,6 +222,9 @@ module QI {
 
             if (this._ratioComplete < 0) return false; // MotionEvent.BLOCKED or MotionEvent.WAITING
 
+            // delay swapping currents to priors, in-case event gets cancelled after starting, but in an initial wait
+            if (this._runOfStep === 1) this._firstRun();
+            
             // update the positions
             this._updatePositions(positions);
 
@@ -346,17 +349,17 @@ module QI {
             }
         }*/
         // ======================================== event prep =======================================
-        /** @override */
-        public _nextEvent(event : MotionEvent) : void {
-            super._nextEvent(event);
-
+        /**
+         * delay swapping currents to priors, in-case event gets cancelled after starting, but in an initial wait
+         */
+        private _firstRun() : void {
             // is possible to have a MotionEvent(with no deformation), not VertexDeformation sub-class
-            if (!(event instanceof VertexDeformation) ) return;
+            if (!(this._currentStepInSeries instanceof VertexDeformation) ) return;
 
             this._priorFinalPositionVals = this._currFinalPositionVals;
             this._priorFinalNormalVals   = this._currFinalNormalVals  ;
 
-            var deformation : VertexDeformation = <VertexDeformation> event;
+            var deformation : VertexDeformation = <VertexDeformation> this._currentStepInSeries;
             var referenceIdx = this._getIdxForState(deformation.getReferenceStateName() );
             if (referenceIdx === -1) {
                 BABYLON.Tools.Error("ShapeKeyGroup: invalid reference state");
