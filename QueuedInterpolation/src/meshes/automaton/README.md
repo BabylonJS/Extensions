@@ -1,115 +1,104 @@
-# BEING Automaton Module#
-The BEING module is built into and based upon the QueuedInterpolation extension.  An automaton is one whose base class is `BEING.Body`.  Any other meshes associated, e.g. hair, clothes, shoes, should be child meshes.  The `Body` class coordinates a number of separate independent functions:
+# QI.Automaton Class #
+The Automaton base class of is `QI.Mesh`.  Any other meshes associated, e.g. hair, clothes, shoes, should be child meshes.  Eyes, eye brows, eye lashes, teeth & tongue meshes must be merged to the body, though this should probably only done just prior to export & not saved in .blend that way.  This class coordinates a number of separate independent functions:
 - Facial expressions
 - Blinking, both actively directed, and involuntary
 - Winking
 - Eye Movement
 - Speech (development tools not publicly released)
 
-The mesh that constitutes the `Body`, does not HAVE to come from MakeHuman.  It merely needs to have shapekeys whose naming conventions match what are expected.
+The mesh that constitutes the `Automaton`, does not HAVE to come from MakeHuman.  It merely needs to have shapekeys whose naming conventions match what are expected.
 
-### Demo Scenes###
+### Demo Scenes ###
 
-- [Emotions](https://palmer-jc.github.io/scenes/Being/human_emotions/index.html)
+- [QA](https://palmer-jc.github.io/scenes/QueuedInterpolation/automaton/index.html)
 - [Fingers](https://palmer-jc.github.io/scenes/QueuedInterpolation/finger_shapekeys/index.html)
-- [Eyes](https://palmer-jc.github.io/scenes/Being/eye_model/index.html)
 
-# Expressions / Finger Shapekeys Work-flow for MakeHuman#
+# Expressions / Finger Shapekeys Work-flow for MakeHuman #
 
-The process illustrated allows one to define expression and finger shapekeys for use with the MakeHuman`GAME_RIG`.  Once the poses are in a Pose Library of a `.blend` file though, all the back and forth using `Sync with MH` can be skipped.  In fact, there is a `shapekey_pose_libs.blend` in this directory with several Pose Libraries.  Simply use Blender's `file->Append` to copy them.  Pose Libraries are found in the `Actions` directory.  Since expression and finger poses only involve rotation, they work acceptably with a wide variety of MakeHuman models.
+The process illustrated here allows one to define expression and finger shapekeys for use with the MakeHuman`GAME_RIG` by saving into pose libraries.  Unfortunately, Once the poses are in a Pose Library of a `.blend`, the pose library cannot be copied for all your models.  Differently shaped models in MH are achieved by altering the skeleton's orientation & length of bones.  Using pose libraries from different models will give inferior results. 
+
+If you stick with using the defaults for hands though, there is a `fingerPoses.blend` in this directory with a whole set of poses for each hand.  Simply use Blender's `file->Append` to copy them.  Pose Libraries are found in the `Actions` directory.  Results seem the same from baby to adult.
 
 <img src="doc-assist/process.png">
 
 ## Required Plug-ins ##
 
-### MHX2###
-[MHX2](https://thomasmakehuman.wordpress.com/) has pieces installed in both MakeHuman & Blender (see its documentation). As little use of MHX2 as possible is made.  It clearly is the best MakeHuman transfer format for Blender right now, however it is complicated (multiple versions of the same skeleton), and has problems making / saving custom expressions (e.g. winking).  It also does not play well with Pose Libraries, which are key to this process.
+### MHX2 ###
+[MHX2](https://thomasmakehuman.wordpress.com/) has pieces installed in both MakeHuman & Blender (see its documentation). As little use of MHX2 as possible is made.  It clearly is the best MakeHuman transfer format for Blender right now, however it is complicated (multiple versions of the same skeleton), and has problems making / saving custom expressions (e.g. winking).  It also does not play well with pose libraries, which are key to this process.
 
-### Tower-of-Babel###
-The [Tower-of-Babel](https://github.com/BabylonJS/Extensions/tree/master/QueuedInterpolation/Blender) add-in for Blender is also more than just an exporter.  It has many pieces which make this work-flow possible.  Indeed, the last step of actually generating in-line Javascript source code for the QueuedInterpolation extension of Babylon.JS is not actually required.
+### Tower-of-Babel ###
+The [Tower-of-Babel](https://github.com/BabylonJS/Extensions/tree/master/QueuedInterpolation/Blender) add-in for Blender is also more than just an exporter.  It has many pieces which make this work-flow possible.  Indeed, the last step of actually generating in-line Javascript source code for the QueuedInterpolation extension of Babylon.JS is not actually required.  It could be used to transfer pose libraries to shapekeys for any purpose.
 
-### MakeHuman Community###
+### MakeHuman Community ###
 
 <img src="doc-assist/MH_community.jpg">
 
 The [community](https://github.com/makehumancommunity/community-plugins/tree/master/blender_source/MH_Community) plug-in (also in 2 pieces) contains operations to transfer information from the MakeHuman application to the Blender mesh / skeleton after import.  In theory, these operations could also be performed when using a format other than MHX2, but those are not currently as good.  While the plug-in operations are performed once the mesh has been imported into Blender, it highly recommended that you perform them prior to modification of the meshes.
 
+### Custom Expressions ###
+The common set of expressions which need to be transferred are in the [customExpressionsMH](./customExpressionsMH) sub-directory.  They need to be copied to the MakeHuman user data directory, `Documents\makehuman\v1\data\expressions` for Windows.  If MakeHuman is running, then it will have to be restarted before they can be seen in the `Pose/Animate -> Expressions` tab.
+
 ## Expressions ##
-### In MakeHuman:###
+### In MakeHuman : ###
 
 1. Design a character, assigned with `GAME_RIG` skeleton, save and export via MHX2 (probably with 'Feet on Ground' checked).
-2. Change the rig to Default No Toes, and export a 2nd time, adding ` default NT rig` on to the name.  There is probably no need to save this single change as a separate MakeHuman model.
-3. On the `Utilities -> Socket` Tab: Click the `Accept connections` checkbox for later.
+2. Change the rig to Default No Toes, and export a 2nd time, adding ` default NT rig` on to the file name.  There is probably no need to save this single change as a separate MakeHuman model.
+3. On the MakeHuman `Utilities -> Socket` Tab: Click the `Accept connections` checkbox for later.
 4. Leave MakeHuman running.
 
 <img src="doc-assist/MH_ServerConnect.jpg">
 
-### Goto to Blender:###
+### Goto to Blender: ###
 1. Do an import of the Default No Toes export using MHX2, no need to override defaults.
 2. Goto the Armature Data Tab, and click the `New` button in the `Pose Library` section.  The name of library is of no importance.
 
-Begin a process of transferring poses from Make Human to the library by switching to the `MakeHuman` (Community Plug-in)  tab on the Tool Shelf.  If exported with `Feet on Ground`, insure the checkbox below the `Sync with MH` is selected.  For each expression you wish to transfer:
+Begin a process of transferring poses from Make Human to the library by switching to the `MakeHuman` (Community Plug-in)  tab on the Tool Shelf.  If exported with `Feet on Ground`, insure the check below the `Sync with MH` is on.  The `No Location Translation` check must also off.  For each expression you wish to transfer:
 
 1. Change to MakeHuman application, and set the expression desired in `Pose/Animate -> Expressions` Tab.
 2. Change back to Blender, click `Sync with MH` in Bone Operators.
 3. Click `+` to add the pose to the library.
-4. Rename the pose, with a `FACE-` prefix, and for expressions a `_EXP` suffix.  Depending on the appropriateness to wink or not blink for this pose, also add `_WINKABLE` or `_NO_BLINK` suffixes.  See table below as an example of mapping.  You can use mixed case for your Blender pose names, if you wish, but on export to BJS everything is upper cased.
+4. Rename the pose to match with the name in MakeHuman.  There is a small [text file](./customExpressionsMH/names.txt) with all of the names.  Using the clipboard against this file will reduce typing & errors.
 
-Note: Neither the `Sync with MH` button, nor the adding of a pose to the library are affected by the bones which are selected.  All are bones sync-ed, and all are saved with the pose in the library.  Below, are the poses used saved in the library `.blend`.
-
-|MakeHuman Pose | Blender Library Pose
-| --- | ---
-|smile02        | FACE-HAPPY_EXP_WINKABLE
-|sad02          | FACE-SAD_EXP
-|anger01        | FACE-ANGRY_EXP
-|fear03         | FACE-SCARED_EXP_NO_BLINK
-|laugh02        | FACE-LAUGHING_EXP_WINKABLE
-|cry01          | FACE-CRYING_EXP_NO_BLINK
-|determination01| FACE-DETERMINED_EXP
-|effort03       | FACE-STRUGGLING_EXP_NO_BLINK
-|disgust01      | FACE-DISGUSTED_EXP
-|sceptical01    | FACE-SKEPTICAL_EXP
+Note: Neither the `Sync with MH` button, nor the adding of a pose to the library are affected by the bones which are selected.  All are bones sync-ed, and all are saved with the pose in the library.
 
 |Armature Data Tab (library) | Mesh Tab |
 | --- | --- 
 |<img src="doc-assist/ArmatureData.jpg">|<img src="doc-assist/MeshData.jpg">
 
-### Key Generation###
+### Key Generation ###
 Once you have all your poses, click the `Pose lib to Shape keys` button in the `Tower of Babel` section of the Armature Data Tab.
 
-For each pose, there will be shape key generated for each mesh where there is at least 1 vertex more than 0.00025 different than the basis value.  This is not an exact process, so extra keys will probably be generated which should not.  Tongue seems to have keys for everything.  These can either be discarded or ignored in the next step.  A small amount of proofing the results will keep your final export size to BJS much smaller.
+For each pose, there will be shape key generated for each mesh where there is at least 1 vertex more than 0.00025 different than the basis value.  This is not an exact process, so extra keys will be generated which should not.  Eye browse / lids seems to have keys for everything.  These should be discarded before going on.  Not only will this reduce the final export file, but having the eyes participating in anything other than the 4 eye keys will cause many problems.
 
-### Key Transfer###
+|Body Keys|Browse / Lids (+yellow)| Tongue |
+| --- | --- | ---
+|<img src="doc-assist/BodyKeys.jpg">|<img src="doc-assist/BrowsKeys.jpg">|<img src="doc-assist/TongueKeys.jpg">
+
+
+|Eye Keys|Teeth |
+| --- | --- 
+|<img src="doc-assist/EyeKeys.jpg">|<img src="doc-assist/TeethKeys.jpg">
+
+### Key Transfer ###
 The keys now are on the meshes, but this is not on a skeleton of reasonable size for WebGL.  Remember, that you exported twice.  To get keys on a mesh with the `GAME_RIG`, they need to be written to an archive file (.TOB).  Do that by:
 
 1. Selecting meshes which should be archived, eliminating meshes where the keys should be ignored.
 2. Click `Archive Shapekeys` button in the `Tower of Babel` section of the Mesh Data Tab.
 3. Specify a file location.
 
-Now import the mesh / armature that you wish to have the keys.  Then click the `Restore Shapekeys` button, after selecting the meshes to receive them.  The names of the meshes will have a different name prefix, but anything before the delimiter (:) will be ignored.  If Collada or FBX formats become viable, the `restore delimiter` may need to be changed.
+Now import the mesh / armature that you wish to have the keys on.  Then click the `Restore Shapekeys` button, after selecting the meshes to receive them.  The names of the meshes will have a different name prefix, but anything before the delimiter (:) will be ignored.  If Collada or FBX formats become viable, the `restore delimiter` needs to be changed.
 
 The restore should be done pretty early. The meshes need to have the exact same number of vertices at restore.  Also, afterwards you may not manually delete or add vertices.  Operations like `Limited Dissolve` also update the shapekeys, but manual adds or deletes will not export correctly as the shapekeys are out of sync with geometry.
 
-#### Custom Expressions / Winking####
-The `Expression Mixer` in MH `Utilities` allows you to make your own expressions.  This is also how to make the 2 shape keys in the `WINK` shape key group.  Once you save the new expression, you need to restart MakeHuman before the expression shows up.  The process for Custom Expressions is the same.
+The base class of the body mesh needs to be set to `QI.Automaton`.  Teeth, tongue, eyes, eye browse, & eye lashes need to be merged to the body, but delaying that just prior to export is recommended.
 
-# Early Operations#
-Utilizing Blender's filename incrementer, transferred expressions and other shapekeys is recommended as the first save with no geometry changes.  If you wanted to go back and add expressions, having a first level save with some of the stuff below already done, would be advisable.
+# Other MakeHuman Community Operations #
+There are some other useful operations provided.  These operators were made specifically for Babylon.JS.  They are safe to do before or after transferring expression shape keys.  These include:
 
-## Other MakeHuman Community Operations##
-There are also other operators made specifically for Babylon.JS which are safe to do prior to transferring expression shape keys.  These include:
-
-- `Separate Eyes` into 2 separate meshes.  BEING can move eyes in a number of ways, but they need to be separate.
 - `Convert to IK Rig` will add bones & bone constraints to a `GAME_RIG`.  The operation also tells exporter to ignore IK bones.
 - `Remove Finger Bones`, in case either you will be doing via shape keys (similar to expressions) or not at all.  Important for mobile bone limits.
 
-## Exporter Custom Properties / Materials changes##
-Any settings that you know of, not just exporter, which do not change vertices means will make it easier to change expressions without have to re-do.  If you will eventually be merging all meshes which have expressions (recommended), you would only need to change exporter custom properties on the Body mesh.
-
-## Parent Other Meshes to Body##
-This not strictly needed to be done except for the eye meshes, but is safe to do / reversible.
-
-# Finger Shapekeys#
+# Finger Shapekeys #
 
 |Finger IK Rig | Custom Shape |
 | --- | --- |
