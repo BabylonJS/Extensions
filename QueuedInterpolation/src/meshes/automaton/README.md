@@ -1,5 +1,5 @@
 # QI.Automaton Class #
-The Automaton base class of is `QI.Mesh`.  Any other meshes associated, e.g. hair, clothes, shoes, should be child meshes.  Eyes, eye brows, eye lashes, teeth & tongue meshes must be merged to the body, though this should probably only done just prior to export & not saved in .blend that way.  This class coordinates a number of separate independent functions:
+The Automaton base class is `QI.Mesh`.  Teeth, tongue, eye, eye brow, & eye lash meshes must be merged to the body, though this should probably only done just prior to export & not saved in .blend that way.  Any other meshes associated, e.g. hair, clothes, shoes, should be child meshes.  This class coordinates a number of separate independent functions:
 - Facial expressions
 - Blinking, both actively directed, and involuntary
 - Winking
@@ -90,7 +90,7 @@ Now import the mesh / armature that you wish to have the keys on.  Then click th
 
 The restore should be done pretty early. The meshes need to have the exact same number of vertices at restore.  Also, afterwards you may not manually delete or add vertices.  Operations like `Limited Dissolve` also update the shapekeys, but manual adds or deletes will not export correctly as the shapekeys are out of sync with geometry.
 
-The base class of the body mesh needs to be set to `QI.Automaton`.  Teeth, tongue, eyes, eye browse, & eye lashes need to be merged to the body, but delaying that just prior to export is recommended.
+The base class of the body mesh needs to be set to `QI.Automaton`.  Teeth, tongue, eye, eye browse, & eye lash meshes need to be merged to the body, but delaying that just prior to export is recommended.
 
 # Other MakeHuman Community Operations #
 There are some other useful operations provided.  These operators were made specifically for Babylon.JS.  They are safe to do before or after transferring expression shape keys.  These include:
