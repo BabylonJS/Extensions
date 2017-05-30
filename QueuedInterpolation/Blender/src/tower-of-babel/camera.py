@@ -107,7 +107,8 @@ class Camera(FCurveAnimatable):
  
         else:
             file_handler.write(', new _B.Vector3(' + format_vector(self.position) + '), scene);\n')
-
+            file_handler.write(indent + 'if (positionOffset) camera.position.addInPlace(positionOffset);\n')
+ 
         # always assign rig, even when none, Reason:  Could have VR camera with different Rig than default
         file_handler.write(indent + 'camera.setCameraRigMode(' + self.Camera3DRig + ',{interaxialDistance: ' + format_f(self.interaxialDistance) + '});\n')
 

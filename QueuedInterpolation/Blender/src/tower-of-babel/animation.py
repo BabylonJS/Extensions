@@ -129,7 +129,7 @@ class Animation:
             file_handler.write(indent + '{frame: ' + format_int(self.frames[frame_idx]) + ', value: ')
             value_idx = self.values[frame_idx]
             if self.dataType == ANIMATIONTYPE_MATRIX:
-                file_handler.write('M(' + format_matrix4(value_idx) + ')}')
+                file_handler.write('_M(' + format_matrix4(value_idx) + ')}')
             elif self.dataType == ANIMATIONTYPE_QUATERNION:
                file_handler.write('new _B.Quaternion(' + format_quaternion(value_idx) + ')}')
             else:

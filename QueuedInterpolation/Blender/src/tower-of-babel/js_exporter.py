@@ -285,21 +285,8 @@ class JSExporter:
 
         # Armatures/Bones - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         if self.hasSkeletons:
-            file_handler.write('\n' + indent1 + 'var bonesLoaded = false;')
-            file_handler           .write(JSExporter.define_module_method    ('defineSkeletons', 'bonesLoaded'))
-            typescript_file_handler.write(JSExporter.define_Typescript_method('defineSkeletons', 'bonesLoaded'))
-
-            file_handler.write(indent2 + 'var loadStart = _B.Tools.Now;\n')
-            file_handler.write(indent2 + 'var skeleton;\n')
-            file_handler.write(indent2 + 'var bone;\n')
-            file_handler.write(indent2 + 'var animation;\n\n')
             for skeleton in self.skeletons:
-                skeleton.to_script_file(file_handler, indent2, JSExporter.logInBrowserConsole)
-            file_handler.write(indent2 + 'bonesLoaded = true;\n')
-            if JSExporter.logInBrowserConsole:
-                file_handler.write(indent2 + '_B.Tools.Log("' + JSExporter.nameSpace + '.defineSkeletons completed:  " + ((_B.Tools.Now - loadStart) / 1000).toFixed(2) + " secs");\n')
-            file_handler.write(indent1 + '}\n')
-            file_handler.write(indent1 + JSExporter.nameSpace + '.defineSkeletons = defineSkeletons;\n')
+                skeleton.to_script_file(file_handler, indent1, JSExporter.logInBrowserConsole)
 
         # Meshes and Nodes - - - - - - - - - - - - - - - - - - - - - - - - - - -
         for mesh in self.meshesAndNodes:
@@ -307,8 +294,10 @@ class JSExporter:
 
         # Cameras - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         if self.hasCameras:
-            file_handler           .write(JSExporter.define_module_method    ('defineCameras'))
-            typescript_file_handler.write(JSExporter.define_Typescript_method('defineCameras'))
+            callArgs = []
+            callArgs.append(OptionalArgument('positionOffset', 'BABYLON.Vector3', 'null'))
+            file_handler           .write(JSExporter.define_module_method    ('defineCameras', '', callArgs))
+            typescript_file_handler.write(JSExporter.define_Typescript_method('defineCameras', '', callArgs))
 
             file_handler.write(indent2 + 'var camera;\n\n') # intensionally vague, since sub-classes instances & different specific properties set
             for camera in self.cameras:
@@ -342,8 +331,10 @@ class JSExporter:
 
         # Lights - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         if self.hasLights:
-            file_handler           .write(JSExporter.define_module_method    ('defineLights'))
-            typescript_file_handler.write(JSExporter.define_Typescript_method('defineLights'))
+            callArgs = []
+            callArgs.append(OptionalArgument('positionOffset', 'BABYLON.Vector3', 'null'))
+            file_handler           .write(JSExporter.define_module_method    ('defineLights', '', callArgs))
+            typescript_file_handler.write(JSExporter.define_Typescript_method('defineLights', '', callArgs))
 
             file_handler.write(indent2 + 'var light;\n\n') # intensionally vague, since sub-classes instances & different specific properties set
             for light in self.lights:

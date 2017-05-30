@@ -74,6 +74,9 @@ class Skeleton:
         self.id = id
         self.bones = []
 
+        # Tower of Babel specific members
+        self.functionName = 'skel_' + legal_js_identifier(self.name)
+            
         if bpySkeleton.data.LibraryWithScene:
             self.libraryName = bpySkeleton.data.libraryName
             self.bpySkeleton = bpySkeleton # needed for call to build library
@@ -200,20 +203,27 @@ class Skeleton:
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # assume the following JS variables have already been declared: scene, skeleton, bone, animation
     def to_script_file(self, file_handler, indent, logInBrowserConsole):
-        # specifying scene gets skeleton added to scene in constructor
-        if logInBrowserConsole: file_handler.write(indent + "_B.Tools.Log('defining skeleton:  " + self.name + "');\n")
-        file_handler.write(indent + 'skeleton = new QI.Skeleton("' + self.name + '", "' + format_int(self.id) + '", scene);\n') # MUST be String for inline
-        file_handler.write(indent + 'skeleton.dimensionsAtRest = new _V(' + format_vector(self.dimensions) + ');\n')
-
+        indent1 = indent + '    '
+        # specifying scene gets skeleton added to scene in constructor        
+        file_handler.write('\n' + indent + 'function ' + self.functionName + '(name, scene){\n')
+        if logInBrowserConsole: file_handler.write(indent1 + "_B.Tools.Log('defining skeleton:  " + self.name + "');\n")
+        file_handler.write(indent1 + 'var bone;\n')
+        file_handler.write(indent1 + 'var animation;\n\n')
+        file_handler.write(indent1 + 'var skeleton = new QI.Skeleton(name, "' + format_int(self.id) + '", scene);\n') # MUST be String for inline
+        file_handler.write(indent1 + 'skeleton.dimensionsAtRest = new _V(' + format_vector(self.dimensions) + ');\n')
+        
         for bone in self.bones:
-            bone.to_script_file(file_handler, indent)
+            bone.to_script_file(file_handler, indent1)
 
         if hasattr(self, 'libraryName'):
-            file_handler.write(indent +'skeleton.assignPoseLibrary("' + self.libraryName + '");\n')
+            file_handler.write(indent1 +'skeleton.assignPoseLibrary("' + self.libraryName + '");\n')
 
         if hasattr(self, 'ranges'):
             for range in self.ranges:
-                range.to_script_file(file_handler, indent, 'skeleton')
+                range.to_script_file(file_handler, indent1, 'skeleton')
+                
+        file_handler.write(indent1 +'return skeleton;\n')
+        file_handler.write(indent +'}\n')
 
 #===============================================================================
 # determine all the meshes which are controlled by skeleton, called also by pose_lib

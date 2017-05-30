@@ -88,9 +88,12 @@ class Light(FCurveAnimatable):
             file_handler.write(indent + 'light = new _B.SpotLight("' + self.name + '", new _B.Vector3(' + format_vector(self.position) +
                                '), new _B.Vector3(' + format_vector(self.direction) + '), ' + format_f(self.angle) + ', ' + format_f(self.exponent) + ', scene);\n')
 
-        else:
+        else: # Hemi
             file_handler.write(indent + 'light = new _B.HemisphericLight("' + self.name + '", new _B.Vector3(' + format_vector(self.direction) + '), scene);\n')
             file_handler.write(indent + 'light.groundColor = new _B.Color3(' + format_color(self.groundColor) + ');\n')
+            
+        if self.light_type != HEMI_LIGHT:
+            file_handler.write(indent + 'if (positionOffset) light.position.addInPlace(positionOffset);\n')
 
         file_handler.write(indent + 'light.intensity = ' + format_f(self.intensity) + ';\n')
 

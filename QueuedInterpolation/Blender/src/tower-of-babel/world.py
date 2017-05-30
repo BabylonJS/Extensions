@@ -40,6 +40,7 @@ class World:
     def initScene_script(self, file_handler, typescript_file_handler, needPhysics, exporter):
         callArgs = []
         callArgs.append(OptionalArgument('resourcesRootDir', 'string', '"./"'))
+        callArgs.append(OptionalArgument('positionOffset', 'BABYLON.Vector3', 'null'))
         file_handler.write(exporter.define_module_method('initScene', '', callArgs))
         typescript_file_handler.write(exporter.define_Typescript_method('initScene', '', callArgs))
 
@@ -59,11 +60,13 @@ class World:
             file_handler.write(indent + 'scene.fogEnd = ' + self.fogEnd + ';\n')
             file_handler.write(indent + 'scene.fogDensity = ' + self.fogDensity + ';\n')
 
-        file_handler.write('\n' + indent + '// define materials & skeletons before meshes\n')
+        file_handler.write('\n' + indent + '// define materials before meshes\n')
         file_handler.write(indent + 'defineMaterials(scene, resourcesRootDir);\n')
-        if exporter.hasSkeletons: file_handler.write(indent + 'defineSkeletons(scene);\n')
 
         file_handler.write('\n' + indent + '// instance all root meshes\n')
+        file_handler.write(indent + 'var mesh;\n')
+        
+        offsetCode = 'if (positionOffset) mesh.position.addInPlace(positionOffset);\n'
 
         if exporter.scene.includeMeshFactory:
             factoryVersion  = indent + 'if (typeof (TOWER_OF_BABEL) !== \'undefined\'){\n'
@@ -74,13 +77,15 @@ class World:
         for mesh in exporter.meshesAndNodes:
             if not hasattr(mesh, 'parentId'):
                 if exporter.scene.includeMeshFactory and not hasattr(mesh, 'shapeKeyGroups'):
-                    factoryVersion += meshIndent + 'TOWER_OF_BABEL.MeshFactory.instance("' + exporter.nameSpace + '", "' + mesh.name + '", true);\n'
-                regVersion += meshIndent + 'new ' + mesh.legalName + '("' + mesh.name + '", scene)'
-                if not hasattr(mesh, 'shapeKeyGroups'):
-                    regVersion += '.makeInstances();\n' if hasattr(mesh, "instances") and len(mesh.instances) > 0 else ';\n'
-                else:
-                    regVersion += ';\n'
+                    factoryVersion += meshIndent + 'mesh = TOWER_OF_BABEL.MeshFactory.instance("' + exporter.nameSpace + '", "' + mesh.name + '", true);\n'
+                    factoryVersion += meshIndent + offsetCode;
+                regVersion += meshIndent + 'mesh = new ' + mesh.legalName + '("' + mesh.name + '", scene);\n'
+                
+                if not hasattr(mesh, 'shapeKeyGroups') and hasattr(mesh, "instances") and len(mesh.instances) > 0:
+                    regVersion += meshIndent + 'mesh.makeInstances(positionOffset);\n'
 
+                regVersion += meshIndent + offsetCode;
+                
         # code to optionally
         if exporter.scene.includeMeshFactory:
             file_handler.write(factoryVersion)
@@ -91,13 +96,13 @@ class World:
             file_handler.write(regVersion)
 
         if exporter.hasCameras: file_handler.write('\n' + indent + '// define cameras after meshes, incase LockedTarget is in use\n')
-        if exporter.hasCameras: file_handler.write(indent +'defineCameras(scene);\n')
+        if exporter.hasCameras: file_handler.write(indent +'defineCameras(scene, positionOffset);\n')
 
         if exporter.hasSounds : file_handler.write('\n' + indent + '// define sounds after meshes, incase attached\n')
         if exporter.hasSounds : file_handler.write(indent + 'defineSounds(scene, resourcesRootDir);\n')
 
         if exporter.hasLights : file_handler.write('\n' + indent + '// lights defined after meshes, so shadow gen\'s can also be defined\n')
-        if exporter.hasLights : file_handler.write(indent + 'defineLights(scene);\n')
+        if exporter.hasLights : file_handler.write(indent + 'defineLights(scene, positionOffset);\n')
 
         file_handler.write('    }\n')
         file_handler.write('    ' + exporter.nameSpace + '.initScene = initScene;\n')

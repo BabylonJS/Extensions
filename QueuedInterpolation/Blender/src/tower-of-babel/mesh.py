@@ -92,7 +92,7 @@ class Mesh(FCurveAnimatable):
             if objArmature != None:
                 hasSkeleton = True
                 # used to get bone index, since could be skipping IK bones
-                skeleton = exporter.get_skeleton(objArmature.name)
+                self.skeleton = exporter.get_skeleton(objArmature.name)
                 i = 0
                 for obj in scene.objects:
                     if obj.type == "ARMATURE":
@@ -343,7 +343,7 @@ class Mesh(FCurveAnimatable):
                             for bone in objArmature.pose.bones:
                                 if object.vertex_groups[index].name == bone.name:
                                     matricesWeights.append(weight)
-                                    matricesIndices.append(skeleton.get_index_of_bone(bone.name))
+                                    matricesIndices.append(self.skeleton.get_index_of_bone(bone.name))
 
                     # Texture coordinates
                     if hasUV:
@@ -683,9 +683,8 @@ class Mesh(FCurveAnimatable):
         indent2A = indent2 + '    '
         indent3A = indent2A + '    '
         # Geometry
-        if hasattr(self, 'skeletonId'):
-            file_handler.write('\n' + indent2A + 'defineSkeletons(scene);\n')
-            file_handler.write(indent2A + var + '.skeleton = scene.getLastSkeletonByID("' + format_int(self.skeletonId) + '");\n')
+        if hasattr(self, 'skeleton'):
+            file_handler.write(indent2A + var + '.skeleton = ' + self.skeleton.functionName + '(name, scene);\n')
             file_handler.write(indent2A + var + '.numBoneInfluencers = ' + format_int(self.numBoneInfluencers) + ';\n\n')
 
         if exporter.logInBrowserConsole:
@@ -801,7 +800,7 @@ class Mesh(FCurveAnimatable):
             # instances handled as a separate function when a root mesh
             if len(self.instances) > 0:
                 file_handler.write('\n')
-                file_handler.write(indent + '    ' + self.legalName + '.prototype.makeInstances = function () {\n')
+                file_handler.write(indent + '    ' + self.legalName + '.prototype.makeInstances = function (positionOffset) {\n')
                 self.writeMakeInstances(file_handler, var, indent + '        ')
                 file_handler.write(indent + '    };\n')
 
@@ -820,6 +819,7 @@ class Mesh(FCurveAnimatable):
         for instance in self.instances:
             file_handler.write(indent + 'instance =  ' + var + '.createInstance("' + instance.name + '");\n')
             writePosRotScale(file_handler, instance, 'instance', indent)
+            file_handler.write(indent + 'if (positionOffset) instance.position.addInPlace(positionOffset);\n')
             file_handler.write(indent + 'instance.checkCollisions = ' + format_bool(self.checkCollisions) + ';\n')
             if self.animationsPresent:
                 for idx in range(0, len(self.animations)):
@@ -911,10 +911,11 @@ def writePosRotScale(file_handler, object, var, indent):
         file_handler.write(indent + var + '.freezeWorldMatrix();\n')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def get_base_class(meshOrNode):
-    if hasattr(meshOrNode, 'isNode'): return '_B.Mesh'
+     # do not abbreviate to '_B' for BABYLON, since will also be written to .d.ts
+    if hasattr(meshOrNode, 'isNode'): return 'BABYLON.Mesh'
 
     if len(meshOrNode.userSuppliedBaseClass) > 0: return meshOrNode.userSuppliedBaseClass
-    else: return 'QI.Mesh' if hasattr(meshOrNode, 'shapeKeyGroups') or hasattr(meshOrNode, 'skeletonWeights') or meshOrNode.needEntrance else '_B.Mesh'
+    else: return 'QI.Mesh' if hasattr(meshOrNode, 'shapeKeyGroups') or hasattr(meshOrNode, 'skeletonWeights') or meshOrNode.needEntrance else 'BABYLON.Mesh'
 #===============================================================================
 class MeshInstance:
      def __init__(self, instancedMesh, rotation, rotationQuaternion):
