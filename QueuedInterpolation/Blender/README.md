@@ -1,5 +1,7 @@
-#Tower of Babel Exporter for Blender, 4.4
+# Tower of Babel Exporter for Blender, 4.4
+
 <img src="doc-assist/get_baked.png">
+
 ## Background ##
 
 All Add-ons for Blender need to be written in Python.  The original Blender exporter was written as a single static class with some helper functions.  Everything was converted from Blender's representation of things to BJS's at the same time as it was written out, in a single pass.  Some of the conversions made were from quads to triangles, and switching the Y and Z axes.
@@ -14,34 +16,40 @@ Eventually, the .babylon exporter was replaced with the Tower of Babel code base
 
 They can also both be present.  When this is the case, the custom properties of only one will display, the last used or installed.  You can also explicitly turn one off in Blender Preferences.  Fortunately, the common properties are named the same, so the settings transfer back and forth.
 
-##New in 4.4##
+## New in 4.4 ##
+
 - Support for saving textures in a sub-directory from the main file.
 
-##New in 4.3##
+## New in 4.3 ##
+
 - Fixes from 4.2.1: Node typo, better .ik bone detection, & rest pose for bones.
 - Typescript is no longer an option.  A .JS & .D.TS are always generated.  The code examples at bottom are still in Typescript though.
 - The `to_scene_file()` methods to make a .babylon in this file.  Makes it easier to do a side by side diff.  Code never called here.
 
-##New in 4.2##
+## New in 4.2 ##
+
 - Blender Actions support, see **Actions** section
 - Skeleton animation library .blends now supported, see **Armatures** section
 - Inverse Kinematics friendly skeleton exporting, see **Armatures** section
 - Export time much shorter for .blends with armatures with actions
 
-##New in 4.1##
+## New in 4.1 ##
+
 - Added export of bone length
 - Fixed flawed checking for bone animation optimization
 
-##New in 4.0##
-###Skeletons###
+## New in 4.0 ##
+
+### Skeletons ###
+
 **Variable bone / vertex influencers (1-8)**- Export and check what the log file said was the highest # of Influencers observed.  You might then go to the custom properties for the mesh (see below), and lower the 'Max bone influencers / vertex' below what was observed, then export again.  Often times you may not notice much or any damage / stiffness when animated.  Lowering from 5 to 4 will also reduce cpu &amp; gpu memory requirements, but they all reduce processing.
 
 **Vertex optimization using a skeleton**- Previously, having a skeleton for a mesh would cause no sharing of vertices between triangles.  This is no longer the case.  This reduces the size of vertex positions, normals, uvs, colors, skeleton info, and shape keys dramatically.  It will also reduce shape key, and cpu skinning processing.
 
-###Shape keys###
+### Shape keys ###
 The internal processing of shape keys was re-designed (for the 2nd time).  It works much better when the mesh also has a skeleton, and processes much faster.
 
-###Others###
+### Others ###
 
 - Flat shading of meshes is now implemented in exporter, instead of BJS.  Shape keys meshes can now flat shaded.
 - checkReadyOnlyOnce for a material changed to off by default.  Turn on manually for a Mesh in custom properties.
@@ -50,7 +58,8 @@ The internal processing of shape keys was re-designed (for the 2nd time).  It wo
 - Meshes inheriting from QI.Mesh, may be in a Mesh Class Factory, as long as it has no shape keys.
 - The material baking process will use UV1 when one is found, instead of always creating one.
 
-##Installation##
+## Installation ##
+
 <img src="doc-assist/blenderUserPreferences.png">  
 
 1. Go to File->User Preferences->Addons Tab
@@ -61,9 +70,12 @@ The internal processing of shape keys was re-designed (for the 2nd time).  It wo
 6. Click the check box of the add-on to activate it (4 in image).
 5. Click on the `Save User Settings` button, in order not to have to repeat the activation process next time you open Blender.
 
-##Compare / Contrast to .babylon Exporter##
-###Differences due to the type of the file generated.###
+## Compare / Contrast to .babylon Exporter ##
+
+### Differences due to the type of the file generated. ###
+
 **Loading / Calling**-  A .babylon file is treated as data, and must be loaded asynchronously.  If you need to execute code that is reliant on a .babylon loading, it must be provided as a callback function to scene loader.  Things can get tricky when there is a whole series of .babylon files. All .JS files are loaded and parsed prior to any JavaScript executing.  (You can create a script element and append it to document.head from within Javascript though.)  This means any objects can be instanced simply using `new`, then placing any reliant code on the next line, e.g. 
+
 ```typescript
 // materialsRootDir and source optional
 var mesh = new ModuleName.MeshClass("name", scene, materialsRootDir, source);
@@ -73,27 +85,32 @@ mesh.position.x = 6;
 
 **OO development &amp; source code management**-  A .babylon file must have Javascript which reads it, `BABYLON.SceneLoader`, and then takes the data and constructs `BABYLON.Mesh` objects.  There is no dynamic code execution in Javascript, so no sub-classing of `BABYLON.Mesh` is possible with a .babylon.  See Meshes under Features to see Tower of Babel's sub-classing capabilities.  Also, generated source code files, especially .TS files, are much better for placing in repositories like, Git.
 
-###Skeleton animation###
+### Skeleton animation ###
+
 The traditional BJS animation system, requires that skeletal animation have every frame. The .babylon file has a "baked" animation for bone animations.  While Tower of Babel only sends the key frames.  It is expected that if you are exporting with Tower of Babel that you will be using the QueuedInterpolation animation extension.  It generates any non-key frames, which is much more space efficient.
 
-###Feature Differences###
+### Feature Differences ###
+
 Currently, the 2 exporters are pretty close feature wise.  Here are the features unique to Tower of Babel:
 
 - Morphing using Shape keys
 - Cloning using Mesh Class Factories
 
-###BJS version Required###
+### BJS version Required ###
+
 The .TS / .JS files check that BJS 2.3 or greater is running.  Bone influencers > 4 will not run until 2.3.  The Queued Interpolation runtime, which implements shape keys is also dependent on 2.3.
 
-##Features &amp; Usage##
+## Features &amp; Usage ##
+
 This document is not going to attempt to describe the actual mesh modeling or material creation in Blender.  There are many resources that show that.  We are concerned here with which features of Blender are exportable, and how to access them.
 
 There are custom properties that are explicitly added by the exporter to control the export.  There are also built-in properties that are mapped into BJS properties.
 
-###Custom Properties###
+### Custom Properties ###
+
 Custom properties are added for the exporter as well as for Mesh, Camera, &amp; Light object types. The properties for objects are displayed as a section on their respective Data properties Tab.  Those bordered in blue, will not be in the .babylon exporter.
 
-|Exporter (on Scene tab) | Mesh |
+| Exporter (on Scene tab) | Mesh |
 | --- | --- 
 |<img src="doc-assist/exporterSettings.png">|<img src="doc-assist/meshSettings.png">
 
@@ -103,10 +120,11 @@ Custom properties are added for the exporter as well as for Mesh, Camera, &amp; 
 
 The settings for each are saved with the .blend file.
 
-###Mapped Properties###
+### Mapped Properties ###
+
 Blender has many scattered properties that are taken into account by the exporter.  Here is an assortment of where these properties are located:
 
-|World (Blender Render)| Blender Game Render Settings | Rotation Units
+| World (Blender Render)| Blender Game Render Settings | Rotation Units
 | --- | --- | ---
 |Horizon color must be shared.|Set on the material not the mesh.|Default is `XYZ Euler`.  Meshes &amp; Cameras may also be `Quaternion`.
 |<img src="doc-assist/worldSettings.png">|<img src="doc-assist/gameRenderSettings.png">|<img src="doc-assist/rotationSettings.png">
@@ -116,8 +134,10 @@ Blender has many scattered properties that are taken into account by the exporte
 |Click camera off to load a mesh invisibly
 |<img src="doc-assist/outlinerSettings.png">
 
-###Meshes###
+### Meshes ###
+
 Meshes are output as a public sub-class of the base class custom property when they do not have a mesh as a parent, a root mesh.  They are instanced using `new`, and can be further sub-classed by any hand written code you wish to make. Here is the syntax again (source is for cloning):
+
 ```typescript
 // materialsRootDir and source optional
 var mesh = new ModuleName.MeshClass("name", scene, materialsRootDir, source); 
@@ -125,17 +145,20 @@ var mesh = new ModuleName.MeshClass("name", scene, materialsRootDir, source);
 
 Meshes that are the children of another mesh are output as an internal function which returns an instance of the base class custom property.  These child functions are called by the constructor of the parent mesh, never by you.  
 
-####Instances####
+#### Instances ####
+
 Instances, as BJS defines them, are objects of type `BABYLON.InstancedMesh`.  Their purpose is to take advantage GPU hardware acceleration available for identical meshes, including material.  They are made in Blender using the `Object->Duplicate Linked` menu item in the 3D View.  They are implemented as a public method, `makeInstances()`, for root meshes.  Instances of child meshes are in-lined into the private function that also builds them.
 
-####QI.Mesh Classes####
+#### QI.Mesh Classes ####
+
 If a mesh contains shape keys or you wish to use the bone interpolator, then it needs to inherit from a `QI.Mesh` base class.  If you do not specify a base class, it will default to `QI.Mesh` if it has shape keys.  Otherwise, you will to explicitly set this in custom mesh properties.
 
 You create a `Basis` shape key and all of the other keys relative to it.  The name of the shape key is important.  The format is `SHAPE_KEY_GROUP-KEY`, and all upper case.  This provides for having groups like FACE, LEFT_HAND, etc.  The default shape key group assigned to a key not in this format is `ENTIRE_MESH`.  If you imported a Make Human with shape keys, you need to change this to `FACE` in addition to changing the base class to `QI.MakeHuman`.
 
 On the BJS side, having separate groups allows for concurrent, independent deformations.  No morphing animation in Blender is transferred.  Skeletal animation will be transferred, however it may not be processed the same way for meshes with a `QI.Mesh` base class.
 
-####Mesh Class Factories####
+#### Mesh Class Factories ####
+
 This feature allows Meshes to be instanced on demand, using the existing geometry of another instance, if available.  The BJS terminology for this is cloning.  Sharing of geometry reduces GPU &amp; CPU memory, and is very fast to create due to the lack of GPU calls to load data.  This is enabled using a custom property checkbox in the exporter, see above. The class factory needs to be initialized and then called like:
 
 ```typescript
@@ -156,10 +179,12 @@ TOWER_OF_BABEL.MeshFactory.instance("Font2D", "W");
 TOWER_OF_BABEL.MeshFactory.MODULES.push(new Font2D.MeshFactory(scene));
 ```
 
-####Nodes####
+#### Nodes ####
+
 Blender nodes are implemented as meshes in BJS, without any geometry.  Useful for assigning a common parent among meshes.  Fcurve animations are also possible with nodes.
 
-###Cameras###
+### Cameras ###
+
 The initial position and direction of the camera is transferred, but not always by the same means.  Cameras can also be preset to track to an object, called a locked target in BJS.  Arc Rotate &amp; Follow cameras required a mesh to track, or they cannot be exported.  The easiest way to set up tracking is using the 3D view.
 
 - Right click the camera.
@@ -173,7 +198,8 @@ To see what this looks like. view the Constraints Tab of Camera below, where thi
 | --- | --- 
 |<img src="doc-assist/cameraConstraints.png">|<img src="doc-assist/cameraMappedSettings.png">
 
-###Lights / Shadow Generating###
+### Lights / Shadow Generating ###
+
 Blender has different names for light types than BabylonJS.  Actually, Blender calls them lamps, not Lights.  Here is how they correlate:
 
 |Blender | BabylonJS | Shadow Capable | Transfers Position | Transfers Direction
@@ -195,12 +221,14 @@ There are also some mapped properties. Some that are always used, and some speci
 |<img src="doc-assist/pointLightSettings.png">|<img src="doc-assist/spotLightSettings.png">
 
 
-###Materials###
+### Materials ###
+
 Materials that are just made up of colors are setup using the Blender Render, as seen below.  Making `MultiMaterials` are a matter of assigning more than one material for a mesh.  Once you have the materials, enter edit mode, select faces to have a materials,then click Assign.
 
 <img src="doc-assist/StdMaterials.png">
 
-####Textures####
+#### Textures ####
+
 Textures can be added to a material of a mesh, so the faces that are assigned the texture are the materials. Image textures are normally just a file copy, with some properties mapped to BJS.  
 
 If there are procedural textures in any materials for a mesh, then any image textures are just worked into the baked images instead.  Procedural textures are rendered in Blender, then output as an image.  Properties are used in the rendering / baking process, rather than being mapped into BJS properties.  This opens up many more properties that can be used than mapped using image textures. 
@@ -214,15 +242,18 @@ If there are procedural textures in any materials for a mesh, then any image tex
 |How to set a texture to get a spheremap
 |<img src="doc-assist/textureSpheremapExample.png">
 
-####in-line textures####
+#### in-line textures ####
+
 Textures do not need to be in a separate file.  They can also be inside either the .JS or .babylon file.  The size of the combined file will be larger, but assuming you are using gzip on your server, the transmission is about the same.  Other than just being self-contained,  having fewer files can improve the time a web page downloads due to the latency of doing each file.
 
-####Cycles Render / Texture Baking####
+#### Cycles Render / Texture Baking ####
+
 The Cycles Render is supported by baking out a set of textures that BJS can accept.  Lighting / shadows are not taken into account as part of the baking.  If your Cycles material is a simple diffuse node, setting a color, you are far better off replacing it with an equivalent material using the Blender Render.  You avoid doing texture lookups in the fragment shader, and do not waste GPU memory.  A texture takes up much more GPU memory than disk space, since it is compressed on disk.
 
 When baking textures, either from Cycles or Blender Render Procedural textures, the dimensions are set on a mesh by mesh basis.  This is part of the custom properties of a mesh.  It is highly recommended to make this a power of 2.  The format output is .JPG.  The quality setting controls the compression on disk.
 
-###Actions###
+### Actions ###
+
 Action animations for Meshes, lights, and Cameras are transferred on export.  AnimationRanges are new in BJS as of 2.3. For each action, a corresponding AnimationRange object with the same name is made on import to BJS.  
 
 See the table below for which properties are animatable, based on the object type.  If the custom property `Auto Launch Animations` is checked, then these will start when the object created.  This will play the entire animation, so may not useful when there are multiple actions, as all will be played.
@@ -233,7 +264,8 @@ See the table below for which properties are animatable, based on the object typ
 |**Cameras** | √| √ |
 |**Lights** | | √| 
 
-###Armatures###
+### Armatures ###
+
 Armatures are exported along with their actions as AnimationRanges.  It is no longer a requirement that an armature be the parent of a mesh it controls. Skeletal animations cannot be set to auto animate.
 
 **Variable bone / vertex influencers (1-8)**- Export and check what the log file said was the highest # of Influencers observed.  You might then go to the custom properties for the mesh, and lower the 'Max bone influencers / vertex' below what was observed, then export again.  Often times you may not notice much or any damage / stiffness when animated.  Lowering from 5 to 4 will also reduce cpu &amp; gpu memory requirements, but they all reduce processing.
@@ -241,6 +273,7 @@ Armatures are exported along with their actions as AnimationRanges.  It is no lo
 **Inverse Kinematics Friendly**- There is a custom exporter property (on Scene tab), `Ignore IK Bones`.  The effect is any bone with `.ik` in the name will not be exported.  Any extra bones that are needed to make inverse kinematics work will never make it to BJS.  So now you can do all your posing for your key frames more easily in Blender, without the baggage following you to BJS.
 
 **Skeleton Animation Libraries**- As of BJS 2.3, the AnimationRanges of a skeleton can be transferred to another with the same bone structure.  The bone lengths can be taken into account during the copy to compensate for skeletons which are shorter, wider, or expressed in different units e.g. inches vs meters.  Here is an example of implementing a library as 2 .babylon files:
+
 ```Typescript
 var scene = new BABYLON.Scene(engine);
         
@@ -255,12 +288,15 @@ scene.executeWhenReady(function () {
      ...
 });
 ```
+
 **Animation Differences**- The traditional BJS animation system, requires that skeletal animation contain every frame. The .babylon file has these "baked" animations for bones.  While Tower of Babel only saves the key frames.  It is expected that if you are exporting with Tower of Babel that you will be using the QueuedInterpolation animation extension.  It generates any non-key frames at runtime, which is much more space efficient.
 
 This does not mean that you must bake any of your actions, skeletal or not, to produce a .babylon.  Keeping only the key frames is much more flexible than actually baking it into the .blend file.
 
-###Log File###
+### Log File ###
+
 Another file always generated is the log file.  It has the same name as the script file or .babylon file with the extension .log.  It provides information about what was or was not done.  Many possible warnings are provided, instead of just leaving you wondering why something did not come through.  Most importantly, should the exporter terminate with an error, it will be contained in this file.  Here is part of one:
+
 ```
 	Exporter version: 3.0.0, Blender version: 2.75 (sub 0)
 ========= Conversion from Blender to Babylon.js =========
@@ -291,7 +327,8 @@ elapsed time:  0 min, 19.1473 secs
 		
 ```
 
-##Structure of Generated Module##
+## Structure of Generated Module ##
+
 The typescript module version is the one described below.  There are 2 features that are omitted from the sample code though:
 
 - Every entry point validates that the version of Babylon is compatible, as shown below.  This is omitted from all other sample code.  
@@ -302,13 +339,15 @@ if (Number(BABYLON.Engine.Version.substr(0, BABYLON.Engine.Version.lastIndexOf("
 ```
 
 As with all .TS files, it starts off defining the module that the classes are a part of.  The module name matches the file name you made for the export.
+
 ```typescript
 // File generated with Tower of Babel version: 4.0.0 on 12/14/15
 module ModuleName{
     ...
 ```
 
-###initScene()###
+### initScene() ###
+
 If you indicated that you wanted an `initScene()` included, it will be generated next.  When you call this function in your application code, it will do the .babylon file equivalent of `BABYLON.SceneLoader.Append()`.  You pass a previously instanced scene as an argument, and may also pass `resourcesRootDir`.  `resourcesRootDir` is very tolerant about whether you terminate it with a `/` or not.  The default is the same as the html file. When `initScene()` is called, the root directory of texture files &amp; sound files must be the same.
 
 The example below shows when everything is present.  The calling of the definition of skeletons, cameras, sounds, lights, and shadows are only added when there are some to define.
@@ -345,9 +384,11 @@ export function initScene(scene : BABYLON.Scene, resourcesRootDir : string = "./
     defineShadowGen(scene);
 }
 ```
+
 The example above shows when a MeshFactory class is also included.  A check is made for the Tower of Babel runtime.  If it's found then the MeshFactory is installed into it, and mesh instances are made that way.  When is MeshFactory not included, only the direct method using `new` is present.
 
-###MeshFactory Class###
+### MeshFactory Class ###
+
 This is an example of a mesh factory, showing only one class that is instance able, `meshClassNm1`.  The below switch statement will be expanded with a case statement for each root level mesh in the module that does not contain shape keys.  See section in Features &amp; Usage, above, for calling instructions.
 
 ```typescript
@@ -395,10 +436,12 @@ function clean(libIdx : number) : void {...}
 export function getStats() : [number] { return [cloneCount, originalVerts, clonedVerts]; }
 ```
 
-###defineMaterials()###
+### defineMaterials() ###
+
 The defineMaterials() is a public module level function.  It is called from many of the other entry points, so you are not usually required to call it.  It also has checking at the beginning to ensure it only does something on the first call.
 
 Shown below are a standard material, and another with a baked in-line texture.  The pattern will repeat for as many materials exported.
+
 ```typescript
 var matLoaded = false;
 export function defineMaterials(scene : BABYLON.Scene, materialsRootDir : string = "./") : void {
@@ -456,9 +499,12 @@ export function defineMaterials(scene : BABYLON.Scene, materialsRootDir : string
 }
 ```
 
-###Meshes###
-####Root Mesh Sub-Classes####
+### Meshes ###
+
+#### Root Mesh Sub-Classes ####
+
 Here is an example of a mesh which has no parent mesh.  It is implemented as a sub-class of the base class.
+
 ```typescript
 export class MeshClass extends BABYLON.Mesh {
     // all child meshes are declared as public members and instanced in constructor
@@ -555,7 +601,8 @@ export class MeshClass extends BABYLON.Mesh {
 }
 ```
 
-####Child Mesh Instances####
+#### Child Mesh Instances ####
+
 Here is the child mesh called by the root mesh above.  All of the same sections of the root mesh are present, except with 'ret' being assigned, not 'this'.
 ```typescript
 function child_Appendage(scene : BABYLON.Scene, parent : any, source? : any) : BABYLON.Mesh {
@@ -570,7 +617,8 @@ function child_Appendage(scene : BABYLON.Scene, parent : any, source? : any) : B
 }
 ```
 
-####Meshes inheriting from QI.Mesh####
+#### Meshes inheriting from QI.Mesh ####
+
 Meshes with shape keys must inherit from QI.Mesh class.  The code is the same as any other mesh, except positions &amp; normals are defined as update-able.  
 
 After the standard mesh code, the shape key group assignments appear.  As each shape key group is created with each of its keys.  The `affectedPositionElements` of a group is the cut down list of positions used by the keys of the group.  Similar to `VertexGroups` of Blender.  Used for performance reasons.  Since a Basis key is part of every group, it is specified in the constructor.  It is not the whole Basis, just the part used by this group.
@@ -593,7 +641,8 @@ export class Plane extends QI.Mesh {
 }
 ```
 
-###defineSkeletons() [Optional]###
+### defineSkeletons() [Optional] ###
+
 There is very little reason to call this yourself.  If you instance a mesh with a skeleton, this is called early in the constructor for you.  Like `defineMaterials()`, this only does something the first time it is called.
 
 ```typescript
@@ -620,7 +669,8 @@ export function defineSkeletons(scene : BABYLON.Scene) : void {
 }
 ```
 
-###defineCameras() [Optional]###
+### defineCameras() [Optional] ###
+
 if calling `defineCameras` yourself, be sure to wait until any mesh that might be a locked target for it has been instanced.
 
 ```typescript
@@ -645,7 +695,8 @@ export function defineCameras(scene : BABYLON.Scene) : void {
     }
 ```
 
-###defineSounds() [Optional]###
+### defineSounds() [Optional] ###
+
 Sound files can be assigned at both the scene and the mesh levels.  The sound is never really in Blender.  It is all custom property settings.  The scene is paused from rendering until the sounds are ready to play.
 
 ```typescript
@@ -675,7 +726,8 @@ export function defineSounds(scene : BABYLON.Scene, soundsRootDir : string = "./
 }
 ```
 
-###defineLights() / defineShadowGen() [Optional]###
+### defineLights() / defineShadowGen() [Optional] ###
+
 If there were any lights exported, the function `defineLights()` will be in the file.  All lights will be instanced one right after another (only one shown).  When a light has animations, they will be defined right after each light.
 
 If any lights were set to be shadow generators, `defineShadowGen()` will also be in the file.  It is called at the end of `defineLights()` and not exported, so you cannot call it yourself.  The sample below only shows one generator, but if there were more, they would done one right after another.  The reason this function is even broken out is because a .babylon file defines shadow generators separate from lights.  This causes there to be 2 Python classes.  Having each class write out its own data is cleaner.
@@ -710,7 +762,8 @@ function defineShadowGen(scene : BABYLON.Scene) : void {
 }
 ```
 
-###freshenShadowRenderLists()###
+### freshenShadowRenderLists() ###
+
 `freshenShadowRenderLists()` is for updating the renderlist's of all shadow generators, after being initially called at the end of `defineShadowGen()`.  Useful to call when generating meshes on demand, e.g. using a mesh factory. 
 
 `freshenShadowRenderLists()` is a generalized function, to support definition of lights and shadows in separate .blends from meshes.  It is always included for convenience.  If you have multiple generated files, calling anyone once, is all that is required.
@@ -731,7 +784,9 @@ export function freshenShadowRenderLists(scene : BABYLON.Scene) : void {
 ```
 
 ## Running ##
+
 The exported .JS file must of course be referenced in the `<head>` section of the launch html.  Depending on what features you take advantage of, other .JS files need inclusion as indicated.  If you combine / uglify, then use the order shown below:
+
 ```html
 <head>
     <meta charset="UTF-8">
