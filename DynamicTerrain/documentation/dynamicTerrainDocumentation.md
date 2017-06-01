@@ -84,7 +84,7 @@ It's better to choose a multiple of 2 as the number of terrain subdivisions.
 Once created, this number never changes, neither the terrain number of vertices, but only its shape.  
 This means the computation charge to update the terrain is always constant and depends only on this subdivision value.  
 
-The terrain is a logical object providing several features. It embeddeds a BJS mesh accessible with the property `.mesh` :
+The terrain is a logical object providing several features. It embeds a BJS mesh accessible with the property `.mesh` :
 ```javascript
 var terrainMesh : terrain.mesh;
 terrain.Mesh.diffuseTexture = myTerrainTexture;
@@ -114,7 +114,7 @@ In short, by default, the terrain sees the map as infinite.
 LOD is an acronym for Level Of Detail.  
 It's a feature allowing to reduce the rendering precision of some mesh when it's far away from the camera in order to lower the necessary computation : the less vertices, the less CPU/GPU needed.  
 
-The dynamic terrain provides also a LOD feature but in a different way : the terrain number of vertices always keep constant but only the part of data map covered by the terrain changes.  
+The dynamic terrain provides also a LOD feature but in a different way : the terrain number of vertices always keeps constant but only the part of data map covered by the terrain changes.  
 By default, one terrain quad fits one map quad.  
 This factor can be modified with the property `.initialLOD` (equal to 1, by default) at any time.  
 
@@ -218,7 +218,7 @@ http://www.babylonjs-playground.com/#FJNR5#13
 
 Notes : 
 
-* We can change the value of the property `.LODLimits` at any time, it's taken in account on the next terrain update. So it's not a fixed value. We could image to have different LOD behavior depending on the camera position, speed or on the landscape itself.
+* We can change the value of the property `.LODLimits` at any time, it's taken in account on the next terrain update. So it's not a fixed value. We could imagine to have different LOD behavior depending on the camera position, speed or on the landscape itself.
 * The array is always stored internally being sorted in the descending order (ex `[4, 2]`). So let's remember this when we have to read this property value.  
 * Some of the terrain quads aren't squared, but rectangular. Actually each terrain vertex is given current `lodX` and `lodZ` values what we can read from a custom user function if needed (to be seen further).  
 
@@ -238,7 +238,7 @@ Of course, the perimetric LOD and the camera LOD correction can work together : 
 
 * the initial LOD is the factor of the central terrain quad to apply to the map quad (default 1),
 * the cameraLODcorrection is the quantity to add to this initial LOD to adjust to the camera position or distance (default 0),
-* the LOD limits are the limits in the perimetric terrain subdivision from where to increase the initial LOD (default `[]`), the camera LOD correction applies the same way on all the quads, so even on the already increased perimetric quads.  
+* the LOD limits are the limits in the perimetric terrain subdivisions from where to increase the initial LOD (default `[]`), the camera LOD correction applies the same way on all the quads, so even on the already increased perimetric quads.  
 * these three properties can be set at any time ! It's called _dynamic_ terrain, isn't it ?
 * the global LOD value is the current LOD factor value of the central quads.  
 
@@ -264,8 +264,8 @@ They can be changed at any time according to our needs.
 
 
 ### User custom function
-The Dynamic Terrain provides the ability to update each of its vertex on the whole terrain update.  
-Let's enable it (disabled by default) at any time. It can be enabled/disabled at any moment.   
+The Dynamic Terrain provides the ability to update each of its vertex while the whole terrain update.  
+Let's enable it (disabled by default). It can be enabled/disabled at any time.   
 ```javascrit
 terrain.useCustomVertexFunction = true;
 ```
@@ -304,13 +304,13 @@ Of course, it works also with alpha : http://www.babylonjs-playground.com/#FJNR5
 This feature is disabled by default because it may have an impact on the CPU.  
 Indeed, when a terrain is 100x100 quads, it has 10K vertices and this custom function is then called 10K times.   
 So let's remember to make it as fast as possible and to not allocate any object within it, else the garbage collector will have to work, consuming our precious FPS.  
-Let's also remember that the custom user function is called only on terrain updates, not necesseraly each frame. There's a way to force the terrain update on every frame that we'll see further.  
+Let's also remember that this custom user function is called only on terrain updates, not necesseraly each frame. There's a way to force the terrain update on every frame that we'll see further.  
 
 
 ### After or Before Terrain Update
 The Dynamic Terrain is updated automatically according to the camera position and all the LOD or tolerance parameters we've set so far.  
 Sometimes it's necessery to do something just before or just after the terrain update although we can't predict in the main logic when this update is triggered.  
-Therefore, the Dynamic Terrain provides two functions that we can over-write what are called just before and just after the terrain update : `beforeUpdate()` and `afterUpdate()`
+Therefore, the Dynamic Terrain provides two functions that we can over-write and what are called just before and just after the terrain update : `beforeUpdate()` and `afterUpdate()`
 
 ```javascript
     // compute the squared maximum distance in the terrain
@@ -342,12 +342,12 @@ if (terrain.contains(x, z)) {
 }
 ```
 
-If we need to know what is the altitude on the map of any point located at the coordinatets _(x, z)_ in the World, even if this point is not one of the point defining the map, we can use the method `getHeightFromMap(x ,z)`.  
+If we need to know what is the altitude on the map of any point located at the coordinatets _(x, z)_ in the World, even if this point is not one of the point defining the map (not one of the points in the map array), we can use the method `getHeightFromMap(x ,z)`.  
 ```javascript
 var y = terrain.getHeightFromMap(x, z); // returns y at (x, z) in the World
 ```
 
-This method can also returns the value of the terrain normal vector at the coordinates _(x, z)_. This value is set to a Vector3 passed as a reference : `getHeightFromMap(x, z, ref)`.  
+This method can also return the value of the terrain normal vector at the coordinates _(x, z)_. This value is set to a Vector3 passed as a reference : `getHeightFromMap(x, z, ref)`.  
 ```javacript
 var normal = BABYLON.Vector.Zero();
 y = terrain.getHeightFromMap(x, z, normal); // update also normal with the terrain normal at (x, z)
@@ -400,9 +400,9 @@ Let's get back the very first example of the data array generation and let's pop
             mapData[3 * (l * mapSubX + w) + 2] = z;    
 
             // colors of the map
-            mapColors[3 * (l * mapSubX + w)] = (0.5 + Math.random() * 0.2);
-            mapColors[3 * (l * mapSubX + w) + 1] = (0.5 + Math.random() * 0.4);
-            mapColors[3 * (l * mapSubX + w) + 2] = (0.5);       
+            mapColors[3 * (l * mapSubX + w)] = (0.5 + Math.random() * 0.2);     // red
+            mapColors[3 * (l * mapSubX + w) + 1] = (0.5 + Math.random() * 0.4); // green
+            mapColors[3 * (l * mapSubX + w) + 2] = (0.5);                       // blue
         }
     }
 ```
