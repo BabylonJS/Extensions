@@ -84,7 +84,7 @@ It's better to choose a multiple of 2 as the number of terrain subdivisions.
 Once created, this number never changes, neither the terrain number of vertices, but only its shape.  
 This means the computation charge to update the terrain is always constant and depends only on this subdivision value.  
 
-The terrain is a logical object providing several features. It embeddeds a BJS mesh accessible with the property `.mesh` :
+The terrain is a logical object providing several features. It embeds a BJS mesh accessible with the property `.mesh` :
 ```javascript
 var terrainMesh : terrain.mesh;
 terrain.Mesh.diffuseTexture = myTerrainTexture;
@@ -114,7 +114,7 @@ In short, by default, the terrain sees the map as infinite.
 LOD is an acronym for Level Of Detail.  
 It's a feature allowing to reduce the rendering precision of some mesh when it's far away from the camera in order to lower the necessary computation : the less vertices, the less CPU/GPU needed.  
 
-The dynamic terrain provides also a LOD feature but in a different way : the terrain number of vertices always keep constant but only the part of data map covered by the terrain changes.  
+The dynamic terrain provides also a LOD feature but in a different way : the terrain number of vertices always keeps constant but only the part of data map covered by the terrain changes.  
 By default, one terrain quad fits one map quad.  
 This factor can be modified with the property `.initialLOD` (equal to 1, by default) at any time.  
 
@@ -218,7 +218,7 @@ http://www.babylonjs-playground.com/#FJNR5#13
 
 Notes : 
 
-* We can change the value of the property `.LODLimits` at any time, it's taken in account on the next terrain update. So it's not a fixed value. We could image to have different LOD behavior depending on the camera position, speed or on the landscape itself.
+* We can change the value of the property `.LODLimits` at any time, it's taken in account on the next terrain update. So it's not a fixed value. We could imagine to have different LOD behavior depending on the camera position, speed or on the landscape itself.
 * The array is always stored internally being sorted in the descending order (ex `[4, 2]`). So let's remember this when we have to read this property value.  
 * Some of the terrain quads aren't squared, but rectangular. Actually each terrain vertex is given current `lodX` and `lodZ` values what we can read from a custom user function if needed (to be seen further).  
 
@@ -238,7 +238,7 @@ Of course, the perimetric LOD and the camera LOD correction can work together : 
 
 * the initial LOD is the factor of the central terrain quad to apply to the map quad (default 1),
 * the cameraLODcorrection is the quantity to add to this initial LOD to adjust to the camera position or distance (default 0),
-* the LOD limits are the limits in the perimetric terrain subdivision from where to increase the initial LOD (default `[]`), the camera LOD correction applies the same way on all the quads, so even on the already increased perimetric quads.  
+* the LOD limits are the limits in the perimetric terrain subdivisions from where to increase the initial LOD (default `[]`), the camera LOD correction applies the same way on all the quads, so even on the already increased perimetric quads.  
 * these three properties can be set at any time ! It's called _dynamic_ terrain, isn't it ?
 * the global LOD value is the current LOD factor value of the central quads.  
 
@@ -264,8 +264,8 @@ They can be changed at any time according to our needs.
 
 
 ### User custom function
-The Dynamic Terrain provides the ability to update each of its vertex on the whole terrain update.  
-Let's enable it (disabled by default) at any time. It can be enabled/disabled at any moment.   
+The Dynamic Terrain provides the ability to update each of its vertex while the whole terrain update.  
+Let's enable it (disabled by default). It can be enabled/disabled at any time.   
 ```javascrit
 terrain.useCustomVertexFunction = true;
 ```
@@ -304,13 +304,13 @@ Of course, it works also with alpha : http://www.babylonjs-playground.com/#FJNR5
 This feature is disabled by default because it may have an impact on the CPU.  
 Indeed, when a terrain is 100x100 quads, it has 10K vertices and this custom function is then called 10K times.   
 So let's remember to make it as fast as possible and to not allocate any object within it, else the garbage collector will have to work, consuming our precious FPS.  
-Let's also remember that the custom user function is called only on terrain updates, not necesseraly each frame. There's a way to force the terrain update on every frame that we'll see further.  
+Let's also remember that this custom user function is called only on terrain updates, not necesseraly each frame. There's a way to force the terrain update on every frame that we'll see further.  
 
 
 ### After or Before Terrain Update
 The Dynamic Terrain is updated automatically according to the camera position and all the LOD or tolerance parameters we've set so far.  
 Sometimes it's necessery to do something just before or just after the terrain update although we can't predict in the main logic when this update is triggered.  
-Therefore, the Dynamic Terrain provides two functions that we can over-write what are called just before and just after the terrain update : `beforeUpdate()` and `afterUpdate()`
+Therefore, the Dynamic Terrain provides two functions that we can over-write and what are called just before and just after the terrain update : `beforeUpdate()` and `afterUpdate()`
 
 ```javascript
     // compute the squared maximum distance in the terrain
@@ -342,12 +342,12 @@ if (terrain.contains(x, z)) {
 }
 ```
 
-If we need to know what is the altitude on the map of any point located at the coordinatets _(x, z)_ in the World, even if this point is not one of the point defining the map, we can use the method `getHeightFromMap(x ,z)`.  
+If we need to know what is the altitude on the map of any point located at the coordinatets _(x, z)_ in the World, even if this point is not one of the point defining the map (not one of the points in the map array), we can use the method `getHeightFromMap(x ,z)`.  
 ```javascript
 var y = terrain.getHeightFromMap(x, z); // returns y at (x, z) in the World
 ```
 
-This method can also returns the value of the terrain normal vector at the coordinates _(x, z)_. This value is set to a Vector3 passed as a reference : `getHeightFromMap(x, z, ref)`.  
+This method can also return the value of the terrain normal vector at the coordinates _(x, z)_. This value is set to a Vector3 passed as a reference : `getHeightFromMap(x, z, ref)`.  
 ```javacript
 var normal = BABYLON.Vector.Zero();
 y = terrain.getHeightFromMap(x, z, normal); // update also normal with the terrain normal at (x, z)
@@ -400,9 +400,9 @@ Let's get back the very first example of the data array generation and let's pop
             mapData[3 * (l * mapSubX + w) + 2] = z;    
 
             // colors of the map
-            mapColors[3 * (l * mapSubX + w)] = (0.5 + Math.random() * 0.2);
-            mapColors[3 * (l * mapSubX + w) + 1] = (0.5 + Math.random() * 0.4);
-            mapColors[3 * (l * mapSubX + w) + 2] = (0.5);       
+            mapColors[3 * (l * mapSubX + w)] = (0.5 + Math.random() * 0.2);     // red
+            mapColors[3 * (l * mapSubX + w) + 1] = (0.5 + Math.random() * 0.4); // green
+            mapColors[3 * (l * mapSubX + w) + 2] = (0.5);                       // blue
         }
     }
 ```
@@ -478,13 +478,18 @@ _A height map and normal array generator up to come soon_
 
 
 ### Normal map
-By default, as the terrain morphs from the current map data, all its normals are recomputed each update.  
-The normal computation charge is directly related to the terrain number of vertices (10K for a 100x100 terrain).  
-If we don't need the normal computation (ex : a terrain that would have only an emissive color or a wireframed terrain), we can disable at any time it with the property `.computeNormals`.  
+By default, each time we assign a new data map to the terrain, it pre-computes all the normals of the map once.  
+Computing all the map normals is a heavy process, but it's done only once.  
+This permits to skip the terrain mesh normal recomputation each time this one is morphed, it is to say on each update. Thus, the terrain normal recomputation is disabled by default.   
+This computation charge would be directly related to the terrain number of vertices (10K for a 100x100 terrain).  
+If for some reason (example : dynamic morphing if the terrain), we need to force the normal computation each update :  
 ```javascript
-terrain.computeNormals = false;   // default true, to skip the normal computation
+terrain.computeNormals = true;   // default false, to skip the normal computation
 ```
-If we have to manage a very large terrain and we still need to display the reflected light with right normals, we could pre-compute all the normals from the map data and store them in a normal flat array like we did for map point coordinates.  
+As the normals of map are pre-computed automatically for us, we don't need to care about them.  
+These normals are stored internally in a flat array of floats, just like the map coordinates.  
+
+There is still a way to use a custom normal array if needed.   
 This flat array of successive floats as normal vector coordinates _(x, y, z)_ for each map point can then be passed to the terrain. It simply must be exactly the same size than the map data array.  
 In this case, the terrain normals aren't computed any longer and the map normal array is instead.  
 This array is passed with the optional parameter property `.mapNormals`.  
@@ -501,55 +506,11 @@ var params = {
 var terrain = new BABYLON.DynamicTerrain("t", params, scene);
 ```
 
-How to get a normal map ?  
-Let's get back our first example when the data map was depicted by a huge wireframe ribbon.  
-So let's build back this ribbon, let's get its normal array from its `vertexData` object and then let's just dispose it.  
 
-```javascript
-    var mapData = new Float32Array(mapSubX * mapSubZ * 3); // 3 float values per point : x, y and z
-    var paths = [];                             // array for the ribbon model
-    for (var l = 0; l < mapSubZ; l++) {
-        var path = [];                          // only for the ribbon
-        for (var w = 0; w < mapSubX; w++) {
-            var x = (w - mapSubX * 0.5) * 2.0;
-            var z = (l - mapSubZ * 0.5) * 2.0;
-            var y = noise.simplex2(x * noiseScale, z * noiseScale);
-                   
-            mapData[3 *(l * mapSubX + w)] = x;
-            mapData[3 * (l * mapSubX + w) + 1] = y;
-            mapData[3 * (l * mapSubX + w) + 2] = z;
-
-            path.push(new BABYLON.Vector3(x, y, z));
-        }
-        paths.push(path);
-    }
-
-    // beware of the ribbon side orientation to get normals orientated upward
-    var map = BABYLON.MeshBuilder.CreateRibbon("m", {pathArray: paths, sideOrientation: 1}, scene);
-    var ribNormals = map.getVerticesData(BABYLON.VertexBuffer.NormalKind);
-    map.dispose();
-```
-Beware of the ribbon side orientation, because the normals could be orientation downward. If we aren't sure, let's just log the normal array in the console and check if every second value from three (y coordinate) is positive.  
-In this former snippet, we simply create a ribbon from the map data, then we store its normals in an array called `ribNormals` and we finally dispose this ribbon as it's not needed any more.  
-The array `ribNormals` is then passed in the Dynamic Terrain constructor with the optional parameter property `mapNormals` :  
-```javascript
-        var terrainSub = 100;               // 100 terrain subdivisions
-        var params = {
-            mapData: mapData,               // data map declaration : what data to use ?
-            mapSubX: mapSubX,               // how are these data stored by rows and columns
-            mapSubZ: mapSubZ,
-            mapNormals: ribNormals,         // map normal array
-            terrainSub: terrainSub          // how many terrain subdivisions wanted
-        }
-        var terrain = new BABYLON.DynamicTerrain("t", params, scene);
-```
-http://www.babylonjs-playground.com/#FJNR5#27    
-When a `mapNormals` array is passed, the terrain normals aren't computed any longer, they are just got from this array.  
-As the normal computation is often an intensive operation for heavy meshes (heavy in term of vertex number), skipping this process can bring a real CPU gain.  
 Example :  
 This terrain is 300x300 so 90K vertices what is really a huge mesh to compute every update.  
-With a normal map, so with pre-computed normals : http://www.babylonjs-playground.com/#FJNR5#25   
-Without, so normal computation each update : http://www.babylonjs-playground.com/#FJNR5#26  
+With a normal map, so with automatic pre-computed normals : http://www.babylonjs-playground.com/#FJNR5#110   
+Without (`computeNormals = true`), so normal computation each update : http://www.babylonjs-playground.com/#FJNR5#111    
 Let's simply check the FPS difference when rotating the camera to feel the gain.  
 
 ### Map change on the fly
