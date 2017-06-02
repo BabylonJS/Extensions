@@ -110,6 +110,11 @@ declare module BABYLON {
             normal: Vector3;
         }): any;
         /**
+         * Computes all the normals from the terrain data map  and stores it in the passed Float32Array reference.
+         * This passed array must have the same size than the mapData array.
+         */
+        computeNormalsFromMapToRef(normals: number[] | Float32Array): void;
+        /**
          * Returns true if the World coordinates (x, z) are in the current terrain.
          * @param x
          * @param z
@@ -233,7 +238,8 @@ declare module BABYLON {
          */
         mapNormals: Float32Array | number[];
         /**
-         * Boolean : must the normals be recomputed on each terrain update (default : true)
+         * Boolean : must the normals be recomputed on each terrain update (default : false).
+         * By default, all the map normals are pre-computed on terrain creation.
          */
         computeNormals: boolean;
         /**

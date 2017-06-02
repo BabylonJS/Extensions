@@ -478,13 +478,18 @@ _A height map and normal array generator up to come soon_
 
 
 ### Normal map
-By default, as the terrain morphs from the current map data, all its normals are recomputed each update.  
-The normal computation charge is directly related to the terrain number of vertices (10K for a 100x100 terrain).  
-If we don't need the normal computation (ex : a terrain that would have only an emissive color or a wireframed terrain), we can disable at any time it with the property `.computeNormals`.  
+By default, each time we assign a new data map to the terrain, it pre-computes all the normals of the map once.  
+Computing all the map normals is a heavy process, but it's done only once.  
+This permits to skip the terrain mesh normal recomputation each time this one is morphed, it is to say on each update. Thus, the terrain normal recomputation is disabled by default.   
+This computation charge would be directly related to the terrain number of vertices (10K for a 100x100 terrain).  
+If for some reason (example : dynamic morphing if the terrain), we need to force the normal computation each update :  
 ```javascript
-terrain.computeNormals = false;   // default true, to skip the normal computation
+terrain.computeNormals = true;   // default false, to skip the normal computation
 ```
-If we have to manage a very large terrain and we still need to display the reflected light with right normals, we could pre-compute all the normals from the map data and store them in a normal flat array like we did for map point coordinates.  
+As the normals of map are pre-computed automatically for us, we don't need to care about them.  
+These normals are stored internally in a flat array of floats, just like the map coordinates.  
+
+There is still a way to use a custom normal array if needed.   
 This flat array of successive floats as normal vector coordinates _(x, y, z)_ for each map point can then be passed to the terrain. It simply must be exactly the same size than the map data array.  
 In this case, the terrain normals aren't computed any longer and the map normal array is instead.  
 This array is passed with the optional parameter property `.mapNormals`.  
@@ -501,55 +506,11 @@ var params = {
 var terrain = new BABYLON.DynamicTerrain("t", params, scene);
 ```
 
-How to get a normal map ?  
-Let's get back our first example when the data map was depicted by a huge wireframe ribbon.  
-So let's build back this ribbon, let's get its normal array from its `vertexData` object and then let's just dispose it.  
 
-```javascript
-    var mapData = new Float32Array(mapSubX * mapSubZ * 3); // 3 float values per point : x, y and z
-    var paths = [];                             // array for the ribbon model
-    for (var l = 0; l < mapSubZ; l++) {
-        var path = [];                          // only for the ribbon
-        for (var w = 0; w < mapSubX; w++) {
-            var x = (w - mapSubX * 0.5) * 2.0;
-            var z = (l - mapSubZ * 0.5) * 2.0;
-            var y = noise.simplex2(x * noiseScale, z * noiseScale);
-                   
-            mapData[3 *(l * mapSubX + w)] = x;
-            mapData[3 * (l * mapSubX + w) + 1] = y;
-            mapData[3 * (l * mapSubX + w) + 2] = z;
-
-            path.push(new BABYLON.Vector3(x, y, z));
-        }
-        paths.push(path);
-    }
-
-    // beware of the ribbon side orientation to get normals orientated upward
-    var map = BABYLON.MeshBuilder.CreateRibbon("m", {pathArray: paths, sideOrientation: 1}, scene);
-    var ribNormals = map.getVerticesData(BABYLON.VertexBuffer.NormalKind);
-    map.dispose();
-```
-Beware of the ribbon side orientation, because the normals could be orientation downward. If we aren't sure, let's just log the normal array in the console and check if every second value from three (y coordinate) is positive.  
-In this former snippet, we simply create a ribbon from the map data, then we store its normals in an array called `ribNormals` and we finally dispose this ribbon as it's not needed any more.  
-The array `ribNormals` is then passed in the Dynamic Terrain constructor with the optional parameter property `mapNormals` :  
-```javascript
-        var terrainSub = 100;               // 100 terrain subdivisions
-        var params = {
-            mapData: mapData,               // data map declaration : what data to use ?
-            mapSubX: mapSubX,               // how are these data stored by rows and columns
-            mapSubZ: mapSubZ,
-            mapNormals: ribNormals,         // map normal array
-            terrainSub: terrainSub          // how many terrain subdivisions wanted
-        }
-        var terrain = new BABYLON.DynamicTerrain("t", params, scene);
-```
-http://www.babylonjs-playground.com/#FJNR5#27    
-When a `mapNormals` array is passed, the terrain normals aren't computed any longer, they are just got from this array.  
-As the normal computation is often an intensive operation for heavy meshes (heavy in term of vertex number), skipping this process can bring a real CPU gain.  
 Example :  
 This terrain is 300x300 so 90K vertices what is really a huge mesh to compute every update.  
-With a normal map, so with pre-computed normals : http://www.babylonjs-playground.com/#FJNR5#25   
-Without, so normal computation each update : http://www.babylonjs-playground.com/#FJNR5#26  
+With a normal map, so with automatic pre-computed normals : http://www.babylonjs-playground.com/#FJNR5#110   
+Without (`computeNormals = true`), so normal computation each update : http://www.babylonjs-playground.com/#FJNR5#111    
 Let's simply check the FPS difference when rotating the camera to feel the gain.  
 
 ### Map change on the fly
