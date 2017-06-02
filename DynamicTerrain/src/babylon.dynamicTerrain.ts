@@ -39,7 +39,7 @@ module BABYLON {
         private _updateForced: boolean = false;         // boolean : forced ribbon recomputation
         private _refreshEveryFrame: boolean = false;    // boolean : to force the terrain computation every frame
         private _useCustomVertexFunction: boolean = false; // boolean : to allow the call to updateVertex()
-        private _computeNormals: boolean = true;        // boolean : to skip or not the normal computation
+        private _computeNormals: boolean = false;       // boolean : to skip or not the normal computation
         private _datamap: boolean = false;              // boolean : true if an data map is passed as parameter
         private _uvmap: boolean = false;                // boolean : true if an UV map is passed as parameter
         private _colormap: boolean = false;             // boolean : true if an color map is passed as parameter
@@ -108,7 +108,6 @@ module BABYLON {
             this._mapSubZ = options.mapSubZ || this._terrainIdx;
             this._mapUVs = options.mapUVs;            // if not defined, it will be still populated by default values
             this._mapColors = options.mapColors;
-            this._mapNormals = options.mapNormals;
             this._scene = scene;
             this._terrainCamera = options.camera || scene.activeCamera;
             
@@ -118,6 +117,12 @@ module BABYLON {
             this._colormap = (this._mapColors) ? true : false;
             this._mapData = (this._datamap) ? this._mapData : new Float32Array(this._terrainIdx * this._terrainIdx * 3);
             this._mapUVs = (this._uvmap) ? this._mapUVs : new Float32Array(this._terrainIdx * this._terrainIdx * 2);
+            if (this._datamap) {
+                this._mapNormals = options.mapNormals || new Float32Array(this._mapSubX * this._mapSubZ * 3);
+            } 
+            else {
+                this._mapNormals = new Float32Array(this._terrainIdx * this._terrainIdx * 3);
+            }
 
             // Ribbon creation
             var index = 0;                                          // current vertex index in the map array
@@ -195,6 +200,7 @@ module BABYLON {
             this._normals = this._terrain.getVerticesData(VertexBuffer.NormalKind);
             this._uvs = this._terrain.getVerticesData(VertexBuffer.UVKind);
             this._colors = this._terrain.getVerticesData(VertexBuffer.ColorKind);
+            this.computeNormalsFromMapToRef(this._mapNormals);
 
             // update it immediatly and register the update callback function in the render loop
             this.update(true);
@@ -430,7 +436,7 @@ module BABYLON {
 
             // ribbon update    
             this._terrain.updateVerticesData(VertexBuffer.PositionKind, this._positions, false, false);
-            if (this._computeNormals && !this._mapNormals) {
+            if (this._computeNormals) {
                 VertexData.ComputeNormals(this._positions, this._indices, this._normals);
             } 
             this._terrain.updateVerticesData(VertexBuffer.NormalKind, this._normals, false, false);
@@ -538,6 +544,41 @@ module BABYLON {
 
             return y;
         }
+
+        /**
+         * Computes all the normals from the terrain data map  and stores it in the passed Float32Array reference.  
+         * This passed array must have the same size than the mapData array.
+         */
+         public computeNormalsFromMapToRef(normals: number[] | Float32Array): void {
+            var mapIndices = [];
+            var tmp1 = {normal: Vector3.Zero()};
+            var tmp2 = {normal: Vector3.Zero()};
+            var l = this._mapSubX * (this._mapSubZ - 1);
+            var i = 0;
+            for (i = 0; i < l; i++) {
+                mapIndices.push(i + 1, i + this._mapSubX, i);
+                mapIndices.push(i + this._mapSubX, i + 1, i + this._mapSubX + 1);
+            }
+            VertexData.ComputeNormals(this._mapData, mapIndices, normals);
+            // seam process
+            var lastIdx = (this._mapSubX - 1) * 3;
+            var colStart = 0;
+            var colEnd = 0;
+            for (i = 0; i < this._mapSubZ; i++) {
+                colStart = i * this._mapSubX * 3;
+                colEnd = colStart + lastIdx;
+                this.getHeightFromMap(this._mapData[colStart], this._mapData[colStart + 2], tmp1);
+                this.getHeightFromMap(this._mapData[colEnd], this._mapData[colEnd + 2], tmp2);
+                tmp1.normal.addInPlace(tmp2.normal).scaleInPlace(0.5);
+                normals[colStart] = tmp1.normal.x;
+                normals[colStart + 1] = tmp1.normal.y;
+                normals[colStart + 2] = tmp1.normal.z;
+                normals[colEnd] = tmp1.normal.x;
+                normals[colEnd + 1] = tmp1.normal.y;
+                normals[colEnd + 2] = tmp1.normal.z;
+            }
+         }
+
 
         /**
          * Returns true if the World coordinates (x, z) are in the current terrain.
@@ -711,6 +752,7 @@ module BABYLON {
             this._mapSizeZ = Math.abs(this._mapData[(this._mapSubZ - 1) * this._mapSubX * 3 + 2] - this._mapData[2]);
             this._averageSubSizeX = this._mapSizeX / this._mapSubX;
             this._averageSubSizeZ = this._mapSizeZ / this._mapSubZ;
+            this.computeNormalsFromMapToRef(val);
             this.update(true);
         }
         /**
@@ -766,7 +808,8 @@ module BABYLON {
             this._mapNormals = val;
         }
         /**
-         * Boolean : must the normals be recomputed on each terrain update (default : true)
+         * Boolean : must the normals be recomputed on each terrain update (default : false).  
+         * By default, all the map normals are pre-computed on terrain creation.
          */
         public get computeNormals(): boolean {
             return this._computeNormals;
