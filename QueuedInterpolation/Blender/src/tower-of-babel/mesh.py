@@ -682,11 +682,6 @@ class Mesh(FCurveAnimatable):
         file_handler.write(indent2 + 'if (!cloning){\n')
         indent2A = indent2 + '    '
         indent3A = indent2A + '    '
-        # Geometry
-        if hasattr(self, 'skeleton'):
-            file_handler.write(indent2A + var + '.skeleton = ' + self.skeleton.functionName + '(name, scene);\n')
-            file_handler.write(indent2A + var + '.numBoneInfluencers = ' + format_int(self.numBoneInfluencers) + ';\n\n')
-
         if exporter.logInBrowserConsole:
             file_handler.write(indent2A + 'geo = _B.Tools.Now;\n')
         file_handler.write(indent2A + var + '.setVerticesData(_B.VertexBuffer.PositionKind, new Float32Array([\n')
@@ -790,12 +785,13 @@ class Mesh(FCurveAnimatable):
         if isRootMesh:
             file_handler.write(indent + '    }\n')
 
+            file_handler.write('\n')
+            file_handler.write(indent + '    ' + self.legalName + '.prototype.dispose = function (doNotRecurse) {\n')
+            file_handler.write(indent + '        _super.prototype.dispose.call(this, doNotRecurse);\n')
+            file_handler.write(indent + '        if (this.skeleton) this.skeleton.dispose();\n')
             if hasattr(self,'factoryIdx'):
-                file_handler.write('\n')
-                file_handler.write(indent + '    ' + self.legalName + '.prototype.dispose = function (doNotRecurse) {\n')
-                file_handler.write(indent + '        _super.prototype.dispose.call(this, doNotRecurse);\n')
                 file_handler.write(indent + '        clean(' + str(self.factoryIdx) + ');\n')
-                file_handler.write(indent + '    };\n')
+            file_handler.write(indent + '    };\n')
 
             # instances handled as a separate function when a root mesh
             if len(self.instances) > 0:
@@ -870,6 +866,15 @@ def mesh_node_common_script(file_handler, typescript_file_handler, meshOrNode, i
         file_handler.write(indent2 + 'var shape = 0;\n')
 
     writePosRotScale(file_handler, meshOrNode, var, indent2)
+
+    # Geometry, prior to kids, so can set to parent's (node cannot have skeletons)
+    if hasattr(meshOrNode, 'skeleton'):
+        if isRootMesh:
+            file_handler.write(indent2 + var + '.skeleton = ' + meshOrNode.skeleton.functionName + '(name, scene);\n')
+        else:
+            file_handler.write(indent2 + var + '.skeleton = parent.skeleton;\n')
+
+        file_handler.write(indent2 + var + '.numBoneInfluencers = ' + format_int(meshOrNode.numBoneInfluencers) + ';\n\n')
 
     # not part of root mesh test to allow for nested parenting
     for kid in kids:

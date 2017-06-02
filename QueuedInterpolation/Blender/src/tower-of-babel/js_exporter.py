@@ -256,8 +256,8 @@ class JSExporter:
 
         callArgs = []
         callArgs.append(OptionalArgument('materialsRootDir', 'string', '"./"'))
-        file_handler           .write(JSExporter.define_module_method    ('defineMaterials', 'matLoaded', callArgs))
-        typescript_file_handler.write(JSExporter.define_Typescript_method('defineMaterials', 'matLoaded', callArgs))
+        file_handler           .write(JSExporter.define_module_method    ('defineMaterials', '', callArgs))
+        typescript_file_handler.write(JSExporter.define_Typescript_method('defineMaterials', '', callArgs))
 
         file_handler.write(indent2 + 'if (materialsRootDir.lastIndexOf("/") + 1  !== materialsRootDir.length) { materialsRootDir  += "/"; }\n')
         file_handler.write(indent2 + 'TOWER_OF_BABEL.Preloader.SCENE = scene;\n')
