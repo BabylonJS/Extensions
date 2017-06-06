@@ -544,13 +544,91 @@ var BABYLON;
          * @param z
          */
         DynamicTerrain.prototype.contains = function (x, z) {
-            if (x < this._positions[0] || x > this._positions[3 * this._terrainIdx]) {
+            if (x < this._positions[0] + this.mesh.position.x || x > this._positions[3 * this._terrainIdx] + this.mesh.position.x) {
                 return false;
             }
-            if (z < this._positions[2] || z > this._positions[3 * this._terrainIdx * this._terrainIdx + 2]) {
+            if (z < this._positions[2] + this.mesh.position.z || z > this._positions[3 * this._terrainIdx * this._terrainIdx + 2] + this.mesh.position.z) {
                 return false;
             }
             return true;
+        };
+        /**
+         * Static : Returns a new data map from the passed heightmap image file.
+         The parameters `width` and `height` (positive floats, default 300) set the map width and height sizes.
+         * `subX` is the wanted number of points along the map width (default 120).
+         * `subZ` is the wanted number of points along the map height (default 120).
+         * The parameter `minHeight` (float, default 0) is the minimum altitude of the map.
+         * The parameter `maxHeight` (float, default 1) is the maximum altitude of the map.
+         * The parameter `colorFilter` (optional Color3, default (0.3, 0.59, 0.11) ) is the filter to apply to the image pixel colors to compute the height.
+         * `onReady` is an optional callback function, called once the map is computed. It's passed the computed map.
+         * `scene` is the Scene object whose database will store the downloaded image.
+         */
+        DynamicTerrain.CreateMapFromHeightMap = function (heightmapURL, options, scene) {
+            var subX = options.subX || 120;
+            var subZ = options.subZ || 120;
+            var data = new Float32Array(subX * subZ * 3);
+            DynamicTerrain.CreateMapFromHeightMapToRef(heightmapURL, options, data, scene);
+            return data;
+        };
+        /**
+         * Static : Updates the passed array or Float32Array with a data map computed from the passed heightmap image file.
+         *  The parameters `width` and `height` (positive floats, default 300) set the map width and height sizes.
+         * `subX` is the wanted number of points along the map width (default 120).
+         * `subZ` is the wanted number of points along the map height (default 120).
+         * The parameter `minHeight` (float, default 0) is the minimum altitude of the map.
+         * The parameter `maxHeight` (float, default 1) is the maximum altitude of the map.
+         * The parameter `colorFilter` (optional Color3, default (0.3, 0.59, 0.11) ) is the filter to apply to the image pixel colors to compute the height.
+         * `onReady` is an optional callback function, called once the map is computed. It's passed the computed map.
+         * `scene` is the Scene object whose database will store the downloaded image.
+         * The passed Float32Array must be the right size : 3 x subX x subZ.
+         */
+        DynamicTerrain.CreateMapFromHeightMapToRef = function (heightmapURL, options, data, scene) {
+            var width = options.width || 300;
+            var height = options.height || 300;
+            var subX = options.subX || 100;
+            var subZ = options.subZ || 100;
+            var minHeight = options.minHeight || 0.0;
+            var maxHeight = options.maxHeight || 10.0;
+            var filter = options.colorFilter || new BABYLON.Color3(0.3, 0.59, 0.11);
+            var onReady = options.onReady;
+            var onload = function (img) {
+                // Getting height map data
+                var canvas = document.createElement("canvas");
+                var context = canvas.getContext("2d");
+                var bufferWidth = img.width;
+                var bufferHeight = img.height;
+                canvas.width = bufferWidth;
+                canvas.height = bufferHeight;
+                context.drawImage(img, 0, 0);
+                // Cast is due to wrong definition in lib.d.ts from ts 1.3 - https://github.com/Microsoft/TypeScript/issues/949
+                var buffer = context.getImageData(0, 0, bufferWidth, bufferHeight).data;
+                var x = 0.0;
+                var y = 0.0;
+                var z = 0.0;
+                for (var row = 0; row < subZ; row++) {
+                    for (var col = 0; col < subX; col++) {
+                        x = col * width / subX - width * 0.5;
+                        z = row * height / subZ - height * 0.5;
+                        var heightmapX = ((x + width * 0.5) / width * (bufferWidth - 1)) | 0;
+                        var heightmapY = ((z + height * 0.5) / height * (bufferHeight - 1)) | 0;
+                        var pos = (heightmapX + heightmapY * bufferWidth) * 4;
+                        var r = buffer[pos] / 255.0;
+                        var g = buffer[pos + 1] / 255.0;
+                        var b = buffer[pos + 2] / 255.0;
+                        var gradient = r * filter.r + g * filter.g + b * filter.b;
+                        y = minHeight + (maxHeight - minHeight) * gradient;
+                        var idx = (row * subX + col) * 3;
+                        data[idx] = x;
+                        data[idx + 1] = y;
+                        data[idx + 2] = z;
+                    }
+                }
+                // callback function if any
+                if (onReady) {
+                    onReady(data, subX, subZ);
+                }
+            };
+            BABYLON.Tools.LoadImage(heightmapURL, onload, function () { }, scene.database);
         };
         Object.defineProperty(DynamicTerrain.prototype, "refreshEveryFrame", {
             // Getters / Setters

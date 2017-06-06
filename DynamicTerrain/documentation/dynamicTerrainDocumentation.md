@@ -533,9 +533,9 @@ var normal1 = new Float32Array(map1.length);
 var normal2 = new Float32Array(map2.length);
 var normal3 = new Float32Array(map3.length);
 // let's precompute the normals of all the maps
-DynamicTerrain.ComputeNormalsFromMapToRef(map1, subX1, subY1, normal1);
-DynamicTerrain.ComputeNormalsFromMapToRef(map2, subX2, subY2, normal2);
-DynamicTerrain.ComputeNormalsFromMapToRef(map3, subX3, subY3, normal3);
+BABYLON.DynamicTerrain.ComputeNormalsFromMapToRef(map1, subX1, subY1, normal1);
+BABYLON.DynamicTerrain.ComputeNormalsFromMapToRef(map2, subX2, subY2, normal2);
+BABYLON.DynamicTerrain.ComputeNormalsFromMapToRef(map3, subX3, subY3, normal3);
 ```
 
 ### Map change on the fly
@@ -569,7 +569,7 @@ terrain.mapData = map2;                   // the normal map is automatically com
 ```javascript
 var map2 = someOtherFloat32Array;
 var normal2 = new Float32Array(map2.length);
-DynamicTerrain.ComputeNormalsFromMapToRef(map2, subX2, subY2, normal2);
+BABYLON.DynamicTerrain.ComputeNormalsFromMapToRef(map2, subX2, subY2, normal2);
 
 // then, later in the code ...
 terrain.mapData = map2;

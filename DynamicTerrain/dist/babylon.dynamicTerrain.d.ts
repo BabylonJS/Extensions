@@ -142,6 +142,49 @@ declare module BABYLON {
          */
         contains(x: number, z: number): boolean;
         /**
+         * Static : Returns a new data map from the passed heightmap image file.
+         The parameters `width` and `height` (positive floats, default 300) set the map width and height sizes.
+         * `subX` is the wanted number of points along the map width (default 120).
+         * `subZ` is the wanted number of points along the map height (default 120).
+         * The parameter `minHeight` (float, default 0) is the minimum altitude of the map.
+         * The parameter `maxHeight` (float, default 1) is the maximum altitude of the map.
+         * The parameter `colorFilter` (optional Color3, default (0.3, 0.59, 0.11) ) is the filter to apply to the image pixel colors to compute the height.
+         * `onReady` is an optional callback function, called once the map is computed. It's passed the computed map.
+         * `scene` is the Scene object whose database will store the downloaded image.
+         */
+        static CreateMapFromHeightMap(heightmapURL: string, options: {
+            width: number;
+            height: number;
+            subX: number;
+            subZ: number;
+            minHeight: number;
+            maxHeight: number;
+            onReady?: (map: number[] | Float32Array, subX: number, subZ: number) => void;
+            colorFilter?: Color3;
+        }, scene: Scene): Float32Array;
+        /**
+         * Static : Updates the passed array or Float32Array with a data map computed from the passed heightmap image file.
+         *  The parameters `width` and `height` (positive floats, default 300) set the map width and height sizes.
+         * `subX` is the wanted number of points along the map width (default 120).
+         * `subZ` is the wanted number of points along the map height (default 120).
+         * The parameter `minHeight` (float, default 0) is the minimum altitude of the map.
+         * The parameter `maxHeight` (float, default 1) is the maximum altitude of the map.
+         * The parameter `colorFilter` (optional Color3, default (0.3, 0.59, 0.11) ) is the filter to apply to the image pixel colors to compute the height.
+         * `onReady` is an optional callback function, called once the map is computed. It's passed the computed map.
+         * `scene` is the Scene object whose database will store the downloaded image.
+         * The passed Float32Array must be the right size : 3 x subX x subZ.
+         */
+        static CreateMapFromHeightMapToRef(heightmapURL: string, options: {
+            width: number;
+            height: number;
+            subX: number;
+            subZ: number;
+            minHeight: number;
+            maxHeight: number;
+            onReady?: (map: number[] | Float32Array, subX: number, subZ: number) => void;
+            colorFilter?: Color3;
+        }, data: number[] | Float32Array, scene: Scene): void;
+        /**
          * boolean : if the terrain must be recomputed every frame.
          */
         refreshEveryFrame: boolean;
