@@ -53,13 +53,15 @@ declare module BABYLON {
         private _mapSizeX;
         private _mapSizeZ;
         private _terrain;
-        private _v1;
-        private _v2;
-        private _v3;
-        private _v4;
-        private _vAvB;
-        private _vAvC;
-        private _norm;
+        private _isAlwaysVisible;
+        private _precomputeNormalsFromMap;
+        private static _v1;
+        private static _v2;
+        private static _v3;
+        private static _v4;
+        private static _vAvB;
+        private static _vAvC;
+        private static _norm;
         private _bbMin;
         private _bbMax;
         /**
@@ -105,15 +107,34 @@ declare module BABYLON {
          * Returns the altitude (float) at the coordinates (x, z) of the map.
          * @param x
          * @param z
+         * @param {normal: Vector3} (optional)
+         * If the optional object {normal: Vector3} is passed, then its property "normal" is updated with the normal vector value at the coordinates (x, z).
          */
         getHeightFromMap(x: number, z: number, options?: {
             normal: Vector3;
-        }): any;
+        }): number;
         /**
-         * Computes all the normals from the terrain data map  and stores it in the passed Float32Array reference.
+         * Static : Returns the altitude (float) at the coordinates (x, z) of the passed map.
+         * @param x
+         * @param z
+         * @param mapSubX the number of points along the map width
+         * @param mapSubX the number of points along the map height
+         * @param {normal: Vector3} (optional)
+         * If the optional object {normal: Vector3} is passed, then its property "normal" is updated with the normal vector value at the coordinates (x, z).
+         */
+        static GetHeightFromMap(x: number, z: number, mapData: number[] | Float32Array, mapSubX: number, mapSubZ: number, options?: {
+            normal: Vector3;
+        }): number;
+        private static _GetHeightFromMap(x, z, mapData, mapSubX, mapSubZ, mapSizeX, mapSizeZ, options?);
+        /**
+         * Static : Computes all the normals from the terrain data map  and stores them in the passed Float32Array reference.
          * This passed array must have the same size than the mapData array.
          */
-        computeNormalsFromMapToRef(normals: number[] | Float32Array): void;
+        static ComputeNormalsFromMapToRef(mapData: number[] | Float32Array, mapSubX: number, mapSubZ: any, normals: number[] | Float32Array): void;
+        /**
+         * Computes all the map normals from the current terrain data map.
+         */
+        computeNormalsFromMap(): void;
         /**
          * Returns true if the World coordinates (x, z) are in the current terrain.
          * @param x
@@ -247,6 +268,15 @@ declare module BABYLON {
          * Default false
          */
         useCustomVertexFunction: boolean;
+        /**
+         * Boolean : is the terrain always directly selected for rendering ?
+         */
+        isAlwaysVisible: boolean;
+        /**
+         * Boolean : when assigning a new data map to the existing, shall the normals be automatically precomputed once ?
+         * Default false.
+         */
+        precomputeNormalsFromMap: boolean;
         /**
          * Custom function called for each terrain vertex and passed the :
          * - current vertex {position: Vector3, uvs: Vector2, color: Color4, lodX: integer, lodZ: integer, worldPosition: Vector3, mapIndex: integer}
