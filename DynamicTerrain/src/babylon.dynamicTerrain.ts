@@ -63,14 +63,16 @@ module BABYLON {
         private _mapSizeX: number = 0.0;                                    // map x size
         private _mapSizeZ: number = 0.0;                                    // map z size
         private _terrain: Mesh;                                             // reference to the ribbon
+        private _isAlwaysVisible: boolean = false;                          // is the terrain mesh always selected for rendering
+        private _precomputeNormalsFromMap: boolean = false;                 // if the normals must be precomputed from the map data when assigning a new map to the existing terrain
         // tmp vectors
-        private _v1: Vector3 = Vector3.Zero();
-        private _v2: Vector3 = Vector3.Zero();
-        private _v3: Vector3 = Vector3.Zero();
-        private _v4: Vector3 = Vector3.Zero();
-        private _vAvB: Vector3 = Vector3.Zero();
-        private _vAvC: Vector3 = Vector3.Zero();
-        private _norm: Vector3 = Vector3.Zero();
+        private static _v1: Vector3 = Vector3.Zero();
+        private static _v2: Vector3 = Vector3.Zero();
+        private static _v3: Vector3 = Vector3.Zero();
+        private static _v4: Vector3 = Vector3.Zero();
+        private static _vAvB: Vector3 = Vector3.Zero();
+        private static _vAvC: Vector3 = Vector3.Zero();
+        private static _norm: Vector3 = Vector3.Zero();
         private _bbMin: Vector3 = Vector3.Zero();
         private _bbMax: Vector3 = Vector3.Zero();
 
@@ -200,7 +202,7 @@ module BABYLON {
             this._normals = this._terrain.getVerticesData(VertexBuffer.NormalKind);
             this._uvs = this._terrain.getVerticesData(VertexBuffer.UVKind);
             this._colors = this._terrain.getVerticesData(VertexBuffer.ColorKind);
-            this.computeNormalsFromMapToRef(this._mapNormals);
+            this.computeNormalsFromMap();
 
             // update it immediatly and register the update callback function in the render loop
             this.update(true);
@@ -482,93 +484,115 @@ module BABYLON {
          * Returns the altitude (float) at the coordinates (x, z) of the map.  
          * @param x 
          * @param z 
+         * @param {normal: Vector3} (optional)
+         * If the optional object {normal: Vector3} is passed, then its property "normal" is updated with the normal vector value at the coordinates (x, z).  
          */
-        public getHeightFromMap(x: number, z: number, options?: {normal: Vector3} ) {
+        public getHeightFromMap(x: number, z: number, options?: {normal: Vector3} ): number {
+            return DynamicTerrain._GetHeightFromMap(x, z, this._mapData, this._mapSubX, this._mapSizeZ, this._mapSizeX, this._mapSizeZ, options);
+        }
 
-            var x0 = this._mapData[0];
-            var z0 = this._mapData[2];
+        /**
+         * Static : Returns the altitude (float) at the coordinates (x, z) of the passed map.
+         * @param x 
+         * @param z 
+         * @param mapSubX the number of points along the map width
+         * @param mapSubX the number of points along the map height
+         * @param {normal: Vector3} (optional)
+         * If the optional object {normal: Vector3} is passed, then its property "normal" is updated with the normal vector value at the coordinates (x, z).  
+         */
+        public static GetHeightFromMap(x: number, z: number, mapData: number[]| Float32Array, mapSubX: number, mapSubZ: number, options? : {normal: Vector3}) : number {
+            var mapSizeX = Math.abs(mapData[(mapSubX - 1) * 3] - mapData[0]);
+            var mapSizeZ = Math.abs(mapData[(mapSubZ - 1) * mapSubX * 3 + 2] - mapData[2]);
+            return DynamicTerrain._GetHeightFromMap(x, z, mapData, mapSubX, mapSizeZ, mapSizeX, mapSizeZ, options);
+        }
+
+        // Computes the height and optionnally the normal at the coordinates (x ,z) from the passed map
+        private static _GetHeightFromMap(x: number, z: number, mapData: number[]| Float32Array, mapSubX: number, mapSubZ: number, mapSizeX: number, mapSizeZ: number, options? : {normal: Vector3}) : number {
+
+            var x0 = mapData[0];
+            var z0 = mapData[2];
 
             // reset x and z in the map space so they are between 0 and the axis map size
-            x = x - Math.floor((x - x0) / this._mapSizeX) * this._mapSizeX;
-            z = z - Math.floor((z - z0) / this._mapSizeZ) * this._mapSizeZ;
+            x = x - Math.floor((x - x0) / mapSizeX) * mapSizeX;
+            z = z - Math.floor((z - z0) / mapSizeZ) * mapSizeZ;
 
-            var col1 = Math.floor((x - x0) * this._mapSubX / this._mapSizeX);
-            var row1 = Math.floor((z - z0) * this._mapSubZ / this._mapSizeZ);
-            var col2 = (col1 + 1) % this._mapSubX;
-            var row2 = (row1 + 1) % this._mapSubZ;
+            var col1 = Math.floor((x - x0) * mapSubX / mapSizeX);
+            var row1 = Math.floor((z - z0) * mapSubZ / mapSizeZ);
+            var col2 = (col1 + 1) % mapSubX;
+            var row2 = (row1 + 1) % mapSubZ;
             // starting indexes of the positions of 4 vertices defining a quad on the map
-            var idx1 = 3 * (row1 * this._mapSubX + col1);
-            var idx2 = 3 * (row1 * this._mapSubX + col2);
-            var idx3 = 3 * ((row2) * this._mapSubX + col1);
-            var idx4 = 3 * ((row2) * this._mapSubX + col2);
+            var idx1 = 3 * (row1 * mapSubX + col1);
+            var idx2 = 3 * (row1 * mapSubX + col2);
+            var idx3 = 3 * ((row2) * mapSubX + col1);
+            var idx4 = 3 * ((row2) * mapSubX + col2);
 
-            this._v1.copyFromFloats(this._mapData[idx1], this._mapData[idx1 + 1], this._mapData[idx1 + 2]);
-            this._v2.copyFromFloats(this._mapData[idx2], this._mapData[idx2 + 1], this._mapData[idx2 + 2]);
-            this._v3.copyFromFloats(this._mapData[idx3], this._mapData[idx3 + 1], this._mapData[idx3 + 2]);
-            this._v4.copyFromFloats(this._mapData[idx4], this._mapData[idx4 + 1], this._mapData[idx4 + 2]);
+            DynamicTerrain._v1.copyFromFloats(mapData[idx1], mapData[idx1 + 1], mapData[idx1 + 2]);
+            DynamicTerrain._v2.copyFromFloats(mapData[idx2], mapData[idx2 + 1], mapData[idx2 + 2]);
+            DynamicTerrain._v3.copyFromFloats(mapData[idx3], mapData[idx3 + 1], mapData[idx3 + 2]);
+            DynamicTerrain._v4.copyFromFloats(mapData[idx4], mapData[idx4 + 1], mapData[idx4 + 2]);
 
-            var vA = this._v1;
+            var vA = DynamicTerrain._v1;
             var vB;
             var vC;
             var v;
 
-            var xv4v1 = this._v4.x - this._v1.x;
-            var zv4v1 = this._v4.z - this._v1.z;
+            var xv4v1 = DynamicTerrain._v4.x - DynamicTerrain._v1.x;
+            var zv4v1 = DynamicTerrain._v4.z - DynamicTerrain._v1.z;
             if (xv4v1 == 0 || zv4v1 == 0) {
-                return this._v1.y;
+                return DynamicTerrain._v1.y;
             }
             var cd = zv4v1 / xv4v1;
-            var h = this._v1.z - cd * this._v1.x;
+            var h = DynamicTerrain._v1.z - cd * DynamicTerrain._v1.x;
             if (z < cd * x + h) {
-                vB = this._v4;
-                vC = this._v2;
+                vB = DynamicTerrain._v4;
+                vC = DynamicTerrain._v2;
                 v = vA;
             } 
             else {
-                vB = this._v3;
-                vC = this._v4;
+                vB = DynamicTerrain._v3;
+                vC = DynamicTerrain._v4;
                 v = vB;
             }
-            vB.subtractToRef(vA, this._vAvB);
-            vC.subtractToRef(vA, this._vAvC);
-            Vector3.CrossToRef(this._vAvB, this._vAvC, this._norm);
-            this._norm.normalize();
+            vB.subtractToRef(vA, DynamicTerrain._vAvB);
+            vC.subtractToRef(vA, DynamicTerrain._vAvC);
+            Vector3.CrossToRef(DynamicTerrain._vAvB, DynamicTerrain._vAvC, DynamicTerrain._norm);
+            DynamicTerrain._norm.normalize();
             if (options && options.normal) {
-                options.normal.copyFrom(this._norm);
+                options.normal.copyFrom(DynamicTerrain._norm);
             }
-            var d = -(this._norm.x * v.x + this._norm.y * v.y + this._norm.z * v.z);
+            var d = -(DynamicTerrain._norm.x * v.x + DynamicTerrain._norm.y * v.y + DynamicTerrain._norm.z * v.z);
             var y = v.y;
-            if (this._norm.y != 0.0) {
-                y = -(this._norm.x * x + this._norm.z * z + d) / this._norm.y;
+            if (DynamicTerrain._norm.y != 0.0) {
+                y = -(DynamicTerrain._norm.x * x + DynamicTerrain._norm.z * z + d) / DynamicTerrain._norm.y;
             }
 
             return y;
         }
 
         /**
-         * Computes all the normals from the terrain data map  and stores it in the passed Float32Array reference.  
+         * Static : Computes all the normals from the terrain data map  and stores them in the passed Float32Array reference.  
          * This passed array must have the same size than the mapData array.
          */
-         public computeNormalsFromMapToRef(normals: number[] | Float32Array): void {
+         public static ComputeNormalsFromMapToRef(mapData: number[]| Float32Array, mapSubX: number, mapSubZ, normals: number[] | Float32Array): void {
             var mapIndices = [];
             var tmp1 = {normal: Vector3.Zero()};
             var tmp2 = {normal: Vector3.Zero()};
-            var l = this._mapSubX * (this._mapSubZ - 1);
+            var l = mapSubX * (mapSubZ - 1);
             var i = 0;
             for (i = 0; i < l; i++) {
-                mapIndices.push(i + 1, i + this._mapSubX, i);
-                mapIndices.push(i + this._mapSubX, i + 1, i + this._mapSubX + 1);
+                mapIndices.push(i + 1, i + mapSubX, i);
+                mapIndices.push(i + mapSubX, i + 1, i + mapSubX + 1);
             }
-            VertexData.ComputeNormals(this._mapData, mapIndices, normals);
+            VertexData.ComputeNormals(mapData, mapIndices, normals);
             // seam process
-            var lastIdx = (this._mapSubX - 1) * 3;
+            var lastIdx = (mapSubX - 1) * 3;
             var colStart = 0;
             var colEnd = 0;
-            for (i = 0; i < this._mapSubZ; i++) {
-                colStart = i * this._mapSubX * 3;
+            for (i = 0; i < mapSubZ; i++) {
+                colStart = i * mapSubX * 3;
                 colEnd = colStart + lastIdx;
-                this.getHeightFromMap(this._mapData[colStart], this._mapData[colStart + 2], tmp1);
-                this.getHeightFromMap(this._mapData[colEnd], this._mapData[colEnd + 2], tmp2);
+                DynamicTerrain.GetHeightFromMap(mapData[colStart], mapData[colStart + 2], mapData, mapSubX, mapSubZ, tmp1);
+                DynamicTerrain.GetHeightFromMap(mapData[colEnd], mapData[colEnd + 2], mapData, mapSubX, mapSubZ, tmp2);
                 tmp1.normal.addInPlace(tmp2.normal).scaleInPlace(0.5);
                 normals[colStart] = tmp1.normal.x;
                 normals[colStart + 1] = tmp1.normal.y;
@@ -579,6 +603,12 @@ module BABYLON {
             }
          }
 
+         /**
+          * Computes all the map normals from the current terrain data map.
+          */
+          public computeNormalsFromMap(): void {
+              DynamicTerrain.ComputeNormalsFromMapToRef(this._mapData, this._mapSubX, this._mapSubZ, this._mapNormals);
+          }
 
         /**
          * Returns true if the World coordinates (x, z) are in the current terrain.
@@ -752,7 +782,9 @@ module BABYLON {
             this._mapSizeZ = Math.abs(this._mapData[(this._mapSubZ - 1) * this._mapSubX * 3 + 2] - this._mapData[2]);
             this._averageSubSizeX = this._mapSizeX / this._mapSubX;
             this._averageSubSizeZ = this._mapSizeZ / this._mapSubZ;
-            this.computeNormalsFromMapToRef(val);
+            if (this._precomputeNormalsFromMap) {
+                this.computeNormalsFromMap();
+            }
             this.update(true);
         }
         /**
@@ -827,7 +859,26 @@ module BABYLON {
         public set useCustomVertexFunction(val: boolean) {
             this._useCustomVertexFunction = val;
         }
-
+        /**
+         * Boolean : is the terrain always directly selected for rendering ?
+         */
+        public get isAlwaysVisible(): boolean {
+            return this._isAlwaysVisible;
+        }
+        public set isAlwaysVisible(val) {
+            this.mesh.alwaysSelectAsActiveMesh = val;
+            this._isAlwaysVisible = val;
+        }
+        /**
+         * Boolean : when assigning a new data map to the existing, shall the normals be automatically precomputed once ?  
+         * Default false.  
+         */
+        public get precomputeNormalsFromMap(): boolean {
+            return this._precomputeNormalsFromMap;
+        }
+        public set precomputeNormalsFromMap(val) {
+            this._precomputeNormalsFromMap = val;
+        }
         // ===============================================================
         // User custom functions.
         // These following can be overwritten bu the user to fit his needs.
