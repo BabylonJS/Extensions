@@ -183,7 +183,7 @@ var BABYLON;
         /**
          * Updates the terrain position and shape according to the camera position.
          * `force` : boolean, forces the terrain update even if no camera position change.
-         * Returns nothing.
+         * Returns the terrain.
          */
         DynamicTerrain.prototype.update = function (force) {
             this._needsUpdate = false;
@@ -225,6 +225,7 @@ var BABYLON;
             this._centerWorld.x = this._terrain.position.x + this._terrainHalfSizeX;
             this._centerWorld.y = this._terrain.position.y;
             this._centerWorld.z = this._terrain.position.z + this._terrainHalfSizeZ;
+            return this;
         };
         // private : updates the underlying ribbon
         DynamicTerrain.prototype._updateTerrain = function () {
@@ -313,7 +314,7 @@ var BABYLON;
                     this._positions[ribbonPosInd1] = this._averageSubSizeX * stepI;
                     this._positions[ribbonPosInd2] = this._mapData[posIndex + 1];
                     this._positions[ribbonPosInd3] = this._averageSubSizeZ * stepJ;
-                    if (this._mapNormals) {
+                    if (!this._computeNormals) {
                         this._normals[ribbonPosInd1] = this._mapNormals[posIndex];
                         this._normals[ribbonPosInd2] = this._mapNormals[posIndex + 1];
                         this._normals[ribbonPosInd3] = this._mapNormals[posIndex + 2];
@@ -396,7 +397,7 @@ var BABYLON;
         };
         /**
          * Updates the mesh terrain size according to the LOD limits and the camera position.
-         * Returns nothing.
+         * Returns the terrain.
          */
         DynamicTerrain.prototype.updateTerrainSize = function () {
             var remainder = this._terrainSub; // the remaining cells at the general current LOD value
@@ -419,6 +420,7 @@ var BABYLON;
             this._terrainSizeZ = tsz;
             this._terrainHalfSizeX = tsx * 0.5;
             this._terrainHalfSizeZ = tsz * 0.5;
+            return this;
         };
         /**
          * Returns the altitude (float) at the coordinates (x, z) of the map.
@@ -428,7 +430,7 @@ var BABYLON;
          * If the optional object {normal: Vector3} is passed, then its property "normal" is updated with the normal vector value at the coordinates (x, z).
          */
         DynamicTerrain.prototype.getHeightFromMap = function (x, z, options) {
-            return DynamicTerrain._GetHeightFromMap(x, z, this._mapData, this._mapSubX, this._mapSizeZ, this._mapSizeX, this._mapSizeZ, options);
+            return DynamicTerrain._GetHeightFromMap(x, z, this._mapData, this._mapSubX, this._mapSubZ, this._mapSizeX, this._mapSizeZ, options);
         };
         /**
          * Static : Returns the altitude (float) at the coordinates (x, z) of the passed map.
@@ -442,7 +444,7 @@ var BABYLON;
         DynamicTerrain.GetHeightFromMap = function (x, z, mapData, mapSubX, mapSubZ, options) {
             var mapSizeX = Math.abs(mapData[(mapSubX - 1) * 3] - mapData[0]);
             var mapSizeZ = Math.abs(mapData[(mapSubZ - 1) * mapSubX * 3 + 2] - mapData[2]);
-            return DynamicTerrain._GetHeightFromMap(x, z, mapData, mapSubX, mapSizeZ, mapSizeX, mapSizeZ, options);
+            return DynamicTerrain._GetHeightFromMap(x, z, mapData, mapSubX, mapSubZ, mapSizeX, mapSizeZ, options);
         };
         // Computes the height and optionnally the normal at the coordinates (x ,z) from the passed map
         DynamicTerrain._GetHeightFromMap = function (x, z, mapData, mapSubX, mapSubZ, mapSizeX, mapSizeZ, options) {
@@ -533,10 +535,12 @@ var BABYLON;
             }
         };
         /**
-         * Computes all the map normals from the current terrain data map.
+         * Computes all the map normals from the current terrain data map and sets them to the terrain.
+         * Returns the terrain.
          */
         DynamicTerrain.prototype.computeNormalsFromMap = function () {
             DynamicTerrain.ComputeNormalsFromMapToRef(this._mapData, this._mapSubX, this._mapSubZ, this._mapNormals);
+            return this;
         };
         /**
          * Returns true if the World coordinates (x, z) are in the current terrain.
@@ -555,8 +559,8 @@ var BABYLON;
         /**
          * Static : Returns a new data map from the passed heightmap image file.
          The parameters `width` and `height` (positive floats, default 300) set the map width and height sizes.
-         * `subX` is the wanted number of points along the map width (default 120).
-         * `subZ` is the wanted number of points along the map height (default 120).
+         * `subX` is the wanted number of points along the map width (default 100).
+         * `subZ` is the wanted number of points along the map height (default 100).
          * The parameter `minHeight` (float, default 0) is the minimum altitude of the map.
          * The parameter `maxHeight` (float, default 1) is the maximum altitude of the map.
          * The parameter `colorFilter` (optional Color3, default (0.3, 0.59, 0.11) ) is the filter to apply to the image pixel colors to compute the height.
@@ -564,8 +568,8 @@ var BABYLON;
          * `scene` is the Scene object whose database will store the downloaded image.
          */
         DynamicTerrain.CreateMapFromHeightMap = function (heightmapURL, options, scene) {
-            var subX = options.subX || 120;
-            var subZ = options.subZ || 120;
+            var subX = options.subX || 100;
+            var subZ = options.subZ || 100;
             var data = new Float32Array(subX * subZ * 3);
             DynamicTerrain.CreateMapFromHeightMapToRef(heightmapURL, options, data, scene);
             return data;
@@ -573,8 +577,8 @@ var BABYLON;
         /**
          * Static : Updates the passed array or Float32Array with a data map computed from the passed heightmap image file.
          *  The parameters `width` and `height` (positive floats, default 300) set the map width and height sizes.
-         * `subX` is the wanted number of points along the map width (default 120).
-         * `subZ` is the wanted number of points along the map height (default 120).
+         * `subX` is the wanted number of points along the map width (default 100).
+         * `subZ` is the wanted number of points along the map height (default 100).
          * The parameter `minHeight` (float, default 0) is the minimum altitude of the map.
          * The parameter `maxHeight` (float, default 1) is the maximum altitude of the map.
          * The parameter `colorFilter` (optional Color3, default (0.3, 0.59, 0.11) ) is the filter to apply to the image pixel colors to compute the height.
@@ -610,12 +614,9 @@ var BABYLON;
                         x = col * width / subX - width * 0.5;
                         z = row * height / subZ - height * 0.5;
                         var heightmapX = ((x + width * 0.5) / width * (bufferWidth - 1)) | 0;
-                        var heightmapY = ((z + height * 0.5) / height * (bufferHeight - 1)) | 0;
+                        var heightmapY = (bufferHeight - 1) - ((z + height * 0.5) / height * (bufferHeight - 1)) | 0;
                         var pos = (heightmapX + heightmapY * bufferWidth) * 4;
-                        var r = buffer[pos] / 255.0;
-                        var g = buffer[pos + 1] / 255.0;
-                        var b = buffer[pos + 2] / 255.0;
-                        var gradient = r * filter.r + g * filter.g + b * filter.b;
+                        var gradient = (buffer[pos] * filter.r + buffer[pos + 1] * filter.g + buffer[pos + 2] * filter.b) / 255.0;
                         y = minHeight + (maxHeight - minHeight) * gradient;
                         var idx = (row * subX + col) * 3;
                         data[idx] = x;
@@ -629,6 +630,34 @@ var BABYLON;
                 }
             };
             BABYLON.Tools.LoadImage(heightmapURL, onload, function () { }, scene.database);
+        };
+        /**
+         * Static : Updates the passed arrays with UVs values to fit the whole map with subX points along its width and subZ points along its height.
+         * The passed array must be the right size : subX x subZ x 2.
+         */
+        DynamicTerrain.CreateUVMapToRef = function (subX, subZ, mapUVs) {
+            for (var h = 0; h < subZ; h++) {
+                for (var w = 0; w < subX; w++) {
+                    mapUVs[(h * subX + w) * 2] = w / subX;
+                    mapUVs[(h * subX + w) * 2 + 1] = h / subZ;
+                }
+            }
+        };
+        /**
+         * Static : Returns a new UV array with values to fit the whole map with subX points along its width and subZ points along its height.
+         */
+        DynamicTerrain.CreateUVMap = function (subX, subZ) {
+            var mapUVs = new Float32Array(subX * subZ * 2);
+            DynamicTerrain.CreateUVMapToRef(subX, subZ, mapUVs);
+            return mapUVs;
+        };
+        /**
+         * Computes and sets the terrain UV map with values to fit the whole map.
+         * Returns the terrain.
+         */
+        DynamicTerrain.prototype.createUVMap = function () {
+            this.mapUVs = DynamicTerrain.CreateUVMap(this._mapSubX, this._mapSubZ);
+            return this;
         };
         Object.defineProperty(DynamicTerrain.prototype, "refreshEveryFrame", {
             // Getters / Setters
@@ -852,6 +881,7 @@ var BABYLON;
             },
             set: function (val) {
                 this._mapData = val;
+                this._datamap = true;
                 this._mapSizeX = Math.abs(this._mapData[(this._mapSubX - 1) * 3] - this._mapData[0]);
                 this._mapSizeZ = Math.abs(this._mapData[(this._mapSubZ - 1) * this._mapSubX * 3 + 2] - this._mapData[2]);
                 this._averageSubSizeX = this._mapSizeX / this._mapSubX;
@@ -902,6 +932,7 @@ var BABYLON;
                 return this._mapColors;
             },
             set: function (val) {
+                this._colormap = true;
                 this._mapColors = val;
             },
             enumerable: true,
@@ -917,6 +948,7 @@ var BABYLON;
                 return this._mapUVs;
             },
             set: function (val) {
+                this._uvmap = true;
                 this._mapUVs = val;
             },
             enumerable: true,

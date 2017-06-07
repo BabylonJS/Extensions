@@ -93,16 +93,16 @@ declare module BABYLON {
         /**
          * Updates the terrain position and shape according to the camera position.
          * `force` : boolean, forces the terrain update even if no camera position change.
-         * Returns nothing.
+         * Returns the terrain.
          */
-        update(force: boolean): void;
+        update(force: boolean): DynamicTerrain;
         private _updateTerrain();
         private _mod(a, b);
         /**
          * Updates the mesh terrain size according to the LOD limits and the camera position.
-         * Returns nothing.
+         * Returns the terrain.
          */
-        updateTerrainSize(): void;
+        updateTerrainSize(): DynamicTerrain;
         /**
          * Returns the altitude (float) at the coordinates (x, z) of the map.
          * @param x
@@ -132,9 +132,10 @@ declare module BABYLON {
          */
         static ComputeNormalsFromMapToRef(mapData: number[] | Float32Array, mapSubX: number, mapSubZ: any, normals: number[] | Float32Array): void;
         /**
-         * Computes all the map normals from the current terrain data map.
+         * Computes all the map normals from the current terrain data map and sets them to the terrain.
+         * Returns the terrain.
          */
-        computeNormalsFromMap(): void;
+        computeNormalsFromMap(): DynamicTerrain;
         /**
          * Returns true if the World coordinates (x, z) are in the current terrain.
          * @param x
@@ -144,8 +145,8 @@ declare module BABYLON {
         /**
          * Static : Returns a new data map from the passed heightmap image file.
          The parameters `width` and `height` (positive floats, default 300) set the map width and height sizes.
-         * `subX` is the wanted number of points along the map width (default 120).
-         * `subZ` is the wanted number of points along the map height (default 120).
+         * `subX` is the wanted number of points along the map width (default 100).
+         * `subZ` is the wanted number of points along the map height (default 100).
          * The parameter `minHeight` (float, default 0) is the minimum altitude of the map.
          * The parameter `maxHeight` (float, default 1) is the maximum altitude of the map.
          * The parameter `colorFilter` (optional Color3, default (0.3, 0.59, 0.11) ) is the filter to apply to the image pixel colors to compute the height.
@@ -165,8 +166,8 @@ declare module BABYLON {
         /**
          * Static : Updates the passed array or Float32Array with a data map computed from the passed heightmap image file.
          *  The parameters `width` and `height` (positive floats, default 300) set the map width and height sizes.
-         * `subX` is the wanted number of points along the map width (default 120).
-         * `subZ` is the wanted number of points along the map height (default 120).
+         * `subX` is the wanted number of points along the map width (default 100).
+         * `subZ` is the wanted number of points along the map height (default 100).
          * The parameter `minHeight` (float, default 0) is the minimum altitude of the map.
          * The parameter `maxHeight` (float, default 1) is the maximum altitude of the map.
          * The parameter `colorFilter` (optional Color3, default (0.3, 0.59, 0.11) ) is the filter to apply to the image pixel colors to compute the height.
@@ -184,6 +185,20 @@ declare module BABYLON {
             onReady?: (map: number[] | Float32Array, subX: number, subZ: number) => void;
             colorFilter?: Color3;
         }, data: number[] | Float32Array, scene: Scene): void;
+        /**
+         * Static : Updates the passed arrays with UVs values to fit the whole map with subX points along its width and subZ points along its height.
+         * The passed array must be the right size : subX x subZ x 2.
+         */
+        static CreateUVMapToRef(subX: number, subZ: number, mapUVs: number[] | Float32Array): void;
+        /**
+         * Static : Returns a new UV array with values to fit the whole map with subX points along its width and subZ points along its height.
+         */
+        static CreateUVMap(subX: number, subZ: number): Float32Array;
+        /**
+         * Computes and sets the terrain UV map with values to fit the whole map.
+         * Returns the terrain.
+         */
+        createUVMap(): DynamicTerrain;
         /**
          * boolean : if the terrain must be recomputed every frame.
          */
