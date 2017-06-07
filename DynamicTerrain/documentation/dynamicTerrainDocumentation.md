@@ -611,7 +611,7 @@ BABYLON.DynamicTerrain.CreateMapFromHeightMapToRef(url3, options, set3, scene);
 ``` 
 Example : http://www.babylonjs-playground.com/#FJNR5#123  
 In this example we use both the world image to texture the whole map with `createUVMap()` and the world height map to define the altitudes.  
-The same with a huge map (800K points, so more memory) but the same terrain size : abylonjs-playground.com/#FJNR5#124  
+The same with a huge map (800K points, so more memory) but the same terrain size : http://www.babylonjs-playground.com/#FJNR5#124 
 
 
 ### Map change on the fly
