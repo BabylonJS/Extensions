@@ -1,11 +1,12 @@
 /// <reference path="../meshes/Mesh.ts"/>
+/// <reference path="./AbstractGrandEntrance.ts"/>
 
 module QI{
     /**
      * Implemented using the ShaderBuilder extension embedded into QI.
      * This is an abstract class.  A concrete subclass needs to implement _getEffectHostMesh() & _makeCallback()
      */
-    export class ShaderBuilderEntrance implements GrandEntrance {
+    export class ShaderBuilderEntrance extends AbstractGrandEntrance {
         private static _SB_INITIALIZED = false;
 
         /**
@@ -16,13 +17,9 @@ module QI{
          * @param {BABYLON.Sound} soundEffect - An optional instance of the sound to play as a part of entrance.
          * @param {boolean} disposeSound - When true, dispose the sound effect on completion. (Default false)
          */
-        constructor(public _mesh: Mesh, public durations : Array<number>, public soundEffect? : BABYLON.Sound, disposeSound? : boolean) {
-            if (this.soundEffect && disposeSound) {
-                var ref = this;
-                this.soundEffect.onended = function() {
-                    ref.soundEffect.dispose();
-               };
-            }
+        constructor(mesh: Mesh, durations : Array<number>, soundEffect? : BABYLON.Sound, disposeSound? : boolean) {
+            super(mesh, durations, soundEffect, disposeSound);
+
             if (!ShaderBuilderEntrance._SB_INITIALIZED) {
                 ShaderBuilderEntrance._SB_INITIALIZED = true;
                 BABYLONX.ShaderBuilder.InitializeEngine();
@@ -43,7 +40,7 @@ module QI{
         public _effectHostMesh : BABYLON.Mesh;
         public _originalScale : BABYLON.Vector3;
         
-        /** GrandEntrance implementation */
+        /** @override */
         public makeEntrance() : void {
             this._originalScale = this._mesh.scaling.clone();
             this._mesh.scaling = new BABYLON.Vector3(0.0000001, 0.0000001, 0.0000001);
@@ -226,6 +223,7 @@ module QI{
             
             sb.Transparency(); // assign material.needAlphaBlending = function () { return true; }
               
+   //         console.log(sb.toScript("QI", "PoofMaterial", true));
             var material = sb.BuildMaterial(scene);
             material.setVector4('color', new BABYLON.Vector4(1, 1, 0, 1));
             material.setVector4('color2', new BABYLON.Vector4(1, 0, 0, 1));

@@ -1,33 +1,19 @@
 /// <reference path="../meshes/Mesh.ts"/>
+/// <reference path="./AbstractGrandEntrance.ts"/>
 
 module QI{
     /**
      * The Fire Entrance REQUIRES that BABYLON.FireMaterial.js be loaded
      */
-    export class FireEntrance implements GrandEntrance {
+    export class FireEntrance extends AbstractGrandEntrance {
         private _count : number;
         private _diffuse : BABYLON.Texture;
         private _distortion : BABYLON.Texture;
         private _opacity : BABYLON.Texture;
 
-        /**
-         * @constructor - This is the required constructor for a GrandEntrance.  This is what Tower of Babel
-         * generated code expects.
-         * @param {QI.Mesh} _mesh - Root level mesh to display.
-         * @param {Array<number>} durations - The millis of various sections of entrance.  For Fire only 1.
-         * @param {BABYLON.Sound} soundEffect - An optional instance of the sound to play as a part of entrance.
-         * @param {boolean} disposeSound - When true, dispose the sound effect on completion. (Default false)
-         */
-        constructor(public _mesh: Mesh, public durations : Array<number>, public soundEffect? : BABYLON.Sound, disposeSound? : boolean) {
-            if (this.soundEffect && disposeSound) {
-                var ref = this;
-                this.soundEffect.onended = function() {
-                    ref.soundEffect.dispose();
-               };
-            }
-        }
+        // no need for a constructor, just use super's
 
-        /** GrandEntrance implementation */
+        /** @override */
         public makeEntrance() : void {
             if (!BABYLON.FireMaterial) {
                 throw "Fire Material library not found";

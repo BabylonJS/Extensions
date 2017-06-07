@@ -5,24 +5,14 @@
 /// <reference path="../deformation/skeletonBased/PoseProcessor.ts"/>
 /// <reference path="../deformation/skeletonBased/Skeleton.ts"/>
 
+/// <reference path="../entrances/AbstractGrandEntrance.ts"/>
+
 /// <reference path="../queue/MotionEvent.ts"/>
 /// <reference path="../queue/EventSeries.ts"/>
 /// <reference path="../queue/PovProcessor.ts"/>
 /// <reference path="../queue/TimelineControl.ts"/>
 
 module QI {
-    /** An interface used so both implementing classes & Mesh do not have to reference each other.
-     *
-     * Any class implementing this MUST have constructor with 3 arguments: 
-     *      - The root level mesh to display.
-     *      - An array of durations, length variable
-     *      - An optional sound to accompany the entrance
-     * Tower of Babel generates instancing this way.
-     */
-    export interface GrandEntrance {
-        makeEntrance() : void;
-    }
-
     /**
      * Mesh sub-class which has a before render which processes events for ShapeKeysGroups, Skeleton Poses, and POV.
      */
@@ -56,7 +46,7 @@ module QI {
 
         // for grand entrances
         public static COMPUTED_GROUP_NAME = "COMPUTED-GROUP"; // having a '-' is strategic, since that is the separator for blender shapekeys (GROUP-KEYNAME)
-        public entranceMethod : GrandEntrance; // set prior to being on screen for any effect
+        public entranceMethod : AbstractGrandEntrance; // set prior to being on screen for any effect
 
         /**
          * @constructor - Args same As BABYLON.Mesh, except that using a source for cloning requires there be no shape keys
