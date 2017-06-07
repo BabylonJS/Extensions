@@ -476,8 +476,21 @@ http://www.babylonjs-playground.com/#FJNR5#28
 A FreeCamera was set instead of an ArcRotate one to move easily on the map. The map texture is also changed to the file _earth.jpg_.  
 As we can notice now, the texture is no longer bound to the terrain itself but to the map : the image is stretched in this example along the whole map.  
 
-_A height map and normal array generator up to come soon_
-
+In this former example, we stretched the image along the whole map.  
+For this very specific need, we can also the method `.createUVMap()` what does the same (computation and assignement to the terrain) in a single call.   
+```javascript
+        var params = {
+            mapData: mapData,               // data map declaration : what data to use ?
+            mapSubX: mapSubX,               // how are these data stored by rows and columns
+            mapSubZ: mapSubZ,
+            terrainSub: terrainSub          // how many terrain subdivisions wanted
+            // no more for mapUVs, it will be done by createUVMap()
+        }
+        var terrain = new BABYLON.DynamicTerrain("t", params, scene);
+        terrain.createUVMap();  
+        // computes and sets an UV map stretching the texture on the whole image
+```
+Example with no more manual UV computation : http://www.babylonjs-playground.com/#FJNR5#121  
 
 ### Normal map
 By default, when we assign a data map to the terrain at construction time, it pre-computes all the normals of the map once.  
@@ -533,10 +546,73 @@ var normal1 = new Float32Array(map1.length);
 var normal2 = new Float32Array(map2.length);
 var normal3 = new Float32Array(map3.length);
 // let's precompute the normals of all the maps
-DynamicTerrain.ComputeNormalsFromMapToRef(map1, subX1, subY1, normal1);
-DynamicTerrain.ComputeNormalsFromMapToRef(map2, subX2, subY2, normal2);
-DynamicTerrain.ComputeNormalsFromMapToRef(map3, subX3, subY3, normal3);
+BABYLON.DynamicTerrain.ComputeNormalsFromMapToRef(map1, subX1, subY1, normal1);
+BABYLON.DynamicTerrain.ComputeNormalsFromMapToRef(map2, subX2, subY2, normal2);
+BABYLON.DynamicTerrain.ComputeNormalsFromMapToRef(map3, subX3, subY3, normal3);
 ```
+
+### Map creation from a height map  
+A height map is an image file, usually with grey colors only (from black to white), where each pixel color holds the point altitude : the brighter, the higher.  
+Example file : http://www.babylonjs.com/assets/heightMap.png  
+
+Like the BJS `MeshBuilder` class provides a method to create a mesh from a height map, the Dynamic Terrain provides a static method to generate a data map from a height map.  
+
+Here's the way to use it :  
+```javascript
+// Declare a callback function that will be executed once the heightmap file is downloaded
+// This function is passed the generated data and the number of points on the map height and width
+var terrain;
+var createTerrain = function(mapData, mapSubX, mapSubZ) {
+    var options = {
+        terrainSub: 100,  // 100 x 100 quads
+        mapData: mapData, // the generated data received
+        mapSubX: mapSubX, mapSubZ: mapSubZ // the map number of points per dimension
+    };
+    terrain = new BABYLON.DynamicTerrain("dt", options, scene);
+    terrain.createUVMap();      // compute also the UVs
+    terrain.mesh.material = someMaterial; 
+    // etc about the terrain ...
+    // terrain.updateCameraLOD = function(camera) { ... }
+};
+
+// Create the map from the height map and call the callback function when done
+var hmURL = "http://www.babylonjs.com/assets/heightMap.png";  // heightmap file URL
+var hmOptions = {
+        width: 5000, height: 4000,          // map size in the World 
+        subX: 1000, subZ: 800,              // number of points on map width and height
+        onReady: createTerrain              // callback function declaration
+};
+var mapData = new Float32Array(1000 * 800 * 3); // the array that will store the generated data
+BABYLON.DynamicTerrain.CreateMapFromHeightMapToRef(hmURL, hmOptions, mapData, scene);
+```
+
+* `hmURL` is a string, it's the URL or the DataURL string of the height map image,
+* `width` and `height` are optional floats (default 300), the dimensions the map in the World,  
+* `subX` and `subZ` are optional integers (default 100), the number of points on each map dimension,
+* `minHeight` and `maxHeight` are the optional minimal and maximal heights (floats, default 0 and 10),  
+* `onReady` is an optional callback function to be called when the data are generated. It's passed the data array and the number of points per map dimension,  
+* `mapData` is a float array, sized subX x subZ x 3,  
+* `scene` is the scene that will store the downloaded image in its internal database.  
+
+Let's note that, if we need to create the terrain in the callback function, it's not needed to use this kind of function to precompute in advance some data set from different images for further use :  
+```javascript
+var url1 = someURL;
+var url2 = someOtherURL;
+var url3 = someOtherURL;
+// all my maps will have the same subdivisions and dimensions
+// no callback function here
+var options = {width: 5000, height: 4000, subX: 1000, subZ: 800};
+var set1 = new Float32Array(subX * subZ * 3);
+var set2 = new Float32Array(subX * subZ * 3);
+var set3 = new Float32Array(subX * subZ * 3);
+BABYLON.DynamicTerrain.CreateMapFromHeightMapToRef(url1, options, set1, scene);
+BABYLON.DynamicTerrain.CreateMapFromHeightMapToRef(url2, options, set2, scene);
+BABYLON.DynamicTerrain.CreateMapFromHeightMapToRef(url3, options, set3, scene);
+``` 
+Example : http://www.babylonjs-playground.com/#FJNR5#123  
+In this example we use both the world image to texture the whole map with `createUVMap()` and the world height map to define the altitudes.  
+The same with a huge map (800K points, so more memory) but the same terrain size : abylonjs-playground.com/#FJNR5#124  
+
 
 ### Map change on the fly
 The terrain can be assigned another map at any time.  
@@ -569,7 +645,7 @@ terrain.mapData = map2;                   // the normal map is automatically com
 ```javascript
 var map2 = someOtherFloat32Array;
 var normal2 = new Float32Array(map2.length);
-DynamicTerrain.ComputeNormalsFromMapToRef(map2, subX2, subY2, normal2);
+BABYLON.DynamicTerrain.ComputeNormalsFromMapToRef(map2, subX2, subY2, normal2);
 
 // then, later in the code ...
 terrain.mapData = map2;
