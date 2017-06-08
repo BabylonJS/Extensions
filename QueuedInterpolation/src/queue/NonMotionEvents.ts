@@ -9,6 +9,7 @@ module QI{
         private _paused = false;
         private _scene : BABYLON.Scene;
         private _registeredFN : () => void;
+        private _alsoCleanFunc: () => void;
 
         /**
          * Not part of constructor in case being run from a queue.  start value might be changed by the
@@ -65,6 +66,16 @@ module QI{
                 this._scene.unregisterBeforeRender(this._registeredFN);
                 this._scene = null; 
             }
+            if (this._alsoCleanFunc) this._alsoCleanFunc();
+        }
+        
+        /**
+         * assign things to also be done when complete.  Used by instancers which are not sub-classing.
+         * Unlike other stuff in clear(), this always runs.
+         * @param {() => void} func - run in clear method as well.
+         */
+        public alsoClean(func : () => void) : void {
+            this._alsoCleanFunc = func;
         }
 
         // method to be overridden
