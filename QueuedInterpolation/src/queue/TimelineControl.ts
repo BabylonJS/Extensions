@@ -82,11 +82,12 @@ module QI {
         }
 
         // =========================================== Gets ==========================================
-        public static get manualFrameRate() : number  { return TimelineControl._manualFrameRate; }
-        public static get isRealtime     () : boolean { return TimelineControl._isRealtime; }
-        public static get Now            () : number  { return TimelineControl._now; }
-        public static get FrameID        () : number  { return TimelineControl._frameID; }
-        public static get Speed          () : number  { return TimelineControl._speed; }
+        public static get manualFrameRate() : number        { return TimelineControl._manualFrameRate; }
+        public static get isRealtime     () : boolean       { return TimelineControl._isRealtime; }
+        public static get Now            () : number        { return TimelineControl._now; }
+        public static get FrameID        () : number        { return TimelineControl._frameID; }
+        public static get Speed          () : number        { return TimelineControl._speed; }
+        public static get scene          () : BABYLON.Scene { return TimelineControl._scene; }
         
         public static set Speed          (newSpeed : number) {
             if (!TimelineControl._isRealtime){
