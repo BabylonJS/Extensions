@@ -593,6 +593,8 @@ var BABYLON;
             var subZ = options.subZ || 100;
             var minHeight = options.minHeight || 0.0;
             var maxHeight = options.maxHeight || 10.0;
+            var offsetX = options.offsetX || 0.0;
+            var offsetZ = options.offsetZ || 0.0;
             var filter = options.colorFilter || new BABYLON.Color3(0.3, 0.59, 0.11);
             var onReady = options.onReady;
             var onload = function (img) {
@@ -619,9 +621,9 @@ var BABYLON;
                         var gradient = (buffer[pos] * filter.r + buffer[pos + 1] * filter.g + buffer[pos + 2] * filter.b) / 255.0;
                         y = minHeight + (maxHeight - minHeight) * gradient;
                         var idx = (row * subX + col) * 3;
-                        data[idx] = x;
+                        data[idx] = x + offsetX;
                         data[idx + 1] = y;
-                        data[idx + 2] = z;
+                        data[idx + 2] = z + offsetZ;
                     }
                 }
                 // callback function if any
