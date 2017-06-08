@@ -160,6 +160,8 @@ declare module BABYLON {
             subZ: number;
             minHeight: number;
             maxHeight: number;
+            offsetX: number;
+            offsetZ: number;
             onReady?: (map: number[] | Float32Array, subX: number, subZ: number) => void;
             colorFilter?: Color3;
         }, scene: Scene): Float32Array;
@@ -182,6 +184,8 @@ declare module BABYLON {
             subZ: number;
             minHeight: number;
             maxHeight: number;
+            offsetX: number;
+            offsetZ: number;
             onReady?: (map: number[] | Float32Array, subX: number, subZ: number) => void;
             colorFilter?: Color3;
         }, data: number[] | Float32Array, scene: Scene): void;

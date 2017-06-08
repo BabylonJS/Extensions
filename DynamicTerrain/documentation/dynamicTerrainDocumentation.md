@@ -590,6 +590,7 @@ BABYLON.DynamicTerrain.CreateMapFromHeightMapToRef(hmURL, hmOptions, mapData, sc
 * `width` and `height` are optional floats (default 300), the dimensions the map in the World,  
 * `subX` and `subZ` are optional integers (default 100), the number of points on each map dimension,
 * `minHeight` and `maxHeight` are the optional minimal and maximal heights (floats, default 0 and 10),  
+* `offsetX` and `offsetZ` are optional floats (default 0) to shift the map, what is centered around the World origin by default, along the X or Z World axes,  
 * `onReady` is an optional callback function to be called when the data are generated. It's passed the data array and the number of points per map dimension,  
 * `mapData` is a float array, sized subX x subZ x 3,  
 * `scene` is the scene that will store the downloaded image in its internal database.  

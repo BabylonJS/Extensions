@@ -642,7 +642,7 @@ module BABYLON {
          * `onReady` is an optional callback function, called once the map is computed. It's passed the computed map.  
          * `scene` is the Scene object whose database will store the downloaded image.  
          */
-        public static CreateMapFromHeightMap(heightmapURL: string, options: {width: number, height: number, subX: number, subZ: number, minHeight: number, maxHeight: number, onReady?: (map: number[]|Float32Array, subX: number, subZ: number) => void, colorFilter?: Color3 }, scene: Scene): Float32Array {
+        public static CreateMapFromHeightMap(heightmapURL: string, options: {width: number, height: number, subX: number, subZ: number, minHeight: number, maxHeight: number, offsetX: number, offsetZ: number, onReady?: (map: number[]|Float32Array, subX: number, subZ: number) => void, colorFilter?: Color3 }, scene: Scene): Float32Array {
             var subX = options.subX || 100;
             var subZ = options.subZ || 100;
             var data = new Float32Array(subX * subZ * 3);
@@ -662,13 +662,15 @@ module BABYLON {
          * `scene` is the Scene object whose database will store the downloaded image.  
          * The passed Float32Array must be the right size : 3 x subX x subZ.  
          */
-        public static CreateMapFromHeightMapToRef(heightmapURL: string, options: {width: number, height: number, subX: number, subZ: number, minHeight: number, maxHeight: number, onReady?: (map: number[]|Float32Array, subX: number, subZ: number) => void, colorFilter?: Color3}, data: number[] | Float32Array, scene: Scene): void {
+        public static CreateMapFromHeightMapToRef(heightmapURL: string, options: {width: number, height: number, subX: number, subZ: number, minHeight: number, maxHeight: number, offsetX: number, offsetZ: number, onReady?: (map: number[]|Float32Array, subX: number, subZ: number) => void, colorFilter?: Color3}, data: number[] | Float32Array, scene: Scene): void {
             var width = options.width || 300;
             var height = options.height || 300;
             var subX = options.subX || 100;
             var subZ = options.subZ || 100;
             var minHeight = options.minHeight || 0.0;
             var maxHeight = options.maxHeight || 10.0;
+            var offsetX = options.offsetX || 0.0;
+            var offsetZ = options.offsetZ || 0.0;
             var filter = options.colorFilter || new Color3(0.3, 0.59, 0.11);
             var onReady = options.onReady;
 
@@ -696,9 +698,9 @@ module BABYLON {
                         var gradient = (buffer[pos] * filter.r + buffer[pos + 1] * filter.g + buffer[pos + 2] * filter.b) / 255.0;
                         y = minHeight + (maxHeight - minHeight) * gradient;
                         var idx = (row * subX + col) * 3;
-                        data[idx] = x;
+                        data[idx] = x + offsetX;
                         data[idx + 1] = y;
-                        data[idx + 2] = z;
+                        data[idx + 2] = z + offsetZ;
                     }
                 }
 
