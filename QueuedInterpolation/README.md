@@ -1,4 +1,4 @@
-#Point of View Movement and Rotation
+# Point of View Movement and Rotation
 ## Movement: ##
 ![](https://raw.githubusercontent.com/BabylonJS/Extensions/master/POV/doc-assist/POV-Movement.png)
 
@@ -65,7 +65,7 @@ rotatePOV(flipBack: number, twirlClockwise: number, tiltRight: number): void;
  */
 calcRotatePOV(flipBack: number, twirlClockwise: number, tiltRight: number): BABYLON.Vector3;
 ```
-#POV Before Render Extension 
+# POV Before Render Extension 
 ![](https://raw.githubusercontent.com/BabylonJS/Extensions/master/POV/doc-assist/POV-System.png)
 ##Introduction##
 The functions inside of `AbstractMesh` are just raw material for the POV extension.  They are there so that they could be called under any circumstance.  A queue based, POV before render animation system uses these methods to achieve coordinated, stepwise, movement & rotation.  It can be found in the [Extensions](https://github.com/BabylonJS/Extensions/tree/master/POV) repository.
@@ -99,7 +99,7 @@ constructor(
     private _pace          : Pace = Pace.LINEAR)
 ```
 
-###Event Series##
+## Event Series
 An `EventSeries' consists of an array of `MotionEvent`s, `BABYLON.Action`s, and functions().  The class also holds , is the unit placed in the render queue.
 ```typescript
 /**
@@ -112,16 +112,16 @@ An `EventSeries' consists of an array of `MotionEvent`s, `BABYLON.Action`s, and 
  */
 constructor(public _eventSeries : Array<any>, public _nRepeats = 1, public _initialWallclockProrating = 1.0)
 ```
-###Series Queue###
+### Series Queue
 
-##Attaching to Mesh##
+## Attaching to Mesh
 
-##Example##
+## Example
 Testing of hosting of actual scenes, completely on GitHub
 [example](https://raw.githubusercontent.com/BabylonJS/Extensions/master/POV/tester.html)
 
-##Advanced Features##
-###Action System Integration###
+## Advanced Features
+### Action System Integration
 Separate from placing a `BABYLON.Action` inside of an `EventSeries`, you can also have a wrapper `Action` for an `EventSeries`.  `SeriesAction` could then be registered with an `ActionManager`.
 ```typescript
 /**
@@ -132,7 +132,7 @@ Separate from placing a `BABYLON.Action` inside of an `EventSeries`, you can als
  */
 constructor(triggerOptions: any, private _target: SeriesTargetable, private _eSeries : EventSeries, condition?: BABYLON.Condition);
 ```
-###Synchronized movement between meshes###
+### Synchronized movement between meshes
 Different meshes can move in coordination with each other.  A `MotionEvent` of each is said to be a sync partner of the other.  Using this can cause hangs unless the `EventSeries` of each is queued on each mesh at the same time.
 
 The sync partner of a `MotionEvent` cannot be part of the constructor, since how would the partner of the first to be instanced be passed?  After construction, the `setSyncPartner` function of each is then called:
@@ -142,9 +142,9 @@ The sync partner of a `MotionEvent` cannot be part of the constructor, since how
  */
 public setSyncPartner(syncPartner : MotionEvent) : void{
 ```
-###Non-Linear Pacing###
-###Series Level Acceleration-Deceleration###
-##Up Coming Features for Version 1.1##
+### Non-Linear Pacing
+### Series Level Acceleration-Deceleration
+## Up Coming Features for Version 1.1
 The first new feature is a method to clear what the mesh is currently doing and or clear what is queued to do next.  
 
 The second is to integrate optional `BABYLON.Sound` to start playing at the beginning of a `MotionEvent`.  Timing of audio to motion is very often important to make things believable.  The `BABYLON.Sound` object is passed in the `MotionEvent` constructor.  When the `MotionEvent` is activated by the before-renderer,  the sound will be checked if it is ready to play.  If not, the event will enter a wait state until the frame that the sound indicates ready.  Should a sound be part of an event that is stopped, the playing will also be stopped.
