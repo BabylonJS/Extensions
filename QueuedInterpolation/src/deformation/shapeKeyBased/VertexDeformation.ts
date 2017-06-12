@@ -41,7 +41,7 @@ module QI{
         constructor(
             groupName                   : string,
             private _referenceStateName : string,
-            private _endStateNames      : Array<string>,
+            private _endStateNames      : string[],
             private _endStateRatios     : Array<number> = null,
 
             // args from super
@@ -75,10 +75,6 @@ module QI{
                 this._endStateNames[i] = this._endStateNames[i].toUpperCase();
                 if (this._referenceStateName === this._endStateNames[i]) {
                     BABYLON.Tools.Error("VertexDeformation: reference state cannot be the same as the end state");
-                    return;
-                }
-                if (this._endStateRatios !== null && (this._endStateRatios[i] < -1 || this._endStateRatios[i] > 1) ) {
-                    BABYLON.Tools.Error("VertexDeformation: endStateRatio range  > -1 and < 1");
                     return;
                 }
             }
