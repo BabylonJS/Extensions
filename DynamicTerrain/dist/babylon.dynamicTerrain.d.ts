@@ -53,13 +53,15 @@ declare module BABYLON {
         private _mapSizeX;
         private _mapSizeZ;
         private _terrain;
-        private _v1;
-        private _v2;
-        private _v3;
-        private _v4;
-        private _vAvB;
-        private _vAvC;
-        private _norm;
+        private _isAlwaysVisible;
+        private _precomputeNormalsFromMap;
+        private static _v1;
+        private static _v2;
+        private static _v3;
+        private static _v4;
+        private static _vAvB;
+        private static _vAvC;
+        private static _norm;
         private _bbMin;
         private _bbMax;
         /**
@@ -91,35 +93,116 @@ declare module BABYLON {
         /**
          * Updates the terrain position and shape according to the camera position.
          * `force` : boolean, forces the terrain update even if no camera position change.
-         * Returns nothing.
+         * Returns the terrain.
          */
-        update(force: boolean): void;
+        update(force: boolean): DynamicTerrain;
         private _updateTerrain();
         private _mod(a, b);
         /**
          * Updates the mesh terrain size according to the LOD limits and the camera position.
-         * Returns nothing.
+         * Returns the terrain.
          */
-        updateTerrainSize(): void;
+        updateTerrainSize(): DynamicTerrain;
         /**
          * Returns the altitude (float) at the coordinates (x, z) of the map.
          * @param x
          * @param z
+         * @param {normal: Vector3} (optional)
+         * If the optional object {normal: Vector3} is passed, then its property "normal" is updated with the normal vector value at the coordinates (x, z).
          */
         getHeightFromMap(x: number, z: number, options?: {
             normal: Vector3;
-        }): any;
+        }): number;
         /**
-         * Computes all the normals from the terrain data map  and stores it in the passed Float32Array reference.
+         * Static : Returns the altitude (float) at the coordinates (x, z) of the passed map.
+         * @param x
+         * @param z
+         * @param mapSubX the number of points along the map width
+         * @param mapSubX the number of points along the map height
+         * @param {normal: Vector3} (optional)
+         * If the optional object {normal: Vector3} is passed, then its property "normal" is updated with the normal vector value at the coordinates (x, z).
+         */
+        static GetHeightFromMap(x: number, z: number, mapData: number[] | Float32Array, mapSubX: number, mapSubZ: number, options?: {
+            normal: Vector3;
+        }): number;
+        private static _GetHeightFromMap(x, z, mapData, mapSubX, mapSubZ, mapSizeX, mapSizeZ, options?);
+        /**
+         * Static : Computes all the normals from the terrain data map  and stores them in the passed Float32Array reference.
          * This passed array must have the same size than the mapData array.
          */
-        computeNormalsFromMapToRef(normals: number[] | Float32Array): void;
+        static ComputeNormalsFromMapToRef(mapData: number[] | Float32Array, mapSubX: number, mapSubZ: any, normals: number[] | Float32Array): void;
+        /**
+         * Computes all the map normals from the current terrain data map and sets them to the terrain.
+         * Returns the terrain.
+         */
+        computeNormalsFromMap(): DynamicTerrain;
         /**
          * Returns true if the World coordinates (x, z) are in the current terrain.
          * @param x
          * @param z
          */
         contains(x: number, z: number): boolean;
+        /**
+         * Static : Returns a new data map from the passed heightmap image file.
+         The parameters `width` and `height` (positive floats, default 300) set the map width and height sizes.
+         * `subX` is the wanted number of points along the map width (default 100).
+         * `subZ` is the wanted number of points along the map height (default 100).
+         * The parameter `minHeight` (float, default 0) is the minimum altitude of the map.
+         * The parameter `maxHeight` (float, default 1) is the maximum altitude of the map.
+         * The parameter `colorFilter` (optional Color3, default (0.3, 0.59, 0.11) ) is the filter to apply to the image pixel colors to compute the height.
+         * `onReady` is an optional callback function, called once the map is computed. It's passed the computed map.
+         * `scene` is the Scene object whose database will store the downloaded image.
+         */
+        static CreateMapFromHeightMap(heightmapURL: string, options: {
+            width: number;
+            height: number;
+            subX: number;
+            subZ: number;
+            minHeight: number;
+            maxHeight: number;
+            offsetX: number;
+            offsetZ: number;
+            onReady?: (map: number[] | Float32Array, subX: number, subZ: number) => void;
+            colorFilter?: Color3;
+        }, scene: Scene): Float32Array;
+        /**
+         * Static : Updates the passed array or Float32Array with a data map computed from the passed heightmap image file.
+         *  The parameters `width` and `height` (positive floats, default 300) set the map width and height sizes.
+         * `subX` is the wanted number of points along the map width (default 100).
+         * `subZ` is the wanted number of points along the map height (default 100).
+         * The parameter `minHeight` (float, default 0) is the minimum altitude of the map.
+         * The parameter `maxHeight` (float, default 1) is the maximum altitude of the map.
+         * The parameter `colorFilter` (optional Color3, default (0.3, 0.59, 0.11) ) is the filter to apply to the image pixel colors to compute the height.
+         * `onReady` is an optional callback function, called once the map is computed. It's passed the computed map.
+         * `scene` is the Scene object whose database will store the downloaded image.
+         * The passed Float32Array must be the right size : 3 x subX x subZ.
+         */
+        static CreateMapFromHeightMapToRef(heightmapURL: string, options: {
+            width: number;
+            height: number;
+            subX: number;
+            subZ: number;
+            minHeight: number;
+            maxHeight: number;
+            offsetX: number;
+            offsetZ: number;
+            onReady?: (map: number[] | Float32Array, subX: number, subZ: number) => void;
+            colorFilter?: Color3;
+        }, data: number[] | Float32Array, scene: Scene): void;
+        /**
+         * Static : Updates the passed arrays with UVs values to fit the whole map with subX points along its width and subZ points along its height.
+         * The passed array must be the right size : subX x subZ x 2.
+         */
+        static CreateUVMapToRef(subX: number, subZ: number, mapUVs: number[] | Float32Array): void;
+        /**
+         * Static : Returns a new UV array with values to fit the whole map with subX points along its width and subZ points along its height.
+         */
+        static CreateUVMap(subX: number, subZ: number): Float32Array;
+        /**
+         * Computes and sets the terrain UV map with values to fit the whole map.
+         * Returns the terrain.
+         */
+        createUVMap(): DynamicTerrain;
         /**
          * boolean : if the terrain must be recomputed every frame.
          */
@@ -247,6 +330,15 @@ declare module BABYLON {
          * Default false
          */
         useCustomVertexFunction: boolean;
+        /**
+         * Boolean : is the terrain always directly selected for rendering ?
+         */
+        isAlwaysVisible: boolean;
+        /**
+         * Boolean : when assigning a new data map to the existing, shall the normals be automatically precomputed once ?
+         * Default false.
+         */
+        precomputeNormalsFromMap: boolean;
         /**
          * Custom function called for each terrain vertex and passed the :
          * - current vertex {position: Vector3, uvs: Vector2, color: Color4, lodX: integer, lodZ: integer, worldPosition: Vector3, mapIndex: integer}

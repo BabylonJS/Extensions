@@ -358,6 +358,8 @@ y = terrain.getHeightFromMap(x, z, normal); // update also normal with the terra
 ```javascript
 var mesh = terrain.mesh;                // the terrain underlying BJS mesh
 
+terrain.isAlwaysVisible = true;         // default false : if the terrain is always visible in the camera field of view, this will speed up the terrain mesh selection process, so the global scene speed.  
+
 var quadSizeX = terrain.averageSubSizeX; // terrain real quad X size
 var quadSizeZ = terrain.averageSubSizeZ; // terrain real quad Z size
 
@@ -474,15 +476,39 @@ http://www.babylonjs-playground.com/#FJNR5#28
 A FreeCamera was set instead of an ArcRotate one to move easily on the map. The map texture is also changed to the file _earth.jpg_.  
 As we can notice now, the texture is no longer bound to the terrain itself but to the map : the image is stretched in this example along the whole map.  
 
-_A height map and normal array generator up to come soon_
-
+In this former example, we stretched the image along the whole map.  
+For this very specific need, we can also the method `.createUVMap()` what does the same (computation and assignement to the terrain) in a single call.   
+```javascript
+        var params = {
+            mapData: mapData,               // data map declaration : what data to use ?
+            mapSubX: mapSubX,               // how are these data stored by rows and columns
+            mapSubZ: mapSubZ,
+            terrainSub: terrainSub          // how many terrain subdivisions wanted
+            // no more for mapUVs, it will be done by createUVMap()
+        }
+        var terrain = new BABYLON.DynamicTerrain("t", params, scene);
+        terrain.createUVMap();  
+        // computes and sets an UV map stretching the texture on the whole image
+```
+Example with no more manual UV computation : http://www.babylonjs-playground.com/#FJNR5#121  
 
 ### Normal map
-By default, each time we assign a new data map to the terrain, it pre-computes all the normals of the map once.  
+By default, when we assign a data map to the terrain at construction time, it pre-computes all the normals of the map once.  
 Computing all the map normals is a heavy process, but it's done only once.  
 This permits to skip the terrain mesh normal recomputation each time this one is morphed, it is to say on each update. Thus, the terrain normal recomputation is disabled by default.   
 This computation charge would be directly related to the terrain number of vertices (10K for a 100x100 terrain).  
-If for some reason (example : dynamic morphing if the terrain), we need to force the normal computation each update :  
+```javascript 
+var terrainSub = 100;               // 100 terrain subdivisions
+var params = {
+    mapData: mapData,               // data map declaration : what data to use ?
+    mapSubX: mapSubX,               // how are these data stored by rows and columns
+    mapSubZ: mapSubZ,
+    terrainSub: terrainSub          // how many terrain subdivisions wanted
+    // nothing more to do : the map normals are computed at creation time !
+}
+var terrain = new BABYLON.DynamicTerrain("t", params, scene);
+```
+If for some reason (example : dynamic morphing if the terrain, this will be explained in the part "Without data map"), we need to force the normal computation each update :  
 ```javascript
 terrain.computeNormals = true;   // default false, to skip the normal computation
 ```
@@ -491,7 +517,6 @@ These normals are stored internally in a flat array of floats, just like the map
 
 There is still a way to use a custom normal array if needed.   
 This flat array of successive floats as normal vector coordinates _(x, y, z)_ for each map point can then be passed to the terrain. It simply must be exactly the same size than the map data array.  
-In this case, the terrain normals aren't computed any longer and the map normal array is instead.  
 This array is passed with the optional parameter property `.mapNormals`.  
 ```javascript
 var normalArray = [n1.x, n1.y, n1.z, n2.x, n2.y, n2.z, ...];
@@ -506,12 +531,89 @@ var params = {
 var terrain = new BABYLON.DynamicTerrain("t", params, scene);
 ```
 
-
 Example :  
 This terrain is 300x300 so 90K vertices what is really a huge mesh to compute every update.  
 With a normal map, so with automatic pre-computed normals : http://www.babylonjs-playground.com/#FJNR5#110   
 Without (`computeNormals = true`), so normal computation each update : http://www.babylonjs-playground.com/#FJNR5#111    
 Let's simply check the FPS difference when rotating the camera to feel the gain.  
+
+If we have several data sets that we intend to use as data maps, we can precompute all these data set normals with the static method `ComputeNormalsFromMapToRef(map, subX, subY, array)`.  
+```javascript
+var map1 = someFloat32Array;
+var map2 = someOtherFloat32Array;
+var map3 = someOtherFloat32Array;
+var normal1 = new Float32Array(map1.length);
+var normal2 = new Float32Array(map2.length);
+var normal3 = new Float32Array(map3.length);
+// let's precompute the normals of all the maps
+BABYLON.DynamicTerrain.ComputeNormalsFromMapToRef(map1, subX1, subY1, normal1);
+BABYLON.DynamicTerrain.ComputeNormalsFromMapToRef(map2, subX2, subY2, normal2);
+BABYLON.DynamicTerrain.ComputeNormalsFromMapToRef(map3, subX3, subY3, normal3);
+```
+
+### Map creation from a height map  
+A height map is an image file, usually with grey colors only (from black to white), where each pixel color holds the point altitude : the brighter, the higher.  
+Example file : http://www.babylonjs.com/assets/heightMap.png  
+
+Like the BJS `MeshBuilder` class provides a method to create a mesh from a height map, the Dynamic Terrain provides a static method to generate a data map from a height map.  
+
+Here's the way to use it :  
+```javascript
+// Declare a callback function that will be executed once the heightmap file is downloaded
+// This function is passed the generated data and the number of points on the map height and width
+var terrain;
+var createTerrain = function(mapData, mapSubX, mapSubZ) {
+    var options = {
+        terrainSub: 100,  // 100 x 100 quads
+        mapData: mapData, // the generated data received
+        mapSubX: mapSubX, mapSubZ: mapSubZ // the map number of points per dimension
+    };
+    terrain = new BABYLON.DynamicTerrain("dt", options, scene);
+    terrain.createUVMap();      // compute also the UVs
+    terrain.mesh.material = someMaterial; 
+    // etc about the terrain ...
+    // terrain.updateCameraLOD = function(camera) { ... }
+};
+
+// Create the map from the height map and call the callback function when done
+var hmURL = "http://www.babylonjs.com/assets/heightMap.png";  // heightmap file URL
+var hmOptions = {
+        width: 5000, height: 4000,          // map size in the World 
+        subX: 1000, subZ: 800,              // number of points on map width and height
+        onReady: createTerrain              // callback function declaration
+};
+var mapData = new Float32Array(1000 * 800 * 3); // the array that will store the generated data
+BABYLON.DynamicTerrain.CreateMapFromHeightMapToRef(hmURL, hmOptions, mapData, scene);
+```
+
+* `hmURL` is a string, it's the URL or the DataURL string of the height map image,
+* `width` and `height` are optional floats (default 300), the dimensions the map in the World,  
+* `subX` and `subZ` are optional integers (default 100), the number of points on each map dimension,
+* `minHeight` and `maxHeight` are the optional minimal and maximal heights (floats, default 0 and 10),  
+* `offsetX` and `offsetZ` are optional floats (default 0) to shift the map, what is centered around the World origin by default, along the X or Z World axes,  
+* `onReady` is an optional callback function to be called when the data are generated. It's passed the data array and the number of points per map dimension,  
+* `mapData` is a float array, sized subX x subZ x 3,  
+* `scene` is the scene that will store the downloaded image in its internal database.  
+
+Let's note that, if we need to create the terrain in the callback function, it's not needed to use this kind of function to precompute in advance some data set from different images for further use :  
+```javascript
+var url1 = someURL;
+var url2 = someOtherURL;
+var url3 = someOtherURL;
+// all my maps will have the same subdivisions and dimensions
+// no callback function here
+var options = {width: 5000, height: 4000, subX: 1000, subZ: 800};
+var set1 = new Float32Array(subX * subZ * 3);
+var set2 = new Float32Array(subX * subZ * 3);
+var set3 = new Float32Array(subX * subZ * 3);
+BABYLON.DynamicTerrain.CreateMapFromHeightMapToRef(url1, options, set1, scene);
+BABYLON.DynamicTerrain.CreateMapFromHeightMapToRef(url2, options, set2, scene);
+BABYLON.DynamicTerrain.CreateMapFromHeightMapToRef(url3, options, set3, scene);
+``` 
+Example : http://www.babylonjs-playground.com/#FJNR5#123  
+In this example we use both the world image to texture the whole map with `createUVMap()` and the world height map to define the altitudes.  
+The same with a huge map (800K points, so more memory) but the same terrain size : http://www.babylonjs-playground.com/#FJNR5#124 
+
 
 ### Map change on the fly
 The terrain can be assigned another map at any time.  
@@ -533,7 +635,23 @@ if (camera.position.z > someLimit) {
     terrain.mapNormals = normals2;
 }
 ```
+Let's note that when we assign a new data map to a terrain, the normal map of this map is not automatically recomputed.  
+Thus we have two options :  
+* either we request for this automatic normal recomputation what can take some time with the property `terrain.precomputeNormalsFromMap = true`. In this case, every new data map assignement to the terrain will trigger the map normal computation on the fly, 
+```javascript
+terrain.precomputeNormalsFromMap = true;  // default = false
+terrain.mapData = map2;                   // the normal map is automatically computed on the hood
+```
+* either, as explained in the former section, we precompute by ourselves the new data map normals before and we assign to the terrain both the data map and the normal map at once.  
+```javascript
+var map2 = someOtherFloat32Array;
+var normal2 = new Float32Array(map2.length);
+BABYLON.DynamicTerrain.ComputeNormalsFromMapToRef(map2, subX2, subY2, normal2);
 
+// then, later in the code ...
+terrain.mapData = map2;
+terrain.mapNormals = normals2;
+```
 
 ### Without Data Map  
 The Dynamic Terrain is a right tool to render a part of a map of 3D data.  
@@ -570,6 +688,7 @@ If we need to give the terrain an extra animation, we can set its property `.ref
     var t = 0.0;
     terrain.useCustomVertexFunction = true;
     terrain.refreshEveryFrame = true;
+    terrain.computeNormals = true;
 
     // user custom function : now the altitude depends on t too.
     terrain.updateVertex = function(vertex, i, j) {
@@ -584,6 +703,7 @@ If we need to give the terrain an extra animation, we can set its property `.ref
 http://www.babylonjs-playground.com/#FJNR5#33    
 
 The CPU load required by the method `updateVertex()` is depending of course on what it does, but also on the terrain number of vertices.  
+Let's note that, as we computationally change each terrain vertex altitude, the normal computation must be forced (`terrain.computeNormals = true`) to get a right light reflection with plain triangles: http://www.babylonjs-playground.com/#FJNR5#120   
 
 **Important note :**   
 We used here the parameters `i`, `j` and the vertex `position` property.  
