@@ -776,7 +776,7 @@ class Mesh(FCurveAnimatable):
             file_handler.write(indent2 + '_B.Tools.Log("defined mesh: " + ' + var + '.name + (cloning ? " (cloned)" : "") + " completed:  " + load.toFixed(2) + ", geometry:  " + geo.toFixed(2) + ", skey:  " + shape.toFixed(2) + " secs");\n')
 
         if self.isVisible and isRootMesh:
-            file_handler.write(indent2 + 'if (matLoaded){\n')
+            file_handler.write(indent2 + 'if (matLoaded && !_sceneTransitionName){\n')
             file_handler.write(indent2 + '    if (typeof ' + var + '.grandEntrance == "function") ' + var + '.grandEntrance();\n')
             file_handler.write(indent2 + '    else makeVisible(' + var + ');\n\n')
             file_handler.write(indent2 + '} else waitingMeshes.push(' + var + ');\n')

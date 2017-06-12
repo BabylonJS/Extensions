@@ -185,6 +185,7 @@ class JSExporter:
     def to_script_file(self):
         indent1 = '    '
         indent2 = '        '
+        indent3 = '            '
 
         Logger.log('========= Writing of files started =========', 0)
         file_handler            = open(self.filepathMinusExtension + '.js'  , 'w', encoding='utf8')
@@ -214,23 +215,28 @@ class JSExporter:
         file_handler.write(indent1 + 'var waitingMeshes = [];\n')
         file_handler.write(indent1 + 'var pendingTextures = 0;\n')
         if JSExporter.logInBrowserConsole:
-            file_handler.write(indent1 + 'var texLoadStart;\n')
+            file_handler.write(indent1 + 'var texLoadStart = 0;\n')
         file_handler.write(indent1 + 'function onTexturesLoaded(){\n')
         file_handler.write(indent2 + 'if (--pendingTextures > 0) return;\n')
         if JSExporter.logInBrowserConsole:
             file_handler.write(indent2 + '_B.Tools.Log("Texture Load delay:  " + ((_B.Tools.Now - texLoadStart) / 1000).toFixed(2) + " secs");\n')
-        file_handler.write(indent2 + 'for (var i = 0, len = waitingMeshes.length; i < len; i++){\n')
-        file_handler.write(indent2 + '    if (typeof waitingMeshes[i].grandEntrance == "function") waitingMeshes[i].grandEntrance();\n')
-        file_handler.write(indent2 + '    else makeVisible(waitingMeshes[i]);\n')
+        file_handler.write(indent2 + 'if (_sceneTransitionName) QI.SceneTransition.perform(_sceneTransitionName, waitingMeshes, _overriddenMillis, _overriddenSound, _options);\n')
+        file_handler.write(indent2 + 'else {\n')
+        file_handler.write(indent3 + 'for (var i = 0, len = waitingMeshes.length; i < len; i++) {\n')
+        file_handler.write(indent3 + '    if (typeof waitingMeshes[i].grandEntrance == "function") waitingMeshes[i].grandEntrance();\n')
+        file_handler.write(indent3 + '    else makeVisible(waitingMeshes[i]);\n')
+        file_handler.write(indent3 + '}\n')
         file_handler.write(indent2 + '}\n')
         file_handler.write(indent2 + 'waitingMeshes = [];\n')
+        file_handler.write(indent2 + '_sceneTransitionName = null;\n')
         file_handler.write(indent2 + 'matLoaded = true;\n')
         file_handler.write(indent1 + '}\n\n')
 
+        file_handler.write(indent1 + '// QI.Mesh has similar method, using this to not require QI\n')
         file_handler.write(indent1 + 'function makeVisible(mesh){\n')
         file_handler.write(indent2 + 'var children = mesh.getChildMeshes();\n')
         file_handler.write(indent2 + 'mesh.isVisible = true;\n')
-        file_handler.write(indent2 + 'for (var i = 0, len = children.length; i < len; i++){\n')
+        file_handler.write(indent2 + 'for (var i = 0, len = children.length; i < len; i++) {\n')
         file_handler.write(indent2 + '    children[i].isVisible = true;\n')
         file_handler.write(indent2 + '}\n')
         file_handler.write(indent1 + '}\n')
@@ -260,6 +266,7 @@ class JSExporter:
         typescript_file_handler.write(JSExporter.define_Typescript_method('defineMaterials', '', callArgs))
 
         file_handler.write(indent2 + 'if (materialsRootDir.lastIndexOf("/") + 1  !== materialsRootDir.length) { materialsRootDir  += "/"; }\n')
+        file_handler.write(indent2 + 'if (QI) QI.TimelineControl.initialize(scene);\n')
         file_handler.write(indent2 + 'TOWER_OF_BABEL.Preloader.SCENE = scene;\n')
 
         if JSExporter.logInBrowserConsole:
@@ -267,7 +274,7 @@ class JSExporter:
         file_handler.write(indent2 + 'matReadAhead(materialsRootDir);\n')
         file_handler.write(indent2 + 'var material;\n')
         file_handler.write(indent2 + 'var texture;\n')
-        file_handler.write(indent2 + 'var txBuffer;\n\n')
+        file_handler.write(indent2 + 'var txBuffer;\n')
 
         for material in self.materials:
             material.to_script_file(file_handler, indent2, False)
@@ -275,7 +282,10 @@ class JSExporter:
             file_handler.write(indent2 + 'var multiMaterial;\n')
             for multimaterial in self.multiMaterials:
                 multimaterial.to_script_file(file_handler, indent2)
-        file_handler.write(indent2 + 'if (pendingTextures === 0) matLoaded = true;\n')
+        file_handler.write('\n' + indent2 + 'if (pendingTextures === 0) {\n')
+        file_handler.write(indent2 + '    matLoaded = true; \n')
+        file_handler.write(indent2 + '    if (_sceneTransitionName) QI.SceneTransition.perform(_sceneTransitionName, waitingMeshes, _overriddenMillis, _overriddenSound, _options);\n')
+        file_handler.write(indent2 + '}\n')
         if JSExporter.logInBrowserConsole:
             file_handler.write(indent2 + 'else texLoadStart = _B.Tools.Now;\n')
         if JSExporter.logInBrowserConsole:
@@ -295,7 +305,7 @@ class JSExporter:
         # Cameras - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         if self.hasCameras:
             callArgs = []
-            callArgs.append(OptionalArgument('positionOffset', 'BABYLON.Vector3', 'null'))
+            callArgs.append(OptionalArgument('positionOffset', 'BABYLON.Vector3'))
             file_handler           .write(JSExporter.define_module_method    ('defineCameras', '', callArgs))
             typescript_file_handler.write(JSExporter.define_Typescript_method('defineCameras', '', callArgs))
 
@@ -332,7 +342,7 @@ class JSExporter:
         # Lights - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         if self.hasLights:
             callArgs = []
-            callArgs.append(OptionalArgument('positionOffset', 'BABYLON.Vector3', 'null'))
+            callArgs.append(OptionalArgument('positionOffset', 'BABYLON.Vector3'))
             file_handler           .write(JSExporter.define_module_method    ('defineLights', '', callArgs))
             typescript_file_handler.write(JSExporter.define_Typescript_method('defineLights', '', callArgs))
 
@@ -439,7 +449,11 @@ class JSExporter:
     def define_Typescript_method(name, loadCheckVar = '', optionalArgs = []):
         ret  = '\n    export function ' + name + '(scene : BABYLON.Scene'
         for optArg in optionalArgs:
-            ret += ', ' + optArg.argumentName + ' : ' + optArg.tsType + " = " + optArg.default
+            if optArg.default is not None: 
+                ret += ', ' + optArg.argumentName + ' : ' + optArg.tsType + " = " + optArg.default
+            else:
+                ret += ', ' + optArg.argumentName + '? : ' + optArg.tsType
+                
         ret += ') : void;\n'
         return ret
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -451,9 +465,9 @@ class JSExporter:
             defaults = ''
             for optArg in optionalArgs:
                 constr   += ', ' + optArg.argumentName
-                defaults += '        if (!' + optArg.argumentName + ') { ' + optArg.argumentName + ' = ' + optArg.default + '; }\n'
+                if optArg.default is not None: defaults += '        if (!' + optArg.argumentName + ') { ' + optArg.argumentName + ' = ' + optArg.default + '; }\n'
             ret += constr + ') {\n'
-            ret += defaults
+            if len(defaults) > 0: ret += defaults
         else:
             ret += ') {\n'
 

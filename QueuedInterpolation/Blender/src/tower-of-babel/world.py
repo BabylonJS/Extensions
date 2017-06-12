@@ -10,7 +10,7 @@ import bpy
 FOGMODE_LINEAR = 3
 #===============================================================================
 class OptionalArgument:
-    def __init__(self, argumentName, tsType = '', default = '""'):
+    def __init__(self, argumentName, tsType, default = None):
         self.argumentName = argumentName
         self.tsType = tsType
         self.default = default
@@ -38,13 +38,26 @@ class World:
         Logger.log('Python World class constructor completed')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def initScene_script(self, file_handler, typescript_file_handler, needPhysics, exporter):
+        file_handler.write('    var _sceneTransitionName;\n')
+        file_handler.write('    var _overriddenMillis;\n')
+        file_handler.write('    var _overriddenSound;\n')
+        file_handler.write('    var _options;\n')
         callArgs = []
         callArgs.append(OptionalArgument('resourcesRootDir', 'string', '"./"'))
-        callArgs.append(OptionalArgument('positionOffset', 'BABYLON.Vector3', 'null'))
+        callArgs.append(OptionalArgument('positionOffset', 'BABYLON.Vector3'))
+        callArgs.append(OptionalArgument('sceneTransitionName', 'string'))
+        callArgs.append(OptionalArgument('overriddenMillis', 'number'))
+        callArgs.append(OptionalArgument('overriddenSound', 'BABYLON.Sound'))
+        callArgs.append(OptionalArgument('options', '{}'))
         file_handler.write(exporter.define_module_method('initScene', '', callArgs))
         typescript_file_handler.write(exporter.define_Typescript_method('initScene', '', callArgs))
 
         indent = '        '
+        file_handler.write(indent + '_sceneTransitionName = sceneTransitionName;\n')
+        file_handler.write(indent + '_overriddenMillis    = overriddenMillis;\n')
+        file_handler.write(indent + '_overriddenSound     = overriddenSound;\n')
+        file_handler.write(indent + '_options             = options;\n\n')
+
         file_handler.write(indent + 'scene.autoClear = ' + format_bool(self.autoClear) + ';\n')
         file_handler.write(indent + 'scene.clearColor    = new _B.Color3(' + format_color(self.clear_color) + ');\n')
         file_handler.write(indent + 'scene.ambientColor  = new _B.Color3(' + format_color(self.ambient_color) + ');\n')
@@ -86,7 +99,7 @@ class World:
 
                 regVersion += meshIndent + offsetCode;
                 
-        # code to optionally
+        # code to optionally use an instance from the mesh factory
         if exporter.scene.includeMeshFactory:
             file_handler.write(factoryVersion)
             file_handler.write(indent + '} else {\n')
