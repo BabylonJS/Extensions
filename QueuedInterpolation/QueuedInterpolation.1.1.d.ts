@@ -244,6 +244,7 @@ declare module QI {
         private static _manualFrameRate;
         private static _isRealtime;
         private static _now;
+        private static _privelegedNow;
         private static _lastRun;
         private static _lastFrame;
         private static _frameID;
@@ -262,13 +263,15 @@ declare module QI {
         static readonly manualFrameRate: number;
         static readonly isRealtime: boolean;
         static readonly Now: number;
+        static readonly PrivilegedNow: number;
         static readonly FrameID: number;
         static Speed: number;
+        static readonly scene: BABYLON.Scene;
         private static _systemResumeTime;
         private static _systemPaused;
         /** system could be paused at a higher up without notification; just by stop calling beforeRender() */
         static readonly isSystemPaused: boolean;
-        static pauseSystem(): void;
+        static pauseSystem(needPrivilegedSound?: boolean): void;
         static resumeSystem(): void;
         static readonly SystemResumeTime: number;
     }
@@ -417,6 +420,7 @@ declare module QI {
         private _paused;
         private _scene;
         private _registeredFN;
+        private _alsoCleanFunc;
         /**
          * Not part of constructor in case being run from a queue.  start value might be changed by the
          * time actually run, especially if another PropertyEvent in front of this one.
@@ -431,6 +435,12 @@ declare module QI {
          * Stop / cleanup resources. Only does anything when not being added to a queue.
          */
         clear(): void;
+        /**
+         * assign things to also be done when complete.  Used by instancers which are not sub-classing.
+         * Unlike other stuff in clear(), this always runs.
+         * @param {() => void} func - run in clear method as well.
+         */
+        alsoClean(func: () => void): void;
         _incrementallyUpdate(ratioComplete: number): void;
     }
     /**
@@ -458,6 +468,9 @@ declare module QI {
          *      pace - Any Object with the function: getCompletionMilestone(currentDurationRatio) (default MotionEvent.LINEAR)
          *      sound - Sound to start with event.
          *      requireCompletionOf - A way to serialize events from different queues e.g. shape key & skeleton.
+         *
+         *      privilegedEvent - NonMotionEvents Only, when not running from a Queue:
+         *                        Support for SceneTransitions, which can then system pause while running.
          */
         constructor(_object: Object, _property: string, _targetValue: any, milliDuration: number, options?: IMotionEventOptions);
         getClassName(): string;
@@ -488,6 +501,9 @@ declare module QI {
          *      pace - Any Object with the function: getCompletionMilestone(currentDurationRatio) (default MotionEvent.LINEAR)
          *      sound - Sound to start with event.
          *      requireCompletionOf - A way to serialize events from different queues e.g. shape key & skeleton.
+         *
+         *      privilegedEvent - NonMotionEvents Only:
+         *                        Support for SceneTransitions, which can then system pause while running.
          */
         constructor(_callback: (ratioComplete: number) => void, milliDuration: number, options?: IMotionEventOptions);
         getClassName(): string;
@@ -543,9 +559,14 @@ declare module QI {
         subposes?: string[];
         /**
          * Skeletons Only:
-         * Should any sub-poses previously applied should be subtracted during event(default false)?
+         * Should any sub-poses previously applied should be subtracted during event (default false)
          */
         revertSubposes?: boolean;
+        /**
+         * NonMotionEvents Only, when not running from a Queue:
+         * Support for SceneTransitions, which can then system pause while running (default false)
+         */
+        privilegedEvent?: boolean;
     }
     /**
      * Class to store MotionEvent info & evaluate how complete it should be.
@@ -597,7 +618,10 @@ declare module QI {
          *                 Sub-poses which should be substituted during event (default null).
          *
          *      revertSubposes - Skeletons Only:
-         *                       Should any sub-poses previously applied should be subtracted during event(default false)?
+         *                       Should any sub-poses previously applied should be subtracted during event (default false)
+         *
+         *      privilegedEvent - NonMotionEvents Only, when not running from a Queue:
+         *                        Support for SceneTransitions, which can then system pause while running (default false)
          */
         constructor(_milliDuration: number, movePOV: BABYLON.Vector3, rotatePOV?: BABYLON.Vector3, options?: IMotionEventOptions);
         toString(): string;
@@ -635,6 +659,7 @@ declare module QI {
         readonly millisBefore: number;
         readonly pace: Pace;
         readonly syncPartner: MotionEvent;
+        private readonly _now;
         /**
          * Called by EventSeries, before MotionEvent is return by series (even the first run).  This is to support
          * acceleration / deceleration across event series repeats.
@@ -851,10 +876,7 @@ declare module QI {
      * Implemented using the ShaderBuilder extension embedded into QI.
      * This is an abstract class.  A concrete subclass needs to implement _getEffectHostMesh() & _makeCallback()
      */
-    class ShaderBuilderEntrance implements GrandEntrance {
-        _mesh: Mesh;
-        durations: Array<number>;
-        soundEffect: BABYLON.Sound;
+    class ShaderBuilderEntrance extends AbstractGrandEntrance {
         private static _SB_INITIALIZED;
         /**
          * @constructor - This is the required constructor for a GrandEntrance.  This is what Tower of Babel
@@ -864,18 +886,18 @@ declare module QI {
          * @param {BABYLON.Sound} soundEffect - An optional instance of the sound to play as a part of entrance.
          * @param {boolean} disposeSound - When true, dispose the sound effect on completion. (Default false)
          */
-        constructor(_mesh: Mesh, durations: Array<number>, soundEffect?: BABYLON.Sound, disposeSound?: boolean);
+        constructor(mesh: Mesh, durations: Array<number>, soundEffect?: BABYLON.Sound, disposeSound?: boolean);
         /**
          * The mesh returned contains a material that was built by ShaderBuilder.  Subclass should override.
          */
-        _getEffectHostMesh(): BABYLON.Mesh;
+        protected _getEffectHostMesh(): BABYLON.Mesh;
         /**
          * Method for making the call back for the recurring event.  Subclass should override.
          */
-        _makeCallback(): (ratioComplete: number) => void;
-        _effectHostMesh: BABYLON.Mesh;
-        _originalScale: BABYLON.Vector3;
-        /** GrandEntrance implementation */
+        protected _makeCallback(): (ratioComplete: number) => void;
+        protected _effectHostMesh: BABYLON.Mesh;
+        protected _originalScale: BABYLON.Vector3;
+        /** @override */
         makeEntrance(): void;
     }
     /**
@@ -916,21 +938,9 @@ declare module QI {
 }
 
 declare module QI {
-    class ExpandEntrance implements GrandEntrance {
-        _mesh: Mesh;
-        durations: Array<number>;
-        soundEffect: BABYLON.Sound;
+    class ExpandEntrance extends AbstractGrandEntrance {
         private _HighLightLayer;
-        /**
-         * @constructor - This is the required constructor for a GrandEntrance.  This is what Tower of Babel
-         * generated code expects.
-         * @param {QI.Mesh} _mesh - Root level mesh to display.
-         * @param {Array<number>} durations - The millis of various sections of entrance.  For Fire only 1.
-         * @param {BABYLON.Sound} soundEffect - An optional instance of the sound to play as a part of entrance.
-         * @param {boolean} disposeSound - When true, dispose the sound effect on completion. (Default false)
-         */
-        constructor(_mesh: Mesh, durations: Array<number>, soundEffect?: BABYLON.Sound, disposeSound?: boolean);
-        /** GrandEntrance implementation */
+        /** @override */
         makeEntrance(): void;
     }
 }
@@ -939,24 +949,12 @@ declare module QI {
     /**
      * The Fire Entrance REQUIRES that BABYLON.FireMaterial.js be loaded
      */
-    class FireEntrance implements GrandEntrance {
-        _mesh: Mesh;
-        durations: Array<number>;
-        soundEffect: BABYLON.Sound;
+    class FireEntrance extends AbstractGrandEntrance {
         private _count;
         private _diffuse;
         private _distortion;
         private _opacity;
-        /**
-         * @constructor - This is the required constructor for a GrandEntrance.  This is what Tower of Babel
-         * generated code expects.
-         * @param {QI.Mesh} _mesh - Root level mesh to display.
-         * @param {Array<number>} durations - The millis of various sections of entrance.  For Fire only 1.
-         * @param {BABYLON.Sound} soundEffect - An optional instance of the sound to play as a part of entrance.
-         * @param {boolean} disposeSound - When true, dispose the sound effect on completion. (Default false)
-         */
-        constructor(_mesh: Mesh, durations: Array<number>, soundEffect?: BABYLON.Sound, disposeSound?: boolean);
-        /** GrandEntrance implementation */
+        /** @override */
         makeEntrance(): void;
         /**
          * Even with inline textures, the shaders must still be compiled.  Cannot
@@ -971,19 +969,8 @@ declare module QI {
 }
 
 declare module QI {
-    class GatherEntrance implements GrandEntrance {
-        _mesh: Mesh;
-        durations: Array<number>;
-        soundEffect: BABYLON.Sound;
-        /**
-         * @constructor - This is the required constructor for a GrandEntrance.  This is what Tower of Babel
-         * generated code expects.
-         * @param {QI.Mesh} _mesh - Root level mesh to display.
-         * @param {Array<number>} durations - The millis of various sections of entrance.  For Fire only 1.
-         * @param {BABYLON.Sound} soundEffect - An optional instance of the sound to play as a part of entrance.
-         */
-        constructor(_mesh: Mesh, durations: Array<number>, soundEffect?: BABYLON.Sound, disposeSound?: boolean);
-        /** GrandEntrance implementation */
+    class GatherEntrance extends AbstractGrandEntrance {
+        /** @override */
         makeEntrance(): void;
         /**
          * Build a SCATTER end state on the computed shapekeygroup.  Static so can be used for things other than an entrance.
@@ -994,17 +981,24 @@ declare module QI {
 }
 
 declare module QI {
-    /** An interface used so both implementing classes & Mesh do not have to reference each other.
-     *
-     * Any class implementing this MUST have constructor with 3 arguments:
-     *      - The root level mesh to display.
-     *      - An array of durations, length variable
-     *      - An optional sound to accompany the entrance
-     * Tower of Babel generates instancing this way.
-     */
-    interface GrandEntrance {
+    class AbstractGrandEntrance {
+        _mesh: QI.Mesh;
+        durations: Array<number>;
+        soundEffect: BABYLON.Sound;
+        /**
+         * @constructor - This is the required constructor for a GrandEntrance.  This is what Tower of Babel
+         * generated code expects.
+         * @param {QI.Mesh} _mesh - Root level mesh to display.
+         * @param {Array<number>} durations - The millis of various sections of entrance.
+         * @param {BABYLON.Sound} soundEffect - An optional instance of the sound to play as a part of entrance.
+         * @param {boolean} disposeSound - When true, dispose the sound effect on completion. (Default false)
+         */
+        constructor(_mesh: QI.Mesh, durations: Array<number>, soundEffect?: BABYLON.Sound, disposeSound?: boolean);
         makeEntrance(): void;
     }
+}
+
+declare module QI {
     /**
      * Mesh sub-class which has a before render which processes events for ShapeKeysGroups, Skeleton Poses, and POV.
      */
@@ -1027,7 +1021,7 @@ declare module QI {
         _skeletonChangesMade: boolean;
         private _lastFrameID;
         static COMPUTED_GROUP_NAME: string;
-        entranceMethod: GrandEntrance;
+        entranceMethod: AbstractGrandEntrance;
         /**
          * @constructor - Args same As BABYLON.Mesh, except that using a source for cloning requires there be no shape keys
          * @param {string} name - The value used by scene.getMeshByName() to do a lookup.
@@ -1321,6 +1315,65 @@ declare module QI {
          */
         assemble(strandNumVerts: number[], rootRelativePositions: number[], longestStrand?: number, stiffness?: number, boneIndex?: number): void;
         private _lengthSoFar(deltaX, deltaY, deltaZ);
+    }
+}
+
+declare module QI {
+    interface Transition {
+        initiate(meshes: Array<BABYLON.AbstractMesh>, overriddenMillis: number, overriddenSound: BABYLON.Sound, options?: {}): void;
+    }
+    class SceneTransition {
+        /**
+         * Using a static dictionary to get transitions, so that custom transitions not included can be referenced.
+         * Stock transitions already loaded.
+         */
+        static EFFECTS: {
+            [name: string]: Transition;
+        };
+        /**
+         * This is the entry point call in the Tower of Babel generated code once all textures are buffered.
+         */
+        static perform(sceneTransitionName: string, meshes: Array<BABYLON.AbstractMesh>, overriddenMillis?: number, overriddenSound?: BABYLON.Sound, options?: {}): void;
+        static makeAllVisible(meshes: Array<BABYLON.AbstractMesh>): void;
+    }
+}
+
+declare module QI {
+    class IntoFocusTransition implements Transition {
+        static NAME: string;
+        private static _INITIAL_KERNEL;
+        private static _DEFAULT_MILLIS;
+        private _sound;
+        /**
+         * Transition implementation
+         */
+        initiate(meshes: Array<BABYLON.AbstractMesh>, overriddenMillis: number, overriddenSound: BABYLON.Sound): void;
+    }
+}
+
+declare module QI {
+    class ToColorTransition implements Transition {
+        static NAME: string;
+        private static _DEFAULT_MILLIS;
+        private _sound;
+        /**
+         * Transition implementation
+         */
+        initiate(meshes: Array<BABYLON.AbstractMesh>, overriddenMillis: number, overriddenSound: BABYLON.Sound): void;
+    }
+}
+
+declare module QI {
+    class VisiblityTransition implements Transition {
+        static NAME: string;
+        private static _DEFAULT_MILLIS;
+        private _sound;
+        private _meshes;
+        /**
+         * Transition implementation
+         */
+        initiate(meshes: Array<BABYLON.AbstractMesh>, overriddenMillis: number, overriddenSound: BABYLON.Sound): void;
+        private _changeVisiblity(ratioComplete, meshes);
     }
 }
 

@@ -23,6 +23,7 @@ module QI{
 
             if (scene) {
                 TimelineControl.initialize(scene); // only does something the first call
+                if (this.options.privilegedEvent) TimelineControl.pauseSystem(typeof(this.options.sound) !== "undefined"); // do not disable sound when part of transition
                 var ref = this;
                 this._registeredFN = function(){ref._beforeRender();};
                 scene.registerBeforeRender(this._registeredFN );
@@ -35,18 +36,19 @@ module QI{
         public getClassName(): string { return "NonMotionEvent"; } 
 
         private _beforeRender() : void {
-            if (TimelineControl.isSystemPaused) {
-                if (!this._paused){
-                    this.pause();
-                    this._paused = true;
+            if (!this.options.privilegedEvent) {
+                if (TimelineControl.isSystemPaused) {
+                    if (!this._paused){
+                        this.pause();
+                        this._paused = true;
+                    }
+                    return;
+    
+                }else if (this._paused){
+                    this._paused = false;
+                    this.resumePlay();
                 }
-                return;
-
-            }else if (this._paused){
-                this._paused = false;
-                this.resumePlay();
             }
-            var resume = !this._paused;
             var ratioComplete = this.getCompletionMilestone();
             if (ratioComplete < 0) return; // MotionEvent.BLOCKED, Motion.SYNC_BLOCKED or MotionEvent.WAITING
 
@@ -65,6 +67,8 @@ module QI{
                 this._paused = false;
                 this._scene.unregisterBeforeRender(this._registeredFN);
                 this._scene = null; 
+                
+                if (this.options.privilegedEvent) TimelineControl.resumeSystem();
             }
             if (this._alsoCleanFunc) this._alsoCleanFunc();
         }
@@ -107,6 +111,9 @@ module QI{
          *      pace - Any Object with the function: getCompletionMilestone(currentDurationRatio) (default MotionEvent.LINEAR)
          *      sound - Sound to start with event.
          *      requireCompletionOf - A way to serialize events from different queues e.g. shape key & skeleton.
+         * 
+         *      privilegedEvent - NonMotionEvents Only, when not running from a Queue:
+         *                        Support for SceneTransitions, which can then system pause while running.
          */
         constructor(public _object : Object, public _property : string, public _targetValue : any, milliDuration : number, options? : IMotionEventOptions) {
             super(milliDuration, null, null, options);
@@ -172,6 +179,9 @@ module QI{
          *      pace - Any Object with the function: getCompletionMilestone(currentDurationRatio) (default MotionEvent.LINEAR)
          *      sound - Sound to start with event.
          *      requireCompletionOf - A way to serialize events from different queues e.g. shape key & skeleton.
+         * 
+         *      privilegedEvent - NonMotionEvents Only:
+         *                        Support for SceneTransitions, which can then system pause while running.
          */
         constructor(private _callback : (ratioComplete : number) => void, milliDuration : number, options? : IMotionEventOptions) {
             super(milliDuration, null, null, options);

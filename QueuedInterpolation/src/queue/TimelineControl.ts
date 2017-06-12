@@ -10,6 +10,7 @@ module QI {
         private static _manualFrameRate : number;
         private static _isRealtime = true;
         private static _now = BABYLON.Tools.Now;
+        private static _privelegedNow = BABYLON.Tools.Now;
         private static _lastRun = BABYLON.Tools.Now;
         private static _lastFrame = BABYLON.Tools.Now;
         private static _frameID = 0; // useful for new in frame detection
@@ -43,12 +44,12 @@ module QI {
         }
 
         private static _manualAdvanceAfterRender() : void {
+            // realtime elapsed & set up for "next" elapsed
+            var elapsed = BABYLON.Tools.Now - TimelineControl._lastFrame;
+            TimelineControl._lastFrame = BABYLON.Tools.Now;
+            
             if (!TimelineControl._systemPaused || TimelineControl._resumeQueued){
                 TimelineControl._frameID++;
-
-                // realtime elapsed & set up for "next" elapsed
-                var elapsed = BABYLON.Tools.Now - TimelineControl._lastFrame;
-                TimelineControl._lastFrame = BABYLON.Tools.Now;
 
                 // assign a new Now based on whether realtime or not
                 if (TimelineControl._isRealtime){
@@ -68,12 +69,18 @@ module QI {
                     var screen = engine.readPixels(0, 0, engine.getRenderWidth(), engine.getRenderHeight() );
                     // . . .
                 }
-
             }
+            
+            // always assign the privileged time, which is not subject to stopping
+            if (TimelineControl._isRealtime){
+                TimelineControl._privelegedNow += elapsed * TimelineControl._speed;
+
+            } else TimelineControl._privelegedNow += 1000 / TimelineControl._manualFrameRate; // add # of millis for exact advance
+
             // record last time after render processed regardless of paused or not; used to detect tab change
             TimelineControl._lastRun = BABYLON.Tools.Now;
         }
-
+        
         public static sizeFor720 () : void { TimelineControl._sizeForRecording(1280,  720); }
         public static sizeFor1080() : void { TimelineControl._sizeForRecording(1920, 1080); }
 
@@ -85,6 +92,7 @@ module QI {
         public static get manualFrameRate() : number        { return TimelineControl._manualFrameRate; }
         public static get isRealtime     () : boolean       { return TimelineControl._isRealtime; }
         public static get Now            () : number        { return TimelineControl._now; }
+        public static get PrivilegedNow  () : number        { return TimelineControl._privelegedNow; }
         public static get FrameID        () : number        { return TimelineControl._frameID; }
         public static get Speed          () : number        { return TimelineControl._speed; }
         public static get scene          () : BABYLON.Scene { return TimelineControl._scene; }
@@ -110,11 +118,11 @@ module QI {
 
         /** system could be paused at a higher up without notification; just by stop calling beforeRender() */
         public static get isSystemPaused() : boolean { return TimelineControl._systemPaused; }
-        public static pauseSystem() : void { 
+        public static pauseSystem(needPrivilegedSound ? : boolean) : void { 
             TimelineControl._systemPaused = true;
 
              // disable the audio system
-            TimelineControl._scene.audioEnabled = false;
+            TimelineControl._scene.audioEnabled = needPrivilegedSound;
         }
 
         public static resumeSystem() : void {

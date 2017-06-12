@@ -1607,11 +1607,11 @@ var QI;
             TimelineControl._manualFrameRate = rateIfManual;
         };
         TimelineControl._manualAdvanceAfterRender = function () {
+            // realtime elapsed & set up for "next" elapsed
+            var elapsed = BABYLON.Tools.Now - TimelineControl._lastFrame;
+            TimelineControl._lastFrame = BABYLON.Tools.Now;
             if (!TimelineControl._systemPaused || TimelineControl._resumeQueued) {
                 TimelineControl._frameID++;
-                // realtime elapsed & set up for "next" elapsed
-                var elapsed = BABYLON.Tools.Now - TimelineControl._lastFrame;
-                TimelineControl._lastFrame = BABYLON.Tools.Now;
                 // assign a new Now based on whether realtime or not
                 if (TimelineControl._isRealtime) {
                     TimelineControl._now += elapsed * TimelineControl._speed;
@@ -1629,6 +1629,12 @@ var QI;
                     var screen = engine.readPixels(0, 0, engine.getRenderWidth(), engine.getRenderHeight());
                 }
             }
+            // always assign the privileged time, which is not subject to stopping
+            if (TimelineControl._isRealtime) {
+                TimelineControl._privelegedNow += elapsed * TimelineControl._speed;
+            }
+            else
+                TimelineControl._privelegedNow += 1000 / TimelineControl._manualFrameRate; // add # of millis for exact advance
             // record last time after render processed regardless of paused or not; used to detect tab change
             TimelineControl._lastRun = BABYLON.Tools.Now;
         };
@@ -1650,6 +1656,11 @@ var QI;
         });
         Object.defineProperty(TimelineControl, "Now", {
             get: function () { return TimelineControl._now; },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(TimelineControl, "PrivilegedNow", {
+            get: function () { return TimelineControl._privelegedNow; },
             enumerable: true,
             configurable: true
         });
@@ -1675,16 +1686,21 @@ var QI;
             enumerable: true,
             configurable: true
         });
+        Object.defineProperty(TimelineControl, "scene", {
+            get: function () { return TimelineControl._scene; },
+            enumerable: true,
+            configurable: true
+        });
         Object.defineProperty(TimelineControl, "isSystemPaused", {
             /** system could be paused at a higher up without notification; just by stop calling beforeRender() */
             get: function () { return TimelineControl._systemPaused; },
             enumerable: true,
             configurable: true
         });
-        TimelineControl.pauseSystem = function () {
+        TimelineControl.pauseSystem = function (needPrivilegedSound) {
             TimelineControl._systemPaused = true;
             // disable the audio system
-            TimelineControl._scene.audioEnabled = false;
+            TimelineControl._scene.audioEnabled = needPrivilegedSound;
         };
         TimelineControl.resumeSystem = function () {
             // since Now is computed in an after renderer, resumes are queued. Processing a call to resumeSystem directly would have a stale 'Now'.
@@ -1701,6 +1717,7 @@ var QI;
     }());
     TimelineControl._isRealtime = true;
     TimelineControl._now = BABYLON.Tools.Now;
+    TimelineControl._privelegedNow = BABYLON.Tools.Now;
     TimelineControl._lastRun = BABYLON.Tools.Now;
     TimelineControl._lastFrame = BABYLON.Tools.Now;
     TimelineControl._frameID = 0; // useful for new in frame detection
@@ -2049,7 +2066,10 @@ var QI;
          *                 Sub-poses which should be substituted during event (default null).
          *
          *      revertSubposes - Skeletons Only:
-         *                       Should any sub-poses previously applied should be subtracted during event(default false)?
+         *                       Should any sub-poses previously applied should be subtracted during event (default false)
+         *
+         *      privilegedEvent - NonMotionEvents Only, when not running from a Queue:
+         *                        Support for SceneTransitions, which can then system pause while running (default false)
          */
         function MotionEvent(_milliDuration, movePOV, rotatePOV, options) {
             if (rotatePOV === void 0) { rotatePOV = null; }
@@ -2076,7 +2096,8 @@ var QI;
                 noStepWiseMovement: false,
                 mirrorAxes: null,
                 subposes: null,
-                revertSubposes: false
+                revertSubposes: false,
+                privilegedEvent: false
             };
             this.options.millisBefore = this.options.millisBefore || 0;
             this.options.absoluteMovement = this.options.absoluteMovement || false;
@@ -2112,7 +2133,7 @@ var QI;
          */
         MotionEvent.prototype.activate = function (lateStartMilli) {
             if (lateStartMilli === void 0) { lateStartMilli = 0; }
-            this._startTime = QI.TimelineControl.Now;
+            this._startTime = this._now;
             if (lateStartMilli > 0) {
                 // apply 20% of the late start or 10% of duration which ever is less
                 lateStartMilli /= 5;
@@ -2130,7 +2151,7 @@ var QI;
             if (this._currentDurationRatio === MotionEvent._BLOCKED) {
                 // check sound and prior event first
                 if (this.isSoundReady() && this.isPriorComplete()) {
-                    this._startTime = QI.TimelineControl.Now; // reset the start clocks
+                    this._startTime = this._now; // reset the start clocks
                     this._currentDurationRatio = MotionEvent._SYNC_BLOCKED;
                 }
                 else
@@ -2141,7 +2162,7 @@ var QI;
                 // change both to WAITING & start clock, once both are SYNC_BLOCKED
                 if (this._syncPartner) {
                     if (this._syncPartner.isSyncBlocked()) {
-                        this._startTime = QI.TimelineControl.Now; // reset the start clocks
+                        this._startTime = this._now; // reset the start clocks
                         this._syncPartner._syncReady(this._startTime);
                     }
                     else
@@ -2150,11 +2171,11 @@ var QI;
                 this._currentDurationRatio = MotionEvent._WAITING;
             }
             // go time, or at least time waiting from millis before
-            this._millisSoFar = QI.TimelineControl.Now - this._startTime;
+            this._millisSoFar = this._now - this._startTime;
             if (this._currentDurationRatio === MotionEvent._WAITING) {
                 var overandAbove = this._millisSoFar - this._proratedMillisBefore;
                 if (overandAbove >= 0) {
-                    this._startTime = QI.TimelineControl.Now - overandAbove; // prorate start for time served
+                    this._startTime = this._now - overandAbove; // prorate start for time served
                     this._millisSoFar = overandAbove;
                     if (this.options.sound && !this.muteSound) {
                         this.options.sound.setPlaybackRate(QI.TimelineControl.Speed);
@@ -2186,12 +2207,12 @@ var QI;
                 return;
             var before = this._startTime;
             // back into a start time which reflects the millisSoFar
-            this._startTime = QI.TimelineControl.Now - this._millisSoFar;
+            this._startTime = this._now - this._millisSoFar;
             if (this.options.sound && !this.muteSound && this.options.sound.isPaused)
                 this.options.sound.play();
         };
         MotionEvent.prototype.pause = function () {
-            if (this.options.sound)
+            if (this.options.sound && !this.options.privilegedEvent)
                 this.options.sound.pause();
         };
         // =================================== sync partner methods ===================================
@@ -2234,6 +2255,11 @@ var QI;
         });
         Object.defineProperty(MotionEvent.prototype, "syncPartner", {
             get: function () { return this._syncPartner; },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(MotionEvent.prototype, "_now", {
+            get: function () { return this.options.privilegedEvent ? QI.TimelineControl.PrivilegedNow : QI.TimelineControl.Now; },
             enumerable: true,
             configurable: true
         });
@@ -2342,6 +2368,8 @@ var QI;
             this.activate(lateStartMilli);
             if (scene) {
                 QI.TimelineControl.initialize(scene); // only does something the first call
+                if (this.options.privilegedEvent)
+                    QI.TimelineControl.pauseSystem(typeof (this.options.sound) !== "undefined"); // do not disable sound when part of transition
                 var ref = this;
                 this._registeredFN = function () { ref._beforeRender(); };
                 scene.registerBeforeRender(this._registeredFN);
@@ -2351,18 +2379,19 @@ var QI;
         };
         NonMotionEvent.prototype.getClassName = function () { return "NonMotionEvent"; };
         NonMotionEvent.prototype._beforeRender = function () {
-            if (QI.TimelineControl.isSystemPaused) {
-                if (!this._paused) {
-                    this.pause();
-                    this._paused = true;
+            if (!this.options.privilegedEvent) {
+                if (QI.TimelineControl.isSystemPaused) {
+                    if (!this._paused) {
+                        this.pause();
+                        this._paused = true;
+                    }
+                    return;
                 }
-                return;
+                else if (this._paused) {
+                    this._paused = false;
+                    this.resumePlay();
+                }
             }
-            else if (this._paused) {
-                this._paused = false;
-                this.resumePlay();
-            }
-            var resume = !this._paused;
             var ratioComplete = this.getCompletionMilestone();
             if (ratioComplete < 0)
                 return; // MotionEvent.BLOCKED, Motion.SYNC_BLOCKED or MotionEvent.WAITING
@@ -2379,7 +2408,19 @@ var QI;
                 this._paused = false;
                 this._scene.unregisterBeforeRender(this._registeredFN);
                 this._scene = null;
+                if (this.options.privilegedEvent)
+                    QI.TimelineControl.resumeSystem();
             }
+            if (this._alsoCleanFunc)
+                this._alsoCleanFunc();
+        };
+        /**
+         * assign things to also be done when complete.  Used by instancers which are not sub-classing.
+         * Unlike other stuff in clear(), this always runs.
+         * @param {() => void} func - run in clear method as well.
+         */
+        NonMotionEvent.prototype.alsoClean = function (func) {
+            this._alsoCleanFunc = func;
         };
         // method to be overridden
         NonMotionEvent.prototype._incrementallyUpdate = function (ratioComplete) { };
@@ -2407,6 +2448,9 @@ var QI;
          *      pace - Any Object with the function: getCompletionMilestone(currentDurationRatio) (default MotionEvent.LINEAR)
          *      sound - Sound to start with event.
          *      requireCompletionOf - A way to serialize events from different queues e.g. shape key & skeleton.
+         *
+         *      privilegedEvent - NonMotionEvents Only, when not running from a Queue:
+         *                        Support for SceneTransitions, which can then system pause while running.
          */
         function PropertyEvent(_object, _property, _targetValue, milliDuration, options) {
             var _this = _super.call(this, milliDuration, null, null, options) || this;
@@ -2478,6 +2522,9 @@ var QI;
          *      pace - Any Object with the function: getCompletionMilestone(currentDurationRatio) (default MotionEvent.LINEAR)
          *      sound - Sound to start with event.
          *      requireCompletionOf - A way to serialize events from different queues e.g. shape key & skeleton.
+         *
+         *      privilegedEvent - NonMotionEvents Only:
+         *                        Support for SceneTransitions, which can then system pause while running.
          */
         function RecurringCallbackEvent(_callback, milliDuration, options) {
             var _this = _super.call(this, milliDuration, null, null, options) || this;
@@ -4562,6 +4609,37 @@ var QI;
         }*/
 })(QI || (QI = {}));
 
+/// <reference path="../meshes/Mesh.ts"/>
+var QI;
+(function (QI) {
+    var AbstractGrandEntrance = (function () {
+        /**
+         * @constructor - This is the required constructor for a GrandEntrance.  This is what Tower of Babel
+         * generated code expects.
+         * @param {QI.Mesh} _mesh - Root level mesh to display.
+         * @param {Array<number>} durations - The millis of various sections of entrance.
+         * @param {BABYLON.Sound} soundEffect - An optional instance of the sound to play as a part of entrance.
+         * @param {boolean} disposeSound - When true, dispose the sound effect on completion. (Default false)
+         */
+        function AbstractGrandEntrance(_mesh, durations, soundEffect, disposeSound) {
+            this._mesh = _mesh;
+            this.durations = durations;
+            this.soundEffect = soundEffect;
+            if (this.soundEffect && disposeSound) {
+                var ref = this;
+                this.soundEffect.onended = function () {
+                    ref.soundEffect.dispose();
+                };
+            }
+        }
+        AbstractGrandEntrance.prototype.makeEntrance = function () {
+            throw "Must be over-ridden by sub-classes";
+        };
+        return AbstractGrandEntrance;
+    }());
+    QI.AbstractGrandEntrance = AbstractGrandEntrance;
+})(QI || (QI = {}));
+
 /// <reference path="../deformation/shapeKeyBased/VertexDeformation.ts"/>
 /// <reference path="../deformation/shapeKeyBased/ShapeKeyGroup.ts"/>
 
@@ -4573,6 +4651,7 @@ var QI;
 /// <reference path="../deformation/skeletonBased/Pose.ts"/>
 /// <reference path="../deformation/skeletonBased/PoseProcessor.ts"/>
 /// <reference path="../deformation/skeletonBased/Skeleton.ts"/>
+/// <reference path="../entrances/AbstractGrandEntrance.ts"/>
 /// <reference path="../queue/MotionEvent.ts"/>
 /// <reference path="../queue/EventSeries.ts"/>
 /// <reference path="../queue/PovProcessor.ts"/>
@@ -5294,6 +5373,7 @@ var QI;
 
 
 
+/// <reference path="./Mesh.ts"/>
 var QI;
 (function (QI) {
     var Hair = (function (_super) {
@@ -6498,28 +6578,22 @@ var QI;
 })(QI || (QI = {}));
 
 /// <reference path="../meshes/Mesh.ts"/>
+/// <reference path="./AbstractGrandEntrance.ts"/>
+
+
+
+
+
+
 var QI;
 (function (QI) {
-    var GatherEntrance = (function () {
-        /**
-         * @constructor - This is the required constructor for a GrandEntrance.  This is what Tower of Babel
-         * generated code expects.
-         * @param {QI.Mesh} _mesh - Root level mesh to display.
-         * @param {Array<number>} durations - The millis of various sections of entrance.  For Fire only 1.
-         * @param {BABYLON.Sound} soundEffect - An optional instance of the sound to play as a part of entrance.
-         */
-        function GatherEntrance(_mesh, durations, soundEffect, disposeSound) {
-            this._mesh = _mesh;
-            this.durations = durations;
-            this.soundEffect = soundEffect;
-            if (this.soundEffect && disposeSound) {
-                var ref = this;
-                this.soundEffect.onended = function () {
-                    ref.soundEffect.dispose();
-                };
-            }
+    var GatherEntrance = (function (_super) {
+        __extends(GatherEntrance, _super);
+        function GatherEntrance() {
+            return _super !== null && _super.apply(this, arguments) || this;
         }
-        /** GrandEntrance implementation */
+        // no need for a constructor, just use super's
+        /** @override */
         GatherEntrance.prototype.makeEntrance = function () {
             var startingState = GatherEntrance.buildScatter(this._mesh);
             // queue a return to basis
@@ -6572,37 +6646,30 @@ var QI;
             return startingState;
         };
         return GatherEntrance;
-    }());
+    }(QI.AbstractGrandEntrance));
     QI.GatherEntrance = GatherEntrance;
 })(QI || (QI = {}));
 
 /// <reference path="../meshes/Mesh.ts"/>
+/// <reference path="./AbstractGrandEntrance.ts"/>
+
+
+
+
+
+
 var QI;
 (function (QI) {
     /**
      * The Fire Entrance REQUIRES that BABYLON.FireMaterial.js be loaded
      */
-    var FireEntrance = (function () {
-        /**
-         * @constructor - This is the required constructor for a GrandEntrance.  This is what Tower of Babel
-         * generated code expects.
-         * @param {QI.Mesh} _mesh - Root level mesh to display.
-         * @param {Array<number>} durations - The millis of various sections of entrance.  For Fire only 1.
-         * @param {BABYLON.Sound} soundEffect - An optional instance of the sound to play as a part of entrance.
-         * @param {boolean} disposeSound - When true, dispose the sound effect on completion. (Default false)
-         */
-        function FireEntrance(_mesh, durations, soundEffect, disposeSound) {
-            this._mesh = _mesh;
-            this.durations = durations;
-            this.soundEffect = soundEffect;
-            if (this.soundEffect && disposeSound) {
-                var ref = this;
-                this.soundEffect.onended = function () {
-                    ref.soundEffect.dispose();
-                };
-            }
+    var FireEntrance = (function (_super) {
+        __extends(FireEntrance, _super);
+        function FireEntrance() {
+            return _super !== null && _super.apply(this, arguments) || this;
         }
-        /** GrandEntrance implementation */
+        // no need for a constructor, just use super's
+        /** @override */
         FireEntrance.prototype.makeEntrance = function () {
             if (!BABYLON.FireMaterial) {
                 throw "Fire Material library not found";
@@ -6676,34 +6743,27 @@ var QI;
             this._mesh.resumeInstancePlay();
         };
         return FireEntrance;
-    }());
+    }(QI.AbstractGrandEntrance));
     QI.FireEntrance = FireEntrance;
 })(QI || (QI = {}));
 
 /// <reference path="../meshes/Mesh.ts"/>
+/// <reference path="./AbstractGrandEntrance.ts"/>
+
+
+
+
+
+
 var QI;
 (function (QI) {
-    var ExpandEntrance = (function () {
-        /**
-         * @constructor - This is the required constructor for a GrandEntrance.  This is what Tower of Babel
-         * generated code expects.
-         * @param {QI.Mesh} _mesh - Root level mesh to display.
-         * @param {Array<number>} durations - The millis of various sections of entrance.  For Fire only 1.
-         * @param {BABYLON.Sound} soundEffect - An optional instance of the sound to play as a part of entrance.
-         * @param {boolean} disposeSound - When true, dispose the sound effect on completion. (Default false)
-         */
-        function ExpandEntrance(_mesh, durations, soundEffect, disposeSound) {
-            this._mesh = _mesh;
-            this.durations = durations;
-            this.soundEffect = soundEffect;
-            if (this.soundEffect && disposeSound) {
-                var ref = this;
-                this.soundEffect.onended = function () {
-                    ref.soundEffect.dispose();
-                };
-            }
+    var ExpandEntrance = (function (_super) {
+        __extends(ExpandEntrance, _super);
+        function ExpandEntrance() {
+            return _super !== null && _super.apply(this, arguments) || this;
         }
-        /** GrandEntrance implementation */
+        // no need for a constructor, just use super's
+        /** @override */
         ExpandEntrance.prototype.makeEntrance = function () {
             var ref = this;
             var origScaling = ref._mesh.scaling;
@@ -6745,11 +6805,12 @@ var QI;
             this._mesh.resumeInstancePlay();
         };
         return ExpandEntrance;
-    }());
+    }(QI.AbstractGrandEntrance));
     QI.ExpandEntrance = ExpandEntrance;
 })(QI || (QI = {}));
 
 /// <reference path="../meshes/Mesh.ts"/>
+/// <reference path="./AbstractGrandEntrance.ts"/>
 
 
 
@@ -6762,7 +6823,8 @@ var QI;
      * Implemented using the ShaderBuilder extension embedded into QI.
      * This is an abstract class.  A concrete subclass needs to implement _getEffectHostMesh() & _makeCallback()
      */
-    var ShaderBuilderEntrance = (function () {
+    var ShaderBuilderEntrance = (function (_super) {
+        __extends(ShaderBuilderEntrance, _super);
         /**
          * @constructor - This is the required constructor for a GrandEntrance.  This is what Tower of Babel
          * generated code expects.
@@ -6771,20 +6833,13 @@ var QI;
          * @param {BABYLON.Sound} soundEffect - An optional instance of the sound to play as a part of entrance.
          * @param {boolean} disposeSound - When true, dispose the sound effect on completion. (Default false)
          */
-        function ShaderBuilderEntrance(_mesh, durations, soundEffect, disposeSound) {
-            this._mesh = _mesh;
-            this.durations = durations;
-            this.soundEffect = soundEffect;
-            if (this.soundEffect && disposeSound) {
-                var ref = this;
-                this.soundEffect.onended = function () {
-                    ref.soundEffect.dispose();
-                };
-            }
+        function ShaderBuilderEntrance(mesh, durations, soundEffect, disposeSound) {
+            var _this = _super.call(this, mesh, durations, soundEffect, disposeSound) || this;
             if (!ShaderBuilderEntrance._SB_INITIALIZED) {
                 ShaderBuilderEntrance._SB_INITIALIZED = true;
                 BABYLONX.ShaderBuilder.InitializeEngine();
             }
+            return _this;
         }
         /**
          * The mesh returned contains a material that was built by ShaderBuilder.  Subclass should override.
@@ -6794,7 +6849,7 @@ var QI;
          * Method for making the call back for the recurring event.  Subclass should override.
          */
         ShaderBuilderEntrance.prototype._makeCallback = function () { return null; };
-        /** GrandEntrance implementation */
+        /** @override */
         ShaderBuilderEntrance.prototype.makeEntrance = function () {
             this._originalScale = this._mesh.scaling.clone();
             this._mesh.scaling = new BABYLON.Vector3(0.0000001, 0.0000001, 0.0000001);
@@ -6827,7 +6882,7 @@ var QI;
             this._mesh.resumeInstancePlay();
         };
         return ShaderBuilderEntrance;
-    }());
+    }(QI.AbstractGrandEntrance));
     ShaderBuilderEntrance._SB_INITIALIZED = false;
     QI.ShaderBuilderEntrance = ShaderBuilderEntrance;
     //================================================================================================
@@ -6991,6 +7046,187 @@ var QI;
     }(ShaderBuilderEntrance));
     PoofEntrance._MAX_TIME = 1300;
     QI.PoofEntrance = PoofEntrance;
+})(QI || (QI = {}));
+
+/// <reference path="../queue/NonMotionEvents.ts"/>
+/// <reference path="../queue/TimelineControl.ts"/>
+/// <
+var QI;
+(function (QI) {
+    var SceneTransition = (function () {
+        function SceneTransition() {
+        }
+        /**
+         * This is the entry point call in the Tower of Babel generated code once all textures are buffered.
+         */
+        SceneTransition.perform = function (sceneTransitionName, meshes, overriddenMillis, overriddenSound, options) {
+            var effect = SceneTransition.EFFECTS[sceneTransitionName];
+            if (!effect)
+                throw "No such scene transition: " + sceneTransitionName;
+            effect.initiate(meshes, overriddenMillis, overriddenSound);
+        };
+        SceneTransition.makeAllVisible = function (meshes) {
+            for (var i = 0, mLen = meshes.length; i < mLen; i++) {
+                var mesh = meshes[i];
+                if (mesh instanceof QI.Mesh)
+                    mesh.makeVisible(true); // also resumes event queued, which is always initially paused
+                else {
+                    var children = mesh.getChildMeshes();
+                    mesh.isVisible = true;
+                    for (var j = 0, cLen = children.length; j < cLen; j++) {
+                        children[i].isVisible = true;
+                    }
+                }
+            }
+        };
+        return SceneTransition;
+    }());
+    /**
+     * Using a static dictionary to get transitions, so that custom transitions not included can be referenced.
+     * Stock transitions already loaded.
+     */
+    SceneTransition.EFFECTS = {};
+    QI.SceneTransition = SceneTransition;
+})(QI || (QI = {}));
+
+/// <reference path="./SceneTransition.ts"/>
+/// <reference path="../queue/Pace.ts"/>
+/// <reference path="../queue/MotionEvent.ts"/>
+/// <reference path="../queue/TimelineControl.ts"/>
+var QI;
+(function (QI) {
+    var IntoFocusTransition = (function () {
+        function IntoFocusTransition() {
+        }
+        /**
+         * Transition implementation
+         */
+        IntoFocusTransition.prototype.initiate = function (meshes, overriddenMillis, overriddenSound) {
+            QI.SceneTransition.makeAllVisible(meshes);
+            // set up post processes
+            var camera = QI.TimelineControl.scene.activeCamera || QI.TimelineControl.scene.activeCameras[0];
+            var postProcess0 = new BABYLON.BlurPostProcess("Horizontal blur", new BABYLON.Vector2(1.0, 0), IntoFocusTransition._INITIAL_KERNEL, 1.0, camera);
+            var postProcess1 = new BABYLON.BlurPostProcess("Vertical blur", new BABYLON.Vector2(0, 1.0), IntoFocusTransition._INITIAL_KERNEL, 1.0, camera);
+            // account for overriding
+            var time = overriddenMillis ? overriddenMillis : IntoFocusTransition._DEFAULT_MILLIS;
+            var sound = overriddenSound ? overriddenSound : this._sound;
+            var options = { pace: new QI.SinePace(QI.Pace.MODE_INOUT), privilegedEvent: true };
+            if (sound)
+                options.sound = sound;
+            var callBack = function (ratioComplete) {
+                postProcess0.kernel = IntoFocusTransition._INITIAL_KERNEL * (1 - ratioComplete);
+                postProcess1.kernel = IntoFocusTransition._INITIAL_KERNEL * (1 - ratioComplete);
+            };
+            var event = new QI.RecurringCallbackEvent(callBack, time, options);
+            var dispose = function () {
+                postProcess0.dispose();
+                postProcess1.dispose();
+            };
+            event.alsoClean(dispose);
+            event.initialize(0, QI.TimelineControl.scene);
+        };
+        return IntoFocusTransition;
+    }());
+    IntoFocusTransition.NAME = "INTO_FOCUS";
+    IntoFocusTransition._INITIAL_KERNEL = 200;
+    IntoFocusTransition._DEFAULT_MILLIS = 5000;
+    QI.IntoFocusTransition = IntoFocusTransition;
+    // code to run on module load, registering of the transition
+    QI.SceneTransition.EFFECTS[IntoFocusTransition.NAME] = new IntoFocusTransition();
+})(QI || (QI = {}));
+
+/// <reference path="./SceneTransition.ts"/>
+/// <reference path="../queue/Pace.ts"/>
+/// <reference path="../queue/MotionEvent.ts"/>
+/// <reference path="../queue/TimelineControl.ts"/>
+var QI;
+(function (QI) {
+    var ToColorTransition = (function () {
+        function ToColorTransition() {
+        }
+        /**
+         * Transition implementation
+         */
+        ToColorTransition.prototype.initiate = function (meshes, overriddenMillis, overriddenSound) {
+            QI.SceneTransition.makeAllVisible(meshes);
+            // set up post processes
+            var camera = QI.TimelineControl.scene.activeCamera || QI.TimelineControl.scene.activeCameras[0];
+            var postProcess = new BABYLON.BlackAndWhitePostProcess("WelcomeToWonderLand", 1.0, camera);
+            // account for overriding
+            var time = overriddenMillis ? overriddenMillis : ToColorTransition._DEFAULT_MILLIS;
+            var sound = overriddenSound ? overriddenSound : this._sound;
+            var options = { pace: new QI.SinePace(QI.Pace.MODE_INOUT), privilegedEvent: true };
+            if (sound)
+                options.sound = sound;
+            var callBack = function (ratioComplete) {
+                postProcess.degree = ratioComplete;
+            };
+            var event = new QI.PropertyEvent(postProcess, "degree", 0, time, options);
+            var dispose = function () {
+                postProcess.dispose();
+            };
+            event.alsoClean(dispose);
+            event.initialize(0, QI.TimelineControl.scene);
+        };
+        return ToColorTransition;
+    }());
+    ToColorTransition.NAME = "TO_COLOR";
+    ToColorTransition._DEFAULT_MILLIS = 5000;
+    QI.ToColorTransition = ToColorTransition;
+    // code to run on module load, registering of the transition
+    QI.SceneTransition.EFFECTS[ToColorTransition.NAME] = new ToColorTransition();
+})(QI || (QI = {}));
+
+/// <reference path="./SceneTransition.ts"/>
+/// <reference path="../queue/Pace.ts"/>
+/// <reference path="../queue/MotionEvent.ts"/>
+/// <reference path="../queue/TimelineControl.ts"/>
+var QI;
+(function (QI) {
+    var VisiblityTransition = (function () {
+        function VisiblityTransition() {
+        }
+        /**
+         * Transition implementation
+         */
+        VisiblityTransition.prototype.initiate = function (meshes, overriddenMillis, overriddenSound) {
+            QI.SceneTransition.makeAllVisible(meshes);
+            this._meshes = meshes;
+            // set up post processes
+            var camera = QI.TimelineControl.scene.activeCamera || QI.TimelineControl.scene.activeCameras[0];
+            // account for overriding
+            var time = overriddenMillis ? overriddenMillis : VisiblityTransition._DEFAULT_MILLIS;
+            var sound = overriddenSound ? overriddenSound : this._sound;
+            var options = { pace: new QI.SinePace(QI.Pace.MODE_INOUT), privilegedEvent: true };
+            if (sound)
+                options.sound = sound;
+            var ref = this;
+            var callBack = function (ratioComplete) {
+                ref._changeVisiblity(ratioComplete, ref._meshes);
+            };
+            var event = new QI.RecurringCallbackEvent(callBack, time, options);
+            var dispose = function () {
+                ref._meshes = null;
+            };
+            event.alsoClean(dispose);
+            event.initialize(0, QI.TimelineControl.scene);
+        };
+        VisiblityTransition.prototype._changeVisiblity = function (ratioComplete, meshes) {
+            for (var i = 0, mLen = meshes.length; i < mLen; i++) {
+                var mesh = meshes[i];
+                mesh.visibility = ratioComplete;
+                var children = mesh.getChildMeshes();
+                if (children.length > 0)
+                    this._changeVisiblity(ratioComplete, children);
+            }
+        };
+        return VisiblityTransition;
+    }());
+    VisiblityTransition.NAME = "VISIBLITY";
+    VisiblityTransition._DEFAULT_MILLIS = 5000;
+    QI.VisiblityTransition = VisiblityTransition;
+    // code to run on module load, registering of the transition
+    QI.SceneTransition.EFFECTS[VisiblityTransition.NAME] = new VisiblityTransition();
 })(QI || (QI = {}));
 
 var TOWER_OF_BABEL;

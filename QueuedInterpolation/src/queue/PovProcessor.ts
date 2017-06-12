@@ -386,7 +386,7 @@ module QI {
         }
         // ========================================= Statics =========================================
         public static get Version() : string {
-            return "1.1.0";
+            return "1.1.0 Beta";
         }
 
         public static LerpToRef(start: BABYLON.Vector3, end: BABYLON.Vector3, amount: number, result: BABYLON.Vector3) : void {

@@ -57,9 +57,15 @@ module QI{
 
         /**
          * Skeletons Only:
-         * Should any sub-poses previously applied should be subtracted during event(default false)?
+         * Should any sub-poses previously applied should be subtracted during event (default false)
          */
         revertSubposes?: boolean;
+        
+        /**
+         * NonMotionEvents Only, when not running from a Queue:
+         * Support for SceneTransitions, which can then system pause while running (default false)
+         */
+        privilegedEvent?: boolean;
     }
 
    /**
@@ -118,7 +124,10 @@ module QI{
          *                 Sub-poses which should be substituted during event (default null).
          *
          *      revertSubposes - Skeletons Only:
-         *                       Should any sub-poses previously applied should be subtracted during event(default false)?
+         *                       Should any sub-poses previously applied should be subtracted during event (default false)
+         * 
+         *      privilegedEvent - NonMotionEvents Only, when not running from a Queue:
+         *                        Support for SceneTransitions, which can then system pause while running (default false)
          */
         constructor(
             private _milliDuration : number,
@@ -141,7 +150,8 @@ module QI{
                 noStepWiseMovement: false,
                 mirrorAxes: null,
                 subposes : null,
-                revertSubposes : false
+                revertSubposes : false,
+                privilegedEvent : false
             };
             this.options.millisBefore = this.options.millisBefore || 0;
             this.options.absoluteMovement = this.options.absoluteMovement || false;
@@ -180,7 +190,7 @@ module QI{
          * @param {number} lateStartMilli - indication of how far already behind
          */
         public activate(lateStartMilli = 0) : void {
-            this._startTime = TimelineControl.Now;
+            this._startTime = this._now;
             if (lateStartMilli > 0){
                 // apply 20% of the late start or 10% of duration which ever is less
                 lateStartMilli /= 5;
@@ -201,7 +211,7 @@ module QI{
                 // check sound and prior event first
                
                 if (this.isSoundReady() && this.isPriorComplete()) {
-                    this._startTime = TimelineControl.Now; // reset the start clocks
+                    this._startTime = this._now; // reset the start clocks
                     this._currentDurationRatio = MotionEvent._SYNC_BLOCKED;           
                 } else return MotionEvent._BLOCKED;
             }
@@ -211,7 +221,7 @@ module QI{
                 // change both to WAITING & start clock, once both are SYNC_BLOCKED
                 if (this._syncPartner){
                     if (this._syncPartner.isSyncBlocked() ){
-                        this._startTime = TimelineControl.Now; // reset the start clocks
+                        this._startTime = this._now; // reset the start clocks
                         this._syncPartner._syncReady(this._startTime);
                     }
                     else return MotionEvent._SYNC_BLOCKED;
@@ -220,12 +230,12 @@ module QI{
             }
             
             // go time, or at least time waiting from millis before
-            this._millisSoFar = TimelineControl.Now - this._startTime;
+            this._millisSoFar = this._now - this._startTime;
 
             if (this._currentDurationRatio === MotionEvent._WAITING) {
                 var overandAbove = this._millisSoFar - this._proratedMillisBefore;
                 if (overandAbove >= 0){
-                    this._startTime = TimelineControl.Now - overandAbove;  // prorate start for time served
+                    this._startTime = this._now - overandAbove;  // prorate start for time served
                     this._millisSoFar = overandAbove;
 
                     if (this.options.sound && !this.muteSound){
@@ -261,13 +271,13 @@ module QI{
             var before = this._startTime;
 
             // back into a start time which reflects the millisSoFar
-            this._startTime = TimelineControl.Now - this._millisSoFar;
+            this._startTime = this._now - this._millisSoFar;
 
             if (this.options.sound && !this.muteSound && this.options.sound.isPaused) this.options.sound.play();
         }
 
         public pause() : void {
-            if (this.options.sound) this.options.sound.pause();
+            if (this.options.sound && !this.options.privilegedEvent) this.options.sound.pause();
         }
         // =================================== sync partner methods ===================================
         /**
@@ -294,10 +304,11 @@ module QI{
         public isComplete   () : boolean { return this._currentDurationRatio === MotionEvent._COMPLETE; }
         public isExecuting  () : boolean { return this._currentDurationRatio >   MotionEvent._READY && this._currentDurationRatio < MotionEvent._COMPLETE; }
 
-        public get milliDuration() : number { return this._milliDuration; }
-        public get millisBefore() : number { return this.options.millisBefore; }
-        public get pace() : Pace {return this.options.pace; }
-        public get syncPartner() : MotionEvent {return this._syncPartner; }
+        public get milliDuration() : number      { return this._milliDuration; }
+        public get millisBefore () : number      { return this.options.millisBefore; }
+        public get pace         () : Pace        { return this.options.pace; }
+        public get syncPartner  () : MotionEvent { return this._syncPartner; }
+        private get _now        () : number      { return this.options.privilegedEvent ? TimelineControl.PrivilegedNow : TimelineControl.Now; }
 
         /**
          * Called by EventSeries, before MotionEvent is return by series (even the first run).  This is to support
