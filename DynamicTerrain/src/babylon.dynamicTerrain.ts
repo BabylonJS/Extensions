@@ -315,7 +315,6 @@ module BABYLON {
                     lodJ = LODValue; 
                 }
 
-                var color;
                 for (var i = 0|0; i <= this._terrainSub; i++) {
                     // LOD X
                     LODValue = this._LODValue;
