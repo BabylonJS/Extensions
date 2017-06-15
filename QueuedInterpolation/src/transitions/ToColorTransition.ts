@@ -15,11 +15,9 @@ module QI{
          * Transition implementation
          */
         public initiate(meshes : Array<BABYLON.AbstractMesh>, overriddenMillis : number, overriddenSound : BABYLON.Sound) : void {
-            SceneTransition.makeAllVisible(meshes);
-            
-            // set up post processes
             var camera = QI.TimelineControl.scene.activeCamera || QI.TimelineControl.scene.activeCameras[0];
 
+            // set up post processes
             var postProcess = new BABYLON.BlackAndWhitePostProcess("WelcomeToWonderLand", 1.0, camera);
             
             // account for overriding

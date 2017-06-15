@@ -21,6 +21,7 @@ module QI {
             var effect = SceneTransition.EFFECTS[sceneTransitionName];
             if (!effect) throw "No such scene transition: " + sceneTransitionName;
             
+            SceneTransition.makeAllVisible(meshes);
             effect.initiate(meshes, overriddenMillis, overriddenSound);
         }
         

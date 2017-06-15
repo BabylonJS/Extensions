@@ -16,11 +16,10 @@ module QI{
          * Transition implementation
          */
         public initiate(meshes : Array<BABYLON.AbstractMesh>, overriddenMillis : number, overriddenSound : BABYLON.Sound) : void {
-            SceneTransition.makeAllVisible(meshes);
             this._meshes = meshes;
             
-            // set up post processes
-            var camera = QI.TimelineControl.scene.activeCamera || QI.TimelineControl.scene.activeCameras[0];
+            // avoid a flash of being fully visible for a frame sometimes
+            this._changeVisiblity(0, meshes);
             
             // account for overriding
             var time  = overriddenMillis ? overriddenMillis : VisiblityTransition._DEFAULT_MILLIS;

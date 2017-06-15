@@ -16,11 +16,9 @@ module QI{
          * Transition implementation
          */
         public initiate(meshes : Array<BABYLON.AbstractMesh>, overriddenMillis : number, overriddenSound : BABYLON.Sound) : void {
-            SceneTransition.makeAllVisible(meshes);
-            
-            // set up post processes
             var camera = QI.TimelineControl.scene.activeCamera || QI.TimelineControl.scene.activeCameras[0];
 
+            // set up post processes
             var postProcess0 = new BABYLON.BlurPostProcess("Horizontal blur", new BABYLON.Vector2(1.0, 0), IntoFocusTransition._INITIAL_KERNEL, 1.0, camera);
             var postProcess1 = new BABYLON.BlurPostProcess("Vertical blur"  , new BABYLON.Vector2(0, 1.0), IntoFocusTransition._INITIAL_KERNEL, 1.0, camera);
             
