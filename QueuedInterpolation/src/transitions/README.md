@@ -42,8 +42,8 @@ module QI {
                  options? : {}
         ) : void;
     }
-}```
-
+}
+```
 Many of the arguments are those passed using `initScene()` arguments.  The `meshes` argument is passed by the generated code.  This is used by transitions which are made by adjusting each of the new meshes.
 
 The transition should be performed using one of the `QI.NonMotionEvent` sub-classes.  These can run using privileged time option.  If the event queues of any of the meshes have events immediately added, they will not start until the transition is complete.
