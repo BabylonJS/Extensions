@@ -53,6 +53,10 @@ class World:
         typescript_file_handler.write(exporter.define_Typescript_method('initScene', '', callArgs))
 
         indent = '        '
+        file_handler.write(indent + 'function MOVE(mesh, positionOffset) {\n')
+        file_handler.write(indent + '    mesh.position.addInPlace(positionOffset);\n')
+        file_handler.write(indent + '    if (mesh.isWorldMatrixFrozen) mesh.freezeWorldMatrix();\n')
+        file_handler.write(indent + '}\n\n')
         file_handler.write(indent + '_sceneTransitionName = sceneTransitionName;\n')
         file_handler.write(indent + '_overriddenMillis    = overriddenMillis;\n')
         file_handler.write(indent + '_overriddenSound     = overriddenSound;\n')
@@ -79,7 +83,7 @@ class World:
         file_handler.write('\n' + indent + '// instance all root meshes\n')
         file_handler.write(indent + 'var mesh;\n')
         
-        offsetCode = 'if (positionOffset) mesh.position.addInPlace(positionOffset);\n'
+        offsetCode = 'if (positionOffset) MOVE(mesh, positionOffset);\n'
 
         if exporter.scene.includeMeshFactory:
             factoryVersion  = indent + 'if (typeof (TOWER_OF_BABEL) !== \'undefined\'){\n'
