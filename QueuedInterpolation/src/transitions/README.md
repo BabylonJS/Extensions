@@ -6,11 +6,11 @@
 /**
  * Create an instance of all meshes / lights / shadows / and camera exported.
  * @param {BABYLON.Scene} scene - Needed for the constructor of all elements.
- * @param {string} resourcesRootDir - The directory location to start to look for texture files. Default "./"
- * @param {BABYLON.Vector3} positionOffset - When specified, assign the position of all elements with this offset.  Meshes can still FreezeWorldMatrix.
- * @param {string} sceneTransitionName - The name of the transition to use, when desired.
- * @param {number} overriddenMillis - The millis the transition should take when the default should not be used.
- * @param {BABYLON.Sound} overriddenSound - The transition sound which should be played, when the default should not be used.
+ * @param {string} resourcesRootDir - location to start to look for texture files. Default "./"
+ * @param {BABYLON.Vector3} positionOffset - Amount to adjust elements.  Meshes can still FreezeWorldMatrix.
+ * @param {string} sceneTransitionName - The transition to use, when desired.
+ * @param {number} overriddenMillis - Time of the transition, when not defaulting.
+ * @param {BABYLON.Sound} overriddenSound - The transition sound, when not defaulting.
  * @param {{}} options - A dictionary to place extra options which some transitions may require.
  */
 export function initScene(scene : BABYLON.Scene,
@@ -36,9 +36,14 @@ Custom Transitions are class which implement the `QI.Transition` interface:
 ```typescript
 module QI {
     export interface Transition {
-        initiate(meshes : Array<BABYLON.AbstractMesh>, overriddenMillis : number, overriddenSound : BABYLON.Sound, options? : {}) : void;
+        initiate(meshes : Array<BABYLON.AbstractMesh>,
+                 overriddenMillis : number,
+                 overriddenSound : BABYLON.Sound,
+                 options? : {}
+        ) : void;
     }
 }```
+
 Many of the arguments are those passed using `initScene()` arguments.  The `meshes` argument is passed by the generated code.  This is used by transitions which are made by adjusting each of the new meshes.
 
 The transition should be performed using one of the `QI.NonMotionEvent` sub-classes.  These can run using privileged time option.  If the event queues of any of the meshes have events immediately added, they will not start until the transition is complete.
