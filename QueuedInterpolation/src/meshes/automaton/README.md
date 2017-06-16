@@ -51,15 +51,10 @@ The common set of expressions which need to be transferred are in the [customExp
 ### Goto to Blender: ###
 1. Do an import of the Default No Toes export using MHX2, no need to override defaults.
 2. Goto the Armature Data Tab, and click the `New` button in the `Pose Library` section.  The name of library is of no importance.
+3. Transfer all the custom expressions from Make Human to the library by switching to the `MakeHuman` (Community Plug-in)  tab on the Tool Shelf.  If exported with `Feet on Ground`, insure the check below the `Sync with MH` is on.  The `No Location Translation` check must also off.  Set the tag for Expression transfer to `QI.Automaton`, then click the `To Pose Lib` button.
 
-Begin a process of transferring poses from Make Human to the library by switching to the `MakeHuman` (Community Plug-in)  tab on the Tool Shelf.  If exported with `Feet on Ground`, insure the check below the `Sync with MH` is on.  The `No Location Translation` check must also off.  For each expression you wish to transfer:
 
-1. Change to MakeHuman application, and set the expression desired in `Pose/Animate -> Expressions` Tab.
-2. Change back to Blender, click `Sync with MH` in Bone Operators.
-3. Click `+` to add the pose to the library.
-4. Rename the pose to match with the name in MakeHuman.  There is a small [text file](./customExpressionsMH/names.txt) with all of the names.  Using the clipboard against this file will reduce typing & errors.
-
-Note: Neither the `Sync with MH` button, nor the adding of a pose to the library are affected by the bones which are selected.  All are bones sync-ed, and all are saved with the pose in the library.
+Notes: The Expression must not be set in MH.  Also, to counteract any possible side-effects enabling location translation, reset expression to None in MH, then click `Sync with MH` button.
 
 |Armature Data Tab (library) | Mesh Tab |
 | --- | --- 
