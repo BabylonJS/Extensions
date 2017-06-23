@@ -205,6 +205,11 @@ class JSExporter:
                     Logger.warn(error, 2)
 
         # World - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # scope these regardless of initScene, so can be used for detection of
+        file_handler.write(indent1 + 'var _sceneTransitionName;\n')
+        file_handler.write(indent1 + 'var _overriddenMillis;\n')
+        file_handler.write(indent1 + 'var _overriddenSound;\n')
+        file_handler.write(indent1 + 'var _options;\n')
         if self.scene.includeInitScene:
             self.world.initScene_script(file_handler, typescript_file_handler, self.needPhysics, self)
         if self.scene.includeMeshFactory:

@@ -38,10 +38,6 @@ class World:
         Logger.log('Python World class constructor completed')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def initScene_script(self, file_handler, typescript_file_handler, needPhysics, exporter):
-        file_handler.write('    var _sceneTransitionName;\n')
-        file_handler.write('    var _overriddenMillis;\n')
-        file_handler.write('    var _overriddenSound;\n')
-        file_handler.write('    var _options;\n')
         callArgs = []
         callArgs.append(OptionalArgument('resourcesRootDir', 'string', '"./"'))
         callArgs.append(OptionalArgument('positionOffset', 'BABYLON.Vector3'))

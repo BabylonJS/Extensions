@@ -143,8 +143,10 @@ class TextureReduction:
         baked.file_format = file_format
         baked.mapping = 'UV' # default value
 
-        # give image a good name, so export has one
-        legalName = legal_js_identifier(mtex.texture.name)+ '.' + baked.file_format.lower()
+        # give image a good name, so export has one (BJS optimized using the .jpg in the name)
+        extension = baked.file_format.lower()
+        if extension == 'jpeg': extension = 'jpg'
+        legalName = legal_js_identifier(mtex.texture.name)+ '.' + extension
         baked.filepath_raw = path.join(filepath, legalName)
 
         # assign the image to the UV Editor, which does not have to shown

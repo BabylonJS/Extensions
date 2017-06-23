@@ -89,9 +89,9 @@ class ShapeKeyGroup:
             self.stateVertices.append(affectedVertices)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def to_script_file(self, file_handler, var, indent):
-        writeInt32Array(file_handler, '_i', indent, self.affectedIndices, True)
+        writeIndexArray(file_handler, '_i', indent, self.affectedIndices, True)
         file_handler.write(indent  + 'shapeKeyGroup = new QI.ShapeKeyGroup(' + var + ', "' + self.group + '", _i);\n')
 
         for state_idx in range(len(self.stateVertices)):
-            writeFloat32Array(file_handler, '_i', indent, self.stateVertices[state_idx], True)
+            writeRepeatableArray(file_handler, '_i', indent, self.stateVertices[state_idx], 'Float32Array', True)
             file_handler.write(indent  + 'shapeKeyGroup._addShapeKey("' + self.stateNames[state_idx] + '", true, _i);\n')

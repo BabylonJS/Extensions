@@ -660,15 +660,6 @@ class Mesh(FCurveAnimatable):
         var = 'this' if isRootMesh else 'ret'
         indent2 = indent + ('        ' if isRootMesh else '    ')
 
-        # only set when not default for a QI.Mesh; child QI.Meshes do not need & BABYLON.Meshes do not have (a BABYLON.Mesh can have a grandEntrance() though)
-        if self.needEntrance:
-            file_handler.write(indent2 + var + '.entranceMethod = new ' + self.entranceClass + '(this, ' + self.entranceDur)
-            # sound is optional so check before writing
-            if len(self.entranceSnd) > 0:
-                file_handler.write(', ' + self.entranceSnd)
-                file_handler.write(', ' + format_bool(self.disposeSound))
-            file_handler.write(');\n')
-
         if hasattr(self, 'physicsImpostor'):
             file_handler.write(indent2 + 'if (!scene.isPhysicsEnabled()) {\n')
             file_handler.write(indent2 + '\tscene.enablePhysics();\n')
@@ -690,7 +681,7 @@ class Mesh(FCurveAnimatable):
         file_handler.write(indent2A + format_bool(hasShapeKeys) + ');\n\n')
 
         file_handler.write(indent2A + 'var _i;//indices & affected indices for shapekeys\n')
-        writeInt32Array(file_handler, '_i', indent2A, self.indices, False)
+        writeIndexArray(file_handler, '_i', indent2A, self.indices, False)
         file_handler.write(indent2A + var + '.setIndices(_i);\n\n')
 
         if len(self.normals) > 0:
@@ -727,17 +718,17 @@ class Mesh(FCurveAnimatable):
             file_handler.write(indent2A + 'false);\n\n')
 
         if hasattr(self, 'skeletonWeights'):
-            writeFloat32Array(file_handler, '_i', indent2A, self.skeletonWeights, False)
+            writeRepeatableArray(file_handler, '_i', indent2A, self.skeletonWeights, 'Float32Array', False)
             file_handler.write(indent2A + var + '.setVerticesData(_B.VertexBuffer.MatricesWeightsKind, _i, false);\n\n')
 
-            writeFloat32Array(file_handler, '_i', indent2A, self.skeletonIndices, False)
+            writeRepeatableArray(file_handler, '_i', indent2A, self.skeletonIndices, 'Uint32Array', False)
             file_handler.write(indent2A + var + '.setVerticesData(_B.VertexBuffer.MatricesIndicesKind, UNPACK(_i), false);\n\n') # UNPACK defined in package_level
 
         if hasattr(self, 'skeletonWeightsExtra'):
-            writeFloat32Array(file_handler, '_i', indent2A, self.skeletonWeightsExtra, False)
+            writeRepeatableArray(file_handler, '_i', indent2A, self.skeletonWeightsExtra, 'Float32Array', False)
             file_handler.write(indent2A + var + '.setVerticesData(_B.VertexBuffer.MatricesWeightsExtraKind, _i, false);\n\n')
 
-            writeFloat32Array(file_handler, '_i', indent2A, self.skeletonIndicesExtra, False)
+            writeRepeatableArray(file_handler, '_i', indent2A, self.skeletonIndicesExtra, 'Uint32Array', False)
             file_handler.write(indent2A + var + '.setVerticesData(_B.VertexBuffer.MatricesIndicesExtraKind, UNPACK(_i), false);\n\n') # UNPACK defined in package_level
 
         if exporter.logInBrowserConsole:
@@ -748,6 +739,16 @@ class Mesh(FCurveAnimatable):
         file_handler.write(indent2A + var + '.subMeshes = [];\n')
         for subMesh in self.subMeshes:
             subMesh.to_script_file(file_handler, var, indent2A)
+
+        # only set when not default for a QI.Mesh; child QI.Meshes do not need & BABYLON.Meshes do not have (a BABYLON.Mesh can have a grandEntrance() though)
+        # done after geo code, since FireMaterial for FireGrandEntrance needs UV
+        if self.needEntrance:
+            file_handler.write(indent2 + var + '.entranceMethod = new ' + self.entranceClass + '(this, ' + self.entranceDur)
+            # sound is optional so check before writing
+            if len(self.entranceSnd) > 0:
+                file_handler.write(', ' + self.entranceSnd)
+                file_handler.write(', ' + format_bool(self.disposeSound))
+            file_handler.write(');\n')
 
         # Octree, cannot predetermine since something in scene; break down and write an if
         file_handler.write(indent2A + 'if (scene._selectionOctree) {\n')
