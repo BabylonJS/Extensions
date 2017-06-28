@@ -4618,7 +4618,7 @@ var QI;
          * generated code expects.
          * @param {QI.Mesh} _mesh - Root level mesh to display.
          * @param {Array<number>} durations - The millis of various sections of entrance.
-         * @param {BABYLON.Sound} soundEffect - An optional instance of the sound to play as a part of entrance.
+         * @param {BABYLON.Sound} soundEffect - An optional sound to play as a part of entrance.
          * @param {boolean} disposeSound - When true, dispose the sound effect on completion. (Default false)
          */
         function AbstractGrandEntrance(_mesh, durations, soundEffect, disposeSound) {
@@ -5436,8 +5436,8 @@ var QI;
                 cdx += 4;
                 idx++;
                 if (boneIndex) {
-                    matrixIndices[mdx] = boneIndex;
-                    matrixWeights[mdx] = 1;
+                    matrixIndices[mdx] = 0; //boneIndex;
+                    matrixWeights[mdx] = 0; //1
                     mdx += 4;
                 }
                 for (var vert = 1; vert < strandNumVerts[i]; vert++) {
@@ -5454,8 +5454,8 @@ var QI;
                     colors32[cdx + 3] = colorA;
                     cdx += 4;
                     if (boneIndex) {
-                        matrixIndices[mdx] = boneIndex;
-                        matrixWeights[mdx] = 1 - (deltaStiffness * (this._lengthSoFar(deltaX, deltaY, deltaZ) / longestStrand));
+                        matrixIndices[mdx] = 0; //boneIndex;
+                        matrixWeights[mdx] = 0; //1 - (deltaStiffness * (this._lengthSoFar(deltaX, deltaY, deltaZ) / longestStrand));
                         mdx += 4;
                     }
                     indices.push(idx - 1);
@@ -7063,6 +7063,7 @@ var QI;
             var effect = SceneTransition.EFFECTS[sceneTransitionName];
             if (!effect)
                 throw "No such scene transition: " + sceneTransitionName;
+            SceneTransition.makeAllVisible(meshes);
             effect.initiate(meshes, overriddenMillis, overriddenSound);
         };
         SceneTransition.makeAllVisible = function (meshes) {
@@ -7102,9 +7103,8 @@ var QI;
          * Transition implementation
          */
         IntoFocusTransition.prototype.initiate = function (meshes, overriddenMillis, overriddenSound) {
-            QI.SceneTransition.makeAllVisible(meshes);
-            // set up post processes
             var camera = QI.TimelineControl.scene.activeCamera || QI.TimelineControl.scene.activeCameras[0];
+            // set up post processes
             var postProcess0 = new BABYLON.BlurPostProcess("Horizontal blur", new BABYLON.Vector2(1.0, 0), IntoFocusTransition._INITIAL_KERNEL, 1.0, camera);
             var postProcess1 = new BABYLON.BlurPostProcess("Vertical blur", new BABYLON.Vector2(0, 1.0), IntoFocusTransition._INITIAL_KERNEL, 1.0, camera);
             // account for overriding
@@ -7148,9 +7148,8 @@ var QI;
          * Transition implementation
          */
         ToColorTransition.prototype.initiate = function (meshes, overriddenMillis, overriddenSound) {
-            QI.SceneTransition.makeAllVisible(meshes);
-            // set up post processes
             var camera = QI.TimelineControl.scene.activeCamera || QI.TimelineControl.scene.activeCameras[0];
+            // set up post processes
             var postProcess = new BABYLON.BlackAndWhitePostProcess("WelcomeToWonderLand", 1.0, camera);
             // account for overriding
             var time = overriddenMillis ? overriddenMillis : ToColorTransition._DEFAULT_MILLIS;
@@ -7190,10 +7189,9 @@ var QI;
          * Transition implementation
          */
         VisiblityTransition.prototype.initiate = function (meshes, overriddenMillis, overriddenSound) {
-            QI.SceneTransition.makeAllVisible(meshes);
             this._meshes = meshes;
-            // set up post processes
-            var camera = QI.TimelineControl.scene.activeCamera || QI.TimelineControl.scene.activeCameras[0];
+            // avoid a flash of being fully visible for a frame sometimes
+            this._changeVisiblity(0, meshes);
             // account for overriding
             var time = overriddenMillis ? overriddenMillis : VisiblityTransition._DEFAULT_MILLIS;
             var sound = overriddenSound ? overriddenSound : this._sound;

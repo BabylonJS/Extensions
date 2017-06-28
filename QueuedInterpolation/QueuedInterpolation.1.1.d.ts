@@ -990,7 +990,7 @@ declare module QI {
          * generated code expects.
          * @param {QI.Mesh} _mesh - Root level mesh to display.
          * @param {Array<number>} durations - The millis of various sections of entrance.
-         * @param {BABYLON.Sound} soundEffect - An optional instance of the sound to play as a part of entrance.
+         * @param {BABYLON.Sound} soundEffect - An optional sound to play as a part of entrance.
          * @param {boolean} disposeSound - When true, dispose the sound effect on completion. (Default false)
          */
         constructor(_mesh: QI.Mesh, durations: Array<number>, soundEffect?: BABYLON.Sound, disposeSound?: boolean);
@@ -1532,133 +1532,6 @@ declare module TOWER_OF_BABEL {
 }
 
 declare module QI {
-    class ShapeKeyGroup extends PovProcessor {
-        private _affectedPositionElements;
-        private _nPosElements;
-        private _states;
-        private _normals;
-        private _stateNames;
-        private _affectedVertices;
-        private _nVertices;
-        private _currFinalPositionVals;
-        private _priorFinalPositionVals;
-        private _currFinalNormalVals;
-        private _priorFinalNormalVals;
-        private _stalling;
-        private _reusablePositionFinals;
-        private _reusableNormalFinals;
-        private _lastReusablePosUsed;
-        private _lastReusableNormUsed;
-        private _currFinalPositionSIMD;
-        private _priorFinalPositionSIMD;
-        private _currFinalNormalSIMD;
-        private _priorFinalNormalSIMD;
-        private _mirrorAxis;
-        static BASIS: string;
-        /**
-         * @param {Mesh} _mesh - reference of QI.Mesh this ShapeKeyGroup is a part of
-         * @param {String} _name - Name of the Key Group, upper case only
-         * @param {Uint32Array} _affectedPositionElements - index of either an x, y, or z of positions.  Not all 3 of a vertex need be present.  Ascending order.
-         */
-        constructor(_mesh: Mesh, _name: string, _affectedPositionElements: Uint32Array);
-        private _getDerivedName(referenceIdx, endStateIdxs, endStateRatios, mirrorAxes?);
-        /**
-         * add a derived key from the data contained in a deformation; wrapper for addComboDerivedKey().
-         * @param {ReferenceDeformation} deformation - mined for its reference & end state names, and end state ratio
-         */
-        addDerivedKeyFromDeformation(deformation: VertexDeformation): void;
-        /**
-         * add a derived key using a single end state from the arguments;  wrapper for addComboDerivedKey().
-         * @param {string} referenceStateName - Name of the reference state to be based on
-         * @param {string} endStateName - Name of the end state to be based on
-         * @param {number} endStateRatio - Not validated, but if -1 < or > 1, then can never be called, since Deformation validates
-         * @param {string} mirrorAxis - axis [X,Y, or Z] to mirror against for an end state ratio, which is negative.  No meaning if positive.  If null, shape key group setting used.
-         */
-        addDerivedKey(referenceStateName: string, endStateName: string, endStateRatio: number, mirrorAxis?: string): void;
-        /**
-         * add a derived key from the arguments
-         * @param {string} referenceStateName - Name of the reference state to be based on, probably 'Basis'
-         * @param {Array} endStateNames - Names of the end states to be based on
-         * @param {Array} endStateRatios - Not validated, but if -1 < or > 1, then can never be called, since Deformation validates
-         * @param {string} mirrorAxes - axis [X,Y, or Z] to mirror against for an end state ratio, which is negative.  No meaning if positive.  If null, shape key group setting used.
-         * @param {String} newStateName - The name of the new state.  If not set, then it will be computed.
-         */
-        addComboDerivedKey(referenceStateName: string, endStateNames: Array<string>, endStateRatios: Array<number>, mirrorAxes?: string, newStateName?: string): void;
-        /**
-         * Called in construction code from TOB.  Unlikely to be called by application code.
-         * @param {string} stateName - Name of the end state to be added.
-         * @param {boolean} basisRelativeVals - when true, values are relative to basis, which is usually much more compact
-         * @param {Float32Array} stateKey - Array of the positions for the _affectedPositionElements
-         */
-        _addShapeKey(stateName: string, basisRelativeVals: boolean, stateKey: Float32Array): void;
-        /**
-         * Remove the resources associated with a end state.
-         * @param {string} endStateName - Name of the end state to be removed.
-         */
-        deleteShapeKey(stateName: string): void;
-        /**
-         * Called by the beforeRender() registered by this._mesh
-         * ShapeKeyGroup is a subclass of POV.BeforeRenderer, so need to call its beforeRender method, _incrementallyMove()
-         * @param {Float32Array} positions - Array of the positions for the entire mesh, portion updated based on _affectedPositionElements
-         * @param {Float32Array} normals   - Array of the normals   for the entire mesh, portion updated based on _affectedVertices
-         */
-        _incrementallyDeform(positions: Float32Array, normals: Float32Array): boolean;
-        /**
-         * Go to a single pre-defined state immediately.  Much like Skeleton._assignPoseImmediately, can be done while
-         * mesh is not currently visible.  Should not be call here, but through the mesh.
-         * @param {string} stateName - Names of the end state to take.
-         * @param {Float32Array} positions - Array of the positions for the entire mesh, portion updated based on _affectedPositionElements
-         * @param {Float32Array} normals   - Array of the normals   for the entire mesh, portion updated based on _affectedVertices
-         */
-        _deformImmediately(stateName: string, positions: Float32Array, normals: Float32Array): void;
-        /** Only public, so can be swapped out with SIMD version */
-        _updatePositions(positions: Float32Array): void;
-        /** Only public, so can be swapped out with SIMD version */
-        _updateNormals(normals: Float32Array): void;
-        /**
-         * delay swapping currents to priors, in-case event gets cancelled after starting, but in an initial wait
-         */
-        private _firstRun();
-        /**
-         * Called by addShapeKeyInternal() & _nextDeformation() to build the positions for an end point
-         * @param {Float32Array} targetArray - location of output. One of the _reusablePositionFinals for _nextDeformation().  Bound for: _states[], if addShapeKeyInternal().
-         * @param {number} referenceIdx - the index into _states[] to use as a reference
-         * @param {Array<number>} endStateIdxs - the indexes into _states[] to use as a target
-         * @param {Array<number>} endStateRatios - the ratios of the target state to achive, relative to the reference state
-         * @param {string} mirrorAxes - axis [X,Y,Z] to mirror against for an end state ratio, which is negative.  No meaning if positive.  If null, shape key group setting used.
-         * @param {boolean} log - write console message of action, when true (Default false)
-         *
-         */
-        private _buildPosEndPoint(targetArray, referenceIdx, endStateIdxs, endStateRatios, mirrorAxes?, log?);
-        /**
-         * Called by addShapeKeyInternal() & _nextDeformation() to build the normals for an end point
-         * @param {Float32Array} targetArray - location of output. One of the _reusableNormalFinals for _nextDeformation().  Bound for: _normals[], if addShapeKeyInternal().
-         * @param {Float32Array} endStatePos - postion data to build the normals for.  Output from buildPosEndPoint, or data passed in from addShapeKey()
-         */
-        private _buildNormEndPoint(targetArray, endStatePos);
-        private static _isMirroring(endStateRatios);
-        /**
-         * Determine if a key already exists.
-         * @param {string} stateName - name of key to check
-         */
-        hasKey(stateName: string): boolean;
-        private _getIdxForState(stateName);
-        getName(): string;
-        getNPosElements(): number;
-        getNStates(): number;
-        getStates(): Array<string>;
-        toString(): string;
-        mirrorAxisOnX(): void;
-        mirrorAxisOnY(): void;
-        mirrorAxisOnZ(): void;
-        /**
-         * Only public for QI.MeshconsolidateShapeKeyGroups(), where this should be called from.
-         */
-        static _buildConsolidatedGroup(mesh: Mesh, newGroupName: string, thoseToMerge: Array<ShapeKeyGroup>): ShapeKeyGroup;
-    }
-}
-
-declare module QI {
     /**
      * Class to store Deformation info & evaluate how complete it should be.
      */
@@ -1818,6 +1691,133 @@ declare module QI {
          */
         constructor(groupName: string, milliDuration: number, movePOV?: BABYLON.Vector3, rotatePOV?: BABYLON.Vector3, options?: IMotionEventOptions);
         getClassName(): string;
+    }
+}
+
+declare module QI {
+    class ShapeKeyGroup extends PovProcessor {
+        private _affectedPositionElements;
+        private _nPosElements;
+        private _states;
+        private _normals;
+        private _stateNames;
+        private _affectedVertices;
+        private _nVertices;
+        private _currFinalPositionVals;
+        private _priorFinalPositionVals;
+        private _currFinalNormalVals;
+        private _priorFinalNormalVals;
+        private _stalling;
+        private _reusablePositionFinals;
+        private _reusableNormalFinals;
+        private _lastReusablePosUsed;
+        private _lastReusableNormUsed;
+        private _currFinalPositionSIMD;
+        private _priorFinalPositionSIMD;
+        private _currFinalNormalSIMD;
+        private _priorFinalNormalSIMD;
+        private _mirrorAxis;
+        static BASIS: string;
+        /**
+         * @param {Mesh} _mesh - reference of QI.Mesh this ShapeKeyGroup is a part of
+         * @param {String} _name - Name of the Key Group, upper case only
+         * @param {Uint32Array} _affectedPositionElements - index of either an x, y, or z of positions.  Not all 3 of a vertex need be present.  Ascending order.
+         */
+        constructor(_mesh: Mesh, _name: string, _affectedPositionElements: Uint32Array);
+        private _getDerivedName(referenceIdx, endStateIdxs, endStateRatios, mirrorAxes?);
+        /**
+         * add a derived key from the data contained in a deformation; wrapper for addComboDerivedKey().
+         * @param {ReferenceDeformation} deformation - mined for its reference & end state names, and end state ratio
+         */
+        addDerivedKeyFromDeformation(deformation: VertexDeformation): void;
+        /**
+         * add a derived key using a single end state from the arguments;  wrapper for addComboDerivedKey().
+         * @param {string} referenceStateName - Name of the reference state to be based on
+         * @param {string} endStateName - Name of the end state to be based on
+         * @param {number} endStateRatio - Not validated, but if -1 < or > 1, then can never be called, since Deformation validates
+         * @param {string} mirrorAxis - axis [X,Y, or Z] to mirror against for an end state ratio, which is negative.  No meaning if positive.  If null, shape key group setting used.
+         */
+        addDerivedKey(referenceStateName: string, endStateName: string, endStateRatio: number, mirrorAxis?: string): void;
+        /**
+         * add a derived key from the arguments
+         * @param {string} referenceStateName - Name of the reference state to be based on, probably 'Basis'
+         * @param {Array} endStateNames - Names of the end states to be based on
+         * @param {Array} endStateRatios - Not validated, but if -1 < or > 1, then can never be called, since Deformation validates
+         * @param {string} mirrorAxes - axis [X,Y, or Z] to mirror against for an end state ratio, which is negative.  No meaning if positive.  If null, shape key group setting used.
+         * @param {String} newStateName - The name of the new state.  If not set, then it will be computed.
+         */
+        addComboDerivedKey(referenceStateName: string, endStateNames: Array<string>, endStateRatios: Array<number>, mirrorAxes?: string, newStateName?: string): void;
+        /**
+         * Called in construction code from TOB.  Unlikely to be called by application code.
+         * @param {string} stateName - Name of the end state to be added.
+         * @param {boolean} basisRelativeVals - when true, values are relative to basis, which is usually much more compact
+         * @param {Float32Array} stateKey - Array of the positions for the _affectedPositionElements
+         */
+        _addShapeKey(stateName: string, basisRelativeVals: boolean, stateKey: Float32Array): void;
+        /**
+         * Remove the resources associated with a end state.
+         * @param {string} endStateName - Name of the end state to be removed.
+         */
+        deleteShapeKey(stateName: string): void;
+        /**
+         * Called by the beforeRender() registered by this._mesh
+         * ShapeKeyGroup is a subclass of POV.BeforeRenderer, so need to call its beforeRender method, _incrementallyMove()
+         * @param {Float32Array} positions - Array of the positions for the entire mesh, portion updated based on _affectedPositionElements
+         * @param {Float32Array} normals   - Array of the normals   for the entire mesh, portion updated based on _affectedVertices
+         */
+        _incrementallyDeform(positions: Float32Array, normals: Float32Array): boolean;
+        /**
+         * Go to a single pre-defined state immediately.  Much like Skeleton._assignPoseImmediately, can be done while
+         * mesh is not currently visible.  Should not be call here, but through the mesh.
+         * @param {string} stateName - Names of the end state to take.
+         * @param {Float32Array} positions - Array of the positions for the entire mesh, portion updated based on _affectedPositionElements
+         * @param {Float32Array} normals   - Array of the normals   for the entire mesh, portion updated based on _affectedVertices
+         */
+        _deformImmediately(stateName: string, positions: Float32Array, normals: Float32Array): void;
+        /** Only public, so can be swapped out with SIMD version */
+        _updatePositions(positions: Float32Array): void;
+        /** Only public, so can be swapped out with SIMD version */
+        _updateNormals(normals: Float32Array): void;
+        /**
+         * delay swapping currents to priors, in-case event gets cancelled after starting, but in an initial wait
+         */
+        private _firstRun();
+        /**
+         * Called by addShapeKeyInternal() & _nextDeformation() to build the positions for an end point
+         * @param {Float32Array} targetArray - location of output. One of the _reusablePositionFinals for _nextDeformation().  Bound for: _states[], if addShapeKeyInternal().
+         * @param {number} referenceIdx - the index into _states[] to use as a reference
+         * @param {Array<number>} endStateIdxs - the indexes into _states[] to use as a target
+         * @param {Array<number>} endStateRatios - the ratios of the target state to achive, relative to the reference state
+         * @param {string} mirrorAxes - axis [X,Y,Z] to mirror against for an end state ratio, which is negative.  No meaning if positive.  If null, shape key group setting used.
+         * @param {boolean} log - write console message of action, when true (Default false)
+         *
+         */
+        private _buildPosEndPoint(targetArray, referenceIdx, endStateIdxs, endStateRatios, mirrorAxes?, log?);
+        /**
+         * Called by addShapeKeyInternal() & _nextDeformation() to build the normals for an end point
+         * @param {Float32Array} targetArray - location of output. One of the _reusableNormalFinals for _nextDeformation().  Bound for: _normals[], if addShapeKeyInternal().
+         * @param {Float32Array} endStatePos - postion data to build the normals for.  Output from buildPosEndPoint, or data passed in from addShapeKey()
+         */
+        private _buildNormEndPoint(targetArray, endStatePos);
+        private static _isMirroring(endStateRatios);
+        /**
+         * Determine if a key already exists.
+         * @param {string} stateName - name of key to check
+         */
+        hasKey(stateName: string): boolean;
+        private _getIdxForState(stateName);
+        getName(): string;
+        getNPosElements(): number;
+        getNStates(): number;
+        getStates(): Array<string>;
+        toString(): string;
+        mirrorAxisOnX(): void;
+        mirrorAxisOnY(): void;
+        mirrorAxisOnZ(): void;
+        /**
+         * Only public for QI.MeshconsolidateShapeKeyGroups(), where this should be called from.
+         */
+        static _buildConsolidatedGroup(mesh: Mesh, newGroupName: string, thoseToMerge: Array<ShapeKeyGroup>): ShapeKeyGroup;
     }
 }
 

@@ -4,8 +4,8 @@ from mathutils import Euler, Matrix
 
 from bpy import app
 from time import strftime
-MAX_FLOAT_PRECISION_INT = 4
-MAX_FLOAT_PRECISION = '%.' + str(MAX_FLOAT_PRECISION_INT) + 'f'
+FLOAT_PRECISION_DEFAULT = 4
+#MAX_FLOAT_PRECISION = '%.' + str(MAX_FLOAT_PRECISION_DEFAULT) + 'f'
 VERTEX_OUTPUT_PER_LINE = 50
 STRIP_LEADING_ZEROS_DEFAULT = True # false for .babylon
 MIN_CONTIGUOUS_INDEXES = 10
@@ -94,8 +94,9 @@ def legal_js_identifier(input):
         out += '_' + prefix
     return out
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-def format_f(num, stripLeadingZero = STRIP_LEADING_ZEROS_DEFAULT):
-    s = MAX_FLOAT_PRECISION % num # rounds to N decimal places while changing to string
+def format_f(num, stripLeadingZero = STRIP_LEADING_ZEROS_DEFAULT, precision = FLOAT_PRECISION_DEFAULT):
+    fmt = '%.' + str(precision) + 'f'
+    s = fmt % num  # rounds to N decimal places
     s = s.rstrip('0') # strip trailing zeroes
     s = s.rstrip('.') # strip trailing .
     s = '0' if s == '-0' else s # nuke -0
@@ -273,8 +274,8 @@ def write_string(file_handler, name, string, noComma = False):
         file_handler.write(',')
     file_handler.write('"' + name + '":"' + string + '"')
 
-def write_float(file_handler, name, float):
-    file_handler.write(',"' + name + '":' + format_f(float))
+def write_float(file_handler, name, float, precision = FLOAT_PRECISION_DEFAULT):
+    file_handler.write(',"' + name + '":' + format_f(float, precision = precision))
 
 def write_int(file_handler, name, int, noComma = False):
     if noComma == False:
@@ -360,7 +361,7 @@ def findContigousRanges(array, isSorted):
         
     return ret
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-def writeInt32Array(file_handler, var, indent, array, isSorted):
+def writeIndexArray(file_handler, var, indent, array, isSorted):
     sz = len(array)
     ranges = findContigousRanges(array, isSorted)
     nRanges = len(ranges)
@@ -427,17 +428,17 @@ def findRepeatRanges(array):
         
     return ret
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-def writeFloat32Array(file_handler, var, indent, array, isVectorArray):
+def writeRepeatableArray(file_handler, var, indent, array, dataType, isVectorArray):
     if isVectorArray: array = vectorArrayToArray(array)
     sz = len(array)
     repeatRanges = findRepeatRanges(array)
     nRanges = len(repeatRanges)
     
     if nRanges == 0:
-        file_handler.write(indent  + var + ' = new Float32Array([' + format_array(array, indent) + ']);\n');
+        file_handler.write(indent  + var + ' = new ' + dataType + '([' + format_array(array, indent) + ']);\n');
         return;
         
-    file_handler.write(indent  + var + ' = new Float32Array(' + format_int(sz) + ');\n');
+    file_handler.write(indent  + var + ' = new ' + dataType + '(' + format_int(sz) + ');\n');
     
     # test for values at beginning
     firstRangeBegin = repeatRanges[0][0]

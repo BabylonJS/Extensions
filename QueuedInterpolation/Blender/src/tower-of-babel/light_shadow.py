@@ -126,6 +126,7 @@ class ShadowGenerator:
         self.lightId = lamp.name
         self.mapSize = lamp.data.shadowMapSize
         self.shadowBias = lamp.data.shadowBias
+        self.shadowDarkness = lamp.data.shadowDarkness
 
         if lamp.data.shadowMap == ESM_SHADOWS:
             self.useExponentialShadowMap = True
@@ -139,7 +140,8 @@ class ShadowGenerator:
     def to_script_file(self, file_handler, indent):
         file_handler.write(indent + 'light = scene.getLightByID("' + self.lightId + '");\n')
         file_handler.write(indent + 'shadowGenerator = new _B.ShadowGenerator(' + format_int(self.mapSize) + ', light);\n')
-        file_handler.write(indent + 'shadowGenerator.bias = ' + format_f(self.shadowBias) + ';\n')
+        file_handler.write(indent + 'shadowGenerator.bias = ' + format_f(self.shadowBias, precision = 5) + ';\n')
+        file_handler.write(indent + 'shadowGenerator.darkness = ' + format_f(self.shadowDarkness) + ';\n')
         if hasattr(self, 'useExponentialShadowMap') :
             file_handler.write(indent + 'shadowGenerator.useExponentialShadowMap = true;\n')
         elif hasattr(self, 'usePoissonSampling'):
@@ -188,6 +190,13 @@ bpy.types.Lamp.shadowBlurBoxOffset = bpy.props.IntProperty(
     description='Setting when using a Blur Variance shadow map',
     default = 0
 )
+bpy.types.Lamp.shadowDarkness = bpy.props.FloatProperty(
+    name='Shadow Darkness',
+    description='Shadow Darkness',
+    default = 1,
+    min = 0, 
+    max = 1
+)
 bpy.types.Lamp.cameraLight = bpy.props.BoolProperty(
     name='Camera Light (point type only)',
     description='attach this light to move / rotate with the active camera using a scene.beforeCameraRender,\nor activeCameras[0] when more than 1 active',
@@ -218,6 +227,10 @@ class LightPanel(bpy.types.Panel):
         row = layout.row()
         row.enabled = usingShadows
         row.prop(ob.data, 'shadowBias')
+
+        row = layout.row()
+        row.enabled = usingShadows
+        row.prop(ob.data, 'shadowDarkness')
 
         box = layout.box()
         box.label(text="Blur ESM Shadows")

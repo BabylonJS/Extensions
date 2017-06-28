@@ -271,8 +271,8 @@ class JSExporter:
         typescript_file_handler.write(JSExporter.define_Typescript_method('defineMaterials', '', callArgs))
 
         file_handler.write(indent2 + 'if (materialsRootDir.lastIndexOf("/") + 1  !== materialsRootDir.length) { materialsRootDir  += "/"; }\n')
-        file_handler.write(indent2 + 'if (QI) QI.TimelineControl.initialize(scene);\n')
-        file_handler.write(indent2 + 'TOWER_OF_BABEL.Preloader.SCENE = scene;\n')
+        file_handler.write(indent2 + 'if (typeof(QI) !== "undefined") QI.TimelineControl.initialize(scene);\n')
+        file_handler.write(indent2 + 'if (typeof(TOWER_OF_BABEL) !== "undefined") TOWER_OF_BABEL.Preloader.SCENE = scene;\n')
 
         if JSExporter.logInBrowserConsole:
             file_handler.write(indent2 + 'var loadStart = _B.Tools.Now;\n')

@@ -105,6 +105,15 @@ Once the IK bones are added, most of the finger bones they control are hidden to
 
 You should use a separate prefix for poses of each hand, so that they can be operated independently.  After you have your poses, just click the `Pose lib to Shape Keys` operation again.  Work-flow after that is the same as expressions.  You would probably want to run `Remove Finger Bones` where the shapekeys are going.
 
+# Workflow Example #
+This is a workflow recommendation for building the `GAME_RIG` model for export, assuming a shapekey export file already made:
 
-
+1. Import the HM export, not overridding anything.
+2. Make any mods to the exporter panel on the scene tab.  Uncheck `Include initScene()` & specify directory images e.g. `../images`.
+3. Parent the Body mesh to all other meshes.
+4. Set Base Class of the Body to `QI.Automaton`, and any other mesh properties.
+5. Remove Finger bones mentioned above.
+6. Downsize, & switch to .jpg (except eyelashes & eyebrowses) using Tower of Babel operation.
+7. Select meshes and restore archive shapekeys.
+8. Switch to `Blender Game`, then turn off `Back Face Culling` for meshes like hanging hair, which need to be seen on both sides.
 
