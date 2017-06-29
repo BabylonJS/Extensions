@@ -117,7 +117,8 @@ class Hair():
         file_handler.write(indent2 + 'ret.setEnabled(' + format_bool(self.bjsMesh.isEnabled) + ');\n')
         file_handler.write(indent2 + 'ret.checkCollisions = ' + format_bool(self.bjsMesh.checkCollisions) + ';\n')
         file_handler.write(indent2 + 'ret.receiveShadows  = ' + format_bool(self.bjsMesh.receiveShadows) + ';\n')
-        file_handler.write(indent2 + 'ret.castShadows  = ' + format_bool(self.bjsMesh.castShadows) + ';\n\n')
+        file_handler.write(indent2 + 'ret.castShadows  = ' + format_bool(self.bjsMesh.castShadows) + ';\n')
+        file_handler.write(indent2 + 'ret.skeleton = parent.skeleton;\n\n')
         
         file_handler.write(indent2 + 'ret.color = new _B.Color3(' + format_color(self.color) + ');\n')
         
@@ -126,4 +127,36 @@ class Hair():
         file_handler.write(indent2 + 'ret.assemble(strandNumVerts, rootRelativePositions, ' + format_int(self.longestStrand) + ');\n')
         file_handler.write(indent2 + 'return ret;\n')
         file_handler.write(indent + '}\n')
+#===============================================================================
 
+bpy.types.ParticleSettings.bone = bpy.props.StringProperty(
+    name='Bone',
+    description='',
+    default = ''
+)
+
+bpy.types.ParticleSettings.stiffness = bpy.props.FloatProperty(
+    name='Stiffness',
+    description='',
+    default = 0.3
+)
+
+#===============================================================================
+class HairPanel(bpy.types.Panel):
+    bl_label = get_title()
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = 'particles'
+
+    @classmethod
+    def poll(cls, context):
+        hair = context.world
+        #print(ob.data)
+        return ob is not None and isinstance(ob, bpy.types.ParticleSettings)
+
+    def draw(self, context):
+        ob = context.particle_settings
+        layout.prop(ob, 'bone')
+        
+        layout.prop(ob, 'stiffness')
+        

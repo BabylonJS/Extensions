@@ -24,7 +24,7 @@ BILLBOARDMODE_NONE = 0
 #BILLBOARDMODE_Z = 4
 BILLBOARDMODE_ALL = 7
 
-# used in Mesh constructor, defined in BABYLON.PhysicsEngine
+# used in Mesh constructor, defined in BABYLON.PhysicsImpostor
 SPHERE_IMPOSTER = 1
 BOX_IMPOSTER = 2
 #PLANE_IMPOSTER = 3
@@ -32,7 +32,7 @@ MESH_IMPOSTER = 4
 CAPSULE_IMPOSTER = 5
 CONE_IMPOSTER = 6
 CYLINDER_IMPOSTER = 7
-CONVEX_HULL_IMPOSTER = 8
+PARTICLE_IMPOSTER = 8
 
 DEFAULT_SHAPE_KEY_GROUP = 'GROUPSONLY'
 SHAPE_KEY_GROUPS_ALLOWED = True
@@ -139,6 +139,26 @@ class Mesh(FCurveAnimatable):
             self.dataName = self.name
             self.parentId = forcedParent.name
 
+        # Physics
+        if object.rigid_body != None:
+            shape_items = {'SPHERE'     : SPHERE_IMPOSTER,
+                           'BOX'        : BOX_IMPOSTER,
+                           'MESH'       : MESH_IMPOSTER,
+                           'CAPSULE'    : CAPSULE_IMPOSTER,
+                           'CONE'       : CONE_IMPOSTER,
+                           'CYLINDER'   : CYLINDER_IMPOSTER,
+                           'CONVEX_HULL': PARTICLE_IMPOSTER}
+
+            shape_type = shape_items[object.rigid_body.collision_shape]
+            self.physicsImpostor = shape_type
+            
+            mass = object.rigid_body.mass
+            if mass < 0.005:
+                mass = 0
+            self.physicsMass = mass
+            self.physicsFriction = object.rigid_body.friction
+            self.physicsRestitution = object.rigid_body.restitution
+
         # Get if this will be an instance of another, before processing materials, to avoid multi-bakes
         sourceMesh = exporter.getSourceMeshInstance(self.dataName)
         if sourceMesh is not None:
@@ -156,25 +176,6 @@ class Mesh(FCurveAnimatable):
             return
         else:
             self.instances = []
-
-        # Physics
-        if object.rigid_body != None:
-            shape_items = {'SPHERE'     : SPHERE_IMPOSTER,
-                           'BOX'        : BOX_IMPOSTER,
-                           'MESH'       : MESH_IMPOSTER,
-                           'CAPSULE'    : CAPSULE_IMPOSTER,
-                           'CONE'       : CONE_IMPOSTER,
-                           'CYLINDER'   : CYLINDER_IMPOSTER,
-                           'CONVEX_HULL': CONVEX_HULL_IMPOSTER}
-
-            shape_type = shape_items[object.rigid_body.collision_shape]
-            self.physicsImpostor = shape_type
-            mass = object.rigid_body.mass
-            if mass < 0.005:
-                mass = 0
-            self.physicsMass = mass
-            self.physicsFriction = object.rigid_body.friction
-            self.physicsRestitution = object.rigid_body.restitution
 
         # process all of the materials required
         maxVerts = MAX_VERTEX_ELEMENTS if scene.force64Kmeshes else MAX_VERTEX_ELEMENTS_32Bit # change for multi-materials or shapekeys
@@ -660,15 +661,6 @@ class Mesh(FCurveAnimatable):
         var = 'this' if isRootMesh else 'ret'
         indent2 = indent + ('        ' if isRootMesh else '    ')
 
-        if hasattr(self, 'physicsImpostor'):
-            file_handler.write(indent2 + 'if (!scene.isPhysicsEnabled()) {\n')
-            file_handler.write(indent2 + '\tscene.enablePhysics();\n')
-            file_handler.write(indent2 + '}\n')
-            file_handler.write(indent2 + var + '.setPhysicsState({ impostor: '    + format_int(self.physicsImpostor) +
-                                                                ', mass: '        + format_f(self.physicsMass) +
-                                                                ', friction: '    + format_f(self.physicsFriction) +
-                                                                ', restitution: ' + format_f(self.physicsRestitution) + '});\n')
-
         # section that is not done for clones
         file_handler.write(indent2 + 'if (!cloning){\n')
         indent2A = indent2 + '    '
@@ -915,6 +907,16 @@ def writePosRotScale(file_handler, object, var, indent):
     # need to check if present, since Node has no freezeWorldMatrix
     if hasattr(object, 'freezeWorldMatrix') and object.freezeWorldMatrix:
         file_handler.write(indent + var + '.freezeWorldMatrix();\n')
+        
+    if hasattr(object, 'physicsImpostor'):
+        file_handler.write(indent + 'if (!scene.isPhysicsEnabled()) {\n')
+        file_handler.write(indent + '\tscene.enablePhysics();\n')
+        file_handler.write(indent + '}\n')
+        file_handler.write(indent + var + '.physicsImpostor = new _B.PhysicsImpostor(' + var + ', ' +
+                                                                                           format_int(object.physicsImpostor) + 
+                                                                                        ', { mass: '      + format_f(object.physicsMass) +
+                                                                                        ', friction: '    + format_f(object.physicsFriction) +
+                                                                                        ', restitution: ' + format_f(object.physicsRestitution) + '}, scene);\n')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def get_base_class(meshOrNode):
      # do not abbreviate to '_B' for BABYLON, since will also be written to .d.ts
@@ -948,6 +950,13 @@ class MeshInstance:
         write_vector(file_handler, 'scaling', self.scaling)
         # freeze World Matrix currently ignored for instances
         write_bool(file_handler, 'freezeWorldMatrix', self.freezeWorldMatrix)
+
+        if hasattr(self, 'physicsImpostor'):
+            write_int(file_handler, 'physicsImpostor', self.physicsImpostor)
+            write_float(file_handler, 'physicsMass', self.physicsMass)
+            write_float(file_handler, 'physicsFriction', self.physicsFriction)
+            write_float(file_handler, 'physicsRestitution', self.physicsRestitution)
+            
         file_handler.write('}')
 #===============================================================================
 class Node(FCurveAnimatable):
