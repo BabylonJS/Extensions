@@ -1367,6 +1367,202 @@ void main(void) { \n\
     BABYLONX.ShaderBuilder = ShaderBuilder;
 })(BABYLONX || (BABYLONX = {}));
 
+
+var QI;
+(function (QI) {
+    var CylinderCamera = (function (_super) {
+        __extends(CylinderCamera, _super);
+        function CylinderCamera(name, _isVertical, alphaOrBeta, radius, scene, targetMesh, toBoundingCenter) {
+            if (toBoundingCenter === void 0) { toBoundingCenter = true; }
+            var _this = _super.call(this, name, 0, 0, radius, BABYLON.Vector3.Zero(), scene) || this;
+            _this._isVertical = _isVertical;
+            _this._traverseOffset = 0;
+            if (targetMesh)
+                _this.setTargetMesh(targetMesh, toBoundingCenter);
+            // apply the angle to the correct axis, otherwise 0
+            _this.alpha = _this._isVertical ? alphaOrBeta : CylinderCamera.FixedHorz;
+            _this.beta = _this._isVertical ? CylinderCamera.FixedVert : alphaOrBeta;
+            _this.getViewMatrix();
+            return _this;
+        }
+        CylinderCamera.prototype._getTargetPosition = function () {
+            if (this._targetMesh) {
+                this._target.copyFrom(this._targetMesh.getAbsolutePosition());
+                if (this._isVertical)
+                    this._target.y += this._traverseOffset;
+                else
+                    this._target.x += this._traverseOffset;
+            }
+            return this._target;
+        };
+        CylinderCamera.prototype._checkInputs = function () {
+            //if (async) collision inspection was triggered, don't update the camera's position - until the collision callback was called.
+            if (this._collisionTriggered) {
+                return;
+            }
+            this.inputs.checkInputs();
+            // Inertia
+            if (this.inertialAlphaOffset !== 0 || this.inertialBetaOffset !== 0 || this.inertialRadiusOffset !== 0) {
+                if (this._isVertical) {
+                    if (this.getScene().useRightHandedSystem) {
+                        this.alpha -= this.inertialAlphaOffset;
+                    }
+                    else {
+                        this.alpha += this.inertialAlphaOffset;
+                    }
+                }
+                else
+                    this._traverseOffset -= this.inertialAlphaOffset;
+                if (!this._isVertical)
+                    this.beta += this.inertialBetaOffset;
+                else
+                    this._traverseOffset -= this.inertialBetaOffset;
+                this.radius -= this.inertialRadiusOffset;
+                this.inertialAlphaOffset *= this.inertia;
+                this.inertialBetaOffset *= this.inertia;
+                this.inertialRadiusOffset *= this.inertia;
+                if (Math.abs(this.inertialAlphaOffset) < this.speed * BABYLON.Epsilon)
+                    this.inertialAlphaOffset = 0;
+                if (Math.abs(this.inertialBetaOffset) < this.speed * BABYLON.Epsilon)
+                    this.inertialBetaOffset = 0;
+                if (Math.abs(this.inertialRadiusOffset) < this.speed * BABYLON.Epsilon)
+                    this.inertialRadiusOffset = 0;
+            }
+            // Panning inertia
+            if (this.inertialPanningX !== 0 || this.inertialPanningY !== 0) {
+                if (!this._localDirection) {
+                    this._localDirection = BABYLON.Vector3.Zero();
+                    this._transformedDirection = BABYLON.Vector3.Zero();
+                }
+                this._localDirection.copyFromFloats(this.inertialPanningX, this.inertialPanningY, this.inertialPanningY);
+                this._localDirection.multiplyInPlace(this.panningAxis);
+                this._viewMatrix.invertToRef(this._cameraTransformMatrix);
+                BABYLON.Vector3.TransformNormalToRef(this._localDirection, this._cameraTransformMatrix, this._transformedDirection);
+                //Eliminate y if map panning is enabled (panningAxis == 1,0,1)
+                if (!this.panningAxis.y) {
+                    this._transformedDirection.y = 0;
+                }
+                this.inertialPanningX *= this.panningInertia;
+                this.inertialPanningY *= this.panningInertia;
+                if (Math.abs(this.inertialPanningX) < this.speed * BABYLON.Epsilon)
+                    this.inertialPanningX = 0;
+                if (Math.abs(this.inertialPanningY) < this.speed * BABYLON.Epsilon)
+                    this.inertialPanningY = 0;
+            }
+            // Limits
+            this._checkLimits();
+            _super.prototype._checkInputs.call(this);
+        };
+        CylinderCamera.prototype._checkLimits = function () {
+            // only limit beta (vertical) the same way as ArchRotateCamera when not a vertical cylinder
+            if (!this._isVertical) {
+                if (this.lowerBetaLimit === null || this.lowerBetaLimit === undefined) {
+                    if (this.allowUpsideDown && this.beta > Math.PI) {
+                        this.beta = this.beta - (2 * Math.PI);
+                    }
+                }
+                else {
+                    if (this.beta < this.lowerBetaLimit) {
+                        this.beta = this.lowerBetaLimit;
+                    }
+                }
+                if (this.upperBetaLimit === null || this.upperBetaLimit === undefined) {
+                    if (this.allowUpsideDown && this.beta < -Math.PI) {
+                        this.beta = this.beta + (2 * Math.PI);
+                    }
+                }
+                else {
+                    if (this.beta > this.upperBetaLimit) {
+                        this.beta = this.upperBetaLimit;
+                    }
+                }
+            }
+            else
+                this.beta = CylinderCamera.FixedVert;
+            // only limit alpha (horizontal) the same way as ArchRotateCamera when a vertical cylinder
+            if (this._isVertical) {
+                if (this.lowerAlphaLimit && this.alpha < this.lowerAlphaLimit) {
+                    this.alpha = this.lowerAlphaLimit;
+                }
+                if (this.upperAlphaLimit && this.alpha > this.upperAlphaLimit) {
+                    this.alpha = this.upperAlphaLimit;
+                }
+            }
+            else
+                this.alpha = CylinderCamera.FixedHorz;
+            // radius limits the same as ArchRotateCamera
+            if (this.lowerRadiusLimit && this.radius < this.lowerRadiusLimit) {
+                this.radius = this.lowerRadiusLimit;
+            }
+            if (this.upperRadiusLimit && this.radius > this.upperRadiusLimit) {
+                this.radius = this.upperRadiusLimit;
+            }
+        };
+        CylinderCamera.prototype.rebuildAnglesAndRadius = function () {
+            var radiusv3 = this.position.subtract(this._getTargetPosition());
+            this.radius = radiusv3.length();
+            // Alpha, only rebuilt when a vertical cylinder
+            if (this._isVertical) {
+                this.alpha = Math.acos(radiusv3.x / Math.sqrt(Math.pow(radiusv3.x, 2) + Math.pow(radiusv3.z, 2)));
+                if (radiusv3.z < 0) {
+                    this.alpha = 2 * Math.PI - this.alpha;
+                }
+            }
+            // Beta, only rebuilt when not a vertical cylinder
+            if (!this._isVertical) {
+                this.beta = Math.acos(radiusv3.y / this.radius);
+            }
+            this._checkLimits();
+        };
+        CylinderCamera.prototype.setTargetMesh = function (target, toBoundingCenter, limitTraverse) {
+            if (toBoundingCenter === void 0) { toBoundingCenter = true; }
+            if (limitTraverse === void 0) { limitTraverse = true; }
+            this._targetMesh = target;
+            var boundingCenter = target.getBoundingInfo().boundingBox.center;
+            var dimensions = boundingCenter.scale(2);
+            if (toBoundingCenter) {
+                if (this._isVertical)
+                    this._traverseOffset = boundingCenter.y;
+                else
+                    this._traverseOffset = boundingCenter.x;
+            }
+            else
+                this._traverseOffset = 0;
+            // need to reduce default angular sensitively for the dimension now used to traverse; was 1000
+            // was used as 1000 points / radians
+            // now as 1000 points / extent
+            if (this._isVertical)
+                this.angularSensibilityY = 1000 / dimensions.y;
+            else
+                this.angularSensibilityX = 1000 / dimensions.x;
+            this._target = this._getTargetPosition();
+            this.rebuildAnglesAndRadius();
+        };
+        CylinderCamera.prototype.zoomOn = function (meshes, doNotUpdateMaxZ) {
+            if (doNotUpdateMaxZ === void 0) { doNotUpdateMaxZ = false; }
+            throw "has no meaning in CylinderCamera";
+        };
+        CylinderCamera.prototype.focusOn = function (meshesOrMinMaxVectorAndDistance, doNotUpdateMaxZ) {
+            if (doNotUpdateMaxZ === void 0) { doNotUpdateMaxZ = false; }
+            throw "has no meaning in CylinderCamera";
+        };
+        CylinderCamera.prototype.createRigCamera = function (name, cameraIndex) {
+            throw "No currently supported";
+        };
+        CylinderCamera.prototype.dispose = function () {
+            this.inputs.clear();
+            _super.prototype.dispose.call(this);
+        };
+        CylinderCamera.prototype.getClassName = function () {
+            return "CylinderCamera";
+        };
+        return CylinderCamera;
+    }(BABYLON.ArcRotateCamera));
+    CylinderCamera.FixedVert = Math.PI / 2;
+    CylinderCamera.FixedHorz = Math.PI / 2;
+    QI.CylinderCamera = CylinderCamera;
+})(QI || (QI = {}));
+
 var QI;
 (function (QI) {
     /**
@@ -1732,6 +1928,11 @@ var QI;
 })(QI || (QI = {}));
 
 
+
+
+
+
+
 var QI;
 (function (QI) {
     /**
@@ -1765,6 +1966,15 @@ var QI;
             }
             return (this._compute(currentDurationRatio * 2) * 0.5);
         };
+        Pace.prototype.getClassName = function () { return "Pace"; };
+        Pace.prototype.toScript = function () {
+            var ret = "new QI." + this.getClassName + "(";
+            if (this._mode === Pace.MODE_OUT)
+                ret += "QI.Pace.MODE_OUT";
+            else if (this._mode === Pace.MODE_INOUT)
+                ret += "QI.Pace.MODE_INOUT";
+            return ret + ")";
+        };
         /**
          * Perform the method without regard for the mode.  MUST be overridden
          * @param{number} currentDurationRatio - How much time has elapse / how long it is supposed to take
@@ -1790,6 +2000,7 @@ var QI;
             currentDurationRatio = Math.max(0, Math.min(1, currentDurationRatio));
             return (1.0 - Math.sqrt(1.0 - (currentDurationRatio * currentDurationRatio)));
         };
+        CirclePace.prototype.getClassName = function () { return "CirclePace"; };
         return CirclePace;
     }(Pace));
     QI.CirclePace = CirclePace;
@@ -1803,6 +2014,7 @@ var QI;
         CubicPace.prototype._compute = function (currentDurationRatio) {
             return (currentDurationRatio * currentDurationRatio * currentDurationRatio);
         };
+        CubicPace.prototype.getClassName = function () { return "CubicPace"; };
         return CubicPace;
     }(Pace));
     QI.CubicPace = CubicPace;
@@ -1831,6 +2043,7 @@ var QI;
             }
             return (num2 * Math.sin(((6.2831853071795862 * num3) + 1.5707963267948966) * currentDurationRatio));
         };
+        ElasticPace.prototype.getClassName = function () { return "ElasticPace"; };
         return ElasticPace;
     }(Pace));
     QI.ElasticPace = ElasticPace;
@@ -1851,6 +2064,7 @@ var QI;
             }
             return ((Math.exp(this.exponent * currentDurationRatio) - 1.0) / (Math.exp(this.exponent) - 1.0));
         };
+        ExponentialPace.prototype.getClassName = function () { return "ExponentialPace"; };
         return ExponentialPace;
     }(Pace));
     QI.ExponentialPace = ExponentialPace;
@@ -1869,6 +2083,7 @@ var QI;
             var y = Math.max(0.0, this.power);
             return Math.pow(currentDurationRatio, y);
         };
+        PowerPace.prototype.getClassName = function () { return "PowerPace"; };
         return PowerPace;
     }(Pace));
     QI.PowerPace = PowerPace;
@@ -1882,6 +2097,7 @@ var QI;
         QuadraticPace.prototype._compute = function (currentDurationRatio) {
             return (currentDurationRatio * currentDurationRatio);
         };
+        QuadraticPace.prototype.getClassName = function () { return "QuadraticPace"; };
         return QuadraticPace;
     }(Pace));
     QI.QuadraticPace = QuadraticPace;
@@ -1895,6 +2111,7 @@ var QI;
         QuarticPace.prototype._compute = function (currentDurationRatio) {
             return (currentDurationRatio * currentDurationRatio * currentDurationRatio * currentDurationRatio);
         };
+        QuarticPace.prototype.getClassName = function () { return "QuarticPace"; };
         return QuarticPace;
     }(Pace));
     QI.QuarticPace = QuarticPace;
@@ -1908,6 +2125,7 @@ var QI;
         QuinticPace.prototype._compute = function (currentDurationRatio) {
             return (currentDurationRatio * currentDurationRatio * currentDurationRatio * currentDurationRatio * currentDurationRatio);
         };
+        QuinticPace.prototype.getClassName = function () { return "QuinticPace"; };
         return QuinticPace;
     }(Pace));
     QI.QuinticPace = QuinticPace;
@@ -1921,6 +2139,7 @@ var QI;
         SinePace.prototype._compute = function (currentDurationRatio) {
             return (1.0 - Math.sin(1.5707963267948966 * (1.0 - currentDurationRatio)));
         };
+        SinePace.prototype.getClassName = function () { return "SinePace"; };
         return SinePace;
     }(Pace));
     QI.SinePace = SinePace;
@@ -1944,6 +2163,7 @@ var QI;
         BezierCurvePace.prototype._compute = function (currentDurationRatio) {
             return BABYLON.BezierCurve.interpolate(currentDurationRatio, this.x1, this.y1, this.x2, this.y2);
         };
+        BezierCurvePace.prototype.getClassName = function () { return "BezierCurvePace"; };
         return BezierCurvePace;
     }(Pace));
     QI.BezierCurvePace = BezierCurvePace;
@@ -2013,6 +2233,21 @@ var QI;
             var baseDuration = (upperIdx > 0) ? this.durationRatios[upperIdx - 1] : 0;
             var interStepRatio = (currentDurationRatio - baseDuration) / this.incremetalDurationBetweenSteps[upperIdx];
             return baseCompletion + (interStepRatio * this.incremetalCompletionBetweenSteps[upperIdx]);
+        };
+        SteppedPace.prototype.getClassName = function () { return "SteppedPace"; };
+        /** @override */
+        SteppedPace.prototype.toScript = function () {
+            var comps = "";
+            var durs = "";
+            for (var i = 0, len = this.completionRatios.length; i < len; i++) {
+                if (i > 0) {
+                    comps += ", ";
+                    durs += ", ";
+                }
+                comps += this.completionRatios[i];
+                durs += this.durationRatios[i];
+            }
+            return "new QI.SteppedPace([" + comps + "], [" + durs + "])";
         };
         return SteppedPace;
     }(Pace));
@@ -2088,6 +2323,7 @@ var QI;
                 return;
             }
             // Adapt options
+            this._noOptions = !options;
             this.options = options || {
                 millisBefore: 0,
                 absoluteMovement: false,
@@ -2125,6 +2361,136 @@ var QI;
                 ", absoluteRotation: " + this.options.absoluteRotation +
                 ", noStepWiseMovement: " + this.options.noStepWiseMovement);
         };
+        /** override when millis, move, or rotate not needed */
+        MotionEvent.prototype.toScript = function () {
+            return this._toScriptImpl(true, true, true);
+        };
+        MotionEvent.prototype._toScriptImpl = function (needMillis, needMove, needRotate) {
+            var ret = "new QI." + this.getClassName() + "(";
+            ret += this._toScriptCustomArgs();
+            var first = this._toScriptCustomArgs() === "";
+            if (needMillis) {
+                if (!first)
+                    ret += ", ";
+                else
+                    first = false;
+                ret += this._milliDuration;
+            }
+            if (needMove) {
+                if (!first)
+                    ret += ", ";
+                else
+                    first = false;
+                if (this.movePOV)
+                    ret += "new BABYLON.Vector3(" + this.movePOV.x + ", " + this.movePOV.y + ", " + this.movePOV.z + ")";
+                else
+                    ret += "null";
+            }
+            if (needRotate) {
+                if (!first)
+                    ret += ", ";
+                else
+                    first = false;
+                if (this.rotatePOV)
+                    ret += "new BABYLON.Vector3(" + this.rotatePOV.x + ", " + this.rotatePOV.y + ", " + this.rotatePOV.z + ")";
+                else
+                    ret += "null";
+            }
+            if (!this._noOptions)
+                ret += ", " + this._toScriptOptions();
+            return ret + ")";
+        };
+        /** overridden by classes which have custom args in constructor */
+        MotionEvent.prototype._toScriptCustomArgs = function () {
+            return "";
+        };
+        /**
+         * Broken out in case toScript needs to be overridden.
+         */
+        MotionEvent.prototype._toScriptOptions = function () {
+            if (this._noOptions)
+                return null;
+            var ret = "";
+            var first = true;
+            if (this.options.millisBefore !== 0) {
+                if (!first)
+                    ret += ", ";
+                else
+                    first = false;
+                ret += "millisBefore: " + this.options.millisBefore;
+            }
+            if (this.options.absoluteMovement) {
+                if (!first)
+                    ret += ", ";
+                else
+                    first = false;
+                ret += "absoluteMovement : true";
+            }
+            if (this.options.absoluteRotation) {
+                if (!first)
+                    ret += ", ";
+                else
+                    first = false;
+                ret += "absoluteRotation : true";
+            }
+            if (this.options.pace != MotionEvent.LINEAR) {
+                if (!first)
+                    ret += ", ";
+                else
+                    first = false;
+                ret += "pace : " + this.options.pace.toScript();
+            }
+            if (this.options.sound) {
+                if (!first)
+                    ret += ", ";
+                else
+                    first = false;
+                ret += "sound : " + this.options.sound.name; // name must match the object name
+            }
+            if (this.options.noStepWiseMovement) {
+                if (!first)
+                    ret += ", ";
+                else
+                    first = false;
+                ret += "noStepWiseMovement : true";
+            }
+            if (this.options.mirrorAxes) {
+                if (!first)
+                    ret += ", ";
+                else
+                    first = false;
+                ret += "mirrorAxes : \"" + this.options.mirrorAxes + "\"";
+            }
+            if (this.options.subposes) {
+                if (!first)
+                    ret += ", ";
+                else
+                    first = false;
+                ret += "subposes : \"[";
+                for (var i = 0, len = this.options.subposes.length; i < len; i++) {
+                    if (i > 0)
+                        ret += ", ";
+                    ret += "\"" + this.options.subposes[i] + "\"";
+                }
+                ret += "]";
+            }
+            if (this.options.revertSubposes) {
+                if (!first)
+                    ret += ", ";
+                else
+                    first = false;
+                ret += "revertSubposes : true";
+            }
+            if (this.options.privilegedEvent) {
+                if (!first)
+                    ret += ", ";
+                else
+                    first = false;
+                ret += "privilegedEvent : true";
+            }
+            return (ret.length > 0) ? "{" + ret + "}" : null;
+        };
+        /** Needs to be overridden by sub-classes. */
         MotionEvent.prototype.getClassName = function () { return "PoseEvent"; };
         // =================================== run time processing ===================================
         /**
@@ -2329,6 +2695,14 @@ var QI;
             _this._groupName = groupName;
             return _this;
         }
+        Stall.prototype.toScript = function () {
+            var ret = "new QI.Stall(" + this.milliDuration;
+            if (this._groupName !== QI.PovProcessor.POV_GROUP_NAME)
+                ret += ", \"" + this._groupName + "\"";
+            if (this.options.sound)
+                ret += ", " + this.options.sound.name; // name must match the object name
+            return ret + ")";
+        };
         Stall.prototype.getClassName = function () { return "Stall"; };
         return Stall;
     }(MotionEvent));
@@ -2376,6 +2750,9 @@ var QI;
                 // store scene, so can unregister
                 this._scene = scene;
             }
+        };
+        NonMotionEvent.prototype.toScript = function () {
+            return "NonMotionEvents DO NOT Support toScript";
         };
         NonMotionEvent.prototype.getClassName = function () { return "NonMotionEvent"; };
         NonMotionEvent.prototype._beforeRender = function () {
@@ -3638,6 +4015,9 @@ var QI;
             }
             return ret + _super.prototype.toString.call(this);
         };
+        PoseEvent.prototype._toScriptCustomArgs = function () {
+            return "\"" + this.poseName + "\"";
+        };
         PoseEvent.prototype.getClassName = function () { return "PoseEvent"; };
         return PoseEvent;
     }(QI.MotionEvent));
@@ -3847,6 +4227,19 @@ var QI;
         VertexDeformation.prototype.getEndStateNames = function () { return this._endStateNames; };
         VertexDeformation.prototype.getEndStateRatio = function (idx) { return this._endStateRatios[idx]; };
         VertexDeformation.prototype.getEndStateRatios = function () { return this._endStateRatios; };
+        VertexDeformation.prototype._toScriptCustomArgs = function () {
+            var names = "";
+            var ratios = "";
+            for (var i = 0, len = this._endStateNames.length; i < len; i++) {
+                if (i > 0) {
+                    names += ", ";
+                    ratios += ", ";
+                }
+                names += "\"" + this._endStateNames[i] + "\"";
+                ratios += this._endStateRatios[i];
+            }
+            return "\"" + this._groupName + "\", \"" + this._referenceStateName + "\", [" + names + "], [" + ratios + "]";
+        };
         VertexDeformation.prototype.getClassName = function () { return "VertexDeformation"; };
         VertexDeformation.prototype.toString = function () {
             var ret = _super.prototype.toString.call(this);
@@ -3905,6 +4298,9 @@ var QI;
             if (rotatePOV === void 0) { rotatePOV = null; }
             return _super.call(this, groupName, "BASIS", [endStateName], [endStateRatio], milliDuration, movePOV, rotatePOV, options) || this;
         }
+        Deformation.prototype._toScriptCustomArgs = function () {
+            return "\"" + this._groupName + "\", \"" + this._endStateNames[0] + "\", " + this._endStateRatios[0];
+        };
         Deformation.prototype.getClassName = function () { return "Deformation"; };
         return Deformation;
     }(VertexDeformation));
@@ -3948,6 +4344,23 @@ var QI;
             if (endStateRatio === void 0) { endStateRatio = 1; }
             return _super.call(this, groupName, endStateName, endStateRatio, 0.01, null, null, options) || this;
         }
+        /** override when millis, move, or rotate not needed */
+        MorphImmediate.prototype.toScript = function () {
+            return this._toScriptImpl(false, false, false);
+        };
+        MorphImmediate.prototype._toScriptCustomArgs = function () {
+            var names = "";
+            var ratios = "";
+            for (var i = 0, len = this._endStateNames.length; i < len; i++) {
+                if (i > 0) {
+                    names += ", ";
+                    ratios += ", ";
+                }
+                names += "\"" + this._endStateNames[i];
+                ratios += this._endStateRatios[i];
+            }
+            return "\"" + this._groupName + "\", \"" + this._endStateNames[0] + "\", " + this._endStateRatios[0];
+        };
         MorphImmediate.prototype.getClassName = function () { return "MorphImmediate"; };
         return MorphImmediate;
     }(Deformation));
@@ -3996,6 +4409,9 @@ var QI;
             if (rotatePOV === void 0) { rotatePOV = null; }
             return _super.call(this, groupName, "BASIS", 1, milliDuration, movePOV, rotatePOV, options) || this;
         }
+        BasisReturn.prototype._toScriptCustomArgs = function () {
+            return "\"" + this._groupName + "\"";
+        };
         BasisReturn.prototype.getClassName = function () { return "BasisReturn"; };
         return BasisReturn;
     }(Deformation));
@@ -5400,9 +5816,9 @@ var QI;
          *                                           More compact than absolute for all, & useful in calculating hair length at each point.
          * @param {number} longestStrand - The longest distance between the first & last points in the strands, optional.
          * @param {number} stiffness - The matrix weight at the end of the longest strand, optional.
-         * @param {number} boneIndex - The index of the bone in the skeleton to be used as a bone influencer, optional.
+         * @param {number} boneName - The name of the bone in the skeleton to be used as a bone influencer, optional.
          */
-        Hair.prototype.assemble = function (strandNumVerts, rootRelativePositions, longestStrand, stiffness, boneIndex) {
+        Hair.prototype.assemble = function (strandNumVerts, rootRelativePositions, longestStrand, stiffness, boneName) {
             var idx = 0; // index used for writing into indices
             var pdx = 0; // index used for writing into positions
             var cdx = 0; // index used for writing into vertex colors
@@ -5414,6 +5830,7 @@ var QI;
             var matrixIndices;
             var matrixWeights;
             var deltaStiffness;
+            var boneIndex = (this.skeleton && boneName) ? this.skeleton.getBoneIndexByName(boneName) : null;
             if (boneIndex) {
                 matrixIndices = new Float32Array(nPosElements / 3 * 4);
                 matrixWeights = new Float32Array(nPosElements / 3 * 4);
@@ -5436,8 +5853,8 @@ var QI;
                 cdx += 4;
                 idx++;
                 if (boneIndex) {
-                    matrixIndices[mdx] = 0; //boneIndex;
-                    matrixWeights[mdx] = 0; //1
+                    matrixIndices[mdx] = boneIndex;
+                    matrixWeights[mdx] = 1;
                     mdx += 4;
                 }
                 for (var vert = 1; vert < strandNumVerts[i]; vert++) {
@@ -5454,8 +5871,8 @@ var QI;
                     colors32[cdx + 3] = colorA;
                     cdx += 4;
                     if (boneIndex) {
-                        matrixIndices[mdx] = 0; //boneIndex;
-                        matrixWeights[mdx] = 0; //1 - (deltaStiffness * (this._lengthSoFar(deltaX, deltaY, deltaZ) / longestStrand));
+                        matrixIndices[mdx] = boneIndex;
+                        matrixWeights[mdx] = .0000010; //1 - (deltaStiffness * (this._lengthSoFar(deltaX, deltaY, deltaZ) / longestStrand));
                         mdx += 4;
                     }
                     indices.push(idx - 1);
@@ -5470,6 +5887,7 @@ var QI;
                 this.numBoneInfluencers = 1;
                 this.setVerticesData(BABYLON.VertexBuffer.MatricesIndicesKind, matrixIndices);
                 this.setVerticesData(BABYLON.VertexBuffer.MatricesWeightsKind, matrixWeights);
+                console.log("setting skeleton");
             }
         };
         Hair.prototype._lengthSoFar = function (deltaX, deltaY, deltaZ) {

@@ -152,6 +152,8 @@ declare module QI {
          * @param{number} currentDurationRatio - How much time has elapse / how long it is supposed to take
          */
         getCompletionMilestone(currentDurationRatio: number): number;
+        getClassName(): string;
+        toScript(): string;
         /**
          * Perform the method without regard for the mode.  MUST be overridden
          * @param{number} currentDurationRatio - How much time has elapse / how long it is supposed to take
@@ -161,10 +163,12 @@ declare module QI {
     class CirclePace extends Pace {
         /** @override */
         protected _compute(currentDurationRatio: number): number;
+        getClassName(): string;
     }
     class CubicPace extends Pace {
         /** @override */
         protected _compute(currentDurationRatio: number): number;
+        getClassName(): string;
     }
     class ElasticPace extends Pace {
         oscillations: number;
@@ -172,34 +176,41 @@ declare module QI {
         constructor(oscillations?: number, springiness?: number, mode?: number);
         /** @override */
         protected _compute(currentDurationRatio: number): number;
+        getClassName(): string;
     }
     class ExponentialPace extends Pace {
         exponent: number;
         constructor(exponent?: number, mode?: number);
         /** @override */
         protected _compute(currentDurationRatio: number): number;
+        getClassName(): string;
     }
     class PowerPace extends Pace {
         power: number;
         constructor(power?: number, mode?: number);
         /** @override */
         protected _compute(currentDurationRatio: number): number;
+        getClassName(): string;
     }
     class QuadraticPace extends Pace {
         /** @override */
         protected _compute(currentDurationRatio: any): number;
+        getClassName(): string;
     }
     class QuarticPace extends Pace {
         /** @override */
         protected _compute(currentDurationRatio: number): number;
+        getClassName(): string;
     }
     class QuinticPace extends Pace {
         /** @override */
         protected _compute(currentDurationRatio: number): number;
+        getClassName(): string;
     }
     class SinePace extends Pace {
         /** @override */
         protected _compute(currentDurationRatio: number): number;
+        getClassName(): string;
     }
     class BezierCurvePace extends Pace {
         x1: number;
@@ -209,6 +220,7 @@ declare module QI {
         constructor(x1?: number, y1?: number, x2?: number, y2?: number, mode?: number);
         /** @override */
         protected _compute(currentDurationRatio: number): number;
+        getClassName(): string;
     }
     /**
      *  Class used to coorelate duration ratio to completion ratio.  Enables MotionEvents to have
@@ -231,6 +243,9 @@ declare module QI {
          * @param{number} currentDurationRatio - How much time has elapse / how long it is supposed to take
          */
         getCompletionMilestone(currentDurationRatio: number): number;
+        getClassName(): string;
+        /** @override */
+        toScript(): string;
     }
 }
 
@@ -429,6 +444,7 @@ declare module QI {
          * must be being added to a queue.
          */
         initialize(lateStartMilli?: number, scene?: BABYLON.Scene): void;
+        toScript(): string;
         getClassName(): string;
         private _beforeRender();
         /**
@@ -578,6 +594,7 @@ declare module QI {
         static LINEAR: SteppedPace;
         private _syncPartner;
         options: IMotionEventOptions;
+        private _noOptions;
         private _startTime;
         private _millisSoFar;
         private _currentDurationRatio;
@@ -625,6 +642,16 @@ declare module QI {
          */
         constructor(_milliDuration: number, movePOV: BABYLON.Vector3, rotatePOV?: BABYLON.Vector3, options?: IMotionEventOptions);
         toString(): string;
+        /** override when millis, move, or rotate not needed */
+        toScript(): string;
+        protected _toScriptImpl(needMillis: boolean, needMove: boolean, needRotate: boolean): string;
+        /** overridden by classes which have custom args in constructor */
+        protected _toScriptCustomArgs(): string;
+        /**
+         * Broken out in case toScript needs to be overridden.
+         */
+        protected _toScriptOptions(): string;
+        /** Needs to be overridden by sub-classes. */
         getClassName(): string;
         /**
          * Indicate readiness by caller to start processing event.
@@ -690,6 +717,7 @@ declare module QI {
          * could be issues.
          */
         constructor(milliDuration: number, groupName?: string, sound?: BABYLON.Sound);
+        toScript(): string;
         getClassName(): string;
     }
 }
@@ -1311,9 +1339,9 @@ declare module QI {
          *                                           More compact than absolute for all, & useful in calculating hair length at each point.
          * @param {number} longestStrand - The longest distance between the first & last points in the strands, optional.
          * @param {number} stiffness - The matrix weight at the end of the longest strand, optional.
-         * @param {number} boneIndex - The index of the bone in the skeleton to be used as a bone influencer, optional.
+         * @param {number} boneName - The name of the bone in the skeleton to be used as a bone influencer, optional.
          */
-        assemble(strandNumVerts: number[], rootRelativePositions: number[], longestStrand?: number, stiffness?: number, boneIndex?: number): void;
+        assemble(strandNumVerts: number[], rootRelativePositions: number[], longestStrand?: number, stiffness?: number, boneName?: string): void;
         private _lengthSoFar(deltaX, deltaY, deltaZ);
     }
 }
@@ -1374,6 +1402,27 @@ declare module QI {
          */
         initiate(meshes: Array<BABYLON.AbstractMesh>, overriddenMillis: number, overriddenSound: BABYLON.Sound): void;
         private _changeVisiblity(ratioComplete, meshes);
+    }
+}
+
+declare module QI {
+    class CylinderCamera extends BABYLON.ArcRotateCamera {
+        _isVertical: boolean;
+        private _targetMesh;
+        private _traverseOffset;
+        static FixedVert: number;
+        static FixedHorz: number;
+        constructor(name: string, _isVertical: boolean, alphaOrBeta: number, radius: number, scene: BABYLON.Scene, targetMesh?: BABYLON.AbstractMesh, toBoundingCenter?: boolean);
+        _getTargetPosition(): BABYLON.Vector3;
+        _checkInputs(): void;
+        _checkLimits(): void;
+        rebuildAnglesAndRadius(): void;
+        setTargetMesh(target: BABYLON.AbstractMesh, toBoundingCenter?: boolean, limitTraverse?: boolean): void;
+        zoomOn(meshes?: BABYLON.AbstractMesh[], doNotUpdateMaxZ?: boolean): void;
+        focusOn(meshesOrMinMaxVectorAndDistance: any, doNotUpdateMaxZ?: boolean): void;
+        createRigCamera(name: string, cameraIndex: number): BABYLON.Camera;
+        dispose(): void;
+        getClassName(): string;
     }
 }
 
@@ -1537,8 +1586,8 @@ declare module QI {
      */
     class VertexDeformation extends MotionEvent {
         private _referenceStateName;
-        private _endStateNames;
-        private _endStateRatios;
+        protected _endStateNames: string[];
+        protected _endStateRatios: Array<number>;
         /**
          * @param {string} groupName -  Used by QI.Mesh to place in the correct ShapeKeyGroup queue(s).
          * @param {string} _referenceStateName - Names of state key to be used as a reference, so that a endStateRatio can be used
@@ -1578,6 +1627,7 @@ declare module QI {
         getEndStateNames(): Array<string>;
         getEndStateRatio(idx: number): number;
         getEndStateRatios(): Array<number>;
+        protected _toScriptCustomArgs(): string;
         getClassName(): string;
         toString(): string;
     }
@@ -1618,6 +1668,7 @@ declare module QI {
          *                   If null, shape key group setting used.
          */
         constructor(groupName: string, endStateName: string, endStateRatio: number, milliDuration: number, movePOV?: BABYLON.Vector3, rotatePOV?: BABYLON.Vector3, options?: IMotionEventOptions);
+        protected _toScriptCustomArgs(): string;
         getClassName(): string;
     }
     /**
@@ -1653,6 +1704,9 @@ declare module QI {
          *                   If null, shape key group setting used.
          */
         constructor(groupName: string, endStateName: string, endStateRatio?: number, options?: IMotionEventOptions);
+        /** override when millis, move, or rotate not needed */
+        toScript(): string;
+        protected _toScriptCustomArgs(): string;
         getClassName(): string;
     }
     /**
@@ -1690,6 +1744,7 @@ declare module QI {
          *                   If null, shape key group setting used.
          */
         constructor(groupName: string, milliDuration: number, movePOV?: BABYLON.Vector3, rotatePOV?: BABYLON.Vector3, options?: IMotionEventOptions);
+        protected _toScriptCustomArgs(): string;
         getClassName(): string;
     }
 }
@@ -1944,6 +1999,7 @@ declare module QI {
          */
         constructor(poseName: string, milliDuration: number, movePOV?: BABYLON.Vector3, rotatePOV?: BABYLON.Vector3, options?: IMotionEventOptions);
         toString(): string;
+        protected _toScriptCustomArgs(): string;
         getClassName(): string;
     }
 }
