@@ -807,7 +807,7 @@ class Mesh(FCurveAnimatable):
         file_handler.write(indent + 'var instance;\n')
         for instance in self.instances:
             file_handler.write(indent + 'instance =  ' + var + '.createInstance("' + instance.name + '");\n')
-            writePosRotScale(file_handler, instance, 'instance', indent)
+            writePosRotScale(file_handler, instance, 'instance', indent, True)
             file_handler.write(indent + 'if (positionOffset) instance.position.addInPlace(positionOffset);\n')
             file_handler.write(indent + 'instance.checkCollisions = ' + format_bool(self.checkCollisions) + ';\n')
             if self.animationsPresent:
@@ -887,7 +887,7 @@ def mesh_node_common_script(file_handler, typescript_file_handler, meshOrNode, i
     return baseClass
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #  module level since called from Mesh & Node, and also for instances
-def writePosRotScale(file_handler, object, var, indent):
+def writePosRotScale(file_handler, object, var, indent, isInstance = False):
     # these need to be written prior to freezing
     # this also needs to be called in parent, prior to children instancing, so freeze works for them too
     # remember switching y with z at the same time
@@ -909,9 +909,10 @@ def writePosRotScale(file_handler, object, var, indent):
         file_handler.write(indent + var + '.freezeWorldMatrix();\n')
         
     if hasattr(object, 'physicsImpostor'):
-        file_handler.write(indent + 'if (!scene.isPhysicsEnabled()) {\n')
-        file_handler.write(indent + '\tscene.enablePhysics();\n')
-        file_handler.write(indent + '}\n')
+        if not isInstance:
+            file_handler.write(indent + 'if (!scene.isPhysicsEnabled()) {\n')
+            file_handler.write(indent + '\tscene.enablePhysics();\n')
+            file_handler.write(indent + '}\n')
         file_handler.write(indent + var + '.physicsImpostor = new _B.PhysicsImpostor(' + var + ', ' +
                                                                                            format_int(object.physicsImpostor) + 
                                                                                         ', { mass: '      + format_f(object.physicsMass) +
@@ -936,6 +937,12 @@ class MeshInstance:
             self.rotationQuaternion = rotationQuaternion
         self.scaling = instancedMesh.scaling
         self.freezeWorldMatrix = instancedMesh.freezeWorldMatrix
+        
+        if hasattr(instancedMesh, 'physicsImpostor'):
+            self.physicsImpostor = instancedMesh.physicsImpostor
+            self.physicsMass = instancedMesh.physicsMass
+            self.physicsFriction = instancedMesh.physicsFriction
+            self.physicsRestitution = instancedMesh.physicsRestitution
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
      def to_scene_file(self, file_handler):
         file_handler.write('{')

@@ -19,13 +19,11 @@ class Hair():
         
         # allow the parent mesh to declare this child correctly in .d.ts file
         self.userSuppliedBaseClass = 'QI.Hair'
-
-        # since materials of mesh have already been processed, just need to assign it here
-        bjsMaterial = exporter.getMaterial( particle_sys.settings.material_slot, True)
-        if bjsMaterial is not None and hasattr(bjsMaterial, 'diffuse'):
-            self.color = bjsMaterial.diffuse
-        else:
-            self.color = Color((1, 1, 1))
+        
+        # grab the custom properties
+        self.boneName  = particle_sys.settings.boneName
+        self.stiffness = particle_sys.settings.stiffness
+        self.baseColor = particle_sys.settings.baseColor
         
         # find the modifier name & temporarily convert it
         for mod in [m for m in mesh.modifiers if m.type == 'PARTICLE_SYSTEM']:
@@ -120,16 +118,16 @@ class Hair():
         file_handler.write(indent2 + 'ret.castShadows  = ' + format_bool(self.bjsMesh.castShadows) + ';\n')
         file_handler.write(indent2 + 'ret.skeleton = parent.skeleton;\n\n')
         
-        file_handler.write(indent2 + 'ret.color = new _B.Color3(' + format_color(self.color) + ');\n')
+        file_handler.write(indent2 + 'ret.color = new _B.Color3(' + format_color(self.baseColor) + ');\n')
         
         file_handler.write(indent2 + 'var strandNumVerts = [' + format_array(self.strandNumVerts, indent2) + '];\n')
         file_handler.write(indent2 + 'var rootRelativePositions = [' + format_array(self.rootRelativePositions, indent2) + '];\n')
-        file_handler.write(indent2 + 'ret.assemble(strandNumVerts, rootRelativePositions, ' + format_int(self.longestStrand) + ');\n')
+        file_handler.write(indent2 + 'ret.assemble(strandNumVerts, rootRelativePositions, ' + format_int(self.longestStrand) + ', ' + format_f(self.stiffness) + ', "' + self.boneName + '");\n')
         file_handler.write(indent2 + 'return ret;\n')
         file_handler.write(indent + '}\n')
 #===============================================================================
 
-bpy.types.ParticleSettings.bone = bpy.props.StringProperty(
+bpy.types.ParticleSettings.boneName = bpy.props.StringProperty(
     name='Bone',
     description='',
     default = ''
@@ -138,7 +136,24 @@ bpy.types.ParticleSettings.bone = bpy.props.StringProperty(
 bpy.types.ParticleSettings.stiffness = bpy.props.FloatProperty(
     name='Stiffness',
     description='',
-    default = 0.3
+    default = 1.0,
+    min = 0.1,
+    max = 1.0
+)
+
+bpy.types.ParticleSettings.dissolveAnlge = bpy.props.FloatProperty(
+    name='Dissolve Angle',
+    description='Used to do a limited dissolve to remove some vertices',
+    default = 1.0,
+    min = 0.1,
+    max = 1.0
+)
+
+bpy.types.ParticleSettings.baseColor = bpy.props.FloatVectorProperty(
+    name='Base Color',
+    description='Used to generate vertex colors randomly near this.',
+    subtype='COLOR',
+    default=[0.0,0.0,0.0]
 )
 
 #===============================================================================
@@ -146,17 +161,24 @@ class HairPanel(bpy.types.Panel):
     bl_label = get_title()
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
-    bl_context = 'particles'
+    bl_context = 'particle'
 
     @classmethod
     def poll(cls, context):
-        hair = context.world
-        #print(ob.data)
-        return ob is not None and isinstance(ob, bpy.types.ParticleSettings)
-
-    def draw(self, context):
-        ob = context.particle_settings
-        layout.prop(ob, 'bone')
+        mesh = context.object
+        if mesh is None or len(mesh.particle_systems) == 0: return False
         
-        layout.prop(ob, 'stiffness')
+        index = mesh.particle_systems.active_index
+        return mesh.particle_systems[index].settings.type == 'HAIR'
+    
+    def draw(self, context):
+        layout = self.layout
+        
+        mesh = context.object
+        index = mesh.particle_systems.active_index
+        
+        hair = mesh.particle_systems[index].settings
+        layout.prop(hair, 'boneName')        
+        layout.prop(hair, 'stiffness')
+        layout.prop(hair, 'baseColor')
         

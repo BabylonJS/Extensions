@@ -188,7 +188,6 @@ class TextureReductionPanel(bpy.types.Panel):
         index = mesh.active_material_index
         material = mesh.material_slots[index].material
 
-        scene = context.scene
         box = layout.box()
         box.prop(material, 'usePNG')
         box.prop(material, 'longestSideSize')
