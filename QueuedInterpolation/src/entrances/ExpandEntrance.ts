@@ -12,40 +12,38 @@ module QI {
             var ref = this;
             var origScaling = ref._mesh.scaling;
             ref._mesh.scaling = BABYLON.Vector3.Zero();
+                        
+            // The meshes must be visible & the highlightLayer must be applied ahead of time, or sound will be off
+            // No visible effect, since the scaling is zero
+            this._mesh.makeVisible(true);
             
+            // add a temporary glow for entrance when have HighlightLayer (BJS 2.5), and stencil enabled on engine
+            var scene = this._mesh.getScene();
+            var doingHighlight = BABYLON.HighlightLayer && scene.getEngine().isStencilEnable;
+            if (doingHighlight) {
+                    // limit effect, so does not show on orthographic cameras, if any
+                    var camera = (scene.activeCameras.length > 0) ? scene.activeCameras[0] : scene.activeCamera;
+                    this._HighLightLayer = new BABYLON.HighlightLayer("QI.ExpandEntrance internal", scene, {camera: camera});
+
+                    this._HighLightLayer.addMesh(this._mesh, BABYLON.Color3.White());
+                    
+                    var kids = <Array<BABYLON.Mesh>> this._mesh.getDescendants();
+                    for (var i = 0, len = kids.length; i < len; i++) {
+                        this._HighLightLayer.addMesh(kids[i], BABYLON.Color3.White());
+                    }
+            }
+                
             // add the minimum steps
             var events : Array<any>;
             events = [
-                // make mesh, and kids visible
-                function() { ref._mesh.makeVisible(true);},
-
                 // return to a basis state
                 new PropertyEvent(ref._mesh, 'scaling', origScaling, this.durations[0], {sound : ref.soundEffect})
             ];
 
-            var scene = this._mesh.getScene();
-            // add a temporary glow for entrance when have HighlightLayer (BJS 2.5), and stencil enabled on engine
-            if (BABYLON.HighlightLayer && scene.getEngine().isStencilEnable){
-
-                // splice as first event
-                events.splice(0, 0, function(){
-                    // limit effect, so does not show on orthographic cameras, if any
-                    var camera = (scene.activeCameras.length > 0) ? scene.activeCameras[0] : scene.activeCamera;
-                    ref._HighLightLayer = new BABYLON.HighlightLayer("QI.ExpandEntrance internal", scene, {camera: camera});
-
-                    ref._HighLightLayer.addMesh(ref._mesh, BABYLON.Color3.White());
-                    
-                    var kids = <Array<BABYLON.Mesh>> ref._mesh.getDescendants();
-                    for (var i = 0, len = kids.length; i < len; i++) {
-                        ref._HighLightLayer.addMesh(kids[i], BABYLON.Color3.White());
-                    }
-                });
-
-                // add wait & clean up on the end
+            if (doingHighlight) {
                 events.push(new Stall(ref.durations[1]));
                 events.push(function(){ ref._HighLightLayer.dispose();  });
             }
-
             // Make sure there is a block event for all queues not part of this entrance.
             // User could have added events, say skeleton based, for a morph based entrance, so block it.
             this._mesh.appendStallForMissingQueues(events, this.durations[0] + this.durations[1], Mesh.COMPUTED_GROUP_NAME);
