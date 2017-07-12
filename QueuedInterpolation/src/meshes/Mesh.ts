@@ -658,16 +658,76 @@ module QI {
         public getLastPoseNameQueuedOrRun() : string {
             return this._poseProcessor ? this._poseProcessor.getLastPoseNameQueuedOrRun() : null;
         }
-        // =================================== BJS side ShapeGroup ===================================
+        // ================================= Grand Entrance Methods ==================================
         /** Entry point called by TOB generated code, when everything is ready.
          *  To load in advance without showing export disabled.  Call this when ready.
          *  Can also be called after the first time, if makeVisible(false) was called.
          */
         public grandEntrance() : void {
             if (this.isEnabled() && !this.isVisible) {
-                if (this.entranceMethod) this.entranceMethod.makeEntrance(); else this.makeVisible(true);
+                var ref = this;
+                this.compileMaterials(function() {
+                    if (ref.entranceMethod) ref.entranceMethod.makeEntrance(); else ref.makeVisible(true);
+                });
             }
          }
+
+        /**
+         * Get Every material in use by the mesh & it's children.  This is primarily for compileMaterials(),
+         * but needs to be broken out, so it can be called recursively.
+         * 
+         * @param repo - This is an array of dictionaries with entries of a mesh & material, initialized when missing.
+         * @param meshPassed - An argument of the mesh (child mesh) to operate on.
+         * @returns an array of dictionaries with entries of a mesh & material.
+         */
+        public getEverySimpleMaterial(repo? : Array<{mesh: BABYLON.Mesh, mat: BABYLON.Material}>, meshPassed? : BABYLON.Mesh) : Array<{mesh: BABYLON.Mesh, mat: BABYLON.Material}> {
+            if (!repo) repo = new Array<{mesh: BABYLON.Mesh, mat: BABYLON.Material}>(0);
+            
+            var mesh = meshPassed ? meshPassed : this;
+            
+            // take care of this mesh or the one passed
+            if (mesh.material instanceof BABYLON.MultiMaterial) {
+                var subMaterials = (<BABYLON.MultiMaterial> mesh.material).subMaterials;
+                for (var i = 0, len = subMaterials.length; i < len; i++) {
+                    repo.push( {mesh : mesh, mat: subMaterials[i]} );
+                }
+            } else repo.push( {mesh : mesh, mat: mesh.material} );
+            
+            // take care of children only needing to go one level, since getChildMeshes() is also recursive
+            if (!meshPassed) {
+                var children = mesh.getChildMeshes();
+                for (var i = 0, len = children.length; i < len; i++) {
+                    this.getEverySimpleMaterial(repo, <BABYLON.Mesh> children[i]);
+                } 
+            }           
+            return repo;
+        }
+        
+        /**
+         * Ensure that all materials for this mesh & it's children are actively forced to compile
+         */
+        public compileMaterials(completionCallback : () => void) : void {
+            var everyMatSet = this.getEverySimpleMaterial();
+            var compiledMaterials = 0;
+            var nMaterials = everyMatSet.length;
+            
+            // find how many materials are StandardMaterials, since ShaderMaterials do not override isReadyForSubMesh()
+            var nReportingBack = 0;
+            for (var i = 0; i < nMaterials; i++) {
+                if (everyMatSet[i].mat instanceof BABYLON.StandardMaterial) nReportingBack++;
+            }
+            
+            // the callback to forceCompilation 
+            var callback = function(material : BABYLON.Material) : void {
+                if (++compiledMaterials < nReportingBack) return;
+                completionCallback();     
+            };
+            
+            // force compile each mesh & material set
+            for (var i = 0; i < nMaterials; i++) {
+                everyMatSet[i].mat.forceCompilation(everyMatSet[i].mesh, callback);
+            }
+        }
 
         /**
          * make computed shape key group when missing.  Used mostly by GrandEntrances.
