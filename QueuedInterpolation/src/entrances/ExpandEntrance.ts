@@ -3,6 +3,7 @@
 
 module QI {
     export class ExpandEntrance extends AbstractGrandEntrance {
+        //TODO expand to greater than 1.0 then back to 1.0
         private _HighLightLayer : BABYLON.HighlightLayer;
 
         // no need for a constructor, just use super's
@@ -37,16 +38,20 @@ module QI {
             var events : Array<any>;
             events = [
                 // return to a basis state
-                new PropertyEvent(ref._mesh, 'scaling', origScaling, this.durations[0], {sound : ref.soundEffect})
+                new PropertyEvent(ref._mesh, 'scaling', origScaling, this.durations[0], ref._options)
             ];
 
             if (doingHighlight) {
                 events.push(new Stall(ref.durations[1]));
                 events.push(function(){ ref._HighLightLayer.dispose();  });
             }
+                
+            // eliminate resources
+            events.push(function() { ref._options = null; });
+                
             // Make sure there is a block event for all queues not part of this entrance.
             // User could have added events, say skeleton based, for a morph based entrance, so block it.
-            this._mesh.appendStallForMissingQueues(events, this.durations[0] + this.durations[1], Mesh.COMPUTED_GROUP_NAME);
+            this._mesh.appendStallForMissingQueues(events, this.durations[0] + this.durations[1]);
 
             // run functions of series on the POV processor (default), so not dependent on a Shapekeygroup or skeleton processor existing
             var series = new EventSeries(events);

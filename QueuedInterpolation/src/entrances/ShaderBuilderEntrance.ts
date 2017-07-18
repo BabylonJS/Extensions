@@ -29,16 +29,16 @@ module QI{
         /**
          * The mesh returned contains a material that was built by ShaderBuilder.  Subclass should override.
          */        
-        public _getEffectHostMesh() : BABYLON.Mesh { return null; }   
+        protected _getEffectHostMesh() : BABYLON.Mesh { return null; }   
         
         /**
          * Method for making the call back for the recurring event.  Subclass should override.
          */
-        public _makeCallback() : (ratioComplete : number) => void { return null; }
+        protected _makeCallback() : (ratioComplete : number) => void { return null; }
         
         // made properties, so they can be accessed by a sub-classes _makeCallback() method
-        public _effectHostMesh : BABYLON.Mesh;
-        public _originalScale : BABYLON.Vector3;
+        protected _effectHostMesh : BABYLON.Mesh;
+        protected _originalScale : BABYLON.Vector3;
         
         /** @override */
         public makeEntrance() : void {
@@ -60,11 +60,12 @@ module QI{
                 },
 
                 // Start the shader effect, managed by the callback, & sound, if passed.
-                new RecurringCallbackEvent(this._makeCallback(), ref.durations[0], {sound: ref.soundEffect}),
+                new RecurringCallbackEvent(this._makeCallback(), ref.durations[0], ref._options),
 
                 // clean up
                 function () {
                     ref._effectHostMesh.dispose();
+                    ref._options = null;
                 }
             ];
 

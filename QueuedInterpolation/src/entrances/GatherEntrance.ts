@@ -15,7 +15,7 @@ module QI {
             var events : Array<any>;
             events = [
                 // morphImmediate to starting state prior making root mesh visible.  Start sound, if passed.
-                new MorphImmediate(Mesh.COMPUTED_GROUP_NAME, startingState, 1, {sound : ref.soundEffect}),
+                new MorphImmediate(Mesh.COMPUTED_GROUP_NAME, startingState, 1, ref._options),
 
                 // make root mesh visible
                 function(){ref._mesh.isVisible = true;},
@@ -27,6 +27,7 @@ module QI {
                 function(){
                     ref._mesh.makeVisible(true);
                     ref._mesh.removeShapeKeyGroup(Mesh.COMPUTED_GROUP_NAME);
+                    ref._options = null;
                 }
             ];
 

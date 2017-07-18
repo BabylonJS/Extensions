@@ -86,6 +86,7 @@ module QI{
                     ref._diffuse.dispose();
                     ref._distortion.dispose();
                     ref._opacity.dispose();
+                    ref._options = null;
                 }
             ];
 
