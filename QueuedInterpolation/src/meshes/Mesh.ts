@@ -658,6 +658,42 @@ module QI {
         public getLastPoseNameQueuedOrRun() : string {
             return this._poseProcessor ? this._poseProcessor.getLastPoseNameQueuedOrRun() : null;
         }
+        
+        /**
+         * Convenience method for queuing a single move on the mesh.
+         * @param {number} milliDuration - The number of milli seconds the deformation is to be completed in
+         * @param {Vector3} movePOV - Mesh movement relative to its current position/rotation to be performed at the same time (default null).
+         *                  right-up-forward
+         *
+         * @param {Vector3} rotatePOV - Incremental Mesh rotation to be performed or null.
+         *                  flipBack-twirlClockwise-tiltRight
+         *
+         * @param {IMotionEventOptions} options - Named options to keep args down to a manageable level.
+         *
+         *      millisBefore - Fixed wait period prior to start, once this event and also syncPartner (if any) is ready (default 0).
+         *                     When negative, no delay if being repeated in an EventSeries.
+         *
+         *      absoluteMovement - Movement arg is an absolute value, not POV (default false).
+         *      absoluteRotation - Rotation arg is an absolute value, not POV (default false).
+         *      pace - Any Object with the function: getCompletionMilestone(currentDurationRatio) (default MotionEvent.LINEAR)
+         *      sound - Sound to start with event.  WARNING: When event also has a sync partner, there could be issues.
+         *
+         *      noStepWiseMovement - Calc the full amount of movement from Node's original position / rotation,
+         *                           rather than stepwise (default false).  No meaning when no rotation in event.
+         *
+         * @returns {MotionEvent} This is the event which gets queued.
+         */
+        public queuePOV(
+            milliDuration  : number,
+            movePOV        : BABYLON.Vector3 = null,
+            rotatePOV      : BABYLON.Vector3 = null,
+            options?       : IMotionEventOptions) : MotionEvent
+        {
+            var event = new MotionEvent(milliDuration, movePOV, rotatePOV, options);
+            this.queueSingleEvent(event);
+            return event;
+        }
+
         // ================================= Grand Entrance Methods ==================================
         /** Entry point called by TOB generated code, when everything is ready.
          *  To load in advance without showing export disabled.  Call this when ready.
@@ -706,7 +742,7 @@ module QI {
         /**
          * Ensure that all materials for this mesh & it's children are actively forced to compile
          */
-        public compileMaterials(completionCallback : () => void) : void {
+        public compileMaterials(completionCallback? : () => void) : void {
             var everyMatSet = this.getEverySimpleMaterial();
             var compiledMaterials = 0;
             var nMaterials = everyMatSet.length;
@@ -718,10 +754,12 @@ module QI {
             }
             
             // the callback to forceCompilation 
-            var callback = function(material : BABYLON.Material) : void {
-                if (++compiledMaterials < nReportingBack) return;
-                completionCallback();     
-            };
+            if (completionCallback) {
+                var callback = function(material : BABYLON.Material) : void {
+                    if (++compiledMaterials < nReportingBack) return;
+                    completionCallback();     
+                };
+            }
             
             // force compile each mesh & material set
             for (var i = 0; i < nMaterials; i++) {
@@ -753,12 +791,15 @@ module QI {
          * make the whole hierarchy visible or not.  The queues are either paused or resumed as well.
          * @param {boolean} visible - To be or not to be
          */
-        public makeVisible(visible : boolean) : void {
+        public makeVisible(visible : boolean, compileMats? : boolean) : void {
             this.isVisible = visible;
             if (visible)
                 this.resumeInstancePlay();
             else
                 this.pausePlay();
+            
+            // compileMaterials may have already been called
+            if (compileMats) this.compileMaterials();
 
             var children = this.getChildMeshes();
             for (var i = 0, len = children.length; i < len; i++) {
