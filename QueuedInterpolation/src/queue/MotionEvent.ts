@@ -77,6 +77,7 @@ module QI{
 
         private _syncPartner : MotionEvent; // not part of constructor, since cannot be in both partners constructors, use setSyncPartner()
         public options : IMotionEventOptions;
+        private _noOptions : boolean;
 
         // time and state management members
         private _startTime = -1;
@@ -142,6 +143,7 @@ module QI{
             }
 
             // Adapt options
+            this._noOptions = !options;
             this.options = options || {
                 millisBefore: 0,
                 absoluteMovement: false,
@@ -183,7 +185,115 @@ module QI{
                    ", noStepWiseMovement: " + this.options.noStepWiseMovement
             );
         }
-         public getClassName(): string { return "PoseEvent"; } 
+        
+        /** override when millis, move, or rotate not needed */
+        public toScript() : string {
+            return this._toScriptImpl(true, true, true);
+        }
+        
+        protected _toScriptImpl(needMillis : boolean, needMove : boolean, needRotate : boolean) : string { 
+            var ret = "new QI." + this.getClassName() + "(";
+            ret += this._toScriptCustomArgs();
+            var first = this._toScriptCustomArgs() === "";
+            
+            if (needMillis) {
+                if (!first) ret += ", "; else first = false;
+                ret += this._milliDuration;
+            }
+            
+            if (needMove) {
+                if (!first) ret += ", "; else first = false;
+                if (this.movePOV) 
+                    ret += "new BABYLON.Vector3(" +this.movePOV.x + ", " + this.movePOV.y + ", " + this.movePOV.z + ")";
+                else
+                    ret += "null";
+            }
+            
+            if (needRotate) {
+                if (!first) ret += ", "; else first = false;
+                if (this.rotatePOV) 
+                    ret += "new BABYLON.Vector3(" +this.rotatePOV.x + ", " + this.rotatePOV.y + ", " + this.rotatePOV.z + ")";
+                else
+                    ret += "null";
+            }
+            
+            if (!this._noOptions) ret += ", " + this._toScriptOptions();
+            return ret + ")";
+        }
+        
+        /** overridden by classes which have custom args in constructor */
+        protected _toScriptCustomArgs() : string {
+            return "";
+        }
+        
+        /**
+         * Broken out in case toScript needs to be overridden.
+         */
+        protected _toScriptOptions() : string { 
+            if (this._noOptions) return null;
+            var ret = "";
+            var first = true;
+            
+            if (this.options.millisBefore !== 0) {
+                if (!first) ret += ", "; else first = false;
+                ret += "millisBefore: " + this.options.millisBefore;
+            }
+            
+            if (this.options.absoluteMovement) {
+                if (!first) ret += ", "; else first = false;
+                ret += "absoluteMovement : true";
+            }
+            
+            if (this.options.absoluteRotation) {
+                if (!first) ret += ", "; else first = false;
+                ret += "absoluteRotation : true";
+            }
+            
+            if (this.options.pace != MotionEvent.LINEAR) {
+                if (!first) ret += ", "; else first = false;
+                ret += "pace : " + this.options.pace.toScript();
+            }
+            
+            if (this.options.sound) {
+                if (!first) ret += ", "; else first = false;
+                ret += "sound : " + this.options.sound.name; // name must match the object name
+            }
+            
+            if (this.options.noStepWiseMovement) {
+                if (!first) ret += ", "; else first = false;
+                ret += "noStepWiseMovement : true";
+            }
+            
+            if (this.options.mirrorAxes) {
+                if (!first) ret += ", "; else first = false;
+                ret += "mirrorAxes : \"" + this.options.mirrorAxes + "\"";
+            }
+            
+            if (this.options.subposes) {
+                if (!first) ret += ", "; else first = false;
+                ret += "subposes : \"[";
+                for (var i = 0, len = this.options.subposes.length; i < len; i++) {
+                    if (i > 0) ret += ", ";
+                    ret += "\"" + this.options.subposes[i] + "\"";
+                }
+                ret += "]";
+            }
+            
+            if (this.options.revertSubposes) {
+                if (!first) ret += ", "; else first = false;
+                ret += "revertSubposes : true";
+            }
+            
+            if (this.options.privilegedEvent) {
+                if (!first) ret += ", "; else first = false;
+                ret += "privilegedEvent : true";
+            }
+            
+            return (ret.length > 0) ? "{" + ret + "}" : null;
+        }
+        
+        /** Needs to be overridden by sub-classes. */
+        public getClassName(): string { return "PoseEvent"; } 
         // =================================== run time processing ===================================
         /**
          * Indicate readiness by caller to start processing event.
@@ -350,6 +460,14 @@ module QI{
             super(milliDuration,  null, null, {sound : sound});
             this._groupName = groupName;
         }
-         public getClassName(): string { return "Stall"; } 
+        
+        public toScript() : string {
+            var ret =  "new QI.Stall(" + this.milliDuration;
+            if (this._groupName !== PovProcessor.POV_GROUP_NAME) ret += ", \"" + this._groupName + "\"";
+            if (this.options.sound) ret += ", " + this.options.sound.name; // name must match the object name
+            return ret + ")";
+        }
+        
+        public getClassName(): string { return "Stall"; } 
     }
 }

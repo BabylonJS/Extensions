@@ -41,8 +41,8 @@ module QI{
         constructor(
             groupName                   : string,
             private _referenceStateName : string,
-            private _endStateNames      : string[],
-            private _endStateRatios     : Array<number> = null,
+            protected _endStateNames    : string[],
+            protected _endStateRatios   : Array<number> = null,
 
             // args from super
             milliDuration               : number,
@@ -86,6 +86,19 @@ module QI{
         public getEndStateNames() : Array<string> { return this._endStateNames; }
         public getEndStateRatio(idx : number) :number {return this._endStateRatios[idx]; }
         public getEndStateRatios() : Array<number> {return this._endStateRatios; }
+        
+        protected _toScriptCustomArgs() : string {
+            var names = "";
+            var ratios = "";
+            for(var i = 0, len = this._endStateNames.length; i < len; i++) {
+                if (i > 0) { names += ", "; ratios += ", "; }
+                names += "\"" + this._endStateNames[i] + "\"";
+                ratios += this._endStateRatios[i];
+            }
+            
+            return "\"" + this._groupName + "\", \"" + this._referenceStateName + "\", [" + names + "], [" + ratios + "]";
+        }
+
         public getClassName(): string { return "VertexDeformation"; } 
         public toString() : string {
             var ret = super.toString();
@@ -147,6 +160,11 @@ module QI{
             options?      : IMotionEventOptions){
             super(groupName, "BASIS", [endStateName], [endStateRatio], milliDuration, movePOV, rotatePOV, options);
         }
+        
+        protected _toScriptCustomArgs() : string {
+            return "\"" + this._groupName + "\", \"" + this._endStateNames[0] + "\", " + this._endStateRatios[0];
+        }
+
         public getClassName(): string { return "Deformation"; } 
     }
     //================================================================================================
@@ -190,6 +208,24 @@ module QI{
             options?      : IMotionEventOptions){
             super(groupName, endStateName, endStateRatio, 0.01, null, null, options);
         }
+        
+        /** override when millis, move, or rotate not needed */
+        public toScript() : string {
+            return this._toScriptImpl(false, false, false);
+        }
+        
+        protected _toScriptCustomArgs() : string {
+            var names = "";
+            var ratios = "";
+            for(var i = 0, len = this._endStateNames.length; i < len; i++) {
+                if (i > 0) { names += ", "; ratios += ", "; }
+                names += "\"" + this._endStateNames[i];
+                ratios += this._endStateRatios[i];
+            }
+            
+            return "\"" + this._groupName + "\", \"" + this._endStateNames[0] + "\", " + this._endStateRatios[0];
+        }
+
         public getClassName(): string { return "MorphImmediate"; } 
     }
     //================================================================================================
@@ -238,6 +274,11 @@ module QI{
             options?      : IMotionEventOptions){
             super(groupName, "BASIS", 1, milliDuration, movePOV, rotatePOV, options);
         }
-         public getClassName(): string { return "BasisReturn"; } 
+        
+        protected _toScriptCustomArgs() : string {
+            return "\"" + this._groupName + "\"";
+        }
+
+        public getClassName(): string { return "BasisReturn"; } 
    }
 }

@@ -35,6 +35,16 @@ module QI {
             return (this._compute(currentDurationRatio * 2) * 0.5);
         }
 
+        public getClassName(): string { return "Pace"; } 
+        
+        public toScript() : string {
+            var ret = "new QI." + this.getClassName + "(";
+            if (this._mode === Pace.MODE_OUT) ret += "QI.Pace.MODE_OUT";
+            else if (this._mode === Pace.MODE_INOUT) ret += "QI.Pace.MODE_INOUT";
+            
+            return ret + ")";
+        }
+
         /**
          * Perform the method without regard for the mode.  MUST be overridden
          * @param{number} currentDurationRatio - How much time has elapse / how long it is supposed to take
@@ -50,6 +60,8 @@ module QI {
             currentDurationRatio = Math.max(0, Math.min(1, currentDurationRatio));
             return (1.0 - Math.sqrt(1.0 - (currentDurationRatio * currentDurationRatio)));
         }
+        
+        public getClassName(): string { return "CirclePace"; } 
     }
     //================================================================================================
     export class CubicPace extends Pace {
@@ -57,6 +69,8 @@ module QI {
         protected _compute(currentDurationRatio: number): number {
             return (currentDurationRatio * currentDurationRatio * currentDurationRatio);
         }
+        
+        public getClassName(): string { return "CubicPace"; } 
     }
     //================================================================================================
     export class ElasticPace extends Pace {
@@ -77,6 +91,8 @@ module QI {
             }
             return (num2 * Math.sin(((6.2831853071795862 * num3) + 1.5707963267948966) * currentDurationRatio));
         }
+        
+        public getClassName(): string { return "ElasticPace"; } 
     }
     //================================================================================================
     export class ExponentialPace extends Pace {
@@ -92,6 +108,8 @@ module QI {
 
             return ((Math.exp(this.exponent * currentDurationRatio) - 1.0) / (Math.exp(this.exponent) - 1.0));
         }
+        
+        public getClassName(): string { return "ExponentialPace"; } 
     }
     //================================================================================================
     export class PowerPace extends Pace {
@@ -104,6 +122,8 @@ module QI {
             var y = Math.max(0.0, this.power);
             return Math.pow(currentDurationRatio, y);
         }
+        
+        public getClassName(): string { return "PowerPace"; } 
     }
     //================================================================================================
     export class QuadraticPace extends Pace {
@@ -111,6 +131,8 @@ module QI {
         protected _compute(currentDurationRatio) : number {
             return (currentDurationRatio * currentDurationRatio);
         }
+        
+        public getClassName(): string { return "QuadraticPace"; } 
     }
     //================================================================================================
     export class QuarticPace extends Pace {
@@ -118,6 +140,8 @@ module QI {
         protected _compute(currentDurationRatio : number) : number {
             return (currentDurationRatio * currentDurationRatio * currentDurationRatio * currentDurationRatio);
         }
+        
+        public getClassName(): string { return "QuarticPace"; } 
     }
     //================================================================================================
     export class QuinticPace extends Pace {
@@ -125,6 +149,8 @@ module QI {
         protected _compute(currentDurationRatio : number) : number {
             return (currentDurationRatio * currentDurationRatio * currentDurationRatio * currentDurationRatio * currentDurationRatio);
         }
+        
+        public getClassName(): string { return "QuinticPace"; } 
     }
     //================================================================================================
     export class SinePace extends Pace {
@@ -132,6 +158,8 @@ module QI {
         protected _compute(currentDurationRatio : number) : number {
             return (1.0 - Math.sin(1.5707963267948966 * (1.0 - currentDurationRatio)));
         }
+        
+        public getClassName(): string { return "SinePace"; } 
     }
     //================================================================================================
     export class BezierCurvePace extends Pace {
@@ -143,6 +171,8 @@ module QI {
         protected _compute(currentDurationRatio : number): number {
             return BABYLON.BezierCurve.interpolate(currentDurationRatio, this.x1, this.y1, this.x2, this.y2);
         }
+        
+        public getClassName(): string { return "BezierCurvePace"; } 
     }
     //================================================================================================
     /**
@@ -211,6 +241,20 @@ module QI {
             var interStepRatio = (currentDurationRatio - baseDuration) / this.incremetalDurationBetweenSteps[upperIdx];
 
             return baseCompletion + (interStepRatio * this.incremetalCompletionBetweenSteps[upperIdx]);
+        }
+        
+        public getClassName(): string { return "SteppedPace"; } 
+        /** @override */
+        public toScript() : string {
+            var comps = "";
+            var durs  = "";
+            for(var i = 0, len = this.completionRatios.length; i < len; i++) {
+                if (i > 0) { comps += ", "; durs += ", "; }
+                comps += this.completionRatios[i];
+                durs  += this.durationRatios[i];
+            }
+            
+            return "new QI.SteppedPace([" + comps + "], [" + durs + "])";
         }
     }
 }

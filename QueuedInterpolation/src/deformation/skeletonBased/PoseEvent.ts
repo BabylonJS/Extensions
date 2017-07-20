@@ -61,6 +61,11 @@ module QI{
             }
             return ret + super.toString();
         }
-         public getClassName(): string { return "PoseEvent"; } 
+        
+        protected _toScriptCustomArgs() : string {
+            return "\"" + this.poseName + "\"";
+        }
+        
+        public getClassName(): string { return "PoseEvent"; } 
     }
 }

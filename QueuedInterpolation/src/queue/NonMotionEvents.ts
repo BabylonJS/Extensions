@@ -33,6 +33,10 @@ module QI{
             }
         }
 
+        public toScript() : string {
+            return "NonMotionEvents DO NOT Support toScript";
+        }
+        
         public getClassName(): string { return "NonMotionEvent"; } 
 
         private _beforeRender() : void {
