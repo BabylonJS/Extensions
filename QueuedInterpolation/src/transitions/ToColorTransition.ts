@@ -16,6 +16,7 @@ module QI{
          */
         public initiate(meshes : Array<BABYLON.AbstractMesh>, overriddenMillis : number, overriddenSound : BABYLON.Sound) : void {
             var camera = QI.TimelineControl.scene.activeCamera || QI.TimelineControl.scene.activeCameras[0];
+            if (!camera) throw "QI.ToColorTransition: no camera currently assigned to scene";
 
             // set up post processes
             var postProcess = new BABYLON.BlackAndWhitePostProcess("WelcomeToWonderLand", 1.0, camera);
