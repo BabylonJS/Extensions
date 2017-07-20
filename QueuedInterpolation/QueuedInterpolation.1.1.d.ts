@@ -381,6 +381,7 @@ declare module QI {
          * the skeleton being different from the one used to build the skeleton library; optional
          */
         _nextEvent(event: MotionEvent, movementScaling?: BABYLON.Vector3): void;
+        private _calcRef;
         /**
          * Perform relative position change from the point of view of behind the front of the node.
          * This is performed taking into account the node's current rotation, so you do not have to care.
@@ -397,8 +398,10 @@ declare module QI {
          * @param {number} amountRight
          * @param {number} amountUp
          * @param {number} amountForward
+         * @param {BABYLON.Vector3} ref - optional Vector to use to return the result
+         * @returns The vector to add to position
          */
-        calcMovePOV(amountRight: number, amountUp: number, amountForward: number): BABYLON.Vector3;
+        calcMovePOV(amountRight: number, amountUp: number, amountForward: number, ref?: BABYLON.Vector3): BABYLON.Vector3;
         /**
          * Perform relative rotation change from the point of view of behind the front of the mesh.
          * Supports definition of mesh facing forward or backward.
@@ -1012,7 +1015,8 @@ declare module QI {
     class AbstractGrandEntrance {
         _mesh: QI.Mesh;
         durations: Array<number>;
-        soundEffect: BABYLON.Sound;
+        protected soundEffect: BABYLON.Sound;
+        protected _options: IMotionEventOptions;
         /**
          * @constructor - This is the required constructor for a GrandEntrance.  This is what Tower of Babel
          * generated code expects.
@@ -1022,6 +1026,13 @@ declare module QI {
          * @param {boolean} disposeSound - When true, dispose the sound effect on completion. (Default false)
          */
         constructor(_mesh: QI.Mesh, durations: Array<number>, soundEffect?: BABYLON.Sound, disposeSound?: boolean);
+        makeEntrance(): void;
+    }
+}
+
+declare module QI {
+    class FadeInEntrance extends AbstractGrandEntrance {
+        /** @override */
         makeEntrance(): void;
     }
 }
@@ -1277,11 +1288,55 @@ declare module QI {
          * If a pose has not been found yet, then get the last recorded pose.
          */
         getLastPoseNameQueuedOrRun(): string;
+        /**
+         * Convenience method for queuing a single move on the mesh.
+         * @param {number} milliDuration - The number of milli seconds the deformation is to be completed in
+         * @param {Vector3} movePOV - Mesh movement relative to its current position/rotation to be performed at the same time (default null).
+         *                  right-up-forward
+         *
+         * @param {Vector3} rotatePOV - Incremental Mesh rotation to be performed or null.
+         *                  flipBack-twirlClockwise-tiltRight
+         *
+         * @param {IMotionEventOptions} options - Named options to keep args down to a manageable level.
+         *
+         *      millisBefore - Fixed wait period prior to start, once this event and also syncPartner (if any) is ready (default 0).
+         *                     When negative, no delay if being repeated in an EventSeries.
+         *
+         *      absoluteMovement - Movement arg is an absolute value, not POV (default false).
+         *      absoluteRotation - Rotation arg is an absolute value, not POV (default false).
+         *      pace - Any Object with the function: getCompletionMilestone(currentDurationRatio) (default MotionEvent.LINEAR)
+         *      sound - Sound to start with event.  WARNING: When event also has a sync partner, there could be issues.
+         *
+         *      noStepWiseMovement - Calc the full amount of movement from Node's original position / rotation,
+         *                           rather than stepwise (default false).  No meaning when no rotation in event.
+         *
+         * @returns {MotionEvent} This is the event which gets queued.
+         */
+        queuePOV(milliDuration: number, movePOV?: BABYLON.Vector3, rotatePOV?: BABYLON.Vector3, options?: IMotionEventOptions): MotionEvent;
         /** Entry point called by TOB generated code, when everything is ready.
          *  To load in advance without showing export disabled.  Call this when ready.
          *  Can also be called after the first time, if makeVisible(false) was called.
          */
         grandEntrance(): void;
+        /**
+         * Get Every material in use by the mesh & it's children.  This is primarily for compileMaterials(),
+         * but needs to be broken out, so it can be called recursively.
+         *
+         * @param repo - This is an array of dictionaries with entries of a mesh & material, initialized when missing.
+         * @param meshPassed - An argument of the mesh (child mesh) to operate on.
+         * @returns an array of dictionaries with entries of a mesh & material.
+         */
+        getEverySimpleMaterial(repo?: Array<{
+            mesh: BABYLON.Mesh;
+            mat: BABYLON.Material;
+        }>, meshPassed?: BABYLON.Mesh): Array<{
+            mesh: BABYLON.Mesh;
+            mat: BABYLON.Material;
+        }>;
+        /**
+         * Ensure that all materials for this mesh & it's children are actively forced to compile
+         */
+        compileMaterials(completionCallback?: () => void): void;
         /**
          * make computed shape key group when missing.  Used mostly by GrandEntrances.
          * @returns {ShapeKeyGroup} used for Javascript made end states.
@@ -1291,7 +1346,7 @@ declare module QI {
          * make the whole hierarchy visible or not.  The queues are either paused or resumed as well.
          * @param {boolean} visible - To be or not to be
          */
-        makeVisible(visible: boolean): void;
+        makeVisible(visible: boolean, compileMats?: boolean): void;
         /**
          * Used by some GrandEntrances to get the center of the entire mesh with children too.
          *
@@ -1320,7 +1375,6 @@ declare module QI {
 
 declare module QI {
     class Hair extends BABYLON.LinesMesh {
-        static COLOR_RANGE: number;
         /**
          * @constructor - Args same As BABYLON.Mesh, except that the arg for useVertexColor in LinesMesh is not passed an hard-coded to true
          * @param {string} name - The value used by scene.getMeshByName() to do a lookup.
@@ -1337,18 +1391,19 @@ declare module QI {
          * @param {number[]} strandNumVerts -The number of verts per each strand.
          * @param {number[]} rootRelativePositions - The x, y, z values of each point.  First is root is absolute, rest are delta to root.
          *                                           More compact than absolute for all, & useful in calculating hair length at each point.
+         * @param {number} colorSpread - The maximum amount to randomly change the color of a thread, optional.
          * @param {number} longestStrand - The longest distance between the first & last points in the strands, optional.
          * @param {number} stiffness - The matrix weight at the end of the longest strand, optional.
          * @param {number} boneName - The name of the bone in the skeleton to be used as a bone influencer, optional.
          */
-        assemble(strandNumVerts: number[], rootRelativePositions: number[], longestStrand?: number, stiffness?: number, boneName?: string): void;
+        assemble(strandNumVerts: number[], rootRelativePositions: number[], colorSpread?: number, longestStrand?: number, stiffness?: number, boneName?: string): void;
         private _lengthSoFar(deltaX, deltaY, deltaZ);
     }
 }
 
 declare module QI {
     interface Transition {
-        initiate(meshes: Array<BABYLON.AbstractMesh>, overriddenMillis: number, overriddenSound: BABYLON.Sound, options?: {}): void;
+        initiate(meshes: Array<BABYLON.AbstractMesh>, overriddenMillis: number, overriddenSound: BABYLON.Sound, options?: any): void;
     }
     class SceneTransition {
         /**
@@ -1361,7 +1416,7 @@ declare module QI {
         /**
          * This is the entry point call in the Tower of Babel generated code once all textures are buffered.
          */
-        static perform(sceneTransitionName: string, meshes: Array<BABYLON.AbstractMesh>, overriddenMillis?: number, overriddenSound?: BABYLON.Sound, options?: {}): void;
+        static perform(sceneTransitionName: string, meshes: Array<BABYLON.AbstractMesh>, overriddenMillis?: number, overriddenSound?: BABYLON.Sound, options?: any): void;
         static makeAllVisible(meshes: Array<BABYLON.AbstractMesh>): void;
     }
 }
@@ -1399,8 +1454,9 @@ declare module QI {
         private _meshes;
         /**
          * Transition implementation
+         * uses an option runUnPrivileged
          */
-        initiate(meshes: Array<BABYLON.AbstractMesh>, overriddenMillis: number, overriddenSound: BABYLON.Sound): void;
+        initiate(meshes: Array<BABYLON.AbstractMesh>, overriddenMillis: number, overriddenSound: BABYLON.Sound, options?: any): void;
         private _changeVisiblity(ratioComplete, meshes);
     }
 }
@@ -1413,11 +1469,11 @@ declare module QI {
         static FixedVert: number;
         static FixedHorz: number;
         constructor(name: string, _isVertical: boolean, alphaOrBeta: number, radius: number, scene: BABYLON.Scene, targetMesh?: BABYLON.AbstractMesh, toBoundingCenter?: boolean);
-        _getTargetPosition(): BABYLON.Vector3;
+        protected _getTargetPosition(): BABYLON.Vector3;
         _checkInputs(): void;
-        _checkLimits(): void;
+        protected _checkLimits(): void;
         rebuildAnglesAndRadius(): void;
-        setTargetMesh(target: BABYLON.AbstractMesh, toBoundingCenter?: boolean, limitTraverse?: boolean): void;
+        setTargetMesh(target: BABYLON.AbstractMesh, toBoundingCenter?: boolean): void;
         zoomOn(meshes?: BABYLON.AbstractMesh[], doNotUpdateMaxZ?: boolean): void;
         focusOn(meshesOrMinMaxVectorAndDistance: any, doNotUpdateMaxZ?: boolean): void;
         createRigCamera(name: string, cameraIndex: number): BABYLON.Camera;
@@ -1577,6 +1633,14 @@ declare module TOWER_OF_BABEL {
          *  Broken out so can be called by either _notifyReady(), or applyWhenReady().
          */
         private _assign(readyCallback);
+    }
+}
+
+declare module QI {
+    class MaterialPreCompiler {
+        private static _mesh;
+        static compile(mat: BABYLON.Material, scene: BABYLON.Scene, readyCallback: () => void): void;
+        private static _getMesh(scene);
     }
 }
 

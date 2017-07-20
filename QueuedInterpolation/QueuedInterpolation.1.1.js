@@ -1514,9 +1514,8 @@ var QI;
             }
             this._checkLimits();
         };
-        CylinderCamera.prototype.setTargetMesh = function (target, toBoundingCenter, limitTraverse) {
+        CylinderCamera.prototype.setTargetMesh = function (target, toBoundingCenter) {
             if (toBoundingCenter === void 0) { toBoundingCenter = true; }
-            if (limitTraverse === void 0) { limitTraverse = true; }
             this._targetMesh = target;
             var boundingCenter = target.getBoundingInfo().boundingBox.center;
             var dimensions = boundingCenter.scale(2);
@@ -1671,6 +1670,7 @@ var QI;
         };
         return MatrixComp;
     }());
+    //TODO Fix rotation bug where the libraries size is different
     MatrixComp.One = new BABYLON.Vector3(1, 1, 1);
     QI.MatrixComp = MatrixComp;
 })(QI || (QI = {}));
@@ -3249,6 +3249,8 @@ var QI;
             // reason being that freezeWorldMatrix wrappers a call to computeWorldMatrix, so un-neccessary refreezing defeats purpose
             this._u = false;
             this._name = PovProcessor.POV_GROUP_NAME; // for multi group event series as in MORPH; public for QI.Mesh
+            // ================================== Point of View Movement =================================
+            this._calcRef = BABYLON.Vector3.Zero();
             // ================================== INSTANCE play - pause ==================================
             this._lastResumeTime = 0; // for passive detection of game pause
             this._instancePaused = false;
@@ -3496,7 +3498,6 @@ var QI;
             // will not be changed until any wait or block is done
             this._runOfStep = 0;
         };
-        // ================================== Point of View Movement =================================
         /**
          * Perform relative position change from the point of view of behind the front of the node.
          * This is performed taking into account the node's current rotation, so you do not have to care.
@@ -3506,7 +3507,7 @@ var QI;
          * @param {number} amountForward
          */
         PovProcessor.prototype.movePOV = function (amountRight, amountUp, amountForward) {
-            this._node["position"].addInPlace(this.calcMovePOV(amountRight, amountUp, amountForward));
+            this._node["position"].addInPlace(this.calcMovePOV(amountRight, amountUp, amountForward, this._calcRef));
         };
         /**
          * Calculate relative position change from the point of view of behind the front of the node.
@@ -3515,11 +3516,13 @@ var QI;
          * @param {number} amountRight
          * @param {number} amountUp
          * @param {number} amountForward
+         * @param {BABYLON.Vector3} ref - optional Vector to use to return the result
+         * @returns The vector to add to position
          */
-        PovProcessor.prototype.calcMovePOV = function (amountRight, amountUp, amountForward) {
+        PovProcessor.prototype.calcMovePOV = function (amountRight, amountUp, amountForward, ref) {
             var rot = this._node[this._rotationProperty];
             BABYLON.Matrix.RotationYawPitchRollToRef(rot.y, rot.x, rot.z, this._rotationMatrix);
-            var translationDelta = BABYLON.Vector3.Zero();
+            var translationDelta = ref ? ref : BABYLON.Vector3.Zero();
             var defForwardMult = this._isMesh ? (this._node.definedFacingForward ? -1 : 1) : 1;
             BABYLON.Vector3.TransformCoordinatesFromFloatsToRef(amountRight * defForwardMult, amountUp, amountForward * defForwardMult, this._rotationMatrix, translationDelta);
             return translationDelta;
@@ -5041,11 +5044,13 @@ var QI;
             this._mesh = _mesh;
             this.durations = durations;
             this.soundEffect = soundEffect;
-            if (this.soundEffect && disposeSound) {
-                var ref = this;
-                this.soundEffect.onended = function () {
-                    ref.soundEffect.dispose();
-                };
+            this._options = {};
+            if (this.soundEffect) {
+                this._options.sound = this.soundEffect;
+                if (disposeSound) {
+                    var ref = this;
+                    ref.soundEffect.onended = function () { ref.soundEffect.dispose(); };
+                }
             }
         }
         AbstractGrandEntrance.prototype.makeEntrance = function () {
@@ -5664,17 +5669,107 @@ var QI;
         Mesh.prototype.getLastPoseNameQueuedOrRun = function () {
             return this._poseProcessor ? this._poseProcessor.getLastPoseNameQueuedOrRun() : null;
         };
-        // =================================== BJS side ShapeGroup ===================================
+        /**
+         * Convenience method for queuing a single move on the mesh.
+         * @param {number} milliDuration - The number of milli seconds the deformation is to be completed in
+         * @param {Vector3} movePOV - Mesh movement relative to its current position/rotation to be performed at the same time (default null).
+         *                  right-up-forward
+         *
+         * @param {Vector3} rotatePOV - Incremental Mesh rotation to be performed or null.
+         *                  flipBack-twirlClockwise-tiltRight
+         *
+         * @param {IMotionEventOptions} options - Named options to keep args down to a manageable level.
+         *
+         *      millisBefore - Fixed wait period prior to start, once this event and also syncPartner (if any) is ready (default 0).
+         *                     When negative, no delay if being repeated in an EventSeries.
+         *
+         *      absoluteMovement - Movement arg is an absolute value, not POV (default false).
+         *      absoluteRotation - Rotation arg is an absolute value, not POV (default false).
+         *      pace - Any Object with the function: getCompletionMilestone(currentDurationRatio) (default MotionEvent.LINEAR)
+         *      sound - Sound to start with event.  WARNING: When event also has a sync partner, there could be issues.
+         *
+         *      noStepWiseMovement - Calc the full amount of movement from Node's original position / rotation,
+         *                           rather than stepwise (default false).  No meaning when no rotation in event.
+         *
+         * @returns {MotionEvent} This is the event which gets queued.
+         */
+        Mesh.prototype.queuePOV = function (milliDuration, movePOV, rotatePOV, options) {
+            if (movePOV === void 0) { movePOV = null; }
+            if (rotatePOV === void 0) { rotatePOV = null; }
+            var event = new QI.MotionEvent(milliDuration, movePOV, rotatePOV, options);
+            this.queueSingleEvent(event);
+            return event;
+        };
+        // ================================= Grand Entrance Methods ==================================
         /** Entry point called by TOB generated code, when everything is ready.
          *  To load in advance without showing export disabled.  Call this when ready.
          *  Can also be called after the first time, if makeVisible(false) was called.
          */
         Mesh.prototype.grandEntrance = function () {
             if (this.isEnabled() && !this.isVisible) {
-                if (this.entranceMethod)
-                    this.entranceMethod.makeEntrance();
-                else
-                    this.makeVisible(true);
+                var ref = this;
+                this.compileMaterials(function () {
+                    if (ref.entranceMethod)
+                        ref.entranceMethod.makeEntrance();
+                    else
+                        ref.makeVisible(true);
+                });
+            }
+        };
+        /**
+         * Get Every material in use by the mesh & it's children.  This is primarily for compileMaterials(),
+         * but needs to be broken out, so it can be called recursively.
+         *
+         * @param repo - This is an array of dictionaries with entries of a mesh & material, initialized when missing.
+         * @param meshPassed - An argument of the mesh (child mesh) to operate on.
+         * @returns an array of dictionaries with entries of a mesh & material.
+         */
+        Mesh.prototype.getEverySimpleMaterial = function (repo, meshPassed) {
+            if (!repo)
+                repo = new Array(0);
+            var mesh = meshPassed ? meshPassed : this;
+            // take care of this mesh or the one passed
+            if (mesh.material instanceof BABYLON.MultiMaterial) {
+                var subMaterials = mesh.material.subMaterials;
+                for (var i = 0, len = subMaterials.length; i < len; i++) {
+                    repo.push({ mesh: mesh, mat: subMaterials[i] });
+                }
+            }
+            else
+                repo.push({ mesh: mesh, mat: mesh.material });
+            // take care of children only needing to go one level, since getChildMeshes() is also recursive
+            if (!meshPassed) {
+                var children = mesh.getChildMeshes();
+                for (var i = 0, len = children.length; i < len; i++) {
+                    this.getEverySimpleMaterial(repo, children[i]);
+                }
+            }
+            return repo;
+        };
+        /**
+         * Ensure that all materials for this mesh & it's children are actively forced to compile
+         */
+        Mesh.prototype.compileMaterials = function (completionCallback) {
+            var everyMatSet = this.getEverySimpleMaterial();
+            var compiledMaterials = 0;
+            var nMaterials = everyMatSet.length;
+            // find how many materials are StandardMaterials, since ShaderMaterials do not override isReadyForSubMesh()
+            var nReportingBack = 0;
+            for (var i = 0; i < nMaterials; i++) {
+                if (everyMatSet[i].mat instanceof BABYLON.StandardMaterial)
+                    nReportingBack++;
+            }
+            // the callback to forceCompilation 
+            if (completionCallback) {
+                var callback = function (material) {
+                    if (++compiledMaterials < nReportingBack)
+                        return;
+                    completionCallback();
+                };
+            }
+            // force compile each mesh & material set
+            for (var i = 0; i < nMaterials; i++) {
+                everyMatSet[i].mat.forceCompilation(everyMatSet[i].mesh, callback);
             }
         };
         /**
@@ -5698,12 +5793,15 @@ var QI;
          * make the whole hierarchy visible or not.  The queues are either paused or resumed as well.
          * @param {boolean} visible - To be or not to be
          */
-        Mesh.prototype.makeVisible = function (visible) {
+        Mesh.prototype.makeVisible = function (visible, compileMats) {
             this.isVisible = visible;
             if (visible)
                 this.resumeInstancePlay();
             else
                 this.pausePlay();
+            // compileMaterials may have already been called
+            if (compileMats)
+                this.compileMaterials();
             var children = this.getChildMeshes();
             for (var i = 0, len = children.length; i < len; i++) {
                 if (children[i] instanceof Mesh) {
@@ -5794,6 +5892,8 @@ var QI;
 (function (QI) {
     var Hair = (function (_super) {
         __extends(Hair, _super);
+        //TODO get matrix weights to use stiffness
+        //TODO document hair
         /**
          * @constructor - Args same As BABYLON.Mesh, except that the arg for useVertexColor in LinesMesh is not passed an hard-coded to true
          * @param {string} name - The value used by scene.getMeshByName() to do a lookup.
@@ -5814,11 +5914,13 @@ var QI;
          * @param {number[]} strandNumVerts -The number of verts per each strand.
          * @param {number[]} rootRelativePositions - The x, y, z values of each point.  First is root is absolute, rest are delta to root.
          *                                           More compact than absolute for all, & useful in calculating hair length at each point.
+         * @param {number} colorSpread - The maximum amount to randomly change the color of a thread, optional.
          * @param {number} longestStrand - The longest distance between the first & last points in the strands, optional.
          * @param {number} stiffness - The matrix weight at the end of the longest strand, optional.
          * @param {number} boneName - The name of the bone in the skeleton to be used as a bone influencer, optional.
          */
-        Hair.prototype.assemble = function (strandNumVerts, rootRelativePositions, longestStrand, stiffness, boneName) {
+        Hair.prototype.assemble = function (strandNumVerts, rootRelativePositions, colorSpread, longestStrand, stiffness, boneName) {
+            if (colorSpread === void 0) { colorSpread = 0.05; }
             var idx = 0; // index used for writing into indices
             var pdx = 0; // index used for writing into positions
             var cdx = 0; // index used for writing into vertex colors
@@ -5839,16 +5941,19 @@ var QI;
             var rootX, rootY, rootZ;
             var deltaX, deltaY, deltaZ;
             var colorR, colorG, colorB, colorA;
-            var colorOffset;
+            var colorOffset = new Array(3);
             for (var i = 0, nStrands = strandNumVerts.length; i < nStrands; i++) {
                 rootX = positions32[pdx] = rootRelativePositions[pdx];
                 rootY = positions32[pdx + 1] = rootRelativePositions[pdx + 1];
                 rootZ = positions32[pdx + 2] = rootRelativePositions[pdx + 2];
                 pdx += 3;
-                colorOffset = Math.random() * (2 * Hair.COLOR_RANGE) - Hair.COLOR_RANGE; // between -.1 and .1
-                colorR = colors32[cdx] = Math.min(1, Math.max(0, this.color.r + colorOffset));
-                colorG = colors32[cdx + 1] = Math.min(1, Math.max(0, this.color.g + colorOffset));
-                colorB = colors32[cdx + 2] = Math.min(1, Math.max(0, this.color.b + colorOffset));
+                // between -.05 and .05 using default
+                colorOffset[0] = Math.random() * (2 * colorSpread) - colorSpread;
+                colorOffset[1] = Math.random() * (2 * colorSpread) - colorSpread;
+                colorOffset[2] = Math.random() * (2 * colorSpread) - colorSpread;
+                colorR = colors32[cdx] = Math.min(1, Math.max(0, this.color.r + colorOffset[0]));
+                colorG = colors32[cdx + 1] = Math.min(1, Math.max(0, this.color.g + colorOffset[0]));
+                colorB = colors32[cdx + 2] = Math.min(1, Math.max(0, this.color.b + colorOffset[0]));
                 colorA = colors32[cdx + 3] = 1;
                 cdx += 4;
                 idx++;
@@ -5887,7 +5992,6 @@ var QI;
                 this.numBoneInfluencers = 1;
                 this.setVerticesData(BABYLON.VertexBuffer.MatricesIndicesKind, matrixIndices);
                 this.setVerticesData(BABYLON.VertexBuffer.MatricesWeightsKind, matrixWeights);
-                console.log("setting skeleton");
             }
         };
         Hair.prototype._lengthSoFar = function (deltaX, deltaY, deltaZ) {
@@ -5895,7 +5999,6 @@ var QI;
         };
         return Hair;
     }(BABYLON.LinesMesh));
-    Hair.COLOR_RANGE = 0.050;
     QI.Hair = Hair;
 })(QI || (QI = {}));
 
@@ -6562,6 +6665,7 @@ var QI;
     Expression.SCARED = new Expression("SCARED", false, false, true, ["CHEEKS_HIGH", "EYEBROWS_RAISED_LEFT", "EYEBROWS_RAISED_RIGHT", "WINK_LEFT", "WINK_RIGHT", "NOSE_FLARE", "MOUTH_CORNERS_DOWN", "MOUTH_LIPS_LOWER_UP", "SYMMETRY_CHIN_LEFT", "SYMMETRY_RIGHT_UP"], [-0.05, 1.25, 1.75, -0.65, -0.6, -0.25, 0.35, -0.6, -0.65, 0.05], "Y--YYY-YX-", 8);
     Expression.SKEPTICAL = new Expression("SKEPTICAL", false, false, true, ["EYEBROWS_RAISED_LEFT", "EYEBROWS_RAISED_RIGHT", "WINK_RIGHT", "NOSE_FLARE", "SYMMETRY_CHIN_LEFT", "SYMMETRY_RIGHT_UP"], [-0.65, 0.95, -0.35, -0.25, -0.2, 0.15], "Y-YYX-", 9);
     Expression.STRUGGLING = new Expression("STRUGGLING", false, false, false, ["EYEBROWS_ANGRY", "EYEBROWS_RAISED_LEFT", "EYELIDS_SQUINT", "WINK_LEFT", "WINK_RIGHT", "NOSE_FLARE", "MOUTH_CORNERS_DOWN", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "MOUTH_WIDE", "SYMMETRY_LEFT_UP", "SYMMETRY_RIGHT_UP"], [1, 0.6, 1, 0.25, 0.35, 1, 0.5, 0.35, -0.7, 0.6, 0.05, -0.4, 0.55], "--------Y--Y-", 10);
+    //TODO sort both VISMES & if expressions need to change
     Expression.VISEME_ID = -1;
     Expression.VISEME_DICT = {
         ".": new Expression(".", true, true, false, ["MOUTH_LIPS_LOWER_OUT"], [0.25], null, Expression.VISEME_ID),
@@ -7019,7 +7123,7 @@ var QI;
             var events;
             events = [
                 // morphImmediate to starting state prior making root mesh visible.  Start sound, if passed.
-                new QI.MorphImmediate(QI.Mesh.COMPUTED_GROUP_NAME, startingState, 1, { sound: ref.soundEffect }),
+                new QI.MorphImmediate(QI.Mesh.COMPUTED_GROUP_NAME, startingState, 1, ref._options),
                 // make root mesh visible
                 function () { ref._mesh.isVisible = true; },
                 // return to a basis state
@@ -7028,6 +7132,7 @@ var QI;
                 function () {
                     ref._mesh.makeVisible(true);
                     ref._mesh.removeShapeKeyGroup(QI.Mesh.COMPUTED_GROUP_NAME);
+                    ref._options = null;
                 }
             ];
             // make sure there is a block event for all queues not part of this entrance.
@@ -7066,6 +7171,53 @@ var QI;
         return GatherEntrance;
     }(QI.AbstractGrandEntrance));
     QI.GatherEntrance = GatherEntrance;
+})(QI || (QI = {}));
+
+/// <reference path="../meshes/Mesh.ts"/>
+/// <reference path="./AbstractGrandEntrance.ts"/>
+
+
+
+
+
+
+var QI;
+(function (QI) {
+    var FadeInEntrance = (function (_super) {
+        __extends(FadeInEntrance, _super);
+        function FadeInEntrance() {
+            return _super !== null && _super.apply(this, arguments) || this;
+        }
+        //TODO document
+        // no need for a constructor, just use super's
+        /** @override */
+        FadeInEntrance.prototype.makeEntrance = function () {
+            var ref = this;
+            ref._mesh.visibility = 0.001; // cannot be 0
+            var events;
+            events = [
+                // make all meshes visible
+                function () { ref._mesh.makeVisible(true); },
+                // return to a basis state
+                new QI.PropertyEvent(ref._mesh, 'visibility', 1.0, this.durations[0], ref._options),
+                // eliminate resources
+                function () {
+                    ref._options = null;
+                }
+            ];
+            // Make sure there is a block event for all queues not part of this entrance.
+            // User could have added events, say skeleton based, for a morph based entrance, so block it.
+            this._mesh.appendStallForMissingQueues(events, this.durations[0]);
+            // run functions of series on the POV processor (default), so not dependent on a Shapekeygroup or skeleton processor existing
+            var series = new QI.EventSeries(events);
+            // insert to the front of the mesh's queues to be sure the first to run
+            this._mesh.queueEventSeries(series, false, false, true);
+            // Mesh instanced in pause mode; now resume with everything now queued
+            this._mesh.resumeInstancePlay();
+        };
+        return FadeInEntrance;
+    }(QI.AbstractGrandEntrance));
+    QI.FadeInEntrance = FadeInEntrance;
 })(QI || (QI = {}));
 
 /// <reference path="../meshes/Mesh.ts"/>
@@ -7148,6 +7300,7 @@ var QI;
                     ref._diffuse.dispose();
                     ref._distortion.dispose();
                     ref._opacity.dispose();
+                    ref._options = null;
                 }
             ];
             // make sure there is a block event for all queues not part of this entrance.
@@ -7186,35 +7339,37 @@ var QI;
             var ref = this;
             var origScaling = ref._mesh.scaling;
             ref._mesh.scaling = BABYLON.Vector3.Zero();
+            // The meshes must be visible & the highlightLayer must be applied ahead of time, or sound will be off
+            // No visible effect, since the scaling is zero
+            this._mesh.makeVisible(true);
+            // add a temporary glow for entrance when have HighlightLayer (BJS 2.5), and stencil enabled on engine
+            var scene = this._mesh.getScene();
+            var doingHighlight = BABYLON.HighlightLayer && scene.getEngine().isStencilEnable;
+            if (doingHighlight) {
+                // limit effect, so does not show on orthographic cameras, if any
+                var camera = (scene.activeCameras.length > 0) ? scene.activeCameras[0] : scene.activeCamera;
+                this._HighLightLayer = new BABYLON.HighlightLayer("QI.ExpandEntrance internal", scene, { camera: camera });
+                this._HighLightLayer.addMesh(this._mesh, BABYLON.Color3.White());
+                var kids = this._mesh.getDescendants();
+                for (var i = 0, len = kids.length; i < len; i++) {
+                    this._HighLightLayer.addMesh(kids[i], BABYLON.Color3.White());
+                }
+            }
             // add the minimum steps
             var events;
             events = [
-                // make mesh, and kids visible
-                function () { ref._mesh.makeVisible(true); },
                 // return to a basis state
-                new QI.PropertyEvent(ref._mesh, 'scaling', origScaling, this.durations[0], { sound: ref.soundEffect })
+                new QI.PropertyEvent(ref._mesh, 'scaling', origScaling, this.durations[0], ref._options)
             ];
-            var scene = this._mesh.getScene();
-            // add a temporary glow for entrance when have HighlightLayer (BJS 2.5), and stencil enabled on engine
-            if (BABYLON.HighlightLayer && scene.getEngine().isStencilEnable) {
-                // splice as first event
-                events.splice(0, 0, function () {
-                    // limit effect, so does not show on orthographic cameras, if any
-                    var camera = (scene.activeCameras.length > 0) ? scene.activeCameras[0] : scene.activeCamera;
-                    ref._HighLightLayer = new BABYLON.HighlightLayer("QI.ExpandEntrance internal", scene, { camera: camera });
-                    ref._HighLightLayer.addMesh(ref._mesh, BABYLON.Color3.White());
-                    var kids = ref._mesh.getDescendants();
-                    for (var i = 0, len = kids.length; i < len; i++) {
-                        ref._HighLightLayer.addMesh(kids[i], BABYLON.Color3.White());
-                    }
-                });
-                // add wait & clean up on the end
+            if (doingHighlight) {
                 events.push(new QI.Stall(ref.durations[1]));
                 events.push(function () { ref._HighLightLayer.dispose(); });
             }
+            // eliminate resources
+            events.push(function () { ref._options = null; });
             // Make sure there is a block event for all queues not part of this entrance.
             // User could have added events, say skeleton based, for a morph based entrance, so block it.
-            this._mesh.appendStallForMissingQueues(events, this.durations[0] + this.durations[1], QI.Mesh.COMPUTED_GROUP_NAME);
+            this._mesh.appendStallForMissingQueues(events, this.durations[0] + this.durations[1]);
             // run functions of series on the POV processor (default), so not dependent on a Shapekeygroup or skeleton processor existing
             var series = new QI.EventSeries(events);
             // insert to the front of the mesh's queues to be sure the first to run
@@ -7283,10 +7438,11 @@ var QI;
                     ref._effectHostMesh.setEnabled(true);
                 },
                 // Start the shader effect, managed by the callback, & sound, if passed.
-                new QI.RecurringCallbackEvent(this._makeCallback(), ref.durations[0], { sound: ref.soundEffect }),
+                new QI.RecurringCallbackEvent(this._makeCallback(), ref.durations[0], ref._options),
                 // clean up
                 function () {
                     ref._effectHostMesh.dispose();
+                    ref._options = null;
                 }
             ];
             // make sure there is a block event for all queues not part of this entrance.
@@ -7482,13 +7638,13 @@ var QI;
             if (!effect)
                 throw "No such scene transition: " + sceneTransitionName;
             SceneTransition.makeAllVisible(meshes);
-            effect.initiate(meshes, overriddenMillis, overriddenSound);
+            effect.initiate(meshes, overriddenMillis, overriddenSound, options);
         };
         SceneTransition.makeAllVisible = function (meshes) {
             for (var i = 0, mLen = meshes.length; i < mLen; i++) {
                 var mesh = meshes[i];
                 if (mesh instanceof QI.Mesh)
-                    mesh.makeVisible(true); // also resumes event queued, which is always initially paused
+                    mesh.makeVisible(true, true); // also resumes event queued, which is always initially paused
                 else {
                     var children = mesh.getChildMeshes();
                     mesh.isVisible = true;
@@ -7567,6 +7723,8 @@ var QI;
          */
         ToColorTransition.prototype.initiate = function (meshes, overriddenMillis, overriddenSound) {
             var camera = QI.TimelineControl.scene.activeCamera || QI.TimelineControl.scene.activeCameras[0];
+            if (!camera)
+                throw "QI.ToColorTransition: no camera currently assigned to scene";
             // set up post processes
             var postProcess = new BABYLON.BlackAndWhitePostProcess("WelcomeToWonderLand", 1.0, camera);
             // account for overriding
@@ -7605,22 +7763,24 @@ var QI;
         }
         /**
          * Transition implementation
+         * uses an option runUnPrivileged
          */
-        VisiblityTransition.prototype.initiate = function (meshes, overriddenMillis, overriddenSound) {
+        VisiblityTransition.prototype.initiate = function (meshes, overriddenMillis, overriddenSound, options) {
             this._meshes = meshes;
             // avoid a flash of being fully visible for a frame sometimes
             this._changeVisiblity(0, meshes);
             // account for overriding
             var time = overriddenMillis ? overriddenMillis : VisiblityTransition._DEFAULT_MILLIS;
             var sound = overriddenSound ? overriddenSound : this._sound;
-            var options = { pace: new QI.SinePace(QI.Pace.MODE_INOUT), privilegedEvent: true };
+            var isPrivledged = (options && options.runUnPrivileged) ? false : true;
+            var eventOptions = { pace: new QI.SinePace(QI.Pace.MODE_INOUT), privilegedEvent: isPrivledged };
             if (sound)
-                options.sound = sound;
+                eventOptions.sound = sound;
             var ref = this;
             var callBack = function (ratioComplete) {
                 ref._changeVisiblity(ratioComplete, ref._meshes);
             };
-            var event = new QI.RecurringCallbackEvent(callBack, time, options);
+            var event = new QI.RecurringCallbackEvent(callBack, time, eventOptions);
             var dispose = function () {
                 ref._meshes = null;
             };
@@ -7785,6 +7945,7 @@ var TOWER_OF_BABEL;
         };
         return Preloader;
     }());
+    //TODO iOS has problem with preloader; use Alert to track down
     Preloader.READ_AHEAD_LOGGING = false; // when true, write timings to the console
     Preloader.MAKE_MULTI_SCENE = false; // when true, data retrieved is not deleted after texture is assigned
     // A common TextureBuffer array across all PreLoaders, if multiples.
@@ -7895,6 +8056,7 @@ var TOWER_OF_BABEL;
         function SceneChunk() {
             return _super !== null && _super.apply(this, arguments) || this;
         }
+        // TODO fully implement SceneChunk
         /**
          * Should be part of the callback passed to makeReady().
          * @param {BABYLON.Scene} scene - Needed to pass to the Mesh constructor(s) of the scene chunk's meshes / lights / etc.

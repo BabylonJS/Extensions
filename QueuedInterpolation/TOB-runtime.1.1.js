@@ -44,6 +44,29 @@ var TOWER_OF_BABEL;
     TOWER_OF_BABEL.MeshFactory = MeshFactory;
 })(TOWER_OF_BABEL || (TOWER_OF_BABEL = {}));
 
+var QI;
+(function (QI) {
+    var MaterialPreCompiler = (function () {
+        function MaterialPreCompiler() {
+        }
+        MaterialPreCompiler.compile = function (mat, scene, readyCallback) {
+            var mesh = MaterialPreCompiler._getMesh(scene);
+            mesh.material = mat;
+            mat.forceCompilation(mesh, readyCallback);
+        };
+        MaterialPreCompiler._getMesh = function (scene) {
+            if (MaterialPreCompiler._mesh)
+                return MaterialPreCompiler._mesh;
+            var m = new BABYLON.Mesh("mat pre-compiler", scene);
+            m.setVerticesData(BABYLON.VertexBuffer.PositionKind, new Float32Array([0, 0, 0]));
+            m.setIndices([0, 0, 0]);
+            return MaterialPreCompiler._mesh = m;
+        };
+        return MaterialPreCompiler;
+    }());
+    QI.MaterialPreCompiler = MaterialPreCompiler;
+})(QI || (QI = {}));
+
 var TOWER_OF_BABEL;
 (function (TOWER_OF_BABEL) {
     var Preloader = (function () {
@@ -150,6 +173,7 @@ var TOWER_OF_BABEL;
         };
         return Preloader;
     }());
+    //TODO iOS has problem with preloader; use Alert to track down
     Preloader.READ_AHEAD_LOGGING = false; // when true, write timings to the console
     Preloader.MAKE_MULTI_SCENE = false; // when true, data retrieved is not deleted after texture is assigned
     // A common TextureBuffer array across all PreLoaders, if multiples.
@@ -255,6 +279,7 @@ var TOWER_OF_BABEL;
         function SceneChunk() {
             return _super !== null && _super.apply(this, arguments) || this;
         }
+        // TODO fully implement SceneChunk
         /**
          * Should be part of the callback passed to makeReady().
          * @param {BABYLON.Scene} scene - Needed to pass to the Mesh constructor(s) of the scene chunk's meshes / lights / etc.
