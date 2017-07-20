@@ -20,7 +20,7 @@ module QI {
             this.getViewMatrix();
         }
 
-        public _getTargetPosition(): BABYLON.Vector3 {                
+        protected _getTargetPosition(): BABYLON.Vector3 {                
             if (this._targetMesh) {
                 this._target.copyFrom(this._targetMesh.getAbsolutePosition());
                 if (this._isVertical) this._target.y += this._traverseOffset;
@@ -94,7 +94,7 @@ module QI {
             super._checkInputs();
         }
 
-        public _checkLimits() {
+        protected _checkLimits() {
             // only limit beta (vertical) the same way as ArchRotateCamera when not a vertical cylinder
             if (!this._isVertical) {
                 if (this.lowerBetaLimit === null || this.lowerBetaLimit === undefined) {
@@ -157,7 +157,7 @@ module QI {
             this._checkLimits();
         }
 
-        public setTargetMesh(target: BABYLON.AbstractMesh, toBoundingCenter = true, limitTraverse = true): void {
+        public setTargetMesh(target: BABYLON.AbstractMesh, toBoundingCenter = true): void {
             this._targetMesh = target;
             var boundingCenter = target.getBoundingInfo().boundingBox.center;
             var dimensions = boundingCenter.scale(2);
