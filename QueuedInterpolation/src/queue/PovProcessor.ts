@@ -318,6 +318,7 @@ module QI {
             this._runOfStep = 0;
         }
         // ================================== Point of View Movement =================================
+        private _calcRef = BABYLON.Vector3.Zero();
         /**
          * Perform relative position change from the point of view of behind the front of the node.
          * This is performed taking into account the node's current rotation, so you do not have to care.
@@ -327,7 +328,7 @@ module QI {
          * @param {number} amountForward
          */
         public movePOV(amountRight: number, amountUp: number, amountForward: number) : void {
-            this._node["position"].addInPlace(this.calcMovePOV(amountRight, amountUp, amountForward));
+            this._node["position"].addInPlace(this.calcMovePOV(amountRight, amountUp, amountForward, this._calcRef));
         }
 
         /**
@@ -337,12 +338,14 @@ module QI {
          * @param {number} amountRight
          * @param {number} amountUp
          * @param {number} amountForward
+         * @param {BABYLON.Vector3} ref - optional Vector to use to return the result
+         * @returns The vector to add to position
          */
-        public calcMovePOV(amountRight: number, amountUp: number, amountForward: number) : BABYLON.Vector3 {
+        public calcMovePOV(amountRight: number, amountUp: number, amountForward: number, ref?: BABYLON.Vector3) : BABYLON.Vector3 {
             var rot = <BABYLON.Vector3> this._node[this._rotationProperty];
             BABYLON.Matrix.RotationYawPitchRollToRef(rot.y, rot.x, rot.z, this._rotationMatrix);
 
-            var translationDelta = BABYLON.Vector3.Zero();
+            var translationDelta = ref ? ref : BABYLON.Vector3.Zero();
             var defForwardMult = this._isMesh ? ((<BABYLON.Mesh> this._node).definedFacingForward ? -1 : 1 ) : 1;
             BABYLON.Vector3.TransformCoordinatesFromFloatsToRef(amountRight * defForwardMult, amountUp, amountForward * defForwardMult, this._rotationMatrix, translationDelta);
             return translationDelta;
