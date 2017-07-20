@@ -228,6 +228,7 @@ class JSExporter:
         file_handler.write(indent2 + 'if (_sceneTransitionName) QI.SceneTransition.perform(_sceneTransitionName, waitingMeshes, _overriddenMillis, _overriddenSound, _options);\n')
         file_handler.write(indent2 + 'else {\n')
         file_handler.write(indent3 + 'for (var i = 0, len = waitingMeshes.length; i < len; i++) {\n')
+        file_handler.write(indent3 + '    if (!waitingMeshes[i].initComplete) continue;\n')
         file_handler.write(indent3 + '    if (typeof waitingMeshes[i].grandEntrance == "function") waitingMeshes[i].grandEntrance();\n')
         file_handler.write(indent3 + '    else makeVisible(waitingMeshes[i]);\n')
         file_handler.write(indent3 + '}\n')
@@ -287,10 +288,9 @@ class JSExporter:
             file_handler.write(indent2 + 'var multiMaterial;\n')
             for multimaterial in self.multiMaterials:
                 multimaterial.to_script_file(file_handler, indent2)
-        file_handler.write('\n' + indent2 + 'if (pendingTextures === 0) {\n')
-        file_handler.write(indent2 + '    matLoaded = true; \n')
-        file_handler.write(indent2 + '    if (_sceneTransitionName) QI.SceneTransition.perform(_sceneTransitionName, waitingMeshes, _overriddenMillis, _overriddenSound, _options);\n')
-        file_handler.write(indent2 + '}\n')
+                
+        file_handler.write('\n' + indent2 + 'matLoaded = pendingTextures === 0;\n')
+
         if JSExporter.logInBrowserConsole:
             file_handler.write(indent2 + 'else texLoadStart = _B.Tools.Now;\n')
         if JSExporter.logInBrowserConsole:

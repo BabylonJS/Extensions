@@ -130,7 +130,13 @@ class World:
 
         if exporter.hasLights : file_handler.write('\n' + indent + '// lights defined after meshes, so shadow gen\'s can also be defined\n')
         if exporter.hasLights : file_handler.write(indent + 'defineLights(scene, positionOffset);\n')
+        
+        file_handler.write('\n')
+        file_handler.write(indent + 'if (sceneTransitionName && matLoaded) {\n')
+        file_handler.write(indent + '    QI.SceneTransition.perform(sceneTransitionName, waitingMeshes, overriddenMillis, overriddenSound, options);\n')
+        file_handler.write(indent + '}\n')
 
+        
         file_handler.write('    }\n')
         file_handler.write('    ' + exporter.nameSpace + '.initScene = initScene;\n')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -107,7 +107,7 @@ class Light(FCurveAnimatable):
         file_handler.write(indent + 'light.specular = new _B.Color3(' + format_color(self.specular) + ');\n')
 
         if hasattr(self, 'includedOnlyMeshesIds'):
-            file_handler.write(indent + 'light._includedOnlyMeshesIds = [')
+            file_handler.write(indent + 'light.includedOnlyMeshesIds = [')
             first = True
             for meshId in self.includedOnlyMeshesIds:
                 if first != True:

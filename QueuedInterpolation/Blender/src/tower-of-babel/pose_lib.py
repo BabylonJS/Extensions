@@ -69,6 +69,10 @@ class PoseLibExporter:
         else:
             self.doCurrentLibrary(file_handler, indent)
 
+        # clear all transform of all bones, so last pose does not remain
+        bpy.ops.pose.select_all(action = 'SELECT')
+        bpy.ops.pose.transforms_clear()
+        
         return None
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def doCurrentLibrary(self, file_handler, indent):

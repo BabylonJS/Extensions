@@ -661,6 +661,9 @@ class Mesh(FCurveAnimatable):
         var = 'this' if isRootMesh else 'ret'
         indent2 = indent + ('        ' if isRootMesh else '    ')
 
+        # flag for onTexturesLoaded(), to be sure constructor is done before doing GrandEntrance prematurely; causes sound to play too early
+        file_handler.write(indent2 + var + '.initComplete = false;\n')
+        
         # section that is not done for clones
         file_handler.write(indent2 + 'if (!cloning){\n')
         indent2A = indent2 + '    '
@@ -764,11 +767,16 @@ class Mesh(FCurveAnimatable):
 
         # add hook for postConstruction(), if found in super class
         file_handler.write(indent2 + 'if (this.postConstruction) this.postConstruction();\n')
+        
+        # flag for onTexturesLoaded(), to be sure constructor is done before doing GrandEntrance prematurely; causes sound to play too early
+        file_handler.write(indent2 + var + '.initComplete = true;\n')
+        
         if exporter.logInBrowserConsole:
             file_handler.write(indent2 + 'load = (_B.Tools.Now - load) / 1000;\n')
             file_handler.write(indent2 + '_B.Tools.Log("defined mesh: " + ' + var + '.name + (cloning ? " (cloned)" : "") + " completed:  " + load.toFixed(2) + ", geometry:  " + geo.toFixed(2) + ", skey:  " + shape.toFixed(2) + " secs");\n')
 
         if self.isVisible and isRootMesh:
+            # meshes shot at doing grand entrance, when no initScene, and materials / texture retrieved before constructor complete
             file_handler.write(indent2 + 'if (matLoaded && !_sceneTransitionName){\n')
             file_handler.write(indent2 + '    if (typeof ' + var + '.grandEntrance == "function") ' + var + '.grandEntrance();\n')
             file_handler.write(indent2 + '    else makeVisible(' + var + ');\n\n')
