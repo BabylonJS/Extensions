@@ -292,7 +292,7 @@ class JSExporter:
         file_handler.write('\n' + indent2 + 'matLoaded = pendingTextures === 0;\n')
 
         if JSExporter.logInBrowserConsole:
-            file_handler.write(indent2 + 'else texLoadStart = _B.Tools.Now;\n')
+            file_handler.write(indent2 + 'if (!matLoaded) texLoadStart = _B.Tools.Now;\n')
         if JSExporter.logInBrowserConsole:
             file_handler.write(indent2 + '_B.Tools.Log("' + JSExporter.nameSpace + '.defineMaterials completed:  " + ((_B.Tools.Now - loadStart) / 1000).toFixed(2) + " secs");\n')
         file_handler.write(indent1 + '}\n')
