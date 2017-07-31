@@ -104,7 +104,10 @@ module QI {
         public toString() : string {
             var ret = "number of events: "  + this._nEvents + ", repeats: " + this._nRepeats + ", # groups: " + this._nGroups;
             for (var i = 0; i < this._nEvents; i++) {
-                ret += "\n" + i + "- " + this._events[i].toString();
+                if (this._events[i] instanceof MotionEvent)
+                    ret += "\n\t\t" + i + "- " + this._events[i].toString();
+               else
+                    ret += "\n\t\t" + i + "- group: "  + this._groupForFuncActions + ", " + this._events[i].toString();
             }
             return ret;
         }

@@ -149,6 +149,8 @@ module QI{
                 absoluteMovement: false,
                 absoluteRotation: false,
                 pace: MotionEvent.LINEAR,
+                sound: null,
+                requireCompletionOf: null,
                 noStepWiseMovement: false,
                 mirrorAxes: null,
                 subposes : null,
@@ -159,6 +161,8 @@ module QI{
             this.options.absoluteMovement = this.options.absoluteMovement || false;
             this.options.absoluteRotation = this.options.absoluteRotation || false;
             this.options.pace = this.options.pace || MotionEvent.LINEAR;
+            this.options.sound = this.options.sound || null;
+            this.options.requireCompletionOf = this.options.requireCompletionOf || null;
             this.options.noStepWiseMovement = this.options.noStepWiseMovement || false;
 
             // subclass specific
@@ -171,19 +175,20 @@ module QI{
         }
 
         public toString() : string {
-            return "group: " + this._groupName + 
-                   ", type: " + this.getClassName() + 
-                   ", duration: " + this._milliDuration +
-                   ", move: " + (this.movePOV ? this.movePOV.toString() : "None") +
-                   ", rotate: " + (this.rotatePOV ? this.rotatePOV.toString() : "None" +
-                   ", sound: " + (this.options.sound ? this.options.sound.name : "None") +
-                   ", mustComplete event: " + (this.options.requireCompletionOf ? "Yes" : "No") +
-                   ", wait: " + this.options.millisBefore +
-                   ", non-linear pace: " + (this.options.pace !== MotionEvent.LINEAR) +
-                   ", absoluteMovement: " + this.options.absoluteMovement +
-                   ", absoluteRotation: " + this.options.absoluteRotation +
-                   ", noStepWiseMovement: " + this.options.noStepWiseMovement
-            );
+            var ret = "group: " + this._groupName + 
+                     ", type: " + this.getClassName() + 
+                     ", duration: " + this._milliDuration + 
+                     ", wait: " + this.options.millisBefore +
+                     ", pace: " + this.options.pace.getClassName();
+            if (this.movePOV                    ) ret += ", move: " + this.movePOV.toString();
+            if (this.rotatePOV                  ) ret += ", rotate: " + this.rotatePOV.toString();
+            if (this.options.sound              ) ret += ", sound: " + this.options.sound.name;
+            if (this.options.requireCompletionOf) ret += ", HAS mustComplete event";
+            if (this.options.absoluteMovement   ) ret += ", absoluteMovement";
+            if (this.options.absoluteRotation   ) ret += ", absoluteRotation: ";
+            if (this.options.noStepWiseMovement ) ret += ", noStepWiseMovement: ";
+            
+            return ret;
         }
         
         /** override when millis, move, or rotate not needed */
@@ -231,6 +236,8 @@ module QI{
          */
         protected _toScriptOptions() : string { 
             if (this._noOptions) return null;
+            if (this.options.requireCompletionOf) throw "QI.MotionEvent: requireCompletionOf cannot be assigned for toScript";
+            
             var ret = "";
             var first = true;
             
@@ -293,7 +300,7 @@ module QI{
         }
         
         /** Needs to be overridden by sub-classes. */
-        public getClassName(): string { return "PoseEvent"; } 
+        public getClassName(): string { return "MotionEvent"; } 
         // =================================== run time processing ===================================
         /**
          * Indicate readiness by caller to start processing event.

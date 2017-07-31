@@ -51,7 +51,8 @@ module QI{
         }
         // ==================================== Getters & setters ====================================
         public toString() : string {
-            var ret = "Pose- " + this.poseName + ", ";
+            var ret =  super.toString();
+            ret += ", Pose- " + this.poseName + ", ";
             if (this.options.subposes && this.options.subposes.length > 0) {
                 ret += "Subposes- [";
                 for(var i = 0, len = this.options.subposes.length; i < len; i++) {
@@ -59,7 +60,7 @@ module QI{
                 }
                 ret += "], revertSubposes- " + this.options.revertSubposes + ", ";
             }
-            return ret + super.toString();
+            return ret;
         }
         
         protected _toScriptCustomArgs() : string {
