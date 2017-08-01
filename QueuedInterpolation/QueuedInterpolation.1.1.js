@@ -2329,6 +2329,8 @@ var QI;
                 absoluteMovement: false,
                 absoluteRotation: false,
                 pace: MotionEvent.LINEAR,
+                sound: null,
+                requireCompletionOf: null,
                 noStepWiseMovement: false,
                 mirrorAxes: null,
                 subposes: null,
@@ -2339,6 +2341,8 @@ var QI;
             this.options.absoluteMovement = this.options.absoluteMovement || false;
             this.options.absoluteRotation = this.options.absoluteRotation || false;
             this.options.pace = this.options.pace || MotionEvent.LINEAR;
+            this.options.sound = this.options.sound || null;
+            this.options.requireCompletionOf = this.options.requireCompletionOf || null;
             this.options.noStepWiseMovement = this.options.noStepWiseMovement || false;
             // subclass specific
             this.options.mirrorAxes = this.options.mirrorAxes || null;
@@ -2348,18 +2352,26 @@ var QI;
             this.setProratedWallClocks(1, false);
         }
         MotionEvent.prototype.toString = function () {
-            return "group: " + this._groupName +
+            var ret = "group: " + this._groupName +
                 ", type: " + this.getClassName() +
                 ", duration: " + this._milliDuration +
-                ", move: " + (this.movePOV ? this.movePOV.toString() : "None") +
-                ", rotate: " + (this.rotatePOV ? this.rotatePOV.toString() : "None" +
-                ", sound: " + (this.options.sound ? this.options.sound.name : "None") +
-                ", mustComplete event: " + (this.options.requireCompletionOf ? "Yes" : "No") +
                 ", wait: " + this.options.millisBefore +
-                ", non-linear pace: " + (this.options.pace !== MotionEvent.LINEAR) +
-                ", absoluteMovement: " + this.options.absoluteMovement +
-                ", absoluteRotation: " + this.options.absoluteRotation +
-                ", noStepWiseMovement: " + this.options.noStepWiseMovement);
+                ", pace: " + this.options.pace.getClassName();
+            if (this.movePOV)
+                ret += ", move: " + this.movePOV.toString();
+            if (this.rotatePOV)
+                ret += ", rotate: " + this.rotatePOV.toString();
+            if (this.options.sound)
+                ret += ", sound: " + this.options.sound.name;
+            if (this.options.requireCompletionOf)
+                ret += ", HAS mustComplete event";
+            if (this.options.absoluteMovement)
+                ret += ", absoluteMovement";
+            if (this.options.absoluteRotation)
+                ret += ", absoluteRotation: ";
+            if (this.options.noStepWiseMovement)
+                ret += ", noStepWiseMovement: ";
+            return ret;
         };
         /** override when millis, move, or rotate not needed */
         MotionEvent.prototype.toScript = function () {
@@ -2410,6 +2422,8 @@ var QI;
         MotionEvent.prototype._toScriptOptions = function () {
             if (this._noOptions)
                 return null;
+            if (this.options.requireCompletionOf)
+                throw "QI.MotionEvent: requireCompletionOf cannot be assigned for toScript";
             var ret = "";
             var first = true;
             if (this.options.millisBefore !== 0) {
@@ -2491,7 +2505,7 @@ var QI;
             return (ret.length > 0) ? "{" + ret + "}" : null;
         };
         /** Needs to be overridden by sub-classes. */
-        MotionEvent.prototype.getClassName = function () { return "PoseEvent"; };
+        MotionEvent.prototype.getClassName = function () { return "MotionEvent"; };
         // =================================== run time processing ===================================
         /**
          * Indicate readiness by caller to start processing event.
@@ -3024,7 +3038,10 @@ var QI;
         EventSeries.prototype.toString = function () {
             var ret = "number of events: " + this._nEvents + ", repeats: " + this._nRepeats + ", # groups: " + this._nGroups;
             for (var i = 0; i < this._nEvents; i++) {
-                ret += "\n" + i + "- " + this._events[i].toString();
+                if (this._events[i] instanceof QI.MotionEvent)
+                    ret += "\n\t\t" + i + "- " + this._events[i].toString();
+                else
+                    ret += "\n\t\t" + i + "- group: " + this._groupForFuncActions + ", " + this._events[i].toString();
             }
             return ret;
         };
@@ -3083,8 +3100,9 @@ var QI;
         /**
          * Signals ready to start processing. Re-initializes incase of reuse. Also evaluates if everybodyReady, when using groups
          * @param {string} groupName - This is the group name saying it is ready.
+         * @param {boolean} enableDebug -  This allows turning on debug by POVProcessor after constructor, if QI.Mesh Debug enabled
          */
-        EventSeries.prototype.activate = function (groupName) {
+        EventSeries.prototype.activate = function (groupName, enableDebug) {
             this._indexInRun = -1;
             this._repeatCounter = 0;
             this._proRatingThisRepeat = (this._nRepeats > 1) ? this._initialWallclockProrating : 1.0;
@@ -3100,6 +3118,8 @@ var QI;
             // if everybody ready, tell that to partner
             if (this._everybodyReady && this._syncPartner)
                 this._setPartnerReady();
+            if (enableDebug)
+                this._debug = true;
             if (this._debug)
                 BABYLON.Tools.Log("EventSeries: series activated by " + groupName + ", _everybodyReady: " + this._everybodyReady + ", _partnerReady: " + this._partnerReady);
         };
@@ -3260,6 +3280,7 @@ var QI;
             this._isMesh = (!this._isproperty) && this._node instanceof BABYLON.Mesh;
             this._isLight = (!this._isproperty) && this._node instanceof BABYLON.Light;
             this._isCamera = (!this._isproperty) && this._node instanceof BABYLON.Camera;
+            this._isQIMesh = this._isMesh && this._node instanceof QI.Mesh;
             // validate this node is usable
             if (this._isCamera) {
                 if (!(this._node instanceof BABYLON.TargetCamera))
@@ -3367,12 +3388,18 @@ var QI;
         // ============================ Event Series Queueing & retrieval ============================
         /**
          * SeriesTargetable implementation method
-         * @param {EventSeries} eSeries - The series to append to the end of series queue
+         * @param {EventSeries| Array<any>} eSeriesOrArray - The series to append to the end of series queue.  Can also be an array when
+         * defaulting on other EventSeries Args, to make application level code simpler.
          * @param {boolean} clearQueue - When true, stop anything queued from running.  Note this will also stop
          * any current MotionEvent.
          * @param {boolean} stopCurrentSeries - When true, stop any current MotionEvent too.
          */
-        PovProcessor.prototype.queueEventSeries = function (eSeries, clearQueue, stopCurrentSeries) {
+        PovProcessor.prototype.queueEventSeries = function (eSeriesOrArray, clearQueue, stopCurrentSeries) {
+            var eSeries;
+            if (eSeriesOrArray instanceof QI.EventSeries)
+                eSeries = eSeriesOrArray;
+            else
+                eSeries = new QI.EventSeries(eSeriesOrArray);
             if (clearQueue)
                 this.clearQueue(stopCurrentSeries);
             this._queue.push(eSeries);
@@ -3380,7 +3407,12 @@ var QI;
         /**
          * Place this series next to be run.
          */
-        PovProcessor.prototype.insertSeriesInFront = function (eSeries) {
+        PovProcessor.prototype.insertSeriesInFront = function (eSeriesOrArray) {
+            var eSeries;
+            if (eSeriesOrArray instanceof QI.EventSeries)
+                eSeries = eSeriesOrArray;
+            else
+                eSeries = new QI.EventSeries(eSeriesOrArray);
             this._queue.splice(0, 0, eSeries);
         };
         /**
@@ -3416,7 +3448,7 @@ var QI;
             var ret = this._queue.length > 0 && this._node.isEnabled() && this._node._currentRenderId !== -1;
             if (ret) {
                 this._currentSeries = this._queue.shift();
-                this._currentSeries.activate(this._name);
+                this._currentSeries.activate(this._name, this._isQIMesh && this._node.debug);
             }
             else
                 this._currentSeries = null;
@@ -3433,7 +3465,7 @@ var QI;
          */
         PovProcessor.prototype.getQueueState = function () {
             var ret = this._name + " queue state:  number series queued: " + this._queue.length;
-            if (this._node instanceof QI.Mesh) {
+            if (this._isQIMesh) {
                 ret += ", paused : " + this._node.isPaused();
                 ret += ", mesh visible : " + this._node.isVisible;
             }
@@ -4008,7 +4040,8 @@ var QI;
         }
         // ==================================== Getters & setters ====================================
         PoseEvent.prototype.toString = function () {
-            var ret = "Pose- " + this.poseName + ", ";
+            var ret = _super.prototype.toString.call(this);
+            ret += ", Pose- " + this.poseName + ", ";
             if (this.options.subposes && this.options.subposes.length > 0) {
                 ret += "Subposes- [";
                 for (var i = 0, len = this.options.subposes.length; i < len; i++) {
@@ -4016,7 +4049,7 @@ var QI;
                 }
                 ret += "], revertSubposes- " + this.options.revertSubposes + ", ";
             }
-            return ret + _super.prototype.toString.call(this);
+            return ret;
         };
         PoseEvent.prototype._toScriptCustomArgs = function () {
             return "\"" + this.poseName + "\"";
@@ -5110,7 +5143,7 @@ var QI;
             _this._instancePaused = true; // do not allow anything to run till visible; managed by grand entrance
             if (source && source._shapeKeyGroups.length > 0)
                 throw "QI.Mesh: meshes with shapekeys cannot be cloned";
-            _this._povProcessor = new QI.PovProcessor(_this, false); // do not actually register as a beforeRender, use this classes & register below
+            _this._povProcessor = new QI.PovProcessor(_this, true); // do not actually register as a beforeRender, use this classes & register below
             // tricky registering a prototype as a callback in constructor; cannot say 'this.beforeRender()' & must be wrappered
             var ref = _this;
             _this._registeredFN = function () { ref.beforeRender(); };
@@ -5403,14 +5436,20 @@ var QI;
         };
         /**
          * SeriesTargetable implementation method
-         * @param {EventSeries} eSeries - The series to append to the end of series queue
+         * @param {EventSeries| Array<any>} eSeriesOrArray - The series to append to the end of series queue.  Can also be an array when
+         * defaulting on other EventSeries Args, to make application level code simpler.
          * @param {boolean} clearQueue - When true, stop anything queued from running.  Note this will also stop
          * any current MotionEvent.
          * @param {boolean} stopCurrentSeries - When true, stop any current MotionEvent too.
          * @param {boolean} insertSeriesInFront - Make sure series is next to run.  Primarily used by grand entrances.
          * clearQueue & stopCurrentSeries args are ignored when this is true.
          */
-        Mesh.prototype.queueEventSeries = function (eSeries, clearQueue, stopCurrentSeries, insertSeriesInFront) {
+        Mesh.prototype.queueEventSeries = function (eSeriesOrArray, clearQueue, stopCurrentSeries, insertSeriesInFront) {
+            var eSeries;
+            if (eSeriesOrArray instanceof QI.EventSeries)
+                eSeries = eSeriesOrArray;
+            else
+                eSeries = new QI.EventSeries(eSeriesOrArray);
             var groups;
             if (this.debug)
                 groups = [];
@@ -5458,6 +5497,18 @@ var QI;
                     BABYLON.Tools.Log(msg + "]");
                 }
             }
+        };
+        /**
+         * primarily for diagnostic purposes
+         */
+        Mesh.prototype.getAllQueueStates = function () {
+            var ret = this._povProcessor.getQueueState();
+            if (this._poseProcessor)
+                ret += "\n\n" + this._poseProcessor.getQueueState();
+            for (var g = 0, len = this._shapeKeyGroups.length; g < len; g++) {
+                ret += "\n\n" + this._shapeKeyGroups[g].getQueueState();
+            }
+            return ret;
         };
         // ==================================== Shapekey Wrappers ====================================
         /**
@@ -7429,6 +7480,7 @@ var QI;
             // create host mesh to handle the effect, & disable for now
             this._effectHostMesh = this._getEffectHostMesh();
             this._effectHostMesh.setEnabled(false);
+            this._effectHostMesh.isPickable = false;
             var ref = this;
             // queue a dispose of hostMesh & beforeRender
             var events = [

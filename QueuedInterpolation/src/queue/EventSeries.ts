@@ -170,8 +170,9 @@ module QI {
         /**
          * Signals ready to start processing. Re-initializes incase of reuse. Also evaluates if everybodyReady, when using groups
          * @param {string} groupName - This is the group name saying it is ready.
+         * @param {boolean} enableDebug -  This allows turning on debug by POVProcessor after constructor, if QI.Mesh Debug enabled
          */
-        public activate(groupName : string) : void {
+        public activate(groupName : string, enableDebug? : boolean) : void {
             this._indexInRun  = -1;
             this._repeatCounter = 0;
             this._proRatingThisRepeat = (this._nRepeats > 1) ? this._initialWallclockProrating : 1.0;
@@ -188,6 +189,7 @@ module QI {
             // if everybody ready, tell that to partner
             if (this._everybodyReady && this._syncPartner) this._setPartnerReady();
 
+            if (enableDebug) this._debug = true;
             if (this._debug) BABYLON.Tools.Log("EventSeries: series activated by " + groupName + ", _everybodyReady: " + this._everybodyReady + ", _partnerReady: " + this._partnerReady);
         }
         // ===================================== processor methods ====================================

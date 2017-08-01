@@ -22,7 +22,7 @@ module QI {
         private _positions32F : Float32Array;
         private _normals32F   : Float32Array;
 
-        public  _povProcessor : PovProcessor; // public for EyeBall
+        private _povProcessor : PovProcessor;
         private _shapeKeyGroups = new Array<ShapeKeyGroup>();
         private _poseProcessor : PoseProcessor;
 
@@ -62,7 +62,7 @@ module QI {
             super(name, scene, parent, source, doNotCloneChildren);
             if (source && source._shapeKeyGroups.length > 0) throw "QI.Mesh: meshes with shapekeys cannot be cloned";
 
-            this._povProcessor = new PovProcessor(this, false);  // do not actually register as a beforeRender, use this classes & register below
+            this._povProcessor = new PovProcessor(this, true);  // do not actually register as a beforeRender, use this classes & register below
 
             // tricky registering a prototype as a callback in constructor; cannot say 'this.beforeRender()' & must be wrappered
             var ref = this;
@@ -378,14 +378,19 @@ module QI {
 
         /**
          * SeriesTargetable implementation method
-         * @param {EventSeries} eSeries - The series to append to the end of series queue
+         * @param {EventSeries| Array<any>} eSeriesOrArray - The series to append to the end of series queue.  Can also be an array when 
+         * defaulting on other EventSeries Args, to make application level code simpler.
          * @param {boolean} clearQueue - When true, stop anything queued from running.  Note this will also stop
          * any current MotionEvent.
          * @param {boolean} stopCurrentSeries - When true, stop any current MotionEvent too.
          * @param {boolean} insertSeriesInFront - Make sure series is next to run.  Primarily used by grand entrances.
          * clearQueue & stopCurrentSeries args are ignored when this is true.
          */
-        public queueEventSeries(eSeries : EventSeries, clearQueue? : boolean, stopCurrentSeries? : boolean, insertSeriesInFront? : boolean) : void {
+        public queueEventSeries(eSeriesOrArray : EventSeries | Array<any>, clearQueue? : boolean, stopCurrentSeries? : boolean, insertSeriesInFront? : boolean) : void {
+            var eSeries : EventSeries;
+            if (eSeriesOrArray instanceof EventSeries) eSeries = eSeriesOrArray;
+            else eSeries = new EventSeries(eSeriesOrArray);
+            
             var groups : Array<string>;
             if  (this.debug) groups = [];
             for (var g = 0, len = this._shapeKeyGroups.length; g < len; g++){
@@ -427,6 +432,18 @@ module QI {
                     BABYLON.Tools.Log(msg + "]");
                 }
             }
+        }
+        
+        /**
+         * primarily for diagnostic purposes
+         */
+        public getAllQueueStates() : string {
+            var ret = this._povProcessor.getQueueState();
+            if (this._poseProcessor) ret +=  "\n\n" + this._poseProcessor.getQueueState();
+            for (var g = 0, len = this._shapeKeyGroups.length; g < len; g++) {
+                 ret +=  "\n\n" + this._shapeKeyGroups[g].getQueueState();
+            }
+            return ret;
         }
         // ==================================== Shapekey Wrappers ====================================
         /**

@@ -12,6 +12,7 @@ module QI {
         private _isMesh     : boolean;
         private _isLight    : boolean;
         private _isCamera   : boolean;
+        private _isQIMesh   : boolean;
 
         // event series queue & reference vars for current series & step within
         protected  _queue = new Array<EventSeries>();
@@ -58,6 +59,7 @@ module QI {
             this._isMesh     = (!this._isproperty) && this._node instanceof BABYLON.Mesh;
             this._isLight    = (!this._isproperty) && this._node instanceof BABYLON.Light;
             this._isCamera   = (!this._isproperty) && this._node instanceof BABYLON.Camera;
+            this._isQIMesh   = this._isMesh        && this._node instanceof Mesh; 
 
             // validate this node is usable
             if (this._isCamera) {
@@ -176,12 +178,17 @@ module QI {
         // ============================ Event Series Queueing & retrieval ============================
         /**
          * SeriesTargetable implementation method
-         * @param {EventSeries} eSeries - The series to append to the end of series queue
+         * @param {EventSeries| Array<any>} eSeriesOrArray - The series to append to the end of series queue.  Can also be an array when 
+         * defaulting on other EventSeries Args, to make application level code simpler.
          * @param {boolean} clearQueue - When true, stop anything queued from running.  Note this will also stop
          * any current MotionEvent.
          * @param {boolean} stopCurrentSeries - When true, stop any current MotionEvent too.
          */
-        public queueEventSeries(eSeries : EventSeries, clearQueue? : boolean, stopCurrentSeries? : boolean) : void {
+        public queueEventSeries(eSeriesOrArray : EventSeries | Array<any>, clearQueue? : boolean, stopCurrentSeries? : boolean) : void {
+            var eSeries : EventSeries;
+            if (eSeriesOrArray instanceof EventSeries) eSeries = eSeriesOrArray;
+            else eSeries = new EventSeries(eSeriesOrArray);
+            
             if (clearQueue) this.clearQueue(stopCurrentSeries);
             this._queue.push(eSeries);
         }
@@ -189,7 +196,11 @@ module QI {
         /**
          * Place this series next to be run.
          */
-        public insertSeriesInFront(eSeries : EventSeries) : void {
+        public insertSeriesInFront(eSeriesOrArray : EventSeries) : void {
+            var eSeries : EventSeries;
+            if (eSeriesOrArray instanceof EventSeries) eSeries = eSeriesOrArray;
+            else eSeries = new EventSeries(eSeriesOrArray);
+            
             this._queue.splice(0, 0, eSeries);      
         }
 
@@ -225,7 +236,7 @@ module QI {
             var ret = this._queue.length > 0 && this._node.isEnabled() && this._node._currentRenderId !== -1;
             if (ret){
                 this._currentSeries = this._queue.shift();
-                this._currentSeries.activate(this._name);
+                this._currentSeries.activate(this._name, this._isQIMesh && (<QI.Mesh> this._node).debug);
             }else
                 this._currentSeries = null;
 
@@ -246,7 +257,7 @@ module QI {
         public getQueueState() : string {
             var ret = this._name + " queue state:  number series queued: " + this._queue.length;
             
-            if (this._node instanceof Mesh) {
+            if (this._isQIMesh) {
                 ret += ", paused : " + (<QI.Mesh> this._node).isPaused();
                 ret += ", mesh visible : " + (<QI.Mesh> this._node).isVisible;
             }

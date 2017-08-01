@@ -108,8 +108,9 @@ declare module QI {
         /**
          * Signals ready to start processing. Re-initializes incase of reuse. Also evaluates if everybodyReady, when using groups
          * @param {string} groupName - This is the group name saying it is ready.
+         * @param {boolean} enableDebug -  This allows turning on debug by POVProcessor after constructor, if QI.Mesh Debug enabled
          */
-        activate(groupName: string): void;
+        activate(groupName: string, enableDebug?: boolean): void;
         /**
          * Called to know if series is complete.  nextEvent() may still
          * return null if other groups not yet completed their events in a run, or this group has
@@ -303,6 +304,7 @@ declare module QI {
         private _isMesh;
         private _isLight;
         private _isCamera;
+        private _isQIMesh;
         protected _queue: EventSeries[];
         protected _currentSeries: EventSeries;
         protected _currentStepInSeries: MotionEvent;
@@ -341,16 +343,17 @@ declare module QI {
         _incrementallyMove(): void;
         /**
          * SeriesTargetable implementation method
-         * @param {EventSeries} eSeries - The series to append to the end of series queue
+         * @param {EventSeries| Array<any>} eSeriesOrArray - The series to append to the end of series queue.  Can also be an array when
+         * defaulting on other EventSeries Args, to make application level code simpler.
          * @param {boolean} clearQueue - When true, stop anything queued from running.  Note this will also stop
          * any current MotionEvent.
          * @param {boolean} stopCurrentSeries - When true, stop any current MotionEvent too.
          */
-        queueEventSeries(eSeries: EventSeries, clearQueue?: boolean, stopCurrentSeries?: boolean): void;
+        queueEventSeries(eSeriesOrArray: EventSeries | Array<any>, clearQueue?: boolean, stopCurrentSeries?: boolean): void;
         /**
          * Place this series next to be run.
          */
-        insertSeriesInFront(eSeries: EventSeries): void;
+        insertSeriesInFront(eSeriesOrArray: EventSeries): void;
         /**
          * @param {number} _nRepeats - Number of times to run through series elements.
          */
@@ -977,29 +980,6 @@ declare module QI {
 }
 
 declare module QI {
-    /**
-     * The Fire Entrance REQUIRES that BABYLON.FireMaterial.js be loaded
-     */
-    class FireEntrance extends AbstractGrandEntrance {
-        private _count;
-        private _diffuse;
-        private _distortion;
-        private _opacity;
-        /** @override */
-        makeEntrance(): void;
-        /**
-         * Even with inline textures, the shaders must still be compiled.  Cannot
-         * allow mesh to be visible prior or permanent material will flash.
-         */
-        private _loaded();
-        /**
-         * The fire is now ready. Go for it.
-         */
-        private _showTime();
-    }
-}
-
-declare module QI {
     class GatherEntrance extends AbstractGrandEntrance {
         /** @override */
         makeEntrance(): void;
@@ -1039,6 +1019,29 @@ declare module QI {
 
 declare module QI {
     /**
+     * The Fire Entrance REQUIRES that BABYLON.FireMaterial.js be loaded
+     */
+    class FireEntrance extends AbstractGrandEntrance {
+        private _count;
+        private _diffuse;
+        private _distortion;
+        private _opacity;
+        /** @override */
+        makeEntrance(): void;
+        /**
+         * Even with inline textures, the shaders must still be compiled.  Cannot
+         * allow mesh to be visible prior or permanent material will flash.
+         */
+        private _loaded();
+        /**
+         * The fire is now ready. Go for it.
+         */
+        private _showTime();
+    }
+}
+
+declare module QI {
+    /**
      * Mesh sub-class which has a before render which processes events for ShapeKeysGroups, Skeleton Poses, and POV.
      */
     class Mesh extends BABYLON.Mesh implements SeriesTargetable {
@@ -1046,7 +1049,7 @@ declare module QI {
         private _registeredFN;
         private _positions32F;
         private _normals32F;
-        _povProcessor: PovProcessor;
+        private _povProcessor;
         private _shapeKeyGroups;
         private _poseProcessor;
         _originalPositions: Float32Array;
@@ -1140,14 +1143,19 @@ declare module QI {
         queueSingleEvent(event: MotionEvent): void;
         /**
          * SeriesTargetable implementation method
-         * @param {EventSeries} eSeries - The series to append to the end of series queue
+         * @param {EventSeries| Array<any>} eSeriesOrArray - The series to append to the end of series queue.  Can also be an array when
+         * defaulting on other EventSeries Args, to make application level code simpler.
          * @param {boolean} clearQueue - When true, stop anything queued from running.  Note this will also stop
          * any current MotionEvent.
          * @param {boolean} stopCurrentSeries - When true, stop any current MotionEvent too.
          * @param {boolean} insertSeriesInFront - Make sure series is next to run.  Primarily used by grand entrances.
          * clearQueue & stopCurrentSeries args are ignored when this is true.
          */
-        queueEventSeries(eSeries: EventSeries, clearQueue?: boolean, stopCurrentSeries?: boolean, insertSeriesInFront?: boolean): void;
+        queueEventSeries(eSeriesOrArray: EventSeries | Array<any>, clearQueue?: boolean, stopCurrentSeries?: boolean, insertSeriesInFront?: boolean): void;
+        /**
+         * primarily for diagnostic purposes
+         */
+        getAllQueueStates(): string;
         /**
          * Query for determining if a given shapekey has been defined for the mesh.
          * @param {string} groupName - The name of the shapekey group on the mesh.
