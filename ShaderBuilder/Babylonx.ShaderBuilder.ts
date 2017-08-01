@@ -352,6 +352,9 @@ module BABYLONX {
         Uv2: boolean;
         Center: boolean;
         Flags: boolean;
+        
+        DefinitionFragment : string,
+        DefinitionVertex : string,
 
         FragmentView: boolean;
         FragmentWorld: boolean;
@@ -624,7 +627,7 @@ module BABYLONX {
 
             }
             if (this.Setting.Helpers) {
-                var sresult = Shader.Join([
+                var sresult = Shader.Join([ 
                     "vec3 random3(vec3 c) {   float j = 4096.0*sin(dot(c,vec3(17.0, 59.4, 15.0)));   vec3 r;   r.z = fract(512.0*j); j *= .125;  r.x = fract(512.0*j); j *= .125; r.y = fract(512.0*j);  return r-0.5;  } ",
                     "float rand(vec2 co){   return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453); } ",
                     "const float F3 =  0.3333333;const float G3 =  0.1666667;",
@@ -639,7 +642,7 @@ module BABYLONX {
 
             }
 
-            this.Vertex.push("void main(void) { \n\
+            this.Vertex.push(Shader.Def(this.Setting.DefinitionVertex,"") + "\n\ void main(void) { \n\
     "+ ShaderMaterialHelperStatics.Position + " = " + ShaderMaterialHelperStatics.AttrPosition + "; \n\
     " + ShaderMaterialHelperStatics.Normal + " = " + ShaderMaterialHelperStatics.AttrNormal + "; \n\
     vec4 result = vec4(" + ShaderMaterialHelperStatics.Position + ",1.);  \n\
@@ -666,7 +669,7 @@ module BABYLONX {
 
             this.Fragment.push(this.FragmentBeforeMain);
 
-            this.Fragment.push(" \n\
+            this.Fragment.push((Shader.Def(this.Setting.DefinitionFragment,"") + " \n\
 void main(void) { \n\
      int discardState = 0;\n\
      vec4 result = vec4(0.);\n\
@@ -760,14 +763,14 @@ void main(void) { \n\
             }
 
             if (this.Setting.NormalMap != null) {
-                this.Fragment.push("vec3 normalMap() { vec4 result = vec4(0.);   return result.xyz;}");
+                this.Fragment.push("vec3 normalMap() { vec4 result = vec4(0.);   return result.xyz;} ");
             }
 
             // start Build Fragment Frame  
 
             this.Fragment.push(this.FragmentBeforeMain);
 
-            this.Fragment.push(" \n\
+            this.Fragment.push(Shader.Def(this.Setting.DefinitionFragment,"") + "\n\
 void main(void) { \n\
      int discardState = 0;\n\
      vec2 vuv = vUV;\n\
@@ -1752,7 +1755,10 @@ void main(void) { \n\
             this.Varings = [];
             this.Vertex = [];
 
-
+            this.Setting.DefinitionVertex = "";
+            this.Setting.DefinitionFragment = "";
+            
+           
             this.Setting.Uv = true;
             this.Setting.Time = true;
             this.Setting.Camera = true;
