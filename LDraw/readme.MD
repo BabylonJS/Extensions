@@ -10,12 +10,13 @@ This exporter allow to convert any (LDraw)[http://www.ldraw.org] format to babyl
 # Usage
 Use the following settings:
 
-f= list file names to convert separated by ;
-r= give the root path for LDraw parts, default is same as the converter
-p= path of files to convert, default is same as the converter
-o= output directory for the babylon file
-h= 1 for hi or 0 for low quality images, default is hi
-c= name of color file, path default is either LDraw or app. Defautl name is ldconfig.ldr
+* f= list file names to convert separated by ;
+* r= give the root path for LDraw parts, default is same as the converter
+* p= path of files to convert, default is same as the converter
+* o= output directory for the babylon file
+* h= 1 for hi or 0 for low quality images, default is hi
+* c= name of color file, path default is either LDraw or app. Defautl name is ldconfig.ldr
+
 Example:
 
 LegoConvertDat r=c\Ldraw f=3456.dat;Mybuild.ldr;SuperSet.mpd;axle.dat o=C:\tmp
