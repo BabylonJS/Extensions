@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+    <StartArguments>f=test.ldr%3b8851.mpd r=C:\Users\Public\Documents\LDraw\ p=c:\tmp\ldraw\ o=C:\Repos\babylon\scenes c=ldconfig.ldr h=0</StartArguments>
+  </PropertyGroup>
+</Project>
