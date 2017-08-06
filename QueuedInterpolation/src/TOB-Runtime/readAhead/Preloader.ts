@@ -1,12 +1,13 @@
 module TOWER_OF_BABEL {
     export class Preloader {
+        //TODO iOS has problem with preloader; use Alert to track down
         public static READ_AHEAD_LOGGING = false; // when true, write timings to the console
         public static MAKE_MULTI_SCENE = false;   // when true, data retrieved is not deleted after texture is assigned
         public static SCENE : BABYLON.Scene;      // simplify having scene as an argument all over the place.
 
-        private _characters  = new Array<Character >();
-        private _busts       = new Array<Character >();
-        private _sceneChunks = new Array<SceneChunk>();
+        public _characters   : { [desc: string] : Character;  } = {};
+        public _busts        : { [desc: string] : Character;  } = {};
+        private _sceneChunks : { [desc: string] : SceneChunk; } = {};
 
         // A common TextureBuffer array across all PreLoaders, if multiples.
         // Also allows generated code to be put statically in header section of html, where no Preloader is instanced.
@@ -27,9 +28,9 @@ module TOWER_OF_BABEL {
          * or prepRemainingCharacters() is called.
          * @param {Character} player - An instance of the Character, PreLoadable, to add.
          */
-        public addCharacter(player : Character) : void {
+        public addCharacter(player : Character, desc : string) : void {
             player._preloader = this;
-            this._characters.push(player);
+            this._characters[desc] = player;
         }
 
         /**
@@ -37,9 +38,9 @@ module TOWER_OF_BABEL {
          * or prepRemainingBusts() is called.
          * @param {Character} player - An instance of the Character, PreLoadable, to add.
          */
-        public addBust(player : Character) : void {
+        public addBust(player : Character, desc : string) : void {
             player._preloader = this;
-            this._busts.push(player);
+            this._busts[desc] = player;
         }
 
         /**
@@ -47,9 +48,9 @@ module TOWER_OF_BABEL {
          * or prepRemainingChunks() is called.
          * @param {SceneChunk} chunk - An instance of the SceneChunk, PreLoadable, to add.
          */
-        public addSceneChunk(chunk : SceneChunk) : void {
+        public addSceneChunk(chunk : SceneChunk, desc : string) : void {
             chunk._preloader = this;
-            this._sceneChunks.push(chunk);
+            this._sceneChunks[desc] = chunk;
         }
 
         public static addtextureBuffer(image : TextureBuffer) : void {
@@ -70,40 +71,51 @@ module TOWER_OF_BABEL {
             return null;
         }
 
-        public get numCharacters() : number {
-            return this._characters.length;
-        }
+        public get numCharacters () : number { return Object.keys(this._characters ).length; }
+        public get numBusts      () : number { return Object.keys(this._busts      ).length; }
+        public get numSceneChunks() : number { return Object.keys(this._sceneChunks).length; }
+        
+        public getCharacterKeys () : string[] { return Object.keys(this._characters ); }
+        public getBustKeys      () : string[] { return Object.keys(this._busts      ); }
+        public getSceneChunkKeys() : string[] { return Object.keys(this._sceneChunks); }
+        
+        public prepRemainingCharacters () : void { this._prepRemaining(this._characters ); }
+        public prepRemainingBusts      () : void { this._prepRemaining(this._busts      ); }
+        public prepRemainingSceneChunks() : void { this._prepRemaining(this._sceneChunks); }
 
-        public get numBusts() : number {
-            return this._busts.length;
+        private _prepRemaining(dict : {[desc: string] : PreLoadable}) : void {
+            for (var desc in dict) {
+                dict[desc].makeReady();
+             }
         }
-
-        public get numSceneChunks() : number {
-            return this._sceneChunks.length;
-        }
-
-        public prepRemainingCharacters() : void {
-            for (var i = 0, len = this._characters.length; i < len; i++) {
-                // does nothing once ready
-                this._characters[i].makeReady();
-            }
-        }
-
-        public prepRemainingBusts() : void {
-            for (var i = 0, len = this._busts.length; i < len; i++) {
-                // does nothing once ready
-                this._busts[i].makeReady();
-            }
-        }
-
-        public pickCharacter(bustOnly : boolean, index? : number) : Character {
-            var bank = bustOnly ? this._busts : this._characters;
+        
+        /** return a character
+         *  @param {number | string} indexOrKey - The order in the dictionary, or the key.  Random when not specified
+         */
+        public pickCharacter(indexOrKey? : number | string) : Character { return this._pick(this._characters, indexOrKey); }
+        
+        /** return a bust
+         *  @param {number | string} indexOrKey - The order in the dictionary, or the key.  Random when not specified
+         */
+        public pickBust(indexOrKey? : number | string) : Character { return this._pick(this._busts, indexOrKey); }
+        
+        private _pick(dict : {[desc: string] : PreLoadable}, indexOrKey? : number | string) : Character {
+            
             // not using a ! test, since index can be zero
-            if (typeof index === "undefined") {
-                index = Math.floor(Math.random() * bank.length);
+            if (typeof indexOrKey === "undefined") {
+                return this._getNth(dict, Math.floor(Math.random() * Object.keys(dict).length));
             }
-
-            return bank[index];
+            
+            if  (typeof indexOrKey === "string") return <Character> dict[<string> indexOrKey];
+            else return  this._getNth(dict, <number> indexOrKey);
+        }
+        
+        private _getNth(dict : {[desc: string] : PreLoadable}, index : number) : Character {
+            var i = 0;
+            for (var desc in dict) {
+                if (i++ === index) return <Character> dict[desc];
+             }
+            return null;
         }
     }
 }

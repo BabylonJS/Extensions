@@ -89,7 +89,7 @@ module TOWER_OF_BABEL {
     }
 
     export class SceneChunk extends PreLoadable {
-
+        // TODO fully implement SceneChunk
         /**
          * Should be part of the callback passed to makeReady().
          * @param {BABYLON.Scene} scene - Needed to pass to the Mesh constructor(s) of the scene chunk's meshes / lights / etc.

@@ -1497,8 +1497,12 @@ declare module TOWER_OF_BABEL {
         static READ_AHEAD_LOGGING: boolean;
         static MAKE_MULTI_SCENE: boolean;
         static SCENE: BABYLON.Scene;
-        private _characters;
-        private _busts;
+        _characters: {
+            [desc: string]: Character;
+        };
+        _busts: {
+            [desc: string]: Character;
+        };
         private _sceneChunks;
         private static _images;
         /**
@@ -1512,19 +1516,19 @@ declare module TOWER_OF_BABEL {
          * or prepRemainingCharacters() is called.
          * @param {Character} player - An instance of the Character, PreLoadable, to add.
          */
-        addCharacter(player: Character): void;
+        addCharacter(player: Character, desc: string): void;
         /**
          * Register a bust as a pre-loadable object.  Nothing actually is retrieved unless it is picked,
          * or prepRemainingBusts() is called.
          * @param {Character} player - An instance of the Character, PreLoadable, to add.
          */
-        addBust(player: Character): void;
+        addBust(player: Character, desc: string): void;
         /**
          * Register a scene chunk as a pre-loadable object.  Nothing actually is retrieved unless it is picked,
          * or prepRemainingChunks() is called.
          * @param {SceneChunk} chunk - An instance of the SceneChunk, PreLoadable, to add.
          */
-        addSceneChunk(chunk: SceneChunk): void;
+        addSceneChunk(chunk: SceneChunk, desc: string): void;
         static addtextureBuffer(image: TextureBuffer): void;
         /**
          * Called by defineMaterials(), generated code, to finally assign the pre-loaded texture data to a BABYLON.Texture.
@@ -1537,9 +1541,23 @@ declare module TOWER_OF_BABEL {
         readonly numCharacters: number;
         readonly numBusts: number;
         readonly numSceneChunks: number;
+        getCharacterKeys(): string[];
+        getBustKeys(): string[];
+        getSceneChunkKeys(): string[];
         prepRemainingCharacters(): void;
         prepRemainingBusts(): void;
-        pickCharacter(bustOnly: boolean, index?: number): Character;
+        prepRemainingSceneChunks(): void;
+        private _prepRemaining(dict);
+        /** return a character
+         *  @param {number | string} indexOrKey - The order in the dictionary, or the key.  Random when not specified
+         */
+        pickCharacter(indexOrKey?: number | string): Character;
+        /** return a bust
+         *  @param {number | string} indexOrKey - The order in the dictionary, or the key.  Random when not specified
+         */
+        pickBust(indexOrKey?: number | string): Character;
+        private _pick(dict, indexOrKey?);
+        private _getNth(dict, index);
     }
 }
 

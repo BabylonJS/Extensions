@@ -78,9 +78,9 @@ var TOWER_OF_BABEL;
         function Preloader(jsPath, matPath) {
             this.jsPath = jsPath;
             this.matPath = matPath;
-            this._characters = new Array();
-            this._busts = new Array();
-            this._sceneChunks = new Array();
+            this._characters = {};
+            this._busts = {};
+            this._sceneChunks = {};
             if (this.jsPath.lastIndexOf("/") + 1 !== this.jsPath.length)
                 this.jsPath += "/";
             if (this.matPath.lastIndexOf("/") + 1 !== this.matPath.length)
@@ -91,27 +91,27 @@ var TOWER_OF_BABEL;
          * or prepRemainingCharacters() is called.
          * @param {Character} player - An instance of the Character, PreLoadable, to add.
          */
-        Preloader.prototype.addCharacter = function (player) {
+        Preloader.prototype.addCharacter = function (player, desc) {
             player._preloader = this;
-            this._characters.push(player);
+            this._characters[desc] = player;
         };
         /**
          * Register a bust as a pre-loadable object.  Nothing actually is retrieved unless it is picked,
          * or prepRemainingBusts() is called.
          * @param {Character} player - An instance of the Character, PreLoadable, to add.
          */
-        Preloader.prototype.addBust = function (player) {
+        Preloader.prototype.addBust = function (player, desc) {
             player._preloader = this;
-            this._busts.push(player);
+            this._busts[desc] = player;
         };
         /**
          * Register a scene chunk as a pre-loadable object.  Nothing actually is retrieved unless it is picked,
          * or prepRemainingChunks() is called.
          * @param {SceneChunk} chunk - An instance of the SceneChunk, PreLoadable, to add.
          */
-        Preloader.prototype.addSceneChunk = function (chunk) {
+        Preloader.prototype.addSceneChunk = function (chunk, desc) {
             chunk._preloader = this;
-            this._sceneChunks.push(chunk);
+            this._sceneChunks[desc] = chunk;
         };
         Preloader.addtextureBuffer = function (image) {
             Preloader._images.push(image);
@@ -131,45 +131,56 @@ var TOWER_OF_BABEL;
             return null;
         };
         Object.defineProperty(Preloader.prototype, "numCharacters", {
-            get: function () {
-                return this._characters.length;
-            },
+            get: function () { return Object.keys(this._characters).length; },
             enumerable: true,
             configurable: true
         });
         Object.defineProperty(Preloader.prototype, "numBusts", {
-            get: function () {
-                return this._busts.length;
-            },
+            get: function () { return Object.keys(this._busts).length; },
             enumerable: true,
             configurable: true
         });
         Object.defineProperty(Preloader.prototype, "numSceneChunks", {
-            get: function () {
-                return this._sceneChunks.length;
-            },
+            get: function () { return Object.keys(this._sceneChunks).length; },
             enumerable: true,
             configurable: true
         });
-        Preloader.prototype.prepRemainingCharacters = function () {
-            for (var i = 0, len = this._characters.length; i < len; i++) {
-                // does nothing once ready
-                this._characters[i].makeReady();
+        Preloader.prototype.getCharacterKeys = function () { return Object.keys(this._characters); };
+        Preloader.prototype.getBustKeys = function () { return Object.keys(this._busts); };
+        Preloader.prototype.getSceneChunkKeys = function () { return Object.keys(this._sceneChunks); };
+        Preloader.prototype.prepRemainingCharacters = function () { this._prepRemaining(this._characters); };
+        Preloader.prototype.prepRemainingBusts = function () { this._prepRemaining(this._busts); };
+        Preloader.prototype.prepRemainingSceneChunks = function () { this._prepRemaining(this._sceneChunks); };
+        Preloader.prototype._prepRemaining = function (dict) {
+            for (var desc in dict) {
+                dict[desc].makeReady();
             }
         };
-        Preloader.prototype.prepRemainingBusts = function () {
-            for (var i = 0, len = this._busts.length; i < len; i++) {
-                // does nothing once ready
-                this._busts[i].makeReady();
-            }
-        };
-        Preloader.prototype.pickCharacter = function (bustOnly, index) {
-            var bank = bustOnly ? this._busts : this._characters;
+        /** return a character
+         *  @param {number | string} indexOrKey - The order in the dictionary, or the key.  Random when not specified
+         */
+        Preloader.prototype.pickCharacter = function (indexOrKey) { return this._pick(this._characters, indexOrKey); };
+        /** return a bust
+         *  @param {number | string} indexOrKey - The order in the dictionary, or the key.  Random when not specified
+         */
+        Preloader.prototype.pickBust = function (indexOrKey) { return this._pick(this._busts, indexOrKey); };
+        Preloader.prototype._pick = function (dict, indexOrKey) {
             // not using a ! test, since index can be zero
-            if (typeof index === "undefined") {
-                index = Math.floor(Math.random() * bank.length);
+            if (typeof indexOrKey === "undefined") {
+                return this._getNth(dict, Math.floor(Math.random() * Object.keys(dict).length));
             }
-            return bank[index];
+            if (typeof indexOrKey === "string")
+                return dict[indexOrKey];
+            else
+                return this._getNth(dict, indexOrKey);
+        };
+        Preloader.prototype._getNth = function (dict, index) {
+            var i = 0;
+            for (var desc in dict) {
+                if (i++ === index)
+                    return dict[desc];
+            }
+            return null;
         };
         return Preloader;
     }());
