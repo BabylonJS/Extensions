@@ -82,13 +82,18 @@ namespace LegoConvertDat.Services
                     Debug.WriteLine(ex.Message);
 
                 }
-                //create a 24 color as it's a no color for
-                //this color is mapped to white. It is used when a raw dat part is loaded
+                //create a 24 and 16 color as it's a no color for
+                //those colors is mapped to white. It is used when a raw dat part is loaded
                 LegoColor Leg24 = new LegoColor();
                 Leg24.Name = "Master Color";
                 Leg24.Code = 24;
-                Leg24.Color = new RGB("#FFFFFF");
+                Leg24.Color = new RGB("#FF0000");
                 Colors.Add(Leg24);
+                LegoColor Leg16 = new LegoColor();
+                Leg16.Name = "Neutral";
+                Leg16.Code = 16;
+                Leg16.Color = new RGB("#FF0000");
+                Colors.Add(Leg16);
             }
         }
 
