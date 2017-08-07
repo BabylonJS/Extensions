@@ -76,12 +76,6 @@ namespace LegoConvertDat
                 babylonScene.ambientColor = new float[] { 0.0f, 0.0f, 0.0f };
 
                 babylonScene.gravity = new float[] { 0, 0, -0.9f };
-                //Camera
-                //BabylonCamera mainCamera = new BabylonCamera();
-                //mainCamera.name = "Default";
-                //mainCamera.id = mainCamera.name;
-                //babylonScene.cameras = new BabylonCamera[] { mainCamera };
-                //babylonScene.activeCameraID = mainCamera.id;
 
                 //fog
                 babylonScene.fogColor = null;
@@ -90,9 +84,7 @@ namespace LegoConvertDat
                 babylonScene.fogMode = 0;
                 babylonScene.fogStart = 0;
 
-                //light
-                //dBabylonLight babylonLight = new BabylonLight();
-                //babylonScene.lights = new BabylonLight[] { babylonLight };
+                //Preparing for the materials
                 Console.WriteLine("Creating lights and cameras");
                 babylonScene.Prepare(true, true);
                 Console.WriteLine("Creating colors and textures");
@@ -116,19 +108,18 @@ namespace LegoConvertDat
                 }
                 babylonScene.materials = babMaterial.ToArray();
 
+                float minX = float.MaxValue;
+                float minY = float.MaxValue;
+                float minZ = float.MaxValue;
+                float maxX = float.MinValue;
+                float maxY = float.MinValue;
+                float maxZ = float.MinValue;
                 Console.WriteLine("Creating meshes");
                 //Mesh
                 List<BabylonMesh> babMesh = new List<BabylonMesh>();
                 foreach (var col in MatCol)
                 {
-#if DEBUG
-                    float minX = float.MaxValue;
-                    float minY = float.MaxValue;
-                    float minZ = float.MaxValue;
-                    float maxX = float.MinValue;
-                    float maxY = float.MinValue;
-                    float maxZ = float.MinValue;
-#endif
+
 
                     BabylonMesh mesh = new BabylonMesh();
                     mesh.id = FileName + col.ToString();
@@ -151,7 +142,7 @@ namespace LegoConvertDat
                         var normal = polcol[i].GetNormal();
                         for (int j = 0; j < 3; j++)
                         {
-#if DEBUG
+
                             if (polcol[i].Points(j).X < minX)
                                 minX = polcol[i].Points(j).X;
                             if (polcol[i].Points(j).Y < minY)
@@ -164,7 +155,7 @@ namespace LegoConvertDat
                                 maxY = polcol[i].Points(j).Y;
                             if (polcol[i].Points(j).Z > maxZ)
                                 maxZ = polcol[i].Points(j).Z;
-#endif
+
                             //Get the point positions
                             mesh.positions[i * 9 + j * 3] = polcol[i].Points(j).X;
                             mesh.positions[i * 9 + 1 + j * 3] = -polcol[i].Points(j).Y;
@@ -180,15 +171,32 @@ namespace LegoConvertDat
                         mesh.indices[i * 3 + 2] = i * 3 + 2;
                     }
                     babMesh.Add(mesh);
-#if DEBUG
-                    Console.WriteLine($"Min X: {minX} Y: {minY} Z:{minZ}");
-                    Console.WriteLine($"Max X: {maxX} Y: {maxY} Z:{maxZ}");
-#endif
                 }
+                Console.WriteLine($"Min X: {minX} Y: {minY} Z:{minZ}");
+                Console.WriteLine($"Max X: {maxX} Y: {maxY} Z:{maxZ}");
+
+                //Console.WriteLine("Creating lights and cameras");
+                //Camera
+                //BabylonCamera mainCamera = new BabylonCamera();
+                //mainCamera.name = "Camera";
+                //mainCamera.id = mainCamera.name;
+                //mainCamera.position = new float[] { maxX - minX, maxY, -minZ };
+                //mainCamera.target = babMesh[0].position;
+                //mainCamera.type = "ArcRotateCamera";
+                //babylonScene.cameras = new BabylonCamera[] { mainCamera };
+                //babylonScene.activeCameraID = mainCamera.id;
+                
+
+                //light
+                //dBabylonLight babylonLight = new BabylonLight();
+                //babylonScene.lights = new BabylonLight[] { babylonLight };
+                              
                 //create the Array
                 babylonScene.meshes = babMesh.ToArray();
                 Console.WriteLine("Serializing babylon file");
-                var filewithoutext = FileName.Substring(0, FileName.Length - FileName.LastIndexOf('.'));
+                //remove extention, replace potential \ by -
+                var filewithoutext = FileName.Substring(0, FileName.LastIndexOf('.'));
+                filewithoutext = filewithoutext.Replace('\\', '-');
                 var ser = JsonConvert.SerializeObject(babylonScene);
                 Console.WriteLine("Saving babylon file");
                 StreamWriter firstfile = new StreamWriter(OutputPath + filewithoutext + ".babylon");
