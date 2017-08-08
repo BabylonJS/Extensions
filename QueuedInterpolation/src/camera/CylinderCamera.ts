@@ -1,6 +1,7 @@
 
 module QI {
     export class CylinderCamera extends BABYLON.ArcRotateCamera {
+        // TODO add documentation
         private _targetMesh: BABYLON.AbstractMesh;
         
         private _traverseOffset = 0;
@@ -170,9 +171,9 @@ module QI {
             
             // need to reduce default angular sensitively for the dimension now used to traverse; was 1000
             // was used as 1000 points / radians
-            // now as 1000 points / extent
-            if (this._isVertical) this.angularSensibilityY = 1000 / dimensions.y;
-            else this.angularSensibilityX = 1000 / dimensions.x;
+            // now as 5000 points / extent
+            if (this._isVertical) this.angularSensibilityY = 5000 / dimensions.y;
+            else this.angularSensibilityX = 5000 / dimensions.x;
                                     
             this._target = this._getTargetPosition();
             this.rebuildAnglesAndRadius();
