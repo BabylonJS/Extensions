@@ -45,7 +45,7 @@ Now we can set the camera altitude on each frame at a fixed elevation above the 
     });
 ```
 If we move the camera with the keyboard arrow keys, it will follow the terrain ground.   
-http://www.babylonjs-playground.com/#J6FMJ#2  
+https://www.babylonjs-playground.com/#J6FMJ#6  
 
 We could also make a bigger map and a bigger terrain : 
 ```javascript
@@ -73,7 +73,7 @@ terrain.LODLimits = [4, 3, 2, 1, 1];
 ```
 Let's don't worry if this feature seems complex to understand and let's just remember that it extends the terrain visible size on its perimeter and reduces the rendered map details in the same time.  
 
-PG : http://www.babylonjs-playground.com/#J6FMJ#4  
+PG : https://www.babylonjs-playground.com/#J6FMJ#7  
 
 
 
