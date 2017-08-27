@@ -8,17 +8,57 @@ module QI{
      * applied to the each Automaton.
      */
     export class Expression {
-        public static NONE       = new Expression("NONE"      , true , true , false, [], []);
-        public static ANGRY      = new Expression("ANGRY"     , false, true , true , ["CHEEKS_HIGH", "CHEEKS_SUCK", "EYEBROWS_ANGRY", "EYEBROWS_RAISED_LEFT", "NOSE_FLARE", "MOUTH_CORNERS_DOWN", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "SYMMETRY_LEFT_UP"], [0.85, 0.3, 1, -0.3, 1, 1, -0.2, 1, 0.1], "---Y--Y--");
-        public static CRYING     = new Expression("CRYING"    , false, false, false, ["EYEBROWS_RAISED_LEFT", "EYEBROWS_RAISED_RIGHT", "EYELIDS_SQUINT", "NOSE_FLARE", "MOUTH_CORNERS_DOWN", "MOUTH_LIPS_LOWER_UP"], [-0.2, -0.2, 1, 0.6, 0.85, -0.55], "YY---Y");
-        public static DISGUSTED  = new Expression("DISGUSTED" , false, true , true , ["CHEEKS_HIGH", "CHEEKS_SUCK", "EYEBROWS_ANGRY", "EYEBROWS_RAISED_LEFT", "EYELIDS_SQUINT", "WINK_LEFT", "NOSE_FLARE", "MOUTH_CORNERS_DOWN", "MOUTH_CORNERS_UP", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP"], [0.65, 0.05, 0.55, 1, 0.25, -0.1, 0.6, 1, -0.1, 0.2, -1], "-----Y--Y-Y");
-        public static HAPPY      = new Expression("HAPPY"     , true , true , true , ["EYEBROWS_RAISED_LEFT", "EYELIDS_SQUINT", "NOSE_FLARE", "MOUTH_CORNERS_DOWN", "MOUTH_CORNERS_UP", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_UPPER_UP", "SYMMETRY_LEFT_UP"], [-0.1, 0.15, 0.25, -0.2, 0.5, 0.65, -0.25, 0.45], "Y--Y--Y-");
-        public static LAUGH      = new Expression("LAUGH"     , true , true , true , ["CHEEKS_HIGH", "EYEBROWS_ANGRY", "EYELIDS_SQUINT", "NOSE_FLARE", "MOUTH_CORNERS_UP", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_UPPER_UP", "MOUTH_OPEN", "MOUTH_PUCKER"], [0.8, -1, -0.15, 0.55, 0.45, -0.25, 0.5, 0.75, -1], "-YY--Z--X");
-        public static PPHPHT     = new Expression("PPHPHT"    , false, true , false, ["CHEEKS_SUCK", "MOUTH_PUCKER", "TONGUE_STUCK_OUT", "NOSE_FLARE", "CHEEKS_HIGH", "MOUTH_OPEN", "EYELIDS_SQUINT"], [1.0, 1.0, 1.0, 1.0, 0.5, 0.5, 0.5]);
-        public static SAD        = new Expression("SAD"       , false, true , true , ["EYEBROWS_ANGRY", "MOUTH_CORNERS_UP", "MOUTH_LIPS_LOWER_UP", "MOUTH_PUCKER", "MOUTH_WIDE", "SYMMETRY_CHIN_LEFT"], [-1, -0.4, 0.65, -0.3, 0.25, 0.45], "YY-X--");
-        public static SCARED     = new Expression("SCARED"    , false, false, true , ["EYEBROWS_RAISED_LEFT", "EYEBROWS_RAISED_RIGHT", "WINK_LEFT", "WINK_RIGHT", "MOUTH_CORNERS_DOWN", "MOUTH_LIPS_LOWER_UP", "SYMMETRY_CHIN_LEFT"], [0.45, 0.8, -0.65, -0.6, 0.35, -0.6, -0.65], "--YY-YX");
-        public static SKEPTICAL  = new Expression("SKEPTICAL" , false, false, true , ["EYEBROWS_RAISED_LEFT", "EYEBROWS_RAISED_RIGHT", "WINK_RIGHT"], [-0.5, 0.65, -0.3], "Y-Y");
-        public static STRUGGLING = new Expression("STRUGGLING", false, false, false, ["EYEBROWS_ANGRY", "EYEBROWS_RAISED_LEFT", "EYELIDS_SQUINT", "WINK_LEFT", "WINK_RIGHT", "NOSE_FLARE", "MOUTH_CORNERS_DOWN", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "MOUTH_WIDE", "SYMMETRY_LEFT_UP", "SYMMETRY_RIGHT_UP"], [1, 0.6, 1, 0.25, 0.35, 1, 0.5, 0.35, -0.7, 0.6, 0.05, -0.4, 0.55], "--------Y--Y-");
+        public static STOCK          = 0;
+        public static CUSTOM         = 1;
+        public static VISEME         = 2;
+        public static SPEECH_CAPABLE = 3;
+        
+        // stock expressions
+        public static NONE       = new Expression("NONE"      , true , true , false, [], [], null, 0);
+        public static ANGRY      = new Expression("ANGRY"     , false, true , true , ["CHEEKS_HIGH", "CHEEKS_SUCK", "EYEBROWS_ANGRY", "EYEBROWS_RAISED_LEFT", "NOSE_FLARE", "MOUTH_CORNERS_DOWN", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "SYMMETRY_LEFT_UP"], [1.85, 0.3, 1.85, -0.3, 1.4, 1, -0.2, 1, 0.1], "---Y--Y--", Expression.STOCK);
+        public static CRYING     = new Expression("CRYING"    , false, false, false, ["CHEEKS_HIGH", "CHEEKS_SUCK", "EYEBROWS_RAISED_LEFT", "EYEBROWS_RAISED_RIGHT", "EYELIDS_SQUINT", "NOSE_FLARE", "MOUTH_CORNERS_DOWN", "MOUTH_LIPS_LOWER_UP"], [-1, 1.4, -0.2, -0.2, 1.2, 1.2, 1.25, -0.65], "Y-YY---Y", Expression.STOCK);
+        public static DISGUSTED  = new Expression("DISGUSTED" , false, true , true , ["CHEEKS_HIGH", "CHEEKS_SUCK", "EYEBROWS_ANGRY", "EYEBROWS_RAISED_LEFT", "EYELIDS_SQUINT", "WINK_LEFT", "NOSE_FLARE", "MOUTH_CORNERS_DOWN", "MOUTH_CORNERS_UP", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP"], [0.95, 0.05, 0.55, 1, 0.45, -0.1, 1.35, 1.3, -0.1, 0.2, -1], "-----Y--Y-Y", Expression.STOCK);
+        public static HAPPY      = new Expression("HAPPY"     , true , true , true , ["CHEEKS_HIGH", "CHEEKS_PUMP", "EYEBROWS_ANGRY", "EYEBROWS_RAISED_LEFT", "EYELIDS_SQUINT", "NOSE_FLARE", "MOUTH_CORNERS_DOWN", "MOUTH_CORNERS_UP", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "MOUTH_WIDE", "SYMMETRY_CHIN_LEFT", "SYMMETRY_LEFT_UP", "SYMMETRY_RIGHT_UP"], [0.8, 0.25, -0.8, -0.1, 0.15, 0.25, -0.45, 0.5, 0.7, -0.5, -0.25, 0.4, -0.1, 0.1, 0.2], "--YY--Y--YY-X--", Expression.STOCK);
+        public static LAUGH      = new Expression("LAUGH"     , true , true , true , ["CHEEKS_HIGH", "EYEBROWS_ANGRY", "EYELIDS_SQUINT", "NOSE_FLARE", "MOUTH_CORNERS_UP", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_UPPER_UP", "MOUTH_OPEN", "MOUTH_PUCKER"], [0.8, -1, -0.15, 0.55, 0.45, -0.25, 0.5, 0.85, -1], "-YY--Z--X", Expression.STOCK);
+        public static PPHPHT     = new Expression("PPHPHT"    , false, true , false, ["CHEEKS_HIGH", "CHEEKS_SUCK", "EYELIDS_SQUINT", "NOSE_FLARE", "TONGUE_STUCK_OUT", "MOUTH_OPEN", "MOUTH_PUCKER"], [0.5, 1, 0.5, 1, 1.05, 0.5, 1], null, Expression.STOCK);
+        public static SAD        = new Expression("SAD"       , false, true , true , ["CHEEKS_HIGH", "CHEEKS_PUMP", "CHEEKS_SUCK", "EYEBROWS_ANGRY", "MOUTH_CORNERS_DOWN", "MOUTH_CORNERS_UP", "MOUTH_LIPS_LOWER_UP", "MOUTH_PUCKER", "MOUTH_WIDE", "SYMMETRY_CHIN_LEFT", "SYMMETRY_RIGHT_UP"], [-1.45, -0.35, 0.05, -1, -0.35, -0.4, 0.65, -0.3, 0.25, 0.2, -0.1], "YX-YYY-X--Y", Expression.STOCK);
+        public static SCARED     = new Expression("SCARED"    , false, false, true , ["CHEEKS_HIGH", "EYEBROWS_RAISED_LEFT", "EYEBROWS_RAISED_RIGHT", "WINK_LEFT", "WINK_RIGHT", "NOSE_FLARE", "MOUTH_CORNERS_DOWN", "MOUTH_LIPS_LOWER_UP", "SYMMETRY_CHIN_LEFT", "SYMMETRY_RIGHT_UP"], [-0.05, 1.25, 1.75, -0.65, -0.6, -0.25, 0.35, -0.6, -0.65, 0.05], "Y--YYY-YX-", Expression.STOCK);
+        public static SKEPTICAL  = new Expression("SKEPTICAL" , false, false, true , ["EYEBROWS_RAISED_LEFT", "EYEBROWS_RAISED_RIGHT", "WINK_RIGHT", "NOSE_FLARE", "SYMMETRY_CHIN_LEFT", "SYMMETRY_RIGHT_UP"], [-0.65, 0.95, -0.35, -0.25, -0.2, 0.15], "Y-YYX-", Expression.STOCK);
+        public static STRUGGLING = new Expression("STRUGGLING", false, false, false, ["EYEBROWS_ANGRY", "EYEBROWS_RAISED_LEFT", "EYELIDS_SQUINT", "WINK_LEFT", "WINK_RIGHT", "NOSE_FLARE", "MOUTH_CORNERS_DOWN", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "MOUTH_WIDE", "SYMMETRY_LEFT_UP", "SYMMETRY_RIGHT_UP"], [1, 0.6, 1, 0.25, 0.35, 1, 0.5, 0.35, -0.7, 0.6, 0.05, -0.4, 0.55], "--------Y--Y-", Expression.STOCK);
+
+        //TODO sort both VISMES & if expressions need to change
+        public static ANGRY_NM      = Expression.ANGRY.stripMouthTargets();
+        public static CRYING_NM     = Expression.CRYING.stripMouthTargets();
+        public static DISGUSTED_NM  = Expression.DISGUSTED.stripMouthTargets();
+        public static HAPPY_NM      = Expression.HAPPY.stripMouthTargets();
+        public static LAUGH_NM      = Expression.LAUGH.stripMouthTargets();
+        public static PPHPHT_NM     = Expression.PPHPHT.stripMouthTargets();
+        public static SAD_NM        = Expression.SAD.stripMouthTargets();
+        public static SCARED_NM     = Expression.SCARED.stripMouthTargets();
+        public static SKEPTICAL_NM  = Expression.SKEPTICAL.stripMouthTargets();
+        public static STRUGGLING_NM = Expression.STRUGGLING.stripMouthTargets();
+
+        // those ARPABET values with no viseme: D, G, K, N, NG, T, Y, & Z
+        public static VISEME_DICT = {
+            "."          : new Expression("."          , true , true , false, ["MOUTH_LIPS_LOWER_OUT"],  [0.25], null, Expression.VISEME),
+            "AA"         : new Expression("AA"         , true , true , false, ["MOUTH_LIPS_LOWER_OUT", "MOUTH_OPEN", "MOUTH_PUCKER", "MOUTH_WIDE"], [0.3, .65, .55, 0.10], null, Expression.VISEME),
+            "AO"         : new Expression("AO"         , true , true , false, ["MOUTH_LIPS_LOWER_OUT", "MOUTH_OPEN", "MOUTH_WIDE"], [0.5  , 0.35, -0.35 ], "--X", Expression.VISEME),
+            "AW-OW"      : new Expression("AW-OW"      , true , true , false, ["MOUTH_CORNERS_DOWN", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_UPPER_UP", "MOUTH_OPEN", "MOUTH_PUCKER", "MOUTH_WIDE"], [-0.05, 0.5, 0.35, 0.05, 1.5, -0.3], "Y-----", Expression.VISEME),
+            "AE-EH"      : new Expression("AE-EH"      , true , true , false, ["MOUTH_CORNERS_DOWN", "MOUTH_CORNERS_UP", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_OPEN", "MOUTH_WIDE"], [-0.25, 0.3, 0.8, -0.5, 0.45, 0.3], "Y--Y--", Expression.VISEME),
+            "AH"         : new Expression("AH"         , true , true , false, ["MOUTH_LIPS_LOWER_OUT", "MOUTH_OPEN"], [0.3, 0.4], null, Expression.VISEME),
+            "AY-IH"      : new Expression("AY-IH"      , true , true , false, ["MOUTH_CORNERS_DOWN", "MOUTH_CORNERS_UP", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_OPEN", "MOUTH_WIDE"], [-0.25, 0.3, 0.8, -0.5, 0.35, 0.3], "Y--Y--", Expression.VISEME),
+            "B-M-P"      : new Expression("B-M-P"      , true , true , false, ["MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP"], [0.55, -0.45], "-Y", Expression.VISEME),
+            "CH-JH-SH-ZH": new Expression("CH-JH-SH-ZH", true , true , false, ["MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "MOUTH_PUCKER", "MOUTH_WIDE"], [0.9, -0.45, -0.45, 1.1, 0.8], "-YY--", Expression.VISEME),
+            "DH-TH"      : new Expression("DH-TH"      , true , true , false, ["MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_OPEN", "MOUTH_PUCKER", "MOUTH_WIDE", "TONGUE_RAISED", "TONGUE_STUCK_OUT"], [0.4, -1, 0.1, 0.05, 0.8, 0.15, 0.35], "-Y-----",  Expression.VISEME),
+            "ER-R-W"     : new Expression("ER-R-W"     , true , true , false, ["MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_OPEN", "MOUTH_PUCKER"], [-0.3, 2, 0.25, 1], "Z---", Expression.VISEME),
+            "EY"         : new Expression("EY"         , true , true , false, ["MOUTH_CORNERS_DOWN", "MOUTH_CORNERS_UP", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "MOUTH_OPEN", "MOUTH_PUCKER", "MOUTH_WIDE"], [0.05, 0.45, 0.2, 0.05, 0.15, 0.3, -0.4, 0.3], "------X-", Expression.VISEME),
+            "F-V"        : new Expression("F-V"        , true , true , false, ["MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "MOUTH_WIDE"], [.6, 0.2, -0.5, 1], "--Y-", Expression.VISEME),
+            "IY"         : new Expression("IY"         , true , true , false, ["NOSE_FLARE", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "MOUTH_OPEN"], [0.4, 0.05, 0.1, 0.4, 0.1], null, Expression.VISEME),
+            "L"          : new Expression("L"          , true , true , false, ["MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "MOUTH_OPEN", "MOUTH_PUCKER", "MOUTH_WIDE", "TONGUE_RAISED", "TONGUE_STUCK_OUT"], [0.35, -0.7, -0.2, 0.2, -0.05, 1, 0.2, 0.2], "-YY-X---", Expression.VISEME),
+            "OY-UH-UW"   : new Expression("OY-UH-UW"   , true , true , false, ["MOUTH_LIPS_LOWER_UP", "MOUTH_OPEN", "MOUTH_PUCKER"], [0.65, 0.25, 1.55], null, Expression.VISEME),
+            "S"          : new Expression("S"          , true , true , false, ["MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "MOUTH_WIDE"], [0.4, -0.4, -0.15, 0.65], "-YY-", Expression.VISEME),
+        };
+
         public mirrorReqd = false;
 
         /**
@@ -30,8 +70,9 @@ module QI{
          * @param {number[]} endStateRatios - ratios of states to combine.
          * @param {string} mirrorAxes - When one of the endStateRatios is negative, this must be specified to indicate the axis to mirror on:
          *                 Use anything for endstates >= 0, but '-' is a good convention.
+         * @param {number} type - easy ways to group 
          */
-        constructor(public name : string, public winkable : boolean, public blinkable : boolean, public randomizable : boolean, public endStateNames : string[], public endStateRatios : number[], public mirrorAxes? : string) {
+        constructor(public name : string, public winkable : boolean, public blinkable : boolean, public randomizable : boolean, public endStateNames : string[], public endStateRatios : number[], public mirrorAxes? : string, public type = Expression.CUSTOM) {
             if (this.endStateNames.length !== this.endStateRatios.length) {
                 BABYLON.Tools.Error("Expression: " + this.name + " invalid when endStateNames not same length as endStateRatios");
                 return;
@@ -53,10 +94,52 @@ module QI{
             Object.freeze(this);  // make immutable
         }
         
+        public get isViseme       () : boolean { return this.type === Expression.VISEME; }
+        public get isRegular      () : boolean { return this.type === Expression.STOCK || this.type === Expression.CUSTOM; }
+        public get isSpeechCapable() : boolean { return this.type === Expression.SPEECH_CAPABLE; }
+        public get regularNameFor () : string {
+            return (!this.isViseme) ? this.name.replace("_NM", "") : null;
+        }
+        public get speechCapableNameFor () : string {
+            if (this.isSpeechCapable || this.name === "NONE") return this.name;
+            return (!this.isViseme) ? this.name + "_NM" : null;
+        }
+        
+        public static convertForSpeech(name : string) : string {
+            if (name.indexOf("_NM") !== -1 || name === "NONE") return name;
+            return name + "_NM";
+        }
+        
+        public stripMouthTargets() : Expression {
+            var name = this.name + "_NM";
+            var endStateNames  : string[] = [];
+            var endStateRatios : number[] = [];
+            var mirrorAxes : string = null;
+            var mirrorReqd = false;
+            
+            for (var i = 0, nStates = this.endStateNames.length; i < nStates; i++){
+                 if (this.endStateNames[i].indexOf("MOUTH_") === -1) {
+                     endStateNames .push(this.endStateNames [i]);
+                     endStateRatios.push(this.endStateRatios[i]);
+                     mirrorReqd = mirrorReqd || this.endStateRatios[i] < 0;
+                 }   
+            }
+            // if mirror required now, must have been required before
+            if (mirrorReqd) {
+                mirrorAxes = "";
+                for (var i = 0, nStates = this.endStateNames.length; i < nStates; i++){
+                     if (this.endStateNames[i].indexOf("MOUTH_") === -1) {
+                         mirrorAxes += this.mirrorAxes.substr(i, 1);
+                     }   
+                }
+            }
+            return new Expression(name, this.winkable, this.blinkable, this.randomizable, endStateNames, endStateRatios, mirrorAxes, Expression.SPEECH_CAPABLE);
+        }
+        
         /**
          * This is so expression developer can log changes to be communicated back for source code implementation.
          */
-        public toString() : string {
+        public toScript() : string {
             var ret = "var exp = new QI.Expression(\"" + this.name + "\", " + this.winkable + ", " + this.blinkable + ", " + this.randomizable + ", ";
             var n = "[", s = "[";
             var nStates = this.endStateNames.length;
@@ -74,7 +157,14 @@ module QI{
                 }
             }
             ret += n + ", " + s + ", ";
-            ret += this.mirrorAxes ? "\"" + this.mirrorAxes + "\"" : "null";
+            ret += this.mirrorReqd ? "\"" + this.mirrorAxes + "\"" : "null";
+            
+            switch (this.type) {
+                case Expression.STOCK         : ret += ", Expression.STOCK"         ; break;
+                case Expression.CUSTOM        : ret += ", Expression.CUSTOM"        ; break;
+                case Expression.VISEME        : ret += ", Expression.VISEME"        ; break;
+                case Expression.SPEECH_CAPABLE: ret += ", Expression.SPEECH_CAPABLE"; break;
+            }
             ret += ");\n";
             return ret + "model.addExpression(exp);";
         }
@@ -145,7 +235,7 @@ module QI{
         }
         
         /**
-         * @param {String} name - The name of the new expression.
+         * @param {Expression} exp - The expression to be made available.
          * @param {boolean} winkable - Not all expressions is it appropriate to wink, indicate this one is with true.
          * @param {boolean} blinkable - It is not appropriate when an expression closes eyelids to allow blinking. Indicate no closing with true.
          * @param {Array} endStateNames - Names of the end states to be based on
@@ -162,27 +252,33 @@ module QI{
         
         /**
          * Adds the expressions contained in this file.  These do take both time to construct and memory, so doing all might be wasteful.
-         * @param {string} whichOnes - names of the ones to load, e.g. 'ANGRY LAUGH'.  When missing, then all.
+         * @param {string} whichOnes - names of the ones to load, e.g. 'ANGRY LAUGH'.  When "", then all.
+         * @param {boolean} visemesToo - When true, also add speech friendly versions of the expressions.
          */
-        public addStockExpressions(whichOnes? : string) : void {
-            var all = !whichOnes;
-            if (all || whichOnes.indexOf("ANGRY"     ) !== -1) this.addExpression(Expression.ANGRY);
-            if (all || whichOnes.indexOf("CRYING"    ) !== -1) this.addExpression(Expression.CRYING);
-            if (all || whichOnes.indexOf("DISGUSTED" ) !== -1) this.addExpression(Expression.DISGUSTED);
-            if (all || whichOnes.indexOf("HAPPY"     ) !== -1) this.addExpression(Expression.HAPPY);
-            if (all || whichOnes.indexOf("LAUGH"     ) !== -1) this.addExpression(Expression.LAUGH);
-            if (all || whichOnes.indexOf("PPHPHT"    ) !== -1) this.addExpression(Expression.PPHPHT);
-            if (all || whichOnes.indexOf("SAD"       ) !== -1) this.addExpression(Expression.SAD);
-            if (all || whichOnes.indexOf("SCARED"    ) !== -1) this.addExpression(Expression.SCARED);
-            if (all || whichOnes.indexOf("SKEPTICAL" ) !== -1) this.addExpression(Expression.SKEPTICAL);
-            if (all || whichOnes.indexOf("STRUGGLING") !== -1) this.addExpression(Expression.STRUGGLING);
+        public addStockExpressions(whichOnes : string = "", visemesToo = false) : void {
+            var all : boolean = whichOnes.length === 0;
+            if (all || whichOnes.indexOf("ANGRY"     ) !== -1) { this.addExpression(Expression.ANGRY     ); if (visemesToo) this.addExpression(Expression.ANGRY_NM     ); }
+            if (all || whichOnes.indexOf("CRYING"    ) !== -1) { this.addExpression(Expression.CRYING    ); if (visemesToo) this.addExpression(Expression.CRYING_NM    ); }
+            if (all || whichOnes.indexOf("DISGUSTED" ) !== -1) { this.addExpression(Expression.DISGUSTED ); if (visemesToo) this.addExpression(Expression.DISGUSTED_NM ); }
+            if (all || whichOnes.indexOf("HAPPY"     ) !== -1) { this.addExpression(Expression.HAPPY     ); if (visemesToo) this.addExpression(Expression.HAPPY_NM     ); }
+            if (all || whichOnes.indexOf("LAUGH"     ) !== -1) { this.addExpression(Expression.LAUGH     ); if (visemesToo) this.addExpression(Expression.LAUGH_NM     ); }
+            if (all || whichOnes.indexOf("PPHPHT"    ) !== -1) { this.addExpression(Expression.PPHPHT    ); if (visemesToo) this.addExpression(Expression.PPHPHT_NM    ); }
+            if (all || whichOnes.indexOf("SAD"       ) !== -1) { this.addExpression(Expression.SAD       ); if (visemesToo) this.addExpression(Expression.SAD_NM       ); }
+            if (all || whichOnes.indexOf("SCARED"    ) !== -1) { this.addExpression(Expression.SCARED    ); if (visemesToo) this.addExpression(Expression.SCARED_NM    ); }
+            if (all || whichOnes.indexOf("SKEPTICAL" ) !== -1) { this.addExpression(Expression.SKEPTICAL ); if (visemesToo) this.addExpression(Expression.SKEPTICAL_NM ); }
+            if (all || whichOnes.indexOf("STRUGGLING") !== -1) { this.addExpression(Expression.STRUGGLING); if (visemesToo) this.addExpression(Expression.STRUGGLING_NM); }
+            
+            if (visemesToo) {
+                for (var name in Expression.VISEME_DICT) {
+                    this.addExpression(Expression.VISEME_DICT[name]);
+                }
+            }
         }
         
         /**
          * Release the shape key components after all the base expressions have been created.  Those for winking are always kept.
-         * @param {boolean} keepThoseForSpeech - when true, keys for mouth & some for tongue are still kept
          */
-        public removeExpressionComponents(keepThoseForSpeech : boolean) : void {
+        public removeExpressionComponents() : void {
             // those for CHEEKS
             this._face.deleteShapeKey("CHEEKS_HIGH");
             this._face.deleteShapeKey("CHEEKS_PUMP");
@@ -198,19 +294,18 @@ module QI{
             this._face.deleteShapeKey("WINK_BOTH_CLOSED");
             this._face.deleteShapeKey("WINK_LEFT");
             this._face.deleteShapeKey("WINK_RIGHT");
-            
-            // those for NOSE
-            this._face.deleteShapeKey("NOSE_FLARE");
-
-            // those for TONGUE
-            this._face.deleteShapeKey("TONGUE_STUCK_OUT");
-       
+                   
             // those for SYMMETRY
             this._face.deleteShapeKey("SYMMETRY_CHIN_LEFT");
             this._face.deleteShapeKey("SYMMETRY_LEFT_UP");
             this._face.deleteShapeKey("SYMMETRY_RIGHT_UP");
 
-            if (keepThoseForSpeech) return;
+            // those for NOSE
+            this._face.deleteShapeKey("NOSE_FLARE");
+
+            // those for TONGUE
+            this._face.deleteShapeKey("TONGUE_RAISED");
+            this._face.deleteShapeKey("TONGUE_STUCK_OUT");
             
             // those for MOUTH
             this._face.deleteShapeKey("MOUTH_CORNERS_DOWN");
@@ -221,16 +316,26 @@ module QI{
             this._face.deleteShapeKey("MOUTH_OPEN");
             this._face.deleteShapeKey("MOUTH_PUCKER");
             this._face.deleteShapeKey("MOUTH_WIDE");
-
-            // those for TONGUE
-            this._face.deleteShapeKey("TONGUE_RAISED");
         }
         
         public getExpressionNames() : Array<string> {
             var len = this.expressions.length;
-            var ret = new Array<string>(len);
+            var ret = new Array<string>();
             for (var i = 0; i < len; i++) {
-                ret[i] = this.expressions[i].name;
+                if (!this.expressions[i].isViseme) {
+                    ret.push(this.expressions[i].name);
+                }
+            }
+            return ret;
+        }
+        
+        public getVisemeNames() : Array<string> {
+            var len = this.expressions.length;
+            var ret = new Array<string>();
+            for (var i = 0; i < len; i++) {
+                if (this.expressions[i].isViseme) {
+                    ret.push(this.expressions[i].name);
+                }
             }
             return ret;
         }
