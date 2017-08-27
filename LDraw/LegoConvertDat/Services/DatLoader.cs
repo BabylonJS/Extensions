@@ -22,6 +22,7 @@ namespace LegoConvertDat.Services
         public bool IsPart { get; set; }
         public DatLoader(string rootpath, string filename, bool hiqual)
         {
+            HiQuality = hiqual;
             RootPath = rootpath;
             if (RootPath.IndexOf('\\', RootPath.Length - 1) < 0)
                 RootPath += "\\";

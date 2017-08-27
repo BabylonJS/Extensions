@@ -14,6 +14,8 @@ namespace LegoConvertDat.Helpers
                 str = str.Replace("  ", " ");
             if (str.Length > 0)
             {
+                if ((str[0] == ' ') && (str.Length == 1))
+                    return "";
                 while (str[0] == ' ')
                     str = str.Substring(1);
                 while (str[str.Length - 1] == ' ')
