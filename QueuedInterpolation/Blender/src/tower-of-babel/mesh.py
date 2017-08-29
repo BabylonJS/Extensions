@@ -228,18 +228,6 @@ class Mesh(FCurveAnimatable):
         self.colors     = [] # not always used
         self.indices    = []
         self.subMeshes  = []
-        
-        if forcedParent is None and len(object.particle_systems) > 0:
-            if len(object.particle_systems) > 1:
-                Logger.warn('Only 1 particle system supported per mesh, ignored. ', 2)
-            
-            elif object.particle_systems[0].settings.type != 'HAIR':
-                Logger.warn('Only HAIR particle systems supported.  Use convert, ignored. ', 2)
-            else:
-                # hair temporary conversion of particle system only works when mesh is the active mesh
-                exporter.scene.objects.active = object
-                exporter.meshesAndNodes.append(Hair(object.particle_systems[0], object, self, exporter))
-                exporter.scene.objects.active = object
 
         hasUV = len(mesh.tessface_uv_textures) > 0
         if hasUV:
@@ -764,6 +752,9 @@ class Mesh(FCurveAnimatable):
 
         # close no cloning section
         file_handler.write(indent2 + '}\n')
+        
+        # geo needs to be defined before physics imposter
+        writeImposter(file_handler, self, var, indent2)
 
         # add hook for postConstruction(), if found in super class
         file_handler.write(indent2 + 'if (this.postConstruction) this.postConstruction();\n')
@@ -815,7 +806,8 @@ class Mesh(FCurveAnimatable):
         file_handler.write(indent + 'var instance;\n')
         for instance in self.instances:
             file_handler.write(indent + 'instance =  ' + var + '.createInstance("' + instance.name + '");\n')
-            writePosRotScale(file_handler, instance, 'instance', indent, True)
+            writePosRotScale(file_handler, instance, 'instance', indent)
+            writeImposter(file_handler, instance, 'instance', indent, True)
             file_handler.write(indent + 'if (positionOffset) instance.position.addInPlace(positionOffset);\n')
             file_handler.write(indent + 'instance.checkCollisions = ' + format_bool(self.checkCollisions) + ';\n')
             if self.animationsPresent:
@@ -895,7 +887,7 @@ def mesh_node_common_script(file_handler, typescript_file_handler, meshOrNode, i
     return baseClass
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #  module level since called from Mesh & Node, and also for instances
-def writePosRotScale(file_handler, object, var, indent, isInstance = False):
+def writePosRotScale(file_handler, object, var, indent):
     # these need to be written prior to freezing
     # this also needs to be called in parent, prior to children instancing, so freeze works for them too
     # remember switching y with z at the same time
@@ -915,7 +907,8 @@ def writePosRotScale(file_handler, object, var, indent, isInstance = False):
     # need to check if present, since Node has no freezeWorldMatrix
     if hasattr(object, 'freezeWorldMatrix') and object.freezeWorldMatrix:
         file_handler.write(indent + var + '.freezeWorldMatrix();\n')
-        
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+def writeImposter(file_handler, object, var, indent, isInstance = False):
     if hasattr(object, 'physicsImpostor'):
         if not isInstance:
             file_handler.write(indent + 'if (!scene.isPhysicsEnabled()) {\n')
@@ -925,7 +918,7 @@ def writePosRotScale(file_handler, object, var, indent, isInstance = False):
                                                                                            format_int(object.physicsImpostor) + 
                                                                                         ', { mass: '      + format_f(object.physicsMass) +
                                                                                         ', friction: '    + format_f(object.physicsFriction) +
-                                                                                        ', restitution: ' + format_f(object.physicsRestitution) + '}, scene);\n')
+                                                                                        ', restitution: ' + format_f(object.physicsRestitution) + '}, scene);\n\n')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def get_base_class(meshOrNode):
      # do not abbreviate to '_B' for BABYLON, since will also be written to .d.ts
@@ -1126,7 +1119,7 @@ bpy.types.Mesh.entranceSnd = bpy.props.StringProperty(
 )
 bpy.types.Mesh.disposeSound = bpy.props.BoolProperty(
     name='Dispose Sound',
-    description='When True, dispose the sound once played.',
+    description='When True, dispose the sound once played.  For multiple appearances, use False.',
     default = True
 )
 bpy.types.Mesh.useFlatShading = bpy.props.BoolProperty(
@@ -1260,10 +1253,15 @@ class MeshPanel(bpy.types.Panel):
 
     def draw(self, context):
         ob = context.object
+        treatAsHair = ob.data.treatAsHair   
         layout = self.layout
-        layout.prop(ob.data, 'baseClass')
-
+        
+        row = layout.row()
+        row.enabled = not treatAsHair
+        row.prop(ob.data, 'baseClass')
+        # - - - - - - - - - - - - - - - - - - - - - - - - -
         box = layout.box()
+        box.enabled = not treatAsHair
         box.label(text='Grand Entrance:')
         row = box.row()
         row.enabled = not ob.parent or not isinstance(ob.parent.data, bpy.types.Mesh)
@@ -1280,32 +1278,40 @@ class MeshPanel(bpy.types.Panel):
         row = box.row()
         row.enabled = (not ob.parent or not isinstance(ob.parent.data, bpy.types.Mesh)) and ob.data.grandEntrance and ob.data.grandEntrance != JUST_MAKE_VISIBLE
         row.prop(ob.data, 'disposeSound')
-
+        # - - - - - - - - - - - - - - - - - - - - - - - - -
         row = layout.row()
+        row.enabled = not treatAsHair
         row.prop(ob.data, 'useFlatShading')
         row.prop(ob.data, 'deferNormals')
 
         row = layout.row()
+        row.enabled = not treatAsHair
         row.prop(ob.data, 'castShadows')
         row.prop(ob.data, 'receiveShadows')
 
         row = layout.row()
+        row.enabled = not treatAsHair
         row.prop(ob.data, 'freezeWorldMatrix')
         row.prop(ob.data, 'loadDisabled')
 
         row = layout.row()
+        row.enabled = not treatAsHair
         row.prop(ob.data, 'autoAnimate')
         row.prop(ob.data, 'checkCollisions')
-
+        # - - - - - - - - - - - - - - - - - - - - - - - - -
         box = layout.box()
         box.label(text='Skeleton:')
+        box.enabled = not treatAsHair
+        
         box.prop(ob.data, 'ignoreSkeleton')
         row = box.row()
         row.enabled = not ob.data.ignoreSkeleton
         row.prop(ob.data, 'maxInfluencers')
-
+        # - - - - - - - - - - - - - - - - - - - - - - - - -
         box = layout.box()
         box.label(text='Shape Keys:')
+        box.enabled = not treatAsHair
+        
         row = box.row()
         row.prop(ob.data, 'ignoreShapeKeys')
         row.prop(ob.data, 'prefixDelimiter')
@@ -1317,24 +1323,59 @@ class MeshPanel(bpy.types.Panel):
         row = box.row()
         row.enabled = not ob.data.ignoreShapeKeys
         row.prop(ob.data, 'defaultShapeKeyGroup')
-
+        # - - - - - - - - - - - - - - - - - - - - - - - - -
         box = layout.box()
         box.label('Materials')
+        box.enabled = not treatAsHair
+        
         box.prop(ob.data, 'materialNameSpace')
         box.prop(ob.data, 'maxSimultaneousLights')
         box.prop(ob.data, 'checkReadyOnlyOnce')
 
         box = layout.box()
         box.label(text='Procedural Texture / Cycles Baking')
+        box.enabled = not treatAsHair
+        
 #        box.prop(ob.data, 'forceBaking')
 #        box.prop(ob.data, 'usePNG')
         box.prop(ob.data, 'bakeSize')
         box.prop(ob.data, 'bakeQuality')
-
+        # - - - - - - - - - - - - - - - - - - - - - - - - -
         box = layout.box()
         box.prop(ob.data, 'attachedSound')
+        box.enabled = not treatAsHair
+        
         row = box.row()
-
         row.prop(ob.data, 'autoPlaySound')
         row.prop(ob.data, 'loopSound')
         box.prop(ob.data, 'maxSoundDistance')
+        # - - - - - - - - - - - - - - - - - - - - - - - - -
+        # types defined in particle_hair.py
+        box = layout.box()
+        box.label('Hair Settings')
+        
+        row = box.row()
+        row.prop(ob.data, 'treatAsHair')
+        
+        row = box.row()
+        row.enabled = treatAsHair
+        row.prop(ob.data, 'boneName')
+        
+        row = box.row()
+        row.enabled = treatAsHair
+        row.prop(ob.data, 'stiffness')
+        
+        box = box.box()
+        box.label('Color')
+        usingWheel = ob.data.stdColors == USE_BASE
+        row = box.row()
+        row.enabled =  treatAsHair and usingWheel
+        row.prop(ob.data, 'baseColor')
+        
+        row = box.row()
+        row.enabled = treatAsHair
+        row.prop(ob.data, 'stdColors')
+        
+        row = box.row()
+        row.enabled = treatAsHair
+        row.prop(ob.data, 'colorSpread')

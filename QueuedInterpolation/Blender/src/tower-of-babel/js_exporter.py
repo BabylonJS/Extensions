@@ -101,37 +101,40 @@ class JSExporter:
                         Logger.warn('The following camera not visible in scene thus ignored: ' + object.name)
 
                 elif object.type == 'MESH':
-                    forcedParent = None
-                    nameID = ''
-                    nextStartFace = 0
-
-                    while True and self.isInSelectedLayer(object, scene):
-                        mesh = Mesh(object, scene, nextStartFace, forcedParent, nameID, self)
-                        if mesh.hasUnappliedTransforms and hasattr(mesh, 'skeletonWeights'):
-                            self.fatalError = 'Mesh: ' + mesh.name + ' has un-applied transformations.  This will never work for a mesh with an armature.  Export cancelled'
-                            Logger.log(self.fatalError)
-                            return
-                        
-                        if hasattr(mesh, 'physicsImpostor'): self.needPhysics = True
-
-                        if hasattr(mesh, 'instances'):
-                            self.meshesAndNodes.append(mesh)
-                        else:
-                            break
-
-                        if object.data.attachedSound != '':
-                            self.sounds.append(Sound(object.data.attachedSound, object.data.autoPlaySound, object.data.loopSound, object))
-
-                        nextStartFace = mesh.offsetFace
-                        if nextStartFace == 0:
-                            break
-
-                        if forcedParent is None:
-                            nameID = 0
-                            forcedParent = object
-                            Logger.warn('The following mesh has exceeded the maximum # of vertex elements & will be broken into multiple Babylon meshes: ' + object.name)
-
-                        nameID = nameID + 1
+                    if object.data.treatAsHair:
+                        self.meshesAndNodes.append(Hair(object))
+                    else:
+                        forcedParent = None
+                        nameID = ''
+                        nextStartFace = 0
+    
+                        while True and self.isInSelectedLayer(object, scene):
+                            mesh = Mesh(object, scene, nextStartFace, forcedParent, nameID, self)
+                            if mesh.hasUnappliedTransforms and hasattr(mesh, 'skeletonWeights'):
+                                self.fatalError = 'Mesh: ' + mesh.name + ' has un-applied transformations.  This will never work for a mesh with an armature.  Export cancelled'
+                                Logger.log(self.fatalError)
+                                return
+                            
+                            if hasattr(mesh, 'physicsImpostor'): self.needPhysics = True
+    
+                            if hasattr(mesh, 'instances'):
+                                self.meshesAndNodes.append(mesh)
+                            else:
+                                break
+    
+                            if object.data.attachedSound != '':
+                                self.sounds.append(Sound(object.data.attachedSound, object.data.autoPlaySound, object.data.loopSound, object))
+    
+                            nextStartFace = mesh.offsetFace
+                            if nextStartFace == 0:
+                                break
+    
+                            if forcedParent is None:
+                                nameID = 0
+                                forcedParent = object
+                                Logger.warn('The following mesh has exceeded the maximum # of vertex elements & will be broken into multiple Babylon meshes: ' + object.name)
+    
+                            nameID = nameID + 1
 
                 elif object.type == 'EMPTY':
                     self.meshesAndNodes.append(Node(object, scene.includeMeshFactory))
