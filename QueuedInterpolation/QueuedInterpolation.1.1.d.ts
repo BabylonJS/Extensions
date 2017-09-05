@@ -729,6 +729,18 @@ declare module QI {
 }
 
 declare module QI {
+    function Whoosh(scene: BABYLON.Scene): BABYLON.Sound;
+}
+
+declare module QI {
+    function decode16Bit(base64: string): Float32Array;
+}
+
+declare module QI {
+    function Teleport(scene: BABYLON.Scene): BABYLON.Sound;
+}
+
+declare module QI {
     /** has its origins from:  http://bytearray.org/wp-content/projects/WebAudioRecorder/ */
     class AudioRecorder {
         initialized: boolean;
@@ -894,18 +906,6 @@ declare module QI {
 }
 
 declare module QI {
-    function Whoosh(scene: BABYLON.Scene): BABYLON.Sound;
-}
-
-declare module QI {
-    function decode16Bit(base64: string): Float32Array;
-}
-
-declare module QI {
-    function Teleport(scene: BABYLON.Scene): BABYLON.Sound;
-}
-
-declare module QI {
     /**
      * Implemented using the ShaderBuilder extension embedded into QI.
      * This is an abstract class.  A concrete subclass needs to implement _getEffectHostMesh() & _makeCallback()
@@ -972,14 +972,6 @@ declare module QI {
 }
 
 declare module QI {
-    class ExpandEntrance extends AbstractGrandEntrance {
-        private _HighLightLayer;
-        /** @override */
-        makeEntrance(): void;
-    }
-}
-
-declare module QI {
     class GatherEntrance extends AbstractGrandEntrance {
         /** @override */
         makeEntrance(): void;
@@ -1037,6 +1029,15 @@ declare module QI {
          * The fire is now ready. Go for it.
          */
         private _showTime();
+    }
+}
+
+declare module QI {
+    class ExpandEntrance extends AbstractGrandEntrance {
+        private _HighLightLayer;
+        private _kids;
+        /** @override */
+        makeEntrance(): void;
     }
 }
 
@@ -1188,6 +1189,7 @@ declare module QI {
          *      absoluteRotation - Rotation arg is an absolute value, not POV (default false).
          *      pace - Any Object with the function: getCompletionMilestone(currentDurationRatio) (default MotionEvent.LINEAR)
          *      sound - Sound to start with event.  WARNING: When event also has a sync partner, there could be issues.
+         *      requireCompletionOf - A way to serialize events from different queues e.g. shape key & skeleton.
          *
          *      noStepWiseMovement - Calc the full amount of movement from Node's original position / rotation,
          *                           rather than stepwise (default false).  No meaning when no rotation in event.
@@ -1239,6 +1241,7 @@ declare module QI {
          *      absoluteRotation - Rotation arg is an absolute value, not POV (default false).
          *      pace - Any Object with the function: getCompletionMilestone(currentDurationRatio) (default MotionEvent.LINEAR)
          *      sound - Sound to start with event.  WARNING: When event also has a sync partner, there could be issues.
+         *      requireCompletionOf - A way to serialize events from different queues e.g. shape key & skeleton.
          *
          *      noStepWiseMovement - Calc the full amount of movement from Node's original position / rotation,
          *                           rather than stepwise (default false).  No meaning when no rotation in event.
@@ -1382,7 +1385,21 @@ declare module QI {
 }
 
 declare module QI {
-    class Hair extends BABYLON.LinesMesh {
+    class Hair extends BABYLON.Mesh {
+        static _Colors: {
+            [name: string]: BABYLON.Color3;
+        };
+        private _nPosElements;
+        private _strandNumVerts;
+        cornerOffset: number;
+        namedParameter: any;
+        seed: number;
+        colorSpread: number;
+        intraStrandColorSpread: number;
+        alpha: number;
+        color: BABYLON.Color3;
+        private _namedColor;
+        namedColor: string;
         /**
          * @constructor - Args same As BABYLON.Mesh, except that the arg for useVertexColor in LinesMesh is not passed an hard-coded to true
          * @param {string} name - The value used by scene.getMeshByName() to do a lookup.
@@ -1399,13 +1416,26 @@ declare module QI {
          * @param {number[]} strandNumVerts -The number of verts per each strand.
          * @param {number[]} rootRelativePositions - The x, y, z values of each point.  First is root is absolute, rest are delta to root.
          *                                           More compact than absolute for all, & useful in calculating hair length at each point.
-         * @param {number} colorSpread - The maximum amount to randomly change the color of a thread, optional.
          * @param {number} longestStrand - The longest distance between the first & last points in the strands, optional.
          * @param {number} stiffness - The matrix weight at the end of the longest strand, optional.
          * @param {number} boneName - The name of the bone in the skeleton to be used as a bone influencer, optional.
          */
-        assemble(strandNumVerts: number[], rootRelativePositions: number[], colorSpread?: number, longestStrand?: number, stiffness?: number, boneName?: string): void;
+        assemble(strandNumVerts: number[], rootRelativePositions: number[], longestStrand?: number, stiffness?: number, boneName?: string): void;
+        /**
+         * Positions of strands are sent relative to the start of each strand, which saves space; undo here
+         * Also accumulates the # of position elements (verts * 3), for easy FloatArray initialization.
+         */
+        private _toAbsolutePositions(rootRelativePositions);
+        private _dump(values, name);
+        private static _right;
+        private static _up;
+        private static _forward;
+        private _extrudeTriangle(adx, hasPrev, hasNext, absPositions, positions32, pdx);
+        private _assignWeights(rootRelativePositions, longestStrand?, stiffness?, boneName?);
+        assignVertexColor(): void;
         private _lengthSoFar(deltaX, deltaY, deltaZ);
+        private _workingSeed;
+        random(): number;
     }
 }
 
@@ -1718,6 +1748,11 @@ declare module QI {
         getEndStateRatio(idx: number): number;
         getEndStateRatios(): Array<number>;
         protected _toScriptCustomArgs(): string;
+        /**
+         * This returns a script to request a combined derived keys.
+         * @param {string} groupVarName - This is the shapekey group on which to do the combining.
+         */
+        toDerivedKeyScript(groupVarName: any): string;
         getClassName(): string;
         toString(): string;
     }
@@ -1889,9 +1924,10 @@ declare module QI {
          * @param {Array} endStateNames - Names of the end states to be based on
          * @param {Array} endStateRatios - Not validated, but if -1 < or > 1, then can never be called, since Deformation validates
          * @param {string} mirrorAxes - axis [X,Y, or Z] to mirror against for an end state ratio, which is negative.  No meaning if positive.  If null, shape key group setting used.
-         * @param {String} newStateName - The name of the new state.  If not set, then it will be computed.
+         * @param {String} newStateName - The name of the new state.  If not set, then it will be computed. (optional)
+         * @returns {String} The state name, which might be useful, if you did not include it as an argument
          */
-        addComboDerivedKey(referenceStateName: string, endStateNames: Array<string>, endStateRatios: Array<number>, mirrorAxes?: string, newStateName?: string): void;
+        addComboDerivedKey(referenceStateName: string, endStateNames: Array<string>, endStateRatios: Array<number>, mirrorAxes?: string, newStateName?: string): string;
         /**
          * Called in construction code from TOB.  Unlikely to be called by application code.
          * @param {string} stateName - Name of the end state to be added.
@@ -2264,7 +2300,11 @@ declare module QI {
         endStateNames: string[];
         endStateRatios: number[];
         mirrorAxes: string;
-        id: number;
+        type: number;
+        static STOCK: number;
+        static CUSTOM: number;
+        static VISEME: number;
+        static SPEECH_CAPABLE: number;
         static NONE: Expression;
         static ANGRY: Expression;
         static CRYING: Expression;
@@ -2276,17 +2316,27 @@ declare module QI {
         static SCARED: Expression;
         static SKEPTICAL: Expression;
         static STRUGGLING: Expression;
-        static VISEME_ID: number;
+        static ANGRY_NM: Expression;
+        static CRYING_NM: Expression;
+        static DISGUSTED_NM: Expression;
+        static HAPPY_NM: Expression;
+        static LAUGH_NM: Expression;
+        static PPHPHT_NM: Expression;
+        static SAD_NM: Expression;
+        static SCARED_NM: Expression;
+        static SKEPTICAL_NM: Expression;
+        static STRUGGLING_NM: Expression;
         static VISEME_DICT: {
             ".": Expression;
             "AA": Expression;
             "AO": Expression;
             "AW-OW": Expression;
             "AE-EH": Expression;
-            "AH-HH": Expression;
+            "AH": Expression;
             "AY-IH": Expression;
             "B-M-P": Expression;
             "CH-JH-SH-ZH": Expression;
+            "D": Expression;
             "DH-TH": Expression;
             "ER-R-W": Expression;
             "EY": Expression;
@@ -2306,13 +2356,20 @@ declare module QI {
          * @param {number[]} endStateRatios - ratios of states to combine.
          * @param {string} mirrorAxes - When one of the endStateRatios is negative, this must be specified to indicate the axis to mirror on:
          *                 Use anything for endstates >= 0, but '-' is a good convention.
+         * @param {number} type - easy ways to group
          */
-        constructor(name: string, winkable: boolean, blinkable: boolean, randomizable: boolean, endStateNames: string[], endStateRatios: number[], mirrorAxes?: string, id?: number);
+        constructor(name: string, winkable: boolean, blinkable: boolean, randomizable: boolean, endStateNames: string[], endStateRatios: number[], mirrorAxes?: string, type?: number);
         readonly isViseme: boolean;
+        readonly isRegular: boolean;
+        readonly isSpeechCapable: boolean;
+        readonly regularNameFor: string;
+        readonly speechCapableNameFor: string;
+        static convertForSpeech(name: string): string;
+        stripMouthTargets(): Expression;
         /**
          * This is so expression developer can log changes to be communicated back for source code implementation.
          */
-        toString(): string;
+        toScript(): string;
     }
     class Automaton extends Mesh {
         private static _WINK;
@@ -2343,7 +2400,7 @@ declare module QI {
          */
         protected postConstruction(): void;
         /**
-         * @param {String} name - The name of the new expression.
+         * @param {Expression} exp - The expression to be made available.
          * @param {boolean} winkable - Not all expressions is it appropriate to wink, indicate this one is with true.
          * @param {boolean} blinkable - It is not appropriate when an expression closes eyelids to allow blinking. Indicate no closing with true.
          * @param {Array} endStateNames - Names of the end states to be based on
@@ -2353,9 +2410,10 @@ declare module QI {
         addExpression(exp: Expression): void;
         /**
          * Adds the expressions contained in this file.  These do take both time to construct and memory, so doing all might be wasteful.
-         * @param {string} whichOnes - names of the ones to load, e.g. 'ANGRY LAUGH'.  When null, then all.
+         * @param {string} whichOnes - names of the ones to load, e.g. 'ANGRY LAUGH'.  When "", then all.
+         * @param {boolean} visemesToo - When true, also add speech friendly versions of the expressions.
          */
-        addStockExpressions(whichOnes: string, visemesToo?: boolean): void;
+        addStockExpressions(whichOnes?: string, visemesToo?: boolean): void;
         /**
          * Release the shape key components after all the base expressions have been created.  Those for winking are always kept.
          */

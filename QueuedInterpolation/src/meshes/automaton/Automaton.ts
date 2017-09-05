@@ -12,7 +12,7 @@ module QI{
         public static CUSTOM         = 1;
         public static VISEME         = 2;
         public static SPEECH_CAPABLE = 3;
-        
+
         // stock expressions
         public static NONE       = new Expression("NONE"      , true , true , false, [], [], null, 0);
         public static ANGRY      = new Expression("ANGRY"     , false, true , true , ["CHEEKS_HIGH", "CHEEKS_SUCK", "EYEBROWS_ANGRY", "EYEBROWS_RAISED_LEFT", "NOSE_FLARE", "MOUTH_CORNERS_DOWN", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "SYMMETRY_LEFT_UP"], [1.85, 0.3, 1.85, -0.3, 1.4, 1, -0.2, 1, 0.1], "---Y--Y--", Expression.STOCK);
@@ -43,7 +43,7 @@ module QI{
             "."          : new Expression("."          , true , true , false, ["MOUTH_LIPS_LOWER_OUT"],  [0.25], null, Expression.VISEME),
             "AA"         : new Expression("AA"         , true , true , false, ["MOUTH_LIPS_LOWER_OUT", "MOUTH_OPEN", "MOUTH_PUCKER", "MOUTH_WIDE"], [0.3, .65, .55, 0.10], null, Expression.VISEME),
             "AO"         : new Expression("AO"         , true , true , false, ["MOUTH_LIPS_LOWER_OUT", "MOUTH_OPEN", "MOUTH_WIDE"], [0.5  , 0.35, -0.35 ], "--X", Expression.VISEME),
-            "AW-OW"      : new Expression("AW-OW"      , true , true , false, ["MOUTH_CORNERS_DOWN", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_UPPER_UP", "MOUTH_OPEN", "MOUTH_PUCKER", "MOUTH_WIDE"], [-0.05, 0.5, 0.35, 0.05, 1.5, -0.3], "Y-----", Expression.VISEME),
+            "AW-OW"      : new Expression("AW-OW"      , true , true , false, ["MOUTH_CORNERS_DOWN", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_UPPER_UP", "MOUTH_OPEN", "MOUTH_PUCKER", "MOUTH_WIDE"], [-0.05, 0.5, 0.35, 0.3, 1.15, -0.3], "Y----X", Expression.VISEME),
             "AE-EH"      : new Expression("AE-EH"      , true , true , false, ["MOUTH_CORNERS_DOWN", "MOUTH_CORNERS_UP", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_OPEN", "MOUTH_WIDE"], [-0.25, 0.3, 0.8, -0.5, 0.45, 0.3], "Y--Y--", Expression.VISEME),
             "AH"         : new Expression("AH"         , true , true , false, ["MOUTH_LIPS_LOWER_OUT", "MOUTH_OPEN"], [0.3, 0.4], null, Expression.VISEME),
             "AY-IH"      : new Expression("AY-IH"      , true , true , false, ["MOUTH_CORNERS_DOWN", "MOUTH_CORNERS_UP", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_OPEN", "MOUTH_WIDE"], [-0.25, 0.3, 0.8, -0.5, 0.35, 0.3], "Y--Y--", Expression.VISEME),
@@ -56,7 +56,7 @@ module QI{
             "IY"         : new Expression("IY"         , true , true , false, ["NOSE_FLARE", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "MOUTH_OPEN"], [0.4, 0.05, 0.1, 0.4, 0.1], null, Expression.VISEME),
             "L"          : new Expression("L"          , true , true , false, ["MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "MOUTH_OPEN", "MOUTH_PUCKER", "MOUTH_WIDE", "TONGUE_RAISED", "TONGUE_STUCK_OUT"], [0.35, -0.7, -0.2, 0.2, -0.05, 1, 0.2, 0.2], "-YY-X---", Expression.VISEME),
             "OY-UH-UW"   : new Expression("OY-UH-UW"   , true , true , false, ["MOUTH_LIPS_LOWER_UP", "MOUTH_OPEN", "MOUTH_PUCKER"], [0.65, 0.25, 1.55], null, Expression.VISEME),
-            "S"          : new Expression("S"          , true , true , false, ["MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "MOUTH_WIDE"], [0.4, -0.4, -0.15, 0.65], "-YY-", Expression.VISEME),
+            "S"          : new Expression("S"          , true , true , false, ["MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "MOUTH_WIDE"], [0.4, -0.4, -0.15, 0.35], "-YY-", Expression.VISEME),
         };
 
         public mirrorReqd = false;
@@ -70,7 +70,7 @@ module QI{
          * @param {number[]} endStateRatios - ratios of states to combine.
          * @param {string} mirrorAxes - When one of the endStateRatios is negative, this must be specified to indicate the axis to mirror on:
          *                 Use anything for endstates >= 0, but '-' is a good convention.
-         * @param {number} type - easy ways to group 
+         * @param {number} type - easy ways to group
          */
         constructor(public name : string, public winkable : boolean, public blinkable : boolean, public randomizable : boolean, public endStateNames : string[], public endStateRatios : number[], public mirrorAxes? : string, public type = Expression.CUSTOM) {
             if (this.endStateNames.length !== this.endStateRatios.length) {
@@ -81,7 +81,7 @@ module QI{
                 BABYLON.Tools.Error("Expression: " + this.name + " invalid when mirrorAxes not same length as endStateRatios");
                 return;
             }
-            
+
             for (var i = 0, len = this.endStateRatios.length; i <len; i++) {
                 if (this.endStateRatios[i] < 0) {
                     this.mirrorReqd = true;
@@ -93,7 +93,7 @@ module QI{
             }
             Object.freeze(this);  // make immutable
         }
-        
+
         public get isViseme       () : boolean { return this.type === Expression.VISEME; }
         public get isRegular      () : boolean { return this.type === Expression.STOCK || this.type === Expression.CUSTOM; }
         public get isSpeechCapable() : boolean { return this.type === Expression.SPEECH_CAPABLE; }
@@ -104,25 +104,25 @@ module QI{
             if (this.isSpeechCapable || this.name === "NONE") return this.name;
             return (!this.isViseme) ? this.name + "_NM" : null;
         }
-        
+
         public static convertForSpeech(name : string) : string {
             if (name.indexOf("_NM") !== -1 || name === "NONE") return name;
             return name + "_NM";
         }
-        
+
         public stripMouthTargets() : Expression {
             var name = this.name + "_NM";
             var endStateNames  : string[] = [];
             var endStateRatios : number[] = [];
             var mirrorAxes : string = null;
             var mirrorReqd = false;
-            
+
             for (var i = 0, nStates = this.endStateNames.length; i < nStates; i++){
                  if (this.endStateNames[i].indexOf("MOUTH_") === -1) {
                      endStateNames .push(this.endStateNames [i]);
                      endStateRatios.push(this.endStateRatios[i]);
                      mirrorReqd = mirrorReqd || this.endStateRatios[i] < 0;
-                 }   
+                 }
             }
             // if mirror required now, must have been required before
             if (mirrorReqd) {
@@ -130,12 +130,12 @@ module QI{
                 for (var i = 0, nStates = this.endStateNames.length; i < nStates; i++){
                      if (this.endStateNames[i].indexOf("MOUTH_") === -1) {
                          mirrorAxes += this.mirrorAxes.substr(i, 1);
-                     }   
+                     }
                 }
             }
             return new Expression(name, this.winkable, this.blinkable, this.randomizable, endStateNames, endStateRatios, mirrorAxes, Expression.SPEECH_CAPABLE);
         }
-        
+
         /**
          * This is so expression developer can log changes to be communicated back for source code implementation.
          */
@@ -143,11 +143,11 @@ module QI{
             var ret = "var exp = new QI.Expression(\"" + this.name + "\", " + this.winkable + ", " + this.blinkable + ", " + this.randomizable + ", ";
             var n = "[", s = "[";
             var nStates = this.endStateNames.length;
-            
+
             for (var i = 0; i < nStates; i++){
                 n += "\"" + this.endStateNames[i] + "\"";
                 s += this.endStateRatios[i];
-                
+
                 if (i + 1 < nStates){
                     n += ", ";
                     s += ", ";
@@ -158,7 +158,7 @@ module QI{
             }
             ret += n + ", " + s + ", ";
             ret += this.mirrorReqd ? "\"" + this.mirrorAxes + "\"" : "null";
-            
+
             switch (this.type) {
                 case Expression.STOCK         : ret += ", Expression.STOCK"         ; break;
                 case Expression.CUSTOM        : ret += ", Expression.CUSTOM"        ; break;
@@ -175,7 +175,7 @@ module QI{
         private static _WINK = "WINK";  // shape key group name
         private _winker : ShapeKeyGroup;
         private doInvoluntaryBlinking = false;
-       
+
         // the list of possible blink events & morph targets
         private static _BLINK       =  0; private static _BOTH_CLOSED  = "BOTH_CLOSED";
         private static _WINK_LEFT   =  1; private static _LEFT         = "LEFT";
@@ -197,23 +197,23 @@ module QI{
         private _totChangesOfCurrentMood : number;
 
         // eyes
-        public static _EYES = "EYES"; // shape key group name       
+        public static _EYES = "EYES"; // shape key group name
         private _eyes : ShapeKeyGroup;
         public  doRandomEyes = false;
 
         // no need for a constructor, just use super's & subclasses made by TOB
 
         // ====================================== initializing =======================================
-        /** 
+        /**
          * The shapekeys will not be defined until the subclass constructor has run, so this put here.
          */
         protected postConstruction() : void {
             // add the both closed to WINK before consolidation, so available for expressions
             this._winker = this.getShapeKeyGroup(Automaton._WINK);
             this._winker.addComboDerivedKey(ShapeKeyGroup.BASIS, [Automaton._LEFT, Automaton._RIGHT], [1, 1], null, Automaton._BOTH_CLOSED);
-            
+
             this._eyes = this.getShapeKeyGroup(Automaton._EYES);
-            
+
             // composite the FACE group & nuke components; test allows things other than MakeHuman to send the FACE itself
             if (!this._face) {
                 this._face = this.consolidateShapeKeyGroups(Automaton._FACE, ["CHEEKS", "EYEBROWS", "EYELIDS", "MOUTH", "NOSE", "SYMMETRY", "TONGUE", "WINK"], true); // keep groups, cause want WINK
@@ -227,13 +227,13 @@ module QI{
             }
 
             // expressions
-            this.expressions.push(Expression.NONE);     
-                   
+            this.expressions.push(Expression.NONE);
+
             // make sure eyelids are always drawn last, must be after FACE built
             this.setShapeKeyGroupLast(Automaton._WINK);
-            
+
         }
-        
+
         /**
          * @param {Expression} exp - The expression to be made available.
          * @param {boolean} winkable - Not all expressions is it appropriate to wink, indicate this one is with true.
@@ -249,7 +249,7 @@ module QI{
                 this._randomExpressions.push(this.expressions.length - 1); // append index into expressions
             }
         }
-        
+
         /**
          * Adds the expressions contained in this file.  These do take both time to construct and memory, so doing all might be wasteful.
          * @param {string} whichOnes - names of the ones to load, e.g. 'ANGRY LAUGH'.  When "", then all.
@@ -267,14 +267,14 @@ module QI{
             if (all || whichOnes.indexOf("SCARED"    ) !== -1) { this.addExpression(Expression.SCARED    ); if (visemesToo) this.addExpression(Expression.SCARED_NM    ); }
             if (all || whichOnes.indexOf("SKEPTICAL" ) !== -1) { this.addExpression(Expression.SKEPTICAL ); if (visemesToo) this.addExpression(Expression.SKEPTICAL_NM ); }
             if (all || whichOnes.indexOf("STRUGGLING") !== -1) { this.addExpression(Expression.STRUGGLING); if (visemesToo) this.addExpression(Expression.STRUGGLING_NM); }
-            
+
             if (visemesToo) {
                 for (var name in Expression.VISEME_DICT) {
                     this.addExpression(Expression.VISEME_DICT[name]);
                 }
             }
         }
-        
+
         /**
          * Release the shape key components after all the base expressions have been created.  Those for winking are always kept.
          */
@@ -294,7 +294,7 @@ module QI{
             this._face.deleteShapeKey("WINK_BOTH_CLOSED");
             this._face.deleteShapeKey("WINK_LEFT");
             this._face.deleteShapeKey("WINK_RIGHT");
-                   
+
             // those for SYMMETRY
             this._face.deleteShapeKey("SYMMETRY_CHIN_LEFT");
             this._face.deleteShapeKey("SYMMETRY_LEFT_UP");
@@ -306,7 +306,7 @@ module QI{
             // those for TONGUE
             this._face.deleteShapeKey("TONGUE_RAISED");
             this._face.deleteShapeKey("TONGUE_STUCK_OUT");
-            
+
             // those for MOUTH
             this._face.deleteShapeKey("MOUTH_CORNERS_DOWN");
             this._face.deleteShapeKey("MOUTH_CORNERS_UP");
@@ -317,7 +317,7 @@ module QI{
             this._face.deleteShapeKey("MOUTH_PUCKER");
             this._face.deleteShapeKey("MOUTH_WIDE");
         }
-        
+
         public getExpressionNames() : Array<string> {
             var len = this.expressions.length;
             var ret = new Array<string>();
@@ -328,7 +328,7 @@ module QI{
             }
             return ret;
         }
-        
+
         public getVisemeNames() : Array<string> {
             var len = this.expressions.length;
             var ret = new Array<string>();
@@ -343,10 +343,10 @@ module QI{
         /** @override */
         public beforeRender() : void {
             super.beforeRender();
-            
+
             // do not auto submit anything until visible
             if (!this.isVisible) return;
-            
+
             // can always do eye movement, since no conflicts with other shape keys or speech
             if (this.doRandomEyes && !this._eyes.isActive() ) this._eyeProcessing();
 
@@ -368,7 +368,7 @@ module QI{
             var delay = Math.random() * (10000 - 5000) + 5000; // between 5 & 10 secs
             var up   = Math.random() * 2 - 1;                  // between -1 & 1
             var left = Math.random() * 2 - 1;                  // between -1 & 1
- 
+
             this.queueEyeRotation(up, left, duration, delay, false);
         }
         /**
@@ -387,7 +387,7 @@ module QI{
                 stateNames.push("UP");
                 ratios    .push(up);
             }
-                        
+
             if (left < 0) {
                 stateNames.push("RIGHT");
                 ratios    .push(Math.abs(left));
@@ -395,7 +395,7 @@ module QI{
                 stateNames.push("LEFT");
                 ratios    .push(left);
             }
-                        
+
             var deformation = new VertexDeformation(Automaton._EYES, ShapeKeyGroup.BASIS, stateNames, ratios, duration, null, null, { millisBefore : delay });
             var series = new EventSeries([deformation]);
             if (clearQueue) this._eyes.clearQueue(true);
@@ -408,7 +408,7 @@ module QI{
          */
         private static _MAX_INTERVAL = 8000; // millis, 6000 is average according to wikipedia
         private _winkProcessing() : void {
-            var delay = Math.random() * (Automaton._MAX_INTERVAL - 2000) + 2000; // between 2000 & 8000 millis 
+            var delay = Math.random() * (Automaton._MAX_INTERVAL - 2000) + 2000; // between 2000 & 8000 millis
             this._queueLids(Automaton._BLINK, 10, delay, false);
         }
 
@@ -446,7 +446,7 @@ module QI{
             switch (event){
                 case Automaton._BLINK:
                     if (!this._currentExpression.blinkable) return;
-         
+
                     deformations = [new Deformation(Automaton._WINK, Automaton._BOTH_CLOSED, 1, Automaton._DEFORM_SPEED, null, null, {millisBefore: delay } ),
                                      new BasisReturn(Automaton._WINK, Automaton._DEFORM_SPEED, null, null, {millisBefore: timeClosed} ),
                                    ];
@@ -454,7 +454,7 @@ module QI{
 
                 case Automaton._WINK_LEFT:
                     if (!this._currentExpression.winkable) return;
-                     
+
                     deformations = [ new Deformation(Automaton._WINK, Automaton._LEFT, 1, Automaton._DEFORM_SPEED, null, null, { millisBefore : delay } ),
                                      new BasisReturn(Automaton._WINK, Automaton._DEFORM_SPEED, null, null, {millisBefore: timeClosed} ),
                                    ];
@@ -462,17 +462,17 @@ module QI{
 
                 case Automaton._WINK_RIGHT:
                     if (!this._currentExpression.winkable) return;
-                     
+
                     deformations = [ new Deformation(Automaton._WINK, Automaton._RIGHT, 1, Automaton._DEFORM_SPEED, null, null, { millisBefore : delay } ),
                                      new BasisReturn(Automaton._WINK, Automaton._DEFORM_SPEED, null, null, {millisBefore: timeClosed} ),
                                    ];
                     break;
             }
-                        
+
             var series = new EventSeries(deformations, 1, 1, Automaton._WINK);
             if (clearQueue) this._winker.clearQueue(true);
             this._winker.queueEventSeries(series);
-        }    
+        }
         // ====================================== Expressions ========================================
         /**
          * This queues the next change.  When called from beforeRender in idle mode,
@@ -525,11 +525,11 @@ module QI{
         public setIdleMode(on : boolean) : void {
             this._idleMode = on;
             if (!on &&  this._randomMode) this.setRandomExpressionSwitching(false);
-            
+
             // force picking of a new current mood, or not when not random
             this._numChangesOfCurrentMood =  Automaton._MAX_CHANGES_FOR_MOOD;
         }
-        
+
         /**
          * Allow automatic switching between expressions loaded which are indicated as 'randomizable'.
          * This will turn on idle mode, if off, when switched on.  Will not switch off idle mode, when switched
@@ -545,7 +545,7 @@ module QI{
          * yourself (useful for speech, so idle mode might resume gracefully).
          * @param {string | Expression} expOrName - Name of the shape key representing the expression to change to or an expression.
          * When it is an Expression & not currently loaded, random & idle ARE turned off.  This is only for Expression development.
-         * 
+         *
          * Could also be the last one in the series you just queued yourself, if just documenting.
          * @param {number} degree - This is a value 0 - 1, indicating the degree to which max deformation
          * to expression should occur.
@@ -554,7 +554,7 @@ module QI{
          */
         public setCurrentMood(expOrName : string | Expression, degree : number, justDocumenting? : boolean) : Expression {
             var name = (expOrName instanceof Expression) ?  (<Expression> expOrName).name : <string> expOrName;
-            
+
             // check if the expression has been loaded
             var idx = -1;
             for (var i = 0, len = this.expressions.length; i < len; i++) {
@@ -563,12 +563,12 @@ module QI{
                     break;
                 }
             }
-            
+
             // expression loaded
             if (idx !== -1) {
                 this._currentExpDegree = degree;
                 this._currentExpression = this.expressions[idx];
-                
+
                 if (!justDocumenting) {
                     this._numChangesOfCurrentMood = 0;
                     this._totChangesOfCurrentMood =  Math.floor(Math.random() * (Automaton._MAX_CHANGES_FOR_MOOD - 5) + 5); // between 5 & 10
@@ -580,21 +580,21 @@ module QI{
             else if (expOrName instanceof Expression) {
                 this.setIdleMode(false);
                 this.setRandomExpressionSwitching(false);
-                
+
                 var exp = <Expression> expOrName;
                 var options = exp.mirrorReqd ? {mirrorAxes: exp.mirrorAxes} : {};
                 var deformation = new VertexDeformation(Automaton._FACE, ShapeKeyGroup.BASIS, exp.endStateNames, exp.endStateRatios, 250, null, null, options);
-    
+
                 var series = new EventSeries([deformation]);
                 // do not want to clear the potential stall from a grand entrance, which happens when textures already here, e.g. 2nd load
                 this._face.queueEventSeries(series, this.isVisible, this.isVisible);
                 return <Expression> expOrName;
-            
+
             }
             else {
                 BABYLON.Tools.Error("QI.Automaton- " + this.name + " does not have expression: " + name);
                 return null;
-            
+
             }
 
          }

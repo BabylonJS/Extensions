@@ -1529,11 +1529,11 @@ var QI;
                 this._traverseOffset = 0;
             // need to reduce default angular sensitively for the dimension now used to traverse; was 1000
             // was used as 1000 points / radians
-            // now as 1000 points / extent
+            // now as 5000 points / extent
             if (this._isVertical)
-                this.angularSensibilityY = 1000 / dimensions.y;
+                this.angularSensibilityY = 5000 / dimensions.y;
             else
-                this.angularSensibilityX = 1000 / dimensions.x;
+                this.angularSensibilityX = 5000 / dimensions.x;
             this._target = this._getTargetPosition();
             this.rebuildAnglesAndRadius();
         };
@@ -4256,7 +4256,6 @@ var QI;
             }
             return _this;
         }
-        // ==================================== Post constructor edits ====================================
         // ==================================== Getters & setters ====================================
         VertexDeformation.prototype.getReferenceStateName = function () { return this._referenceStateName; };
         VertexDeformation.prototype.getEndStateName = function (idx) { return this._endStateNames[idx]; };
@@ -4275,6 +4274,24 @@ var QI;
                 ratios += this._endStateRatios[i];
             }
             return "\"" + this._groupName + "\", \"" + this._referenceStateName + "\", [" + names + "], [" + ratios + "]";
+        };
+        /**
+         * This returns a script to request a combined derived keys.
+         * @param {string} groupVarName - This is the shapekey group on which to do the combining.
+         */
+        VertexDeformation.prototype.toDerivedKeyScript = function (groupVarName) {
+            var names = "";
+            var ratios = "";
+            for (var i = 0, len = this._endStateNames.length; i < len; i++) {
+                if (i > 0) {
+                    names += ", ";
+                    ratios += ", ";
+                }
+                names += "\"" + this._endStateNames[i] + "\"";
+                ratios += this._endStateRatios[i];
+            }
+            var mirrorAxes = this.options.mirrorAxes ? "\"" + this.options.mirrorAxes + "\"" : "null";
+            return groupVarName + ".addComboDerivedKey(\"" + this._referenceStateName + "\", [" + names + "], [" + ratios + "], " + mirrorAxes + ");";
         };
         VertexDeformation.prototype.getClassName = function () { return "VertexDeformation"; };
         VertexDeformation.prototype.toString = function () {
@@ -4562,13 +4579,14 @@ var QI;
          * @param {Array} endStateNames - Names of the end states to be based on
          * @param {Array} endStateRatios - Not validated, but if -1 < or > 1, then can never be called, since Deformation validates
          * @param {string} mirrorAxes - axis [X,Y, or Z] to mirror against for an end state ratio, which is negative.  No meaning if positive.  If null, shape key group setting used.
-         * @param {String} newStateName - The name of the new state.  If not set, then it will be computed.
+         * @param {String} newStateName - The name of the new state.  If not set, then it will be computed. (optional)
+         * @returns {String} The state name, which might be useful, if you did not include it as an argument
          */
         ShapeKeyGroup.prototype.addComboDerivedKey = function (referenceStateName, endStateNames, endStateRatios, mirrorAxes, newStateName) {
             if (mirrorAxes === void 0) { mirrorAxes = null; }
             // test if key already exists, then leave
             if (newStateName && this.hasKey(newStateName))
-                return;
+                return null;
             var referenceIdx = this._getIdxForState(referenceStateName);
             if (referenceIdx === -1) {
                 BABYLON.Tools.Error("ShapeKeyGroup: invalid reference state");
@@ -4588,6 +4606,7 @@ var QI;
             var stateKey = new Float32Array(this._nPosElements);
             this._buildPosEndPoint(stateKey, referenceIdx, endStateIdxs, endStateRatios, mirrorAxes, this._node.debug);
             this._addShapeKey(stateName, false, stateKey);
+            return stateName;
         };
         /**
          * Called in construction code from TOB.  Unlikely to be called by application code.
@@ -5552,6 +5571,7 @@ var QI;
          *      absoluteRotation - Rotation arg is an absolute value, not POV (default false).
          *      pace - Any Object with the function: getCompletionMilestone(currentDurationRatio) (default MotionEvent.LINEAR)
          *      sound - Sound to start with event.  WARNING: When event also has a sync partner, there could be issues.
+         *      requireCompletionOf - A way to serialize events from different queues e.g. shape key & skeleton.
          *
          *      noStepWiseMovement - Calc the full amount of movement from Node's original position / rotation,
          *                           rather than stepwise (default false).  No meaning when no rotation in event.
@@ -5628,6 +5648,7 @@ var QI;
          *      absoluteRotation - Rotation arg is an absolute value, not POV (default false).
          *      pace - Any Object with the function: getCompletionMilestone(currentDurationRatio) (default MotionEvent.LINEAR)
          *      sound - Sound to start with event.  WARNING: When event also has a sync partner, there could be issues.
+         *      requireCompletionOf - A way to serialize events from different queues e.g. shape key & skeleton.
          *
          *      noStepWiseMovement - Calc the full amount of movement from Node's original position / rotation,
          *                           rather than stepwise (default false).  No meaning when no rotation in event.
@@ -5943,8 +5964,6 @@ var QI;
 (function (QI) {
     var Hair = (function (_super) {
         __extends(Hair, _super);
-        //TODO get matrix weights to use stiffness
-        //TODO document hair
         /**
          * @constructor - Args same As BABYLON.Mesh, except that the arg for useVertexColor in LinesMesh is not passed an hard-coded to true
          * @param {string} name - The value used by scene.getMeshByName() to do a lookup.
@@ -5957,100 +5976,258 @@ var QI;
          */
         function Hair(name, scene, parent, source, doNotCloneChildren) {
             if (parent === void 0) { parent = null; }
-            return _super.call(this, name, scene, parent, source, doNotCloneChildren, true) || this;
+            var _this = _super.call(this, name, scene, parent, source, doNotCloneChildren, true) || this;
+            // members, so it is easier to develop
+            _this.cornerOffset = 0.02; // the distance of the triangle corner from the passed points
+            _this.seed = 0;
+            _this.colorSpread = 0.05; // The maximum amount to randomly change the color of a thread
+            _this.intraStrandColorSpread = 0.02;
+            _this.alpha = 1.0;
+            _this.color = new BABYLON.Color3(1, 1, 1);
+            // from https://stackoverflow.com/questions/521295/seeding-the-random-number-generator-in-javascript
+            _this._workingSeed = _this.seed;
+            return _this;
         }
+        Object.defineProperty(Hair.prototype, "namedColor", {
+            get: function () { return this._namedColor; },
+            set: function (value) {
+                this._namedColor = value;
+                this.color = Hair._Colors[value];
+            },
+            enumerable: true,
+            configurable: true
+        });
         // ====================================== initializing =======================================
         /**
          * Called to generate the geometry using values which are more compact to pass & allow multiple things to be defined.
          * @param {number[]} strandNumVerts -The number of verts per each strand.
          * @param {number[]} rootRelativePositions - The x, y, z values of each point.  First is root is absolute, rest are delta to root.
          *                                           More compact than absolute for all, & useful in calculating hair length at each point.
-         * @param {number} colorSpread - The maximum amount to randomly change the color of a thread, optional.
          * @param {number} longestStrand - The longest distance between the first & last points in the strands, optional.
          * @param {number} stiffness - The matrix weight at the end of the longest strand, optional.
          * @param {number} boneName - The name of the bone in the skeleton to be used as a bone influencer, optional.
          */
-        Hair.prototype.assemble = function (strandNumVerts, rootRelativePositions, colorSpread, longestStrand, stiffness, boneName) {
-            if (colorSpread === void 0) { colorSpread = 0.05; }
-            var idx = 0; // index used for writing into indices
+        Hair.prototype.assemble = function (strandNumVerts, rootRelativePositions, longestStrand, stiffness, boneName) {
+            var adx = 0; // offset for reading absolutePositions
             var pdx = 0; // index used for writing into positions
-            var cdx = 0; // index used for writing into vertex colors
-            var mdx = 0; // index used for writing into matrix indices & weights
+            var idx = 0; // index used for writing into indices
+            // assign stuff to members to be able to change vertex colors afterward & set for the first time
+            this._strandNumVerts = strandNumVerts;
+            var absPositions = this._toAbsolutePositions(rootRelativePositions);
             var indices = []; // cannot use Uint32Array as it is not worth finding out how big it is going to be in advance
-            var nPosElements = rootRelativePositions.length;
-            var positions32 = new Float32Array(nPosElements);
-            var colors32 = new Float32Array(nPosElements / 3 * 4);
-            var matrixIndices;
-            var matrixWeights;
-            var deltaStiffness;
-            var boneIndex = (this.skeleton && boneName) ? this.skeleton.getBoneIndexByName(boneName) : null;
-            if (boneIndex) {
-                matrixIndices = new Float32Array(nPosElements / 3 * 4);
-                matrixWeights = new Float32Array(nPosElements / 3 * 4);
-                deltaStiffness = 1 - stiffness;
+            var positions32 = new Float32Array(this._nPosElements);
+            var notLast;
+            for (var i = 0, nStrands = this._strandNumVerts.length; i < nStrands; i++) {
+                this._extrudeTriangle(adx, false, true, absPositions, positions32, pdx);
+                adx += 3;
+                pdx += 9;
+                for (var vert = 1; vert < this._strandNumVerts[i]; vert++) {
+                    notLast = vert + 1 < this._strandNumVerts[i];
+                    this._extrudeTriangle(adx, true, notLast, absPositions, positions32, pdx);
+                    adx += 3;
+                    pdx += notLast ? 9 : 3;
+                    if (notLast) {
+                        indices.push(idx);
+                        indices.push(idx + 1);
+                        indices.push(idx + 4);
+                        indices.push(idx);
+                        indices.push(idx + 3);
+                        indices.push(idx + 4);
+                        indices.push(idx + 1);
+                        indices.push(idx + 2);
+                        indices.push(idx + 5);
+                        indices.push(idx + 1);
+                        indices.push(idx + 4);
+                        indices.push(idx + 5);
+                        indices.push(idx + 2);
+                        indices.push(idx);
+                        indices.push(idx + 3);
+                        indices.push(idx + 2);
+                        indices.push(idx + 5);
+                        indices.push(idx + 3);
+                        idx += 3;
+                    }
+                    else {
+                        indices.push(idx);
+                        indices.push(idx + 1);
+                        indices.push(idx + 3);
+                        indices.push(idx + 1);
+                        indices.push(idx + 2);
+                        indices.push(idx + 3);
+                        indices.push(idx + 2);
+                        indices.push(idx);
+                        indices.push(idx + 3);
+                        idx += 4;
+                    }
+                }
             }
+            this._dump(positions32, "positions32");
+            this._dump(indices, "indices");
+            this.setVerticesData(BABYLON.VertexBuffer.PositionKind, positions32);
+            // cannot write weights until position have, do now
+            this._assignWeights(rootRelativePositions, longestStrand, stiffness, boneName);
+            this.setIndices(indices);
+            this.assignVertexColor();
+        };
+        /**
+         * Positions of strands are sent relative to the start of each strand, which saves space; undo here
+         * Also accumulates the # of position elements (verts * 3), for easy FloatArray initialization.
+         */
+        Hair.prototype._toAbsolutePositions = function (rootRelativePositions) {
+            var pdx = 0; // index used for writing into positions           
+            this._nPosElements = 0;
+            var absPositions = new Array(rootRelativePositions.length);
             var rootX, rootY, rootZ;
-            var deltaX, deltaY, deltaZ;
-            var colorR, colorG, colorB, colorA;
-            var colorOffset = new Array(3);
-            for (var i = 0, nStrands = strandNumVerts.length; i < nStrands; i++) {
-                rootX = positions32[pdx] = rootRelativePositions[pdx];
-                rootY = positions32[pdx + 1] = rootRelativePositions[pdx + 1];
-                rootZ = positions32[pdx + 2] = rootRelativePositions[pdx + 2];
+            for (var i = 0, nStrands = this._strandNumVerts.length; i < nStrands; i++) {
+                rootX = absPositions[pdx] = rootRelativePositions[pdx];
+                rootY = absPositions[pdx + 1] = rootRelativePositions[pdx + 1];
+                rootZ = absPositions[pdx + 2] = rootRelativePositions[pdx + 2];
                 pdx += 3;
-                // between -.05 and .05 using default
-                colorOffset[0] = Math.random() * (2 * colorSpread) - colorSpread;
-                colorOffset[1] = Math.random() * (2 * colorSpread) - colorSpread;
-                colorOffset[2] = Math.random() * (2 * colorSpread) - colorSpread;
-                colorR = colors32[cdx] = Math.min(1, Math.max(0, this.color.r + colorOffset[0]));
-                colorG = colors32[cdx + 1] = Math.min(1, Math.max(0, this.color.g + colorOffset[0]));
-                colorB = colors32[cdx + 2] = Math.min(1, Math.max(0, this.color.b + colorOffset[0]));
-                colorA = colors32[cdx + 3] = 1;
-                cdx += 4;
-                idx++;
-                if (boneIndex) {
+                this._nPosElements += 9; // first point of strand will have 3 positions
+                for (var vert = 1; vert < this._strandNumVerts[i]; vert++) {
+                    absPositions[pdx] = rootRelativePositions[pdx] + rootX;
+                    absPositions[pdx + 1] = rootRelativePositions[pdx + 1] + rootY;
+                    absPositions[pdx + 2] = rootRelativePositions[pdx + 2] + rootZ;
+                    pdx += 3;
+                    this._nPosElements += (vert + 1 < this._strandNumVerts[i]) ? 9 : 3; // all but last segment has 9; last 3
+                }
+            }
+            this._dump(rootRelativePositions, "relative pos");
+            this._dump(absPositions, "abs");
+            return absPositions;
+        };
+        Hair.prototype._dump = function (values, name) {
+            if (1 === 1)
+                return;
+            console.log("\n\n" + name + ":");
+            for (var i = 0, len = values.length; i < len; i += 3) {
+                console.log((i / 3) + ":\t" + values[i] + ", " + values[i + 1], ", " + values[i + 2]);
+            }
+        };
+        Hair.prototype._extrudeTriangle = function (adx, hasPrev, hasNext, absPositions, positions32, pdx) {
+            // when this is the end of the strand, just use the actual position once
+            if (!hasNext) {
+                positions32[pdx] = absPositions[adx];
+                positions32[pdx + 1] = absPositions[adx + 1];
+                positions32[pdx + 2] = absPositions[adx + 2];
+                return;
+            }
+            var at = new BABYLON.Vector3(absPositions[adx], absPositions[adx + 1], absPositions[adx + 2]);
+            var prevOffset = hasPrev ? adx - 3 : adx;
+            var prev = new BABYLON.Vector3(absPositions[prevOffset], absPositions[prevOffset + 1], absPositions[prevOffset + 2]);
+            var next = new BABYLON.Vector3(absPositions[adx + 3], absPositions[adx + 4], absPositions[adx + 5]);
+            // the direction of the 2 points
+            var dir = next.subtract(prev).normalize();
+            var right = BABYLON.Vector3.Cross(dir, Hair._right);
+            var xCorner = at.add(right.scale(this.cornerOffset));
+            positions32[pdx] = xCorner.x;
+            positions32[pdx + 1] = xCorner.y;
+            positions32[pdx + 2] = xCorner.z;
+            var up = BABYLON.Vector3.Cross(dir, Hair._up);
+            var yCorner = at.add(up.scale(this.cornerOffset));
+            positions32[pdx + 3] = yCorner.x;
+            positions32[pdx + 4] = yCorner.y;
+            positions32[pdx + 5] = yCorner.z;
+            var forward = BABYLON.Vector3.Cross(dir, Hair._forward);
+            var zCorner = at.add(forward.scale(this.cornerOffset));
+            positions32[pdx + 6] = zCorner.x;
+            positions32[pdx + 7] = zCorner.y;
+            positions32[pdx + 8] = zCorner.z;
+        };
+        Hair.prototype._assignWeights = function (rootRelativePositions, longestStrand, stiffness, boneName) {
+            var boneIndex = (this.skeleton && boneName) ? this.skeleton.getBoneIndexByName(boneName) : null;
+            if (!boneIndex)
+                return false;
+            var pdx = 0; // index used for reading into positions
+            var mdx = 0; // index used for writing into matrix indices & weights
+            var nPosElements = rootRelativePositions.length;
+            var matrixIndices = new Float32Array(nPosElements / 3 * 4);
+            var matrixWeights = new Float32Array(nPosElements / 3 * 4);
+            var deltaStiffness = 1 - stiffness;
+            var t;
+            for (var i = 0, nStrands = this._strandNumVerts.length; i < nStrands; i++) {
+                for (var v = 0; v < 3; v++) {
                     matrixIndices[mdx] = boneIndex;
                     matrixWeights[mdx] = 1;
                     mdx += 4;
-                }
-                for (var vert = 1; vert < strandNumVerts[i]; vert++) {
-                    deltaX = rootRelativePositions[pdx];
-                    positions32[pdx] = rootX + deltaX;
-                    deltaY = rootRelativePositions[pdx + 1];
-                    positions32[pdx + 1] = rootY + deltaY;
-                    deltaZ = rootRelativePositions[pdx + 2];
-                    positions32[pdx + 2] = rootZ + deltaZ;
                     pdx += 3;
-                    colors32[cdx] = colorR;
-                    colors32[cdx + 1] = colorG;
-                    colors32[cdx + 2] = colorB;
-                    colors32[cdx + 3] = colorA;
-                    cdx += 4;
-                    if (boneIndex) {
+                }
+                for (var vert = 1; vert < this._strandNumVerts[i]; vert++) {
+                    t = (vert + 1 < this._strandNumVerts[i]) ? 3 : 1; // all but last segment has 3; last 1
+                    for (var v = 0; v < t; v++) {
                         matrixIndices[mdx] = boneIndex;
-                        matrixWeights[mdx] = .0000010; //1 - (deltaStiffness * (this._lengthSoFar(deltaX, deltaY, deltaZ) / longestStrand));
+                        matrixWeights[mdx] = .0000010; //1 - (deltaStiffness * (this._lengthSoFar(rootRelativePositions[pdx], rootRelativePositions[pdx + 1], rootRelativePositions[pdx + 2]) / longestStrand));
                         mdx += 4;
+                        pdx += 3;
                     }
-                    indices.push(idx - 1);
-                    indices.push(idx);
-                    idx++;
                 }
             }
-            this.setVerticesData(BABYLON.VertexBuffer.PositionKind, positions32);
-            this.setVerticesData(BABYLON.VertexBuffer.ColorKind, colors32);
-            this.setIndices(indices);
-            if (boneIndex) {
-                this.numBoneInfluencers = 1;
-                this.setVerticesData(BABYLON.VertexBuffer.MatricesIndicesKind, matrixIndices);
-                this.setVerticesData(BABYLON.VertexBuffer.MatricesWeightsKind, matrixWeights);
+            this.numBoneInfluencers = 1;
+            this.setVerticesData(BABYLON.VertexBuffer.MatricesIndicesKind, matrixIndices);
+            this.setVerticesData(BABYLON.VertexBuffer.MatricesWeightsKind, matrixWeights);
+        };
+        Hair.prototype.assignVertexColor = function () {
+            this._workingSeed = this.seed;
+            var cdx = 0; // index used for writing into vertex colors
+            var colors32 = new Float32Array(this._nPosElements / 3 * 4);
+            var colorR, colorG, colorB, colorA;
+            var colorOffset = new Array(3);
+            var t;
+            for (var i = 0, nStrands = this._strandNumVerts.length; i < nStrands; i++) {
+                // between -.05 and .05 using default; only use 1 for all channels at the strand level; individuals change too much
+                colorOffset[0] = this.random() * (2 * this.colorSpread) - this.colorSpread;
+                for (var v = 0; v < 3; v++) {
+                    colorR = colors32[cdx] = Math.min(1, Math.max(0, this.color.r + colorOffset[0]));
+                    colorG = colors32[cdx + 1] = Math.min(1, Math.max(0, this.color.g + colorOffset[0]));
+                    colorB = colors32[cdx + 2] = Math.min(1, Math.max(0, this.color.b + colorOffset[0]));
+                    colorA = colors32[cdx + 3] = this.alpha;
+                    cdx += 4;
+                }
+                for (var vert = 1; vert < this._strandNumVerts[i]; vert++) {
+                    t = (vert + 1 < this._strandNumVerts[i]) ? 3 : 1; // all but last segment has 3; last 1
+                    for (var v = 0; v < t; v++) {
+                        colorOffset[0] = this.random() * this.intraStrandColorSpread;
+                        colorOffset[1] = this.random() * this.intraStrandColorSpread;
+                        colorOffset[2] = this.random() * this.intraStrandColorSpread;
+                        colorR = colors32[cdx] = Math.min(1, Math.max(0, colorR + colorOffset[0]));
+                        colorG = colors32[cdx + 1] = Math.min(1, Math.max(0, colorG + colorOffset[1]));
+                        colorB = colors32[cdx + 2] = Math.min(1, Math.max(0, colorB + colorOffset[2]));
+                        colorA = colors32[cdx + 3] = this.alpha;
+                        cdx += 4;
+                    }
+                }
             }
+            this.setVerticesData(BABYLON.VertexBuffer.ColorKind, colors32, true);
         };
         Hair.prototype._lengthSoFar = function (deltaX, deltaY, deltaZ) {
             return Math.sqrt((deltaX * deltaX) + (deltaY * deltaY) + (deltaZ * deltaZ));
         };
+        Hair.prototype.random = function () {
+            var x = Math.sin(this._workingSeed++) * 10000;
+            return x - Math.floor(x);
+        };
         return Hair;
-    }(BABYLON.LinesMesh));
+    }(BABYLON.Mesh));
+    //TODO get matrix weights to use stiffness
+    //TODO document hair
+    // assigned outside of class, at bottom of file since static
+    Hair._Colors = {};
+    // less garbage getting only once
+    Hair._right = BABYLON.Vector3.Right();
+    Hair._up = BABYLON.Vector3.Up();
+    Hair._forward = BABYLON.Vector3.Forward();
     QI.Hair = Hair;
+    // The keys match those in particle_hair.py
+    Hair._Colors["BLACK"] = new BABYLON.Color3(0.05, 0.05, 0.05);
+    Hair._Colors["DARK_BROWN"] = new BABYLON.Color3(0.10, 0.03, 0.005);
+    Hair._Colors["MEDIUM_BROWN"] = new BABYLON.Color3(0.30, 0.16, 0.05);
+    Hair._Colors["LIGHT_BROWN"] = new BABYLON.Color3(0.35, 0.22, 0.09);
+    Hair._Colors["DIRTY_BLONDE"] = new BABYLON.Color3(0.45, 0.35, 0.15);
+    Hair._Colors["BLONDE"] = new BABYLON.Color3(0.65, 0.55, 0.28);
+    Hair._Colors["PLATINUM_BLONDE"] = new BABYLON.Color3(0.95, 0.95, 0.625);
+    Hair._Colors["RED"] = new BABYLON.Color3(0.367, 0.072, 0.026);
+    Hair._Colors["ORANGE"] = new BABYLON.Color3(0.50, 0.19, 0.03);
+    Hair._Colors["WHITE"] = new BABYLON.Color3(0.90, 0.90, 0.95);
 })(QI || (QI = {}));
 
 var QI;
@@ -6642,8 +6819,10 @@ var QI;
          * @param {number[]} endStateRatios - ratios of states to combine.
          * @param {string} mirrorAxes - When one of the endStateRatios is negative, this must be specified to indicate the axis to mirror on:
          *                 Use anything for endstates >= 0, but '-' is a good convention.
+         * @param {number} type - easy ways to group
          */
-        function Expression(name, winkable, blinkable, randomizable, endStateNames, endStateRatios, mirrorAxes, id) {
+        function Expression(name, winkable, blinkable, randomizable, endStateNames, endStateRatios, mirrorAxes, type) {
+            if (type === void 0) { type = Expression.CUSTOM; }
             this.name = name;
             this.winkable = winkable;
             this.blinkable = blinkable;
@@ -6651,7 +6830,7 @@ var QI;
             this.endStateNames = endStateNames;
             this.endStateRatios = endStateRatios;
             this.mirrorAxes = mirrorAxes;
-            this.id = id;
+            this.type = type;
             this.mirrorReqd = false;
             if (this.endStateNames.length !== this.endStateRatios.length) {
                 BABYLON.Tools.Error("Expression: " + this.name + " invalid when endStateNames not same length as endStateRatios");
@@ -6673,14 +6852,69 @@ var QI;
             Object.freeze(this); // make immutable
         }
         Object.defineProperty(Expression.prototype, "isViseme", {
-            get: function () { return this.id && this.id === Expression.VISEME_ID; },
+            get: function () { return this.type === Expression.VISEME; },
             enumerable: true,
             configurable: true
         });
+        Object.defineProperty(Expression.prototype, "isRegular", {
+            get: function () { return this.type === Expression.STOCK || this.type === Expression.CUSTOM; },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Expression.prototype, "isSpeechCapable", {
+            get: function () { return this.type === Expression.SPEECH_CAPABLE; },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Expression.prototype, "regularNameFor", {
+            get: function () {
+                return (!this.isViseme) ? this.name.replace("_NM", "") : null;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Expression.prototype, "speechCapableNameFor", {
+            get: function () {
+                if (this.isSpeechCapable || this.name === "NONE")
+                    return this.name;
+                return (!this.isViseme) ? this.name + "_NM" : null;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Expression.convertForSpeech = function (name) {
+            if (name.indexOf("_NM") !== -1 || name === "NONE")
+                return name;
+            return name + "_NM";
+        };
+        Expression.prototype.stripMouthTargets = function () {
+            var name = this.name + "_NM";
+            var endStateNames = [];
+            var endStateRatios = [];
+            var mirrorAxes = null;
+            var mirrorReqd = false;
+            for (var i = 0, nStates = this.endStateNames.length; i < nStates; i++) {
+                if (this.endStateNames[i].indexOf("MOUTH_") === -1) {
+                    endStateNames.push(this.endStateNames[i]);
+                    endStateRatios.push(this.endStateRatios[i]);
+                    mirrorReqd = mirrorReqd || this.endStateRatios[i] < 0;
+                }
+            }
+            // if mirror required now, must have been required before
+            if (mirrorReqd) {
+                mirrorAxes = "";
+                for (var i = 0, nStates = this.endStateNames.length; i < nStates; i++) {
+                    if (this.endStateNames[i].indexOf("MOUTH_") === -1) {
+                        mirrorAxes += this.mirrorAxes.substr(i, 1);
+                    }
+                }
+            }
+            return new Expression(name, this.winkable, this.blinkable, this.randomizable, endStateNames, endStateRatios, mirrorAxes, Expression.SPEECH_CAPABLE);
+        };
         /**
          * This is so expression developer can log changes to be communicated back for source code implementation.
          */
-        Expression.prototype.toString = function () {
+        Expression.prototype.toScript = function () {
             var ret = "var exp = new QI.Expression(\"" + this.name + "\", " + this.winkable + ", " + this.blinkable + ", " + this.randomizable + ", ";
             var n = "[", s = "[";
             var nStates = this.endStateNames.length;
@@ -6698,44 +6932,72 @@ var QI;
             }
             ret += n + ", " + s + ", ";
             ret += this.mirrorReqd ? "\"" + this.mirrorAxes + "\"" : "null";
-            ret += this.id ? ", " + this.id : "";
+            switch (this.type) {
+                case Expression.STOCK:
+                    ret += ", Expression.STOCK";
+                    break;
+                case Expression.CUSTOM:
+                    ret += ", Expression.CUSTOM";
+                    break;
+                case Expression.VISEME:
+                    ret += ", Expression.VISEME";
+                    break;
+                case Expression.SPEECH_CAPABLE:
+                    ret += ", Expression.SPEECH_CAPABLE";
+                    break;
+            }
             ret += ");\n";
             return ret + "model.addExpression(exp);";
         };
         return Expression;
     }());
+    Expression.STOCK = 0;
+    Expression.CUSTOM = 1;
+    Expression.VISEME = 2;
+    Expression.SPEECH_CAPABLE = 3;
     // stock expressions
     Expression.NONE = new Expression("NONE", true, true, false, [], [], null, 0);
-    Expression.ANGRY = new Expression("ANGRY", false, true, true, ["CHEEKS_HIGH", "CHEEKS_SUCK", "EYEBROWS_ANGRY", "EYEBROWS_RAISED_LEFT", "NOSE_FLARE", "MOUTH_CORNERS_DOWN", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "SYMMETRY_LEFT_UP"], [1.85, 0.3, 1.85, -0.3, 1.4, 1, -0.2, 1, 0.1], "---Y--Y--", 1);
-    Expression.CRYING = new Expression("CRYING", false, false, false, ["CHEEKS_HIGH", "CHEEKS_SUCK", "EYEBROWS_RAISED_LEFT", "EYEBROWS_RAISED_RIGHT", "EYELIDS_SQUINT", "NOSE_FLARE", "MOUTH_CORNERS_DOWN", "MOUTH_LIPS_LOWER_UP"], [-1, 1.4, -0.2, -0.2, 1.2, 1.2, 1.25, -0.65], "Y-YY---Y", 2);
-    Expression.DISGUSTED = new Expression("DISGUSTED", false, true, true, ["CHEEKS_HIGH", "CHEEKS_SUCK", "EYEBROWS_ANGRY", "EYEBROWS_RAISED_LEFT", "EYELIDS_SQUINT", "WINK_LEFT", "NOSE_FLARE", "MOUTH_CORNERS_DOWN", "MOUTH_CORNERS_UP", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP"], [0.95, 0.05, 0.55, 1, 0.45, -0.1, 1.35, 1.3, -0.1, 0.2, -1], "-----Y--Y-Y", 3);
-    Expression.HAPPY = new Expression("HAPPY", true, true, true, ["CHEEKS_HIGH", "CHEEKS_PUMP", "EYEBROWS_ANGRY", "EYEBROWS_RAISED_LEFT", "EYELIDS_SQUINT", "NOSE_FLARE", "MOUTH_CORNERS_DOWN", "MOUTH_CORNERS_UP", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "MOUTH_WIDE", "SYMMETRY_CHIN_LEFT", "SYMMETRY_LEFT_UP", "SYMMETRY_RIGHT_UP"], [0.8, 0.25, -0.8, -0.1, 0.15, 0.25, -0.45, 0.5, 0.7, -0.5, -0.25, 0.4, -0.1, 0.1, 0.2], "--YY--Y--YY-X--", 4);
-    Expression.LAUGH = new Expression("LAUGH", true, true, true, ["CHEEKS_HIGH", "EYEBROWS_ANGRY", "EYELIDS_SQUINT", "NOSE_FLARE", "MOUTH_CORNERS_UP", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_UPPER_UP", "MOUTH_OPEN", "MOUTH_PUCKER"], [0.8, -1, -0.15, 0.55, 0.45, -0.25, 0.5, 0.85, -1], "-YY--Z--X", 5);
-    Expression.PPHPHT = new Expression("PPHPHT", false, true, false, ["CHEEKS_HIGH", "CHEEKS_SUCK", "EYELIDS_SQUINT", "NOSE_FLARE", "TONGUE_STUCK_OUT", "MOUTH_OPEN", "MOUTH_PUCKER"], [0.5, 1, 0.5, 1, 1.05, 0.5, 1], null, 6);
-    Expression.SAD = new Expression("SAD", false, true, true, ["CHEEKS_HIGH", "CHEEKS_PUMP", "CHEEKS_SUCK", "EYEBROWS_ANGRY", "MOUTH_CORNERS_DOWN", "MOUTH_CORNERS_UP", "MOUTH_LIPS_LOWER_UP", "MOUTH_PUCKER", "MOUTH_WIDE", "SYMMETRY_CHIN_LEFT", "SYMMETRY_RIGHT_UP"], [-1.45, -0.35, 0.05, -1, -0.35, -0.4, 0.65, -0.3, 0.25, 0.2, -0.1], "YX-YYY-X--Y", 7);
-    Expression.SCARED = new Expression("SCARED", false, false, true, ["CHEEKS_HIGH", "EYEBROWS_RAISED_LEFT", "EYEBROWS_RAISED_RIGHT", "WINK_LEFT", "WINK_RIGHT", "NOSE_FLARE", "MOUTH_CORNERS_DOWN", "MOUTH_LIPS_LOWER_UP", "SYMMETRY_CHIN_LEFT", "SYMMETRY_RIGHT_UP"], [-0.05, 1.25, 1.75, -0.65, -0.6, -0.25, 0.35, -0.6, -0.65, 0.05], "Y--YYY-YX-", 8);
-    Expression.SKEPTICAL = new Expression("SKEPTICAL", false, false, true, ["EYEBROWS_RAISED_LEFT", "EYEBROWS_RAISED_RIGHT", "WINK_RIGHT", "NOSE_FLARE", "SYMMETRY_CHIN_LEFT", "SYMMETRY_RIGHT_UP"], [-0.65, 0.95, -0.35, -0.25, -0.2, 0.15], "Y-YYX-", 9);
-    Expression.STRUGGLING = new Expression("STRUGGLING", false, false, false, ["EYEBROWS_ANGRY", "EYEBROWS_RAISED_LEFT", "EYELIDS_SQUINT", "WINK_LEFT", "WINK_RIGHT", "NOSE_FLARE", "MOUTH_CORNERS_DOWN", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "MOUTH_WIDE", "SYMMETRY_LEFT_UP", "SYMMETRY_RIGHT_UP"], [1, 0.6, 1, 0.25, 0.35, 1, 0.5, 0.35, -0.7, 0.6, 0.05, -0.4, 0.55], "--------Y--Y-", 10);
+    Expression.ANGRY = new Expression("ANGRY", false, true, true, ["CHEEKS_HIGH", "CHEEKS_SUCK", "EYEBROWS_ANGRY", "EYEBROWS_RAISED_LEFT", "NOSE_FLARE", "MOUTH_CORNERS_DOWN", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "SYMMETRY_LEFT_UP"], [1.85, 0.3, 1.85, -0.3, 1.4, 1, -0.2, 1, 0.1], "---Y--Y--", Expression.STOCK);
+    Expression.CRYING = new Expression("CRYING", false, false, false, ["CHEEKS_HIGH", "CHEEKS_SUCK", "EYEBROWS_RAISED_LEFT", "EYEBROWS_RAISED_RIGHT", "EYELIDS_SQUINT", "NOSE_FLARE", "MOUTH_CORNERS_DOWN", "MOUTH_LIPS_LOWER_UP"], [-1, 1.4, -0.2, -0.2, 1.2, 1.2, 1.25, -0.65], "Y-YY---Y", Expression.STOCK);
+    Expression.DISGUSTED = new Expression("DISGUSTED", false, true, true, ["CHEEKS_HIGH", "CHEEKS_SUCK", "EYEBROWS_ANGRY", "EYEBROWS_RAISED_LEFT", "EYELIDS_SQUINT", "WINK_LEFT", "NOSE_FLARE", "MOUTH_CORNERS_DOWN", "MOUTH_CORNERS_UP", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP"], [0.95, 0.05, 0.55, 1, 0.45, -0.1, 1.35, 1.3, -0.1, 0.2, -1], "-----Y--Y-Y", Expression.STOCK);
+    Expression.HAPPY = new Expression("HAPPY", true, true, true, ["CHEEKS_HIGH", "CHEEKS_PUMP", "EYEBROWS_ANGRY", "EYEBROWS_RAISED_LEFT", "EYELIDS_SQUINT", "NOSE_FLARE", "MOUTH_CORNERS_DOWN", "MOUTH_CORNERS_UP", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "MOUTH_WIDE", "SYMMETRY_CHIN_LEFT", "SYMMETRY_LEFT_UP", "SYMMETRY_RIGHT_UP"], [0.8, 0.25, -0.8, -0.1, 0.15, 0.25, -0.45, 0.5, 0.7, -0.5, -0.25, 0.4, -0.1, 0.1, 0.2], "--YY--Y--YY-X--", Expression.STOCK);
+    Expression.LAUGH = new Expression("LAUGH", true, true, true, ["CHEEKS_HIGH", "EYEBROWS_ANGRY", "EYELIDS_SQUINT", "NOSE_FLARE", "MOUTH_CORNERS_UP", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_UPPER_UP", "MOUTH_OPEN", "MOUTH_PUCKER"], [0.8, -1, -0.15, 0.55, 0.45, -0.25, 0.5, 0.85, -1], "-YY--Z--X", Expression.STOCK);
+    Expression.PPHPHT = new Expression("PPHPHT", false, true, false, ["CHEEKS_HIGH", "CHEEKS_SUCK", "EYELIDS_SQUINT", "NOSE_FLARE", "TONGUE_STUCK_OUT", "MOUTH_OPEN", "MOUTH_PUCKER"], [0.5, 1, 0.5, 1, 1.05, 0.5, 1], null, Expression.STOCK);
+    Expression.SAD = new Expression("SAD", false, true, true, ["CHEEKS_HIGH", "CHEEKS_PUMP", "CHEEKS_SUCK", "EYEBROWS_ANGRY", "MOUTH_CORNERS_DOWN", "MOUTH_CORNERS_UP", "MOUTH_LIPS_LOWER_UP", "MOUTH_PUCKER", "MOUTH_WIDE", "SYMMETRY_CHIN_LEFT", "SYMMETRY_RIGHT_UP"], [-1.45, -0.35, 0.05, -1, -0.35, -0.4, 0.65, -0.3, 0.25, 0.2, -0.1], "YX-YYY-X--Y", Expression.STOCK);
+    Expression.SCARED = new Expression("SCARED", false, false, true, ["CHEEKS_HIGH", "EYEBROWS_RAISED_LEFT", "EYEBROWS_RAISED_RIGHT", "WINK_LEFT", "WINK_RIGHT", "NOSE_FLARE", "MOUTH_CORNERS_DOWN", "MOUTH_LIPS_LOWER_UP", "SYMMETRY_CHIN_LEFT", "SYMMETRY_RIGHT_UP"], [-0.05, 1.25, 1.75, -0.65, -0.6, -0.25, 0.35, -0.6, -0.65, 0.05], "Y--YYY-YX-", Expression.STOCK);
+    Expression.SKEPTICAL = new Expression("SKEPTICAL", false, false, true, ["EYEBROWS_RAISED_LEFT", "EYEBROWS_RAISED_RIGHT", "WINK_RIGHT", "NOSE_FLARE", "SYMMETRY_CHIN_LEFT", "SYMMETRY_RIGHT_UP"], [-0.65, 0.95, -0.35, -0.25, -0.2, 0.15], "Y-YYX-", Expression.STOCK);
+    Expression.STRUGGLING = new Expression("STRUGGLING", false, false, false, ["EYEBROWS_ANGRY", "EYEBROWS_RAISED_LEFT", "EYELIDS_SQUINT", "WINK_LEFT", "WINK_RIGHT", "NOSE_FLARE", "MOUTH_CORNERS_DOWN", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "MOUTH_WIDE", "SYMMETRY_LEFT_UP", "SYMMETRY_RIGHT_UP"], [1, 0.6, 1, 0.25, 0.35, 1, 0.5, 0.35, -0.7, 0.6, 0.05, -0.4, 0.55], "--------Y--Y-", Expression.STOCK);
     //TODO sort both VISMES & if expressions need to change
-    Expression.VISEME_ID = -1;
+    Expression.ANGRY_NM = Expression.ANGRY.stripMouthTargets();
+    Expression.CRYING_NM = Expression.CRYING.stripMouthTargets();
+    Expression.DISGUSTED_NM = Expression.DISGUSTED.stripMouthTargets();
+    Expression.HAPPY_NM = Expression.HAPPY.stripMouthTargets();
+    Expression.LAUGH_NM = Expression.LAUGH.stripMouthTargets();
+    Expression.PPHPHT_NM = Expression.PPHPHT.stripMouthTargets();
+    Expression.SAD_NM = Expression.SAD.stripMouthTargets();
+    Expression.SCARED_NM = Expression.SCARED.stripMouthTargets();
+    Expression.SKEPTICAL_NM = Expression.SKEPTICAL.stripMouthTargets();
+    Expression.STRUGGLING_NM = Expression.STRUGGLING.stripMouthTargets();
+    // those ARPABET values with no viseme: D, G, K, N, NG, T, Y, & Z
     Expression.VISEME_DICT = {
-        ".": new Expression(".", true, true, false, ["MOUTH_LIPS_LOWER_OUT"], [0.25], null, Expression.VISEME_ID),
-        "AA": new Expression("AA", true, true, false, ["MOUTH_LIPS_LOWER_OUT", "MOUTH_OPEN", "MOUTH_PUCKER", "MOUTH_WIDE"], [0.3, .65, .55, 0.10], null, Expression.VISEME_ID),
-        "AO": new Expression("AO", true, true, false, ["MOUTH_LIPS_LOWER_OUT", "MOUTH_OPEN", "MOUTH_WIDE"], [0.5, 0.35, -0.35], "--X", Expression.VISEME_ID),
-        "AW-OW": new Expression("AW-OW", true, true, false, ["MOUTH_CORNERS_DOWN", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_UPPER_UP", "MOUTH_OPEN", "MOUTH_PUCKER", "MOUTH_WIDE"], [-0.05, 0.5, 0.35, 0.05, 1.5, -0.3], "Y-----", Expression.VISEME_ID),
-        "AE-EH": new Expression("AE-EH", true, true, false, ["MOUTH_CORNERS_DOWN", "MOUTH_CORNERS_UP", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_OPEN", "MOUTH_WIDE"], [-0.25, 0.3, 0.8, -0.5, 0.45, 0.3], "Y--Y--", Expression.VISEME_ID),
-        "AH-HH": new Expression("AH-HH", true, true, false, ["MOUTH_LIPS_LOWER_OUT", "MOUTH_OPEN"], [0.3, 0.4], null, Expression.VISEME_ID),
-        "AY-IH": new Expression("AY-IH", true, true, false, ["MOUTH_CORNERS_DOWN", "MOUTH_CORNERS_UP", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_OPEN", "MOUTH_WIDE"], [-0.25, 0.3, 0.8, -0.5, 0.35, 0.3], "Y--Y--", Expression.VISEME_ID),
-        "B-M-P": new Expression("B-M-P", true, true, false, ["MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP"], [0.55, -0.45], "-Y", Expression.VISEME_ID),
-        "CH-JH-SH-ZH": new Expression("CH-JH-SH-ZH", true, true, false, ["MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "MOUTH_PUCKER", "MOUTH_WIDE"], [0.9, -0.45, -0.45, 1.1, 0.8], "-YY--", Expression.VISEME_ID),
-        "DH-TH": new Expression("DH-TH", true, true, false, ["MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "MOUTH_OPEN", "MOUTH_PUCKER", "MOUTH_WIDE", "TONGUE_RAISED", "TONGUE_STUCK_OUT"], [0.6, -1, -0.05, 0.2, -0.05, 0.8, 0.05, 0.45], "-YY-X---", Expression.VISEME_ID),
-        "ER-R-W": new Expression("ER-R-W", true, true, false, ["MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_OPEN", "MOUTH_PUCKER"], [-0.3, 2, 0.25, 1], "Z---", Expression.VISEME_ID),
-        "EY": new Expression("EY", true, true, false, ["MOUTH_CORNERS_DOWN", "MOUTH_CORNERS_UP", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "MOUTH_OPEN", "MOUTH_WIDE"], [-0.25, 0.3, 0.7, -0.5, 0.15, 0.3, 0.3], "Y--Y---", Expression.VISEME_ID),
-        "F-V": new Expression("F-V", true, true, false, ["MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "MOUTH_WIDE"], [.6, 0.2, -0.5, 1], "--Y-", Expression.VISEME_ID),
-        "IY": new Expression("IY", true, true, false, ["NOSE_FLARE", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "MOUTH_OPEN"], [0.4, 0.05, 0.1, 0.4, 0.1], null, Expression.VISEME_ID),
-        "L": new Expression("L", true, true, false, ["MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "MOUTH_OPEN", "MOUTH_PUCKER", "MOUTH_WIDE", "TONGUE_RAISED", "TONGUE_STUCK_OUT"], [0.35, -0.7, -0.2, 0.2, -0.05, 1, 0.2, 0.2], "-YY-X---", Expression.VISEME_ID),
-        "OY-UH-UW": new Expression("OY-UH-UW", true, true, false, ["MOUTH_LIPS_LOWER_UP", "MOUTH_OPEN", "MOUTH_PUCKER"], [0.65, 0.25, 1.55], null, Expression.VISEME_ID),
-        "S": new Expression("S", true, true, false, ["MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "MOUTH_PUCKER", "MOUTH_WIDE"], [0.6, -1.05, -0.05, -0.05, 0.8], "-YYX-", Expression.VISEME_ID),
+        /*done*/ ".": new Expression(".", true, true, false, ["MOUTH_LIPS_LOWER_OUT"], [0.25], null, Expression.VISEME),
+        "AA": new Expression("AA", true, true, false, ["MOUTH_LIPS_LOWER_OUT", "MOUTH_OPEN", "MOUTH_PUCKER", "MOUTH_WIDE"], [0.3, .65, .55, 0.10], null, Expression.VISEME),
+        "AO": new Expression("AO", true, true, false, ["MOUTH_LIPS_LOWER_OUT", "MOUTH_OPEN", "MOUTH_WIDE"], [0.5, 0.35, -0.35], "--X", Expression.VISEME),
+        /*done*/ "AW-OW": new Expression("AW-OW", true, true, false, ["MOUTH_CORNERS_DOWN", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_UPPER_UP", "MOUTH_OPEN", "MOUTH_PUCKER", "MOUTH_WIDE"], [-0.05, 0.5, 0.35, 0.3, 1.15, -0.3], "Y----X", Expression.VISEME),
+        "AE-EH": new Expression("AE-EH", true, true, false, ["MOUTH_CORNERS_DOWN", "MOUTH_CORNERS_UP", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_OPEN", "MOUTH_WIDE"], [-0.25, 0.3, 0.8, -0.5, 0.45, 0.3], "Y--Y--", Expression.VISEME),
+        "AH": new Expression("AH", true, true, false, ["MOUTH_LIPS_LOWER_OUT", "MOUTH_OPEN"], [0.3, 0.4], null, Expression.VISEME),
+        "AY-IH": new Expression("AY-IH", true, true, false, ["MOUTH_CORNERS_DOWN", "MOUTH_CORNERS_UP", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_OPEN", "MOUTH_WIDE"], [-0.25, 0.3, 0.8, -0.5, 0.35, 0.3], "Y--Y--", Expression.VISEME),
+        /*done*/ "B-M-P": new Expression("B-M-P", true, true, false, ["MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP"], [0.55, -0.45], "-Y", Expression.VISEME),
+        "CH-JH-SH-ZH": new Expression("CH-JH-SH-ZH", true, true, false, ["MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "MOUTH_PUCKER", "MOUTH_WIDE"], [0.9, -0.45, -0.45, 1.1, 0.8], "-YY--", Expression.VISEME),
+        "D": new Expression("D", true, true, false, ["TONGUE_RAISED"], [0.45], null, Expression.VISEME),
+        "DH-TH": new Expression("DH-TH", true, true, false, ["MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_OPEN", "MOUTH_PUCKER", "MOUTH_WIDE", "TONGUE_RAISED", "TONGUE_STUCK_OUT"], [0.4, -1, 0.1, 0.05, 0.8, 0.15, 0.35], "-Y-----", Expression.VISEME),
+        "ER-R-W": new Expression("ER-R-W", true, true, false, ["MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_OPEN", "MOUTH_PUCKER"], [-0.3, 2, 0.25, 1], "Z---", Expression.VISEME),
+        /*done*/ "EY": new Expression("EY", true, true, false, ["MOUTH_CORNERS_DOWN", "MOUTH_CORNERS_UP", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "MOUTH_OPEN", "MOUTH_PUCKER", "MOUTH_WIDE"], [0.05, 0.45, 0.2, 0.05, 0.15, 0.3, -0.4, 0.3], "------X-", Expression.VISEME),
+        "F-V": new Expression("F-V", true, true, false, ["MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "MOUTH_WIDE"], [.6, 0.2, -0.5, 1], "--Y-", Expression.VISEME),
+        /*done*/ "IY": new Expression("IY", true, true, false, ["NOSE_FLARE", "MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "MOUTH_OPEN"], [0.4, 0.05, 0.1, 0.4, 0.1], null, Expression.VISEME),
+        /*done*/ "L": new Expression("L", true, true, false, ["MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "MOUTH_OPEN", "MOUTH_PUCKER", "MOUTH_WIDE", "TONGUE_RAISED", "TONGUE_STUCK_OUT"], [0.35, -0.7, -0.2, 0.2, -0.05, 1, 0.2, 0.2], "-YY-X---", Expression.VISEME),
+        "OY-UH-UW": new Expression("OY-UH-UW", true, true, false, ["MOUTH_LIPS_LOWER_UP", "MOUTH_OPEN", "MOUTH_PUCKER"], [0.65, 0.25, 1.55], null, Expression.VISEME),
+        "S": new Expression("S", true, true, false, ["MOUTH_LIPS_LOWER_OUT", "MOUTH_LIPS_LOWER_UP", "MOUTH_LIPS_UPPER_UP", "MOUTH_WIDE"], [0.4, -0.4, -0.15, 0.35], "-YY-", Expression.VISEME),
     };
     QI.Expression = Expression;
     var Automaton = (function (_super) {
@@ -6779,7 +7041,7 @@ var QI;
             this.setShapeKeyGroupLast(Automaton._WINK);
         };
         /**
-         * @param {String} name - The name of the new expression.
+         * @param {Expression} exp - The expression to be made available.
          * @param {boolean} winkable - Not all expressions is it appropriate to wink, indicate this one is with true.
          * @param {boolean} blinkable - It is not appropriate when an expression closes eyelids to allow blinking. Indicate no closing with true.
          * @param {Array} endStateNames - Names of the end states to be based on
@@ -6795,31 +7057,63 @@ var QI;
         };
         /**
          * Adds the expressions contained in this file.  These do take both time to construct and memory, so doing all might be wasteful.
-         * @param {string} whichOnes - names of the ones to load, e.g. 'ANGRY LAUGH'.  When null, then all.
+         * @param {string} whichOnes - names of the ones to load, e.g. 'ANGRY LAUGH'.  When "", then all.
+         * @param {boolean} visemesToo - When true, also add speech friendly versions of the expressions.
          */
         Automaton.prototype.addStockExpressions = function (whichOnes, visemesToo) {
-            if (visemesToo === void 0) { visemesToo = true; }
-            var all = !whichOnes;
-            if (all || whichOnes.indexOf("ANGRY") !== -1)
+            if (whichOnes === void 0) { whichOnes = ""; }
+            if (visemesToo === void 0) { visemesToo = false; }
+            var all = whichOnes.length === 0;
+            if (all || whichOnes.indexOf("ANGRY") !== -1) {
                 this.addExpression(Expression.ANGRY);
-            if (all || whichOnes.indexOf("CRYING") !== -1)
+                if (visemesToo)
+                    this.addExpression(Expression.ANGRY_NM);
+            }
+            if (all || whichOnes.indexOf("CRYING") !== -1) {
                 this.addExpression(Expression.CRYING);
-            if (all || whichOnes.indexOf("DISGUSTED") !== -1)
+                if (visemesToo)
+                    this.addExpression(Expression.CRYING_NM);
+            }
+            if (all || whichOnes.indexOf("DISGUSTED") !== -1) {
                 this.addExpression(Expression.DISGUSTED);
-            if (all || whichOnes.indexOf("HAPPY") !== -1)
+                if (visemesToo)
+                    this.addExpression(Expression.DISGUSTED_NM);
+            }
+            if (all || whichOnes.indexOf("HAPPY") !== -1) {
                 this.addExpression(Expression.HAPPY);
-            if (all || whichOnes.indexOf("LAUGH") !== -1)
+                if (visemesToo)
+                    this.addExpression(Expression.HAPPY_NM);
+            }
+            if (all || whichOnes.indexOf("LAUGH") !== -1) {
                 this.addExpression(Expression.LAUGH);
-            if (all || whichOnes.indexOf("PPHPHT") !== -1)
+                if (visemesToo)
+                    this.addExpression(Expression.LAUGH_NM);
+            }
+            if (all || whichOnes.indexOf("PPHPHT") !== -1) {
                 this.addExpression(Expression.PPHPHT);
-            if (all || whichOnes.indexOf("SAD") !== -1)
+                if (visemesToo)
+                    this.addExpression(Expression.PPHPHT_NM);
+            }
+            if (all || whichOnes.indexOf("SAD") !== -1) {
                 this.addExpression(Expression.SAD);
-            if (all || whichOnes.indexOf("SCARED") !== -1)
+                if (visemesToo)
+                    this.addExpression(Expression.SAD_NM);
+            }
+            if (all || whichOnes.indexOf("SCARED") !== -1) {
                 this.addExpression(Expression.SCARED);
-            if (all || whichOnes.indexOf("SKEPTICAL") !== -1)
+                if (visemesToo)
+                    this.addExpression(Expression.SCARED_NM);
+            }
+            if (all || whichOnes.indexOf("SKEPTICAL") !== -1) {
                 this.addExpression(Expression.SKEPTICAL);
-            if (all || whichOnes.indexOf("STRUGGLING") !== -1)
+                if (visemesToo)
+                    this.addExpression(Expression.SKEPTICAL_NM);
+            }
+            if (all || whichOnes.indexOf("STRUGGLING") !== -1) {
                 this.addExpression(Expression.STRUGGLING);
+                if (visemesToo)
+                    this.addExpression(Expression.STRUGGLING_NM);
+            }
             if (visemesToo) {
                 for (var name in Expression.VISEME_DICT) {
                     this.addExpression(Expression.VISEME_DICT[name]);
@@ -7400,21 +7694,27 @@ var QI;
                 // limit effect, so does not show on orthographic cameras, if any
                 var camera = (scene.activeCameras.length > 0) ? scene.activeCameras[0] : scene.activeCamera;
                 this._HighLightLayer = new BABYLON.HighlightLayer("QI.ExpandEntrance internal", scene, { camera: camera });
-                this._HighLightLayer.addMesh(this._mesh, BABYLON.Color3.White());
-                var kids = this._mesh.getDescendants();
-                for (var i = 0, len = kids.length; i < len; i++) {
-                    this._HighLightLayer.addMesh(kids[i], BABYLON.Color3.White());
+                // get all child meshes, so all can be assigned to highlight layer
+                var meshNKids = this._mesh.getDescendants();
+                meshNKids.push(this._mesh);
+                for (var i = 0, len = meshNKids.length; i < len; i++) {
+                    this._HighLightLayer.addMesh(meshNKids[i], BABYLON.Color3.White());
                 }
             }
             // add the minimum steps
             var events;
             events = [
-                // return to a basis state
+                // return to a basis state; 
                 new QI.PropertyEvent(ref._mesh, 'scaling', origScaling, this.durations[0], ref._options)
             ];
             if (doingHighlight) {
                 events.push(new QI.Stall(ref.durations[1]));
-                events.push(function () { ref._HighLightLayer.dispose(); });
+                events.push(function () {
+                    for (var i = 0, len = meshNKids.length; i < len; i++) {
+                        ref._HighLightLayer.removeMesh(meshNKids[i]);
+                    }
+                    ref._HighLightLayer.dispose();
+                });
             }
             // eliminate resources
             events.push(function () { ref._options = null; });

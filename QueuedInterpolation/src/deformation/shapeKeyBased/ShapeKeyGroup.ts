@@ -130,11 +130,12 @@ module QI {
          * @param {Array} endStateNames - Names of the end states to be based on
          * @param {Array} endStateRatios - Not validated, but if -1 < or > 1, then can never be called, since Deformation validates
          * @param {string} mirrorAxes - axis [X,Y, or Z] to mirror against for an end state ratio, which is negative.  No meaning if positive.  If null, shape key group setting used.
-         * @param {String} newStateName - The name of the new state.  If not set, then it will be computed.
+         * @param {String} newStateName - The name of the new state.  If not set, then it will be computed. (optional)
+         * @returns {String} The state name, which might be useful, if you did not include it as an argument
          */
-        public addComboDerivedKey(referenceStateName : string, endStateNames : Array<string>, endStateRatios : Array<number>, mirrorAxes : string = null, newStateName ? : string) : void {
+        public addComboDerivedKey(referenceStateName : string, endStateNames : Array<string>, endStateRatios : Array<number>, mirrorAxes : string = null, newStateName ? : string) : string {
             // test if key already exists, then leave
-            if (newStateName && this.hasKey(newStateName) ) return;
+            if (newStateName && this.hasKey(newStateName) ) return null;
 
             var referenceIdx = this._getIdxForState(referenceStateName);
             if (referenceIdx === -1) {
@@ -156,6 +157,7 @@ module QI {
             var stateKey  = new Float32Array(this._nPosElements);
             this._buildPosEndPoint(stateKey, referenceIdx, endStateIdxs, endStateRatios, mirrorAxes, (<QI.Mesh> this._node).debug);
             this._addShapeKey(stateName, false, stateKey);
+            return stateName;
         }
 
         /** 

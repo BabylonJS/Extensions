@@ -79,7 +79,6 @@ module QI{
                 }
             }
         }
-        // ==================================== Post constructor edits ====================================
         // ==================================== Getters & setters ====================================
         public getReferenceStateName() : string { return this._referenceStateName; }
         public getEndStateName(idx : number) : string { return this._endStateNames[idx]; }
@@ -97,6 +96,22 @@ module QI{
             }
             
             return "\"" + this._groupName + "\", \"" + this._referenceStateName + "\", [" + names + "], [" + ratios + "]";
+        }
+
+        /**
+         * This returns a script to request a combined derived keys.
+         * @param {string} groupVarName - This is the shapekey group on which to do the combining.
+         */
+        public toDerivedKeyScript(groupVarName) : string {
+            var names = "";
+            var ratios = "";
+            for(var i = 0, len = this._endStateNames.length; i < len; i++) {
+                if (i > 0) { names += ", "; ratios += ", "; }
+                names += "\"" + this._endStateNames[i] + "\"";
+                ratios += this._endStateRatios[i];
+            }
+            var mirrorAxes = this.options.mirrorAxes ? "\"" + this.options.mirrorAxes + "\"" : "null";
+            return groupVarName + ".addComboDerivedKey(\"" + this._referenceStateName + "\", [" + names + "], [" + ratios + "], " + mirrorAxes + ");";
         }
 
         public getClassName(): string { return "VertexDeformation"; } 
@@ -164,7 +179,7 @@ module QI{
         protected _toScriptCustomArgs() : string {
             return "\"" + this._groupName + "\", \"" + this._endStateNames[0] + "\", " + this._endStateRatios[0];
         }
-
+        
         public getClassName(): string { return "Deformation"; } 
     }
     //================================================================================================

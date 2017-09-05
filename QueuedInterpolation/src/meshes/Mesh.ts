@@ -489,6 +489,7 @@ module QI {
          *      absoluteRotation - Rotation arg is an absolute value, not POV (default false).
          *      pace - Any Object with the function: getCompletionMilestone(currentDurationRatio) (default MotionEvent.LINEAR)
          *      sound - Sound to start with event.  WARNING: When event also has a sync partner, there could be issues.
+         *      requireCompletionOf - A way to serialize events from different queues e.g. shape key & skeleton.
          *
          *      noStepWiseMovement - Calc the full amount of movement from Node's original position / rotation,
          *                           rather than stepwise (default false).  No meaning when no rotation in event.
@@ -574,6 +575,7 @@ module QI {
          *      absoluteRotation - Rotation arg is an absolute value, not POV (default false).
          *      pace - Any Object with the function: getCompletionMilestone(currentDurationRatio) (default MotionEvent.LINEAR)
          *      sound - Sound to start with event.  WARNING: When event also has a sync partner, there could be issues.
+         *      requireCompletionOf - A way to serialize events from different queues e.g. shape key & skeleton.
          *
          *      noStepWiseMovement - Calc the full amount of movement from Node's original position / rotation,
          *                           rather than stepwise (default false).  No meaning when no rotation in event.
