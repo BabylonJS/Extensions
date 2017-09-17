@@ -1,11 +1,21 @@
 {
-  "name": "grading_scene_optimizer",
-  "version": "1.0.0",
+  "name": "",
+  "version": "",
   "description": "",
-  "main": "index.js",
+  "main": "",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Pierre Glibert",
-  "license": "ISC"
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-plumber": "^1.1.0",
+    "gulp-server-livereload": "^1.9.2",
+    "gulp-typescript": "^3.1.5",
+    "install": "^0.8.7",
+    "merge2": "^1.0.3",
+    "npm": "^4.2.0",
+    "typescript": "^2.1.6"
+  }
 }

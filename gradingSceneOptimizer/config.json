@@ -1,0 +1,13 @@
+{
+  "version" : "0.0.1",
+  "externalSrc" : [
+    {
+      "from" : "../../Babylon.js/dist/preview release/babylon.d.ts",
+      "to" : "ts"
+    },
+    {
+      "from" : "../../Babylon.js/dist/preview release/babylon.js",
+      "to" : "js"
+    }
+  ]
+}
