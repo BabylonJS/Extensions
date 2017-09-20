@@ -199,7 +199,7 @@ module BABYLON {
    * OPTIMISATION FUNCTION
    ************************/
 
-  // optimization :
+  // Optimize :
   export class Optimize {
 
       // for materials
