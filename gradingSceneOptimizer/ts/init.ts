@@ -93,13 +93,6 @@ window.onload=function() {
   groundMat.bumpTexture = new BABYLON.Texture("assets/floor_bump.png", scene);
 
 
-
-  engine.runRenderLoop( () => {
-      scene.render();
-  });
-
-
-
   scene.executeWhenReady( () => {
 
 
@@ -175,52 +168,15 @@ window.onload=function() {
 
   var GSO = new BABYLON.GradingSceneOptimizer(),
 
-      // create grades. ex. : low, standard and hight quality.
-      minGrade = GSO.createGrade('minimum', BABYLON.PresetGradeOptimization.minimum(),
-      (onSucess) => {
-        // console.log('minGrade : upgrade task');
-        if (onSucess) {
-          onSucess();
-        }
-      },
-      (onSucess) => {
-        // console.log('minGrade : downgrade task');
-        if (onSucess) {
-          onSucess();
-        }
-      }),
+      minGrade = GSO.createGrade('minimum', BABYLON.PresetGradeOptimization.minimum()),
 
       lowGrade = GSO.createGrade('low', BABYLON.PresetGradeOptimization.low()),
 
-      standardGrade = GSO.createGrade('standard', BABYLON.PresetGradeOptimization.standard(),
-      (onSucess) => {
-        // console.log('standardGrade : upgrade task');
-        if (onSucess) {
-          onSucess();
-        }
-      },
-      (onSucess) => {
-        // console.log('standardGrade : downgrade task');
-        if (onSucess) {
-          onSucess();
-        }
-      }),
+      standardGrade = GSO.createGrade('standard', BABYLON.PresetGradeOptimization.standard()),
 
       mediumGrade = GSO.createGrade('medium', BABYLON.PresetGradeOptimization.medium()),
 
-      highGrade = GSO.createGrade('high', BABYLON.PresetGradeOptimization.high(),
-      (onSucess) => {
-        // console.log('highGrade : upgrade task');
-        if (onSucess) {
-          onSucess();
-        }
-      },
-      (onSucess) => {
-        // console.log('highGrade : downgrade task');
-        if (onSucess) {
-          onSucess();
-        }
-      }),
+      highGrade = GSO.createGrade('high', BABYLON.PresetGradeOptimization.high()),
 
       ultraGrade = GSO.createGrade('ultra', BABYLON.PresetGradeOptimization.ultra());
 
@@ -259,7 +215,7 @@ window.onload=function() {
   uiGrades.appendChild(li);
 
   li.addEventListener('click', () => {
-    GSO.autoRun(engine, scene);
+    GSO.hardwareEval(engine, scene);
   });
 
   // create grade li
@@ -275,12 +231,18 @@ window.onload=function() {
 
 
   // show inspector
-  // scene.debugLayer.show();
+  scene.debugLayer.show();
 
 
   // run GradingSceneOptimizer
   GSO.run(engine, scene, standardGrade, () => {
-    // console.log(GSO)
+
+    engine.runRenderLoop( () => {
+        scene.render();
+    });
+
+    console.log(GSO);
+
   });
 
 }
