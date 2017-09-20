@@ -28,6 +28,11 @@ module BABYLON {
                 maxWidth : 1024,
                 maxHeight : 1024,
                 devicePixelRatio : 1
+              },
+              devices : { // TODO
+                mobileEnabled : true,
+                maxScreenWidth : 1024,
+                maxScreenHeight : 1024
               }
 
           };
