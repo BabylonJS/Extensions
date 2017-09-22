@@ -16,23 +16,25 @@ module BABYLON {
               lensFlaresEnabled : false,
               renderTargetsEnabled : false,
               textures : {
-                scale : 0.5,
-                maxSize : 256,
-                minSize : 128
+                  scale : 0.5,
+                  maxSize : 256,
+                  minSize : 128
               },
               materials : {
-                bumpEnabled : false,
-                fresnelEnabled : false
+                  bumpEnabled : false,
+                  fresnelEnabled : false
               },
               renderSize : {
-                maxWidth : 1024,
-                maxHeight : 1024,
-                devicePixelRatio : 1
+                  maxWidth : 1024,
+                  maxHeight : 1024,
+                  devicePixelRatio : 1
               },
-              devices : { // TODO
-                mobileEnabled : true,
-                maxScreenWidth : 1024,
-                maxScreenHeight : 1024
+              devices : {
+                  smartPhoneAllowed : true,
+                  tabletAllowed : true,
+                  noteBookAllowed : true,
+                  computerAllowed : false,
+                  exceptionsList : []
               }
 
           };
@@ -47,18 +49,25 @@ module BABYLON {
               lensFlaresEnabled : false,
               renderTargetsEnabled : false,
               textures : {
-                scale : 0.5,
-                maxSize : 512,
-                minSize : 128
+                  scale : 0.5,
+                  maxSize : 512,
+                  minSize : 128
               },
               materials : {
-                bumpEnabled : true,
-                fresnelEnabled : false
+                  bumpEnabled : true,
+                  fresnelEnabled : false
               },
               renderSize : {
-                maxWidth : 1440,
-                maxHeight : 1440,
-                devicePixelRatio : 1
+                  maxWidth : 1440,
+                  maxHeight : 1440,
+                  devicePixelRatio : 1
+              },
+              devices : {
+                  smartPhoneAllowed : true,
+                  tabletAllowed : true,
+                  noteBookAllowed : true,
+                  computerAllowed : true,
+                  exceptionsList : []
               }
           };
       }
@@ -72,22 +81,29 @@ module BABYLON {
               lensFlaresEnabled : false,
               renderTargetsEnabled : true,
               textures : {
-                scale : 0.5,
-                maxSize : 512,
-                minSize : 256
+                  scale : 0.5,
+                  maxSize : 512,
+                  minSize : 256
               },
               materials : {
-                bumpEnabled : true,
-                fresnelEnabled : false
+                  bumpEnabled : true,
+                  fresnelEnabled : false
               },
               shadows : {
-                type : 'usePoissonSampling',
-                size : 256
+                  type : 'usePoissonSampling',
+                  size : 256
               },
               renderSize : {
-                maxWidth : 1600,
-                maxHeight : 1600,
-                devicePixelRatio : 1
+                  maxWidth : 1600,
+                  maxHeight : 1600,
+                  devicePixelRatio : 1
+              },
+              devices : {
+                  smartPhoneAllowed : true,
+                  tabletAllowed : true,
+                  noteBookAllowed : true,
+                  computerAllowed : true,
+                  exceptionsList : []
               }
           };
       }
@@ -101,27 +117,34 @@ module BABYLON {
               lensFlaresEnabled : false,
               renderTargetsEnabled : true,
               textures : {
-                scale : 0.75,
-                maxSize : 1024,
-                minSize : 256
+                  scale : 0.75,
+                  maxSize : 1024,
+                  minSize : 256
               },
               particules : {
-                ratio : 0.25,
-                maxEmitRate : 300,
-                minEmitRate : 100
+                  ratio : 0.25,
+                  maxEmitRate : 300,
+                  minEmitRate : 100
               },
               materials : {
-                bumpEnabled : true,
-                fresnelEnabled : true
+                  bumpEnabled : true,
+                  fresnelEnabled : true
               },
               shadows : {
-                type : 'usePoissonSampling',
-                size : 512
+                  type : 'usePoissonSampling',
+                  size : 512
               },
               renderSize : {
-                maxWidth : 1920,
-                maxHeight : 1920,
-                devicePixelRatio : 1
+                  maxWidth : 1920,
+                  maxHeight : 1920,
+                  devicePixelRatio : 1
+              },
+              devices : {
+                  smartPhoneAllowed : false,
+                  tabletAllowed : true,
+                  noteBookAllowed : true,
+                  computerAllowed : true,
+                  exceptionsList : []
               }
           };
       }
@@ -135,27 +158,34 @@ module BABYLON {
               lensFlaresEnabled : true,
               renderTargetsEnabled : true,
               textures : {
-                scale : 1,
-                maxSize : 1024,
-                minSize : 512
+                  scale : 1,
+                  maxSize : 1024,
+                  minSize : 512
               },
               particules : {
-                ratio : 0.5,
-                maxEmitRate : 5000,
-                minEmitRate : 100
+                  ratio : 0.5,
+                  maxEmitRate : 5000,
+                  minEmitRate : 100
               },
               materials : {
-                bumpEnabled : true,
-                fresnelEnabled : true
+                  bumpEnabled : true,
+                  fresnelEnabled : true
               },
               shadows : {
-                type : 'useBlurCloseExponentialShadowMap',
-                size : 256
+                  type : 'useBlurCloseExponentialShadowMap',
+                  size : 256
               },
               renderSize : {
-                maxWidth : 2560,
-                maxHeight : 2560,
-                devicePixelRatio : 1
+                  maxWidth : 2560,
+                  maxHeight : 2560,
+                  devicePixelRatio : 1
+              },
+              devices : {
+                  smartPhoneAllowed : false,
+                  tabletAllowed : false,
+                  noteBookAllowed : false,
+                  computerAllowed : true,
+                  exceptionsList : []
               }
           };
       }
@@ -169,27 +199,34 @@ module BABYLON {
               lensFlaresEnabled : true,
               renderTargetsEnabled : true,
               textures : {
-                scale : 1,
-                maxSize : 2048,
-                minSize : 512
+                  scale : 1,
+                  maxSize : 2048,
+                  minSize : 512
               },
               particules : {
-                ratio : 1,
-                maxEmitRate : 10000,
-                minEmitRate : 100
+                  ratio : 1,
+                  maxEmitRate : 10000,
+                  minEmitRate : 100
               },
               materials : {
-                bumpEnabled : true,
-                fresnelEnabled : true
+                  bumpEnabled : true,
+                  fresnelEnabled : true
               },
               shadows : {
-                type : 'useBlurCloseExponentialShadowMap',
-                size : 512
+                  type : 'useBlurCloseExponentialShadowMap',
+                  size : 512
               },
               renderSize : {
-                maxWidth : 2560,
-                maxHeight : 2560,
-                devicePixelRatio : 2
+                  maxWidth : 2560,
+                  maxHeight : 2560,
+                  devicePixelRatio : 2
+              },
+              devices : {
+                  smartPhoneAllowed : false,
+                  tabletAllowed : false,
+                  noteBookAllowed : false,
+                  computerAllowed : true,
+                  exceptionsList : []
               }
           };
       }
@@ -563,6 +600,125 @@ module BABYLON {
           return resizedCopy;
       }
 
+
+      public static isOnAllowedDevice(params: IParamsDevicesGradeOptimization) : boolean{
+        var exceptions = params.exceptionsList,
+            phoneAllowed = params.smartPhoneAllowed,
+            tabletAllowed = params.tabletAllowed,
+            noteBookAllowed = params.noteBookAllowed,
+            computerAllowed = params.computerAllowed,
+            device = this.devicesDetection(params.exceptionsList);
+
+        // test smartPhone
+        if (!phoneAllowed && device === 'smartPhone') {
+            return false;
+        }
+
+        // test tablet
+        if (!tabletAllowed && device === 'tablet') {
+            return false;
+        }
+
+        // test noteBook
+        if (!noteBookAllowed && device === 'noteBook') {
+            return false;
+        }
+
+        // test general computer
+        if (!computerAllowed && device === 'computer') {
+            return false;
+        }
+
+        // check if exception
+        if (
+            exceptions && exceptions.length > 0 && (
+              device === 'smartPhone' ||
+              device === 'tablet' ||
+              device === 'noteBook' ||
+              device === 'computer'
+            )
+          )
+        {
+            return false;
+        }
+
+        return true;
+
+
+
+      }
+
+      // device detection
+      public static devicesDetection(exceptions? : Array<string>) : string | 'smartPhone' | 'tablet' | 'noteBook' | 'computer' {
+
+        // get screen size
+        var screenWidth = screen.height,
+            screenHeight = screen.width,
+            size = Math.max(screenWidth, screenHeight),
+            regex;
+
+        // mobile detection
+        var isMobile = () => {
+            if( navigator.userAgent.match(/Android/i)
+                || navigator.userAgent.match(/webOS/i)
+                || navigator.userAgent.match(/iPhone/i)
+                || navigator.userAgent.match(/iPad/i)
+                || navigator.userAgent.match(/iPod/i)
+                || navigator.userAgent.match(/BlackBerry/i)
+                || navigator.userAgent.match(/Windows Phone/i)
+              )
+            {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+
+        var isExeption = () : string => {
+
+            var expetL = exceptions.length;
+
+            for (let i = 0; i < expetL; i++) {
+
+                var except = exceptions[i];
+
+                regex = new RegExp(except, 'i');
+
+                if( navigator.userAgent.match(regex)){
+                    return except;
+                };
+
+            }
+        }
+
+        // EXCEPTIONS
+        if (exceptions) {
+          var getExcept = isExeption();
+          if (getExcept) {
+              return getExcept;
+          }
+        }
+
+        // SMARTPHONE
+        if (isMobile() && size < 768) {
+            return 'smartPhone';
+        }
+
+        // TABLET
+        if (isMobile()) {
+            return 'tablet';
+        }
+
+        // NOTEBOOK
+        if (size <= 1280) {
+            return 'noteBook';
+        }
+
+        // computer
+        return 'computer';
+      }
+
   }
 
 
@@ -671,6 +827,7 @@ module BABYLON {
       public hardwareEval(engine: Engine, scene: Scene, onSuccess?: Function){
 
           var fps,
+              I = this._currentGradePriority,
               isInit = false,
               timeToWait = 1000,
               evalDuration = this.evaluationDuration;
@@ -701,10 +858,14 @@ module BABYLON {
 
                   // check fps to reach to upgrade
                   if (fps > this.fpsToReach) {
-                      if (this._isUpGradingStep && this._currentGradePriority < this.grades.length - 1) {
+                      if (this._isUpGradingStep && I < this.grades.length - 1) {
+
+                          I++;
+
                           this.upgrade(scene, () => {
                               autoEvaluate();
                           });
+
                       }
 
                       // if it's a success for all grade
@@ -729,12 +890,15 @@ module BABYLON {
                   }
 
                   // if fps not reach, start downgrade step
-                  else if (this._currentGradePriority > 0) {
+                  else if (I > 0) {
                       this._isUpGradingStep = false;
+
+                      I--;
 
                       this.downgrade(scene, () => {
                           autoEvaluate();
                       });
+
                   }
 
                   // when finished
@@ -786,15 +950,14 @@ module BABYLON {
           // clear
           this.stop();
 
-          if (grade === this._currentGrade) {
-              console.log('Allready on grade : ' + grade.name);
+          if (!grade.enabled || grade === this._currentGrade) {
+              console.log('Grade ' + grade.name + ': allready on it or desabled');
               return;
           }
 
           console.log('UPDATE scene by grade : ' + grade.name);
 
           var grades = this.grades,
-              optimization = grade.optimization,
               toPriority = grade.priority,
               gradeToUp,
               currentGrade,
@@ -848,10 +1011,10 @@ module BABYLON {
           }
 
           // update render with optimization parameter
-          this.updateSceneByOptimization(scene, optimization);
+          this.optimizeRenderByGrade(scene, grade);
 
           // update current variable
-          this._currentRenderSize = optimization.renderSize;
+          this._currentRenderSize = grade.renderSize;
           this._currentGrade = grade;
           this._currentGradePriority = toPriority;
 
@@ -865,23 +1028,50 @@ module BABYLON {
       // force upgrade by 1
       public upgrade(scene: Scene, onSuccess? : Function) {
 
-          var grade = this.grades[this._currentGradePriority + 1],
-              upGradingTask = grade.upGradingTask,
-              optimization = grade.optimization;
+          var I = this._currentGradePriority + 1,
+              grades = this.grades,
+              gradesL = grades.length,
+              gradeI = grades[I],
+              upGradingTask;
 
-          console.log(' • Upgrade scene to ' + grade.name + " grade.");
+          // loop to look the next enabled grade
+          var isEnabled = (grade: Grade) => {
+              I ++;
+              if (I < gradesL && !grade.enabled) {
+                isEnabled(grades[I])
+              }
+              else {
+                gradeI = grade;
+                upGradingTask = gradeI.upGradingTask;
+              }
+          }
+
+          isEnabled(gradeI);
+
+          if (!gradeI.enabled) {
+              console.log('Grade ' + gradeI.name + ': allready on it or desabled');
+
+              // on success
+              if (onSuccess) {
+                  onSuccess();
+              }
+
+              return;
+          }
+
+          console.log(' • Upgrade scene to ' + gradeI.name + " grade.");
 
           if (upGradingTask) {
               upGradingTask();
           }
 
           // update render with optimization parameter
-          this.updateSceneByOptimization(scene, optimization);
+          this.optimizeRenderByGrade(scene, gradeI);
 
           // update current variable
-          this._currentRenderSize = optimization.renderSize;
-          this._currentGrade = grade;
-          this._currentGradePriority = grade.priority;
+          this._currentRenderSize = gradeI.renderSize;
+          this._currentGrade = gradeI;
+          this._currentGradePriority = gradeI.priority;
 
           // on success
           if (onSuccess) {
@@ -893,17 +1083,44 @@ module BABYLON {
       // force downgrade by 1
       public downgrade(scene: Scene, onSuccess? : Function) {
 
+          var grades = this.grades,
+              currentPriority = this._currentGradePriority,
+
               // downgrading options
-          var gradeToDowngrade = this.grades[this._currentGradePriority],
+              gradeToDowngrade = grades[currentPriority],
               downGradingTask = gradeToDowngrade.downGradingTask,
 
               // upgrading options
-              gradeToUpgrade = this.grades[this._currentGradePriority - 1],
-              upGradingTask = gradeToUpgrade.upGradingTask,
-              optimization = gradeToUpgrade.optimization;
+              I = currentPriority - 1,
+              gradeI = grades[I],
+              upGradingTask;
 
+          // loop to look the next enabled grade
+          var isEnabled = (grade: Grade) => {
+              I --;
+              if (I >= 0 && !grade.enabled) {
+                isEnabled(grades[I])
+              }
+              else {
+                gradeI = grade;
+                upGradingTask = gradeI.upGradingTask;
+              }
+          }
 
-          console.log(' • Downgrade scene to ' + gradeToUpgrade.name + " grade.");
+          isEnabled(gradeI);
+
+          if (!gradeI.enabled) {
+              console.log('Grade' + gradeI.name + ': allready on it or desabled');
+
+              // on success
+              if (onSuccess) {
+                  onSuccess();
+              }
+
+              return;
+          }
+
+          console.log(' • Downgrade scene to ' + gradeI.name + " grade.");
 
 
           if (downGradingTask) {
@@ -915,12 +1132,12 @@ module BABYLON {
           }
 
           // update render with optimization parameter
-          this.updateSceneByOptimization(scene, optimization);
+          this.optimizeRenderByGrade(scene, gradeI);
 
           // update current variable
-          this._currentRenderSize = optimization.renderSize;
-          this._currentGrade = gradeToUpgrade;
-          this._currentGradePriority = gradeToUpgrade.priority;
+          this._currentRenderSize = gradeI.renderSize;
+          this._currentGrade = gradeI;
+          this._currentGradePriority = gradeI.priority;
 
           // on success
           if (onSuccess) {
@@ -943,47 +1160,87 @@ module BABYLON {
       }
 
       // update Render By Optimization parameters
-      public updateSceneByOptimization(scene: Scene, paramsOptimization : ParamsGradeOptimizationI) {
+      public optimizeRenderByGrade(scene: Scene, grade : Grade) {
 
+        console.log(grade)
           // for render targets
-          if (paramsOptimization.renderTargetsEnabled != undefined) {
-              BABYLON.Optimize.renderTargets(scene, paramsOptimization.renderTargetsEnabled);
+          if (grade.renderTargetsEnabled != undefined) {
+              BABYLON.Optimize.renderTargets(scene, grade.renderTargetsEnabled);
           }
 
           // for postProcess
-          if (paramsOptimization.postProcessesEnabled != undefined) {
-              BABYLON.Optimize.postProcesses(scene, paramsOptimization.postProcessesEnabled);
+          if (grade.postProcessesEnabled != undefined) {
+              BABYLON.Optimize.postProcesses(scene, grade.postProcessesEnabled);
           }
 
           // for lensFlare
-          if (paramsOptimization.lensFlaresEnabled != undefined) {
-              BABYLON.Optimize.lensFlares(scene, paramsOptimization.lensFlaresEnabled);
+          if (grade.lensFlaresEnabled != undefined) {
+              BABYLON.Optimize.lensFlares(scene, grade.lensFlaresEnabled);
           }
 
           // for shadows
-          if (paramsOptimization.shadowsEnabled != undefined) {
-              BABYLON.Optimize.shadows(scene, paramsOptimization.shadowsEnabled, paramsOptimization.shadows);
+          if (grade.shadowsEnabled != undefined) {
+              BABYLON.Optimize.shadows(scene, grade.shadowsEnabled, grade.shadows);
           }
 
           // for maxRenderSize
-          if (paramsOptimization.renderSize != undefined) {
-              BABYLON.Optimize.renderSize(scene, paramsOptimization.renderSize);
+          if (grade.renderSize != undefined) {
+              BABYLON.Optimize.renderSize(scene, grade.renderSize);
           }
 
           // for textures
-          if (paramsOptimization.textures != undefined) {
-              BABYLON.Optimize.textures(scene, paramsOptimization.textures);
+          if (grade.textures != undefined) {
+              BABYLON.Optimize.textures(scene, grade.textures);
           }
 
           // for materials
-          if (paramsOptimization.materials != undefined) {
-              BABYLON.Optimize.materials(scene, paramsOptimization.materials);
+          if (grade.materials != undefined) {
+              BABYLON.Optimize.materials(scene, grade.materials);
           }
 
           // for particules
-          if (paramsOptimization.particulesEnabled != undefined) {
-              BABYLON.Optimize.particules(scene, paramsOptimization.particulesEnabled, paramsOptimization.particules);
+          if (grade.particulesEnabled != undefined) {
+              BABYLON.Optimize.particules(scene, grade.particulesEnabled, grade.particules);
           }
+
+      }
+
+      // add ui to inspect
+      public addUI (scene: Scene, parentNode: HTMLElement) {
+
+        var grades = this.grades,
+            engine = scene.getEngine();
+
+        var addEvent = (li, grade) => {
+
+          li.addEventListener('click', () => {
+            this.updateSceneByGrade(scene, grade);
+          });
+        }
+
+        var createLi = (text) => {
+          var li = document.createElement('li');
+              li.textContent = text;
+          return li;
+        }
+
+        // create auto li
+        var li = createLi('auto');
+        parentNode.appendChild(li);
+
+        li.addEventListener('click', () => {
+          this.hardwareEval(engine, scene);
+        });
+
+        // create grade li
+        for (let i = 0; i < grades.length; i++) {
+          var gradeI = grades[i];
+
+          li = createLi(gradeI.name);
+
+          addEvent(li, gradeI);
+          parentNode.appendChild(li);
+        }
 
       }
 
@@ -1003,15 +1260,104 @@ module BABYLON {
       // priority
       public priority: number;
 
+      // enabled
+      // ex : if this grade is not allowed on mobile device
+      public enabled: boolean;
+
+      // OPTIMIZATION PARAMETERS :
+      // "enabled" variable
+      postProcessesEnabled? : boolean = undefined;
+      lensFlaresEnabled? : boolean = undefined;
+      renderTargetsEnabled? : boolean = undefined;
+      particulesEnabled? : boolean = undefined;
+      shadowsEnabled?: boolean = undefined;
+
+      // parameters variable
+      particules? : IParamsParticulesGradeOptimization = undefined;
+      shadows? : IParamsShadowsGradeOptimization = undefined;
+      renderSize? : IParamsRenderSizeGradeOptimization = undefined;
+      materials? : IParamsMaterialsGradeOptimization = undefined;
+      textures? : IParamsTexturesGradeOptimization = undefined;
+      devices? : IParamsDevicesGradeOptimization = undefined;
+      camera? : IParamsCameraGradeOptimization = undefined;
+
       /**
+       * @param GSO : GradingSceneOptimizer
        * @param name : name of grade
        * @param upGradingTask : task to do when this grade is enabled
        * @param downGradingTask : task to do when this grade is disabled
        * @param optimization : optimization parameters
        */
-      constructor (GSO: GradingSceneOptimizer, public name: string, public optimization : ParamsGradeOptimizationI, public upGradingTask: Function = null, public downGradingTask: Function = null) {
+      constructor (GSO: GradingSceneOptimizer, public name: string, optimization : ParamsGradeOptimizationI, public upGradingTask: Function = null, public downGradingTask: Function = null) {
+
+          var devices;
+
           this.priority = GSO.grades.length;
           GSO.grades.push(this);
+
+
+          // enabled variable
+          if (optimization.postProcessesEnabled != undefined) {
+              this.postProcessesEnabled = optimization.postProcessesEnabled;
+          }
+
+          if (optimization.lensFlaresEnabled != undefined) {
+              this.lensFlaresEnabled = optimization.lensFlaresEnabled;
+          }
+
+          if (optimization.renderTargetsEnabled != undefined) {
+              this.renderTargetsEnabled = optimization.renderTargetsEnabled;
+          }
+
+          if (optimization.particulesEnabled != undefined) {
+              this.particulesEnabled = optimization.particulesEnabled;
+          }
+
+          if (optimization.shadowsEnabled != undefined) {
+              this.shadowsEnabled = optimization.shadowsEnabled;
+          }
+
+
+
+          // parameters variable
+          if (optimization.particules != undefined) {
+              this.particules = optimization.particules;
+          }
+
+          if (optimization.shadows != undefined) {
+              this.shadows = optimization.shadows;
+          }
+
+          if (optimization.renderSize != undefined) {
+              this.renderSize = optimization.renderSize;
+          }
+
+          if (optimization.materials != undefined) {
+              this.materials = optimization.materials;
+          }
+
+          if (optimization.textures != undefined) {
+              this.textures = optimization.textures;
+          }
+
+          if (optimization.devices != undefined) {
+              this.devices = devices = optimization.devices;
+          }
+
+          if (optimization.camera != undefined) {
+              this.camera = optimization.camera;
+          }
+
+
+
+          // look if this grade need to be enabled with devices parameter
+          if (devices && BABYLON.Optimize.isOnAllowedDevice(devices)) {
+              this.enabled = true;
+          }
+          else {
+            this.enabled = false;
+          }
+
       }
 
   }
@@ -1035,11 +1381,12 @@ module BABYLON {
 
 
       // parameters variable
-      particules? : IParamsParticulesGradeOptimization
+      particules? : IParamsParticulesGradeOptimization;
       shadows? : IParamsShadowsGradeOptimization;
       renderSize? : IParamsRenderSizeGradeOptimization;
       materials? : IParamsMaterialsGradeOptimization;
       textures? : IParamsTexturesGradeOptimization;
+      devices? : IParamsDevicesGradeOptimization;
       camera? : IParamsCameraGradeOptimization;
   }
 
@@ -1066,19 +1413,28 @@ module BABYLON {
   // interface material grade parameter
   export interface IParamsMaterialsGradeOptimization {
       bumpEnabled? : boolean;
-      fresnelEnabled? : boolean; // TODO
+      fresnelEnabled? : boolean;
   }
 
   // interface texture grade parameter
   export interface IParamsTexturesGradeOptimization {
       scale : number; // to keep ratio
-      maxSize? : number; // max size accepted
+      maxSize? : number; // max size
       minSize? : number;
+  }
+
+  // interface shadow grade parameter
+  export interface IParamsDevicesGradeOptimization {
+      smartPhoneAllowed? : boolean; // size : 0 - 767 px && mobile detection = true
+      tabletAllowed? : boolean; // size : 768 - 1024 px && mobile detection = true
+      noteBookAllowed? : boolean; // size : < 1280 px && mobile detection = false
+      computerAllowed? : boolean; // size : > 1280 px
+      exceptionsList? : Array<string>;
   }
 
   // interface camera grade parameter
   export interface IParamsCameraGradeOptimization {
-      viewDistance? : number;
+      viewDistance : number; // TODO
   }
 
 }

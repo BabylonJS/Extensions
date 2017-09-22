@@ -158,6 +158,9 @@ window.onload=function() {
 
   })
 
+  // show inspector
+  scene.debugLayer.show();
+
 
 
 
@@ -188,51 +191,8 @@ window.onload=function() {
   // based on view ditance in optimizations parameters
   GSO.minimizeDrawCall = true; // TODO
 
-
-
-
-  /**
-   * UI
-   */
-  var uiGrades = document.getElementById('grades'),
-      grades = GSO.grades;
-
-  var addEvent = (li, grade) => {
-
-    li.addEventListener('click', () => {
-      GSO.updateSceneByGrade(scene, grade);
-    });
-  }
-
-  var createLi = (text) => {
-    var li = document.createElement('li');
-        li.textContent = text;
-    return li;
-  }
-
-  // create auto li
-  var li = createLi('auto');
-  uiGrades.appendChild(li);
-
-  li.addEventListener('click', () => {
-    GSO.hardwareEval(engine, scene);
-  });
-
-  // create grade li
-  for (let i = 0; i < grades.length; i++) {
-    var gradeI = grades[i];
-
-    li = createLi(gradeI.name);
-
-    addEvent(li, gradeI);
-    uiGrades.appendChild(li);
-  }
-
-
-
-  // show inspector
-  scene.debugLayer.show();
-
+  // add ui to inspect
+  GSO.addUI(scene, document.getElementById('grades'))
 
   // run GradingSceneOptimizer
   GSO.run(engine, scene, standardGrade, () => {
@@ -241,6 +201,7 @@ window.onload=function() {
         scene.render();
     });
 
+    console.log(engine);
     console.log(GSO);
 
   });
