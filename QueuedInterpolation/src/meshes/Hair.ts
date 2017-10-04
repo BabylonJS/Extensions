@@ -8,10 +8,15 @@ module QI{
         public static _Colors : { [name : string] : BABYLON.Color3} = {};
         public static Debug = false;
 
-        // assigned from assemble, so hair color can be changed later; primarily for development
+        // assigned from assemble, so hair color or skeleton weight can be changed later; primarily for development
         private _nPosElements : number;
         private _strandNumVerts : number[];
         private _segmentLengthSoFar : Float32Array;
+        private _headBone : string;
+        private _spineBone : string;
+        private _longestStrand : number;
+        private _lowestRootStrand : number;
+        public stiffness : number;
 
         // members, so it is easier to develop
         public cornerOffset = 0.02; // the distance of the triangle corner from the passed points
@@ -57,8 +62,12 @@ module QI{
             var pdx = 0; // index used for writing into positions
             var idx = 0; // index used for writing into indices
 
-            // assign stuff to members to be able to change vertex colors afterward & set for the first time
+            // assign stuff to members to be able to change vertex colors or matrix weights afterward & set for the first time
             this._strandNumVerts = strandNumVerts;
+            this._headBone = headBone;
+            this._spineBone = spineBone;
+            this._longestStrand = longestStrand;
+            this.stiffness = stiffness;
 
             var absPositions = this._toAbsolutePositions(rootRelativePositions);
             this._assignSegmentLengthSoFar(rootRelativePositions);
@@ -111,7 +120,7 @@ module QI{
             this.setVerticesData(BABYLON.VertexBuffer.NormalKind, normals);
 
             // cannot write weights until position have, do now
-            this.assignWeights(headBone, spineBone, longestStrand, stiffness);
+            this.assignWeights();
 
             this.assignVertexColor();
         }
@@ -123,6 +132,7 @@ module QI{
         private _toAbsolutePositions(rootRelativePositions : number[]) : number[] {
             var pdx = 0; // index used for writing into positions
             this._nPosElements = 0;
+            this._lowestRootStrand = Number.MAX_VALUE;
 
             var absPositions = new Array<number>(rootRelativePositions.length);
 
@@ -134,6 +144,8 @@ module QI{
                 rootZ = absPositions[pdx + 2] = rootRelativePositions[pdx + 2];
                 pdx += 3;
                 this._nPosElements += 9; // first point of strand will have 3 positions
+                if (this._lowestRootStrand > rootY)
+                    this._lowestRootStrand = rootY;
 
                 for (var vert = 1; vert < this._strandNumVerts[i]; vert++) {
                     absPositions[pdx    ] = rootRelativePositions[pdx    ] + rootX;
@@ -149,6 +161,38 @@ module QI{
             }
             return absPositions;
         }
+
+/*        public computeNormals(positions32 : Float32Array, indices : any[]) : void {
+            var normals = new Float32Array(this._nPosElements);
+            BABYLON.VertexData.ComputeNormals(positions32, indices, normals);
+
+            // determine min max of X position
+            var minX = Number.MAX_VALUE;
+            var maxX = Number.MIN_VALUE;
+            for (var i = 0; i < this._nPosElements; i += 3) {
+                if (minX > positions32[i])
+                    minX = positions32[i];
+                if (maxX < positions32[i])
+                    maxX = positions32[i];
+            }
+
+            var signZ : number;
+            // change the Z component of the normal, based on the positions
+            for (var i = 0; i < this._nPosElements; i += 3) {
+
+                // the sign of the normal depends of the sign of the Z position
+                signZ = (positions32[i + 2] < 0) ? -1 : 1;
+
+                // when x is negative on right side of head; positive
+                if (positions32[i] < 0) {
+                    normals[i + 2] = signZ * (1 - positions32[i] / minX); // the closer position is to minX, the closer to 0 of the normal
+                } else {
+                    normals[i + 2] = signZ * (1 - positions32[i] / maxX); // the closer position is to maxX, the closer to 0 of the normal
+                }
+            }
+            this.setVerticesData(BABYLON.VertexBuffer.NormalKind, normals);
+
+        }*/
 
         /**
          * primary reason to convert is so skeleton weights are simpler to calculate & can be changed after assemble.  Also takes up less than
@@ -218,11 +262,17 @@ module QI{
             positions32[pdx + 8] = zCorner.z;
         }
 
-        public assignWeights(headBone? : string, spineBone? : string, longestStrand? : number, stiffness? : number) : boolean {
-            var headBoneIndex = (this.skeleton && headBone) ? this.skeleton.getBoneIndexByName(headBone): null;
+        /**
+         * The assignment of matrix weights depend on headBone assigned, and having a skeleton of course.
+         * If spineBone is also assigned.  Some weight can be diverted from the head to avoid the hair cutting into the body
+         * as turned.  This diversion only takes place, when the height, Y, of a vertex is lower than the lowest root of the
+         * strands.
+         */
+        public assignWeights() : boolean {
+            var headBoneIndex = (this.skeleton && this._headBone) ? this.skeleton.getBoneIndexByName(this._headBone): null;
             if (!headBoneIndex) return false;
 
-            var spineBoneIndex = (this.skeleton && spineBone) ? this.skeleton.getBoneIndexByName(spineBone): null;
+            var spineBoneIndex = (this.skeleton && this._spineBone) ? this.skeleton.getBoneIndexByName(this._spineBone): null;
             this.numBoneInfluencers = spineBoneIndex ? 2 : 1;
 
             var sdx = 0; // index used for reading into the strand lengths
@@ -230,7 +280,7 @@ module QI{
 
             var matrixIndices = new Float32Array(this._nPosElements / 3 * 4);
             var matrixWeights = new Float32Array(this._nPosElements / 3 * 4);
-            var deltaStiffness = 1 - stiffness;
+            var deltaStiffness = 1 - this.stiffness;
             var t;
 
             // loop thru each strand to write indices & weights
@@ -246,13 +296,13 @@ module QI{
                 for (var vert = 1; vert < this._strandNumVerts[i]; vert++) {
                     t = (vert + 1 < this._strandNumVerts[i]) ? 3 : 1; // all but last segment has 3; last 1
 
-                    var headInfluence = spineBone ? 1 - (deltaStiffness * this._segmentLengthSoFar[sdx++] / longestStrand) : 1;
+                    var headInfluence = this._spineBone ? 1 - (deltaStiffness * this._segmentLengthSoFar[sdx++] / this._longestStrand) : 1;
                     for (var v = 0; v < t; v++) {
                         // head bone
                         matrixIndices[mdx] = headBoneIndex;
                         matrixWeights[mdx] = headInfluence;
 
-                        if (spineBone) {
+                        if (this._spineBone) {
                         matrixIndices[mdx + 1] = spineBoneIndex;
                         matrixWeights[mdx + 1] = 1 - headInfluence; // make sure both adds to 1
                         }
@@ -276,7 +326,6 @@ module QI{
             var intraOffset = new Array<number>(3);
             var t;
 
-            console.log("inter spread " + this.interStrandColorSpread);
             for (var i = 0, nStrands = this._strandNumVerts.length; i < nStrands; i++) {
                  // between -.05 and .05 using default; only use 1 for all channels at the strand level; individuals change too much
                 interOffset = this.random() * (2 * this.interStrandColorSpread) - this.interStrandColorSpread;
