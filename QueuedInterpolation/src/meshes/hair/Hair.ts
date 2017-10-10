@@ -1,4 +1,4 @@
-/// <reference path="./Mesh.ts"/>
+/// <reference path="../Mesh.ts"/>
 module QI{
 
     export class Hair extends Mesh {
@@ -7,24 +7,29 @@ module QI{
         // assigned outside of class, at bottom of file since static
         public static _Colors : { [name : string] : BABYLON.Color3} = {};
         public static Debug = false;
+        
+        // these are expected to assigned in computer generated code, though they may be changed prior to calling assemble
+        public strandNumVerts : number[];        // The number of verts per each strand.
+        public rootRelativePositions : number[]; // The x, y, z values of each point.  First is root is absolute, rest are delta to root.
+                                                 // More compact than absolute for all, & useful in calculating hair length at each point.
+        public lowestRoot : number;              // The lowest Y of all of the strand roots.  (Used for matrix weights building)
+        public highestRoot : number;             // The highest Y of all of the strand roots.  (Used for dynamically assigning parent with the hair on top.
+        public lowestTip : number;               // The lowest Y of all of the strand tips.  (Used for matrix weights building)
+        public headBone : string;                // The name of the bone in the skeleton to be used as a bone influencer, optional.
+        public spineBone : string;               // The highest bone in the spine to be a second bone influencer, optional.
+        public interStrandColorSpread : number;  // The maximum amount to randomly change the color of a thread
+        public intraStrandColorSpread : number;  // The maximum amount to randomly change the color from strand segment to the next
+        public emissiveColorScaling : number;    // The scaling applied to color, which is then used as the emissive color
+        public cornerOffset : number;            // The distance of the triangle corner from the passed points
+        public color : BABYLON.Color3;           // The base color used for the vertex colors
 
         // assigned from assemble, so hair color or skeleton weight can be changed later; primarily for development
         private _nPosElements : number;
-        private _strandNumVerts : number[];
-        private _segmentLengthSoFar : Float32Array;
-        private _headBone : string;
-        private _spineBone : string;
-        private _longestStrand : number;
-        private _lowestRootStrand : number;
-        public stiffness : number;
+//        private _longestStrand : number;
+        private _parentVertDelta = 0;
 
         // members, so it is easier to develop
-        public cornerOffset = 0.02; // the distance of the triangle corner from the passed points
         public seed = 0;
-        public interStrandColorSpread = 0; // The maximum amount to randomly change the color of a thread
-        public intraStrandColorSpread = 0;
-        public color = new BABYLON.Color3(1, 1, 1);
-        public emissiveColorScaling = 1;
         private _namedColor : string;
 
         public get namedColor() : string { return this._namedColor; }
@@ -38,51 +43,34 @@ module QI{
          * @param {string} name - The value used by scene.getMeshByName() to do a lookup.
          * @param {Scene} scene - The scene to add this mesh to.
          * @param {Node} parent - The parent of this mesh, if it has one
-         * @param {Mesh} source - An optional Mesh from which geometry is shared, cloned.
-         * @param {boolean} doNotCloneChildren - When cloning, skip cloning child meshes of source, default False.
-         *                  When false, achieved by calling a clone(), also passing False.
-         *                  This will make creation of children, recursive.
          */
-        constructor(name: string, scene: BABYLON.Scene, parent: BABYLON.Node = null, source?: Mesh, doNotCloneChildren?: boolean) {
-            super(name, scene, parent, source, doNotCloneChildren);
+        constructor(name: string, scene: BABYLON.Scene, parent: BABYLON.Node = null) {
+            super(name, scene, parent);
+            if (parent && parent instanceof BABYLON.Mesh) this.assignParentDynamically(<BABYLON.Mesh> parent);
         }
         // ====================================== initializing =======================================
         /**
          * Called to generate the geometry using values which are more compact to pass & allow multiple things to be defined.
-         * @param {number[]} strandNumVerts -The number of verts per each strand.
-         * @param {number[]} rootRelativePositions - The x, y, z values of each point.  First is root is absolute, rest are delta to root.
-         *                                           More compact than absolute for all, & useful in calculating hair length at each point.
-         * @param {number} headBone - The name of the bone in the skeleton to be used as a bone influencer, optional.
-         * @param {number} spineBone - The highest bone in the spine to be a second bone influencer, optional.
-         * @param {number} longestStrand - The longest distance between the first & last points in the strands.  Unused when no spineBone, optional.
-         * @param {number} stiffness - The matrix weight at the end of the longest strand to the head bone.  Unused when no spine bone, optional.
+         * @param {boolean} cleanGeo - When true, the default, clear out temporary members
          */
-        public assemble(strandNumVerts : number[], rootRelativePositions : number[], headBone? : string, spineBone? : string, longestStrand? : number, stiffness? : number) : void {
+        public assemble(cleanGeo = true) : void {
             var adx = 0 // offset for reading absolutePositions
             var pdx = 0; // index used for writing into positions
             var idx = 0; // index used for writing into indices
 
-            // assign stuff to members to be able to change vertex colors or matrix weights afterward & set for the first time
-            this._strandNumVerts = strandNumVerts;
-            this._headBone = headBone;
-            this._spineBone = spineBone;
-            this._longestStrand = longestStrand;
-            this.stiffness = stiffness;
-
-            var absPositions = this._toAbsolutePositions(rootRelativePositions);
-            this._assignSegmentLengthSoFar(rootRelativePositions);
+            var absPositions = this._toAbsolutePositions();
 
             var indices = [];  // cannot use Uint32Array as it is not worth finding out how big it is going to be in advance
             var positions32 = new Float32Array(this._nPosElements);
             var notLast : boolean;
 
-            for (var i = 0, nStrands = this._strandNumVerts.length; i < nStrands; i++) {
+            for (var i = 0, nStrands = this.strandNumVerts.length; i < nStrands; i++) {
                 this._extrudeTriangle(adx, false, true, absPositions, positions32, pdx);
                 adx += 3;
                 pdx += 9;
 
-                for (var vert = 1; vert < this._strandNumVerts[i]; vert++) {
-                    notLast = vert + 1 < this._strandNumVerts[i];
+                for (var vert = 1; vert < this.strandNumVerts[i]; vert++) {
+                    notLast = vert + 1 < this.strandNumVerts[i];
                     this._extrudeTriangle(adx, true, notLast, absPositions, positions32, pdx);
                     adx += 3;
                     pdx += notLast ? 9 : 3;
@@ -120,43 +108,75 @@ module QI{
             this.setVerticesData(BABYLON.VertexBuffer.NormalKind, normals);
 
             // cannot write weights until position have, do now
-            this.assignWeights();
+            this._assignWeights(absPositions);
 
             this.assignVertexColor();
         }
 
+        public assignParentDynamically(parent : BABYLON.Mesh, isHairOnTop = false) : void {
+            this.parent = parent;
+            this.isVisible = parent.isVisible;
+            this.setEnabled(parent.isEnabled() );
+            this.skeleton = parent.skeleton;
+            this.checkCollisions = parent.checkCollisions;
+            this.billboardMode = parent.billboardMode;
+            this.receiveShadows = parent.receiveShadows;
+            this["castShadows"] = parent["castShadows"];
+            
+            if (!isHairOnTop) return;
+            
+            if (this.getVerticesData(BABYLON.VertexBuffer.PositionKind) ) {
+                BABYLON.Tools.Warn("QI.Hair: Cannot adjust height to match parent once assemble() has been called.");
+                return;
+            }
+            
+            if (!parent.getVerticesData(BABYLON.VertexBuffer.PositionKind) ) {
+                BABYLON.Tools.Warn("QI.Hair: Cannot adjust height to match parent unless parent verts already assigned.");
+                return;
+            }
+
+            // determine the highest vertex of the parent
+            var parentPos = parent.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+            var highestParentVert = Number.MIN_VALUE;
+            for (var i = 0, len = parentPos.length; i < len; i += 3) {
+                if (highestParentVert < parentPos[i + 1])
+                    highestParentVert = parentPos[i + 1];
+            }
+            
+            // assign the delta of the parent & highest root
+            this._parentVertDelta = this.highestRoot - highestParentVert;
+        }
+        
         /**
          * Positions of strands are sent relative to the start of each strand, which saves space; undo here
          * Also accumulates the # of position elements (verts * 3), for easy FloatArray initialization.
          */
-        private _toAbsolutePositions(rootRelativePositions : number[]) : number[] {
+        private _toAbsolutePositions() : number[] {
             var pdx = 0; // index used for writing into positions
             this._nPosElements = 0;
-            this._lowestRootStrand = Number.MAX_VALUE;
 
-            var absPositions = new Array<number>(rootRelativePositions.length);
+            var absPositions = new Array<number>(this.rootRelativePositions.length);
 
             var rootX  : number, rootY  : number, rootZ  : number;
 
-            for (var i = 0, nStrands = this._strandNumVerts.length; i < nStrands; i++) {
-                rootX = absPositions[pdx    ] = rootRelativePositions[pdx    ];
-                rootY = absPositions[pdx + 1] = rootRelativePositions[pdx + 1];
-                rootZ = absPositions[pdx + 2] = rootRelativePositions[pdx + 2];
+            for (var i = 0, nStrands = this.strandNumVerts.length; i < nStrands; i++) {
+                rootX = absPositions[pdx    ] = this.rootRelativePositions[pdx    ];
+                rootY = absPositions[pdx + 1] = this.rootRelativePositions[pdx + 1] + this._parentVertDelta;
+                rootZ = absPositions[pdx + 2] = this.rootRelativePositions[pdx + 2];
                 pdx += 3;
                 this._nPosElements += 9; // first point of strand will have 3 positions
-                if (this._lowestRootStrand > rootY)
-                    this._lowestRootStrand = rootY;
 
-                for (var vert = 1; vert < this._strandNumVerts[i]; vert++) {
-                    absPositions[pdx    ] = rootRelativePositions[pdx    ] + rootX;
-                    absPositions[pdx + 1] = rootRelativePositions[pdx + 1] + rootY;
-                    absPositions[pdx + 2] = rootRelativePositions[pdx + 2] + rootZ;
+                for (var vert = 1; vert < this.strandNumVerts[i]; vert++) {
+                    absPositions[pdx    ] = this.rootRelativePositions[pdx    ] + rootX;
+                    absPositions[pdx + 1] = this.rootRelativePositions[pdx + 1] + rootY;
+                    absPositions[pdx + 2] = this.rootRelativePositions[pdx + 2] + rootZ;
+                    
                     pdx += 3;
-                    this._nPosElements += (vert + 1 < this._strandNumVerts[i]) ? 9 : 3; // all but last segment has 9; last 3
+                    this._nPosElements += (vert + 1 < this.strandNumVerts[i]) ? 9 : 3; // all but last segment has 9; last 3
                 }
             }
             if (Hair.Debug) {
-                this._dump(rootRelativePositions, "relative pos");
+                this._dump(this.rootRelativePositions, "relative pos");
                 this._dump(absPositions, "abs");
             }
             return absPositions;
@@ -193,32 +213,6 @@ module QI{
             this.setVerticesData(BABYLON.VertexBuffer.NormalKind, normals);
 
         }*/
-
-        /**
-         * primary reason to convert is so skeleton weights are simpler to calculate & can be changed after assemble.  Also takes up less than
-         * 1/3 of the space of the root relative positions.
-         */
-        private _assignSegmentLengthSoFar(rootRelativePositions) : void {
-            // determine the total number of segments
-            var nSegments = 0;
-            for (var i = 0, nStrands = this._strandNumVerts.length; i < nStrands; i++) {
-                nSegments += this._strandNumVerts[i] - 1; // the number of segments is always 1 less than the # of vertices
-            }
-
-            this._segmentLengthSoFar = new Float32Array(nSegments);
-            var pdx = 0; // index used for reading into the original relative positions
-
-            // loop thru each strand to write indices & weights
-            for (var i = 0, c = 0, nStrands = this._strandNumVerts.length; i < nStrands; i++) {
-                pdx += 3; // skip over the positions of the strand root
-
-                // assign the remaining vertices
-                for (var vert = 1; vert < this._strandNumVerts[i]; vert++) {
-                    this._segmentLengthSoFar[c++] = this._lengthSoFar(rootRelativePositions[pdx], rootRelativePositions[pdx + 1], rootRelativePositions[pdx + 2]);
-                    pdx += 3;
-                 }
-            }
-       }
 
          // less garbage getting only once
         private static _right = BABYLON.Vector3.Right();
@@ -268,52 +262,113 @@ module QI{
          * as turned.  This diversion only takes place, when the height, Y, of a vertex is lower than the lowest root of the
          * strands.
          */
-        public assignWeights() : boolean {
-            var headBoneIndex = (this.skeleton && this._headBone) ? this.skeleton.getBoneIndexByName(this._headBone): null;
+        private _assignWeights(absPositions : number[]) : boolean {
+            var headBoneIndex = (this.skeleton && this.headBone) ? this.skeleton.getBoneIndexByName(this.headBone): null;
             if (!headBoneIndex) return false;
 
-            var spineBoneIndex = (this.skeleton && this._spineBone) ? this.skeleton.getBoneIndexByName(this._spineBone): null;
-            this.numBoneInfluencers = spineBoneIndex ? 2 : 1;
+            var spineBoneIndex = (this.skeleton && this.spineBone) ? this.skeleton.getBoneIndexByName(this.spineBone): null;
+            
+//            var segmentLengthSoFar = this._spineBone ? this._assignSegmentLengthSoFar(rootRelativePositions) : null;
 
             var sdx = 0; // index used for reading into the strand lengths
+            var pdx = 0; // index used for reading into positions
             var mdx = 0; // index used for writing into matrix indices & weights
 
             var matrixIndices = new Float32Array(this._nPosElements / 3 * 4);
             var matrixWeights = new Float32Array(this._nPosElements / 3 * 4);
-            var deltaStiffness = 1 - this.stiffness;
             var t;
+            
+            var longestBelow = this.lowestRoot - this.lowestTip;
 
             // loop thru each strand to write indices & weights
-            for (var i = 0, nStrands = this._strandNumVerts.length; i < nStrands; i++) {
+            for (var i = 0, nStrands = this.strandNumVerts.length; i < nStrands; i++) {
                 // assign the triangle of vertices up next to head, no need to account for stiffness / spine influencer (is 0)
                 for (var v = 0; v < 3; v++) {
                     matrixIndices[mdx] = headBoneIndex;
                     matrixWeights[mdx] = 1;
                     mdx += 4;
                 }
+                pdx += 3;
 
+                var headInfluence : number;
                 // assign the rest of the triangles & last point
-                for (var vert = 1; vert < this._strandNumVerts[i]; vert++) {
-                    t = (vert + 1 < this._strandNumVerts[i]) ? 3 : 1; // all but last segment has 3; last 1
+                for (var vert = 1; vert < this.strandNumVerts[i]; vert++) {
+                    t = (vert + 1 < this.strandNumVerts[i]) ? 3 : 1; // all but last segment has 3; last 1
 
-                    var headInfluence = this._spineBone ? 1 - (deltaStiffness * this._segmentLengthSoFar[sdx++] / this._longestStrand) : 1;
+                    // use the spine when the vertex is lower than lowest root vertex
+                    var usesSpine = this.spineBone && (absPositions[pdx + 1] < this.lowestRoot);
+                    
+                    if (usesSpine) {
+                        // use the y of the next vertex on the strand unless last of strand
+                        var idxY = pdx + ((t === 1) ? 1 : 4);
+                        headInfluence = 1 - ((this.lowestRoot - absPositions[idxY]) / longestBelow);
+
+                    } else headInfluence = 1;
+
+                    // do all of the triangle at this level
                     for (var v = 0; v < t; v++) {
                         // head bone
                         matrixIndices[mdx] = headBoneIndex;
                         matrixWeights[mdx] = headInfluence;
 
-                        if (this._spineBone) {
+                        if (usesSpine) {
                         matrixIndices[mdx + 1] = spineBoneIndex;
                         matrixWeights[mdx + 1] = 1 - headInfluence; // make sure both adds to 1
                         }
                         mdx += 4;
                     }
+                    pdx += 3;
                  }
             }
             this.setVerticesData(BABYLON.VertexBuffer.MatricesIndicesKind, matrixIndices);
             this.setVerticesData(BABYLON.VertexBuffer.MatricesWeightsKind, matrixWeights);
         }
 
+/*        private _assignSegmentLengthSoFar(rootRelativePositions) : Float32Array {
+            // determine the total number of segments
+            var nSegments = 0;
+            for (var i = 0, nStrands = this.strandNumVerts.length; i < nStrands; i++) {
+                nSegments += this.strandNumVerts[i] - 1; // the number of segments is always 1 less than the # of vertices
+            }
+
+            var ret = new Float32Array(nSegments);
+            var pdx = 0; // index used for reading into the original relative positions
+
+            // loop thru each strand to write indices & weights
+            for (var i = 0, c = 0, nStrands = this.strandNumVerts.length; i < nStrands; i++) {
+                pdx += 3; // skip over the positions of the strand root
+
+                // assign the remaining vertices
+                for (var vert = 1; vert < this.strandNumVerts[i]; vert++) {
+                    ret[c++] = this._lengthSoFar(rootRelativePositions[pdx], rootRelativePositions[pdx + 1], rootRelativePositions[pdx + 2]);
+                    pdx += 3;
+                 }
+            }
+            return ret;
+       }*/
+
+        /**
+         * Primarily a a mechanism to visually see what the matrix weights assigned, between the head bone (black) and spine bone (white).
+         */
+        public assignWeightsAsColor() : void {
+            var colors32 = new Float32Array(this._nPosElements / 3 * 4);
+            var mdx = 0; // index used for writing into color & reading weights
+    
+            var weights = this.getVerticesData(BABYLON.VertexBuffer.MatricesWeightsKind);
+    
+            for (var i = 0, len = weights.length; i < len; i += 4) {
+                colors32[i] = colors32[i + 1] = colors32[i + 2] = weights[i + 1]; // assign color the amount of the spine
+                colors32[i + 3] = 1.0; 
+            }
+    
+            this.setVerticesData(BABYLON.VertexBuffer.ColorKind, colors32, true);     
+            
+            (<BABYLON.StandardMaterial> this.material).emissiveColor = BABYLON.Color3.White();
+        }
+
+        /**
+         * Called by assemble(), but also callable afterwards for the test scene.
+         */
         public assignVertexColor() : void {
             this._workingSeed = this.seed;
 
@@ -326,7 +381,7 @@ module QI{
             var intraOffset = new Array<number>(3);
             var t;
 
-            for (var i = 0, nStrands = this._strandNumVerts.length; i < nStrands; i++) {
+            for (var i = 0, nStrands = this.strandNumVerts.length; i < nStrands; i++) {
                  // between -.05 and .05 using default; only use 1 for all channels at the strand level; individuals change too much
                 interOffset = this.random() * (2 * this.interStrandColorSpread) - this.interStrandColorSpread;
 
@@ -338,8 +393,8 @@ module QI{
                     cdx += 4;
                 }
 
-                for (var vert = 1; vert < this._strandNumVerts[i]; vert++) {
-                    t = (vert + 1 < this._strandNumVerts[i]) ? 3 : 1; // all but last segment has 3; last 1
+                for (var vert = 1; vert < this.strandNumVerts[i]; vert++) {
+                    t = (vert + 1 < this.strandNumVerts[i]) ? 3 : 1; // all but last segment has 3; last 1
 
                     for (var v = 0; v < t; v++) {
                         intraOffset[0] = this.random() * this.intraStrandColorSpread;
