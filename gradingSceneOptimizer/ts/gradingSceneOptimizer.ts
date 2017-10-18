@@ -773,6 +773,7 @@ module BABYLON {
       private _isDedicatedGPU : boolean;
 
       /**
+       * @param engine : Babylon engine
        * @param fpsToReach : fps to reach
        * @param evaluationDuration : duration for fps evaluation
        * @param autoReEval : active auto evaluation
@@ -798,7 +799,6 @@ module BABYLON {
 
       /**
        * Run GradingSceneOptimizer
-       * @param engine : BABYLON engine
        * @param scene : BABYLON scene
        * @param starterGrade : on wich grade renderGradingSceneOptimizer need to start.
        *                       It's interresting to start with the lower grade.
@@ -808,7 +808,7 @@ module BABYLON {
        */
       public run(scene: Scene, starterGrade?: Grade, onReady?: Function) {
           var engine = scene.getEngine();
-          
+
           // If no starterGrade, get the first
           if (!starterGrade) {
               starterGrade = this.grades[0];

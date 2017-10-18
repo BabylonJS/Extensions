@@ -2,13 +2,25 @@
 
 The new gradingSceneOptimizer will replace the current sceneOptimizer.
 
-## How to use :
+## Description :
+GradingSceneOptimizer allows you to create some grade with different render to optimize your scene and performance.
+For example, with it, you will be able to set a render for specifics devices.
+GradingSceneOptimizer is based on responsive and accessibility concept that's important for web.
+
+## Purpose :
+Get the best quality / performance for all devices.
+
+## Quick use :
 
 ```javascript
-// create new GradingSceneOptimizer
+/**
+ * Create new GradingSceneOptimizer
+ */
 var GSO = new BABYLON.GradingSceneOptimizer(engine),
 
-    // create a new grade
+    /**
+     * Create new grade
+     */
     minGrade = GSO.createGrade('minimum', BABYLON.PresetGradeOptimization.minimum()),
 
     lowGrade = GSO.createGrade('low', BABYLON.PresetGradeOptimization.low()),
@@ -22,21 +34,21 @@ var GSO = new BABYLON.GradingSceneOptimizer(engine),
     ultraGrade = GSO.createGrade('ultra', BABYLON.PresetGradeOptimization.ultra());
 
 
-// run GradingSceneOptimizer
+/**
+ * Run GradingSceneOptimizer
+ */
 GSO.run(scene, minGrade, () => {
 
-  // callback when ready
-  engine.runRenderLoop( () => {
-      scene.render();
-  });
+    // callback when ready
+    engine.runRenderLoop( () => {
+        scene.render();
+    });
 
 });
 ```
 
+## Roadmap :
+
 ## Version :
 
 alpha 0.0.1
-
-```
-Give examples
-```
