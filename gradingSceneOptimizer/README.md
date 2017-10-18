@@ -4,10 +4,11 @@ The new gradingSceneOptimizer will replace the current sceneOptimizer.
 
 ## How to use :
 
-```
+```javascript
 // create new GradingSceneOptimizer
 var GSO = new BABYLON.GradingSceneOptimizer(engine),
 
+    // create a new grade
     minGrade = GSO.createGrade('minimum', BABYLON.PresetGradeOptimization.minimum()),
 
     lowGrade = GSO.createGrade('low', BABYLON.PresetGradeOptimization.low()),
