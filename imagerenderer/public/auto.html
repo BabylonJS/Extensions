@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8" />
+    <title>Babylon - Getting Started</title>
+    <script src="babylonjs/hand.minified-1.2.js"></script>
+    <script src="babylonjs/preview/cannon.js"></script>
+    <script src="babylonjs/preview/oimo.js"></script>
+    <script src="babylonjs/preview/babylon.js"></script>
+    <script src="jquery/jquery-3.2.1.min.js"></script>
+    <style>
+        html, body {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        class LegoRendering {
+
+            constructor(canvas, files, delegate) {
+                this.canvas = canvas;
+                this.files = files;
+                this.filename = files[0];
+                this.eventListener = delegate;
+                this.bTurn = false;
+                this.itr = 0;
+                this.cameraY = 200;
+                this.engine = new BABYLON.Engine(canvas, true);
+                this.iterationsPerAlpha = 6;
+                this.iterationsPerBeta = 6;
+                this.maxIterations = 36;
+            }
+
+            captureScreenshot() {
+                const self = this;
+                this.bTurn = true;
+                if(this.itr >= 0 && this.itr < this.maxIterations-1) {
+                    BABYLON.Tools.CreateScreenshotUsingRenderTarget(this.engine, this.scene.activeCamera, 640, function(base64Image){
+                        self.uploadScreenshot(base64Image);
+
+                        try {
+                            setTimeout(function(){
+                                self.itr++;
+                                self.captureScreenshot();
+                            }, 1);
+                        } catch (e) {
+                            console.log(e);
+                        }
+                    });
+                } else {
+                    if (self.eventListener) {
+                        var event = new CustomEvent('renderingComplete', { detail: this });
+                        self.eventListener.dispatchEvent(event);
+                    }
+                }
+            }
+
+            uploadScreenshot(base64Image) {
+                var uploadFileName = this.filename.substring(0, this.filename.lastIndexOf('.')) + "_" + this.itr + ".png";
+                
+                var myFormData = new FormData();
+                myFormData.append(uploadFileName, base64Image);
+                $.ajax({
+                    url: '/upload',
+                    type: 'POST',
+                    processData: false, // important
+                    contentType: false, // important
+                    // dataType : 'base64',
+                    complete: (xhr, status) => {
+                    },
+                    data: myFormData
+                });
+            }
+
+            createScene() {
+                var scene = new BABYLON.Scene(this.engine);
+                this.scene = scene;
+                scene.clearColor = new BABYLON.Color3(1, 1, 1);
+
+                //Adding a light
+                const top = new BABYLON.HemisphericLight("Omni0", new BABYLON.Vector3(-0.1, -0.25, -1), scene);
+                top.intensity = 0.65;
+
+                const bottom = new BABYLON.HemisphericLight("Omni1", new BABYLON.Vector3(-0.1, -0.25, 1), scene);
+                bottom.intensity = 0.65;
+
+                this.lights = [
+                    top,
+                    bottom
+                ];
+
+                //Adding the main camera
+                var camera = new BABYLON.ArcRotateCamera("Camera2", 0, 0.8, 100, new BABYLON.Vector3(0, 0, 0), scene);
+                this.camera = camera;
+                camera.attachControl(this.canvas, false);
+                scene.activeCamera = camera;
+                // The first parameter can be used to specify which mesh to import. Here we import all meshes
+                const self = this;
+                BABYLON.SceneLoader.ImportMesh("", "parts/", self.filename, scene, function (newMeshes) {
+                    //alert("Imported file name: " + filename);
+                    // Get the bounding vectors of the mesh hierarchy (meshes[0] = root node in gltf)
+
+                    var bounding = newMeshes[0].getHierarchyBoundingVectors();
+                    var boundone = bounding;
+                    var max = bounding.max.x;
+                    scene.activeCamera.target = newMeshes[0];
+                    newMeshes.forEach((mesh)=>{
+                        boundone = mesh.getHierarchyBoundingVectors();
+                        if(boundone.min<bounding.min)
+                        {
+                            bounding.min = boundone.min;
+                            //scene.activeCamera.target = mesh;
+                        }
+                        if(boundone.max>bounding.max)
+                        {
+                            bounding.max = boundone.max;
+                            scene.activeCamera.target = mesh;
+                        }
+                        if(bounding.max.y>max)
+                            max = bounding.max.x;
+                        if(bounding.max.z>max)
+                            max = bounding.max.z;
+
+                    });                    
+                    camera.radius = max * 6;
+                    self.captureScreenshot();
+                });
+                
+
+                // Move the light with the camera
+                var alpha = 0;
+                scene.registerBeforeRender(function () {
+                    if (self.bTurn) {
+                        const betaPercent = (Math.floor(self.itr / self.iterationsPerBeta))/self.iterationsPerBeta;
+                        scene.activeCamera.beta = betaPercent;
+
+                        try {
+                            scene.activeCamera.alpha += alpha;
+                        } catch (e) {
+                            console.log(e);
+                        }
+                        // alpha camera rotation                    
+                        alpha += 3.1416 / self.iterationsPerAlpha;
+                        self.bTurn = false;
+                    }
+                });
+
+                return scene;
+            }
+
+
+        }
+    </script>
+    <script>
+        window.addEventListener('filesAvailable', (event) => {
+            var canvas = document.getElementById('renderCanvas');
+            var rendering = new LegoRendering(canvas, event.detail, window);
+            const scene = rendering.createScene();
+            rendering.engine.runRenderLoop(function () {
+                scene.render();
+            });
+        });
+
+        window.addEventListener('resize', () => {
+            // engine.resize();
+        });
+
+        window.addEventListener('renderingComplete', (event) => {
+            const files = event.detail.files
+            files.splice(0, 1);
+            if (files.length < 1) {
+                return;
+            }
+            var canvas = document.getElementById('renderCanvas');
+            var rendering = new LegoRendering(canvas, files, window);
+            const scene = rendering.createScene();
+            rendering.engine.runRenderLoop(function () {
+                scene.render();
+            });
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            $.ajax({
+                url: '/files',
+                type: 'GET',
+                success: (data) => {
+                    var event = new CustomEvent('filesAvailable', { detail: data });
+                    window.dispatchEvent(event);
+                }
+            });
+
+        });
+    </script>
+</body>
+</html>
