@@ -195,7 +195,7 @@ window.onload=function() {
   GSO.addUI(scene, document.getElementById('grades'))
 
   // run GradingSceneOptimizer
-  GSO.run(engine, scene, standardGrade, () => {
+  GSO.run(engine, scene, minGrade, () => {
 
     engine.runRenderLoop( () => {
         scene.render();
