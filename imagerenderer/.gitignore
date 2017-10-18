@@ -1,0 +1,8 @@
+node_modules/
+public/parts/*.babylon
+public/uploads/*.png
+!index.js
+!/public/jquerry/jquery-3.2.1.min.js
+!/public/babylonjs/hand.minified-1.2.js
+!/public/babylonjs/preview/*.*
+
