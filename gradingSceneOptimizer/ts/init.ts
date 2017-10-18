@@ -169,7 +169,7 @@ window.onload=function() {
    * GradingSceneOptimizer
    */
 
-  var GSO = new BABYLON.GradingSceneOptimizer(),
+  var GSO = new BABYLON.GradingSceneOptimizer(engine),
 
       minGrade = GSO.createGrade('minimum', BABYLON.PresetGradeOptimization.minimum()),
 

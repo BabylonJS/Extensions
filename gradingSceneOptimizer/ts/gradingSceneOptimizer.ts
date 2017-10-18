@@ -1,3 +1,8 @@
+/***********************
+ * CREATED BY PIERRE GLIBERT
+ * Version : alpha_0.0.1
+ **********************/
+
 module BABYLON {
 
   /***********************
@@ -378,9 +383,8 @@ module BABYLON {
       }
 
       // for render size
-      public static renderSize(scene : Scene, params: IParamsRenderSizeGradeOptimization) {
-          var engine = scene.getEngine(),
-              canvas = engine.getRenderingCanvas(),
+      public static renderSize(engine : Engine, params: IParamsRenderSizeGradeOptimization) {
+          var canvas = engine.getRenderingCanvas(),
               width = canvas.clientWidth,
               height = canvas.clientHeight,
               windowPixelRatio = window.devicePixelRatio,
@@ -612,7 +616,41 @@ module BABYLON {
   // hardware :
   export class Hardware {
 
-      public static isOnAllowedDevice(params: IParamsDevicesGradeOptimization) : boolean{
+      // TODO : FEATURE : get a benchMark reference for GPU and CPU
+      public static getBenchmarkScore (engine : Engine) : number{
+          return;
+      }
+
+      public static isDedicatedGPU (engine : Engine) : boolean {
+
+          var GPUs = [
+            'amd',
+            'nvidia',
+            'radeon',
+            'geforce'
+          ],
+          L = GPUs.length,
+          GPUI,
+          regex,
+          vendor = engine.getGlInfo().renderer;
+
+          for (let i = 0; i < L; i++) {
+
+              GPUI = GPUs[i];
+
+              regex = new RegExp(GPUI, 'i');
+
+              if( vendor.match(regex)){
+                  return true;
+              };
+
+          }
+
+          return false;
+
+      }
+
+      public static isOnAllowedDevice(params: IParamsDevicesGradeOptimization) : boolean {
           var exceptions = params.exceptionsList,
               phoneAllowed = params.smartPhoneAllowed,
               tabletAllowed = params.tabletAllowed,
@@ -681,22 +719,35 @@ module BABYLON {
       }
 
       // detectMobile
-      public static isMobile() {
-          var userAgent = navigator.userAgent;
-          if( userAgent.match(/Android/i)
-              || userAgent.match(/webOS/i)
-              || userAgent.match(/iPhone/i)
-              || userAgent.match(/iPad/i)
-              || userAgent.match(/iPod/i)
-              || userAgent.match(/BlackBerry/i)
-              || userAgent.match(/Windows Phone/i)
-            )
-          {
-              return true;
+      public static isMobile() : boolean {
+          var userAgent = navigator.userAgent,
+              mobiles = [
+                'Android',
+                'webOS',
+                'iPhone',
+                'iPad',
+                'iPod',
+                'BlackBerry',
+                'Windows Phone',
+                'Phone'
+              ],
+              L = mobiles.length,
+              mobileI,
+              regex;
+
+          for (let i = 0; i < L; i++) {
+
+              mobileI = mobiles[i];
+
+              regex = new RegExp(mobileI, 'i');
+
+              if( userAgent.match(regex)){
+                  return true;
+              };
+
           }
-          else {
-              return false;
-          }
+
+          return false;
       }
 
 
@@ -799,13 +850,31 @@ module BABYLON {
       // is mobile ?
       private _isMobile: boolean = BABYLON.Hardware.isMobile();
 
+      // is dedicated GPU ?
+      private _isDedicatedGPU : boolean;
+
       /**
        * @param fpsToReach : fps to reach
        * @param evaluationDuration : duration for fps evaluation
        * @param autoReEval : active auto evaluation
        */
-      constructor (public fpsToReach: number = 48, public evaluationDuration: number = 1000, public autoReEval: boolean = true) {
+      constructor (engine: Engine, public fpsToReach: number = 48, public evaluationDuration: number = 1000, public autoReEval: boolean = true) {
 
+          // Detect dedicated GPU
+          this._isDedicatedGPU = BABYLON.Hardware.isDedicatedGPU(engine);
+
+          // add resize event
+          if (this._resizeEvent) {
+              window.removeEventListener("resize", this._resizeEvent);
+          }
+
+          this._resizeEvent = () => {
+              if (this._currentRenderSize) {
+                  BABYLON.Optimize.renderSize(engine, this._currentRenderSize);
+              }
+          }
+
+          window.addEventListener("resize", this._resizeEvent);
       }
 
       /**
@@ -820,21 +889,6 @@ module BABYLON {
        */
       public run(engine: Engine, scene: Scene, starterGrade?: Grade, onReady?: Function) {
 
-          // add resize event
-          if (this._resizeEvent) {
-              window.removeEventListener("resize", this._resizeEvent);
-          }
-
-          this._resizeEvent = () => {
-              if (this._currentRenderSize) {
-                  BABYLON.Optimize.renderSize(scene, this._currentRenderSize);
-              }
-          }
-
-          window.addEventListener("resize", this._resizeEvent);
-
-
-
           // If no starterGrade, get the first
           if (!starterGrade) {
               starterGrade = this.grades[0];
@@ -846,7 +900,7 @@ module BABYLON {
 
               // If no starterGrade, get the last
               if (!starterGrade) {
-                  starterGrade = grades[grades.length - 1]
+                  starterGrade = grades[grades.length - 1];
               }
           }
 
@@ -929,32 +983,6 @@ module BABYLON {
 
                   console.log('     > result : ' + fps + ' fps');
 
-
-
-                  // if it's the last grade and if it's disabled, stop.
-                  // if (this._isUpGradingStep) {
-                  //     I ++;
-                  //
-                  //     gradeI = grades[I];
-                  //
-                  //     if (I >= (gradesL - 1) && !gradeI.enabled) {
-                  //       success();
-                  //       return;
-                  //     }
-                  // }
-                  // else {
-                  //     I --;
-                  //
-                  //     gradeI = grades[I];
-                  //
-                  //     if (I <= 0 && !gradeI.enabled) {
-                  //       success();
-                  //       return;
-                  //     }
-                  // }
-
-
-
                   // check fps to reach to upgrade
                   if (fps > this.fpsToReach) {
 
@@ -963,7 +991,7 @@ module BABYLON {
                       gradeI = grades[I];
 
                       // if it's the last grade and if it's disabled, stop.
-                      if (!gradeI || (I >= (gradesL - 1) && !gradeI.enabled)) {
+                      if (!gradeI || I >= (gradesL - 1)) {
                         success();
                         return;
                       }
@@ -992,7 +1020,7 @@ module BABYLON {
                     gradeI = grades[I];
 
                     // if it's the last grade and if it's disabled, stop.
-                    if (!gradeI || (I <= 0 && !gradeI.enabled)) {
+                    if (!gradeI || I <= 0) {
                       success();
                       return;
                     }
@@ -1077,13 +1105,9 @@ module BABYLON {
               for (let i = currentPriority; i < toPriority; i++) {
                   gradeToUp = grades[i];
 
-                  if (!gradeToUp.enabled) {
-                    continue;
-                  }
-
                   upGradingTask = gradeToUp.upGradingTask;
 
-                  if (upGradingTask && gradeToUp.enabled) {
+                  if (upGradingTask) {
                       upGradingTask();
                   }
               }
@@ -1095,10 +1119,6 @@ module BABYLON {
 
               for (let i = currentPriority; i > toPriority; i--) {
                   gradeToUp = grades[i];
-
-                  if (!gradeToUp.enabled) {
-                    continue;
-                  }
 
                   downGradeTask = gradeToUp.downGradingTask;
 
@@ -1133,47 +1153,11 @@ module BABYLON {
       // force upgrade by 1
       public upgrade(scene: Scene, onSuccess? : Function) {
 
-          var startI = this._currentGradePriority + 1,
+          var I = this._currentGradePriority + 1,
               grades = this.grades,
               gradesL = grades.length,
-              gradeI = grades[startI],
+              gradeI = grades[I],
               upGradingTask;
-
-          // loop to look the next enabled grade
-          // var isEnabled = (grade: Grade) => {
-          //     I ++;
-          //     if (I < gradesL && !grade.enabled) {
-          //       isEnabled(grades[I])
-          //     }
-          //     else {
-          //       gradeI = grade;
-          //       upGradingTask = gradeI.upGradingTask;
-          //     }
-          // }
-          //
-          // isEnabled(gradeI);
-
-          // if (!gradeI.enabled) {
-          //     console.log('Grade ' + gradeI.name + ': allready on it or disabled');
-          //
-          //     // on success
-          //     if (onSuccess) {
-          //         onSuccess();
-          //     }
-          //
-          //     return;
-          // }
-
-          // loop to look the next enabled grade
-          if (!gradeI.enabled) {
-              for (let i = startI; i < gradesL; i++) {
-                  gradeI = grades[i];
-                  if (gradeI.enabled) {
-                    upGradingTask = gradeI.upGradingTask;
-                    break;
-                  }
-              }
-          }
 
           console.log(' • Upgrade scene to ' + gradeI.name + " grade.");
 
@@ -1208,56 +1192,9 @@ module BABYLON {
               downGradingTask = gradeToDowngrade.downGradingTask,
 
               // upgrading options
-              nbrGrade = currentPriority - 1,
-              //I = currentPriority - 1,
-              gradeI = grades[nbrGrade],
+              I = currentPriority - 1,
+              gradeI = grades[I],
               upGradingTask;
-
-          // loop to look the next enabled grade
-          // var isEnabled = (grade: Grade) => {
-          //     I --;
-          //     if (I >= 0 && !grade.enabled) {
-          //       isEnabled(grades[I])
-          //     }
-          //     else {
-          //       gradeI = grade;
-          //       upGradingTask = gradeI.upGradingTask;
-          //     }
-          // }
-          //
-          // isEnabled(gradeI);
-
-          // if (!gradeI.enabled) {
-          //     console.log('Grade' + gradeI.name + ': allready on it or disabled');
-          //
-          //     // on success
-          //     if (onSuccess) {
-          //         onSuccess();
-          //     }
-          //
-          //     return;
-          // }
-
-          // loop to look the next enabled grade
-          if (!gradeI.enabled) {
-              for (let i = nbrGrade; i > 0; i--) {
-                  gradeI = grades[i];
-                  if (gradeI.enabled) {
-                    upGradingTask = gradeI.upGradingTask;
-                    break;
-                  }
-              }
-
-              // if last grade is enabled
-              if (!gradeI.enabled) {
-                  // on success
-                  if (onSuccess) {
-                      onSuccess();
-                  }
-
-                  return;
-              }
-          }
 
 
           console.log(' • Downgrade scene to ' + gradeI.name + " grade.");
@@ -1302,6 +1239,8 @@ module BABYLON {
       // update Render By Optimization parameters
       public optimizeRenderByGrade(scene: Scene, grade : Grade) {
 
+          var engine = scene.getEngine();
+
           // for render targets
           if (grade.renderTargetsEnabled != undefined) {
               BABYLON.Optimize.renderTargets(scene, grade.renderTargetsEnabled);
@@ -1324,7 +1263,7 @@ module BABYLON {
 
           // for maxRenderSize
           if (grade.renderSize != undefined) {
-              BABYLON.Optimize.renderSize(scene, grade.renderSize);
+              BABYLON.Optimize.renderSize(engine, grade.renderSize);
           }
 
           // for textures
@@ -1353,15 +1292,15 @@ module BABYLON {
 
         var addEvent = (li, grade) => {
 
-          li.addEventListener('click', () => {
-            this.updateSceneByGrade(scene, grade);
-          });
+            li.addEventListener('click', () => {
+                this.updateSceneByGrade(scene, grade);
+            });
         }
 
         var createLi = (text) => {
-          var li = document.createElement('li');
-              li.textContent = text;
-          return li;
+            var li = document.createElement('li');
+                li.textContent = text;
+            return li;
         }
 
         // create auto li
@@ -1369,21 +1308,17 @@ module BABYLON {
         parentNode.appendChild(li);
 
         li.addEventListener('click', () => {
-          this.hardwareEval(engine, scene);
+            this.hardwareEval(engine, scene);
         });
 
         // create grade li
         for (let i = 0; i < grades.length; i++) {
-          var gradeI = grades[i];
-
-          if (gradeI.enabled) {
+            var gradeI = grades[i];
 
             li = createLi(gradeI.name);
 
             addEvent(li, gradeI);
             fragment.appendChild(li);
-
-          }
 
         }
 
@@ -1580,6 +1515,7 @@ module BABYLON {
       noteBookAllowed? : boolean; // size : < 1280 px && mobile detection = false
       computerAllowed? : boolean; // size : > 1280 px
       exceptionsList? : Array<string>;
+      onlyDedicatedGPU? : boolean;
   }
 
   // interface camera grade parameter
