@@ -158,9 +158,6 @@ window.onload=function() {
 
   })
 
-  // show inspector
-  scene.debugLayer.show();
-
 
 
 
@@ -185,17 +182,17 @@ window.onload=function() {
 
 
   // active occlusion culling ( for the futur with webGl 2.0)
-  GSO.occlusionCullingEnabled = true; // TODO
+  GSO.occlusionCullingEnabled = true; // TODO : FEATURE
 
   // try to minimize draw call of CPU ( for the futur )
   // based on view ditance in optimizations parameters
-  GSO.minimizeDrawCall = true; // TODO
+  GSO.minimizeDrawCall = true; // TODO : FEATURE
 
   // add ui to inspect
-  GSO.addUI(scene, document.getElementById('grades'))
+  GSO.addUI(scene, document.getElementById('grades'));
 
   // run GradingSceneOptimizer
-  GSO.run(engine, scene, minGrade, () => {
+  GSO.run(scene, minGrade, () => {
 
     engine.runRenderLoop( () => {
         scene.render();
@@ -203,6 +200,9 @@ window.onload=function() {
 
     console.log(engine);
     console.log(GSO);
+
+    // show inspector
+    scene.debugLayer.show();
 
   });
 

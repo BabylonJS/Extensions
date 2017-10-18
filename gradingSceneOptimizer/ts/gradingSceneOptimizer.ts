@@ -616,106 +616,22 @@ module BABYLON {
   // hardware :
   export class Hardware {
 
-      // TODO : FEATURE : get a benchMark reference for GPU and CPU
-      public static getBenchmarkScore (engine : Engine) : number{
-          return;
-      }
-
+      // is there a dedicated GPU
       public static isDedicatedGPU (engine : Engine) : boolean {
-
           var GPUs = [
             'amd',
             'nvidia',
             'radeon',
             'geforce'
           ],
-          L = GPUs.length,
-          GPUI,
-          regex,
           vendor = engine.getGlInfo().renderer;
-
-          for (let i = 0; i < L; i++) {
-
-              GPUI = GPUs[i];
-
-              regex = new RegExp(GPUI, 'i');
-
-              if( vendor.match(regex)){
-                  return true;
-              };
-
-          }
-
-          return false;
-
-      }
-
-      public static isOnAllowedDevice(params: IParamsDevicesGradeOptimization) : boolean {
-          var exceptions = params.exceptionsList,
-              phoneAllowed = params.smartPhoneAllowed,
-              tabletAllowed = params.tabletAllowed,
-              noteBookAllowed = params.noteBookAllowed,
-              computerAllowed = params.computerAllowed,
-              device = this.devicesDetection(params.exceptionsList);
-
-          // test smartPhone
-          if (!phoneAllowed && device === 'smartPhone') {
-              return false;
-          }
-
-          // test tablet
-          if (!tabletAllowed && device === 'tablet') {
-              return false;
-          }
-
-          // test noteBook
-          if (!noteBookAllowed && device === 'noteBook') {
-              return false;
-          }
-
-          // test general computer
-          if (!computerAllowed && device === 'computer') {
-              return false;
-          }
-
-          // check if exception
-          if (
-              exceptions && exceptions.length > 0 && (
-                device === 'smartPhone' ||
-                device === 'tablet' ||
-                device === 'noteBook' ||
-                device === 'computer'
-              )
-            )
-          {
-              return false;
-          }
-
-          return true;
-
+          return this._refDetection(vendor, GPUs);
       }
 
       // device exception detection
-      public static devicesExceptionDetection(exceptions : Array<string>) : string {
-
-          var expetL = exceptions.length,
-              userAgent = navigator.userAgent,
-              except,
-              regex;
-
-          for (let i = 0; i < expetL; i++) {
-
-              except = exceptions[i];
-
-              regex = new RegExp(except, 'i');
-
-              if( userAgent.match(regex)){
-                  return except;
-              };
-
-          }
-
-          return null;
+      public static isDevices(devices : Array<string>) : boolean {
+          var userAgent = navigator.userAgent;
+          return this._refDetection(userAgent, devices);
       }
 
       // detectMobile
@@ -730,29 +646,13 @@ module BABYLON {
                 'BlackBerry',
                 'Windows Phone',
                 'Phone'
-              ],
-              L = mobiles.length,
-              mobileI,
-              regex;
+              ];
 
-          for (let i = 0; i < L; i++) {
-
-              mobileI = mobiles[i];
-
-              regex = new RegExp(mobileI, 'i');
-
-              if( userAgent.match(regex)){
-                  return true;
-              };
-
-          }
-
-          return false;
+          return this._refDetection(userAgent, mobiles);
       }
 
-
       // device detection
-      public static devicesDetection(exceptions? : Array<string>) : string | 'smartPhone' | 'tablet' | 'noteBook' | 'computer' {
+      public static devicesDetection() : string | 'smartPhone' | 'tablet' | 'noteBook' | 'computer' {
 
           // get screen size
           var screenWidth = screen.height,
@@ -761,14 +661,6 @@ module BABYLON {
               userAgent = navigator.userAgent,
               isMobile = this.isMobile(),
               regex;
-
-          // EXCEPTIONS
-          if (exceptions) {
-            var getExcept = this.devicesExceptionDetection(exceptions);
-            if (getExcept) {
-                return getExcept;
-            }
-          }
 
           // SMARTPHONE
           if (isMobile && size < 768) {
@@ -787,6 +679,33 @@ module BABYLON {
 
           // computer
           return 'computer';
+      }
+
+      // TODO : FEATURE : get a benchMark reference for GPU and CPU
+      public static getBenchmarkScore (engine : Engine) : number{
+          return;
+      }
+
+      // regex expression detection
+      private static _refDetection (pattern: string, references : Array<string>) : boolean{
+
+          var L = references.length,
+              refI,
+              regex;
+
+          for (let i = 0; i < L; i++) {
+
+              refI = references[i];
+
+              regex = new RegExp(refI, 'i');
+
+              if( pattern.match(regex)){
+                  return true;
+              };
+
+          }
+
+          return false;
       }
   }
 
@@ -887,8 +806,9 @@ module BABYLON {
        *                       You will get a better accessibility and plug and play concept. It's important for web.
        * @param onReady : callback when GradingSceneOptimizer is ready.
        */
-      public run(engine: Engine, scene: Scene, starterGrade?: Grade, onReady?: Function) {
-
+      public run(scene: Scene, starterGrade?: Grade, onReady?: Function) {
+          var engine = scene.getEngine();
+          
           // If no starterGrade, get the first
           if (!starterGrade) {
               starterGrade = this.grades[0];
@@ -913,13 +833,13 @@ module BABYLON {
                   onReady();
               }
 
-              this.hardwareEval(engine, scene);
+              this.gradesEvaluation(engine, scene);
 
           });
       }
 
-      // eval your hardware performance
-      public hardwareEval(engine: Engine, scene: Scene, onSuccess?: Function){
+      // evaluate and choose the best grade for your hardware
+      public gradesEvaluation(engine: Engine, scene: Scene, onSuccess?: Function){
 
           var fps,
               grades = this.grades,
@@ -1058,10 +978,80 @@ module BABYLON {
       public createGrade(name: string, optimization : ParamsGradeOptimizationI, upGradingTask?: Function, downGradingTask?: Function) {
 
           // create new grade
-          var newGrade = new BABYLON.Grade(this, name, optimization, upGradingTask, downGradingTask);
+          var newGrade = new BABYLON.Grade(name, optimization, upGradingTask, downGradingTask);
+
+          // add grade to GSO
+          this.addGrade(newGrade);
 
           // return grade result
           return newGrade;
+
+      }
+
+      // add existing grade
+      public addGrade(grade: Grade) {
+
+          var grades = this.grades,
+              devices = grade.devices,
+              deviceType = this._deviceType,
+
+
+              isOnAllowedDevice = (params: IParamsDevicesGradeOptimization) : boolean => {
+                  var exceptions = params.exceptionsList,
+                      phoneAllowed = params.smartPhoneAllowed,
+                      tabletAllowed = params.tabletAllowed,
+                      noteBookAllowed = params.noteBookAllowed,
+                      computerAllowed = params.computerAllowed;
+
+                  // check if exception
+                  if (exceptions && exceptions.length > 0 && BABYLON.Hardware.isDevices(exceptions)) {
+                      return true;
+                  }
+
+                  // test smartPhone
+                  if (!phoneAllowed && deviceType === 'smartPhone') {
+                      return false;
+                  }
+
+                  // test tablet
+                  if (!tabletAllowed && deviceType === 'tablet') {
+                      return false;
+                  }
+
+                  // test noteBook
+                  if (!noteBookAllowed && deviceType === 'noteBook') {
+                      return false;
+                  }
+
+                  // test general computer
+                  if (!computerAllowed && deviceType === 'computer') {
+                      return false;
+                  }
+
+                  // check if exception
+                  if (exceptions && exceptions.length > 0 && BABYLON.Hardware.isDevices(exceptions)) {
+                      return false;
+                  }
+
+                  return true;
+
+              }
+
+          // add priority to newGrade
+          grade.priority = grades.length;
+
+          // look if this grade need to be enabled with devices parameter
+          // if no devices options, set enabled to true;
+          // if devices option is defined and isOnAllowedDevice return true, set enabled to true
+          if (!devices || (devices && isOnAllowedDevice(devices))) {
+              // enabled
+              grade.enabled = true;
+              // add to gso only if enabled
+              this.grades.push(grade);
+          }
+          else {
+              grade.enabled = false;
+          }
 
       }
 
@@ -1308,7 +1298,7 @@ module BABYLON {
         parentNode.appendChild(li);
 
         li.addEventListener('click', () => {
-            this.hardwareEval(engine, scene);
+            this.gradesEvaluation(engine, scene);
         });
 
         // create grade li
@@ -1371,12 +1361,7 @@ module BABYLON {
        * @param downGradingTask : task to do when this grade is disabled
        * @param optimization : optimization parameters
        */
-      constructor (GSO: GradingSceneOptimizer, public name: string, optimization : ParamsGradeOptimizationI, public upGradingTask: Function = null, public downGradingTask: Function = null) {
-
-          var devices;
-
-          this.priority = GSO.grades.length;
-
+      constructor (public name: string, optimization : ParamsGradeOptimizationI, public upGradingTask: Function = null, public downGradingTask: Function = null) {
 
           // enabled variable
           if (optimization.postProcessesEnabled != undefined) {
@@ -1423,24 +1408,11 @@ module BABYLON {
           }
 
           if (optimization.devices != undefined) {
-              this.devices = devices = optimization.devices;
+              this.devices = optimization.devices;
           }
 
           if (optimization.camera != undefined) {
               this.camera = optimization.camera;
-          }
-
-
-
-          // look if this grade need to be enabled with devices parameter
-          if (devices && BABYLON.Hardware.isOnAllowedDevice(devices)) {
-              this.enabled = true;
-
-              // add to gso only if enabled
-              GSO.grades.push(this);
-          }
-          else {
-            this.enabled = false;
           }
 
       }
