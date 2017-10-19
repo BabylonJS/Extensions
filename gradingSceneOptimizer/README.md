@@ -288,8 +288,11 @@ var ultraGrade = new BABYLON.Grade('medium', customOptimization,
 
 ## Future Features :
 
-### Occlusion culling and minimizeDrawCalls Features :
+### Occlusion culling and / or minimizeDrawCalls Features :
 Purpose : automatically minimize draw calls to increase performance.
+
+[Interesting article on Unity](https://docs.unity3d.com/2017.3/Documentation/Manual/OcclusionCulling.html)
+[Example by Tarek Sherif with webgl 2](https://tsherif.github.io/webgl2examples/occlusion.html)
 
 
 ### Benchmark Score and GPU recommended Features :
