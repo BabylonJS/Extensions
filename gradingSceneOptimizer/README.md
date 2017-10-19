@@ -292,6 +292,7 @@ var ultraGrade = new BABYLON.Grade('medium', customOptimization,
 Purpose : automatically minimize draw calls to increase performance.
 
 [Interesting article on Unity](https://docs.unity3d.com/2017.3/Documentation/Manual/OcclusionCulling.html)
+  
 [Example by Tarek Sherif with webgl 2](https://tsherif.github.io/webgl2examples/occlusion.html)
 
 
