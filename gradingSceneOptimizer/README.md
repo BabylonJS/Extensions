@@ -288,11 +288,12 @@ var ultraGrade = new BABYLON.Grade('medium', customOptimization,
 
 ## Future Features :
 
-### Minimize draw call > occlusion culling and minimizeDrawCall Features :
+### Occlusion culling and minimizeDrawCalls Features :
+Purpose : automatically minimize draw calls to increase performance.
 
 
-### Increase the accuracy of devices and hardwares detection > Benchmark Score and GPU recommended Features :
-
+### Benchmark Score and GPU recommended Features :
+Purpose : Increase the accuracy of devices and hardwares detection to know which grade is the most optimized for your device.
 
 
 
