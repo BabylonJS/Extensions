@@ -58,7 +58,8 @@ GSO.run(scene, minGrade, function() {
 GradingSceneOptimizer tries to get the best grade for all devices.
 It's based on two steps :
 * First : upgrading. The GradingSceneOptimizer try to reach "x" FPS with your starter grade. If it's ok, it upgrade render again until when it can't reach "x" FPS.
-* Second : dowgrading. If the last try (or the first try with your starter grade ) not reach FPS, the GradingSceneOptimizer downgrade until when it can reach FPS. If the GradingSceneOptimizer reach "x" FPS, it stop. 
+* Second : dowgrading. If the last try (or the first try with your starter grade ) not reach FPS, the GradingSceneOptimizer downgrade until when it can reach FPS. If the GradingSceneOptimizer reach "x" FPS, it stop.
+  
 For the Future, It will be able to detect your benchmark to know automatically on which grade it need to start.
 
 ## GradingSceneOptimizer class :
