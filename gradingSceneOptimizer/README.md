@@ -181,6 +181,97 @@ GSO.startAutoEval(scene,
 
 ## Grades class :
 
+### Create grade :
+```javascript
+
+/**
+    Create new grade :
+    1. grade name
+    2. optimization parameters (here is a preset. see below to custom parameters);
+    3. upgrading task
+    4. downgrading task
+
+    (Don't forget to add it to GSO with GSO.addGrade())
+ */
+var ultraGrade = new BABYLON.Grade('ultra', BABYLON.PresetGradeOptimization.ultra(),
+                    function () {
+                      // task to do on upgrading step
+                      // ex : add meshes
+                    },
+                    function () {
+                      // task to do on downgrading step
+                      // ex : remove meshes
+                    });
+
+
+```
+
+### Custom optimization parameters :
+
+```javascript
+
+// Custom grade optimization parameters :
+var customOptimization = {
+
+    shadowsEnabled : true,
+    particlesEnabled : true,
+    postProcessesEnabled : true,
+    lensFlaresEnabled : true,
+    renderTargetsEnabled : true,
+    textures : {
+        scale : 1,
+        maxSize : 2048,
+        minSize : 512
+    },
+    particles : {
+        ratio : 1,
+        maxEmitRate : 10000,
+        minEmitRate : 100
+    },
+    materials : {
+        bumpEnabled : true,
+        fresnelEnabled : true
+    },
+    shadows : {
+        type : 'useBlurCloseExponentialShadowMap',
+        size : 512
+    },
+    renderSize : {
+        maxWidth : 2560,
+        maxHeight : 2560,
+        devicePixelRatio : 2
+    },
+    camera : {
+      viewDistance : 200
+    }
+    devices : {
+        smartPhoneAllowed : false,
+        tabletAllowed : false,
+        noteBookAllowed : false,
+        computerAllowed : true,
+        exceptionsList : ['xbox'],
+        onlyDedicatedGPU : true
+    }
+
+};
+
+// Create new grade :
+var ultraGrade = new BABYLON.Grade('ultra', customOptimization,
+                    function () {
+                      // task to do on upgrading step
+                      // ex : add meshes
+                    },
+                    function () {
+                      // task to do on downgrading step
+                      // ex : remove meshes
+                    });
+
+
+```
+
+### Custom optimization explanation :
+
+
 
 ## Roadmap :
 
