@@ -41,7 +41,7 @@ var GSO = new BABYLON.GradingSceneOptimizer(engine),
 /**
  * Run GradingSceneOptimizer
  * 'scene' : BABYLON scene
- * 'minGrade' : on which grade renderGradingSceneOptimizer start.
+ * 'minGrade' : on which grade GradingSceneOptimizer start.
  * 'function' : callback when GradingSceneOptimizer is ready.
  */
 GSO.run(scene, minGrade, function() {
@@ -62,28 +62,116 @@ GSO.run(scene, minGrade, function() {
 
 ```javascript
 /**
-    Create new GradingSceneOptimizer
-    1. engine : BABYLON.engine
-    2. 48 : FPS to reach
-    3. 1000 : duration for fps evaluation in ms
-    4. true : active auto evaluation
+    Create new GradingSceneOptimizer :
+    1. BABYLON.engine
+    2. FPS to reach
+    3. duration for fps evaluation in ms
+    4. active auto evaluation
  */
 var GSO = new BABYLON.GradingSceneOptimizer(engine, 48, 1000, true);
 
-// Run again every 30 seconds
+// Run again FPS evaluation every 30 seconds
 GSO.autoRunInterval = 30000;
 
 // FEATURE : Active occlusion culling to get more performance
 GSO.occlusionCullingEnabled = true;
 
-// FEATURE : Try to minimize the number of draw call to get more performance
+// FEATURE : Try to minimize the number of draw call of CPU to get more performance
+//    * based on distance of view in optimizations parameters
+//    * add a radius detection around the meshes (useful for big meshes)
+//    * add a perimeter to preserve CPU performance to set visible to true on a group and not one by one ...
+//    
+//    CAMERA === distance ===> (--- perimeter ---(<- radius detection -> MESH <- radius detection ->)--- perimeter ---)
 GSO.minimizeDrawCall = true;
 
 ```
 
 ### methods :
 
+```javascript
 
+/**
+    Create new grade :
+    1. grade name
+    2. optimization parameters (here is a preset. see below to custom parameters);
+    3. upgrading task
+    4. downgrading task
+ */
+var ultraGrade = GSO.createGrade('ultra', BABYLON.PresetGradeOptimization.ultra(),
+                    function () {
+                      // task to do on upgrading step
+                      // ex : add meshes
+                    },
+                    function () {
+                      // task to do on downgrading step
+                      // ex : remove meshes
+                    });
+
+
+/**
+    add existing grade :
+    1. grade
+
+    (created with new BABYLON.Grade() and not with GSO.createGrade())
+ */
+GSO.addGrade(gradeCreatedBefore);
+
+
+/**
+    Update scene by grade :
+    1. BABYLON.scene
+    2. grade
+    3. onSuccess
+
+    (stop auto run and evaluation)
+ */
+GSO.updateSceneByGrade(scene, ultraGrade,
+    function(){
+      // on success
+    });
+
+
+/**
+    Upgrade by one :
+    1. BABYLON.scene
+    2. onSuccess
+
+    (stop auto run and evaluation)
+ */
+GSO.upgrade(scene,
+    function(){
+      // on success
+    });
+
+
+/**
+    Downgrade by one :
+    1. BABYLON.scene
+    2. onSuccess
+
+    (stop auto run and evaluation)
+ */
+GSO.downgrade(scene,
+    function(){
+      // on success
+    });
+
+
+// stop auto run and evaluation
+GSO.stopAutoEval();
+
+
+/**
+    start auto run and evaluation :
+    1. BABYLON.scene
+    2. onSuccess
+ */
+GSO.startAutoEval(scene,
+    function(){
+      // on success
+    });
+
+```
 
 
 
