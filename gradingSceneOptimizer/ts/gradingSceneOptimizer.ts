@@ -16,7 +16,7 @@ module BABYLON {
       public static minimum() : ParamsGradeOptimizationI {
           return {
               shadowsEnabled : false,
-              particulesEnabled : false,
+              particlesEnabled : false,
               postProcessesEnabled : false,
               lensFlaresEnabled : false,
               renderTargetsEnabled : false,
@@ -49,7 +49,7 @@ module BABYLON {
       public static low() : ParamsGradeOptimizationI {
           return {
               shadowsEnabled : false,
-              particulesEnabled : false,
+              particlesEnabled : false,
               postProcessesEnabled : false,
               lensFlaresEnabled : false,
               renderTargetsEnabled : false,
@@ -81,7 +81,7 @@ module BABYLON {
       public static standard() : ParamsGradeOptimizationI{
           return {
               shadowsEnabled : true,
-              particulesEnabled : false,
+              particlesEnabled : false,
               postProcessesEnabled : false,
               lensFlaresEnabled : false,
               renderTargetsEnabled : true,
@@ -117,7 +117,7 @@ module BABYLON {
       public static medium() : ParamsGradeOptimizationI{
           return {
               shadowsEnabled : true,
-              particulesEnabled : true,
+              particlesEnabled : true,
               postProcessesEnabled : false,
               lensFlaresEnabled : false,
               renderTargetsEnabled : true,
@@ -126,7 +126,7 @@ module BABYLON {
                   maxSize : 1024,
                   minSize : 256
               },
-              particules : {
+              particles : {
                   ratio : 0.25,
                   maxEmitRate : 300,
                   minEmitRate : 100
@@ -158,7 +158,7 @@ module BABYLON {
       public static high() : ParamsGradeOptimizationI {
           return {
               shadowsEnabled : true,
-              particulesEnabled : true,
+              particlesEnabled : true,
               postProcessesEnabled : true,
               lensFlaresEnabled : true,
               renderTargetsEnabled : true,
@@ -167,7 +167,7 @@ module BABYLON {
                   maxSize : 1024,
                   minSize : 512
               },
-              particules : {
+              particles : {
                   ratio : 0.5,
                   maxEmitRate : 5000,
                   minEmitRate : 100
@@ -199,7 +199,7 @@ module BABYLON {
       public static ultra() : ParamsGradeOptimizationI {
           return {
               shadowsEnabled : true,
-              particulesEnabled : true,
+              particlesEnabled : true,
               postProcessesEnabled : true,
               lensFlaresEnabled : true,
               renderTargetsEnabled : true,
@@ -208,7 +208,7 @@ module BABYLON {
                   maxSize : 2048,
                   minSize : 512
               },
-              particules : {
+              particles : {
                   ratio : 1,
                   maxEmitRate : 10000,
                   minEmitRate : 100
@@ -1377,8 +1377,8 @@ module BABYLON {
               this.renderTargetsEnabled = optimization.renderTargetsEnabled;
           }
 
-          if (optimization.particulesEnabled != undefined) {
-              this.particulesEnabled = optimization.particulesEnabled;
+          if (optimization.particlesEnabled != undefined) {
+              this.particulesEnabled = optimization.particlesEnabled;
           }
 
           if (optimization.shadowsEnabled != undefined) {
@@ -1388,8 +1388,8 @@ module BABYLON {
 
 
           // parameters variable
-          if (optimization.particules != undefined) {
-              this.particules = optimization.particules;
+          if (optimization.particles != undefined) {
+              this.particules = optimization.particles;
           }
 
           if (optimization.shadows != undefined) {
@@ -1434,12 +1434,12 @@ module BABYLON {
       postProcessesEnabled? : boolean;
       lensFlaresEnabled? : boolean;
       renderTargetsEnabled? : boolean;
-      particulesEnabled? : boolean;
+      particlesEnabled? : boolean;
       shadowsEnabled?: boolean;
 
 
       // parameters variable
-      particules? : IParamsParticulesGradeOptimization;
+      particles? : IParamsParticulesGradeOptimization;
       shadows? : IParamsShadowsGradeOptimization;
       renderSize? : IParamsRenderSizeGradeOptimization;
       materials? : IParamsMaterialsGradeOptimization;
