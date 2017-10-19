@@ -299,6 +299,7 @@ Purpose : Increase the accuracy of devices and hardwares detection to know which
 
 
 ## Roadmap :
+Coming soon.
 
 ## Version :
 alpha 0.0.1
