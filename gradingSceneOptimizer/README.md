@@ -1,6 +1,7 @@
 # Grading Scene Optimizer
 
 The new gradingSceneOptimizer will replace the current sceneOptimizer.
+Be careful, it's an alpha test version.
 
 ## Description :
 GradingSceneOptimizer allows you to create some grade with different render to optimize your scene and performance.
