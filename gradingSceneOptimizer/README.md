@@ -261,7 +261,9 @@ var customOptimization = {
         tabletAllowed : false,
         noteBookAllowed : false,
         computerAllowed : true,
-        exceptionsAllowed : ['xbox'], // if xbox found in userAgent, this grade is enabled.
+        exceptionsAllowed : ['xbox'] // if xbox found in userAgent, this grade is enabled.
+    },
+    hardwares {
         onlyDedicatedGPU : true, // FUTURE FEATURE : GPU recommended for this grade;
         minBenchmarkScore : 10000 // FUTURE FEATURE : benchmark recommended for this grade;
     }
@@ -292,7 +294,7 @@ var ultraGrade = new BABYLON.Grade('medium', customOptimization,
 Purpose : automatically minimize draw calls to increase performance.
 
 [Interesting article on Unity](https://docs.unity3d.com/2017.3/Documentation/Manual/OcclusionCulling.html)
-  
+
 [Example by Tarek Sherif with webgl 2](https://tsherif.github.io/webgl2examples/occlusion.html)
 
 
