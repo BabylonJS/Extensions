@@ -54,6 +54,7 @@ GSO.run(scene, minGrade, function() {
 });
 ```
 
+## How it works ? :
 
 
 ## GradingSceneOptimizer class :
