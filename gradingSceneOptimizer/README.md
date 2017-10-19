@@ -20,7 +20,7 @@ GradingSceneOptimizer is based on responsive and accessibility that are importan
 ```javascript
 /**
  * Create new GradingSceneOptimizer
- * 'engine' : BABYLON engine
+ * 'engine' : BABYLON.Engine
  */
 var GSO = new BABYLON.GradingSceneOptimizer(engine),
 
@@ -44,7 +44,7 @@ var GSO = new BABYLON.GradingSceneOptimizer(engine),
 
 /**
  * Run GradingSceneOptimizer
- * 'scene' : BABYLON scene
+ * 'scene' : BABYLON.Scene
  * 'minGrade' : on which grade GradingSceneOptimizer start.
  * 'function' : callback when GradingSceneOptimizer is ready.
  */
@@ -77,7 +77,7 @@ For the Future, It will be able to detect your benchmark to know automatically o
 ```javascript
 /**
     Create new GradingSceneOptimizer :
-    1. BABYLON.engine
+    1. BABYLON.Engine
     2. FPS to reach
     3. duration for fps evaluation in ms
     4. active auto evaluation
@@ -133,7 +133,7 @@ GSO.addGrade(gradeCreatedBefore);
 
 /**
     Update scene by grade :
-    1. BABYLON.scene
+    1. BABYLON.Scene
     2. grade
     3. onSuccess
 
@@ -147,7 +147,7 @@ GSO.updateSceneByGrade(scene, ultraGrade,
 
 /**
     Upgrade by one :
-    1. BABYLON.scene
+    1. BABYLON.Scene
     2. onSuccess
 
     (stop auto run and evaluation)
@@ -160,7 +160,7 @@ GSO.upgrade(scene,
 
 /**
     Downgrade by one :
-    1. BABYLON.scene
+    1. BABYLON.Scene
     2. onSuccess
 
     (stop auto run and evaluation)
@@ -177,7 +177,7 @@ GSO.stopAutoEval();
 
 /**
     start auto run and evaluation :
-    1. BABYLON.scene
+    1. BABYLON.Scene
     2. onSuccess
  */
 GSO.startAutoEval(scene,
