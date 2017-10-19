@@ -300,8 +300,11 @@ Purpose : automatically minimize draw calls to increase performance.
 
 ### Benchmark Score, CPU and GPU recommended Features :
 Purpose : Increase the accuracy of devices and hardwares detection to know which grade is the most optimized for your device.
+At the moment, it's you who must to indicate which grade is the most optimized to start.
 
 
+### Complete optimization parameters :
+Purpose : Propose more parameters to get more performance.
 
 
 ## Roadmap :
