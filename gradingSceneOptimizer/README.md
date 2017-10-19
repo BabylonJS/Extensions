@@ -1,7 +1,7 @@
 # Grading Scene Optimizer
 
 The new gradingSceneOptimizer will replace the current sceneOptimizer.
-  
+
 Be careful, it's an alpha test version.
 
 ## Description :
@@ -12,7 +12,8 @@ For example, you will be able to set a render for specifics devices.
 GradingSceneOptimizer is based on responsive and accessibility that are important for web.
 
 ## Purpose :
-Get the best quality / performance for all devices.
+* Get the best quality / performance for all devices.
+* Regroup all optimizations tricks in one comprehensive class.
 
 ## Quick example :
 
@@ -64,6 +65,10 @@ It's based on two steps :
 * Second : dowgrading. If the last try (or the first try with your starter grade ) not reach FPS, the GradingSceneOptimizer downgrade until when it can reach FPS. If the GradingSceneOptimizer reach "x" FPS, it stop.
 
 For the Future, It will be able to detect your benchmark to know automatically on which grade it need to start.
+
+
+
+
 
 ## GradingSceneOptimizer class :
 
@@ -186,8 +191,6 @@ GSO.startAutoEval(scene,
 
 
 
-
-
 ## Grades class :
 
 ### Create grade :
@@ -279,7 +282,20 @@ var ultraGrade = new BABYLON.Grade('medium', customOptimization,
 
 ```
 
+
+
+
+
 ## Future Features :
+
+### Minimize draw call > occlusion culling and minimizeDrawCall Features :
+
+
+### Increase the accuracy of devices and hardwares detection > Benchmark Score and GPU recommended Features :
+
+
+
+
 
 ## Roadmap :
 
