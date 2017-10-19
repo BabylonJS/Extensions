@@ -94,7 +94,7 @@ GSO.minimizeDrawCall = true;
 /**
     Create new grade :
     1. grade name
-    2. optimization parameters (here is a preset. see below to custom parameters);
+    2. optimization parameters (here is a preset. [see below to custom parameters](#Grades-class-:));
     3. upgrading task
     4. downgrading task
  */
