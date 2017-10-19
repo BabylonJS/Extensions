@@ -4,9 +4,9 @@ The new gradingSceneOptimizer will replace the current sceneOptimizer.
 Be careful, it's an alpha test version.
 
 ## Description :
-GradingSceneOptimizer allows you to create some grade with different render to optimize your scene and performance.
+GradingSceneOptimizer allows you to create some grades with different renders to optimize your scene and performance.
 For example, you will be able to set a render for specifics devices.
-GradingSceneOptimizer is based on responsive and accessibility concept that's important for web.
+GradingSceneOptimizer is based on responsive and accessibility that are important for web.
 
 ## Purpose :
 Get the best quality / performance for all devices.
@@ -55,7 +55,11 @@ GSO.run(scene, minGrade, function() {
 ```
 
 ## How it works ? :
-
+GradingSceneOptimizer tries to get the best grade for all devices.
+It's based on two steps :
+* First : upgrading. The GradingSceneOptimizer try to reach "x" FPS with your starter grade. If it's ok, it upgrade render again until when it can't reach "x" FPS.
+* Second : dowgrading. If the last try (or the first try with your starter grade ) not reach FPS, the GradingSceneOptimizer downgrade until when it can reach FPS. If the GradingSceneOptimizer reach "x" FPS, it stop.
+For the Future, It will be able to detect your benchmark to know automatically on which grade it need to start.
 
 ## GradingSceneOptimizer class :
 
@@ -74,10 +78,10 @@ var GSO = new BABYLON.GradingSceneOptimizer(engine, 48, 1000, true);
 // Run again FPS evaluation every 30 seconds
 GSO.autoRunInterval = 30000;
 
-// FEATURE : Active occlusion culling to get more performance
+// FUTURE FEATURE : Active occlusion culling to get more performance
 GSO.occlusionCullingEnabled = true;
 
-// FEATURE : Try to minimize the number of draw call of CPU to get more performance
+// FUTURE FEATURE : Try to minimize the number of draw call of CPU to get more performance
 //    * based on distance of view in optimizations parameters
 //    * add a radius detection around the meshes (useful for big meshes)
 //    * add a perimeter to preserve CPU performance to set visible to true on a group and not one by one ...
@@ -94,7 +98,7 @@ GSO.minimizeDrawCall = true;
 /**
     Create new grade :
     1. grade name
-    2. optimization parameters (here is a preset. [see below to custom parameters](#Grades-class-:));
+    2. optimization parameters (here is a preset. see below to custom parameters);
     3. upgrading task
     4. downgrading task
  */
@@ -220,14 +224,14 @@ var customOptimization = {
     lensFlaresEnabled : true,
     renderTargetsEnabled : true,
     textures : {
-        scale : 1,
-        maxSize : 2048,
-        minSize : 512
+        scale : 0.5, // original texture size * 0.5.
+        maxSize : 1024, // if (original texture size * scale) > maxSize, texture size = maxSize.
+        minSize : 512 // if (original texture size * scale) < minSize, texture size = minSize.
     },
     particles : {
-        ratio : 1,
-        maxEmitRate : 10000,
-        minEmitRate : 100
+        ratio : 0.5, // original emitRate * 0.5.
+        maxEmitRate : 10000, // if (original emitRate * scale) > maxEmitRate, emitRate = maxEmitRate.
+        minEmitRate : 100 // if (original emitRate * scale) < minEmitRate, emitRate = minEmitRate.
     },
     materials : {
         bumpEnabled : true,
@@ -240,25 +244,25 @@ var customOptimization = {
     renderSize : {
         maxWidth : 2560,
         maxHeight : 2560,
-        devicePixelRatio : 2
+        devicePixelRatio : 2 // screen with 200% pixel density
     },
     camera : {
-      viewDistance : 200 // FEATURE
+      viewDistance : 200 // FUTURE FEATURE
     }
-    devices : {
+    devices : { // enable or disable grade on specifics devices and hardware.
         smartPhoneAllowed : false,
         tabletAllowed : false,
         noteBookAllowed : false,
         computerAllowed : true,
-        exceptionsList : ['xbox'],
-        onlyDedicatedGPU : true,
-        benchmarkScore : 10000 // FEATURE
+        exceptionsAllowed : ['xbox'], // if xbox found in userAgent, this grade is enabled.
+        onlyDedicatedGPU : true, // FUTURE FEATURE : GPU recommended for this grade;
+        minBenchmarkScore : 10000 // FUTURE FEATURE : benchmark recommended for this grade;
     }
 
 };
 
 // Create new grade :
-var ultraGrade = new BABYLON.Grade('ultra', customOptimization,
+var ultraGrade = new BABYLON.Grade('medium', customOptimization,
                     function () {
                       // task to do on upgrading step
                       // ex : add meshes
@@ -271,12 +275,9 @@ var ultraGrade = new BABYLON.Grade('ultra', customOptimization,
 
 ```
 
-### Custom optimization explanation :
-
-
+## Future Features :
 
 ## Roadmap :
 
 ## Version :
-
 alpha 0.0.1
