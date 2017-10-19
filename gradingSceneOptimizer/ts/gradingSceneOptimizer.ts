@@ -39,7 +39,7 @@ module BABYLON {
                   tabletAllowed : true,
                   noteBookAllowed : true,
                   computerAllowed : false,
-                  exceptionsList : []
+                  exceptionsAllowed : []
               }
 
           };
@@ -72,7 +72,7 @@ module BABYLON {
                   tabletAllowed : true,
                   noteBookAllowed : true,
                   computerAllowed : true,
-                  exceptionsList : []
+                  exceptionsAllowed : []
               }
           };
       }
@@ -108,7 +108,7 @@ module BABYLON {
                   tabletAllowed : true,
                   noteBookAllowed : true,
                   computerAllowed : true,
-                  exceptionsList : []
+                  exceptionsAllowed : []
               }
           };
       }
@@ -149,7 +149,7 @@ module BABYLON {
                   tabletAllowed : true,
                   noteBookAllowed : true,
                   computerAllowed : true,
-                  exceptionsList : []
+                  exceptionsAllowed : []
               }
           };
       }
@@ -190,7 +190,7 @@ module BABYLON {
                   tabletAllowed : false,
                   noteBookAllowed : false,
                   computerAllowed : true,
-                  exceptionsList : []
+                  exceptionsAllowed : []
               }
           };
       }
@@ -231,7 +231,7 @@ module BABYLON {
                   tabletAllowed : false,
                   noteBookAllowed : false,
                   computerAllowed : true,
-                  exceptionsList : []
+                  exceptionsAllowed : []
               }
           };
       }
@@ -681,7 +681,7 @@ module BABYLON {
           return 'computer';
       }
 
-      // TODO : FEATURE : get a benchMark reference for GPU and CPU
+      // TODO : FUTURE FEATURE : get a benchMark reference for GPU and CPU
       public static getBenchmarkScore (engine : Engine) : number{
           return;
       }
@@ -728,7 +728,7 @@ module BABYLON {
 
       // active occlusion culling to downgrade the number of draw.
       // show only meshes in the frustrum of camera and if we can see it (disable if mesh hide an other mesh)
-      public occlusionCullingEnabled: boolean = true; // TODO ( !!! FEATURE !!!)
+      public occlusionCullingEnabled: boolean = true; // TODO ( !!! FUTURE FEATURE !!!)
 
       // try to minimize draw call of CPU
       // based on distance of view in optimizations paramater
@@ -738,7 +738,7 @@ module BABYLON {
       //    CAMERA === distance ===> (--- perimeter ---(<- radius detection -> MESH <- radius detection ->)--- perimeter ---)
       //
       // set mesh.isVisible to false
-      public minimizeDrawCall: boolean = true; // TODO ( !!! FEATURE !!!)
+      public minimizeDrawCall: boolean = true; // TODO ( !!! FUTURE FEATURE !!!)
 
       // to know on wich grade we are.
       private _currentGrade: Grade;
@@ -998,7 +998,7 @@ module BABYLON {
 
 
               isOnAllowedDevice = (params: IParamsDevicesGradeOptimization) : boolean => {
-                  var exceptions = params.exceptionsList,
+                  var exceptions = params.exceptionsAllowed,
                       phoneAllowed = params.smartPhoneAllowed,
                       tabletAllowed = params.tabletAllowed,
                       noteBookAllowed = params.noteBookAllowed,
@@ -1487,7 +1487,7 @@ module BABYLON {
       tabletAllowed? : boolean; // size : 768 - 1024 px && mobile detection = true
       noteBookAllowed? : boolean; // size : < 1280 px && mobile detection = false
       computerAllowed? : boolean; // size : > 1280 px
-      exceptionsList? : Array<string>;
+      exceptionsAllowed? : Array<string>;
       onlyDedicatedGPU? : boolean;
       benchmarkScore? : number;
   }
