@@ -199,7 +199,7 @@ GSO.startAutoEval(scene,
 /**
     Create new grade :
     1. grade name
-    2. optimization parameters (here is a preset. see below to custom parameters);
+    2. optimization parameters (here, it's a preset. see below to custom parameters);
     3. upgrading task
     4. downgrading task
 
