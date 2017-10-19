@@ -242,7 +242,7 @@ var customOptimization = {
         devicePixelRatio : 2
     },
     camera : {
-      viewDistance : 200
+      viewDistance : 200 // FEATURE
     }
     devices : {
         smartPhoneAllowed : false,
@@ -250,7 +250,8 @@ var customOptimization = {
         noteBookAllowed : false,
         computerAllowed : true,
         exceptionsList : ['xbox'],
-        onlyDedicatedGPU : true
+        onlyDedicatedGPU : true,
+        benchmarkScore : 10000 // FEATURE
     }
 
 };

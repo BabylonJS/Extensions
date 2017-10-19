@@ -1489,6 +1489,7 @@ module BABYLON {
       computerAllowed? : boolean; // size : > 1280 px
       exceptionsList? : Array<string>;
       onlyDedicatedGPU? : boolean;
+      benchmarkScore? : number;
   }
 
   // interface camera grade parameter
