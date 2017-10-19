@@ -833,15 +833,16 @@ module BABYLON {
                   onReady();
               }
 
-              this.gradesEvaluation(engine, scene);
+              this.startAutoEval(scene);
 
           });
       }
 
       // evaluate and choose the best grade for your hardware
-      public gradesEvaluation(engine: Engine, scene: Scene, onSuccess?: Function){
+      public startAutoEval(scene: Scene, onSuccess?: Function){
 
-          var fps,
+          var engine = scene.getEngine(),
+              fps,
               grades = this.grades,
               gradesL = this.grades.length,
               gradeI,
@@ -852,7 +853,7 @@ module BABYLON {
               evalDuration = this.evaluationDuration;
 
           // stop
-          this.stop();
+          this.stopAutoEval();
 
 
 
@@ -1060,7 +1061,7 @@ module BABYLON {
       public updateSceneByGrade(scene : Scene, grade : Grade, onSuccess?: Function) {
 
           // clear
-          this.stop();
+          this.stopAutoEval();
 
           // if allready on this grade
           if (grade === this._currentGrade) {
@@ -1214,7 +1215,7 @@ module BABYLON {
       }
 
       // clear all timer and tasks
-      public stop() {
+      public stopAutoEval() {
 
           this._isUpGradingStep = true;
 
@@ -1298,7 +1299,7 @@ module BABYLON {
         parentNode.appendChild(li);
 
         li.addEventListener('click', () => {
-            this.gradesEvaluation(engine, scene);
+            this.startAutoEval(scene);
         });
 
         // create grade li
