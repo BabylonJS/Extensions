@@ -941,7 +941,7 @@ module BABYLON {
                     gradeI = grades[I];
 
                     // if it's the last grade and if it's disabled, stop.
-                    if (!gradeI || I <= 0) {
+                    if (!gradeI || I < 0) {
                       success();
                       return;
                     }
@@ -1108,7 +1108,7 @@ module BABYLON {
           // down
           else {
 
-              for (let i = currentPriority; i > toPriority; i--) {
+              for (let i = currentPriority; i >= toPriority; i--) {
                   gradeToUp = grades[i];
 
                   downGradeTask = gradeToUp.downGradingTask;
@@ -1148,10 +1148,11 @@ module BABYLON {
               grades = this.grades,
               gradesL = grades.length,
               gradeI = grades[I],
-              upGradingTask;
+              upGradingTask = gradeI.upGradingTask;
 
           console.log(' • Upgrade scene to ' + gradeI.name + " grade.");
 
+          console.log(upGradingTask);
           if (upGradingTask) {
               upGradingTask();
           }
@@ -1185,7 +1186,7 @@ module BABYLON {
               // upgrading options
               I = currentPriority - 1,
               gradeI = grades[I],
-              upGradingTask;
+              upGradingTask = gradeI.upGradingTask;
 
 
           console.log(' • Downgrade scene to ' + gradeI.name + " grade.");

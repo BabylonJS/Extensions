@@ -699,7 +699,7 @@ var BABYLON;
                         I--;
                         gradeI = grades[I];
                         // if it's the last grade and if it's disabled, stop.
-                        if (!gradeI || I <= 0) {
+                        if (!gradeI || I < 0) {
                             success();
                             return;
                         }
@@ -803,7 +803,7 @@ var BABYLON;
                 }
             }
             else {
-                for (var i = currentPriority; i > toPriority; i--) {
+                for (var i = currentPriority; i >= toPriority; i--) {
                     gradeToUp = grades[i];
                     downGradeTask = gradeToUp.downGradingTask;
                     if (downGradeTask) {
@@ -829,8 +829,9 @@ var BABYLON;
         };
         // force upgrade by 1
         GradingSceneOptimizer.prototype.upgrade = function (scene, onSuccess) {
-            var I = this._currentGradePriority + 1, grades = this.grades, gradesL = grades.length, gradeI = grades[I], upGradingTask;
+            var I = this._currentGradePriority + 1, grades = this.grades, gradesL = grades.length, gradeI = grades[I], upGradingTask = gradeI.upGradingTask;
             console.log(' • Upgrade scene to ' + gradeI.name + " grade.");
+            console.log(upGradingTask);
             if (upGradingTask) {
                 upGradingTask();
             }
@@ -851,7 +852,7 @@ var BABYLON;
             // downgrading options
             gradeToDowngrade = grades[currentPriority], downGradingTask = gradeToDowngrade.downGradingTask, 
             // upgrading options
-            I = currentPriority - 1, gradeI = grades[I], upGradingTask;
+            I = currentPriority - 1, gradeI = grades[I], upGradingTask = gradeI.upGradingTask;
             console.log(' • Downgrade scene to ' + gradeI.name + " grade.");
             if (downGradingTask) {
                 downGradingTask();
