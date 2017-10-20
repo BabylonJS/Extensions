@@ -15,7 +15,7 @@ var BABYLON;
         PresetGradeOptimization.minimum = function () {
             return {
                 shadowsEnabled: false,
-                particulesEnabled: false,
+                particlesEnabled: false,
                 postProcessesEnabled: false,
                 lensFlaresEnabled: false,
                 renderTargetsEnabled: false,
@@ -38,7 +38,7 @@ var BABYLON;
                     tabletAllowed: true,
                     noteBookAllowed: true,
                     computerAllowed: false,
-                    exceptionsList: []
+                    exceptionsAllowed: []
                 }
             };
         };
@@ -46,7 +46,7 @@ var BABYLON;
         PresetGradeOptimization.low = function () {
             return {
                 shadowsEnabled: false,
-                particulesEnabled: false,
+                particlesEnabled: false,
                 postProcessesEnabled: false,
                 lensFlaresEnabled: false,
                 renderTargetsEnabled: false,
@@ -69,7 +69,7 @@ var BABYLON;
                     tabletAllowed: true,
                     noteBookAllowed: true,
                     computerAllowed: true,
-                    exceptionsList: []
+                    exceptionsAllowed: []
                 }
             };
         };
@@ -77,7 +77,7 @@ var BABYLON;
         PresetGradeOptimization.standard = function () {
             return {
                 shadowsEnabled: true,
-                particulesEnabled: false,
+                particlesEnabled: false,
                 postProcessesEnabled: false,
                 lensFlaresEnabled: false,
                 renderTargetsEnabled: true,
@@ -104,7 +104,7 @@ var BABYLON;
                     tabletAllowed: true,
                     noteBookAllowed: true,
                     computerAllowed: true,
-                    exceptionsList: []
+                    exceptionsAllowed: []
                 }
             };
         };
@@ -112,7 +112,7 @@ var BABYLON;
         PresetGradeOptimization.medium = function () {
             return {
                 shadowsEnabled: true,
-                particulesEnabled: true,
+                particlesEnabled: true,
                 postProcessesEnabled: false,
                 lensFlaresEnabled: false,
                 renderTargetsEnabled: true,
@@ -121,7 +121,7 @@ var BABYLON;
                     maxSize: 1024,
                     minSize: 256
                 },
-                particules: {
+                particles: {
                     ratio: 0.25,
                     maxEmitRate: 300,
                     minEmitRate: 100
@@ -144,7 +144,7 @@ var BABYLON;
                     tabletAllowed: true,
                     noteBookAllowed: true,
                     computerAllowed: true,
-                    exceptionsList: []
+                    exceptionsAllowed: []
                 }
             };
         };
@@ -152,7 +152,7 @@ var BABYLON;
         PresetGradeOptimization.high = function () {
             return {
                 shadowsEnabled: true,
-                particulesEnabled: true,
+                particlesEnabled: true,
                 postProcessesEnabled: true,
                 lensFlaresEnabled: true,
                 renderTargetsEnabled: true,
@@ -161,7 +161,7 @@ var BABYLON;
                     maxSize: 1024,
                     minSize: 512
                 },
-                particules: {
+                particles: {
                     ratio: 0.5,
                     maxEmitRate: 5000,
                     minEmitRate: 100
@@ -184,7 +184,7 @@ var BABYLON;
                     tabletAllowed: false,
                     noteBookAllowed: false,
                     computerAllowed: true,
-                    exceptionsList: []
+                    exceptionsAllowed: []
                 }
             };
         };
@@ -192,7 +192,7 @@ var BABYLON;
         PresetGradeOptimization.ultra = function () {
             return {
                 shadowsEnabled: true,
-                particulesEnabled: true,
+                particlesEnabled: true,
                 postProcessesEnabled: true,
                 lensFlaresEnabled: true,
                 renderTargetsEnabled: true,
@@ -201,7 +201,7 @@ var BABYLON;
                     maxSize: 2048,
                     minSize: 512
                 },
-                particules: {
+                particles: {
                     ratio: 1,
                     maxEmitRate: 10000,
                     minEmitRate: 100
@@ -224,7 +224,7 @@ var BABYLON;
                     tabletAllowed: false,
                     noteBookAllowed: false,
                     computerAllowed: true,
-                    exceptionsList: []
+                    exceptionsAllowed: []
                 }
             };
         };
@@ -529,7 +529,7 @@ var BABYLON;
             // computer
             return 'computer';
         };
-        // TODO : FEATURE : get a benchMark reference for GPU and CPU
+        // TODO : FUTURE FEATURE : get a benchMark reference for GPU and CPU
         Hardware.getBenchmarkScore = function (engine) {
             return;
         };
@@ -555,6 +555,7 @@ var BABYLON;
     // class to controle optimizations
     var GradingSceneOptimizer = /** @class */ (function () {
         /**
+         * @param engine : Babylon engine
          * @param fpsToReach : fps to reach
          * @param evaluationDuration : duration for fps evaluation
          * @param autoReEval : active auto evaluation
@@ -573,7 +574,7 @@ var BABYLON;
             this.autoRunInterval = 30000;
             // active occlusion culling to downgrade the number of draw.
             // show only meshes in the frustrum of camera and if we can see it (disable if mesh hide an other mesh)
-            this.occlusionCullingEnabled = true; // TODO ( !!! FEATURE !!!)
+            this.occlusionCullingEnabled = true; // TODO ( !!! FUTURE FEATURE !!!)
             // try to minimize draw call of CPU
             // based on distance of view in optimizations paramater
             //    add a radius detection around the meshes (useful for big meshes)
@@ -582,7 +583,7 @@ var BABYLON;
             //    CAMERA === distance ===> (--- perimeter ---(<- radius detection -> MESH <- radius detection ->)--- perimeter ---)
             //
             // set mesh.isVisible to false
-            this.minimizeDrawCall = true; // TODO ( !!! FEATURE !!!)
+            this.minimizeDrawCall = true; // TODO ( !!! FUTURE FEATURE !!!)
             // current priority
             this._currentGradePriority = -1;
             // to know the step of evaluation :
@@ -608,7 +609,6 @@ var BABYLON;
         }
         /**
          * Run GradingSceneOptimizer
-         * @param engine : BABYLON engine
          * @param scene : BABYLON scene
          * @param starterGrade : on wich grade renderGradingSceneOptimizer need to start.
          *                       It's interresting to start with the lower grade.
@@ -636,15 +636,15 @@ var BABYLON;
                 if (onReady) {
                     onReady();
                 }
-                _this.gradesEvaluation(engine, scene);
+                _this.startAutoEval(scene);
             });
         };
         // evaluate and choose the best grade for your hardware
-        GradingSceneOptimizer.prototype.gradesEvaluation = function (engine, scene, onSuccess) {
+        GradingSceneOptimizer.prototype.startAutoEval = function (scene, onSuccess) {
             var _this = this;
-            var fps, grades = this.grades, gradesL = this.grades.length, gradeI, currentPriority, I, isInit = false, timeToWait = 1000, evalDuration = this.evaluationDuration;
+            var engine = scene.getEngine(), fps, grades = this.grades, gradesL = this.grades.length, gradeI, currentPriority, I, isInit = false, timeToWait = 1000, evalDuration = this.evaluationDuration;
             // stop
-            this.stop();
+            this.stopAutoEval();
             // onSucess
             var success = function () {
                 // if autoReEval
@@ -732,7 +732,7 @@ var BABYLON;
         // add existing grade
         GradingSceneOptimizer.prototype.addGrade = function (grade) {
             var grades = this.grades, devices = grade.devices, deviceType = this._deviceType, isOnAllowedDevice = function (params) {
-                var exceptions = params.exceptionsList, phoneAllowed = params.smartPhoneAllowed, tabletAllowed = params.tabletAllowed, noteBookAllowed = params.noteBookAllowed, computerAllowed = params.computerAllowed;
+                var exceptions = params.exceptionsAllowed, phoneAllowed = params.smartPhoneAllowed, tabletAllowed = params.tabletAllowed, noteBookAllowed = params.noteBookAllowed, computerAllowed = params.computerAllowed;
                 // check if exception
                 if (exceptions && exceptions.length > 0 && BABYLON.Hardware.isDevices(exceptions)) {
                     return true;
@@ -777,7 +777,7 @@ var BABYLON;
         // update scene by render grade name
         GradingSceneOptimizer.prototype.updateSceneByGrade = function (scene, grade, onSuccess) {
             // clear
-            this.stop();
+            this.stopAutoEval();
             // if allready on this grade
             if (grade === this._currentGrade) {
                 console.log('Grade ' + grade.name + ': allready on it.');
@@ -871,7 +871,7 @@ var BABYLON;
             }
         };
         // clear all timer and tasks
-        GradingSceneOptimizer.prototype.stop = function () {
+        GradingSceneOptimizer.prototype.stopAutoEval = function () {
             this._isUpGradingStep = true;
             // stop auto run
             clearTimeout(this._autoRunIntervalId);
@@ -933,7 +933,7 @@ var BABYLON;
             var li = createLi('auto');
             parentNode.appendChild(li);
             li.addEventListener('click', function () {
-                _this.gradesEvaluation(engine, scene);
+                _this.startAutoEval(scene);
             });
             // create grade li
             for (var i = 0; i < grades.length; i++) {
@@ -991,15 +991,15 @@ var BABYLON;
             if (optimization.renderTargetsEnabled != undefined) {
                 this.renderTargetsEnabled = optimization.renderTargetsEnabled;
             }
-            if (optimization.particulesEnabled != undefined) {
-                this.particulesEnabled = optimization.particulesEnabled;
+            if (optimization.particlesEnabled != undefined) {
+                this.particulesEnabled = optimization.particlesEnabled;
             }
             if (optimization.shadowsEnabled != undefined) {
                 this.shadowsEnabled = optimization.shadowsEnabled;
             }
             // parameters variable
-            if (optimization.particules != undefined) {
-                this.particules = optimization.particules;
+            if (optimization.particles != undefined) {
+                this.particules = optimization.particles;
             }
             if (optimization.shadows != undefined) {
                 this.shadows = optimization.shadows;
