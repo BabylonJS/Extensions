@@ -200,7 +200,7 @@ window.onload=function() {
    * GradingSceneOptimizer
    */
 
-  var GSO = new BABYLON.GradingSceneOptimizer(engine, 62),
+  var GSO = new BABYLON.GradingSceneOptimizer(engine),
 
       minGrade = GSO.createGrade('minimum', BABYLON.PresetGradeOptimization.minimum()),
 
@@ -210,10 +210,12 @@ window.onload=function() {
           () => {
               // upGradingTask
               sphere2.isVisible = true;
+              console.log('>>> add sphere2')
           },
           () => {
               // downGradingTask
               sphere2.isVisible = false;
+              console.log('>>> remove sphere2')
           }),
 
       mediumGrade = GSO.createGrade('medium', BABYLON.PresetGradeOptimization.medium()),
@@ -222,10 +224,12 @@ window.onload=function() {
           () => {
               // upGradingTask
               sphere3.isVisible = true;
+              console.log('>>> add sphere3')
           },
           () => {
               // downGradingTask
               sphere3.isVisible = false;
+              console.log('>>> remove sphere3')
           }),
 
       ultraGrade = GSO.createGrade('ultra', BABYLON.PresetGradeOptimization.ultra());
@@ -242,7 +246,7 @@ window.onload=function() {
   GSO.addUI(scene);
 
   // run GradingSceneOptimizer
-  GSO.run(scene, ultraGrade, () => {
+  GSO.run(scene, lowGrade, () => {
 
     engine.runRenderLoop( () => {
         scene.render();

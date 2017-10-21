@@ -912,12 +912,12 @@ module BABYLON {
                       gradeI = grades[I];
 
                       // if it's the last grade and if it's disabled, stop.
-                      if (!gradeI || I >= (gradesL - 1)) {
+                      if (!gradeI || I >= gradesL) {
                         success();
                         return;
                       }
 
-                      if (this._isUpGradingStep && I <= (gradesL - 1)) {
+                      if (this._isUpGradingStep && I <= gradesL) {
 
                           this.upgrade(scene, () => {
                               autoEvaluate();
@@ -1093,7 +1093,7 @@ module BABYLON {
           // up
           if (currentPriority < toPriority) {
 
-              for (let i = currentPriority; i < toPriority; i++) {
+              for (let i = currentPriority; i <= toPriority; i++) {
                   gradeToUp = grades[i];
 
                   upGradingTask = gradeToUp.upGradingTask;

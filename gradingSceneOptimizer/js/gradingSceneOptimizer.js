@@ -681,11 +681,11 @@ var BABYLON;
                         I++;
                         gradeI = grades[I];
                         // if it's the last grade and if it's disabled, stop.
-                        if (!gradeI || I >= (gradesL - 1)) {
+                        if (!gradeI || I >= gradesL) {
                             success();
                             return;
                         }
-                        if (_this._isUpGradingStep && I <= (gradesL - 1)) {
+                        if (_this._isUpGradingStep && I <= gradesL) {
                             _this.upgrade(scene, function () {
                                 autoEvaluate();
                             });
@@ -794,7 +794,7 @@ var BABYLON;
             }
             // up
             if (currentPriority < toPriority) {
-                for (var i = currentPriority; i < toPriority; i++) {
+                for (var i = currentPriority; i <= toPriority; i++) {
                     gradeToUp = grades[i];
                     upGradingTask = gradeToUp.upGradingTask;
                     if (upGradingTask) {
