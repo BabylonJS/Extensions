@@ -239,7 +239,7 @@ window.onload=function() {
   GSO.minimizeDrawCall = true; // TODO : FEATURE
 
   // add ui to inspect
-  GSO.addUI(scene, document.getElementsByTagName('body'));
+  GSO.addUI(scene);
 
   // run GradingSceneOptimizer
   GSO.run(scene, ultraGrade, () => {

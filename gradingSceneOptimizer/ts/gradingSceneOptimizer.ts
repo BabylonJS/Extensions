@@ -1276,11 +1276,12 @@ module BABYLON {
       }
 
       // add ui to inspect
-      public addUI (scene: Scene, parentNode: HTMLElement) {
+      public addUI (scene: Scene) {
 
-        var fragment = document.createDocumentFragment(), // "virtual" dom
-            grades = this.grades,
-            engine = scene.getEngine();
+        var ul = document.createElement('ul'),
+            style = document.createElement('style'),
+            fragment = document.createDocumentFragment(), // "virtual" dom
+            grades = this.grades;
 
         var addEvent = (li, grade) => {
 
@@ -1295,9 +1296,18 @@ module BABYLON {
             return li;
         }
 
+
+        // add css rules
+        var css = '#grades {z-index: 1;position: fixed;background-color: white;padding: 20px;}#grades li {font-family: sans-serif;border-bottom: 1px solid black;padding: 10px 0 10px 0;cursor: pointer;}#grades li:hover {color: gray;}'
+        style.innerText = css;
+        document.getElementsByTagName('head')[0].appendChild(style);
+        // add container
+        ul.id = 'grades';
+        fragment.appendChild(ul);
+
         // create auto li
         var li = createLi('auto');
-        parentNode.appendChild(li);
+        ul.appendChild(li);
 
         li.addEventListener('click', () => {
             this.startAutoEval(scene);
@@ -1310,12 +1320,13 @@ module BABYLON {
             li = createLi(gradeI.name);
 
             addEvent(li, gradeI);
-            fragment.appendChild(li);
+            ul.appendChild(li);
 
         }
 
         // add to dom
-        parentNode.appendChild(fragment);
+        //parentNode.appendChild(fragment);
+        document.body.appendChild(fragment)
 
       }
 
