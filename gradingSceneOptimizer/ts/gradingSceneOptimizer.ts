@@ -1152,7 +1152,6 @@ module BABYLON {
 
           console.log(' • Upgrade scene to ' + gradeI.name + " grade.");
 
-          console.log(upGradingTask);
           if (upGradingTask) {
               upGradingTask();
           }
@@ -1275,7 +1274,7 @@ module BABYLON {
 
       }
 
-      // add ui to inspect
+      // add ui to inspect (demo)
       public addUI (scene: Scene) {
 
         var ul = document.createElement('ul'),
