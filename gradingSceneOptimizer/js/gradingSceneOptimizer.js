@@ -831,7 +831,6 @@ var BABYLON;
         GradingSceneOptimizer.prototype.upgrade = function (scene, onSuccess) {
             var I = this._currentGradePriority + 1, grades = this.grades, gradesL = grades.length, gradeI = grades[I], upGradingTask = gradeI.upGradingTask;
             console.log(' • Upgrade scene to ' + gradeI.name + " grade.");
-            console.log(upGradingTask);
             if (upGradingTask) {
                 upGradingTask();
             }
@@ -915,7 +914,7 @@ var BABYLON;
                 BABYLON.Optimize.particules(scene, grade.particulesEnabled, grade.particules);
             }
         };
-        // add ui to inspect
+        // add ui to inspect (demo)
         GradingSceneOptimizer.prototype.addUI = function (scene) {
             var _this = this;
             var ul = document.createElement('ul'), style = document.createElement('style'), fragment = document.createDocumentFragment(), // "virtual" dom
