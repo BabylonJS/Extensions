@@ -613,7 +613,7 @@
                 InstanceClassInfo._CurCategories = joinCat;
                 let obj = this.beforeRefreshForLayoutConstruction(dataPart);
                 if (!this.refreshInstanceDataPart(dataPart)) {
-                    console.log(`Layout construction for ${Tools.getClassName(this._instanceDataParts[0])} failed because refresh returned false`);
+                    console.log(`Layout construction for ${Tools.GetClassName(this._instanceDataParts[0])} failed because refresh returned false`);
                 }
                 this.afterRefreshForLayoutConstruction(dataPart, obj);
                 this.isVisible = curVisible;
@@ -625,7 +625,7 @@
                             pd._zBiasOffset = v.instanceOffset.get(joinCat);
                         }
                         if (!v.size) {
-                            console.log(`ERROR: Couldn't detect the size of the Property ${v.attributeName} from type ${Tools.getClassName(cti.type)}. Property is ignored.`);
+                            console.log(`ERROR: Couldn't detect the size of the Property ${v.attributeName} from type ${Tools.GetClassName(cti.type)}. Property is ignored.`);
                         } else {
                             size += v.size;
                         }
@@ -852,7 +852,7 @@
          * @param useInstanced specified if Instanced Array should be used, if null the engine caps will be used (so true if WebGL supports it, false otherwise), but you have the possibility to override the engine capability. However, if you manually set true but the engine does not support Instanced Array, this method will return null
          */
         protected getDataPartEffectInfo(dataPartId: number, vertexBufferAttributes: string[], uniforms: string[] = null, useInstanced: boolean = null): { attributes: string[], uniforms: string[], defines: string } {
-            let dataPart = Tools.first(this._instanceDataParts, i => i.id === dataPartId);
+            let dataPart = Tools.First(this._instanceDataParts, i => i.id === dataPartId);
             if (!dataPart) {
                 return null;
             }
@@ -1000,7 +1000,7 @@
         }
 
         private _modelRenderCache: ModelRenderCache;
-        private _transparentPrimitiveInfo: TransparentPrimitiveInfo;
+        public _transparentPrimitiveInfo: TransparentPrimitiveInfo;
 
         protected _instanceDataParts: InstanceDataBase[];
         private _renderMode: number;

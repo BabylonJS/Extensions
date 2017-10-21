@@ -1,4 +1,221 @@
 declare module BABYLON {
+    class DynamicFloatArrayElementInfo {
+        offset: number;
+    }
+    /**
+    * The purpose of this class is to store float32 based elements of a given size (defined by the stride argument) in a dynamic fashion, that is, you can add/free elements. You can then access to a defragmented/packed version of the underlying Float32Array by calling the pack() method.
+    * The intent is to maintain through time data that will be bound to a WebGlBuffer with the ability to change add/remove elements.
+    * It was first built to efficiently maintain the WebGlBuffer that contain instancing based data.
+    * Allocating an Element will return a instance of DynamicFloatArrayElement which contains the offset into the Float32Array of where the element starts, you are then responsible to copy your data using this offset.
+    * Beware, calling pack() may change the offset of some Entries because this method will defragment the Float32Array to replace empty elements by moving allocated ones at their location.
+     * This method will return an ArrayBufferView on the existing Float32Array that describes the used elements. Use this View to update the WebGLBuffer and NOT the "buffer" field of the class. The pack() method won't shrink/reallocate the buffer to keep it GC friendly, all the empty space will be put at the end of the buffer, the method just ensure there are no "free holes".
+    */
+    class DynamicFloatArray {
+        /**
+         * Construct an instance of the dynamic float array
+         * @param stride size of one element in float (i.e. not bytes!)
+         * @param initialElementCount the number of available entries at construction
+         */
+        constructor(stride: number, initialElementCount: number);
+        /**
+         * Allocate an element in the array.
+         * @return the element info instance that contains the offset into the main buffer of the element's location.
+         * Beware, this offset may change when you call pack()
+         */
+        allocElement(): DynamicFloatArrayElementInfo;
+        /**
+         * Free the element corresponding to the given element info
+         * @param elInfo the element that describe the allocated element
+         */
+        freeElement(elInfo: DynamicFloatArrayElementInfo): void;
+        /**
+         * This method will pack all the used elements into a linear sequence and put all the free space at the end.
+         * Instances of DynamicFloatArrayElement may have their 'offset' member changed as data could be copied from one location to another, so be sure to read/write your data based on the value inside this member after you called pack().
+         * @return the subArray that is the view of the used elements area, you can use it as a source to update a WebGLBuffer
+         */
+        pack(): Float32Array;
+        private _moveElement(element, destOffset);
+        private _growBuffer();
+        /**
+         * This is the main buffer, all elements are stored inside, you use the DynamicFloatArrayElement instance of a given element to know its location into this buffer, then you have the responsibility to perform write operations in this buffer at the right location!
+         * Don't use this buffer for a WebGL bufferSubData() operation, but use the one returned by the pack() method.
+         */
+        buffer: Float32Array;
+        /**
+         * Get the total count of entries that can fit in the current buffer
+         * @returns the elements count
+         */
+        readonly totalElementCount: number;
+        /**
+         * Get the count of free entries that can still be allocated without resizing the buffer
+         * @returns the free elements count
+         */
+        readonly freeElementCount: number;
+        /**
+         * Get the count of allocated elements
+         * @returns the allocated elements count
+         */
+        readonly usedElementCount: number;
+        /**
+         * Return the size of one element in float
+         * @returns the size in float
+         */
+        readonly stride: number;
+        compareValueOffset: number;
+        sortingAscending: boolean;
+        sort(): boolean;
+        private _allEntries;
+        private _freeEntries;
+        private _stride;
+        private _lastUsed;
+        private _firstFree;
+        private _sortTable;
+        private _sortedTable;
+    }
+}
+
+declare module BABYLON {
+    /**
+     * This class describe a rectangle that were added to the map.
+     * You have access to its coordinates either in pixel or normalized (UV)
+     */
+    class PackedRect {
+        constructor(root: RectPackingMap, parent: PackedRect, pos: Vector2, size: Size);
+        /**
+         * @returns the position of this node into the map
+         */
+        readonly pos: Vector2;
+        /**
+         * @returns the size of the rectangle this node handles
+         */
+        readonly contentSize: Size;
+        /**
+         * Retrieve the inner position (considering the margin) and stores it into the res object
+         * @param res must be a valid Vector2 that will contain the inner position after this call
+         */
+        getInnerPosToRef(res: Vector2): void;
+        /**
+         * Retrieve the inner size (considering the margin) and stores it into the res object
+         * @param res must be a valid Size that will contain the inner size after this call
+         */
+        getInnerSizeToRef(res: Size): void;
+        /**
+         * Compute the UV of the top/left, top/right, bottom/right, bottom/left points of the rectangle this node handles into the map
+         * @returns And array of 4 Vector2, containing UV coordinates for the four corners of the Rectangle into the map
+         */
+        readonly UVs: Vector2[];
+        /**
+         * You may have allocated the PackedRect using over-provisioning (you allocated more than you need in order to prevent frequent deallocations/reallocations)
+         * and then using only a part of the PackRect.
+         * This method will return the UVs for this part by given the custom size of what you really use
+         * @param customSize must be less/equal to the allocated size, UV will be compute from this
+         */
+        getUVsForCustomSize(customSize: Size): Vector2[];
+        /**
+         * Free this rectangle from the map.
+         * Call this method when you no longer need the rectangle to be in the map.
+         */
+        freeContent(): void;
+        protected readonly isUsed: boolean;
+        protected findAndSplitNode(contentSize: Size): PackedRect;
+        private findNode(size);
+        private static TpsSize;
+        private splitNode(contentSize);
+        private attemptDefrag();
+        private clearNode();
+        private readonly isRecursiveFree;
+        protected evalFreeSize(size: number): number;
+        protected _root: RectPackingMap;
+        protected _parent: PackedRect;
+        private _contentSize;
+        private _initialSize;
+        private _leftNode;
+        private _rightNode;
+        private _bottomNode;
+        private _pos;
+        protected _size: Size;
+    }
+    /**
+     * The purpose of this class is to pack several Rectangles into a big map, while trying to fit everything as optimally as possible.
+     * This class is typically used to build lightmaps, sprite map or to pack several little textures into a big one.
+     * Note that this class allows allocated Rectangles to be freed: that is the map is dynamically maintained so you can add/remove rectangle based on their life-cycle.
+     * In case you need a margin around the allocated rect, specify the amount in the margin argument during construction.
+     * In such case you will have to rely on innerPositionToRef and innerSizeToRef calls to get the proper size
+     */
+    class RectPackingMap extends PackedRect {
+        /**
+         * Create an instance of the object with a dimension using the given size
+         * @param size The dimension of the rectangle that will contain all the sub ones.
+         * @param margin The margin (empty space) created (in pixels) around the allocated Rectangles
+         */
+        constructor(size: Size, margin?: number);
+        /**
+         * Add a rectangle, finding the best location to store it into the map
+         * @param size the dimension of the rectangle to store
+         * @return the Node containing the rectangle information, or null if we couldn't find a free spot
+         */
+        addRect(size: Size): PackedRect;
+        /**
+         * Return the current space free normalized between [0;1]
+         * @returns {}
+         */
+        readonly freeSpace: number;
+        _margin: number;
+    }
+}
+
+declare module BABYLON {
+    class MapTexture extends Texture {
+        private _rectPackingMap;
+        private _size;
+        private _replacedViewport;
+        constructor(name: string, scene: Scene, size: ISize, samplingMode?: number, useMipMap?: boolean, margin?: number);
+        /**
+         * Allocate a rectangle of a given size in the texture map
+         * @param size the size of the rectangle to allocation
+         * @return the PackedRect instance corresponding to the allocated rect or null is there was not enough space to allocate it.
+         */
+        allocateRect(size: Size): PackedRect;
+        /**
+         * Free a given rectangle from the texture map
+         * @param rectInfo the instance corresponding to the rect to free.
+         */
+        freeRect(rectInfo: PackedRect): void;
+        /**
+         * Return the available space in the range of [O;1]. 0 being not space left at all, 1 being an empty texture map.
+         * This is the cumulated space, not the biggest available surface. Due to fragmentation you may not allocate a rect corresponding to this surface.
+         * @returns {}
+         */
+        readonly freeSpace: number;
+        /**
+         * Bind the texture to the rendering engine to render in the zone of a given rectangle.
+         * Use this method when you want to render into the texture map with a clipspace set to the location and size of the given rect.
+         * Don't forget to call unbindTexture when you're done rendering
+         * @param rect the zone to render to
+         * @param clear true to clear the portion's color/depth data
+         */
+        bindTextureForRect(rect: PackedRect, clear: boolean): void;
+        /**
+         * Bind the texture to the rendering engine to render in the zone of the given size at the given position.
+         * Use this method when you want to render into the texture map with a clipspace set to the location and size of the given rect.
+         * Don't forget to call unbindTexture when you're done rendering
+         * @param pos the position into the texture
+         * @param size the portion to fit the clip space to
+         * @param clear true to clear the portion's color/depth data
+         */
+        bindTextureForPosSize(pos: Vector2, size: Size, clear: boolean): void;
+        /**
+         * Unbind the texture map from the rendering engine.
+         * Call this method when you're done rendering. A previous call to bindTextureForRect has to be made.
+         * @param dumpForDebug if set to true the content of the texture map will be dumped to a picture file that will be sent to the internet browser.
+         */
+        unbindTexture(dumpForDebug?: boolean): void;
+        readonly canRescale: boolean;
+        clone(): MapTexture;
+    }
+}
+
+declare module BABYLON {
     /**
        * A class storing a Matrix2D for 2D transformations
        * The stored matrix is a 3*3 Matrix2D
@@ -2821,7 +3038,7 @@ declare module BABYLON {
         protected updateInstanceDataPart(part: InstanceDataBase, positionOffset?: Vector2): void;
         protected _updateRenderMode(): void;
         private _modelRenderCache;
-        private _transparentPrimitiveInfo;
+        _transparentPrimitiveInfo: TransparentPrimitiveInfo;
         protected _instanceDataParts: InstanceDataBase[];
         private _renderMode;
     }

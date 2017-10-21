@@ -10,6 +10,9 @@
         "libraries": [
             {
                 "files": [
+                    "src/Engine/babylon.dynamicFloatArray.ts",
+                    "src/Engine/babylon.rectPackingMap.ts",
+                    "src/Engine/babylon.mapTexture.ts",
                     "src/Tools/babylon.math2D.ts",
                     "src/Tools/babylon.IPropertyChanged.ts",
                     "src/Tools/babylon.c2dlogging.ts",

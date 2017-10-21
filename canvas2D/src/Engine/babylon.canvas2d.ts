@@ -691,7 +691,7 @@
                 } else {
                     // Check for Out & Leave
                     for (let prev of this._previousIntersectionList) {
-                        if (!Tools.first(this._actualIntersectionList, (pii) => pii.prim === prev.prim)) {
+                        if (!Tools.First(this._actualIntersectionList, (pii) => pii.prim === prev.prim)) {
                             this._primPointerInfo.updateRelatedTarget(prev.prim, prev.intersectionLocation);
                             this._bubbleNotifyPrimPointerObserver(prev.prim, PrimitivePointerInfo.PointerOut, null);
                         }
@@ -699,7 +699,7 @@
 
                     // Check for Over & Enter
                     for (let actual of this._actualIntersectionList) {
-                        if (!Tools.first(this._previousIntersectionList, (pii) => pii.prim === actual.prim)) {
+                        if (!Tools.First(this._previousIntersectionList, (pii) => pii.prim === actual.prim)) {
                             this._primPointerInfo.updateRelatedTarget(actual.prim, actual.intersectionLocation);
                             this._bubbleNotifyPrimPointerObserver(actual.prim, PrimitivePointerInfo.PointerOver, null);
                         }
@@ -735,7 +735,7 @@
             }
 
             let pii = this._primPointerInfo;
-            debug += `[RID:${this.scene.getRenderId()}] [${prim.hierarchyDepth}] event:${PrimitivePointerInfo.getEventTypeName(mask)}, id: ${prim.id} (${Tools.getClassName(prim)}), primPos: ${pii.primitivePointerPos.toString()}, canvasPos: ${pii.canvasPointerPos.toString()}, relatedTarget: ${pii.relatedTarget.id}`;
+            debug += `[RID:${this.scene.getRenderId()}] [${prim.hierarchyDepth}] event:${PrimitivePointerInfo.getEventTypeName(mask)}, id: ${prim.id} (${Tools.GetClassName(prim)}), primPos: ${pii.primitivePointerPos.toString()}, canvasPos: ${pii.canvasPointerPos.toString()}, relatedTarget: ${pii.relatedTarget.id}`;
             console.log(debug);
         }
 

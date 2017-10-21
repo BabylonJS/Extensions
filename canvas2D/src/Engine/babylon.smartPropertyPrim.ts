@@ -867,7 +867,7 @@
                     return new Array<BindingInfo>();
                 });
 
-                let bi = Tools.first(bindingInfos, cbi => cbi.binding === binding);
+                let bi = Tools.First(bindingInfos, cbi => cbi.binding === binding);
                 if (!bi) {
                     bindingInfos.push(new BindingInfo(binding, i, (i+1) === properties.length));
                 }
@@ -917,7 +917,7 @@
                 let bindingInfos = mod.boundProperties.get(propertyIDStr);
 
                 // Find the binding and remove it
-                let bi = Tools.first(bindingInfos, cbi => cbi.binding === binding);
+                let bi = Tools.First(bindingInfos, cbi => cbi.binding === binding);
                 if (bi) {
                     let bii = bindingInfos.indexOf(bi);
                     bindingInfos.splice(bii, 1);
@@ -1053,7 +1053,7 @@
                 return this._modelKey;
             }
 
-            let modelKey = `Class:${Tools.getClassName(this)};`;
+            let modelKey = `Class:${Tools.GetClassName(this)};`;
             let propDic = this.propDic;
             propDic.forEach((k, v) => {
                 if (v.kind === Prim2DPropInfo.PROPKIND_MODEL) {
@@ -1072,7 +1072,7 @@
                     let value = "[null]";
                     if (propVal != null) {
                         if (v.typeLevelCompare) {
-                            value = Tools.getClassName(propVal);
+                            value = Tools.GetClassName(propVal);
                         } else {
                             // String Dictionaries' content are too complex, with use a Random GUID to make the model unique
                             if (propVal instanceof StringDictionary) {
