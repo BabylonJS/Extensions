@@ -931,7 +931,7 @@ var BABYLON;
                 return li;
             };
             // add css rules
-            var css = '#grades {z-index: 1;position: fixed;background-color: white;padding: 20px; top:0; right:0;}#grades li {font-family: sans-serif;border-bottom: 1px solid black;padding: 10px 0 10px 0;cursor: pointer;}#grades li:hover {color: gray;}';
+            var css = '#grades {z-index: 1;position: fixed;background-color: white;padding: 20px; top:60px; right:0; list-style: none;}#grades li {font-family: sans-serif;border-bottom: 1px solid black;padding: 10px 0 10px 0;cursor: pointer;}#grades li:hover {color: gray;}';
             style.innerText = css;
             document.getElementsByTagName('head')[0].appendChild(style);
             // add container
