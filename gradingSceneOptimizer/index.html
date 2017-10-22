@@ -1,0 +1,61 @@
+<!DOCTYPE html> <!-- Doctype Html5 -->
+
+<html lang="fr"> <!-- manifest="i3v.manifest" -->
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0">
+
+    <title>sceneOptimizer and assetManager</title>
+
+    <link href="css/reset.css" rel="stylesheet" type="text/css" />
+
+    <style>
+
+      body {
+
+      }
+      #canvas {
+        width: 100%;
+        height: 100%;
+        position: fixed;
+      }
+
+      #grades {
+        z-index: 1;
+        position: fixed;
+        background-color: white;
+        padding: 20px;
+      }
+
+      ul li {
+        font-family: sans-serif;
+        border-bottom: 1px solid black;
+        padding: 10px 0 10px 0;
+        cursor: pointer;
+      }
+
+      ul li:hover {
+        color: gray;
+      }
+
+    </style>
+
+
+</head>
+
+<body>
+    <canvas id="canvas" touch-action="none"></canvas>
+    <ul id="grades">
+      <!-- <li class="grade low">LOW</li>
+      <li class="grade standard">STANDARD</li>
+      <li class="grade high">HIGH</li> -->
+    </ul>
+
+
+
+    <script src="https://code.jquery.com/pep/0.4.3/pep.js"></script>
+    <script src="js/babylon.js"></script> <!-- engine -->
+    <script src="js/gradingSceneOptimizer.js"></script> <!-- engine -->
+    <script src="js/init.js"></script> <!-- engine -->
+</body>
+</html>

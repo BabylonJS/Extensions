@@ -730,7 +730,7 @@
                 this._assignTemplate(this._renderingTemplateName);               
             }
 
-            this._visualPlaceholder = new Group2D({ parent: parentPrim, id: `GUI ${Tools.getClassName(this)} RootGroup of ${this.id}`});
+            this._visualPlaceholder = new Group2D({ parent: parentPrim, id: `GUI ${Tools.GetClassName(this)} RootGroup of ${this.id}`});
             let p = this._visualPlaceholder;
             p.addExternalData<UIElement>("_GUIOwnerElement_", this);
             p.dataSource = this;
