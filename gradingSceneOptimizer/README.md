@@ -306,6 +306,8 @@ Purpose : automatically minimize draw calls to increase performance.
 
 [Example by Tarek Sherif with webgl 2](https://tsherif.github.io/webgl2examples/occlusion.html)
 
+[Done on BabylonJs 3.1](http://doc.babylonjs.com/overviews/occlusionquery)
+
 
 ### Benchmark Score, CPU and GPU recommended Features :
 Purpose : Increase the accuracy of devices and hardwares detection to know which grade is the most optimized for your device.
