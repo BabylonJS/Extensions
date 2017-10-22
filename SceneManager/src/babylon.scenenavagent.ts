@@ -1,7 +1,6 @@
 declare class Navigation {
     // Babylon Navigation Mesh Tool
     // https://github.com/wanadev/babylon-navigation-mesh
-    
     buildNodes(mesh: BABYLON.AbstractMesh): any;
     setZoneData(zone: string, data: any): void;
     getGroup(zone: string, position: BABYLON.Vector3): number;
@@ -10,9 +9,7 @@ declare class Navigation {
     findPath(startPosition: BABYLON.Vector3, targetPosition: BABYLON.Vector3, zone: string, group: number): BABYLON.Vector3[];
     getVectorFrom(vertices: number[], index: number, _vector: BABYLON.Vector3): BABYLON.Vector3;
 }
-
 module BABYLON {
-
     /* Babylon Scene Navigation Agent AI */
     export class NavigationAgent {
         private _mesh:BABYLON.AbstractMesh;

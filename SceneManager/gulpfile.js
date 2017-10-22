@@ -19,7 +19,13 @@ var files = [
     "./temp/babylon.scenecomponents.js",
     "./temp/babylon.scenemanager.js",
     "./temp/babylon.scenenavagent.js",
-    "./temp/babylon.sceneshaders.js"
+    "./temp/babylon.sceneparticles.js",
+    "./temp/babylon.sceneplayers.js",
+    "./temp/babylon.sceneplugins.js",
+    "./temp/babylon.sceneshaders.js",
+    "./temp/babylon.sceneshuriken.js",
+    "./temp/babylon.scenestates.js",
+    "./temp/babylon.sceneutilities.js"
 ]
 
 gulp.task("compile", function () {
