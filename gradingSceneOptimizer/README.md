@@ -98,6 +98,9 @@ GSO.occlusionCullingEnabled = true;
 //    CAMERA === distance ===> (--- perimeter ---(<- radius detection -> MESH <- radius detection ->)--- perimeter ---)
 GSO.minimizeDrawCall = true;
 
+// FUTURE FEATURE : optimize picking, collision and rendering selection for big scene.
+GSO.useOctree = true;
+
 ```
 
 ### methods :
@@ -225,11 +228,16 @@ var ultraGrade = new BABYLON.Grade('ultra', BABYLON.PresetGradeOptimization.ultr
 // Custom grade optimization parameters :
 var customOptimization = {
 
+    maxRenderFPS : 30, // FUTURE FEATURE : minimize max fps to get more performance.
+
     shadowsEnabled : true,
     particlesEnabled : true,
     postProcessesEnabled : true,
     lensFlaresEnabled : true,
     renderTargetsEnabled : true,
+    meshes : { // FUTURE FEATURE : reduce nbr of polygon with LOD system.
+      LOD : []
+    }
     textures : {
         scale : 0.5, // original texture size * 0.5.
         maxSize : 1024, // if (original texture size * scale) > maxSize, texture size = maxSize.
@@ -245,6 +253,7 @@ var customOptimization = {
         fresnelEnabled : true
     },
     shadows : {
+        refreshRate : 0, // FUTURE FEATURE : Force to calculate once all shadows
         type : 'useBlurCloseExponentialShadowMap',
         size : 512
     },
