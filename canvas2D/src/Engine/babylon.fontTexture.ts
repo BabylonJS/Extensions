@@ -1017,7 +1017,7 @@
             bfi.baseLine = commonObj["base"];
             bfi.textureSize = new Size(commonObj["scaleW"], commonObj["scaleH"]);
 
-            var maxTextureSize = scene.getEngine()._gl.getParameter(0xd33);
+            var maxTextureSize = (<any>scene.getEngine())._gl.getParameter(0xd33);
             if (commonObj["scaleW"] > maxTextureSize.width || commonObj["scaleH"] > maxTextureSize.height) {
                 errorMsg = "FontMap texture's size is bigger than what WebGL supports";
                 errorCode = -1;
