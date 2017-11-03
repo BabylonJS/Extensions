@@ -81,11 +81,11 @@ class World:
             file_handler.write(indent + 'scene.physicsEnabled = true;\n')
 
         if hasattr(self, 'fogMode') and (self.fogMode != FOGMODE_NONE):
-            file_handler.write(indent + 'scene.fogMode = ' + self.fogMode + ';\n')
+            file_handler.write(indent + 'scene.fogMode = ' + format_int(self.fogMode) + ';\n')
             file_handler.write(indent + 'scene.fogColor = new _B.Color3(' + format_color(self.fogColor) + ');\n')
-            file_handler.write(indent + 'scene.fogStart = ' + self.fogStart + ';\n')
-            file_handler.write(indent + 'scene.fogEnd = ' + self.fogEnd + ';\n')
-            file_handler.write(indent + 'scene.fogDensity = ' + self.fogDensity + ';\n')
+            file_handler.write(indent + 'scene.fogStart = ' + format_f(self.fogStart) + ';\n')
+            file_handler.write(indent + 'scene.fogEnd = ' + format_f(self.fogEnd) + ';\n')
+            file_handler.write(indent + 'scene.fogDensity = ' + format_f(self.fogDensity) + ';\n')
 
         file_handler.write('\n' + indent + '// define materials before meshes\n')
         file_handler.write(indent + 'defineMaterials(scene, resourcesRootDir);\n')

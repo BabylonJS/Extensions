@@ -289,7 +289,7 @@ def write_bool(file_handler, name, bool, noComma = False):
 #===============================================================================
 # module level methods for writing JSON (.js) files
 #===============================================================================
-def write_js_module_header(file_handler, moduleName, hasSkeletons = False):
+def write_js_module_header(file_handler, moduleName, hasSkeletons = False, hasGeo = True):
     file_handler.write('// File generated with Tower of Babel version: ' + format_exporter_version() + ' on ' + strftime("%x") + '\n')
 
     # module open  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -305,20 +305,21 @@ def write_js_module_header(file_handler, moduleName, hasSkeletons = False):
     file_handler.write('    var _Q = _B.Quaternion;\n')
     file_handler.write('    var _V = _B.Vector3;\n')
     
-    # add function to unpack contiguous indexes (referenced in writeInt32Array)
-    file_handler.write('    function CONTIG(array, offset, begin, end) {\n')
-    file_handler.write('        for(var i = 0, len = 1 + end - begin; i < len; i++) {\n')
-    file_handler.write('            array[offset + i] = begin + i;\n')
-    file_handler.write('        }\n')
-    file_handler.write('    }\n')
-    
-    
-    # add function to unpack repeated values (referenced in writeFloat32Array)
-    file_handler.write('    function REPEAT(array, offset, nRepeats, val) {\n')
-    file_handler.write('        for(var i = 0; i < nRepeats; i++) {\n')
-    file_handler.write('            array[offset + i] = val;\n')
-    file_handler.write('        }\n')
-    file_handler.write('    }\n')
+    if hasGeo:
+        # add function to unpack contiguous indexes (referenced in writeInt32Array)
+        file_handler.write('    function CONTIG(array, offset, begin, end) {\n')
+        file_handler.write('        for(var i = 0, len = 1 + end - begin; i < len; i++) {\n')
+        file_handler.write('            array[offset + i] = begin + i;\n')
+        file_handler.write('        }\n')
+        file_handler.write('    }\n')
+        
+        
+        # add function to unpack repeated values (referenced in writeFloat32Array)
+        file_handler.write('    function REPEAT(array, offset, nRepeats, val) {\n')
+        file_handler.write('        for(var i = 0; i < nRepeats; i++) {\n')
+        file_handler.write('            array[offset + i] = val;\n')
+        file_handler.write('        }\n')
+        file_handler.write('    }\n')
     
     if hasSkeletons:
         file_handler.write('    function UNPACK(compressed) {\n')

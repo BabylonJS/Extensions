@@ -32,45 +32,45 @@ class Hair():
     def __init__(self, object):
         self.name = object.name
         self.legalName = legal_js_identifier(self.name)
-        Logger.log('\nprocessing begun of particle hair:  ' + self.name)
+        Logger.log('processing begun of particle hair:  ' + self.name)
         
         if object.parent is not None:
             self.parentId = object.parent.name
         
-        # allow the parent mesh to declare this child correctly in .d.ts file
         self.userSuppliedBaseClass = 'QI.Hair'
         
         # grab the custom properties
-        self.boneName  = object.data.boneName
-        self.stiffness = object.data.stiffness
+        self.headBone  = object.data.headBone
+        self.spineBone  = object.data.spineBone
         
         if object.data.stdColors != USE_BASE:
             self.namedColor = object.data.stdColors
         else:            
             self.color = object.data.baseColor
             
-        self.colorSpread = object.data.colorSpread
+        self.interStrandColorSpread = object.data.interStrandColorSpread
+        self.intraStrandColorSpread = object.data.intraStrandColorSpread
+        self.emissiveColorScaling = object.data.emissiveColorScaling
             
         verts = object.data.vertices
         edges = object.data.edges
         
         self.strandNumVerts = []
         self.rootRelativePositions = []
-        longestStrand = -1
+        self.lowestRoot  =  100000
+        self.highestRoot = -100000
+        self.lowestTip   =  100000
+        self.cornerOffset = 0.02
 
         # determine the number of verts per stand after the dissolve & save rootRelative Positions
         nVerts = 0
         tailVertIdx = -1
         root = None
-        self.longestStrand = -1
         for idx, edge in enumerate(edges):
             if tailVertIdx != edge.vertices[0]:
                 # write out the stand length unless first strand
                 if tailVertIdx != -1:
                     self.strandNumVerts.append(nVerts)
-                    strandLength = self.length(tail.x - root.x, tail.z - root.z, tail.y - root.y)
-                    if self.longestStrand < strandLength:
-                        self.longestStrand = strandLength
                 
                 root = verts[edge.vertices[0]].co
                 nVerts = 2
@@ -79,6 +79,12 @@ class Hair():
                 self.rootRelativePositions.append(root.x)
                 self.rootRelativePositions.append(root.z)
                 self.rootRelativePositions.append(root.y)
+                
+                if self.lowestRoot > root.z: 
+                    self.lowestRoot = root.z
+                
+                if self.highestRoot < root.z: 
+                    self.highestRoot = root.z
             
             else: 
                 nVerts += 1 
@@ -88,7 +94,10 @@ class Hair():
             self.rootRelativePositions.append(tail.x - root.x)
             self.rootRelativePositions.append(tail.z - root.z)
             self.rootRelativePositions.append(tail.y - root.y)
-            
+                
+            if self.lowestTip > tail.z: 
+                self.lowestTip = tail.z
+        
             # always record tail vertex index for next test
             tailVertIdx = edge.vertices[1]
 
@@ -100,58 +109,81 @@ class Hair():
         Logger.log('# of Strands: ' + str(nStrands) + ', Total # of Vertices: ' + str(totalVerts), 2)
         Logger.log('Avg # verts per strand: ' + str(totalVerts / nStrands), 2)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# not in use
     def length(self, deltaX, deltaY, deltaZ):
         return sqrt( (deltaX * deltaX) + (deltaY * deltaY) + (deltaZ * deltaZ) )
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # does not need exporter some args, but need same call signature as Mesh
     def to_script_file(self, file_handler, typescript_file_handler, kids, indent, exporter):
-        #todo unparent hair
-        indent2 = indent + '    '
-        file_handler.write('\n' + indent + 'function child_' + self.legalName + '(scene, parent, source){\n')
+        # this is very similar to mesh_node_common_script in mesh.py;  not worth trying to call with slight differences
+        isRootMesh = not hasattr(self, 'parentId')
+        baseClass = self.userSuppliedBaseClass
+        var = ''
+        indent2 = ''
+        if isRootMesh:
+            var = 'this'
+            indent2 = indent + '        '
+    
+            # declaration of class
+            typescript_file_handler.write('\n' + indent + 'class ' + self.legalName + ' extends ' + baseClass + ' {\n')
+            for kid in kids:
+                typescript_file_handler.write(indent + '    public ' + kid.legalName + ' : ' + get_base_class(kid) + ';\n')
+    
+            typescript_file_handler.write(indent + '    constructor(name: string, scene: BABYLON.Scene);\n')
+    
+            # - - - - - - - - - - -
+            file_handler.write('\n' + indent + 'var ' + self.legalName + ' = (function (_super) {\n')
+            file_handler.write(indent + '    __extends(' + self.legalName + ', _super);\n')
+            file_handler.write(indent + '    function ' + self.legalName + '(name, scene) {\n')
+            file_handler.write(indent2 + '_super.call(this, name, scene, null, source, true);\n\n')
+    
+        else:
+            var = 'ret'
+            indent2 = indent + '    '
+            file_handler.write('\n' + indent + 'function child_' + self.legalName + '(scene, parent) {\n')
+            file_handler.write(indent2 + 'var ' + var + ' = new ' + baseClass + '(parent.name + ".' + self.legalName + '", scene, parent);\n')
 
-        file_handler.write(indent2 + 'var ret = new QI.Hair(parent.name + ".' + self.legalName + '", scene, parent, source);\n')
         file_handler.write(indent2 + 'ret.id = ret.name;\n')
-        file_handler.write(indent2 + 'ret.billboardMode  = parent.billboardMode;\n')
-        file_handler.write(indent2 + 'ret.isVisible  = false; //always false\n')
-        file_handler.write(indent2 + 'ret.setEnabled(parent.isEnabled() );\n')
-        file_handler.write(indent2 + 'ret.checkCollisions = parent.checkCollisions;\n')
-        file_handler.write(indent2 + 'ret.receiveShadows  = parent.receiveShadows;\n')
-        file_handler.write(indent2 + 'ret.castShadows = false;\n') # LinesMeshes error on shadow RenderLists
-        file_handler.write(indent2 + 'ret.skeleton = parent.skeleton;\n\n')
+        writeRepeatableArray(file_handler, var + '.strandNumVerts', indent2, self.strandNumVerts, 'Uint32Array', False)
+        file_handler.write(indent2 + var + '.rootRelativePositions = [' + format_array(self.rootRelativePositions, indent2) + '];\n')
+        file_handler.write(indent2 + var + '.lowestRoot = ' + format_f(self.lowestRoot) + ';\n')
+        file_handler.write(indent2 + var + '.highestRoot = ' + format_f(self.highestRoot) + ';\n')
+        file_handler.write(indent2 + var + '.lowestTip = ' + format_f(self.lowestTip) + ';\n')
+        file_handler.write(indent2 + var + '.headBone = "' + self.headBone + '";\n')
+        file_handler.write(indent2 + var + '.spineBone = "' + self.spineBone + '";\n')
+        file_handler.write(indent2 + var + '.interStrandColorSpread = ' + format_f(self.interStrandColorSpread) + ';\n')
+        file_handler.write(indent2 + var + '.intraStrandColorSpread = ' + format_f(self.intraStrandColorSpread) + ';\n')
+        file_handler.write(indent2 + var + '.emissiveColorScaling = ' + format_f(self.emissiveColorScaling) + ';\n')
+        file_handler.write(indent2 + var + '.cornerOffset = ' + format_f(self.cornerOffset) + ';\n')
         
         if hasattr(self, "namedColor"):
-            file_handler.write(indent2 + 'ret.namedColor = "' + self.namedColor + '";\n')
+            file_handler.write(indent2 + var + '.namedColor = "' + self.namedColor + '";\n')
         else:
-            file_handler.write(indent2 + 'ret.color = new _B.Color3(' + format_color(self.baseColor) + ');\n')
-            
-        file_handler.write(indent2 + 'ret.colorSpread = ' + format_f(self.colorSpread) + ';\n')
-        
-        file_handler.write(indent2 + 'var strandNumVerts;\n')
-        writeRepeatableArray(file_handler, 'strandNumVerts', indent2, self.strandNumVerts, 'Uint32Array', False)
-        file_handler.write(indent2 + 'var rootRelativePositions = [' + format_array(self.rootRelativePositions, indent2) + '];\n')
-        file_handler.write(indent2 + 'ret.assemble(strandNumVerts, rootRelativePositions, ' + format_int(self.longestStrand) + ', ' + format_f(self.stiffness) + ', "' + self.boneName + '");\n')
-        file_handler.write(indent2 + 'return ret;\n')
-        file_handler.write(indent + '}\n')
-#===============================================================================
-bpy.types.Mesh.treatAsHair = bpy.props.BoolProperty(
-    name='Treat As Hair',
-    description='Process the vertices only as if the were converted from a particle hair system',
-    default = False
-)
+            file_handler.write(indent2 +  var + '.color = new _B.Color3(' + format_color(self.baseColor) + ');\n')
+                    
+        # end of constructor; other methods for root mesh, or return for child meshes
+        if isRootMesh:
+            file_handler.write(indent + '    }\n')
 
-bpy.types.Mesh.boneName = bpy.props.StringProperty(
-    name='Bone',
-    description='',
+            file_handler.write(indent + '    return ' + self.legalName + ';\n')
+            file_handler.write(indent + '}(' + baseClass + '));\n')
+            file_handler.write(indent + exporter.nameSpace + '.' + self.legalName + ' = ' + self.legalName + ';\n')
+        else:
+            file_handler.write(indent2 + 'ret.assemble();\n')
+            file_handler.write(indent2 + 'return ret;\n')
+            file_handler.write(indent + '}\n')
+#===============================================================================
+bpy.types.Mesh.headBone = bpy.props.StringProperty(
+    name='Head Bone',
+    description='This name of the bone at the top of the skeleton, optional.',
     default = ''
 )
 
-bpy.types.Mesh.stiffness = bpy.props.FloatProperty(
-    name='Stiffness',
-    description='',
-    default = 1.0,
-    min = 0.1,
-    max = 1.0
+bpy.types.Mesh.spineBone = bpy.props.StringProperty(
+    name='Spine Bone',
+    description='This name of the bone at the top of the body, requires head bone, optional.',
+    default = ''
 )
 
 bpy.types.Mesh.baseColor = bpy.props.FloatVectorProperty(
@@ -163,7 +195,7 @@ bpy.types.Mesh.baseColor = bpy.props.FloatVectorProperty(
 
 bpy.types.Mesh.stdColors = bpy.props.EnumProperty(
     name='Standard Colors',
-    description='',
+    description='These are some pre-assigned vertex colors',
     items = ((USE_BASE       , 'Use Base'       , 'Use the base color setting'),
              (BLACK          , 'Black'          , 'Black hair'),
              (DARK_BROWN     , 'Dark Brown'     , 'Dark brown hair'),
@@ -179,11 +211,26 @@ bpy.types.Mesh.stdColors = bpy.props.EnumProperty(
     default = USE_BASE
 )
 
-bpy.types.Mesh.colorSpread = bpy.props.FloatProperty(
-    name='Color Spread',
-    description='The maximum amount to randomly change the color of a thread.',
-    default= 0.05,
-    min=0.05,
+bpy.types.Mesh.interStrandColorSpread = bpy.props.FloatProperty(
+    name='Inter-Strand Color Spread',
+    description='The maximum amount to randomly change the color of a thread from the base color.',
+    default= 0.00,
+    min=0.0,
     max=1.0
+)      
+
+bpy.types.Mesh.intraStrandColorSpread = bpy.props.FloatProperty(
+    name='Intra-Strand Color Spread',
+    description='The maximum amount to randomly change from one segment of a strand to the next.',
+    default= 0.00,
+    min=0.0,
+    max=0.05
 )
-        
+
+bpy.types.Mesh.emissiveColorScaling = bpy.props.FloatProperty(
+    name='Emissive Scaling',
+    description='The scaling of the vertex color to also be applied to entire mesh.',
+    default= 1.0,
+    min=0.5,
+    max=1.5
+)

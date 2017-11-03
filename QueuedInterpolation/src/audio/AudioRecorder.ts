@@ -8,6 +8,8 @@ module QI {
         private _requestedDuration : number;
         private _startTime : number;
         private _completionCallback : () => void;
+        private _dynamicStartCallBack : () => void;
+        private _dynamicStart : boolean;
 
         // arrays of FloatArrays made during recording
         private _leftchannel  = new Array<Float32Array>();
@@ -23,8 +25,8 @@ module QI {
         private _audioInput = null;
 
         private static _objectUrl : string;
-
         private static _instance : AudioRecorder;
+        private static _startThreshold = 0.05;
 
         /**
          * static function to return a AudioRecorder instance, if supported.  Single instance class.
@@ -82,17 +84,34 @@ module QI {
             dispatched and how many sample-frames need to be processed each call.
             Lower values for buffer size will result in a lower (better) latency.
             Higher values will be necessary to avoid audio breakup and glitches */
-            var bufferSize = 4096;
+            var bufferSize = 2048;
             instance._recorder = context.createScriptProcessor(bufferSize, 2, 2);
 
             // cannot reference using 'this' inside of callback
             instance._recorder.onaudioprocess = function(e) {
                 if (!instance.recording) return;
+                
                 var evt = <AudioProcessingEvent> e;
-                var left = evt.inputBuffer.getChannelData (0);
+                var left  = evt.inputBuffer.getChannelData (0);
                 var right = evt.inputBuffer.getChannelData (1);
+                if (instance._dynamicStart) {
+                    var max = Number.MIN_VALUE;
+                    // check to see if talking detected, using left channel
+                    for (var i = 0; i < 2048; i++) {
+                        if (max < left[i])
+                            max = left[i];
+                        if (Math.abs(left[i]) > AudioRecorder._startThreshold) {
+                            instance._startTime = BABYLON.Tools.Now;
+                            instance._dynamicStartCallBack();
+                            instance._dynamicStart = false;
+                            break;
+                        }
+                    } 
+                    // when now no-longer dynamic start, must have been activated, else return
+                    if (instance._dynamicStart) return;
+                }
                 // we clone the samples
-                instance._leftchannel.push (new Float32Array (left));
+                instance._leftchannel .push (new Float32Array (left));
                 instance._rightchannel.push (new Float32Array (right));
                 instance._recordingLength += bufferSize;
 
@@ -116,15 +135,19 @@ module QI {
          * Begin recording from the microphone
          * @param {number} durationMS- Length to record in millis (default Number.MAX_VALUE).
          * @param {() => void} doneCallback - Function to call when recording has completed (optional).
+         * @param {() => void} dynamicStartCallBack - Presence indicates to same until speech begins. Function to call when recording has really started (optional).
          */
-        public recordStart(durationMS = Number.MAX_VALUE, doneCallback? : () => void) : void {
+        public recordStart(durationMS = Number.MAX_VALUE, doneCallback? : () => void, dynamicStartCallBack? : () => void) : void {
             if (this.recording) { BABYLON.Tools.Warn('QI.AudioRecorder: already recording'); return; }
-            this.recording = true;
             this._requestedDuration = durationMS;
             this._startTime = BABYLON.Tools.Now;
             this._completionCallback = doneCallback ? doneCallback : null;
+            
+            this._dynamicStartCallBack = dynamicStartCallBack ? dynamicStartCallBack : null;
+            this._dynamicStart = this._dynamicStartCallBack !== null;
 
-            this.clean();
+            this.clean();            
+            this.recording = true;
         }
 
         /**
