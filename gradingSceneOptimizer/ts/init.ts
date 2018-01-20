@@ -68,6 +68,7 @@ window.onload=function() {
 
   // add mat01 to ground
   ground.material = groundMat;
+  ground.material.diffuseColor = new BABYLON.Color3(1, 1, 1);
 
   // add position to ground
   ground.position = new BABYLON.Vector3(0,0,0);
@@ -246,7 +247,7 @@ window.onload=function() {
   GSO.addUI(scene);
 
   // run GradingSceneOptimizer
-  GSO.run(scene, lowGrade, () => {
+  GSO.run(scene, minGrade, () => {
 
     engine.runRenderLoop( () => {
         scene.render();
