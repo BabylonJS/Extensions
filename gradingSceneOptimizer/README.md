@@ -318,8 +318,5 @@ At the moment, it's you who must to indicate which grade is the most optimized t
 Purpose : Propose more parameters to get more performance.
 
 
-## Roadmap :
-Coming soon.
-
 ## Version :
 alpha 0.0.1

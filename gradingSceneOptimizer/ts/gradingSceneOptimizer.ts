@@ -1,6 +1,16 @@
 /***********************
  * CREATED BY PIERRE GLIBERT
  * Version : alpha_0.0.1
+ *
+ * forum links :
+ * http://www.html5gamedevs.com/topic/31108-assetmanager-sceneoptimizer-contribution/
+ *
+ * Playground :
+ * https://playground.babylonjs.com/indexstable#9IXPB8#7
+ *
+ *
+ * TODO :
+ *
  **********************/
 
 module BABYLON {
@@ -32,7 +42,7 @@ module BABYLON {
               renderSize : {
                   maxWidth : 1024,
                   maxHeight : 1024,
-                  devicePixelRatio : 1
+                  hardwareScaling : 1
               },
               devices : {
                   smartPhoneAllowed : true,
@@ -65,7 +75,7 @@ module BABYLON {
               renderSize : {
                   maxWidth : 1440,
                   maxHeight : 1440,
-                  devicePixelRatio : 1
+                  hardwareScaling : 1
               },
               devices : {
                   smartPhoneAllowed : true,
@@ -101,7 +111,7 @@ module BABYLON {
               renderSize : {
                   maxWidth : 1600,
                   maxHeight : 1600,
-                  devicePixelRatio : 1
+                  hardwareScaling : 1
               },
               devices : {
                   smartPhoneAllowed : true,
@@ -142,7 +152,7 @@ module BABYLON {
               renderSize : {
                   maxWidth : 1920,
                   maxHeight : 1920,
-                  devicePixelRatio : 1
+                  hardwareScaling : 1
               },
               devices : {
                   smartPhoneAllowed : false,
@@ -183,7 +193,7 @@ module BABYLON {
               renderSize : {
                   maxWidth : 2560,
                   maxHeight : 2560,
-                  devicePixelRatio : 1
+                  hardwareScaling : 1
               },
               devices : {
                   smartPhoneAllowed : false,
@@ -224,7 +234,7 @@ module BABYLON {
               renderSize : {
                   maxWidth : 2560,
                   maxHeight : 2560,
-                  devicePixelRatio : 2
+                  hardwareScaling : 2
               },
               devices : {
                   smartPhoneAllowed : false,
@@ -388,7 +398,7 @@ module BABYLON {
               width = canvas.clientWidth,
               height = canvas.clientHeight,
               windowPixelRatio = window.devicePixelRatio,
-              paramPixelRatio = params.devicePixelRatio || 1,
+              paramPixelRatio = params.hardwareScaling || 1,
               maxWidth = params.maxWidth,
               maxHeight = params.maxHeight,
               newScale = 0;
@@ -551,7 +561,8 @@ module BABYLON {
               }
 
               // wait load end
-              else {
+              else if (texture.onLoadObservable){
+                  BABYLON.Tools.Log(texture);
                   // add new observable
                   texture.onLoadObservable.add((texture) => {
                       resizeChannel(texture, channelName);
@@ -884,7 +895,7 @@ module BABYLON {
               currentPriority = this._currentGradePriority;
               I = currentPriority;
 
-              console.log('   > Hardware evaluation : running ...');
+              BABYLON.Tools.Log('   > Hardware evaluation : running ...');
 
               // force to wait minimum 1 sec to get fps (only for initialisation)
               if (!isInit && evalDuration < timeToWait) {
@@ -902,7 +913,7 @@ module BABYLON {
 
                   fps = engine.getFps();
 
-                  console.log('     > result : ' + fps + ' fps');
+                  BABYLON.Tools.Log('     > result : ' + fps + ' fps');
 
                   // check fps to reach to upgrade
                   if (fps > this.fpsToReach) {
@@ -1065,11 +1076,11 @@ module BABYLON {
 
           // if allready on this grade
           if (grade === this._currentGrade) {
-              console.log('Grade ' + grade.name + ': allready on it.');
+              BABYLON.Tools.Log('Grade ' + grade.name + ': allready on it.');
               return;
           }
 
-          console.log('UPDATE scene by grade : ' + grade.name);
+          BABYLON.Tools.Log('UPDATE scene by grade : ' + grade.name);
 
           var grades = this.grades,
               toPriority = grade.priority,
@@ -1150,7 +1161,7 @@ module BABYLON {
               gradeI = grades[I],
               upGradingTask = gradeI.upGradingTask;
 
-          console.log(' • Upgrade scene to ' + gradeI.name + " grade.");
+          BABYLON.Tools.Log(' • Upgrade scene to ' + gradeI.name + " grade.");
 
           if (upGradingTask) {
               upGradingTask();
@@ -1188,8 +1199,8 @@ module BABYLON {
               upGradingTask = gradeI.upGradingTask;
 
 
-          console.log(' • Downgrade scene to ' + gradeI.name + " grade.");
-
+          //BABYLON.Tools.Log(' • Downgrade scene to ' + gradeI.name + " grade.");
+          BABYLON.Tools.Log(' • Downgrade scene to ' + gradeI.name + " grade.")
 
           if (downGradingTask) {
               downGradingTask();
@@ -1259,7 +1270,7 @@ module BABYLON {
 
           // for textures
           if (grade.textures != undefined) {
-              BABYLON.Optimize.textures(scene, grade.textures);
+              // BABYLON.Optimize.textures(scene, grade.textures);
           }
 
           // for materials
@@ -1476,7 +1487,7 @@ module BABYLON {
   export interface IParamsRenderSizeGradeOptimization {
       maxWidth : number;
       maxHeight : number;
-      devicePixelRatio? : number;
+      hardwareScaling? : number;
   }
 
   // interface material grade parameter

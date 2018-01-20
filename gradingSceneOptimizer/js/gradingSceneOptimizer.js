@@ -1,6 +1,16 @@
 /***********************
  * CREATED BY PIERRE GLIBERT
  * Version : alpha_0.0.1
+ *
+ * forum links :
+ * http://www.html5gamedevs.com/topic/31108-assetmanager-sceneoptimizer-contribution/
+ *
+ * Playground :
+ * https://playground.babylonjs.com/indexstable#9IXPB8#7
+ *
+ *
+ * TODO :
+ *
  **********************/
 var BABYLON;
 (function (BABYLON) {
@@ -31,7 +41,7 @@ var BABYLON;
                 renderSize: {
                     maxWidth: 1024,
                     maxHeight: 1024,
-                    devicePixelRatio: 1
+                    hardwareScaling: 1
                 },
                 devices: {
                     smartPhoneAllowed: true,
@@ -62,7 +72,7 @@ var BABYLON;
                 renderSize: {
                     maxWidth: 1440,
                     maxHeight: 1440,
-                    devicePixelRatio: 1
+                    hardwareScaling: 1
                 },
                 devices: {
                     smartPhoneAllowed: true,
@@ -97,7 +107,7 @@ var BABYLON;
                 renderSize: {
                     maxWidth: 1600,
                     maxHeight: 1600,
-                    devicePixelRatio: 1
+                    hardwareScaling: 1
                 },
                 devices: {
                     smartPhoneAllowed: true,
@@ -137,7 +147,7 @@ var BABYLON;
                 renderSize: {
                     maxWidth: 1920,
                     maxHeight: 1920,
-                    devicePixelRatio: 1
+                    hardwareScaling: 1
                 },
                 devices: {
                     smartPhoneAllowed: false,
@@ -177,7 +187,7 @@ var BABYLON;
                 renderSize: {
                     maxWidth: 2560,
                     maxHeight: 2560,
-                    devicePixelRatio: 1
+                    hardwareScaling: 1
                 },
                 devices: {
                     smartPhoneAllowed: false,
@@ -217,7 +227,7 @@ var BABYLON;
                 renderSize: {
                     maxWidth: 2560,
                     maxHeight: 2560,
-                    devicePixelRatio: 2
+                    hardwareScaling: 2
                 },
                 devices: {
                     smartPhoneAllowed: false,
@@ -331,7 +341,7 @@ var BABYLON;
         };
         // for render size
         Optimize.renderSize = function (engine, params) {
-            var canvas = engine.getRenderingCanvas(), width = canvas.clientWidth, height = canvas.clientHeight, windowPixelRatio = window.devicePixelRatio, paramPixelRatio = params.devicePixelRatio || 1, maxWidth = params.maxWidth, maxHeight = params.maxHeight, newScale = 0;
+            var canvas = engine.getRenderingCanvas(), width = canvas.clientWidth, height = canvas.clientHeight, windowPixelRatio = window.devicePixelRatio, paramPixelRatio = params.hardwareScaling || 1, maxWidth = params.maxWidth, maxHeight = params.maxHeight, newScale = 0;
             if (windowPixelRatio < paramPixelRatio) {
                 paramPixelRatio = 1 / windowPixelRatio;
             }
@@ -435,7 +445,8 @@ var BABYLON;
                 if (texture.isReady()) {
                     resizeChannel(texture, channelName);
                 }
-                else {
+                else if (texture.onLoadObservable) {
+                    BABYLON.Tools.Log(texture);
                     // add new observable
                     texture.onLoadObservable.add(function (texture) {
                         resizeChannel(texture, channelName);
@@ -663,7 +674,7 @@ var BABYLON;
             var autoEvaluate = function () {
                 currentPriority = _this._currentGradePriority;
                 I = currentPriority;
-                console.log('   > Hardware evaluation : running ...');
+                BABYLON.Tools.Log('   > Hardware evaluation : running ...');
                 // force to wait minimum 1 sec to get fps (only for initialisation)
                 if (!isInit && evalDuration < timeToWait) {
                     isInit = true;
@@ -675,7 +686,7 @@ var BABYLON;
                 // start setTimeOut
                 _this._evaluationTimeOutId = setTimeout(function () {
                     fps = engine.getFps();
-                    console.log('     > result : ' + fps + ' fps');
+                    BABYLON.Tools.Log('     > result : ' + fps + ' fps');
                     // check fps to reach to upgrade
                     if (fps > _this.fpsToReach) {
                         I++;
@@ -780,10 +791,10 @@ var BABYLON;
             this.stopAutoEval();
             // if allready on this grade
             if (grade === this._currentGrade) {
-                console.log('Grade ' + grade.name + ': allready on it.');
+                BABYLON.Tools.Log('Grade ' + grade.name + ': allready on it.');
                 return;
             }
-            console.log('UPDATE scene by grade : ' + grade.name);
+            BABYLON.Tools.Log('UPDATE scene by grade : ' + grade.name);
             var grades = this.grades, toPriority = grade.priority, gradeToUp = grade, currentGrade, currentPriority, downGradeTask, upGradingTask;
             if (this._currentGrade) {
                 currentGrade = this._currentGrade;
@@ -830,7 +841,7 @@ var BABYLON;
         // force upgrade by 1
         GradingSceneOptimizer.prototype.upgrade = function (scene, onSuccess) {
             var I = this._currentGradePriority + 1, grades = this.grades, gradesL = grades.length, gradeI = grades[I], upGradingTask = gradeI.upGradingTask;
-            console.log(' • Upgrade scene to ' + gradeI.name + " grade.");
+            BABYLON.Tools.Log(' • Upgrade scene to ' + gradeI.name + " grade.");
             if (upGradingTask) {
                 upGradingTask();
             }
@@ -852,7 +863,8 @@ var BABYLON;
             gradeToDowngrade = grades[currentPriority], downGradingTask = gradeToDowngrade.downGradingTask, 
             // upgrading options
             I = currentPriority - 1, gradeI = grades[I], upGradingTask = gradeI.upGradingTask;
-            console.log(' • Downgrade scene to ' + gradeI.name + " grade.");
+            //BABYLON.Tools.Log(' • Downgrade scene to ' + gradeI.name + " grade.");
+            BABYLON.Tools.Log(' • Downgrade scene to ' + gradeI.name + " grade.");
             if (downGradingTask) {
                 downGradingTask();
             }
@@ -903,7 +915,7 @@ var BABYLON;
             }
             // for textures
             if (grade.textures != undefined) {
-                BABYLON.Optimize.textures(scene, grade.textures);
+                // BABYLON.Optimize.textures(scene, grade.textures);
             }
             // for materials
             if (grade.materials != undefined) {

@@ -15,13 +15,15 @@ window.onload=function() {
 
 
 
-
   /**
    * CUSTOM SCENE
    */
 
   // scene
   var scene = new BABYLON.Scene(engine);
+
+  // Environment Texture
+    var hdrTexture = BABYLON.CubeTexture.CreateFromPrefilteredData("assets/environment.dds", scene);
 
 
   //Adding a light
@@ -51,10 +53,48 @@ window.onload=function() {
 
 
   //Adding an Arc Rotate Camera
-  var camera = new BABYLON.ArcRotateCamera("camera", BABYLON.Tools.ToRadians(-135), BABYLON.Tools.ToRadians(65), 60, new BABYLON.Vector3(0, 0, 0), scene);
+  var camera = new BABYLON.ArcRotateCamera("camera", BABYLON.Tools.ToRadians(-135), BABYLON.Tools.ToRadians(45), 60, new BABYLON.Vector3(0, 4, 0), scene);
   camera.attachControl(canvas, false);
 
 
+
+  /**
+   * Add materials
+   */
+
+  // pbr material
+  var plastic = new BABYLON.PBRMaterial("plastic", scene);
+      plastic.reflectionTexture = hdrTexture;
+      plastic.refractionTexture = hdrTexture;
+      plastic.indexOfRefraction = 0.1;
+      plastic.microSurface = 0.9;
+      plastic.albedoColor = new BABYLON.Color3(0.5, 1, 1);
+      plastic.reflectionColor = new BABYLON.Color3(0.5, 1, 1);
+
+
+  var plastic2 = new BABYLON.PBRMaterial("plastic2", scene);
+      plastic2.reflectionTexture = hdrTexture;
+      plastic2.refractionTexture = hdrTexture;
+      plastic2.indexOfRefraction = 0.2;
+      plastic2.microSurface = 0.85;
+      plastic2.albedoColor = new BABYLON.Color3(1, 1, 0.5);
+      plastic2.reflectionColor = new BABYLON.Color3(1, 1, 0.5);
+
+
+  var plastic3 = new BABYLON.PBRMaterial("plastic3", scene);
+      plastic3.reflectionTexture = hdrTexture;
+      plastic3.refractionTexture = hdrTexture;
+      plastic3.indexOfRefraction = 0.4;
+      plastic3.microSurface = 0.7;
+      plastic3.albedoColor = new BABYLON.Color3(1, 0.5, 1);
+      plastic3.reflectionColor = new BABYLON.Color3(1, 0.5, 1);
+
+
+
+
+  var floorMat = new BABYLON.StandardMaterial("floorMat", scene);
+      floorMat.diffuseTexture = new BABYLON.Texture("assets/floor.png", scene);
+      floorMat.bumpTexture = new BABYLON.Texture("assets/floor_bump.png", scene);
 
 
 
@@ -63,19 +103,13 @@ window.onload=function() {
    */
 
   // add ground
-  var ground = BABYLON.Mesh.CreateGround("ground", 24, 24, 8, scene),
-      groundMat = new BABYLON.StandardMaterial("matGround", scene);
+  var ground = BABYLON.Mesh.CreateGround("ground", 32, 32, 8, scene);
 
   // add mat01 to ground
-  ground.material = groundMat;
-  ground.material.diffuseColor = new BABYLON.Color3(1, 1, 1);
+  ground.material = floorMat;
 
   // add position to ground
   ground.position = new BABYLON.Vector3(0,0,0);
-
-  // add textures
-  groundMat.diffuseTexture = new BABYLON.Texture("assets/floor.png", scene);
-  groundMat.bumpTexture = new BABYLON.Texture("assets/floor_bump.png", scene);
 
 
   // add meshes
@@ -84,40 +118,16 @@ window.onload=function() {
       sphere3 = BABYLON.Mesh.CreateSphere("sphere3", 16, 4, scene);
 
   // pos
-  sphere1.position = new BABYLON.Vector3(0,1,0);
-  sphere2.position = new BABYLON.Vector3(0,6,0);
-  sphere3.position = new BABYLON.Vector3(0,12,0);
+  sphere1.position = new BABYLON.Vector3(10,3,0);
+  sphere2.position = new BABYLON.Vector3(-10,3,0);
+  sphere3.position = new BABYLON.Vector3(0,3,10);
 
   // mat
-  sphere1.material = new BABYLON.StandardMaterial("blue", scene);
-  sphere1.material.diffuseColor = new BABYLON.Color3(0.5, 0.5, 1);
+  sphere1.material = plastic;
 
-  sphere2.material = new BABYLON.StandardMaterial("green", scene);
-  sphere2.material.diffuseColor = new BABYLON.Color3(0.5, 1, 0.5);
-  sphere2.isVisible = false
+  sphere2.material = plastic2;
 
-  sphere3.material = new BABYLON.StandardMaterial("red", scene);
-  sphere3.material.diffuseColor = new BABYLON.Color3(1, 0.5, 0.5);
-  sphere3.isVisible = false
-
-
-
-
-
-  /**
-   * Apply shadows
-   */
-  for (let i = 0; i < scene.meshes.length; i++) {
-    var mesh = scene.meshes[i];
-    if (mesh.name != 'ground') {
-      shMap.renderList.push(mesh);
-    }
-    else {
-      mesh.receiveShadows = true;
-    }
-    mesh.receiveShadows = true;
-  }
-
+  sphere3.material = plastic3;
 
 
 
@@ -132,6 +142,7 @@ window.onload=function() {
   // Create a particle system
   particleSystem = new BABYLON.ParticleSystem("particles", 2000, scene);
 
+  fountain.position = new BABYLON.Vector3(0, 10, 0)
   // hide fountain
   fountain.isVisible = false;
 
@@ -140,8 +151,8 @@ window.onload=function() {
 
   // Where the particles come from
   particleSystem.emitter = fountain; // the starting object, the emitter
-  particleSystem.minEmitBox = new BABYLON.Vector3(-1, 0, 0); // Starting all from
-  particleSystem.maxEmitBox = new BABYLON.Vector3(1, 0, 0); // To...
+  particleSystem.minEmitBox = new BABYLON.Vector3(-32, -32, -32); // Starting all from
+  particleSystem.maxEmitBox = new BABYLON.Vector3(32, 32, 32); // To...
 
   // Colors of all particles
   particleSystem.color1 = new BABYLON.Color4(0.7, 0.8, 1.0, 1.0);
@@ -163,15 +174,15 @@ window.onload=function() {
   particleSystem.blendMode = BABYLON.ParticleSystem.BLENDMODE_ONEONE;
 
   // Set the gravity of all particles
-  particleSystem.gravity = new BABYLON.Vector3(0, -8, 0);
+  particleSystem.gravity = new BABYLON.Vector3(0, -4, 0);
 
   // Direction of each particle after it has been emitted
   particleSystem.direction1 = new BABYLON.Vector3(-1, 2, 1);
   particleSystem.direction2 = new BABYLON.Vector3(1, 2, -1);
 
   // Speed
-  particleSystem.minEmitPower = 1;
-  particleSystem.maxEmitPower = 10;
+  particleSystem.minEmitPower = -5;
+  particleSystem.maxEmitPower = 5;
   particleSystem.updateSpeed = 0.005;
 
   // Start the particle system
@@ -211,12 +222,12 @@ window.onload=function() {
           () => {
               // upGradingTask
               sphere2.isVisible = true;
-              console.log('>>> add sphere2')
+              // console.log('>>> add sphere2')
           },
           () => {
               // downGradingTask
               sphere2.isVisible = false;
-              console.log('>>> remove sphere2')
+              // console.log('>>> remove sphere2')
           }),
 
       mediumGrade = GSO.createGrade('medium', BABYLON.PresetGradeOptimization.medium()),
@@ -225,12 +236,12 @@ window.onload=function() {
           () => {
               // upGradingTask
               sphere3.isVisible = true;
-              console.log('>>> add sphere3')
+              // console.log('>>> add sphere3')
           },
           () => {
               // downGradingTask
               sphere3.isVisible = false;
-              console.log('>>> remove sphere3')
+              // console.log('>>> remove sphere3')
           }),
 
       ultraGrade = GSO.createGrade('ultra', BABYLON.PresetGradeOptimization.ultra());
@@ -254,10 +265,69 @@ window.onload=function() {
     });
 
     console.log(engine);
+    console.log(scene);
     console.log(GSO);
 
     // show inspector
-    scene.debugLayer.show();
+    // scene.debugLayer.show();
+
+  });
+
+
+
+
+
+  /**
+   * Add gltf + asynch load test
+   */
+  BABYLON.SceneLoader.Append("assets/busterDrone/", "busterDrone.gltf", scene, function (scene) {
+    var emptyDrone = new BABYLON.Mesh("emptyDrone", scene)
+    var drone = scene.getMeshByName('__root__');
+    drone.parent = emptyDrone;
+    emptyDrone.scaling = new BABYLON.Vector3(6,6,6);
+    emptyDrone.position = new BABYLON.Vector3(0,6,-6);
+    scene.getMeshByName('node_Scheibe_-6124').isVisible = false;
+
+
+
+
+    /**
+     * Apply shadows on all loaded
+     */
+    for (let i = 0; i < scene.meshes.length; i++) {
+      var mesh = scene.meshes[i];
+      if (mesh.name != 'ground') {
+        shMap.renderList.push(mesh);
+      }
+      else {
+        mesh.receiveShadows = true;
+      }
+      mesh.receiveShadows = true;
+    }
+
+
+
+
+    /**
+     * RUN GSO after when loaded
+     */
+     
+    GSO.run(scene, minGrade, () => {
+
+      engine.runRenderLoop( () => {
+          scene.render();
+      });
+
+      console.log(engine);
+      console.log(scene);
+      console.log(GSO);
+
+      // show inspector
+      // scene.debugLayer.show();
+
+    });
+
+
 
   });
 
