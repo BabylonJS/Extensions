@@ -37,6 +37,9 @@ PARTICLE_IMPOSTER = 8
 DEFAULT_SHAPE_KEY_GROUP = 'GROUPSONLY'
 SHAPE_KEY_GROUPS_ALLOWED = True
 
+TREAT_AS_MESH = 'AS_MESH'
+TREAT_AS_HAIR = 'AS_HAIR'
+
 JUST_MAKE_VISIBLE = 'JUST_MAKE_VISIBLE' # not actually passed, since default & unnecessary for meshes not QI.Mesh
 GATHER            = 'QI.GatherEntrance'
 EXPAND            = 'QI.ExpandEntrance'
@@ -1040,6 +1043,14 @@ class SubMesh:
                           format_int(self.indexStart)    + ', ' +
                           format_int(self.indexCount)    + ', ' + jsMeshVar + ');\n')
 #===============================================================================
+bpy.types.Mesh.meshOrHair = bpy.props.EnumProperty(
+    name='meshOrHair',
+    items = (
+             (TREAT_AS_MESH, "Mesh", "Exporter should process this as faces"),
+             (TREAT_AS_HAIR, "Hair", "Exporter should process this as vertices")
+        ),
+    default = TREAT_AS_MESH
+)
 bpy.types.Mesh.autoAnimate = bpy.props.BoolProperty(
     name='Auto launch animations',
     description='',
@@ -1245,7 +1256,7 @@ class MeshPanel(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'data'
-
+    
     @classmethod
     def poll(cls, context):
         ob = context.object
@@ -1253,129 +1264,103 @@ class MeshPanel(bpy.types.Panel):
 
     def draw(self, context):
         ob = context.object
-        treatAsHair = ob.data.treatAsHair   
         layout = self.layout
+        layout.prop(ob.data, 'meshOrHair', expand=True) 
         
-        row = layout.row()
-        row.enabled = not treatAsHair
-        row.prop(ob.data, 'baseClass')
+        if ob.data.meshOrHair == TREAT_AS_MESH:       
+            layout.prop(ob.data, 'baseClass')
+            # - - - - - - - - - - - - - - - - - - - - - - - - -
+            box = layout.box()
+            box.label(text='Grand Entrance:')
+            row = box.row()
+            row.enabled = not ob.parent or not isinstance(ob.parent.data, bpy.types.Mesh)
+            row.prop(ob.data, 'grandEntrance')
+            row = box.row()
+            row.enabled = (not ob.parent or not isinstance(ob.parent.data, bpy.types.Mesh)) and ob.data.grandEntrance and ob.data.grandEntrance == CUSTOM
+            row.prop(ob.data, 'entranceClass')
+            row = box.row()
+            row.enabled = (not ob.parent or not isinstance(ob.parent.data, bpy.types.Mesh)) and ob.data.grandEntrance and ob.data.grandEntrance != JUST_MAKE_VISIBLE
+            row.prop(ob.data, 'entranceDur')
+            row = box.row()
+            row.enabled = (not ob.parent or not isinstance(ob.parent.data, bpy.types.Mesh)) and ob.data.grandEntrance and ob.data.grandEntrance != JUST_MAKE_VISIBLE
+            row.prop(ob.data, 'entranceSnd')
+            row = box.row()
+            row.enabled = (not ob.parent or not isinstance(ob.parent.data, bpy.types.Mesh)) and ob.data.grandEntrance and ob.data.grandEntrance != JUST_MAKE_VISIBLE
+            row.prop(ob.data, 'disposeSound')
+            # - - - - - - - - - - - - - - - - - - - - - - - - -
+            row = layout.row()
+            row.prop(ob.data, 'useFlatShading')
+            row.prop(ob.data, 'deferNormals')
+    
+            row = layout.row()
+            row.prop(ob.data, 'castShadows')
+            row.prop(ob.data, 'receiveShadows')
+    
+            row = layout.row()
+            row.prop(ob.data, 'freezeWorldMatrix')
+            row.prop(ob.data, 'loadDisabled')
+    
+            row = layout.row()
+            row.prop(ob.data, 'autoAnimate')
+            row.prop(ob.data, 'checkCollisions')
+            # - - - - - - - - - - - - - - - - - - - - - - - - -
+            box = layout.box()
+            box.label(text='Skeleton:')
+            box.prop(ob.data, 'ignoreSkeleton')
+            row = box.row()
+            row.enabled = not ob.data.ignoreSkeleton
+            row.prop(ob.data, 'maxInfluencers')
+            # - - - - - - - - - - - - - - - - - - - - - - - - -
+            box = layout.box()
+            box.label(text='Shape Keys:')
+            row = box.row()
+            row.prop(ob.data, 'ignoreShapeKeys')
+            row.prop(ob.data, 'prefixDelimiter')
+    
+            row = box.row()
+            row.operator('tob.shape_keys_archive')
+            row.operator('tob.shape_keys_restore')
+    
+            row = box.row()
+            row.enabled = not ob.data.ignoreShapeKeys
+            row.prop(ob.data, 'defaultShapeKeyGroup')
+            # - - - - - - - - - - - - - - - - - - - - - - - - -
+            box = layout.box()
+            box.label('Materials')
+            box.prop(ob.data, 'materialNameSpace')
+            box.prop(ob.data, 'maxSimultaneousLights')
+            box.prop(ob.data, 'checkReadyOnlyOnce')
+    
+            box = layout.box()
+            box.label(text='Procedural Texture / Cycles Baking')
+    #        box.prop(ob.data, 'forceBaking')
+    #        box.prop(ob.data, 'usePNG')
+            box.prop(ob.data, 'bakeSize')
+            box.prop(ob.data, 'bakeQuality')
+            # - - - - - - - - - - - - - - - - - - - - - - - - -
+            box = layout.box()
+            box.prop(ob.data, 'attachedSound')
+            row = box.row()
+            
+            row.prop(ob.data, 'autoPlaySound')
+            row.prop(ob.data, 'loopSound')
+            box.prop(ob.data, 'maxSoundDistance')
         # - - - - - - - - - - - - - - - - - - - - - - - - -
-        box = layout.box()
-        box.enabled = not treatAsHair
-        box.label(text='Grand Entrance:')
-        row = box.row()
-        row.enabled = not ob.parent or not isinstance(ob.parent.data, bpy.types.Mesh)
-        row.prop(ob.data, 'grandEntrance')
-        row = box.row()
-        row.enabled = (not ob.parent or not isinstance(ob.parent.data, bpy.types.Mesh)) and ob.data.grandEntrance and ob.data.grandEntrance == CUSTOM
-        row.prop(ob.data, 'entranceClass')
-        row = box.row()
-        row.enabled = (not ob.parent or not isinstance(ob.parent.data, bpy.types.Mesh)) and ob.data.grandEntrance and ob.data.grandEntrance != JUST_MAKE_VISIBLE
-        row.prop(ob.data, 'entranceDur')
-        row = box.row()
-        row.enabled = (not ob.parent or not isinstance(ob.parent.data, bpy.types.Mesh)) and ob.data.grandEntrance and ob.data.grandEntrance != JUST_MAKE_VISIBLE
-        row.prop(ob.data, 'entranceSnd')
-        row = box.row()
-        row.enabled = (not ob.parent or not isinstance(ob.parent.data, bpy.types.Mesh)) and ob.data.grandEntrance and ob.data.grandEntrance != JUST_MAKE_VISIBLE
-        row.prop(ob.data, 'disposeSound')
-        # - - - - - - - - - - - - - - - - - - - - - - - - -
-        row = layout.row()
-        row.enabled = not treatAsHair
-        row.prop(ob.data, 'useFlatShading')
-        row.prop(ob.data, 'deferNormals')
+        else:
+            # types defined in particle_hair.py
+            box = layout.box()
+            box.label('Matrix Weights')
+            box.prop(ob.data, 'headBone')
+            box.prop(ob.data, 'spineBone')
+            
+            box = layout.box()
+            box.label('Color')
+            usingWheel = ob.data.stdColors == USE_BASE
+            row = box.row()
+            row.enabled = usingWheel
+            row.prop(ob.data, 'baseColor')
 
-        row = layout.row()
-        row.enabled = not treatAsHair
-        row.prop(ob.data, 'castShadows')
-        row.prop(ob.data, 'receiveShadows')
-
-        row = layout.row()
-        row.enabled = not treatAsHair
-        row.prop(ob.data, 'freezeWorldMatrix')
-        row.prop(ob.data, 'loadDisabled')
-
-        row = layout.row()
-        row.enabled = not treatAsHair
-        row.prop(ob.data, 'autoAnimate')
-        row.prop(ob.data, 'checkCollisions')
-        # - - - - - - - - - - - - - - - - - - - - - - - - -
-        box = layout.box()
-        box.label(text='Skeleton:')
-        box.enabled = not treatAsHair
-        
-        box.prop(ob.data, 'ignoreSkeleton')
-        row = box.row()
-        row.enabled = not ob.data.ignoreSkeleton
-        row.prop(ob.data, 'maxInfluencers')
-        # - - - - - - - - - - - - - - - - - - - - - - - - -
-        box = layout.box()
-        box.label(text='Shape Keys:')
-        box.enabled = not treatAsHair
-        
-        row = box.row()
-        row.prop(ob.data, 'ignoreShapeKeys')
-        row.prop(ob.data, 'prefixDelimiter')
-
-        row = box.row()
-        row.operator('tob.shape_keys_archive')
-        row.operator('tob.shape_keys_restore')
-
-        row = box.row()
-        row.enabled = not ob.data.ignoreShapeKeys
-        row.prop(ob.data, 'defaultShapeKeyGroup')
-        # - - - - - - - - - - - - - - - - - - - - - - - - -
-        box = layout.box()
-        box.label('Materials')
-        box.enabled = not treatAsHair
-        
-        box.prop(ob.data, 'materialNameSpace')
-        box.prop(ob.data, 'maxSimultaneousLights')
-        box.prop(ob.data, 'checkReadyOnlyOnce')
-
-        box = layout.box()
-        box.label(text='Procedural Texture / Cycles Baking')
-        box.enabled = not treatAsHair
-        
-#        box.prop(ob.data, 'forceBaking')
-#        box.prop(ob.data, 'usePNG')
-        box.prop(ob.data, 'bakeSize')
-        box.prop(ob.data, 'bakeQuality')
-        # - - - - - - - - - - - - - - - - - - - - - - - - -
-        box = layout.box()
-        box.prop(ob.data, 'attachedSound')
-        box.enabled = not treatAsHair
-        
-        row = box.row()
-        row.prop(ob.data, 'autoPlaySound')
-        row.prop(ob.data, 'loopSound')
-        box.prop(ob.data, 'maxSoundDistance')
-        # - - - - - - - - - - - - - - - - - - - - - - - - -
-        # types defined in particle_hair.py
-        box = layout.box()
-        box.label('Hair Settings')
-        
-        row = box.row()
-        row.prop(ob.data, 'treatAsHair')
-        
-        row = box.row()
-        row.enabled = treatAsHair
-        row.prop(ob.data, 'boneName')
-        
-        row = box.row()
-        row.enabled = treatAsHair
-        row.prop(ob.data, 'stiffness')
-        
-        box = box.box()
-        box.label('Color')
-        usingWheel = ob.data.stdColors == USE_BASE
-        row = box.row()
-        row.enabled =  treatAsHair and usingWheel
-        row.prop(ob.data, 'baseColor')
-        
-        row = box.row()
-        row.enabled = treatAsHair
-        row.prop(ob.data, 'stdColors')
-        
-        row = box.row()
-        row.enabled = treatAsHair
-        row.prop(ob.data, 'colorSpread')
+            box.prop(ob.data, 'stdColors')
+            box.prop(ob.data, 'interStrandColorSpread')
+            box.prop(ob.data, 'intraStrandColorSpread')
+            box.prop(ob.data, 'emissiveColorScaling')

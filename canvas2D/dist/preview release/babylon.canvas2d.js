@@ -1,15 +1,720 @@
-BABYLON.Effect.ShadersStore['ellipse2dPixelShader'] = "varying vec4 vColor;\nvoid main(void) {\ngl_FragColor=vColor;\n}";
-BABYLON.Effect.ShadersStore['ellipse2dVertexShader'] = "\n#ifdef Instanced\n#define att attribute\n#else\n#define att uniform\n#endif\nattribute float index;\natt vec2 zBias;\natt vec4 transformX;\natt vec4 transformY;\natt vec3 renderingInfo;\natt float opacity;\n#ifdef Border\natt float borderThickness;\n#endif\n#ifdef FillSolid\natt vec4 fillSolidColor;\n#endif\n#ifdef BorderSolid\natt vec4 borderSolidColor;\n#endif\n#ifdef FillGradient\natt vec4 fillGradientColor1;\natt vec4 fillGradientColor2;\natt vec4 fillGradientTY;\n#endif\n#ifdef BorderGradient\natt vec4 borderGradientColor1;\natt vec4 borderGradientColor2;\natt vec4 borderGradientTY;\n#endif\n\natt vec3 properties;\n#define TWOPI 6.28318530\n\nvarying vec2 vUV;\nvarying vec4 vColor;\nvoid main(void) {\nvec2 pos2;\n#ifdef Border\nfloat w=properties.x;\nfloat h=properties.y;\nfloat ms=properties.z;\nvec2 borderOffset=vec2(1.0,1.0);\nfloat segi=index;\nif (index<ms) {\nborderOffset=vec2(1.0-(borderThickness*2.0/w),1.0-(borderThickness*2.0/h));\n}\nelse {\nsegi-=ms;\n}\nfloat angle=TWOPI*segi/ms;\npos2.x=(cos(angle)/2.0)+0.5;\npos2.y=(sin(angle)/2.0)+0.5;\npos2.x=((pos2.x-0.5)*borderOffset.x)+0.5;\npos2.y=((pos2.y-0.5)*borderOffset.y)+0.5;\n#else\nif (index == 0.0) {\npos2=vec2(0.5,0.5);\n}\nelse {\nfloat ms=properties.z;\nfloat angle=TWOPI*(index-1.0)/ms;\npos2.x=(cos(angle)/2.0)+0.5;\npos2.y=(sin(angle)/2.0)+0.5;\n}\n#endif\n#ifdef FillSolid\nvColor=fillSolidColor;\n#endif\n#ifdef BorderSolid\nvColor=borderSolidColor;\n#endif\n#ifdef FillGradient\nfloat v=dot(vec4(pos2.xy,1,1),fillGradientTY);\nvColor=mix(fillGradientColor2,fillGradientColor1,v); \n#endif\n#ifdef BorderGradient\nfloat v=dot(vec4(pos2.xy,1,1),borderGradientTY);\nvColor=mix(borderGradientColor2,borderGradientColor1,v); \n#endif\nvColor.a*=opacity;\nvec4 pos;\npos.xy=pos2.xy*properties.xy;\npos.z=1.0;\npos.w=1.0;\nfloat x=dot(pos,transformX);\nfloat y=dot(pos,transformY);\nif (renderingInfo.z == 1.0) {\nfloat rw=renderingInfo.x;\nfloat rh=renderingInfo.y;\nfloat irw=2.0/rw;\nfloat irh=2.0/rh;\nx=(floor((x/irw)+0.5)*irw)+irw/2.0;\ny=(floor((y/irh)+0.5)*irh)+irh/2.0;\n}\ngl_Position=vec4(x,y,zBias.x,1);\n}";
-BABYLON.Effect.ShadersStore['lines2dPixelShader'] = "varying vec4 vColor;\nvoid main(void) {\ngl_FragColor=vColor;\n}";
-BABYLON.Effect.ShadersStore['lines2dVertexShader'] = "\n#ifdef Instanced\n#define att attribute\n#else\n#define att uniform\n#endif\nattribute vec2 position;\natt vec2 zBias;\natt vec4 transformX;\natt vec4 transformY;\natt vec3 renderingInfo;\natt float opacity;\n#ifdef FillSolid\natt vec4 fillSolidColor;\n#endif\n#ifdef BorderSolid\natt vec4 borderSolidColor;\n#endif\n#ifdef FillGradient\natt vec2 boundingMin;\natt vec2 boundingMax;\natt vec4 fillGradientColor1;\natt vec4 fillGradientColor2;\natt vec4 fillGradientTY;\n#endif\n#ifdef BorderGradient\natt vec4 borderGradientColor1;\natt vec4 borderGradientColor2;\natt vec4 borderGradientTY;\n#endif\n#define TWOPI 6.28318530\n\nvarying vec2 vUV;\nvarying vec4 vColor;\nvoid main(void) {\n#ifdef FillSolid\nvColor=fillSolidColor;\n#endif\n#ifdef BorderSolid\nvColor=borderSolidColor;\n#endif\n#ifdef FillGradient\nfloat v=dot(vec4((position.xy-boundingMin)/(boundingMax-boundingMin),1,1),fillGradientTY);\nvColor=mix(fillGradientColor2,fillGradientColor1,v); \n#endif\n#ifdef BorderGradient\nfloat v=dot(vec4((position.xy-boundingMin)/(boundingMax-boundingMin),1,1),borderGradientTY);\nvColor=mix(borderGradientColor2,borderGradientColor1,v); \n#endif\nvColor.a*=opacity;\nvec4 pos;\npos.xy=position.xy;\npos.z=1.0;\npos.w=1.0;\nfloat x=dot(pos,transformX);\nfloat y=dot(pos,transformY);\nif (renderingInfo.z == 1.0) {\nfloat rw=renderingInfo.x;\nfloat rh=renderingInfo.y;\nfloat irw=2.0/rw;\nfloat irh=2.0/rh;\nx=(floor((x/irw)+0.5)*irw)+irw/2.0;\ny=(floor((y/irh)+0.5)*irh)+irh/2.0;\n}\ngl_Position=vec4(x,y,zBias.x,1);\n}";
-BABYLON.Effect.ShadersStore['rect2dPixelShader'] = "varying vec4 vColor;\nvoid main(void) {\ngl_FragColor=vColor;\n}";
-BABYLON.Effect.ShadersStore['rect2dVertexShader'] = "\n#ifdef Instanced\n#define att attribute\n#else\n#define att uniform\n#endif\nattribute float index;\natt vec2 zBias;\natt vec4 transformX;\natt vec4 transformY;\natt vec3 renderingInfo;\natt float opacity;\n#ifdef Border\natt float borderThickness;\n#endif\n#ifdef FillSolid\natt vec4 fillSolidColor;\n#endif\n#ifdef BorderSolid\natt vec4 borderSolidColor;\n#endif\n#ifdef FillGradient\natt vec4 fillGradientColor1;\natt vec4 fillGradientColor2;\natt vec4 fillGradientTY;\n#endif\n#ifdef BorderGradient\natt vec4 borderGradientColor1;\natt vec4 borderGradientColor2;\natt vec4 borderGradientTY;\n#endif\n\natt vec3 properties;\n\n#define rsub0 17.0\n#define rsub1 33.0\n#define rsub2 49.0\n#define rsub3 65.0\n#define rsub 64.0\n#define TWOPI 6.28318530\n\nvarying vec2 vUV;\nvarying vec4 vColor;\nvoid main(void) {\nvec2 pos2;\n\nif (properties.z == 0.0) {\n#ifdef Border\nfloat w=properties.x;\nfloat h=properties.y;\nvec2 borderOffset=vec2(1.0,1.0);\nfloat segi=index;\nif (index<4.0) {\nborderOffset=vec2(1.0-(borderThickness*2.0/w),1.0-(borderThickness*2.0/h));\n}\nelse {\nsegi-=4.0;\n}\nif (segi == 0.0) {\npos2=vec2(1.0,1.0);\n} \nelse if (segi == 1.0) {\npos2=vec2(1.0,0.0);\n}\nelse if (segi == 2.0) {\npos2=vec2(0.0,0.0);\n} \nelse {\npos2=vec2(0.0,1.0);\n}\npos2.x=((pos2.x-0.5)*borderOffset.x)+0.5;\npos2.y=((pos2.y-0.5)*borderOffset.y)+0.5;\n#else\nif (index == 0.0) {\npos2=vec2(0.5,0.5);\n}\nelse if (index == 1.0) {\npos2=vec2(1.0,1.0);\n}\nelse if (index == 2.0) {\npos2=vec2(1.0,0.0);\n}\nelse if (index == 3.0) {\npos2=vec2(0.0,0.0);\n}\nelse {\npos2=vec2(0.0,1.0);\n}\n#endif\n}\nelse\n{\n#ifdef Border\nfloat w=properties.x;\nfloat h=properties.y;\nfloat r=properties.z;\nfloat nru=r/w;\nfloat nrv=r/h;\nvec2 borderOffset=vec2(1.0,1.0);\nfloat segi=index;\nif (index<rsub) {\nborderOffset=vec2(1.0-(borderThickness*2.0/w),1.0-(borderThickness*2.0/h));\n}\nelse {\nsegi-=rsub;\n}\n\nif (segi<rsub0) {\npos2=vec2(1.0-nru,nrv);\n}\n\nelse if (segi<rsub1) {\npos2=vec2(nru,nrv);\n}\n\nelse if (segi<rsub2) {\npos2=vec2(nru,1.0-nrv);\n}\n\nelse {\npos2=vec2(1.0-nru,1.0-nrv);\n}\nfloat angle=TWOPI-((index-1.0)*TWOPI/(rsub-0.5));\npos2.x+=cos(angle)*nru;\npos2.y+=sin(angle)*nrv;\npos2.x=((pos2.x-0.5)*borderOffset.x)+0.5;\npos2.y=((pos2.y-0.5)*borderOffset.y)+0.5;\n#else\nif (index == 0.0) {\npos2=vec2(0.5,0.5);\n}\nelse {\nfloat w=properties.x;\nfloat h=properties.y;\nfloat r=properties.z;\nfloat nru=r/w;\nfloat nrv=r/h;\n\nif (index<rsub0) {\npos2=vec2(1.0-nru,nrv);\n}\n\nelse if (index<rsub1) {\npos2=vec2(nru,nrv);\n}\n\nelse if (index<rsub2) {\npos2=vec2(nru,1.0-nrv);\n}\n\nelse {\npos2=vec2(1.0-nru,1.0-nrv);\n}\nfloat angle=TWOPI-((index-1.0)*TWOPI/(rsub-0.5));\npos2.x+=cos(angle)*nru;\npos2.y+=sin(angle)*nrv;\n}\n#endif\n}\n#ifdef FillSolid\nvColor=fillSolidColor;\n#endif\n#ifdef BorderSolid\nvColor=borderSolidColor;\n#endif\n#ifdef FillGradient\nfloat v=dot(vec4(pos2.xy,1,1),fillGradientTY);\nvColor=mix(fillGradientColor2,fillGradientColor1,v); \n#endif\n#ifdef BorderGradient\nfloat v=dot(vec4(pos2.xy,1,1),borderGradientTY);\nvColor=mix(borderGradientColor2,borderGradientColor1,v); \n#endif\nvColor.a*=opacity;\nvec4 pos;\npos.xy=pos2.xy*properties.xy;\npos.z=1.0;\npos.w=1.0;\nfloat x=dot(pos,transformX);\nfloat y=dot(pos,transformY);\nif (renderingInfo.z == 1.0) {\nfloat rw=renderingInfo.x;\nfloat rh=renderingInfo.y;\nfloat irw=2.0/rw;\nfloat irh=2.0/rh;\nx=(floor((x/irw)+0.5)*irw)+irw/2.0;\ny=(floor((y/irh)+0.5)*irh)+irh/2.0;\n}\ngl_Position=vec4(x,y,zBias.x,1);\n}";
-BABYLON.Effect.ShadersStore['sprite2dPixelShader'] = "varying vec2 vUV;\nvarying float vOpacity;\n#ifdef Scale9\nvarying vec2 vTopLeftUV;\nvarying vec2 vBottomRightUV;\nvarying vec4 vScale9;\nvarying vec2 vScaleFactor;\n#endif\nuniform bool alphaTest;\nuniform sampler2D diffuseSampler;\nvoid main(void) {\nvec2 uv=vUV;\n#ifdef Scale9\nvec2 sizeUV=vBottomRightUV-vTopLeftUV;\n\nfloat leftPartUV=vTopLeftUV.x+(vScale9.x/vScaleFactor.x);\nfloat rightPartUV=vTopLeftUV.x+sizeUV.x-((sizeUV.x-vScale9.z)/vScaleFactor.x);\nif (vUV.x<leftPartUV) {\nuv.x=vTopLeftUV.x+((vUV.x- vTopLeftUV.x)*vScaleFactor.x);\n}\nelse if (vUV.x>rightPartUV) {\nuv.x=vTopLeftUV.x+vScale9.z+((vUV.x-rightPartUV)*vScaleFactor.x);\n}\nelse {\nfloat r=(vUV.x-leftPartUV)/(rightPartUV-leftPartUV);\nuv.x=vTopLeftUV.x+vScale9.x+((vScale9.z-vScale9.x)*r);\n}\n\nfloat topPartUV=(vTopLeftUV.y+(vScale9.y/vScaleFactor.y));\nfloat bottomPartUV=(vTopLeftUV.y+sizeUV.y-((sizeUV.y-vScale9.w)/vScaleFactor.y));\nif (vUV.y<topPartUV) {\nuv.y=vTopLeftUV.y+((vUV.y-vTopLeftUV.y)*vScaleFactor.y);\n}\nelse if (vUV.y>bottomPartUV) {\nuv.y=vTopLeftUV.y+vScale9.w+((vUV.y-bottomPartUV)*vScaleFactor.y);\n}\nelse {\nfloat r=(vUV.y-topPartUV)/(bottomPartUV-topPartUV);\nuv.y=vTopLeftUV.y+vScale9.y+((vScale9.w-vScale9.y)*r);\n}\n#endif\nvec4 color=texture2D(diffuseSampler,uv);\nif (alphaTest)\n{\nif (color.a<0.95) {\ndiscard;\n}\n}\ncolor.a*=vOpacity;\ngl_FragColor=color;\n}";
-BABYLON.Effect.ShadersStore['sprite2dVertexShader'] = "\n#ifdef Instanced\n#define att attribute\n#else\n#define att uniform\n#endif\n\nattribute float index;\natt vec2 topLeftUV;\natt vec2 sizeUV;\n#ifdef Scale9\natt vec2 scaleFactor;\n#endif\natt vec2 textureSize;\n\natt vec3 properties;\n#ifdef Scale9\natt vec4 scale9;\n#endif\natt vec2 zBias;\natt vec4 transformX;\natt vec4 transformY;\natt vec3 renderingInfo;\natt float opacity;\n\n\nvarying vec2 vUV;\nvarying float vOpacity;\n#ifdef Scale9\nvarying vec2 vTopLeftUV;\nvarying vec2 vBottomRightUV;\nvarying vec4 vScale9;\nvarying vec2 vScaleFactor;\n#endif\nvoid main(void) {\nvec2 pos2;\nfloat frame=properties.x;\nfloat invertY=properties.y;\nfloat alignToPixel=properties.z;\n\nif (index == 0.0) {\npos2=vec2(0.0,0.0);\nvUV=vec2(topLeftUV.x+(frame*sizeUV.x),topLeftUV.y);\n}\n\nelse if (index == 1.0) {\npos2=vec2(0.0,1.0);\nvUV=vec2(topLeftUV.x+(frame*sizeUV.x),(topLeftUV.y+sizeUV.y));\n}\n\nelse if (index == 2.0) {\npos2=vec2( 1.0,1.0);\nvUV=vec2(topLeftUV.x+sizeUV.x+(frame*sizeUV.x),(topLeftUV.y+sizeUV.y));\n}\n\nelse if (index == 3.0) {\npos2=vec2( 1.0,0.0);\nvUV=vec2(topLeftUV.x+sizeUV.x+(frame*sizeUV.x),topLeftUV.y);\n}\nif (invertY == 1.0) {\nvUV.y=1.0-vUV.y;\n}\n\nvec4 pos;\n\n\n\n\npos.xy=pos2.xy*sizeUV*textureSize;\n\n#ifdef Scale9\nif (invertY == 1.0) {\nvTopLeftUV=vec2(topLeftUV.x,1.0-(topLeftUV.y+sizeUV.y));\nvBottomRightUV=vec2(topLeftUV.x+sizeUV.x,1.0-topLeftUV.y);\nvScale9=vec4(scale9.x,sizeUV.y-scale9.w,scale9.z,sizeUV.y-scale9.y);\n}\nelse {\nvTopLeftUV=topLeftUV;\nvBottomRightUV=vec2(topLeftUV.x+sizeUV.x,topLeftUV.y+sizeUV.y);\nvScale9=scale9;\n}\nvScaleFactor=scaleFactor;\n#endif\nvOpacity=opacity;\npos.z=1.0;\npos.w=1.0;\nfloat x=dot(pos,transformX);\nfloat y=dot(pos,transformY);\nif (renderingInfo.z == 1.0) {\nfloat rw=renderingInfo.x;\nfloat rh=renderingInfo.y;\nfloat irw=2.0/rw;\nfloat irh=2.0/rh;\nx=(floor((x/irw))*irw)+irw/2.0;\ny=(floor((y/irh))*irh)+irh/2.0;\n}\ngl_Position=vec4(x,y,zBias.x,1.0);\n} ";
-BABYLON.Effect.ShadersStore['text2dPixelShader'] = "\nvarying vec4 vColor;\nvarying vec2 vUV;\n\nuniform sampler2D diffuseSampler;\nvoid main(void) {\n#ifdef SignedDistanceField\nfloat dist=texture2D(diffuseSampler,vUV).r;\nif (dist<0.5) {\ndiscard;\n}\n\n\n\n\n\ngl_FragColor=vec4(vColor.xyz*dist,vColor.a);\n#else\nvec4 color=texture2D(diffuseSampler,vUV);\nif (color.a == 0.0) {\ndiscard;\n}\n#ifdef FontTexture\ngl_FragColor=vec4(color.xxx*vColor.xyz*vColor.a,color.x*vColor.a);\n#else\ngl_FragColor=color*vColor;\n#endif\n#endif\n}";
-BABYLON.Effect.ShadersStore['text2dVertexShader'] = "\n#ifdef Instanced\n#define att attribute\n#else\n#define att uniform\n#endif\n\nattribute float index;\natt vec2 zBias;\natt vec4 transformX;\natt vec4 transformY;\natt vec3 renderingInfo;\natt float opacity;\natt vec2 topLeftUV;\natt vec2 sizeUV;\natt vec2 textureSize;\natt vec4 color;\natt float superSampleFactor;\n\nvarying vec2 vUV;\nvarying vec4 vColor;\nvoid main(void) {\nvec2 pos2;\n\nif (index == 0.0) {\npos2=vec2(0.0,0.0);\nvUV=vec2(topLeftUV.x,topLeftUV.y+sizeUV.y);\n}\n\nelse if (index == 1.0) {\npos2=vec2(0.0,1.0);\nvUV=vec2(topLeftUV.x,topLeftUV.y);\n}\n\nelse if (index == 2.0) {\npos2=vec2(1.0,1.0);\nvUV=vec2(topLeftUV.x+sizeUV.x,topLeftUV.y);\n}\n\nelse if (index == 3.0) {\npos2=vec2(1.0,0.0);\nvUV=vec2(topLeftUV.x+sizeUV.x,topLeftUV.y+sizeUV.y);\n}\n\n\n\nvColor=color;\nvColor.a*=opacity;\nvec4 pos;\npos.xy=pos2.xy*superSampleFactor*sizeUV*textureSize;\npos.z=1.0;\npos.w=1.0;\nfloat x=dot(pos,transformX);\nfloat y=dot(pos,transformY);\nif (renderingInfo.z == 1.0) {\nfloat rw=renderingInfo.x;\nfloat rh=renderingInfo.y;\nfloat irw=2.0/rw;\nfloat irh=2.0/rh;\nx=((floor((x/irw)+0.5)*irw)+irw/2.0)+0.5*irw;\ny=((floor((y/irh)+0.5)*irh)+irh/2.0)+0.5*irh;\n}\ngl_Position=vec4(x,y,zBias.x,1.0);\n}";
-BABYLON.Effect.ShadersStore['wireframe2dPixelShader'] = "varying vec4 vColor;\nvoid main(void) {\ngl_FragColor=vColor;\n}";
-BABYLON.Effect.ShadersStore['wireframe2dVertexShader'] = "\n#ifdef Instanced\n#define att attribute\n#else\n#define att uniform\n#endif\n\nattribute vec2 pos;\nattribute vec4 col;\n\n\n\n\natt vec3 properties;\natt vec2 zBias;\natt vec4 transformX;\natt vec4 transformY;\natt vec3 renderingInfo;\natt float opacity;\n\n\nvarying vec4 vColor;\nvoid main(void) {\nvec4 p=vec4(pos.xy,1.0,1.0);\nvColor=vec4(col.xyz,col.w*opacity);\nfloat x=dot(p,transformX);\nfloat y=dot(p,transformY);\nif (renderingInfo.z == 1.0) {\nfloat rw=renderingInfo.x;\nfloat rh=renderingInfo.y;\nfloat irw=2.0/rw;\nfloat irh=2.0/rh;\nx=(floor((x/irw)+0.5)*irw)+irw/2.0;\ny=(floor((y/irh)+0.5)*irh)+irh/2.0;\n}\ngl_Position=vec4(x,y,zBias.x,1);\n}";
+var BABYLON;
+(function (BABYLON) {
+    var DynamicFloatArrayElementInfo = (function () {
+        function DynamicFloatArrayElementInfo() {
+        }
+        return DynamicFloatArrayElementInfo;
+    }());
+    BABYLON.DynamicFloatArrayElementInfo = DynamicFloatArrayElementInfo;
+    /**
+    * The purpose of this class is to store float32 based elements of a given size (defined by the stride argument) in a dynamic fashion, that is, you can add/free elements. You can then access to a defragmented/packed version of the underlying Float32Array by calling the pack() method.
+    * The intent is to maintain through time data that will be bound to a WebGlBuffer with the ability to change add/remove elements.
+    * It was first built to efficiently maintain the WebGlBuffer that contain instancing based data.
+    * Allocating an Element will return a instance of DynamicFloatArrayElement which contains the offset into the Float32Array of where the element starts, you are then responsible to copy your data using this offset.
+    * Beware, calling pack() may change the offset of some Entries because this method will defragment the Float32Array to replace empty elements by moving allocated ones at their location.
+     * This method will return an ArrayBufferView on the existing Float32Array that describes the used elements. Use this View to update the WebGLBuffer and NOT the "buffer" field of the class. The pack() method won't shrink/reallocate the buffer to keep it GC friendly, all the empty space will be put at the end of the buffer, the method just ensure there are no "free holes".
+    */
+    var DynamicFloatArray = (function () {
+        /**
+         * Construct an instance of the dynamic float array
+         * @param stride size of one element in float (i.e. not bytes!)
+         * @param initialElementCount the number of available entries at construction
+         */
+        function DynamicFloatArray(stride, initialElementCount) {
+            this.compareValueOffset = null;
+            this.sortingAscending = true;
+            this._stride = stride;
+            this.buffer = new Float32Array(stride * initialElementCount);
+            this._lastUsed = 0;
+            this._firstFree = 0;
+            this._allEntries = new Array(initialElementCount);
+            this._freeEntries = new Array(initialElementCount);
+            for (var i = 0; i < initialElementCount; i++) {
+                var element = new DynamicFloatArrayElementInfo();
+                element.offset = i * stride;
+                this._allEntries[i] = element;
+                this._freeEntries[initialElementCount - i - 1] = element;
+            }
+        }
+        /**
+         * Allocate an element in the array.
+         * @return the element info instance that contains the offset into the main buffer of the element's location.
+         * Beware, this offset may change when you call pack()
+         */
+        DynamicFloatArray.prototype.allocElement = function () {
+            if (this._freeEntries.length === 0) {
+                this._growBuffer();
+            }
+            var el = this._freeEntries.pop();
+            this._lastUsed = Math.max(el.offset, this._lastUsed);
+            if (el.offset === this._firstFree) {
+                if (this._freeEntries.length > 0) {
+                    this._firstFree = this._freeEntries[this._freeEntries.length - 1].offset;
+                }
+                else {
+                    this._firstFree += this._stride;
+                }
+            }
+            return el;
+        };
+        /**
+         * Free the element corresponding to the given element info
+         * @param elInfo the element that describe the allocated element
+         */
+        DynamicFloatArray.prototype.freeElement = function (elInfo) {
+            this._firstFree = Math.min(elInfo.offset, this._firstFree);
+            this._freeEntries.push(elInfo);
+        };
+        /**
+         * This method will pack all the used elements into a linear sequence and put all the free space at the end.
+         * Instances of DynamicFloatArrayElement may have their 'offset' member changed as data could be copied from one location to another, so be sure to read/write your data based on the value inside this member after you called pack().
+         * @return the subArray that is the view of the used elements area, you can use it as a source to update a WebGLBuffer
+         */
+        DynamicFloatArray.prototype.pack = function () {
+            // no free slot? no need to pack
+            if (this._freeEntries.length === 0) {
+                return this.buffer;
+            }
+            // If the buffer is already packed the last used will always be lower than the first free
+            // The opposite may not be true, we can have a lastUsed greater than firstFree but the array still packed, because when an element is freed, lastUsed is not updated (for speed reason) so we may have a lastUsed of a freed element. But that's ok, well soon realize this case.
+            if (this._lastUsed < this._firstFree) {
+                var elementsBuffer_1 = this.buffer.subarray(0, this._lastUsed + this._stride);
+                return elementsBuffer_1;
+            }
+            var s = this._stride;
+            // Make sure there's a free element at the very end, we need it to create a range where we'll move the used elements that may appear before
+            var lastFree = new DynamicFloatArrayElementInfo();
+            lastFree.offset = this.totalElementCount * s;
+            this._freeEntries.push(lastFree);
+            var sortedFree = this._freeEntries.sort(function (a, b) { return a.offset - b.offset; });
+            var sortedAll = this._allEntries.sort(function (a, b) { return a.offset - b.offset; });
+            var firstFreeSlotOffset = sortedFree[0].offset;
+            var freeZoneSize = 1;
+            var occupiedZoneSize = (this.usedElementCount + 1) * s;
+            var prevOffset = sortedFree[0].offset;
+            for (var i = 1; i < sortedFree.length; i++) {
+                // If the first free (which means everything before is occupied) is greater or equal the occupied zone size, it means everything is defragmented, we can quit
+                if (firstFreeSlotOffset >= occupiedZoneSize) {
+                    break;
+                }
+                var curFree = sortedFree[i];
+                var curOffset = curFree.offset;
+                // Compute the distance between this offset and the previous
+                var distance = curOffset - prevOffset;
+                // If the distance is the stride size, they are adjacent, it good, move to the next
+                if (distance === s) {
+                    // Free zone is one element bigger
+                    ++freeZoneSize;
+                    // as we're about to iterate to the next, the cur becomes the previous...
+                    prevOffset = curOffset;
+                    continue;
+                }
+                // Distance is bigger, which means there's x element between the previous free and this one
+                var usedRange = (distance / s) - 1;
+                // Two cases the free zone is smaller than the data to move or bigger
+                // Copy what can fit in the free zone
+                var curMoveOffset = curOffset - s;
+                var copyCount = Math.min(freeZoneSize, usedRange);
+                for (var j = 0; j < copyCount; j++) {
+                    var freeI = firstFreeSlotOffset / s;
+                    var curI = curMoveOffset / s;
+                    var moveEl = sortedAll[curI];
+                    this._moveElement(moveEl, firstFreeSlotOffset);
+                    var replacedEl = sortedAll[freeI];
+                    // set the offset of the element we replaced with a value that will make it discard at the end of the method
+                    replacedEl.offset = curMoveOffset;
+                    // Swap the element we moved and the one it replaced in the sorted array to reflect the action we've made
+                    sortedAll[freeI] = moveEl;
+                    sortedAll[curI] = replacedEl;
+                    curMoveOffset -= s;
+                    firstFreeSlotOffset += s;
+                }
+                // Free Zone is smaller or equal so it's no longer a free zone, set the new one to the current location
+                if (freeZoneSize <= usedRange) {
+                    firstFreeSlotOffset = curMoveOffset + s;
+                    freeZoneSize = 1 + copyCount;
+                }
+                else {
+                    freeZoneSize = ((curOffset - firstFreeSlotOffset) / s) + 1;
+                }
+                // as we're about to iterate to the next, the cur becomes the previous...
+                prevOffset = curOffset;
+            }
+            var elementsBuffer = this.buffer.subarray(0, firstFreeSlotOffset);
+            this._lastUsed = firstFreeSlotOffset - s;
+            this._firstFree = firstFreeSlotOffset;
+            sortedFree.pop(); // Remove the last free because that's the one we added at the start of the method
+            this._freeEntries = sortedFree.sort(function (a, b) { return b.offset - a.offset; });
+            this._allEntries = sortedAll;
+            return elementsBuffer;
+        };
+        DynamicFloatArray.prototype._moveElement = function (element, destOffset) {
+            for (var i = 0; i < this._stride; i++) {
+                this.buffer[destOffset + i] = this.buffer[element.offset + i];
+            }
+            element.offset = destOffset;
+        };
+        DynamicFloatArray.prototype._growBuffer = function () {
+            // Allocate the new buffer with 50% more entries, copy the content of the current one
+            var newElCount = Math.floor(this.totalElementCount * 1.5);
+            var newBuffer = new Float32Array(newElCount * this._stride);
+            newBuffer.set(this.buffer);
+            var curCount = this.totalElementCount;
+            var addedCount = newElCount - this.totalElementCount;
+            for (var i = 0; i < addedCount; i++) {
+                var element = new DynamicFloatArrayElementInfo();
+                element.offset = (curCount + i) * this.stride;
+                this._allEntries.push(element);
+                this._freeEntries[addedCount - i - 1] = element;
+            }
+            this._firstFree = curCount * this.stride;
+            this.buffer = newBuffer;
+        };
+        Object.defineProperty(DynamicFloatArray.prototype, "totalElementCount", {
+            /**
+             * Get the total count of entries that can fit in the current buffer
+             * @returns the elements count
+             */
+            get: function () {
+                return this._allEntries.length;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(DynamicFloatArray.prototype, "freeElementCount", {
+            /**
+             * Get the count of free entries that can still be allocated without resizing the buffer
+             * @returns the free elements count
+             */
+            get: function () {
+                return this._freeEntries.length;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(DynamicFloatArray.prototype, "usedElementCount", {
+            /**
+             * Get the count of allocated elements
+             * @returns the allocated elements count
+             */
+            get: function () {
+                return this._allEntries.length - this._freeEntries.length;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(DynamicFloatArray.prototype, "stride", {
+            /**
+             * Return the size of one element in float
+             * @returns the size in float
+             */
+            get: function () {
+                return this._stride;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        DynamicFloatArray.prototype.sort = function () {
+            var _this = this;
+            if (!this.compareValueOffset) {
+                throw new Error("The DynamicFloatArray.sort() method needs a valid 'compareValueOffset' property");
+            }
+            var count = this.usedElementCount;
+            // Do we have to (re)create the sort table?
+            if (!this._sortTable || this._sortTable.length < count) {
+                // Small heuristic... We don't want to allocate totalElementCount right away because it may have 50 for 3 used elements, but on the other side we don't want to allocate just 3 when we just need 2, so double this value to give us some air to breath...
+                var newCount = Math.min(this.totalElementCount, count * 2);
+                this._sortTable = new Array(newCount);
+            }
+            if (!this._sortedTable || this._sortedTable.length !== count) {
+                this._sortedTable = new Array(count);
+            }
+            // Because, you know...
+            this.pack();
+            //let stride = this.stride;
+            //for (let i = 0; i < count; i++) {
+            //    let si = this._sortTable[i];
+            //    if (!si) {
+            //        si = new SortInfo();
+            //        this._sortTable[i] = si;
+            //    }
+            //    si.entry = this._allEntries[i];
+            //    si.compareData = this.buffer[si.entry.offset + this.compareValueOffset];
+            //    si.swapedOffset = null;
+            //    this._sortedTable[i] = si;
+            //}
+            var curOffset = 0;
+            var stride = this.stride;
+            for (var i = 0; i < count; i++, curOffset += stride) {
+                var si = this._sortTable[i];
+                if (!si) {
+                    si = new SortInfo();
+                    this._sortTable[i] = si;
+                }
+                si.compareData = this.buffer[curOffset + this.compareValueOffset];
+                si.offset = curOffset;
+                si.swapedOffset = null;
+                this._sortedTable[i] = si;
+            }
+            // Let's sort the sorted table, we want to keep a track of the original one (that's why we have two buffers)
+            if (this.sortingAscending) {
+                this._sortedTable.sort(function (a, b) { return a.compareData - b.compareData; });
+            }
+            else {
+                this._sortedTable.sort(function (a, b) { return b.compareData - a.compareData; });
+            }
+            var swapElements = function (src, dst) {
+                for (var i = 0; i < stride; i++) {
+                    var tps = _this.buffer[dst + i];
+                    _this.buffer[dst + i] = _this.buffer[src + i];
+                    _this.buffer[src + i] = tps;
+                }
+            };
+            // The fun part begin, sortedTable give us the ordered layout to obtain, to get that we have to move elements, but when we move an element: 
+            //  it replaces an existing one.I don't want to allocate a new Float32Array and do a raw copy, because it's awful (GC - wise), 
+            //  and I still want something with a good algorithm complexity.
+            // So here's the deal: we are going to swap elements, but we have to track the change of location of the element being replaced, 
+            //  we need sortTable for that, it contains the original layout of SortInfo object, not the sorted one.
+            // The best way is to use an extra field in SortInfo, because potentially every element can be replaced.
+            // When we'll look for and element, we'll check if its swapedOffset is set, if so we reiterate the operation with the one there 
+            //  until we find a SortInfo object without a swapedOffset which means we got the right location
+            // Yes, we may have to do multiple iterations to find the right location, but hey, it won't be huge: <3 in most cases, and it's better 
+            //  than a double allocation of the whole float32Array or a O(n²/2) typical algorithm.
+            for (var i = 0; i < count; i++) {
+                // Get the element to move
+                var sourceSI = this._sortedTable[i];
+                var destSI = this._sortTable[i];
+                var sourceOff = sourceSI.offset;
+                // If the source changed location, find the new one
+                if (sourceSI.swapedOffset) {
+                    // Follow the swapedOffset until there's none, it will mean that curSI contains the new location in its offset member
+                    var curSI = sourceSI;
+                    while (curSI.swapedOffset) {
+                        curSI = this._sortTable[curSI.swapedOffset / stride];
+                    }
+                    // Finally get the right location
+                    sourceOff = curSI.offset;
+                }
+                // Tag the element being replaced with its new location
+                destSI.swapedOffset = sourceOff;
+                // Swap elements (only if needed)
+                if (sourceOff !== destSI.offset) {
+                    swapElements(sourceOff, destSI.offset);
+                }
+                // Update the offset in the corresponding DFAE
+                //sourceSI.entry.offset = destSI.entry.offset;
+                this._allEntries[sourceSI.offset / stride].offset = destSI.offset;
+            }
+            this._allEntries.sort(function (a, b) { return a.offset - b.offset; });
+            return true;
+        };
+        return DynamicFloatArray;
+    }());
+    BABYLON.DynamicFloatArray = DynamicFloatArray;
+    var SortInfo = (function () {
+        function SortInfo() {
+            this.compareData = this.offset = this.swapedOffset = null;
+        }
+        return SortInfo;
+    }());
+})(BABYLON || (BABYLON = {}));
+
+//# sourceMappingURL=babylon.dynamicFloatArray.js.map
+
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+var BABYLON;
+(function (BABYLON) {
+    /**
+     * This class describe a rectangle that were added to the map.
+     * You have access to its coordinates either in pixel or normalized (UV)
+     */
+    var PackedRect = (function () {
+        function PackedRect(root, parent, pos, size) {
+            this._pos = pos;
+            this._size = size;
+            this._root = root;
+            this._parent = parent;
+            this._contentSize = null;
+            this._bottomNode = null;
+            this._leftNode = null;
+            this._initialSize = null;
+            this._rightNode = null;
+        }
+        Object.defineProperty(PackedRect.prototype, "pos", {
+            /**
+             * @returns the position of this node into the map
+             */
+            get: function () {
+                return this._pos;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(PackedRect.prototype, "contentSize", {
+            /**
+             * @returns the size of the rectangle this node handles
+             */
+            get: function () {
+                return this._contentSize;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        /**
+         * Retrieve the inner position (considering the margin) and stores it into the res object
+         * @param res must be a valid Vector2 that will contain the inner position after this call
+         */
+        PackedRect.prototype.getInnerPosToRef = function (res) {
+            var m = this._root._margin;
+            res.x = this._pos.x + m;
+            res.y = this._pos.y + m;
+        };
+        /**
+         * Retrieve the inner size (considering the margin) and stores it into the res object
+         * @param res must be a valid Size that will contain the inner size after this call
+         */
+        PackedRect.prototype.getInnerSizeToRef = function (res) {
+            var m = this._root._margin;
+            res.width = this._contentSize.width - (m * 2);
+            res.height = this._contentSize.height - (m * 2);
+        };
+        Object.defineProperty(PackedRect.prototype, "UVs", {
+            /**
+             * Compute the UV of the top/left, top/right, bottom/right, bottom/left points of the rectangle this node handles into the map
+             * @returns And array of 4 Vector2, containing UV coordinates for the four corners of the Rectangle into the map
+             */
+            get: function () {
+                if (!this._contentSize) {
+                    throw new Error("Can't compute UVs for this object because it's nor allocated");
+                }
+                return this.getUVsForCustomSize(this._contentSize);
+            },
+            enumerable: true,
+            configurable: true
+        });
+        /**
+         * You may have allocated the PackedRect using over-provisioning (you allocated more than you need in order to prevent frequent deallocations/reallocations)
+         * and then using only a part of the PackRect.
+         * This method will return the UVs for this part by given the custom size of what you really use
+         * @param customSize must be less/equal to the allocated size, UV will be compute from this
+         */
+        PackedRect.prototype.getUVsForCustomSize = function (customSize) {
+            var mainWidth = this._root._size.width;
+            var mainHeight = this._root._size.height;
+            var margin = this._root._margin;
+            var topLeft = new BABYLON.Vector2((this._pos.x + margin) / mainWidth, (this._pos.y + margin) / mainHeight);
+            var rightBottom = new BABYLON.Vector2((this._pos.x + customSize.width + margin - 1) / mainWidth, (this._pos.y + customSize.height + margin - 1) / mainHeight);
+            var uvs = new Array();
+            uvs.push(topLeft);
+            uvs.push(new BABYLON.Vector2(rightBottom.x, topLeft.y));
+            uvs.push(rightBottom);
+            uvs.push(new BABYLON.Vector2(topLeft.x, rightBottom.y));
+            return uvs;
+        };
+        /**
+         * Free this rectangle from the map.
+         * Call this method when you no longer need the rectangle to be in the map.
+         */
+        PackedRect.prototype.freeContent = function () {
+            if (!this.contentSize) {
+                return;
+            }
+            this._contentSize = null;
+            // If everything below is also free, reset the whole node, and attempt to reset parents if they also become free
+            this.attemptDefrag();
+        };
+        Object.defineProperty(PackedRect.prototype, "isUsed", {
+            get: function () {
+                return this._contentSize != null || this._leftNode != null;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        PackedRect.prototype.findAndSplitNode = function (contentSize) {
+            var node = this.findNode(contentSize);
+            // Not enough space...
+            if (!node) {
+                return null;
+            }
+            node.splitNode(contentSize);
+            return node;
+        };
+        PackedRect.prototype.findNode = function (size) {
+            var resNode = null;
+            var margin = this._root._margin * 2;
+            // If this node is used, recurse to each of his subNodes to find an available one in its branch
+            if (this.isUsed) {
+                if (this._leftNode) {
+                    resNode = this._leftNode.findNode(size);
+                }
+                if (!resNode && this._rightNode) {
+                    resNode = this._rightNode.findNode(size);
+                }
+                if (!resNode && this._bottomNode) {
+                    resNode = this._bottomNode.findNode(size);
+                }
+            }
+            else if (this._initialSize) {
+                if (((size.width + margin) <= this._initialSize.width) && ((size.height + margin) <= this._initialSize.height)) {
+                    resNode = this;
+                }
+                else {
+                    return null;
+                }
+            }
+            else if (((size.width + margin) <= this._size.width) && ((size.height + margin) <= this._size.height)) {
+                resNode = this;
+            }
+            return resNode;
+        };
+        PackedRect.prototype.splitNode = function (contentSize) {
+            var cs = PackedRect.TpsSize;
+            var margin = this._root._margin * 2;
+            cs.copyFrom(contentSize);
+            cs.width += margin;
+            cs.height += margin;
+            // If there's no contentSize but an initialSize it means this node were previously allocated, but freed, we need to create a _leftNode as subNode and use to allocate the space we need (and this node will have a right/bottom subNode for the space left as this._initialSize may be greater than contentSize)
+            if (!this._contentSize && this._initialSize) {
+                this._contentSize = cs.clone();
+                this._leftNode = new PackedRect(this._root, this, new BABYLON.Vector2(this._pos.x, this._pos.y), new BABYLON.Size(this._initialSize.width, this._initialSize.height));
+                return this._leftNode.splitNode(contentSize);
+            }
+            else {
+                this._contentSize = cs.clone();
+                this._initialSize = cs.clone();
+                if (cs.width !== this._size.width) {
+                    this._rightNode = new PackedRect(this._root, this, new BABYLON.Vector2(this._pos.x + cs.width, this._pos.y), new BABYLON.Size(this._size.width - cs.width, cs.height));
+                }
+                if (cs.height !== this._size.height) {
+                    this._bottomNode = new PackedRect(this._root, this, new BABYLON.Vector2(this._pos.x, this._pos.y + cs.height), new BABYLON.Size(this._size.width, this._size.height - cs.height));
+                }
+                return this;
+            }
+        };
+        PackedRect.prototype.attemptDefrag = function () {
+            if (!this.isUsed && this.isRecursiveFree) {
+                this.clearNode();
+                if (this._parent) {
+                    this._parent.attemptDefrag();
+                }
+            }
+        };
+        PackedRect.prototype.clearNode = function () {
+            this._initialSize = null;
+            this._rightNode = null;
+            this._bottomNode = null;
+        };
+        Object.defineProperty(PackedRect.prototype, "isRecursiveFree", {
+            get: function () {
+                return !this.contentSize && (!this._leftNode || this._leftNode.isRecursiveFree) && (!this._rightNode || this._rightNode.isRecursiveFree) && (!this._bottomNode || this._bottomNode.isRecursiveFree);
+            },
+            enumerable: true,
+            configurable: true
+        });
+        PackedRect.prototype.evalFreeSize = function (size) {
+            var levelSize = 0;
+            if (!this.isUsed) {
+                var margin = this._root._margin;
+                var is = this._initialSize;
+                if (is) {
+                    levelSize = is.surface - (is.width * margin) - (is.height * margin);
+                }
+                else {
+                    var size_1 = this._size;
+                    levelSize = size_1.surface - (size_1.width * margin) - (size_1.height * margin);
+                }
+            }
+            if (this._rightNode) {
+                levelSize += this._rightNode.evalFreeSize(0);
+            }
+            if (this._bottomNode) {
+                levelSize += this._bottomNode.evalFreeSize(0);
+            }
+            return levelSize + size;
+        };
+        return PackedRect;
+    }());
+    PackedRect.TpsSize = BABYLON.Size.Zero();
+    BABYLON.PackedRect = PackedRect;
+    /**
+     * The purpose of this class is to pack several Rectangles into a big map, while trying to fit everything as optimally as possible.
+     * This class is typically used to build lightmaps, sprite map or to pack several little textures into a big one.
+     * Note that this class allows allocated Rectangles to be freed: that is the map is dynamically maintained so you can add/remove rectangle based on their life-cycle.
+     * In case you need a margin around the allocated rect, specify the amount in the margin argument during construction.
+     * In such case you will have to rely on innerPositionToRef and innerSizeToRef calls to get the proper size
+     */
+    var RectPackingMap = (function (_super) {
+        __extends(RectPackingMap, _super);
+        /**
+         * Create an instance of the object with a dimension using the given size
+         * @param size The dimension of the rectangle that will contain all the sub ones.
+         * @param margin The margin (empty space) created (in pixels) around the allocated Rectangles
+         */
+        function RectPackingMap(size, margin) {
+            if (margin === void 0) { margin = 0; }
+            var _this = _super.call(this, null, null, BABYLON.Vector2.Zero(), size) || this;
+            _this._margin = margin;
+            _this._root = _this;
+            return _this;
+        }
+        /**
+         * Add a rectangle, finding the best location to store it into the map
+         * @param size the dimension of the rectangle to store
+         * @return the Node containing the rectangle information, or null if we couldn't find a free spot
+         */
+        RectPackingMap.prototype.addRect = function (size) {
+            var node = this.findAndSplitNode(size);
+            return node;
+        };
+        Object.defineProperty(RectPackingMap.prototype, "freeSpace", {
+            /**
+             * Return the current space free normalized between [0;1]
+             * @returns {}
+             */
+            get: function () {
+                var freeSize = 0;
+                freeSize = this.evalFreeSize(freeSize);
+                return freeSize / (this._size.width * this._size.height);
+            },
+            enumerable: true,
+            configurable: true
+        });
+        return RectPackingMap;
+    }(PackedRect));
+    BABYLON.RectPackingMap = RectPackingMap;
+})(BABYLON || (BABYLON = {}));
+
+//# sourceMappingURL=babylon.rectPackingMap.js.map
+
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+var BABYLON;
+(function (BABYLON) {
+    var MapTexture = (function (_super) {
+        __extends(MapTexture, _super);
+        function MapTexture(name, scene, size, samplingMode, useMipMap, margin) {
+            if (samplingMode === void 0) { samplingMode = BABYLON.Texture.TRILINEAR_SAMPLINGMODE; }
+            if (useMipMap === void 0) { useMipMap = false; }
+            if (margin === void 0) { margin = 0; }
+            var _this = _super.call(this, null, scene, !useMipMap, false, samplingMode) || this;
+            _this.name = name;
+            _this._size = size;
+            _this.wrapU = BABYLON.Texture.CLAMP_ADDRESSMODE;
+            _this.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
+            // Create the rectPackMap that will allocate portion of the texture
+            _this._rectPackingMap = new BABYLON.RectPackingMap(new BABYLON.Size(size.width, size.height), margin);
+            // Create the texture that will store the content
+            _this._texture = scene.getEngine().createRenderTargetTexture(size, { generateMipMaps: !_this.noMipmap, type: BABYLON.Engine.TEXTURETYPE_UNSIGNED_INT });
+            return _this;
+        }
+        /**
+         * Allocate a rectangle of a given size in the texture map
+         * @param size the size of the rectangle to allocation
+         * @return the PackedRect instance corresponding to the allocated rect or null is there was not enough space to allocate it.
+         */
+        MapTexture.prototype.allocateRect = function (size) {
+            return this._rectPackingMap.addRect(size);
+        };
+        /**
+         * Free a given rectangle from the texture map
+         * @param rectInfo the instance corresponding to the rect to free.
+         */
+        MapTexture.prototype.freeRect = function (rectInfo) {
+            if (rectInfo) {
+                rectInfo.freeContent();
+            }
+        };
+        Object.defineProperty(MapTexture.prototype, "freeSpace", {
+            /**
+             * Return the available space in the range of [O;1]. 0 being not space left at all, 1 being an empty texture map.
+             * This is the cumulated space, not the biggest available surface. Due to fragmentation you may not allocate a rect corresponding to this surface.
+             * @returns {}
+             */
+            get: function () {
+                return this._rectPackingMap.freeSpace;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        /**
+         * Bind the texture to the rendering engine to render in the zone of a given rectangle.
+         * Use this method when you want to render into the texture map with a clipspace set to the location and size of the given rect.
+         * Don't forget to call unbindTexture when you're done rendering
+         * @param rect the zone to render to
+         * @param clear true to clear the portion's color/depth data
+         */
+        MapTexture.prototype.bindTextureForRect = function (rect, clear) {
+            return this.bindTextureForPosSize(rect.pos, rect.contentSize, clear);
+        };
+        /**
+         * Bind the texture to the rendering engine to render in the zone of the given size at the given position.
+         * Use this method when you want to render into the texture map with a clipspace set to the location and size of the given rect.
+         * Don't forget to call unbindTexture when you're done rendering
+         * @param pos the position into the texture
+         * @param size the portion to fit the clip space to
+         * @param clear true to clear the portion's color/depth data
+         */
+        MapTexture.prototype.bindTextureForPosSize = function (pos, size, clear) {
+            var engine = this.getScene().getEngine();
+            engine.bindFramebuffer(this._texture);
+            this._replacedViewport = engine.setDirectViewport(pos.x, pos.y, size.width, size.height);
+            if (clear) {
+                // We only want to clear the part of the texture we're binding to, only the scissor can help us to achieve that
+                engine.scissorClear(pos.x, pos.y, size.width, size.height, new BABYLON.Color4(0, 0, 0, 0));
+            }
+        };
+        /**
+         * Unbind the texture map from the rendering engine.
+         * Call this method when you're done rendering. A previous call to bindTextureForRect has to be made.
+         * @param dumpForDebug if set to true the content of the texture map will be dumped to a picture file that will be sent to the internet browser.
+         */
+        MapTexture.prototype.unbindTexture = function (dumpForDebug) {
+            // Dump ?
+            if (dumpForDebug) {
+                BABYLON.Tools.DumpFramebuffer(this._size.width, this._size.height, this.getScene().getEngine());
+            }
+            var engine = this.getScene().getEngine();
+            if (this._replacedViewport) {
+                engine.setViewport(this._replacedViewport);
+                this._replacedViewport = null;
+            }
+            engine.unBindFramebuffer(this._texture);
+        };
+        Object.defineProperty(MapTexture.prototype, "canRescale", {
+            get: function () {
+                return false;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        // Note, I don't know what behavior this method should have: clone the underlying texture/rectPackingMap or just reference them?
+        // Anyway, there's not much point to use this method for this kind of texture I guess
+        MapTexture.prototype.clone = function () {
+            return null;
+        };
+        return MapTexture;
+    }(BABYLON.Texture));
+    BABYLON.MapTexture = MapTexture;
+})(BABYLON || (BABYLON = {}));
+
+//# sourceMappingURL=babylon.mapTexture.js.map
 
 var BABYLON;
 (function (BABYLON) {
@@ -5254,7 +5959,7 @@ var BABYLON;
                     m.boundPropertiesMask |= propId;
                     return new Array();
                 });
-                var bi = BABYLON.Tools.first(bindingInfos, function (cbi) { return cbi.binding === binding; });
+                var bi = BABYLON.Tools.First(bindingInfos, function (cbi) { return cbi.binding === binding; });
                 if (!bi) {
                     bindingInfos.push(new BindingInfo(binding, i, (i + 1) === properties.length));
                 }
@@ -5297,7 +6002,7 @@ var BABYLON;
             if ((mod.boundPropertiesMask & propertyID) !== 0) {
                 var bindingInfos = mod.boundProperties.get(propertyIDStr);
                 // Find the binding and remove it
-                var bi = BABYLON.Tools.first(bindingInfos, function (cbi) { return cbi.binding === binding; });
+                var bi = BABYLON.Tools.First(bindingInfos, function (cbi) { return cbi.binding === binding; });
                 if (bi) {
                     var bii = bindingInfos.indexOf(bi);
                     bindingInfos.splice(bii, 1);
@@ -5407,7 +6112,7 @@ var BABYLON;
                 if (!this._isFlagSet(SmartPropertyPrim_1.flagModelDirty) && this._modelKey) {
                     return this._modelKey;
                 }
-                var modelKey = "Class:" + BABYLON.Tools.getClassName(this) + ";";
+                var modelKey = "Class:" + BABYLON.Tools.GetClassName(this) + ";";
                 var propDic = this.propDic;
                 propDic.forEach(function (k, v) {
                     if (v.kind === Prim2DPropInfo.PROPKIND_MODEL) {
@@ -5425,7 +6130,7 @@ var BABYLON;
                         var value = "[null]";
                         if (propVal != null) {
                             if (v.typeLevelCompare) {
-                                value = BABYLON.Tools.getClassName(propVal);
+                                value = BABYLON.Tools.GetClassName(propVal);
                             }
                             else {
                                 // String Dictionaries' content are too complex, with use a Random GUID to make the model unique
@@ -10916,7 +11621,7 @@ var BABYLON;
                 InstanceClassInfo._CurCategories = joinCat;
                 var obj = this.beforeRefreshForLayoutConstruction(dataPart);
                 if (!this.refreshInstanceDataPart(dataPart)) {
-                    console.log("Layout construction for " + BABYLON.Tools.getClassName(this._instanceDataParts[0]) + " failed because refresh returned false");
+                    console.log("Layout construction for " + BABYLON.Tools.GetClassName(this._instanceDataParts[0]) + " failed because refresh returned false");
                 }
                 this.afterRefreshForLayoutConstruction(dataPart, obj);
                 this.isVisible = curVisible;
@@ -10927,7 +11632,7 @@ var BABYLON;
                             pd._zBiasOffset = v.instanceOffset.get(joinCat);
                         }
                         if (!v.size) {
-                            console.log("ERROR: Couldn't detect the size of the Property " + v.attributeName + " from type " + BABYLON.Tools.getClassName(cti.type) + ". Property is ignored.");
+                            console.log("ERROR: Couldn't detect the size of the Property " + v.attributeName + " from type " + BABYLON.Tools.GetClassName(cti.type) + ". Property is ignored.");
                         }
                         else {
                             size += v.size;
@@ -11128,7 +11833,7 @@ var BABYLON;
         RenderablePrim2D.prototype.getDataPartEffectInfo = function (dataPartId, vertexBufferAttributes, uniforms, useInstanced) {
             if (uniforms === void 0) { uniforms = null; }
             if (useInstanced === void 0) { useInstanced = null; }
-            var dataPart = BABYLON.Tools.first(this._instanceDataParts, function (i) { return i.id === dataPartId; });
+            var dataPart = BABYLON.Tools.First(this._instanceDataParts, function (i) { return i.id === dataPartId; });
             if (!dataPart) {
                 return null;
             }
@@ -11283,8 +11988,6 @@ var BABYLON;
     BABYLON.RenderablePrim2D = RenderablePrim2D;
     var RenderablePrim2D_1;
 })(BABYLON || (BABYLON = {}));
-
-//# sourceMappingURL=babylon.renderablePrim2d.js.map
 
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -11444,6 +12147,10 @@ var BABYLON;
             this._isTransparent = (this._border && this._border.isTransparent()) || (this._fill && this._fill.isTransparent()) || (this.actualOpacity < 1);
             if (this._isTransparent !== this._oldTransparent) {
                 this._oldTransparent = this._isTransparent;
+                if (!this._isTransparent && this._transparentPrimitiveInfo) {
+                    this.renderGroup._renderableData.removeTransparentPrimitiveInfo(this._transparentPrimitiveInfo);
+                    this._transparentPrimitiveInfo = null;
+                }
                 this._updateRenderMode();
             }
         };
@@ -11612,8 +12319,6 @@ var BABYLON;
     BABYLON.Shape2DInstanceData = Shape2DInstanceData;
     var Shape2D_1;
 })(BABYLON || (BABYLON = {}));
-
-//# sourceMappingURL=babylon.shape2d.js.map
 
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -12639,8 +13344,6 @@ var BABYLON;
     BABYLON.TransparentPrimitiveInfo = TransparentPrimitiveInfo;
     var Group2D_1;
 })(BABYLON || (BABYLON = {}));
-
-//# sourceMappingURL=babylon.group2d.js.map
 
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -17495,7 +18198,7 @@ var BABYLON;
                 }
                 else {
                     var _loop_1 = function (prev) {
-                        if (!BABYLON.Tools.first(this_1._actualIntersectionList, function (pii) { return pii.prim === prev.prim; })) {
+                        if (!BABYLON.Tools.First(this_1._actualIntersectionList, function (pii) { return pii.prim === prev.prim; })) {
                             this_1._primPointerInfo.updateRelatedTarget(prev.prim, prev.intersectionLocation);
                             this_1._bubbleNotifyPrimPointerObserver(prev.prim, BABYLON.PrimitivePointerInfo.PointerOut, null);
                         }
@@ -17507,7 +18210,7 @@ var BABYLON;
                         _loop_1(prev);
                     }
                     var _loop_2 = function (actual) {
-                        if (!BABYLON.Tools.first(this_2._previousIntersectionList, function (pii) { return pii.prim === actual.prim; })) {
+                        if (!BABYLON.Tools.First(this_2._previousIntersectionList, function (pii) { return pii.prim === actual.prim; })) {
                             this_2._primPointerInfo.updateRelatedTarget(actual.prim, actual.intersectionLocation);
                             this_2._bubbleNotifyPrimPointerObserver(actual.prim, BABYLON.PrimitivePointerInfo.PointerOver, null);
                         }
@@ -17545,7 +18248,7 @@ var BABYLON;
                 debug += "  ";
             }
             var pii = this._primPointerInfo;
-            debug += "[RID:" + this.scene.getRenderId() + "] [" + prim.hierarchyDepth + "] event:" + BABYLON.PrimitivePointerInfo.getEventTypeName(mask) + ", id: " + prim.id + " (" + BABYLON.Tools.getClassName(prim) + "), primPos: " + pii.primitivePointerPos.toString() + ", canvasPos: " + pii.canvasPointerPos.toString() + ", relatedTarget: " + pii.relatedTarget.id;
+            debug += "[RID:" + this.scene.getRenderId() + "] [" + prim.hierarchyDepth + "] event:" + BABYLON.PrimitivePointerInfo.getEventTypeName(mask) + ", id: " + prim.id + " (" + BABYLON.Tools.GetClassName(prim) + "), primPos: " + pii.primitivePointerPos.toString() + ", canvasPos: " + pii.canvasPointerPos.toString() + ", relatedTarget: " + pii.relatedTarget.id;
             console.log(debug);
         };
         Canvas2D.prototype._bubbleNotifyPrimPointerObserver = function (prim, mask, eventData) {
@@ -19493,7 +20196,7 @@ var BABYLON;
             if (!this._renderingTemplate) {
                 this._assignTemplate(this._renderingTemplateName);
             }
-            this._visualPlaceholder = new BABYLON.Group2D({ parent: parentPrim, id: "GUI " + BABYLON.Tools.getClassName(this) + " RootGroup of " + this.id });
+            this._visualPlaceholder = new BABYLON.Group2D({ parent: parentPrim, id: "GUI " + BABYLON.Tools.GetClassName(this) + " RootGroup of " + this.id });
             var p = this._visualPlaceholder;
             p.addExternalData("_GUIOwnerElement_", this);
             p.dataSource = this;
