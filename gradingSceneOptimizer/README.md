@@ -326,7 +326,7 @@ We need to create a "background benchmark scene" to calculate the score.
 
 * Scene for CPU side :
   - Increase nbr of particules (instances & animations)
-  - Increase nbr of sphere (clones & transform animations)
+  - Increase nbr of spheres (cloned & transform animations)
   - Rotate camera around scene.
 
 ```javascript
@@ -344,7 +344,7 @@ if (average_Fps < 30) { // 30 will be the ref for benchmark
 
 * Scene for GPU side :
   - Increase nbr of particules. (instances & animations)
-  - Increase nbr of sphere (clones & skeleton animations).
+  - Increase nbr of spheres (instanced, animated skeletons & animated shaders).
   - Add postProcesses to scene. (FXAA level + DEPTH)
   - Rotate camera around scene.
 
@@ -359,6 +359,22 @@ if (average_Fps < 30) { // 30 will be the ref for benchmark
 }
 
 ```
+
+* Result :
+```javascript
+
+return benchMark = {
+  'CPUScore' : CPUResult,
+  'GPUScore' : GPUResult,
+  'score' :
+}
+
+```
+
+* Save it in localStorage
+  - To decrease render time.
+  - To share it with all Babylon project ?
+
 
 
 ### Complete optimization parameters :
