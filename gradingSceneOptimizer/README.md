@@ -366,7 +366,7 @@ if (average_Fps < 30) { // 30 will be the ref for benchmark
 return benchMark = {
   'CPUScore' : CPUResult,
   'GPUScore' : GPUResult,
-  'score' :
+  'HardwareScore' : average between CPUResult & GPUResult
 }
 
 ```
