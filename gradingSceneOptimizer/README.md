@@ -322,10 +322,51 @@ Purpose : automatically minimize draw calls to increase performance.
 Purpose : Increase the accuracy of devices and hardwares detection to know which grade is the most optimized for your device.
 At the moment, it's you who must to indicate which grade is the most optimized to start.
 
+We need to create a "background benchmark scene" to calculate the score.
+• Scene for CPU side :
+  - Increase nbr of particules (instances test & animations)
+  - Increase nbr of sphere (clones & skeleton animations)
+  - Rotate camera around scene.
+
+```javascript
+
+if (average_Fps < 30) { // 30 will be the ref for benchmark
+
+  // 1. stop the CPU benchmark scene
+  // 2. return benchmark result : nbr of particules + nbr of sphere
+  return nbr_Particules + nbr_Sphere;
+
+}
+
+```
+
+
+• Scene for GPU side :
+  - Increase nbr of particules. (instances & animations)
+  - Increase nbr of sphere (clones & skeleton animations).
+  - Add basic postProcess render pipeline to scene. (FXAA level + DEPTH)
+  - Rotate camera around scene.
+
+```javascript
+
+if (average_Fps < 30) { // 30 will be the ref for benchmark
+
+  // 1. stop the GPU benchmark scene
+  // 2. return benchmark result : nbr of particules + nbr of sphere
+  return (nbr_Particules + nbr_Sphere);
+
+}
+
+```
+
 
 ### Complete optimization parameters :
 Purpose : Propose more parameters to get more performance.
 
+## Roadmap :
+  - Finish the alpha version and test it on Playground
+  - Merge it with Babylon and deprecated the older optimizer
+  - Talk about benchMark feature and create it.
 
 ## Version :
 alpha 0.0.1
