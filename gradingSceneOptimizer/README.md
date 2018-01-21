@@ -87,10 +87,10 @@ var GSO = new BABYLON.GradingSceneOptimizer(engine, 48, 1000, true);
 // Run again FPS evaluation every 30 seconds
 GSO.autoRunInterval = 30000;
 
-// FUTURE FEATURE : Active occlusion culling to get more performance
+// TODO : FUTURE FEATURE : Active occlusion culling to get more performance
 GSO.occlusionCullingEnabled = true;
 
-// FUTURE FEATURE : Try to minimize the number of draw call of CPU to get more performance
+// TODO : FUTURE FEATURE : Try to minimize the number of draw call of CPU to get more performance
 //    * based on distance of view in optimizations parameters
 //    * add a radius detection around the meshes (useful for big meshes)
 //    * add a perimeter to preserve CPU performance to set visible to true on a group and not one by one ...
@@ -98,7 +98,7 @@ GSO.occlusionCullingEnabled = true;
 //    CAMERA === distance ===> (--- perimeter ---(<- radius detection -> MESH <- radius detection ->)--- perimeter ---)
 GSO.minimizeDrawCall = true;
 
-// FUTURE FEATURE : optimize picking, collision and rendering selection for big scene.
+// TODO : FUTURE FEATURE : optimize picking, collision and rendering selection for big scene.
 GSO.useOctree = true;
 
 ```
@@ -228,14 +228,14 @@ var ultraGrade = new BABYLON.Grade('ultra', BABYLON.PresetGradeOptimization.ultr
 // Custom grade optimization parameters :
 var customOptimization = {
 
-    maxRenderFPS : 30, // FUTURE FEATURE : minimize max fps to get more performance.
+    maxRenderFPS : 30, // TODO : FUTURE FEATURE : minimize max fps to get more performance.
 
     shadowsEnabled : true,
     particlesEnabled : true,
     postProcessesEnabled : true,
     lensFlaresEnabled : true,
     renderTargetsEnabled : true,
-    meshes : { // FUTURE FEATURE : reduce nbr of polygon with LOD system.
+    meshes : { // TODO : FUTURE FEATURE : reduce nbr of polygon with LOD system.
       LOD : []
     }
     textures : {
@@ -249,21 +249,30 @@ var customOptimization = {
         minEmitRate : 100 // if (original emitRate * scale) < minEmitRate, emitRate = minEmitRate.
     },
     materials : {
-        bumpEnabled : true,
-        fresnelEnabled : true
+        diffuseTextureEnabled : true;
+        opacityTextureEnabled : true;
+        reflectionTextureEnabled : true;
+        emissiveTextureEnabled : true;
+        specularTextureEnabled : true;
+        ambientTextureEnabled : true;
+        bumpTextureEnabled : true;
+        lightmapTextureEnabled : true;
+        refractionTextureEnabled : true;
+        colorGradingTextureEnabled : true;
+        fresnelEnabled? : boolean;
     },
     shadows : {
-        refreshRate : 0, // FUTURE FEATURE : Force to calculate once all shadows
+        refreshRate : 0, // TODO : FUTURE FEATURE : Force to calculate once all shadows
         type : 'useBlurCloseExponentialShadowMap',
         size : 512
     },
     renderSize : {
         maxWidth : 2560,
         maxHeight : 2560,
-        devicePixelRatio : 2 // screen with 200% pixel density
+        hardwareScaling : 0.5 // screen with 200% pixel density
     },
     camera : {
-      viewDistance : 200 // FUTURE FEATURE
+      viewDistance : 200 // TODO : FUTURE FEATURE
     }
     devices : { // enable or disable grade on specifics devices and hardware.
         smartPhoneAllowed : false,
@@ -273,8 +282,8 @@ var customOptimization = {
         exceptionsAllowed : ['xbox'] // if xbox found in userAgent, this grade is enabled.
     },
     hardwares {
-        onlyDedicatedGPU : true, // FUTURE FEATURE : GPU recommended for this grade;
-        minBenchmarkScore : 10000 // FUTURE FEATURE : benchmark recommended for this grade;
+        onlyDedicatedGPU : true, // TODO : FUTURE FEATURE : GPU recommended for this grade;
+        minBenchmarkScore : 10000 // TODO : FUTURE FEATURE : benchmark recommended for this grade;
     }
 
 };
