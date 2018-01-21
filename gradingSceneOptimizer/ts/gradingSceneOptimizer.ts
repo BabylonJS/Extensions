@@ -36,7 +36,9 @@ module BABYLON {
                   minSize : 128
               },
               materials : {
-                  bumpEnabled : false,
+                  reflectionTextureEnabled : false,
+                  refractionTextureEnabled : false,
+                  bumpTextureEnabled : false,
                   fresnelEnabled : false
               },
               renderSize : {
@@ -69,7 +71,9 @@ module BABYLON {
                   minSize : 128
               },
               materials : {
-                  bumpEnabled : true,
+                  reflectionTextureEnabled : false,
+                  refractionTextureEnabled : false,
+                  bumpTextureEnabled : true,
                   fresnelEnabled : false
               },
               renderSize : {
@@ -101,7 +105,9 @@ module BABYLON {
                   minSize : 256
               },
               materials : {
-                  bumpEnabled : true,
+                  reflectionTextureEnabled : true,
+                  refractionTextureEnabled : false,
+                  bumpTextureEnabled : true,
                   fresnelEnabled : false
               },
               shadows : {
@@ -142,7 +148,7 @@ module BABYLON {
                   minEmitRate : 100
               },
               materials : {
-                  bumpEnabled : true,
+                  bumpTextureEnabled : true,
                   fresnelEnabled : true
               },
               shadows : {
@@ -183,12 +189,12 @@ module BABYLON {
                   minEmitRate : 100
               },
               materials : {
-                  bumpEnabled : true,
+                  bumpTextureEnabled : true,
                   fresnelEnabled : true
               },
               shadows : {
-                  type : 'useBlurCloseExponentialShadowMap',
-                  size : 256
+                  type : 'usePoissonSampling',
+                  size : 1024
               },
               renderSize : {
                   maxWidth : 2560,
@@ -224,12 +230,12 @@ module BABYLON {
                   minEmitRate : 100
               },
               materials : {
-                  bumpEnabled : true,
+                  bumpTextureEnabled : true,
                   fresnelEnabled : true
               },
               shadows : {
-                  type : 'useBlurCloseExponentialShadowMap',
-                  size : 512
+                  type : 'usePoissonSampling',
+                  size : 2048
               },
               renderSize : {
                   maxWidth : 2560,
@@ -262,13 +268,59 @@ module BABYLON {
       // for materials
       public static materials(scene : Scene, params: IParamsMaterialsGradeOptimization) {
 
-          // verify bump
-          if (params.bumpEnabled != undefined) {
-              BABYLON.StandardMaterial.BumpTextureEnabled = params.bumpEnabled;
+          // render ambiant textures ?
+          if (params.ambientTextureEnabled != undefined) {
+              BABYLON.StandardMaterial.AmbientTextureEnabled = params.ambientTextureEnabled;
           }
 
+          // render ambiant textures ?
+          if (params.bumpTextureEnabled != undefined) {
+              BABYLON.StandardMaterial.BumpTextureEnabled = params.bumpTextureEnabled;
+          }
+
+          // render color grading textures ?
+          if (params.colorGradingTextureEnabled != undefined) {
+              BABYLON.StandardMaterial.ColorGradingTextureEnabled = params.colorGradingTextureEnabled;
+          }
+
+          // render diffuse textures ?
+          if (params.diffuseTextureEnabled != undefined) {
+              BABYLON.StandardMaterial.DiffuseTextureEnabled = params.diffuseTextureEnabled;
+          }
+
+          // render emissive textures ?
+          if (params.emissiveTextureEnabled != undefined) {
+              BABYLON.StandardMaterial.EmissiveTextureEnabled = params.emissiveTextureEnabled;
+          }
+
+          // render fresnel textures ?
           if (params.fresnelEnabled != undefined) {
-              BABYLON.StandardMaterial.FresnelEnabled = params.bumpEnabled;
+              BABYLON.StandardMaterial.FresnelEnabled = params.fresnelEnabled;
+          }
+
+          // render light map textures ?
+          if (params.lightmapTextureEnabled != undefined) {
+              BABYLON.StandardMaterial.LightmapTextureEnabled = params.lightmapTextureEnabled;
+          }
+
+          // render opacity textures ?
+          if (params.opacityTextureEnabled != undefined) {
+              BABYLON.StandardMaterial.OpacityTextureEnabled = params.opacityTextureEnabled;
+          }
+
+          // render reflection textures ?
+          if (params.reflectionTextureEnabled != undefined) {
+              BABYLON.StandardMaterial.ReflectionTextureEnabled = params.reflectionTextureEnabled;
+          }
+
+          // render refraction textures ?
+          if (params.refractionTextureEnabled != undefined) {
+              BABYLON.StandardMaterial.RefractionTextureEnabled = params.refractionTextureEnabled;
+          }
+
+          // allow specular textures ?
+          if (params.specularTextureEnabled != undefined) {
+              BABYLON.StandardMaterial.SpecularTextureEnabled = params.specularTextureEnabled;
           }
 
       }
@@ -562,7 +614,6 @@ module BABYLON {
 
               // wait load end
               else if (texture.onLoadObservable){
-                  BABYLON.Tools.Log(texture);
                   // add new observable
                   texture.onLoadObservable.add((texture) => {
                       resizeChannel(texture, channelName);
@@ -751,6 +802,17 @@ module BABYLON {
       // set mesh.isVisible to false
       public minimizeDrawCall: boolean = true; // TODO ( !!! FUTURE FEATURE !!!)
 
+
+      // device type
+      public deviceType: string | 'smartPhone' | 'tablet' | 'noteBook' | 'computer' = BABYLON.Hardware.devicesDetection();
+
+      // is mobile ?
+      public isMobile: boolean = BABYLON.Hardware.isMobile();
+
+      // is dedicated GPU ?
+      public isDedicatedGPU : boolean;
+
+
       // to know on wich grade we are.
       private _currentGrade: Grade;
 
@@ -774,14 +836,7 @@ module BABYLON {
       // resize event function
       private _resizeEvent: any;
 
-      // device type
-      private _deviceType: string | 'smartPhone' | 'tablet' | 'noteBook' | 'computer' = BABYLON.Hardware.devicesDetection();
 
-      // is mobile ?
-      private _isMobile: boolean = BABYLON.Hardware.isMobile();
-
-      // is dedicated GPU ?
-      private _isDedicatedGPU : boolean;
 
       /**
        * @param engine : Babylon engine
@@ -792,7 +847,7 @@ module BABYLON {
       constructor (engine: Engine, public fpsToReach: number = 48, public evaluationDuration: number = 1000, public autoReEval: boolean = true) {
 
           // Detect dedicated GPU
-          this._isDedicatedGPU = BABYLON.Hardware.isDedicatedGPU(engine);
+          this.isDedicatedGPU = BABYLON.Hardware.isDedicatedGPU(engine);
 
           // add resize event
           if (this._resizeEvent) {
@@ -895,7 +950,7 @@ module BABYLON {
               currentPriority = this._currentGradePriority;
               I = currentPriority;
 
-              BABYLON.Tools.Log('   > Hardware evaluation : running ...');
+              BABYLON.Tools.Log('Optimizer : Hardware evaluation : running ...');
 
               // force to wait minimum 1 sec to get fps (only for initialisation)
               if (!isInit && evalDuration < timeToWait) {
@@ -913,7 +968,7 @@ module BABYLON {
 
                   fps = engine.getFps();
 
-                  BABYLON.Tools.Log('     > result : ' + fps + ' fps');
+                  BABYLON.Tools.Log('     > Optimizer : result : ' + fps + ' fps');
 
                   // check fps to reach to upgrade
                   if (fps > this.fpsToReach) {
@@ -1005,7 +1060,7 @@ module BABYLON {
 
           var grades = this.grades,
               devices = grade.devices,
-              deviceType = this._deviceType,
+              deviceType = this.deviceType,
 
 
               isOnAllowedDevice = (params: IParamsDevicesGradeOptimization) : boolean => {
@@ -1076,11 +1131,11 @@ module BABYLON {
 
           // if allready on this grade
           if (grade === this._currentGrade) {
-              BABYLON.Tools.Log('Grade ' + grade.name + ': allready on it.');
+              BABYLON.Tools.Log('Optimizer : Grade ' + grade.name + ': allready on it.');
               return;
           }
 
-          BABYLON.Tools.Log('UPDATE scene by grade : ' + grade.name);
+          BABYLON.Tools.Log('Optimizer : UPDATE scene by grade : ' + grade.name);
 
           var grades = this.grades,
               toPriority = grade.priority,
@@ -1161,7 +1216,7 @@ module BABYLON {
               gradeI = grades[I],
               upGradingTask = gradeI.upGradingTask;
 
-          BABYLON.Tools.Log(' • Upgrade scene to ' + gradeI.name + " grade.");
+          BABYLON.Tools.Log('Optimizer : Upgrade scene to ' + gradeI.name + " grade.");
 
           if (upGradingTask) {
               upGradingTask();
@@ -1199,8 +1254,7 @@ module BABYLON {
               upGradingTask = gradeI.upGradingTask;
 
 
-          //BABYLON.Tools.Log(' • Downgrade scene to ' + gradeI.name + " grade.");
-          BABYLON.Tools.Log(' • Downgrade scene to ' + gradeI.name + " grade.")
+          BABYLON.Tools.Log('Optimizer :  Downgrade scene to ' + gradeI.name + " grade.")
 
           if (downGradingTask) {
               downGradingTask();
@@ -1282,61 +1336,6 @@ module BABYLON {
           if (grade.particulesEnabled != undefined) {
               BABYLON.Optimize.particules(scene, grade.particulesEnabled, grade.particules);
           }
-
-      }
-
-      // add ui to inspect (demo)
-      public addUI (scene: Scene) {
-
-        var ul = document.createElement('ul'),
-            style = document.createElement('style'),
-            fragment = document.createDocumentFragment(), // "virtual" dom
-            grades = this.grades;
-
-        var addEvent = (li, grade) => {
-
-            li.addEventListener('click', () => {
-                this.updateSceneByGrade(scene, grade);
-            });
-        }
-
-        var createLi = (text) => {
-            var li = document.createElement('li');
-                li.textContent = text;
-            return li;
-        }
-
-
-        // add css rules
-        var css = '#grades {z-index: 1;position: fixed;background-color: white;padding: 20px; top:60px; right:0; list-style: none;}#grades li {font-family: sans-serif;border-bottom: 1px solid black;padding: 10px 0 10px 0;cursor: pointer;}#grades li:hover {color: gray;}'
-        style.innerText = css;
-        document.getElementsByTagName('head')[0].appendChild(style);
-        // add container
-        ul.id = 'grades';
-        fragment.appendChild(ul);
-
-        // create auto li
-        var li = createLi('auto');
-        ul.appendChild(li);
-
-        li.addEventListener('click', () => {
-            this.startAutoEval(scene);
-        });
-
-        // create grade li
-        for (let i = 0; i < grades.length; i++) {
-            var gradeI = grades[i];
-
-            li = createLi(gradeI.name);
-
-            addEvent(li, gradeI);
-            ul.appendChild(li);
-
-        }
-
-        // add to dom
-        //parentNode.appendChild(fragment);
-        document.body.appendChild(fragment)
 
       }
 
@@ -1492,7 +1491,16 @@ module BABYLON {
 
   // interface material grade parameter
   export interface IParamsMaterialsGradeOptimization {
-      bumpEnabled? : boolean;
+      diffuseTextureEnabled? : boolean;
+      opacityTextureEnabled? : boolean;
+      reflectionTextureEnabled? : boolean;
+      emissiveTextureEnabled? : boolean;
+      specularTextureEnabled? : boolean;
+      ambientTextureEnabled? : boolean;
+      bumpTextureEnabled? : boolean;
+      lightmapTextureEnabled? : boolean;
+      refractionTextureEnabled? : boolean;
+      colorGradingTextureEnabled? : boolean;
       fresnelEnabled? : boolean;
   }
 

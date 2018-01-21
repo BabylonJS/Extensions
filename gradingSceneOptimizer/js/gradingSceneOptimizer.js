@@ -35,7 +35,9 @@ var BABYLON;
                     minSize: 128
                 },
                 materials: {
-                    bumpEnabled: false,
+                    reflectionTextureEnabled: false,
+                    refractionTextureEnabled: false,
+                    bumpTextureEnabled: false,
                     fresnelEnabled: false
                 },
                 renderSize: {
@@ -66,7 +68,9 @@ var BABYLON;
                     minSize: 128
                 },
                 materials: {
-                    bumpEnabled: true,
+                    reflectionTextureEnabled: false,
+                    refractionTextureEnabled: false,
+                    bumpTextureEnabled: true,
                     fresnelEnabled: false
                 },
                 renderSize: {
@@ -97,7 +101,9 @@ var BABYLON;
                     minSize: 256
                 },
                 materials: {
-                    bumpEnabled: true,
+                    reflectionTextureEnabled: true,
+                    refractionTextureEnabled: false,
+                    bumpTextureEnabled: true,
                     fresnelEnabled: false
                 },
                 shadows: {
@@ -137,7 +143,7 @@ var BABYLON;
                     minEmitRate: 100
                 },
                 materials: {
-                    bumpEnabled: true,
+                    bumpTextureEnabled: true,
                     fresnelEnabled: true
                 },
                 shadows: {
@@ -177,12 +183,12 @@ var BABYLON;
                     minEmitRate: 100
                 },
                 materials: {
-                    bumpEnabled: true,
+                    bumpTextureEnabled: true,
                     fresnelEnabled: true
                 },
                 shadows: {
-                    type: 'useBlurCloseExponentialShadowMap',
-                    size: 256
+                    type: 'usePoissonSampling',
+                    size: 1024
                 },
                 renderSize: {
                     maxWidth: 2560,
@@ -217,12 +223,12 @@ var BABYLON;
                     minEmitRate: 100
                 },
                 materials: {
-                    bumpEnabled: true,
+                    bumpTextureEnabled: true,
                     fresnelEnabled: true
                 },
                 shadows: {
-                    type: 'useBlurCloseExponentialShadowMap',
-                    size: 512
+                    type: 'usePoissonSampling',
+                    size: 2048
                 },
                 renderSize: {
                     maxWidth: 2560,
@@ -250,12 +256,49 @@ var BABYLON;
         }
         // for materials
         Optimize.materials = function (scene, params) {
-            // verify bump
-            if (params.bumpEnabled != undefined) {
-                BABYLON.StandardMaterial.BumpTextureEnabled = params.bumpEnabled;
+            // render ambiant textures ?
+            if (params.ambientTextureEnabled != undefined) {
+                BABYLON.StandardMaterial.AmbientTextureEnabled = params.ambientTextureEnabled;
             }
+            // render ambiant textures ?
+            if (params.bumpTextureEnabled != undefined) {
+                BABYLON.StandardMaterial.BumpTextureEnabled = params.bumpTextureEnabled;
+            }
+            // render color grading textures ?
+            if (params.colorGradingTextureEnabled != undefined) {
+                BABYLON.StandardMaterial.ColorGradingTextureEnabled = params.colorGradingTextureEnabled;
+            }
+            // render diffuse textures ?
+            if (params.diffuseTextureEnabled != undefined) {
+                BABYLON.StandardMaterial.DiffuseTextureEnabled = params.diffuseTextureEnabled;
+            }
+            // render emissive textures ?
+            if (params.emissiveTextureEnabled != undefined) {
+                BABYLON.StandardMaterial.EmissiveTextureEnabled = params.emissiveTextureEnabled;
+            }
+            // render fresnel textures ?
             if (params.fresnelEnabled != undefined) {
-                BABYLON.StandardMaterial.FresnelEnabled = params.bumpEnabled;
+                BABYLON.StandardMaterial.FresnelEnabled = params.fresnelEnabled;
+            }
+            // render light map textures ?
+            if (params.lightmapTextureEnabled != undefined) {
+                BABYLON.StandardMaterial.LightmapTextureEnabled = params.lightmapTextureEnabled;
+            }
+            // render opacity textures ?
+            if (params.opacityTextureEnabled != undefined) {
+                BABYLON.StandardMaterial.OpacityTextureEnabled = params.opacityTextureEnabled;
+            }
+            // render reflection textures ?
+            if (params.reflectionTextureEnabled != undefined) {
+                BABYLON.StandardMaterial.ReflectionTextureEnabled = params.reflectionTextureEnabled;
+            }
+            // render refraction textures ?
+            if (params.refractionTextureEnabled != undefined) {
+                BABYLON.StandardMaterial.RefractionTextureEnabled = params.refractionTextureEnabled;
+            }
+            // allow specular textures ?
+            if (params.specularTextureEnabled != undefined) {
+                BABYLON.StandardMaterial.SpecularTextureEnabled = params.specularTextureEnabled;
             }
         };
         // for postProcesses
@@ -446,7 +489,6 @@ var BABYLON;
                     resizeChannel(texture, channelName);
                 }
                 else if (texture.onLoadObservable) {
-                    BABYLON.Tools.Log(texture);
                     // add new observable
                     texture.onLoadObservable.add(function (texture) {
                         resizeChannel(texture, channelName);
@@ -595,18 +637,18 @@ var BABYLON;
             //
             // set mesh.isVisible to false
             this.minimizeDrawCall = true; // TODO ( !!! FUTURE FEATURE !!!)
+            // device type
+            this.deviceType = BABYLON.Hardware.devicesDetection();
+            // is mobile ?
+            this.isMobile = BABYLON.Hardware.isMobile();
             // current priority
             this._currentGradePriority = -1;
             // to know the step of evaluation :
             // 1. try to upgrading.
             // 2. if fps not reached, dowgrading.
             this._isUpGradingStep = true;
-            // device type
-            this._deviceType = BABYLON.Hardware.devicesDetection();
-            // is mobile ?
-            this._isMobile = BABYLON.Hardware.isMobile();
             // Detect dedicated GPU
-            this._isDedicatedGPU = BABYLON.Hardware.isDedicatedGPU(engine);
+            this.isDedicatedGPU = BABYLON.Hardware.isDedicatedGPU(engine);
             // add resize event
             if (this._resizeEvent) {
                 window.removeEventListener("resize", this._resizeEvent);
@@ -674,7 +716,7 @@ var BABYLON;
             var autoEvaluate = function () {
                 currentPriority = _this._currentGradePriority;
                 I = currentPriority;
-                BABYLON.Tools.Log('   > Hardware evaluation : running ...');
+                BABYLON.Tools.Log('Optimizer : Hardware evaluation : running ...');
                 // force to wait minimum 1 sec to get fps (only for initialisation)
                 if (!isInit && evalDuration < timeToWait) {
                     isInit = true;
@@ -686,7 +728,7 @@ var BABYLON;
                 // start setTimeOut
                 _this._evaluationTimeOutId = setTimeout(function () {
                     fps = engine.getFps();
-                    BABYLON.Tools.Log('     > result : ' + fps + ' fps');
+                    BABYLON.Tools.Log('     > Optimizer : result : ' + fps + ' fps');
                     // check fps to reach to upgrade
                     if (fps > _this.fpsToReach) {
                         I++;
@@ -742,7 +784,7 @@ var BABYLON;
         };
         // add existing grade
         GradingSceneOptimizer.prototype.addGrade = function (grade) {
-            var grades = this.grades, devices = grade.devices, deviceType = this._deviceType, isOnAllowedDevice = function (params) {
+            var grades = this.grades, devices = grade.devices, deviceType = this.deviceType, isOnAllowedDevice = function (params) {
                 var exceptions = params.exceptionsAllowed, phoneAllowed = params.smartPhoneAllowed, tabletAllowed = params.tabletAllowed, noteBookAllowed = params.noteBookAllowed, computerAllowed = params.computerAllowed;
                 // check if exception
                 if (exceptions && exceptions.length > 0 && BABYLON.Hardware.isDevices(exceptions)) {
@@ -791,10 +833,10 @@ var BABYLON;
             this.stopAutoEval();
             // if allready on this grade
             if (grade === this._currentGrade) {
-                BABYLON.Tools.Log('Grade ' + grade.name + ': allready on it.');
+                BABYLON.Tools.Log('Optimizer : Grade ' + grade.name + ': allready on it.');
                 return;
             }
-            BABYLON.Tools.Log('UPDATE scene by grade : ' + grade.name);
+            BABYLON.Tools.Log('Optimizer : UPDATE scene by grade : ' + grade.name);
             var grades = this.grades, toPriority = grade.priority, gradeToUp = grade, currentGrade, currentPriority, downGradeTask, upGradingTask;
             if (this._currentGrade) {
                 currentGrade = this._currentGrade;
@@ -841,7 +883,7 @@ var BABYLON;
         // force upgrade by 1
         GradingSceneOptimizer.prototype.upgrade = function (scene, onSuccess) {
             var I = this._currentGradePriority + 1, grades = this.grades, gradesL = grades.length, gradeI = grades[I], upGradingTask = gradeI.upGradingTask;
-            BABYLON.Tools.Log(' • Upgrade scene to ' + gradeI.name + " grade.");
+            BABYLON.Tools.Log('Optimizer : Upgrade scene to ' + gradeI.name + " grade.");
             if (upGradingTask) {
                 upGradingTask();
             }
@@ -863,8 +905,7 @@ var BABYLON;
             gradeToDowngrade = grades[currentPriority], downGradingTask = gradeToDowngrade.downGradingTask, 
             // upgrading options
             I = currentPriority - 1, gradeI = grades[I], upGradingTask = gradeI.upGradingTask;
-            //BABYLON.Tools.Log(' • Downgrade scene to ' + gradeI.name + " grade.");
-            BABYLON.Tools.Log(' • Downgrade scene to ' + gradeI.name + " grade.");
+            BABYLON.Tools.Log('Optimizer :  Downgrade scene to ' + gradeI.name + " grade.");
             if (downGradingTask) {
                 downGradingTask();
             }
@@ -925,45 +966,6 @@ var BABYLON;
             if (grade.particulesEnabled != undefined) {
                 BABYLON.Optimize.particules(scene, grade.particulesEnabled, grade.particules);
             }
-        };
-        // add ui to inspect (demo)
-        GradingSceneOptimizer.prototype.addUI = function (scene) {
-            var _this = this;
-            var ul = document.createElement('ul'), style = document.createElement('style'), fragment = document.createDocumentFragment(), // "virtual" dom
-            grades = this.grades;
-            var addEvent = function (li, grade) {
-                li.addEventListener('click', function () {
-                    _this.updateSceneByGrade(scene, grade);
-                });
-            };
-            var createLi = function (text) {
-                var li = document.createElement('li');
-                li.textContent = text;
-                return li;
-            };
-            // add css rules
-            var css = '#grades {z-index: 1;position: fixed;background-color: white;padding: 20px; top:60px; right:0; list-style: none;}#grades li {font-family: sans-serif;border-bottom: 1px solid black;padding: 10px 0 10px 0;cursor: pointer;}#grades li:hover {color: gray;}';
-            style.innerText = css;
-            document.getElementsByTagName('head')[0].appendChild(style);
-            // add container
-            ul.id = 'grades';
-            fragment.appendChild(ul);
-            // create auto li
-            var li = createLi('auto');
-            ul.appendChild(li);
-            li.addEventListener('click', function () {
-                _this.startAutoEval(scene);
-            });
-            // create grade li
-            for (var i = 0; i < grades.length; i++) {
-                var gradeI = grades[i];
-                li = createLi(gradeI.name);
-                addEvent(li, gradeI);
-                ul.appendChild(li);
-            }
-            // add to dom
-            //parentNode.appendChild(fragment);
-            document.body.appendChild(fragment);
         };
         return GradingSceneOptimizer;
     }());
