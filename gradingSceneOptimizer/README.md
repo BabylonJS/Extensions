@@ -322,7 +322,7 @@ Purpose : automatically minimize draw calls to increase performance.
 Purpose : Increase the accuracy of devices and hardwares detection to know which grade is the most optimized for your device.
 At the moment, it's you who must to indicate which grade is the most optimized to start.
 
-We need to create a "background benchmark scene" to calculate the score.
+We need to create a "background benchmark scene" to calculate the score. ( Or get a json list of benchMark reference for gpu and cpu models)
 
 * Scene for CPU side :
   - Increase nbr of particules (instances & animations)
