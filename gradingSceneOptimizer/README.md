@@ -323,7 +323,8 @@ Purpose : Increase the accuracy of devices and hardwares detection to know which
 At the moment, it's you who must to indicate which grade is the most optimized to start.
 
 We need to create a "background benchmark scene" to calculate the score.
-• Scene for CPU side :
+
+* Scene for CPU side :
   - Increase nbr of particules (instances test & animations)
   - Increase nbr of sphere (clones & skeleton animations)
   - Rotate camera around scene.
@@ -341,7 +342,7 @@ if (average_Fps < 30) { // 30 will be the ref for benchmark
 ```
 
 
-• Scene for GPU side :
+* Scene for GPU side :
   - Increase nbr of particules. (instances & animations)
   - Increase nbr of sphere (clones & skeleton animations).
   - Add basic postProcess render pipeline to scene. (FXAA level + DEPTH)
