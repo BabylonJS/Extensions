@@ -325,8 +325,8 @@ At the moment, it's you who must to indicate which grade is the most optimized t
 We need to create a "background benchmark scene" to calculate the score.
 
 * Scene for CPU side :
-  - Increase nbr of particules (instances test & animations)
-  - Increase nbr of sphere (clones & skeleton animations)
+  - Increase nbr of particules (instances & animations)
+  - Increase nbr of sphere (clones & transform animations)
   - Rotate camera around scene.
 
 ```javascript
@@ -345,7 +345,7 @@ if (average_Fps < 30) { // 30 will be the ref for benchmark
 * Scene for GPU side :
   - Increase nbr of particules. (instances & animations)
   - Increase nbr of sphere (clones & skeleton animations).
-  - Add basic postProcess render pipeline to scene. (FXAA level + DEPTH)
+  - Add postProcesses to scene. (FXAA level + DEPTH)
   - Rotate camera around scene.
 
 ```javascript
