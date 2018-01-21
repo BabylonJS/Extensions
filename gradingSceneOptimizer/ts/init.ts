@@ -254,8 +254,6 @@ window.onload=function() {
   // based on view ditance in optimizations parameters
   GSO.minimizeDrawCall = true; // TODO : FEATURE
 
-  // add ui to inspect
-  GSO.addUI(scene);
 
   // run GradingSceneOptimizer
   GSO.run(scene, minGrade, () => {
@@ -272,6 +270,63 @@ window.onload=function() {
     // scene.debugLayer.show();
 
   });
+
+
+
+
+
+  /**
+   * Add UI to inspect
+   */
+  var ul = document.createElement('ul'),
+      style = document.createElement('style'),
+      fragment = document.createDocumentFragment(), // "virtual" dom
+      grades = GSO.grades;
+
+  var addEvent = (li, grade) => {
+
+      li.addEventListener('click', () => {
+          GSO.updateSceneByGrade(scene, grade);
+      });
+  }
+
+  var createLi = (text) => {
+      var li = document.createElement('li');
+          li.textContent = text;
+      return li;
+  }
+
+
+  // add css rules
+  var css = '#grades {z-index: 1;position: fixed;background-color: white;padding: 20px; top:60px; right:0; list-style: none;}#grades li {font-family: sans-serif;border-bottom: 1px solid black;padding: 10px 0 10px 0;cursor: pointer;}#grades li:hover {color: gray;}'
+  style.innerText = css;
+  document.getElementsByTagName('head')[0].appendChild(style);
+  // add container
+  ul.id = 'grades';
+  fragment.appendChild(ul);
+
+  // create auto li
+  var li = createLi('auto');
+  ul.appendChild(li);
+
+  li.addEventListener('click', () => {
+      GSO.startAutoEval(scene);
+  });
+
+  // create grade li
+  for (let i = 0; i < grades.length; i++) {
+      var gradeI = grades[i];
+
+      li = createLi(gradeI.name);
+
+      addEvent(li, gradeI);
+      ul.appendChild(li);
+
+  }
+
+  // add to dom
+  //parentNode.appendChild(fragment);
+  document.body.appendChild(fragment)
 
 
 
@@ -311,7 +366,7 @@ window.onload=function() {
     /**
      * RUN GSO after when loaded
      */
-     
+
     GSO.run(scene, minGrade, () => {
 
       engine.runRenderLoop( () => {
