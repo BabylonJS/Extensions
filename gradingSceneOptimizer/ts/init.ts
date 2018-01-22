@@ -197,10 +197,10 @@ window.onload=function() {
    */
 
   var godrays = new BABYLON.VolumetricLightScatteringPostProcess('godrays', 1.0, camera, ground, 50, BABYLON.Texture.BILINEAR_SAMPLINGMODE, engine, false);
-	godrays.exposure = 0.1;
+	godrays.exposure = 0.2;
 	godrays.decay = 0.95;
-	godrays.weight = 0.4;
-	godrays.density = 0.3;
+	godrays.weight = 0.8;
+	godrays.density = 0.5;
 
   new BABYLON.FxaaPostProcess("fxaa", 1.0, camera, null, engine, false);
 
