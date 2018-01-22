@@ -1,5 +1,5 @@
 module BABYLON {
-  
+
 
   /*************************
    * OPTIMISATION FUNCTION
