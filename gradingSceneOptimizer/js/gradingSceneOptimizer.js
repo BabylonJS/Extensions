@@ -191,8 +191,8 @@ var BABYLON;
                     size: 1024
                 },
                 renderSize: {
-                    maxWidth: 2560,
-                    maxHeight: 2560,
+                    maxWidth: 1920,
+                    maxHeight: 1920,
                     hardwareScaling: 1
                 },
                 devices: {
@@ -231,9 +231,9 @@ var BABYLON;
                     size: 2048
                 },
                 renderSize: {
-                    maxWidth: 2560,
-                    maxHeight: 2560,
-                    hardwareScaling: 2
+                    maxWidth: 1920,
+                    maxHeight: 1920,
+                    hardwareScaling: 0.5
                 },
                 devices: {
                     smartPhoneAllowed: false,
@@ -384,12 +384,13 @@ var BABYLON;
         };
         // for render size
         Optimize.renderSize = function (engine, params) {
+            // CAREFULL !!!
+            // for a screen with a pixel ratio to 200% :
+            //    window devicePixelRatio = 2
+            //    babylon hardware scaling = 0.5
             var canvas = engine.getRenderingCanvas(), width = canvas.clientWidth, height = canvas.clientHeight, windowPixelRatio = window.devicePixelRatio, paramPixelRatio = params.hardwareScaling || 1, maxWidth = params.maxWidth, maxHeight = params.maxHeight, newScale = 0;
-            if (windowPixelRatio < paramPixelRatio) {
+            if (windowPixelRatio < (1 / paramPixelRatio)) {
                 paramPixelRatio = 1 / windowPixelRatio;
-            }
-            else {
-                paramPixelRatio = 1 / paramPixelRatio;
             }
             if (width > maxWidth || height > maxHeight) {
                 if (width > maxWidth && width > height) {
@@ -956,7 +957,7 @@ var BABYLON;
             }
             // for textures
             if (grade.textures != undefined) {
-                // BABYLON.Optimize.textures(scene, grade.textures);
+                // TODO : BABYLON.Optimize.textures(scene, grade.textures);
             }
             // for materials
             if (grade.materials != undefined) {
