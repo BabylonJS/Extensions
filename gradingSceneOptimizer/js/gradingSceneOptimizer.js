@@ -547,49 +547,50 @@ var BABYLON;
         }
         // for materials
         Optimize.materials = function (scene, params) {
+            var StandardMaterial = BABYLON.StandardMaterial;
             // render ambiant textures ?
             if (params.ambientTextureEnabled != undefined) {
-                BABYLON.StandardMaterial.AmbientTextureEnabled = params.ambientTextureEnabled;
+                StandardMaterial.AmbientTextureEnabled = params.ambientTextureEnabled;
             }
             // render ambiant textures ?
             if (params.bumpTextureEnabled != undefined) {
-                BABYLON.StandardMaterial.BumpTextureEnabled = params.bumpTextureEnabled;
+                StandardMaterial.BumpTextureEnabled = params.bumpTextureEnabled;
             }
             // render color grading textures ?
             if (params.colorGradingTextureEnabled != undefined) {
-                BABYLON.StandardMaterial.ColorGradingTextureEnabled = params.colorGradingTextureEnabled;
+                StandardMaterial.ColorGradingTextureEnabled = params.colorGradingTextureEnabled;
             }
             // render diffuse textures ?
             if (params.diffuseTextureEnabled != undefined) {
-                BABYLON.StandardMaterial.DiffuseTextureEnabled = params.diffuseTextureEnabled;
+                StandardMaterial.DiffuseTextureEnabled = params.diffuseTextureEnabled;
             }
             // render emissive textures ?
             if (params.emissiveTextureEnabled != undefined) {
-                BABYLON.StandardMaterial.EmissiveTextureEnabled = params.emissiveTextureEnabled;
+                StandardMaterial.EmissiveTextureEnabled = params.emissiveTextureEnabled;
             }
             // render fresnel textures ?
             if (params.fresnelEnabled != undefined) {
-                BABYLON.StandardMaterial.FresnelEnabled = params.fresnelEnabled;
+                StandardMaterial.FresnelEnabled = params.fresnelEnabled;
             }
             // render light map textures ?
             if (params.lightmapTextureEnabled != undefined) {
-                BABYLON.StandardMaterial.LightmapTextureEnabled = params.lightmapTextureEnabled;
+                StandardMaterial.LightmapTextureEnabled = params.lightmapTextureEnabled;
             }
             // render opacity textures ?
             if (params.opacityTextureEnabled != undefined) {
-                BABYLON.StandardMaterial.OpacityTextureEnabled = params.opacityTextureEnabled;
+                StandardMaterial.OpacityTextureEnabled = params.opacityTextureEnabled;
             }
             // render reflection textures ?
             if (params.reflectionTextureEnabled != undefined) {
-                BABYLON.StandardMaterial.ReflectionTextureEnabled = params.reflectionTextureEnabled;
+                StandardMaterial.ReflectionTextureEnabled = params.reflectionTextureEnabled;
             }
             // render refraction textures ?
             if (params.refractionTextureEnabled != undefined) {
-                BABYLON.StandardMaterial.RefractionTextureEnabled = params.refractionTextureEnabled;
+                StandardMaterial.RefractionTextureEnabled = params.refractionTextureEnabled;
             }
             // allow specular textures ?
             if (params.specularTextureEnabled != undefined) {
-                BABYLON.StandardMaterial.SpecularTextureEnabled = params.specularTextureEnabled;
+                StandardMaterial.SpecularTextureEnabled = params.specularTextureEnabled;
             }
         };
         // for postProcesses
@@ -647,7 +648,13 @@ var BABYLON;
             if (!params) {
                 return;
             }
-            var shadowsType = ['usePoissonSampling', 'useExponentialShadowMap', 'useBlurExponentialShadowMap', 'useCloseExponentialShadowMap', 'useBlurCloseExponentialShadowMap'], lights = scene.lights, paramSize = params.size, paramType = params.type, shadowMap;
+            var shadowsType = [
+                'usePoissonSampling',
+                'useExponentialShadowMap',
+                'useBlurExponentialShadowMap',
+                'useCloseExponentialShadowMap',
+                'useBlurCloseExponentialShadowMap'
+            ], lights = scene.lights, paramSize = params.size, paramType = params.type, shadowMap;
             // change type of shadow
             var setShadowType = function (shadowGenerator) {
                 for (var i = 0; i < shadowsType.length; i++) {

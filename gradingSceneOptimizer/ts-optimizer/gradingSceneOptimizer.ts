@@ -540,27 +540,27 @@ module BABYLON {
           var engine = scene.getEngine();
 
           // for render targets
-          if (grade.renderTargetsEnabled != undefined) {
+          if (grade.renderTargetsEnabled != undefined) { // DONE
               BABYLON.Optimize.renderTargets(scene, grade.renderTargetsEnabled);
           }
 
           // for postProcess
-          if (grade.postProcessesEnabled != undefined) {
+          if (grade.postProcessesEnabled != undefined) { // DONE
               BABYLON.Optimize.postProcesses(scene, grade.postProcessesEnabled);
           }
 
           // for lensFlare
-          if (grade.lensFlaresEnabled != undefined) {
+          if (grade.lensFlaresEnabled != undefined) { // DONE
               BABYLON.Optimize.lensFlares(scene, grade.lensFlaresEnabled);
           }
 
           // for shadows
-          if (grade.shadowsEnabled != undefined) {
+          if (grade.shadowsEnabled != undefined) { //done
               BABYLON.Optimize.shadows(scene, grade.shadowsEnabled, grade.shadows);
           }
 
           // for maxRenderSize
-          if (grade.renderSize != undefined) {
+          if (grade.renderSize != undefined) { // DONE
               BABYLON.Optimize.renderSize(engine, grade.renderSize);
           }
 
