@@ -284,7 +284,9 @@ var customOptimization = {
     hardwares {
         onlyDedicatedGPU : true, // TODO : FUTURE FEATURE : GPU recommended for this grade;
         minBenchmarkScore : 10000 // TODO : FUTURE FEATURE : benchmark recommended for this grade;
-    }
+    },
+    browsers {}, // TODO :  see exemple here : https://github.com/DamonOehlman/detect-browser/blob/master/index.js
+    OperatingSystems : {} // TODO : see exemple here : https://github.com/DamonOehlman/detect-browser/blob/master/index.js
 
 };
 
@@ -383,6 +385,7 @@ Purpose : Propose more parameters to get more performance.
 ## Roadmap :
   - Finish the alpha version and test it on Playground
   - Merge it with Babylon and deprecated the older optimizer
+  - Finish all TODO in "Custom optimization parameters" section.
   - Talk about benchMark feature and create it.
 
 ## Version :
