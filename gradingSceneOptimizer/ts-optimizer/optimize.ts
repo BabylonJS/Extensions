@@ -70,21 +70,6 @@ module BABYLON {
 
       }
 
-      // for postProcesses
-      public static postProcesses(scene : Scene, enabled: boolean) {
-          scene.postProcessesEnabled = enabled;
-      }
-
-      // for lensFlares
-      public static lensFlares(scene : Scene, enabled: boolean) {
-          scene.lensFlaresEnabled = enabled;
-      }
-
-      // for render Targets (like mirror and bump)
-      public static renderTargets(scene : Scene, enabled: boolean) {
-          scene.renderTargetsEnabled = enabled;
-      }
-
       // for particules
       public static particules(scene : Scene, enabled: boolean, params: IParamsParticulesGradeOptimization) {
 
@@ -258,6 +243,7 @@ module BABYLON {
                           'specularTexture',
                           'bumpTexture',
                           'lightmapTexture',
+                          'ColorGradingTexture',
                           'refractionTexture'],
               // lenght
               channelsL = channels.length,

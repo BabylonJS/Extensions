@@ -21,15 +21,14 @@ module BABYLON {
                   minSize : 128
               },
               materials : {
-                  reflectionTextureEnabled : false,
                   refractionTextureEnabled : false,
                   bumpTextureEnabled : false,
                   fresnelEnabled : false
               },
               renderSize : {
-                  maxWidth : 1024,
-                  maxHeight : 1024,
-                  hardwareScaling : 1
+                  maxWidth : 1280,
+                  maxHeight : 1280,
+                  hardwareScaling : 1.5
               },
               devices : {
                   smartPhoneAllowed : true,
@@ -56,7 +55,6 @@ module BABYLON {
                   minSize : 128
               },
               materials : {
-                  reflectionTextureEnabled : false,
                   refractionTextureEnabled : false,
                   bumpTextureEnabled : true,
                   fresnelEnabled : false
@@ -90,8 +88,7 @@ module BABYLON {
                   minSize : 256
               },
               materials : {
-                  reflectionTextureEnabled : true,
-                  refractionTextureEnabled : false,
+                  refractionTextureEnabled : true,
                   bumpTextureEnabled : true,
                   fresnelEnabled : false
               },
@@ -133,6 +130,7 @@ module BABYLON {
                   minEmitRate : 100
               },
               materials : {
+                  refractionTextureEnabled : true,
                   bumpTextureEnabled : true,
                   fresnelEnabled : true
               },
@@ -174,6 +172,7 @@ module BABYLON {
                   minEmitRate : 100
               },
               materials : {
+                  refractionTextureEnabled : true,
                   bumpTextureEnabled : true,
                   fresnelEnabled : true
               },
@@ -215,6 +214,7 @@ module BABYLON {
                   minEmitRate : 100
               },
               materials : {
+                  refractionTextureEnabled : true,
                   bumpTextureEnabled : true,
                   fresnelEnabled : true
               },

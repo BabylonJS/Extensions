@@ -59,6 +59,8 @@ var BABYLON;
             // 1. try to upgrading.
             // 2. if fps not reached, dowgrading.
             this._isUpGradingStep = true;
+            // to keep original params of particules systems
+            this._originalParticules = [];
             // Detect dedicated GPU
             this.isDedicatedGPU = BABYLON.Hardware.isDedicatedGPU(engine);
             // add resize event
@@ -96,20 +98,23 @@ var BABYLON;
                     starterGrade = grades[grades.length - 1];
                 }
             }
+            // get all original references we need
+            // like particules emit rate or original textures size
+            this._getOriginalReferences(scene);
             // start update scene by starterGrade
             this.updateSceneByGrade(scene, starterGrade, function () {
                 if (onReady) {
                     onReady();
                 }
-                _this.startAutoEval(scene);
+                _this.start(scene);
             });
         };
         // evaluate and choose the best grade for your hardware
-        GradingSceneOptimizer.prototype.startAutoEval = function (scene, onSuccess) {
+        GradingSceneOptimizer.prototype.start = function (scene, onSuccess) {
             var _this = this;
             var engine = scene.getEngine(), fps, grades = this.grades, gradesL = this.grades.length, gradeI, currentPriority, I, isInit = false, timeToWait = 1000, evalDuration = this.evaluationDuration;
             // stop
-            this.stopAutoEval();
+            this.stop();
             // onSucess
             var success = function () {
                 // if autoReEval
@@ -242,7 +247,7 @@ var BABYLON;
         // update scene by render grade name
         GradingSceneOptimizer.prototype.updateSceneByGrade = function (scene, grade, onSuccess) {
             // clear
-            this.stopAutoEval();
+            this.stop();
             // if allready on this grade
             if (grade === this._currentGrade) {
                 BABYLON.Tools.Log('Optimizer : Grade ' + grade.name + ': allready on it.');
@@ -336,7 +341,7 @@ var BABYLON;
             }
         };
         // clear all timer and tasks
-        GradingSceneOptimizer.prototype.stopAutoEval = function () {
+        GradingSceneOptimizer.prototype.stop = function () {
             this._isUpGradingStep = true;
             // stop auto run
             clearTimeout(this._autoRunIntervalId);
@@ -348,36 +353,205 @@ var BABYLON;
             var engine = scene.getEngine();
             // for render targets
             if (grade.renderTargetsEnabled != undefined) {
-                BABYLON.Optimize.renderTargets(scene, grade.renderTargetsEnabled);
+                scene.renderTargetsEnabled = grade.renderTargetsEnabled;
+                // BABYLON.Optimize.renderTargets(scene, grade.renderTargetsEnabled);
             }
             // for postProcess
             if (grade.postProcessesEnabled != undefined) {
-                BABYLON.Optimize.postProcesses(scene, grade.postProcessesEnabled);
+                scene.postProcessesEnabled = grade.postProcessesEnabled;
+                //BABYLON.Optimize.postProcesses(scene, grade.postProcessesEnabled);
             }
             // for lensFlare
             if (grade.lensFlaresEnabled != undefined) {
-                BABYLON.Optimize.lensFlares(scene, grade.lensFlaresEnabled);
+                scene.lensFlaresEnabled = grade.lensFlaresEnabled;
+                // BABYLON.Optimize.lensFlares(scene, grade.lensFlaresEnabled);
             }
             // for shadows
             if (grade.shadowsEnabled != undefined) {
-                BABYLON.Optimize.shadows(scene, grade.shadowsEnabled, grade.shadows);
+                this.optimizeShadows(scene, grade.shadowsEnabled, grade.shadows);
             }
             // for maxRenderSize
             if (grade.renderSize != undefined) {
-                BABYLON.Optimize.renderSize(engine, grade.renderSize);
+                this.optimizeRenderSize(engine, grade.renderSize);
             }
             // for textures
             if (grade.textures != undefined) {
-                // TODO : BABYLON.Optimize.textures(scene, grade.textures);
+                // TODO : this.optimizeTextures(scene, grade.textures);
             }
             // for materials
             if (grade.materials != undefined) {
-                BABYLON.Optimize.materials(scene, grade.materials);
+                this.optimizeMaterials(scene, grade.materials); // Done
             }
             // for particules
             if (grade.particulesEnabled != undefined) {
-                BABYLON.Optimize.particules(scene, grade.particulesEnabled, grade.particules);
+                this.optimizeParticules(scene, grade.particulesEnabled, grade.particules); // done
             }
+        };
+        ///////////////////
+        // GET ORIGINALS //
+        ///////////////////
+        GradingSceneOptimizer.prototype._getOriginalReferences = function (scene) {
+            // for particules , keep :
+            // -  emitRate
+            var particulesSys = scene.particleSystems, L = particulesSys.length, particulesSysI;
+            for (var i = 0; i < L; i++) {
+                particulesSysI = particulesSys[i];
+                this._originalParticules.push({
+                    "emitRate": particulesSysI.emitRate,
+                    "system": particulesSysI
+                });
+            }
+            // for textures , keep :
+            // - width
+            // - height
+            // - texture ( only if autorized)
+        };
+        ////////////////////////////
+        // GSO OPTIMIZE FUNCTIONS //
+        ////////////////////////////
+        // for materials
+        GradingSceneOptimizer.prototype.optimizeMaterials = function (scene, params) {
+            var StandardMaterial = BABYLON.StandardMaterial;
+            // render ambiant textures ?
+            if (params.ambientTextureEnabled != undefined) {
+                StandardMaterial.AmbientTextureEnabled = params.ambientTextureEnabled;
+            }
+            // render ambiant textures ?
+            if (params.bumpTextureEnabled != undefined) {
+                StandardMaterial.BumpTextureEnabled = params.bumpTextureEnabled;
+            }
+            // render color grading textures ?
+            if (params.colorGradingTextureEnabled != undefined) {
+                StandardMaterial.ColorGradingTextureEnabled = params.colorGradingTextureEnabled;
+            }
+            // render diffuse textures ?
+            if (params.diffuseTextureEnabled != undefined) {
+                StandardMaterial.DiffuseTextureEnabled = params.diffuseTextureEnabled;
+            }
+            // render emissive textures ?
+            if (params.emissiveTextureEnabled != undefined) {
+                StandardMaterial.EmissiveTextureEnabled = params.emissiveTextureEnabled;
+            }
+            // render fresnel textures ?
+            if (params.fresnelEnabled != undefined) {
+                StandardMaterial.FresnelEnabled = params.fresnelEnabled;
+            }
+            // render light map textures ?
+            if (params.lightmapTextureEnabled != undefined) {
+                StandardMaterial.LightmapTextureEnabled = params.lightmapTextureEnabled;
+            }
+            // render opacity textures ?
+            if (params.opacityTextureEnabled != undefined) {
+                StandardMaterial.OpacityTextureEnabled = params.opacityTextureEnabled;
+            }
+            // render reflection textures ?
+            if (params.reflectionTextureEnabled != undefined) {
+                StandardMaterial.ReflectionTextureEnabled = params.reflectionTextureEnabled;
+            }
+            // render refraction textures ?
+            if (params.refractionTextureEnabled != undefined) {
+                StandardMaterial.RefractionTextureEnabled = params.refractionTextureEnabled;
+            }
+            // allow specular textures ?
+            if (params.specularTextureEnabled != undefined) {
+                StandardMaterial.SpecularTextureEnabled = params.specularTextureEnabled;
+            }
+        };
+        // for particules
+        GradingSceneOptimizer.prototype.optimizeParticules = function (scene, enabled, params) {
+            if (!enabled) {
+                scene.particlesEnabled = false;
+            }
+            else {
+                scene.particlesEnabled = true;
+            }
+            // if no params, stop here.
+            if (!params) {
+                return;
+            }
+            var oParticleSystems = this._originalParticules, // original particles systems
+            oParticleSysL = oParticleSystems.length, oParticleSysI, particleSys, paramRatio = params.ratio, paramMin = params.minEmitRate, paramMax = params.maxEmitRate, originalEmitRate, newRate;
+            for (var i = 0; i < oParticleSysL; i++) {
+                oParticleSysI = oParticleSystems[i];
+                originalEmitRate = oParticleSysI.emitRate;
+                particleSys = oParticleSysI.system;
+                newRate = originalEmitRate * paramRatio;
+                if (paramMax && newRate > paramMax) {
+                    newRate = paramMax;
+                }
+                else if (paramMin && newRate < paramMin) {
+                    newRate = paramMin;
+                }
+                // update emit rate
+                particleSys.emitRate = newRate;
+            }
+        };
+        // for shadows
+        GradingSceneOptimizer.prototype.optimizeShadows = function (scene, enabled, params) {
+            if (!enabled) {
+                scene.shadowsEnabled = false;
+            }
+            else {
+                scene.shadowsEnabled = true;
+            }
+            // if no params, stop here.
+            if (!params) {
+                return;
+            }
+            var shadowsType = [
+                'usePoissonSampling',
+                'useExponentialShadowMap',
+                'useBlurExponentialShadowMap',
+                'useCloseExponentialShadowMap',
+                'useBlurCloseExponentialShadowMap'
+            ], lights = scene.lights, paramSize = params.size, paramType = params.type, shadowMap;
+            // change type of shadow
+            var setShadowType = function (shadowGenerator) {
+                for (var i = 0; i < shadowsType.length; i++) {
+                    shadowGenerator[shadowsType[i]] = false;
+                }
+                shadowGenerator[paramType] = true;
+            };
+            // for x light
+            for (var i = 0; i < lights.length; i++) {
+                var sh = lights[i].getShadowGenerator();
+                if (!sh) {
+                    continue;
+                }
+                // if need to resize
+                if (paramSize) {
+                    shadowMap = sh.getShadowMap();
+                    // resize map
+                    shadowMap.resize(paramSize);
+                }
+                // if need to change type
+                if (paramType) {
+                    setShadowType(sh); // TODO : typescript : 'IShadowGenerator' is not assignable to parameter of type 'ShadowGenerator'
+                }
+            }
+        };
+        // for render size
+        GradingSceneOptimizer.prototype.optimizeRenderSize = function (engine, params) {
+            // CAREFULL !!!
+            // for a screen with a pixel ratio to 200% :
+            //    window devicePixelRatio = 2
+            //    babylon hardware scaling = 0.5
+            var canvas = engine.getRenderingCanvas(), width = canvas.clientWidth, height = canvas.clientHeight, windowPixelRatio = window.devicePixelRatio, paramPixelRatio = params.hardwareScaling || 1, maxWidth = params.maxWidth, maxHeight = params.maxHeight, newScale = 0;
+            if (windowPixelRatio < (1 / paramPixelRatio)) {
+                paramPixelRatio = 1 / windowPixelRatio;
+            }
+            if (width > maxWidth || height > maxHeight) {
+                if (width > maxWidth && width > height) {
+                    newScale = (width / maxWidth) * paramPixelRatio;
+                }
+                else {
+                    newScale = (height / maxHeight) * paramPixelRatio;
+                }
+            }
+            else {
+                newScale = paramPixelRatio;
+            }
+            engine.setHardwareScalingLevel(newScale);
         };
         return GradingSceneOptimizer;
     }());
@@ -593,18 +767,6 @@ var BABYLON;
                 StandardMaterial.SpecularTextureEnabled = params.specularTextureEnabled;
             }
         };
-        // for postProcesses
-        Optimize.postProcesses = function (scene, enabled) {
-            scene.postProcessesEnabled = enabled;
-        };
-        // for lensFlares
-        Optimize.lensFlares = function (scene, enabled) {
-            scene.lensFlaresEnabled = enabled;
-        };
-        // for render Targets (like mirror and bump)
-        Optimize.renderTargets = function (scene, enabled) {
-            scene.renderTargetsEnabled = enabled;
-        };
         // for particules
         Optimize.particules = function (scene, enabled, params) {
             if (!enabled) {
@@ -724,6 +886,7 @@ var BABYLON;
                 'specularTexture',
                 'bumpTexture',
                 'lightmapTexture',
+                'ColorGradingTexture',
                 'refractionTexture'], 
             // lenght
             channelsL = channels.length, paramMaxSize = params.maxSize, paramMinSize = params.minSize, paramScale = params.scale;
@@ -850,15 +1013,14 @@ var BABYLON;
                     minSize: 128
                 },
                 materials: {
-                    reflectionTextureEnabled: false,
                     refractionTextureEnabled: false,
                     bumpTextureEnabled: false,
                     fresnelEnabled: false
                 },
                 renderSize: {
-                    maxWidth: 1024,
-                    maxHeight: 1024,
-                    hardwareScaling: 1
+                    maxWidth: 1280,
+                    maxHeight: 1280,
+                    hardwareScaling: 1.5
                 },
                 devices: {
                     smartPhoneAllowed: true,
@@ -883,7 +1045,6 @@ var BABYLON;
                     minSize: 128
                 },
                 materials: {
-                    reflectionTextureEnabled: false,
                     refractionTextureEnabled: false,
                     bumpTextureEnabled: true,
                     fresnelEnabled: false
@@ -916,8 +1077,7 @@ var BABYLON;
                     minSize: 256
                 },
                 materials: {
-                    reflectionTextureEnabled: true,
-                    refractionTextureEnabled: false,
+                    refractionTextureEnabled: true,
                     bumpTextureEnabled: true,
                     fresnelEnabled: false
                 },
@@ -958,6 +1118,7 @@ var BABYLON;
                     minEmitRate: 100
                 },
                 materials: {
+                    refractionTextureEnabled: true,
                     bumpTextureEnabled: true,
                     fresnelEnabled: true
                 },
@@ -998,6 +1159,7 @@ var BABYLON;
                     minEmitRate: 100
                 },
                 materials: {
+                    refractionTextureEnabled: true,
                     bumpTextureEnabled: true,
                     fresnelEnabled: true
                 },
@@ -1038,6 +1200,7 @@ var BABYLON;
                     minEmitRate: 100
                 },
                 materials: {
+                    refractionTextureEnabled: true,
                     bumpTextureEnabled: true,
                     fresnelEnabled: true
                 },

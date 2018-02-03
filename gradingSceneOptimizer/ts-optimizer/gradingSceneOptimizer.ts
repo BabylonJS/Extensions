@@ -44,7 +44,6 @@ module BABYLON {
       // set mesh.isVisible to false
       public minimizeDrawCall: boolean = true; // TODO ( !!! FUTURE FEATURE !!!)
 
-
       // device type
       public deviceType: string | 'smartPhone' | 'tablet' | 'noteBook' | 'computer' = BABYLON.Hardware.devicesDetection();
 
@@ -77,6 +76,9 @@ module BABYLON {
 
       // resize event function
       private _resizeEvent: any;
+
+      // to keep original params of particules systems
+      private _originalParticules: Array<IParamsOriginalParticules> = [];
 
 
 
@@ -133,6 +135,10 @@ module BABYLON {
           }
 
 
+          // get all original references we need
+          // like particules emit rate or original textures size
+          this._getOriginalReferences(scene);
+
 
           // start update scene by starterGrade
           this.updateSceneByGrade(scene, starterGrade, () => {
@@ -141,13 +147,13 @@ module BABYLON {
                   onReady();
               }
 
-              this.startAutoEval(scene);
+              this.start(scene);
 
           });
       }
 
       // evaluate and choose the best grade for your hardware
-      public startAutoEval(scene: Scene, onSuccess?: Function){
+      public start(scene: Scene, onSuccess?: Function){
 
           var engine = scene.getEngine(),
               fps,
@@ -161,7 +167,7 @@ module BABYLON {
               evalDuration = this.evaluationDuration;
 
           // stop
-          this.stopAutoEval();
+          this.stop();
 
 
 
@@ -369,7 +375,7 @@ module BABYLON {
       public updateSceneByGrade(scene : Scene, grade : Grade, onSuccess?: Function) {
 
           // clear
-          this.stopAutoEval();
+          this.stop();
 
           // if allready on this grade
           if (grade === this._currentGrade) {
@@ -522,7 +528,7 @@ module BABYLON {
       }
 
       // clear all timer and tasks
-      public stopAutoEval() {
+      public stop() {
 
           this._isUpGradingStep = true;
 
@@ -541,45 +547,295 @@ module BABYLON {
 
           // for render targets
           if (grade.renderTargetsEnabled != undefined) { // DONE
-              BABYLON.Optimize.renderTargets(scene, grade.renderTargetsEnabled);
+              scene.renderTargetsEnabled = grade.renderTargetsEnabled;
+              // BABYLON.Optimize.renderTargets(scene, grade.renderTargetsEnabled);
           }
 
           // for postProcess
           if (grade.postProcessesEnabled != undefined) { // DONE
-              BABYLON.Optimize.postProcesses(scene, grade.postProcessesEnabled);
+              scene.postProcessesEnabled = grade.postProcessesEnabled;
+              //BABYLON.Optimize.postProcesses(scene, grade.postProcessesEnabled);
           }
 
           // for lensFlare
           if (grade.lensFlaresEnabled != undefined) { // DONE
-              BABYLON.Optimize.lensFlares(scene, grade.lensFlaresEnabled);
+              scene.lensFlaresEnabled = grade.lensFlaresEnabled;
+              // BABYLON.Optimize.lensFlares(scene, grade.lensFlaresEnabled);
           }
 
           // for shadows
           if (grade.shadowsEnabled != undefined) { //done
-              BABYLON.Optimize.shadows(scene, grade.shadowsEnabled, grade.shadows);
+              this.optimizeShadows(scene, grade.shadowsEnabled, grade.shadows);
           }
 
           // for maxRenderSize
           if (grade.renderSize != undefined) { // DONE
-              BABYLON.Optimize.renderSize(engine, grade.renderSize);
+              this.optimizeRenderSize(engine, grade.renderSize);
           }
 
           // for textures
           if (grade.textures != undefined) {
-              // TODO : BABYLON.Optimize.textures(scene, grade.textures);
+              // TODO : this.optimizeTextures(scene, grade.textures);
           }
 
           // for materials
           if (grade.materials != undefined) {
-              BABYLON.Optimize.materials(scene, grade.materials);
+              this.optimizeMaterials(scene, grade.materials); // Done
           }
 
           // for particules
           if (grade.particulesEnabled != undefined) {
-              BABYLON.Optimize.particules(scene, grade.particulesEnabled, grade.particules);
+              this.optimizeParticules(scene, grade.particulesEnabled, grade.particules); // done
           }
 
       }
+
+
+
+      ///////////////////
+      // GET ORIGINALS //
+      ///////////////////
+
+      private _getOriginalReferences(scene : Scene) {
+
+          // for particules , keep :
+          // -  emitRate
+          var particulesSys = scene.particleSystems,
+              L = particulesSys.length,
+              particulesSysI : IParticleSystem;
+
+          for (let i = 0; i < L; i++) {
+              particulesSysI = particulesSys[i];
+              this._originalParticules.push(
+                  {
+                      "emitRate" : particulesSysI.emitRate,
+                      "system" : particulesSysI
+                  }
+              )
+          }
+
+          // for textures , keep :
+          // - width
+          // - height
+          // - texture ( only if autorized)
+
+      }
+
+
+
+
+      ////////////////////////////
+      // GSO OPTIMIZE FUNCTIONS //
+      ////////////////////////////
+
+      // for materials
+      public optimizeMaterials(scene : Scene, params: IParamsMaterialsGradeOptimization) {
+
+          var StandardMaterial = BABYLON.StandardMaterial;
+
+          // render ambiant textures ?
+          if (params.ambientTextureEnabled != undefined) {
+              StandardMaterial.AmbientTextureEnabled = params.ambientTextureEnabled;
+          }
+
+          // render ambiant textures ?
+          if (params.bumpTextureEnabled != undefined) {
+              StandardMaterial.BumpTextureEnabled = params.bumpTextureEnabled;
+          }
+
+          // render color grading textures ?
+          if (params.colorGradingTextureEnabled != undefined) {
+              StandardMaterial.ColorGradingTextureEnabled = params.colorGradingTextureEnabled;
+          }
+
+          // render diffuse textures ?
+          if (params.diffuseTextureEnabled != undefined) {
+              StandardMaterial.DiffuseTextureEnabled = params.diffuseTextureEnabled;
+          }
+
+          // render emissive textures ?
+          if (params.emissiveTextureEnabled != undefined) {
+              StandardMaterial.EmissiveTextureEnabled = params.emissiveTextureEnabled;
+          }
+
+          // render fresnel textures ?
+          if (params.fresnelEnabled != undefined) {
+              StandardMaterial.FresnelEnabled = params.fresnelEnabled;
+          }
+
+          // render light map textures ?
+          if (params.lightmapTextureEnabled != undefined) {
+              StandardMaterial.LightmapTextureEnabled = params.lightmapTextureEnabled;
+          }
+
+          // render opacity textures ?
+          if (params.opacityTextureEnabled != undefined) {
+              StandardMaterial.OpacityTextureEnabled = params.opacityTextureEnabled;
+          }
+
+          // render reflection textures ?
+          if (params.reflectionTextureEnabled != undefined) {
+              StandardMaterial.ReflectionTextureEnabled = params.reflectionTextureEnabled;
+          }
+
+          // render refraction textures ?
+          if (params.refractionTextureEnabled != undefined) {
+              StandardMaterial.RefractionTextureEnabled = params.refractionTextureEnabled;
+          }
+
+          // allow specular textures ?
+          if (params.specularTextureEnabled != undefined) {
+              StandardMaterial.SpecularTextureEnabled = params.specularTextureEnabled;
+          }
+
+      }
+
+      // for particules
+      public optimizeParticules(scene : Scene, enabled: boolean, params: IParamsParticulesGradeOptimization) {
+
+          if (!enabled) {
+              scene.particlesEnabled = false;
+          }
+          else {
+              scene.particlesEnabled = true;
+          }
+
+          // if no params, stop here.
+          if (!params) {
+              return;
+          }
+
+          var oParticleSystems = this._originalParticules, // original particles systems
+              oParticleSysL = oParticleSystems.length,
+              oParticleSysI : IParamsOriginalParticules,
+              particleSys : BABYLON.ParticleSystem,
+              paramRatio = params.ratio,
+              paramMin = params.minEmitRate,
+              paramMax = params.maxEmitRate,
+              originalEmitRate,
+              newRate;
+
+          for (let i = 0; i < oParticleSysL; i++) {
+
+              oParticleSysI = oParticleSystems[i];
+              originalEmitRate = oParticleSysI.emitRate;
+              particleSys = oParticleSysI.system;
+              newRate = originalEmitRate * paramRatio;
+
+              if (paramMax && newRate > paramMax) {
+                  newRate = paramMax;
+              }
+              else if (paramMin && newRate < paramMin) {
+                  newRate = paramMin;
+              }
+
+              // update emit rate
+              particleSys.emitRate = newRate;
+
+          }
+
+      }
+
+      // for shadows
+      public optimizeShadows(scene : Scene, enabled: boolean, params: IParamsShadowsGradeOptimization) {
+
+          if (!enabled) {
+              scene.shadowsEnabled = false;
+          }
+          else {
+              scene.shadowsEnabled = true;
+          }
+
+          // if no params, stop here.
+          if (!params) {
+              return;
+          }
+
+          var shadowsType = [
+                  'usePoissonSampling',
+                  'useExponentialShadowMap',
+                  'useBlurExponentialShadowMap',
+                  'useCloseExponentialShadowMap',
+                  'useBlurCloseExponentialShadowMap'
+              ],
+              lights = scene.lights,
+              paramSize = params.size,
+              paramType = params.type,
+
+              shadowMap;
+
+          // change type of shadow
+          var setShadowType = (shadowGenerator: ShadowGenerator) => {
+
+              for (let i = 0; i < shadowsType.length; i++) {
+                  shadowGenerator[shadowsType[i]] = false;
+              }
+              shadowGenerator[paramType] = true;
+
+          }
+
+          // for x light
+          for (let i = 0; i < lights.length; i++) {
+
+              var sh = lights[i].getShadowGenerator();
+
+              if (!sh) {
+                  continue;
+              }
+
+              // if need to resize
+              if (paramSize) {
+                  shadowMap = sh.getShadowMap();
+                  // resize map
+                  shadowMap.resize(paramSize);
+              }
+
+              // if need to change type
+              if (paramType) {
+                  setShadowType(sh); // TODO : typescript : 'IShadowGenerator' is not assignable to parameter of type 'ShadowGenerator'
+              }
+
+          }
+      }
+
+      // for render size
+      public optimizeRenderSize(engine : Engine, params: IParamsRenderSizeGradeOptimization) {
+
+          // CAREFULL !!!
+          // for a screen with a pixel ratio to 200% :
+          //    window devicePixelRatio = 2
+          //    babylon hardware scaling = 0.5
+
+          var canvas = engine.getRenderingCanvas(),
+              width = canvas.clientWidth,
+              height = canvas.clientHeight,
+              windowPixelRatio = window.devicePixelRatio,
+              paramPixelRatio = params.hardwareScaling || 1,
+              maxWidth = params.maxWidth,
+              maxHeight = params.maxHeight,
+              newScale = 0;
+
+          if (windowPixelRatio < ( 1 / paramPixelRatio )) {
+                paramPixelRatio = 1 / windowPixelRatio;
+          }
+
+          if (width > maxWidth || height > maxHeight) {
+              if (width > maxWidth && width > height) {
+                  newScale = (width / maxWidth) * paramPixelRatio;
+              }
+              else {
+                  newScale = (height / maxHeight) * paramPixelRatio;
+              }
+          }
+          else {
+              newScale = paramPixelRatio;
+          }
+
+          engine.setHardwareScalingLevel(newScale);
+
+      }
+
+
 
   }
 
@@ -767,6 +1023,12 @@ module BABYLON {
   // interface camera grade parameter
   export interface IParamsCameraGradeOptimization {
       viewDistance : number; // TODO
+  }
+
+  // interface to keep original particule system
+  export interface IParamsOriginalParticules {
+      emitRate : number;
+      system : IParticleSystem;
   }
 
 }
