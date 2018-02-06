@@ -4202,40 +4202,40 @@
 	],
 	"images": [
 		{
-			"uri": "Assets/Models/PBR/BusterDrone/Materials/Boden_baseColor.png"
+			"uri": "Assets/Models/PBR/BusterDrone/Materials/Boden_baseColor.512.png"
 		},
 		{
-			"uri": "Assets/Models/PBR/BusterDrone/Materials/concrete_044_metalGloss_converted_metalRoughness.jpg"
+			"uri": "Assets/Models/PBR/BusterDrone/Materials/concrete_044_metalGloss_converted_metalRoughness.512.jpg"
 		},
 		{
-			"uri": "Assets/Models/PBR/BusterDrone/Materials/concrete_044_normal1024.jpg"
+			"uri": "Assets/Models/PBR/BusterDrone/Materials/concrete_044_normal1024.256.jpg"
 		},
 		{
-			"uri": "Assets/Models/PBR/BusterDrone/Materials/body_albedo2048.png"
+			"uri": "Assets/Models/PBR/BusterDrone/Materials/body_albedo2048.512.png"
 		},
 		{
-			"uri": "Assets/Models/PBR/BusterDrone/Materials/body_metalgloss2048_converted_metalRoughness.jpg"
+			"uri": "Assets/Models/PBR/BusterDrone/Materials/body_metalgloss2048_converted_metalRoughness.512.jpg"
 		},
 		{
-			"uri": "Assets/Models/PBR/BusterDrone/Materials/body_normal.jpg"
+			"uri": "Assets/Models/PBR/BusterDrone/Materials/body_normal.512.jpg"
 		},
 		{
-			"uri": "Assets/Models/PBR/BusterDrone/Materials/body_emissive.jpg"
+			"uri": "Assets/Models/PBR/BusterDrone/Materials/body_emissive.512.jpg"
 		},
 		{
-			"uri": "Assets/Models/PBR/BusterDrone/Materials/body_AO.jpg"
+			"uri": "Assets/Models/PBR/BusterDrone/Materials/body_AO.512.jpg"
 		},
 		{
-			"uri": "Assets/Models/PBR/BusterDrone/Materials/leg_albedo.jpg"
+			"uri": "Assets/Models/PBR/BusterDrone/Materials/leg_albedo.512.jpg"
 		},
 		{
-			"uri": "Assets/Models/PBR/BusterDrone/Materials/leg_metalgloss_converted_metalRoughness.jpg"
+			"uri": "Assets/Models/PBR/BusterDrone/Materials/leg_metalgloss_converted_metalRoughness.512.jpg"
 		},
 		{
-			"uri": "Assets/Models/PBR/BusterDrone/Materials/leg_normal1024.jpg"
+			"uri": "Assets/Models/PBR/BusterDrone/Materials/leg_normal1024.256.jpg"
 		},
 		{
-			"uri": "Assets/Models/PBR/BusterDrone/Materials/leg_AO.jpg"
+			"uri": "Assets/Models/PBR/BusterDrone/Materials/leg_AO.512.jpg"
 		}
 	],
 	"materials": [

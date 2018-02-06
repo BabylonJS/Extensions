@@ -50,9 +50,9 @@ var BABYLON;
             // set mesh.isVisible to false
             this.minimizeDrawCall = true; // TODO ( !!! FUTURE FEATURE !!!)
             // device type
-            this.deviceType = BABYLON.Hardware.devicesDetection();
+            this.deviceType = BABYLON.UserInfos._devicesDetection();
             // is mobile ?
-            this.isMobile = BABYLON.Hardware.isMobile();
+            this.isMobile = BABYLON.UserInfos.isMobile;
             // current priority
             this._currentGradePriority = -1;
             // to know the step of evaluation :
@@ -61,8 +61,10 @@ var BABYLON;
             this._isUpGradingStep = true;
             // to keep original params of particules systems
             this._originalParticules = [];
+            // to keep original texture size
+            this._originalTextures = [];
             // Detect dedicated GPU
-            this.isDedicatedGPU = BABYLON.Hardware.isDedicatedGPU(engine);
+            this.isDedicatedGPU = BABYLON.UserInfos.isDedicatedGPU;
             // add resize event
             if (this._resizeEvent) {
                 window.removeEventListener("resize", this._resizeEvent);
@@ -204,7 +206,7 @@ var BABYLON;
             var grades = this.grades, devices = grade.devices, deviceType = this.deviceType, isOnAllowedDevice = function (params) {
                 var exceptions = params.exceptionsAllowed, phoneAllowed = params.smartPhoneAllowed, tabletAllowed = params.tabletAllowed, noteBookAllowed = params.noteBookAllowed, computerAllowed = params.computerAllowed;
                 // check if exception
-                if (exceptions && exceptions.length > 0 && BABYLON.Hardware.isDevices(exceptions)) {
+                if (exceptions && exceptions.length > 0 && BABYLON.UserInfos._isDevices(exceptions)) {
                     return true;
                 }
                 // test smartPhone
@@ -224,7 +226,7 @@ var BABYLON;
                     return false;
                 }
                 // check if exception
-                if (exceptions && exceptions.length > 0 && BABYLON.Hardware.isDevices(exceptions)) {
+                if (exceptions && exceptions.length > 0 && BABYLON.UserInfos._isDevices(exceptions)) {
                     return false;
                 }
                 return true;
@@ -376,7 +378,7 @@ var BABYLON;
             }
             // for textures
             if (grade.textures != undefined) {
-                // TODO : this.optimizeTextures(scene, grade.textures);
+                this.optimizeTextures(scene, grade.textures);
             }
             // for materials
             if (grade.materials != undefined) {
@@ -404,11 +406,62 @@ var BABYLON;
             // for textures , keep :
             // - width
             // - height
+            // - channel
             // - texture ( only if autorized)
+            var textures = scene.textures, L = textures.length, textureI, size;
+            for (var i = 0; i < L; i++) {
+                textureI = textures[i];
+                size = textureI.getSize();
+                this._originalTextures.push({
+                    "width": size.width,
+                    "height": size.height,
+                    "texture": textureI,
+                    "useExtention": true
+                });
+                // console.log(textureI);
+                // var internText = textureI.getInternalTexture();
+                // var reloadedTexture = this.reloadTexture(scene, internText);
+                // if (textureI instanceof Texture) {
+                //     textureI.updateURL('/assets/floor.png')
+                // }
+                // BABYLON.TextureTools.CreateResizedCopy(textureI, 100, 100);
+                // textureI._texture = this.reloadTexture(scene, internText);
+                // proxy._swapAndDie(internText);
+                // return;
+            }
         };
         ////////////////////////////
         // GSO OPTIMIZE FUNCTIONS //
         ////////////////////////////
+        // for textures
+        GradingSceneOptimizer.prototype.optimizeTextures = function (scene, params) {
+            // regex :
+            var blobRegex = /^(blob:)/g, // look if a blob
+            extRegex = /\.([0-9]+)\.(?=[^\.]*$)/g; // capture size extention methode
+            var blob = "blob:http://localhost:8889/4a9cad29-06cb-4a23-9e2e-c981a2deea4b", ext = "image.1024.png";
+            var textures = scene.textures, textureI, L = textures.length;
+            // if it's a blob
+            if (!blobRegex) {
+            }
+        };
+        // resize material
+        GradingSceneOptimizer.prototype.resizeChannelsMaterial = function () {
+            var standardChannels = [
+                'diffuseTexture',
+                'ambientTexture',
+                'opacityTexture',
+                'reflectionTexture',
+                'emissiveTexture',
+                'specularTexture',
+                'bumpTexture',
+                'lightmapTexture',
+                'colorGradingTexture',
+                'refractionTexture'
+            ], pbrChannels;
+        };
+        // resize texture
+        GradingSceneOptimizer.prototype.resizeTexture = function (texture, width, height) {
+        };
         // for materials
         GradingSceneOptimizer.prototype.optimizeMaterials = function (scene, params) {
             var StandardMaterial = BABYLON.StandardMaterial;
@@ -631,84 +684,6 @@ var BABYLON;
         return Grade;
     }());
     BABYLON.Grade = Grade;
-})(BABYLON || (BABYLON = {}));
-var BABYLON;
-(function (BABYLON) {
-    /*************************
-     * HARDWARE DETECTION
-     ************************/
-    // hardware :
-    var Hardware = /** @class */ (function () {
-        function Hardware() {
-        }
-        // is there a dedicated GPU
-        Hardware.isDedicatedGPU = function (engine) {
-            var GPUs = [
-                'amd',
-                'nvidia',
-                'radeon',
-                'geforce'
-            ], vendor = engine.getGlInfo().renderer;
-            return this._refDetection(vendor, GPUs);
-        };
-        // device exception detection
-        Hardware.isDevices = function (devices) {
-            var userAgent = navigator.userAgent;
-            return this._refDetection(userAgent, devices);
-        };
-        // detectMobile
-        Hardware.isMobile = function () {
-            var userAgent = navigator.userAgent, mobiles = [
-                'Android',
-                'webOS',
-                'iPhone',
-                'iPad',
-                'iPod',
-                'BlackBerry',
-                'Windows Phone',
-                'Phone'
-            ];
-            return this._refDetection(userAgent, mobiles);
-        };
-        // device detection
-        Hardware.devicesDetection = function () {
-            // get screen size
-            var screenWidth = screen.height, screenHeight = screen.width, size = Math.max(screenWidth, screenHeight), userAgent = navigator.userAgent, isMobile = this.isMobile(), regex;
-            // SMARTPHONE
-            if (isMobile && size < 768) {
-                return 'smartPhone';
-            }
-            // TABLET
-            if (isMobile) {
-                return 'tablet';
-            }
-            // NOTEBOOK
-            if (size <= 1280) {
-                return 'noteBook';
-            }
-            // computer
-            return 'computer';
-        };
-        // TODO : FUTURE FEATURE : get a benchMark reference for GPU and CPU
-        Hardware.getBenchmarkScore = function (engine) {
-            return;
-        };
-        // regex expression detection
-        Hardware._refDetection = function (pattern, references) {
-            var L = references.length, refI, regex;
-            for (var i = 0; i < L; i++) {
-                refI = references[i];
-                regex = new RegExp(refI, 'i');
-                if (pattern.match(regex)) {
-                    return true;
-                }
-                ;
-            }
-            return false;
-        };
-        return Hardware;
-    }());
-    BABYLON.Hardware = Hardware;
 })(BABYLON || (BABYLON = {}));
 var BABYLON;
 (function (BABYLON) {
@@ -1225,4 +1200,136 @@ var BABYLON;
         return PresetGradeOptimization;
     }());
     BABYLON.PresetGradeOptimization = PresetGradeOptimization;
+})(BABYLON || (BABYLON = {}));
+var BABYLON;
+(function (BABYLON) {
+    /*************************
+     * HARDWARE DETECTION
+     ************************/
+    // hardware :
+    var UserInfos = /** @class */ (function () {
+        function UserInfos() {
+            // device type
+            this.deviceType = BABYLON.UserInfos._devicesDetection();
+            // is mobile ?
+            this.isMobile = BABYLON.UserInfos._isMobile();
+            // regexs for device name
+            this.devicesRegex = [
+                // consoles
+                /(ouya)/i,
+                /(nintendo)/i,
+                /(playstation)/i,
+                /(xbox)/i,
+                // tablets
+                /(ipad)/i,
+                /(android).+(tablet|tab)|(tablet|tab).+(android)/i,
+                /(tablet)/i,
+                // smartphones
+                /(iphone|ipod)/i,
+                /(blackberry)/i,
+                /(android).+(phone)|(phone).+(android)/i,
+                /(phone)/i,
+                // mobiles : smartphone or tablet
+                /(android)/i,
+            ];
+            // regexs for browser name
+            this.browsersRegex = [
+                /(mobile|tablet|tab).+(safari)\//i,
+                /(safari)\//i,
+                /(crmo|crios)\/|(mobile|tablet|tab|phone)+(chrome)\//i,
+                /(chrome)\//i,
+                /(fxios)\/|(mobile|tablet|tab|phone).+(firefox)\//i,
+                /(firefox)\//i,
+                /(opios|opr)\/|(mobile|tablet|tab|phone).+(opera)\//i,
+                /(opera)\//i,
+                /(edge)\//i,
+                /(msie|ms|ie|trident)\//i // ie
+            ];
+            // regexs for operating system (os) name
+            this.osRegex = [
+                /(microsoft|windows)/i,
+                /(cros)\s/i,
+                /(iphone|ipad|ipod)/i,
+                /(macintosh|mac)/i,
+                /\(.+(android)/i,
+                /\(.+(linux)/i,
+                /(blackberry)/i,
+                /(firefox)/i,
+            ];
+            // TODO : take first () : \((.*(Android)[^\)]+)\)
+            // regexs for operating system (os) name
+            this.gpuRegex = [
+                /(nvidia|geforce|quadro|titan)/i,
+                /(amd|radeon|ati)/i,
+                /(intel)/i,
+            ];
+        }
+        // is there a dedicated GPU
+        UserInfos._isDedicatedGPU = function (engine) {
+            var GPUs = [
+                'amd',
+                'nvidia',
+                'radeon',
+                'geforce'
+            ], vendor = engine.getGlInfo().renderer;
+            return this._refDetection(vendor, GPUs);
+        };
+        // device exception detection
+        UserInfos._isDevices = function (devices) {
+            var userAgent = navigator.userAgent;
+            return this._refDetection(userAgent, devices);
+        };
+        // detectMobile
+        UserInfos._isMobile = function () {
+            var userAgent = navigator.userAgent, mobiles = [
+                'Android',
+                'webOS',
+                'iPhone',
+                'iPad',
+                'iPod',
+                'BlackBerry',
+                'Windows Phone',
+                'Phone'
+            ];
+            return this._refDetection(userAgent, mobiles);
+        };
+        // device detection
+        UserInfos._devicesDetection = function () {
+            // get screen size
+            var screenWidth = screen.height, screenHeight = screen.width, size = Math.max(screenWidth, screenHeight), userAgent = navigator.userAgent, isMobile = this._isMobile(), regex;
+            // SMARTPHONE
+            if (isMobile && size < 768) {
+                return 'smartPhone';
+            }
+            // TABLET
+            if (isMobile) {
+                return 'tablet';
+            }
+            // NOTEBOOK
+            if (size <= 1280) {
+                return 'noteBook';
+            }
+            // computer
+            return 'computer';
+        };
+        // TODO : FUTURE FEATURE : get a benchMark reference for GPU and CPU
+        UserInfos._getBenchmarkScore = function (engine) {
+            return;
+        };
+        // regex expression detection
+        UserInfos._refDetection = function (pattern, references) {
+            var L = references.length, refI, regex;
+            for (var i = 0; i < L; i++) {
+                refI = references[i];
+                regex = new RegExp(refI, 'i');
+                if (pattern.match(regex)) {
+                    return true;
+                }
+                ;
+            }
+            return false;
+        };
+        return UserInfos;
+    }());
+    BABYLON.UserInfos = UserInfos;
 })(BABYLON || (BABYLON = {}));

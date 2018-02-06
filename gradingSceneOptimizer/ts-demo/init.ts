@@ -23,7 +23,9 @@ window.onload=function() {
   var scene = new BABYLON.Scene(engine);
 
   // Environment Texture
-    var hdrTexture = BABYLON.CubeTexture.CreateFromPrefilteredData("assets/environment.dds", scene);
+  var hdrTexture = BABYLON.CubeTexture.CreateFromPrefilteredData("assets/environment.dds", scene);
+
+  console.log(hdrTexture)
 
 
   //Adding a light
@@ -93,8 +95,8 @@ window.onload=function() {
 
 
   var floorMat = new BABYLON.StandardMaterial("floorMat", scene);
-      floorMat.diffuseTexture = new BABYLON.Texture("assets/floor.png", scene);
-      floorMat.bumpTexture = new BABYLON.Texture("assets/floor_bump.png", scene);
+      floorMat.diffuseTexture = new BABYLON.Texture("assets/floor.128.png", scene);
+      floorMat.bumpTexture = new BABYLON.Texture("assets/floor_bump.128.png", scene);
 
 
 

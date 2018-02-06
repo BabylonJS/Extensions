@@ -259,7 +259,8 @@ var customOptimization = {
         lightmapTextureEnabled : true;
         refractionTextureEnabled : true;
         colorGradingTextureEnabled : true;
-        fresnelEnabled? : boolean;
+        fresnelEnabled? : true;
+        pbrMaterialEnabled : true; // TODO : if false, transform pbr to standard material
     },
     shadows : {
         refreshRate : 0, // TODO : FUTURE FEATURE : Force to calculate once all shadows
@@ -285,8 +286,8 @@ var customOptimization = {
         onlyDedicatedGPU : true, // TODO : FUTURE FEATURE : GPU recommended for this grade;
         minBenchmarkScore : 10000 // TODO : FUTURE FEATURE : benchmark recommended for this grade;
     },
-    browsers {}, // TODO :  see exemple here : https://github.com/DamonOehlman/detect-browser/blob/master/index.js
-    OperatingSystems : {} // TODO : see exemple here : https://github.com/DamonOehlman/detect-browser/blob/master/index.js
+    browsers {}, // TODO :  see exemple here : https://developers.whatismybrowser.com/useragents/explore/
+    OperatingSystems : {} // TODO : see exemple here : https://developers.whatismybrowser.com/useragents/explore/
 
 };
 

@@ -45,13 +45,34 @@ module BABYLON {
       public minimizeDrawCall: boolean = true; // TODO ( !!! FUTURE FEATURE !!!)
 
       // device type
-      public deviceType: string | 'smartPhone' | 'tablet' | 'noteBook' | 'computer' = BABYLON.Hardware.devicesDetection();
+      public deviceType: string | 'smartPhone' | 'tablet' | 'noteBook' | 'computer' = BABYLON.UserInfos._devicesDetection();
+
+      // device name :
+      public device: string;
 
       // is mobile ?
-      public isMobile: boolean = BABYLON.Hardware.isMobile();
+      public isMobile: boolean = BABYLON.UserInfos.isMobile;
+
+      // mobile name :
+      public mobile: string;
+
+      // is smartphone ?
+      public isSmartphone: boolean;
+
+      // smartphone name:
+      public smartphone: string;
+
+      // is tablet ?
+      public isTablet: boolean;
+
+      // tablet name:
+      public tablet: string;
 
       // is dedicated GPU ?
       public isDedicatedGPU : boolean;
+
+      // gpu name
+      public gpu : string;
 
 
       // to know on wich grade we are.
@@ -80,6 +101,9 @@ module BABYLON {
       // to keep original params of particules systems
       private _originalParticules: Array<IParamsOriginalParticules> = [];
 
+      // to keep original texture size
+      private _originalTextures: Array<IParamsOriginalTexture> = [];
+
 
 
       /**
@@ -91,7 +115,7 @@ module BABYLON {
       constructor (engine: Engine, public fpsToReach: number = 48, public evaluationDuration: number = 1000, public autoReEval: boolean = true) {
 
           // Detect dedicated GPU
-          this.isDedicatedGPU = BABYLON.Hardware.isDedicatedGPU(engine);
+          this.isDedicatedGPU = BABYLON.UserInfos.isDedicatedGPU;
 
           // add resize event
           if (this._resizeEvent) {
@@ -319,7 +343,7 @@ module BABYLON {
                       computerAllowed = params.computerAllowed;
 
                   // check if exception
-                  if (exceptions && exceptions.length > 0 && BABYLON.Hardware.isDevices(exceptions)) {
+                  if (exceptions && exceptions.length > 0 && BABYLON.UserInfos._isDevices(exceptions)) {
                       return true;
                   }
 
@@ -344,7 +368,7 @@ module BABYLON {
                   }
 
                   // check if exception
-                  if (exceptions && exceptions.length > 0 && BABYLON.Hardware.isDevices(exceptions)) {
+                  if (exceptions && exceptions.length > 0 && BABYLON.UserInfos._isDevices(exceptions)) {
                       return false;
                   }
 
@@ -575,7 +599,7 @@ module BABYLON {
 
           // for textures
           if (grade.textures != undefined) {
-              // TODO : this.optimizeTextures(scene, grade.textures);
+              this.optimizeTextures(scene, grade.textures);
           }
 
           // for materials
@@ -617,9 +641,48 @@ module BABYLON {
           // for textures , keep :
           // - width
           // - height
+          // - channel
           // - texture ( only if autorized)
+          var textures = scene.textures,
+              L = textures.length,
+              textureI : BaseTexture,
+              size: ISize;
+
+          for (let i = 0; i < L; i++) {
+              textureI = textures[i];
+              size = textureI.getSize();
+
+              this._originalTextures.push(
+                  {
+                      "width" : size.width,
+                      "height" : size.height,
+                      "texture" : textureI,
+                      "useExtention": true
+                  }
+              );
+
+              // console.log(textureI);
+
+              // var internText = textureI.getInternalTexture();
+
+              // var reloadedTexture = this.reloadTexture(scene, internText);
+
+              // if (textureI instanceof Texture) {
+              //     textureI.updateURL('/assets/floor.png')
+              // }
+
+              // BABYLON.TextureTools.CreateResizedCopy(textureI, 100, 100);
+
+              // textureI._texture = this.reloadTexture(scene, internText);
+
+              // proxy._swapAndDie(internText);
+              // return;
+
+
+          }
 
       }
+
 
 
 
@@ -627,6 +690,52 @@ module BABYLON {
       ////////////////////////////
       // GSO OPTIMIZE FUNCTIONS //
       ////////////////////////////
+
+      // for textures
+      public optimizeTextures(scene : Scene, params : IParamsTexturesGradeOptimization) {
+
+          // regex :
+          var blobRegex = /^(blob:)/g, // look if a blob
+              extRegex = /\.([0-9]+)\.(?=[^\.]*$)/g; // capture size extention methode
+
+          var blob = "blob:http://localhost:8889/4a9cad29-06cb-4a23-9e2e-c981a2deea4b",
+              ext = "image.1024.png";
+
+          var textures = scene.textures,
+              textureI,
+              L = textures.length;
+
+
+          // if it's a blob
+          if (!blobRegex) {
+
+          }
+      }
+
+      // resize material
+      public resizeChannelsMaterial() {
+
+          var standardChannels =
+              [
+                  'diffuseTexture',
+                  'ambientTexture',
+                  'opacityTexture',
+                  'reflectionTexture',
+                  'emissiveTexture',
+                  'specularTexture',
+                  'bumpTexture',
+                  'lightmapTexture',
+                  'colorGradingTexture',
+                  'refractionTexture'
+              ],
+
+              pbrChannels;
+      }
+
+      // resize texture
+      public resizeTexture(texture : Texture, width: number, height: number) {
+
+      }
 
       // for materials
       public optimizeMaterials(scene : Scene, params: IParamsMaterialsGradeOptimization) {
@@ -1029,6 +1138,14 @@ module BABYLON {
   export interface IParamsOriginalParticules {
       emitRate : number;
       system : IParticleSystem;
+  }
+
+  // interface to keep original particule system
+  export interface IParamsOriginalTexture {
+      width : number;
+      height : number;
+      texture : BaseTexture;
+      useExtention : boolean; // use extention for load system
   }
 
 }
