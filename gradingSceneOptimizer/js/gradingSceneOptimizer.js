@@ -1204,17 +1204,47 @@ var BABYLON;
 var BABYLON;
 (function (BABYLON) {
     /*************************
-     * HARDWARE DETECTION
+     * USER INFORMATIONS :
+     * detect software and hardware
      ************************/
     // hardware :
     var UserInfos = /** @class */ (function () {
         function UserInfos() {
+            this.userAgent = navigator.userAgent;
             // device type
             this.deviceType = BABYLON.UserInfos._devicesDetection();
             // is mobile ?
             this.isMobile = BABYLON.UserInfos._isMobile();
+            // REGEX :
+            // read this :
+            // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/User-Agent
+            // https://developer.mozilla.org/en-US/docs/Web/HTTP/Browser_detection_using_the_user_agent
+            // https://developers.whatismybrowser.com/useragents/explore/
+            // Mozilla/5.0   (X11; Linux x86_64)   AppleWebKit/537.36   (KHTML, like Gecko)   Chrome/44.0.2403.157 Safari/537.36
+            // --- 1.a ---   ------- 1.b -------   ------- 2.a ------   ------- 2.b -------   --------------- 3 ----------------
+            //
+            // 1.a : product + version
+            // 1.b : system-information ( like os + version )
+            // 2.a : platform : layout engine
+            // 2.b : platform detail ( optional )
+            // 3   : browser or software + version ( commentaire libre )
+            // 1.a : /[^\(]+/i                                        | match : "Mozilla/5.0 "
+            // 1.b : /(\([^\(][^\)]*\))/i                             | match : "(X11; Linux x86_64)"
+            // 2.a : /[\)](\s\w+\/[0-9a-z\.]+)/i                      | match : ") AppleWebKit/537.36"
+            // 2.b : /[\)]\s(\w+\/[0-9a-z\.]+)(\s\([^\(\)]+\))/i      | match : ") AppleWebKit/537.36 (KHTML, like Gecko)"
+            // 3   : /(\s\w+\/[0-9a-z\.]+){1,3}$/i                    | match : " Chrome/44.0.2403.157 Safari/537.36"
+            // EXEPTIONS :
+            //
+            // regex to split useragent 
+            this.splitUserAgentRegex = [
+                /[^\(]+/i,
+                /(\([^\(][^\)]*\))/i,
+                /[\)](\s\w+\/[0-9a-z\.]+)/i,
+                /[\)]\s(\w+\/[0-9a-z\.]+)(\s\([^\(\)]+\))/i,
+                /(\s\w+\/[0-9a-z\.]+){1,3}$/i // 3 : browser or software + version
+            ];
             // regexs for device name
-            this.devicesRegex = [
+            this.deviceRegex = [
                 // consoles
                 /(ouya)/i,
                 /(nintendo)/i,
@@ -1233,17 +1263,17 @@ var BABYLON;
                 /(android)/i,
             ];
             // regexs for browser name
-            this.browsersRegex = [
-                /(mobile|tablet|tab).+(safari)\//i,
-                /(safari)\//i,
-                /(crmo|crios)\/|(mobile|tablet|tab|phone)+(chrome)\//i,
-                /(chrome)\//i,
+            this.browserRegex = [
                 /(fxios)\/|(mobile|tablet|tab|phone).+(firefox)\//i,
                 /(firefox)\//i,
-                /(opios|opr)\/|(mobile|tablet|tab|phone).+(opera)\//i,
+                /(opios|opr|opera mobi)\/|(mobile|tablet|tab|phone).+(opera)\//i,
                 /(opera)\//i,
                 /(edge)\//i,
-                /(msie|ms|ie|trident)\//i // ie
+                /(msie|ms|ie|trident)\//i,
+                /(crmo|crios)\/|(mobile|tablet|tab|phone)+(chrome)\//i,
+                /(chrome)\//i,
+                /(mobile|tablet|tab).+(safari)\//i,
+                /(safari)\//i // safari
             ];
             // regexs for operating system (os) name
             this.osRegex = [
@@ -1256,7 +1286,8 @@ var BABYLON;
                 /(blackberry)/i,
                 /(firefox)/i,
             ];
-            // TODO : take first () : \((.*(Android)[^\)]+)\)
+            // regexs for layout engine
+            this.layoutEngineRegex = [];
             // regexs for operating system (os) name
             this.gpuRegex = [
                 /(nvidia|geforce|quadro|titan)/i,
