@@ -228,26 +228,29 @@ var ultraGrade = new BABYLON.Grade('ultra', BABYLON.PresetGradeOptimization.ultr
 // Custom grade optimization parameters :
 var customOptimization = {
 
-    maxRenderFPS : 30, // TODO : FUTURE FEATURE : minimize max fps to get more performance.
+    maxRenderFPS : 60, // TODO : FUTURE FEATURE : minimize max fps to get more performance.
+    fpsToReach : 48, // TODO : fps to reach by grade
 
     shadowsEnabled : true,
     particlesEnabled : true,
     postProcessesEnabled : true,
     lensFlaresEnabled : true,
     renderTargetsEnabled : true,
-    meshes : { // TODO : FUTURE FEATURE : reduce nbr of polygon with LOD system.
-      LOD : []
-    }
+
+    assets : [] // TODO : assets to load with grade | introduce a smart load
+
     textures : {
         scale : 0.5, // original texture size * 0.5.
         maxSize : 1024, // if (original texture size * scale) > maxSize, texture size = maxSize.
         minSize : 512 // if (original texture size * scale) < minSize, texture size = minSize.
     },
+
     particles : {
         ratio : 0.5, // original emitRate * 0.5.
         maxEmitRate : 10000, // if (original emitRate * scale) > maxEmitRate, emitRate = maxEmitRate.
         minEmitRate : 100 // if (original emitRate * scale) < minEmitRate, emitRate = minEmitRate.
     },
+
     materials : {
         diffuseTextureEnabled : true;
         opacityTextureEnabled : true;
@@ -260,34 +263,40 @@ var customOptimization = {
         refractionTextureEnabled : true;
         colorGradingTextureEnabled : true;
         fresnelEnabled? : true;
-        pbrMaterialEnabled : true; // TODO : if false, transform pbr to standard material
     },
+
     shadows : {
         refreshRate : 0, // TODO : FUTURE FEATURE : Force to calculate once all shadows
         type : 'useBlurCloseExponentialShadowMap',
         size : 512
     },
+
     renderSize : {
         maxWidth : 2560,
         maxHeight : 2560,
         hardwareScaling : 0.5 // screen with 200% pixel density
     },
-    camera : {
-      viewDistance : 200 // TODO : FUTURE FEATURE
+
+    view : { // TODO : FUTURE FEATURE
+      distance : 200 // distance of camera
+      fog : 150 // distance of fog
     }
-    devices : { // enable or disable grade on specifics devices and hardware.
+
+    userInfos : { // enable or disable grade on specifics devices and hardware.
         smartPhoneAllowed : false,
         tabletAllowed : false,
         noteBookAllowed : false,
         computerAllowed : true,
-        exceptionsAllowed : ['xbox'] // if xbox found in userAgent, this grade is enabled.
-    },
-    hardwares {
-        onlyDedicatedGPU : true, // TODO : FUTURE FEATURE : GPU recommended for this grade;
-        minBenchmarkScore : 10000 // TODO : FUTURE FEATURE : benchmark recommended for this grade;
-    },
-    browsers {}, // TODO :  see exemple here : https://developers.whatismybrowser.com/useragents/explore/
-    OperatingSystems : {} // TODO : see exemple here : https://developers.whatismybrowser.com/useragents/explore/
+        consoleAllowed : true,
+        exceptionsAllowed : ['xbox'], // if xbox found in userAgent, this grade is enabled.
+        gpu : string, // gpu name : nvidia, amd, intel.
+        browser : string, // browser name : firefox, chrome, safari, opera, ie, edge.
+        browserVersion : number, // browser version
+        os : string, // operating system name : windows, chromium, ios, mac, android, linux, BlackBerry, firefox
+        osVersion : number, // browser version
+        engine : string, // layout engine : EdgeHTML, Presto, WebKit, Trident, Blink, Gecko, Goanna, Khtml, Netfront
+        engineVersion : number // layout engine version
+    }
 
 };
 
@@ -319,6 +328,11 @@ Purpose : automatically minimize draw calls to increase performance.
 [Example by Tarek Sherif with webgl 2](https://tsherif.github.io/webgl2examples/occlusion.html)
 
 [Done on BabylonJs 3.1](http://doc.babylonjs.com/overviews/occlusionquery)
+
+
+### Smart loading – What you need to start ? :
+Add a smart loading based on grade and distance.
+Purpose : optimize the time loading.
 
 
 ### Benchmark Score, CPU and GPU recommended Features :
