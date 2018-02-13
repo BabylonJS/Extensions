@@ -5,251 +5,455 @@ module BABYLON {
    * detect software and hardware
    ************************/
 
-  // hardware :
-  export class UserInfos {
+  // REGEX :
+  // read this :
+  // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/User-Agent
+  // https://developer.mozilla.org/en-US/docs/Web/HTTP/Browser_detection_using_the_user_agent
+  // https://developers.whatismybrowser.com/useragents/explore/
+  // https://github.com/faisalman/ua-parser-js/blob/master/src/ua-parser.js
+  // http://screensiz.es/
 
-      public userAgent = navigator.userAgent;
+
+
+  // Mozilla/5.0   (X11; Linux x86_64)   AppleWebKit/537.36   (KHTML, like Gecko)   Chrome/44.0.2403.157 Safari/537.36
+  // --- 1.a ---   ------- 1.b -------   ------- 2.a ------   ------- 2.b -------   --------------- 3 ----------------
+  //
+  // 1.a : product + version
+  // 1.b : system-information ( like os + version )
+  // 2.a : platform : layout engine
+  // 2.b : platform detail ( optional )
+  // 3   : browser or software + version ( commentaire libre )
+
+  // 1.a : /[^\(]+/i                                        | match : "Mozilla/5.0 "
+  // 1.b : /(\([^\(][^\)]*\))/i                             | match : "(X11; Linux x86_64)"
+  // 2.a : /[\)](\s\w+\/[0-9a-z\.]+)/i                      | match : ") AppleWebKit/537.36"
+  // 2.b : /[\)]\s(\w+\/[0-9a-z\.]+)(\s\([^\(\)]+\))/i      | match : ") AppleWebKit/537.36 (KHTML, like Gecko)"
+  // 3   : /(\s\w+\/[0-9a-z\.]+){1,3}$/i                    | match : " Chrome/44.0.2403.157 Safari/537.36"
+
+  // capture all with one regex :
+  // /([^\(]+)?\(([^\)]*)[\)]\s?([a-z0-9]*\/[0-9a-z\.]+)?\s?\(?(?:([^\)]*)?[\)])?\s?((?:.*\/?[0-9a-z\.]+\s?)*)?/i
+  // Work great but some useragent have bracket in bracket.
+
+  // Conclusion :
+  // there is too much possibilities to split userAgent.
+  // Work fine with a big part of userAgent exept some exeption
+
+
+
+  export class UserInfosReport {
+
+      // navigator.userAgent
+      public userAgent: string = null;
 
       // device type
-      public deviceType: string | 'smartPhone' | 'tablet' | 'noteBook' | 'computer | console' = BABYLON.UserInfos._devicesDetection();
-
-      // device name :
-      public device: string;
-
-      // is mobile ?
-      public isMobile: boolean = BABYLON.UserInfos._isMobile();
-
-      // mobile name :
-      public mobile: string;
+      public deviceType: string | 'smartPhone' | 'tablet' | 'noteBook' | 'computer' | 'console' | 'tv' = 'computer';
 
       // is smartphone ?
-      public isSmartphone: boolean;
-
-      // smartphone name:
-      public smartphone: string;
+      public isSmartphone: boolean = false;
 
       // is tablet ?
-      public isTablet: boolean;
+      public isTablet: boolean = false;
 
-      // tablet name:
-      public tablet: string;
+      // is notebook ?
+      public isNotebook: boolean = false;
 
-      // is dedicated GPU ?
-      public isDedicatedGPU : boolean;
+      // is computer ?
+      public isComputer: boolean = false;
 
-      // gpu name
-      public gpu : string;
+      // is console ?
+      public isConsole: boolean = false;
+
+      // is tv ?
+      public isTv: boolean = false;
 
       // browser name
-      public browser : string;
+      public software : string = null;
+
+      // browser name
+      public softwareVersion : string = null;
 
       // operating system name
-      public OS : string;
+      public os : string = null;
+
+      // operating system name
+      public osVersion : string = null;
+
+      // operating system name
+      public layout : string = null;
+
+      // operating system name
+      public layoutVersion : string = null;
+
+  }
 
 
+  export class UserInfos {
 
-      // REGEX :
-      // read this :
-      // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/User-Agent
-      // https://developer.mozilla.org/en-US/docs/Web/HTTP/Browser_detection_using_the_user_agent
-      // https://developers.whatismybrowser.com/useragents/explore/
+      // return a report of user agent
+      public static report() : UserInfosReport {
 
+              // create new report
+          var report = new BABYLON.UserInfosReport(),
+              deviceKey,
 
-
-      // Mozilla/5.0   (X11; Linux x86_64)   AppleWebKit/537.36   (KHTML, like Gecko)   Chrome/44.0.2403.157 Safari/537.36
-      // --- 1.a ---   ------- 1.b -------   ------- 2.a ------   ------- 2.b -------   --------------- 3 ----------------
-      //
-      // 1.a : product + version
-      // 1.b : system-information ( like os + version )
-      // 2.a : platform : layout engine
-      // 2.b : platform detail ( optional )
-      // 3   : browser or software + version ( commentaire libre )
-
-      // 1.a : /[^\(]+/i                                        | match : "Mozilla/5.0 "
-      // 1.b : /(\([^\(][^\)]*\))/i                             | match : "(X11; Linux x86_64)"
-      // 2.a : /[\)](\s\w+\/[0-9a-z\.]+)/i                      | match : ") AppleWebKit/537.36"
-      // 2.b : /[\)]\s(\w+\/[0-9a-z\.]+)(\s\([^\(\)]+\))/i      | match : ") AppleWebKit/537.36 (KHTML, like Gecko)"
-      // 3   : /(\s\w+\/[0-9a-z\.]+){1,3}$/i                    | match : " Chrome/44.0.2403.157 Safari/537.36"
-
-
-
-      // EXEPTIONS :
-      //
-
-
-
-      // regex to split useragent 
-      public splitUserAgentRegex : Array<RegExp> = [
-          /[^\(]+/i, // 1.a : product + version
-          /(\([^\(][^\)]*\))/i, // 1.b : system-information
-          /[\)](\s\w+\/[0-9a-z\.]+)/i, // 2.a : platform : layout engine
-          /[\)]\s(\w+\/[0-9a-z\.]+)(\s\([^\(\)]+\))/i, // 2.b : platform detail
-          /(\s\w+\/[0-9a-z\.]+){1,3}$/i // 3 : browser or software + version
-      ];
-
-
-      // regexs for device name
-      public deviceRegex : Array<RegExp> = [
-
-          // consoles
-          /(ouya)/i, // ouya
-          /(nintendo)/i, // nintendo
-          /(playstation)/i, // playstation
-          /(xbox)/i, // xbox
-
-          // tablets
-          /(ipad)/i, // ipad
-          /(android).+(tablet|tab)|(tablet|tab).+(android)/i, // tablet android
-          /(tablet)/i, // general tablet
-
-          // smartphones
-          /(iphone|ipod)/i, // iphone/ipod
-          /(blackberry)/i, // BlackBerry
-          /(android).+(phone)|(phone).+(android)/i, // smartphones android
-          /(phone)/i, // general smartPhone
-
-          // mobiles : smartphone or tablet
-          /(android)/i, // android
-      ]
-
-      // regexs for browser name
-      public browserRegex : Array<RegExp> = [
-
-          /(fxios)\/|(mobile|tablet|tab|phone).+(firefox)\//i, // firefox mobile
-          /(firefox)\//i, // firefox
-
-          /(opios|opr|opera mobi)\/|(mobile|tablet|tab|phone).+(opera)\//i, // opera mobile
-          /(opera)\//i, // opera
-
-
-          /(edge)\//i, // edge
-          /(msie|ms|ie|trident)\//i, // ie
-
-          /(crmo|crios)\/|(mobile|tablet|tab|phone)+(chrome)\//i, // chrome mobile
-          /(chrome)\//i, // chrome
-
-          /(mobile|tablet|tab).+(safari)\//i, // safari mobile
-          /(safari)\//i // safari
-      ]
-
-      // regexs for operating system (os) name
-      public osRegex : Array<RegExp> = [
-          /(microsoft|windows)/i, // windows
-          /(cros)\s/i, // chromium
-          /(iphone|ipad|ipod)/i, // ios
-          /(macintosh|mac)/i, // mac
-
-          /\(.+(android)/i, // android
-          /\(.+(linux)/i, // linux
-          /(blackberry)/i, // blackberry
-          /(firefox)/i, // firefox
-      ]
-
-      // regexs for layout engine
-      public layoutEngineRegex : Array<RegExp> = [
-
-      ]
-
-      // regexs for operating system (os) name
-      public gpuRegex : Array<RegExp> = [
-
-          /(nvidia|geforce|quadro|titan)/i, // nvidia
-          /(amd|radeon|ati)/i, // amd
-          /(intel)/i, // intel
-      ]
-
-
-      // is there a dedicated GPU
-      public static _isDedicatedGPU (engine : Engine) : boolean {
-          var GPUs = [
-            'amd',
-            'nvidia',
-            'radeon',
-            'geforce'
-          ],
-          vendor = engine.getGlInfo().renderer;
-          return this._refDetection(vendor, GPUs);
-      }
-
-      // device exception detection
-      public static _isDevices(devices : Array<string>) : boolean {
-          var userAgent = navigator.userAgent;
-          return this._refDetection(userAgent, devices);
-      }
-
-      // detectMobile
-      public static _isMobile() : boolean {
-          var userAgent = navigator.userAgent,
-              mobiles = [
-                'Android',
-                'webOS',
-                'iPhone',
-                'iPad',
-                'iPod',
-                'BlackBerry',
-                'Windows Phone',
-                'Phone'
-              ];
-
-          return this._refDetection(userAgent, mobiles);
-      }
-
-      // device detection
-      public static _devicesDetection() : string | 'smartPhone' | 'tablet' | 'noteBook' | 'computer' {
-
-          // get screen size
-          var screenWidth = screen.height,
-              screenHeight = screen.width,
-              size = Math.max(screenWidth, screenHeight),
+              // get user agent
               userAgent = navigator.userAgent,
-              isMobile = this._isMobile(),
-              regex;
 
-          // SMARTPHONE
-          if (isMobile && size < 768) {
-              return 'smartPhone';
-          }
+              // detect system
+              system = this.detectSystem(),
 
-          // TABLET
-          if (isMobile) {
-              return 'tablet';
-          }
+              // detect software
+              software = this.detectSoftware(),
 
-          // NOTEBOOK
-          if (size <= 1280) {
-              return 'noteBook';
-          }
+              // detect layout engine
+              layout = this.detectLayout(),
 
-          // computer
-          return 'computer';
+              // detect device
+              device = this.detectDevice();
+
+
+          report.userAgent = userAgent;
+          report.os = system[0];
+          report.osVersion = system[1];
+          report.layout = layout[0];
+          report.layoutVersion = layout[1];
+          report.software = software[0];
+          report.softwareVersion = software[1];
+
+          deviceKey = 'is' + device[0].substr(0, 1).toUpperCase() + device[0].substr(1);
+
+          report[deviceKey] = true;
+
+          return report;
       }
 
-      // TODO : FUTURE FEATURE : get a benchMark reference for GPU and CPU
-      public static _getBenchmarkScore (engine : Engine) : number{
-          return;
-      }
+      // detect device type
+      // return [type]
+      public static detectDevice(): [string] {
 
-      // regex expression detection
-      private static _refDetection (pattern: string, references : Array<string>) : boolean{
+          var useragent = navigator.userAgent,
+              result;
 
-          var L = references.length,
-              refI,
-              regex;
-
-          for (let i = 0; i < L; i++) {
-
-              refI = references[i];
-
-              regex = new RegExp(refI, 'i');
-
-              if( pattern.match(regex)){
-                  return true;
-              };
-
+          // console
+          result = this._match(useragent, /(ouya|nintendo|playstation|xbox)/i, [1]);
+          if (result) {
+              return result;
           }
 
-          return false;
+          // smartphone
+          result = this._match(useragent, /(mobi|phone|ipod|mini)/i, ['smartphone']);
+          if (result) {
+              return result;
+          }
+
+          // tablet
+          result = this._match(useragent, /(tab|ipad)/i, ['tablet']);
+          if (result) {
+              return result;
+          }
+
+          // tv
+          result = this._match(useragent, /(tv)/i, ['tv']);
+          if (result) {
+              return result;
+          }
+
+          // ---> try with the screen size if type is undefined
+          var screenW = window.screen.width,
+              screenH = window.screen.height,
+              size = Math.max(screenW, screenH);
+
+          // try to catch if it's a mobile or not
+          result = this._match(useragent, /(android|ios)/i, ['mobile']);
+          if (result) {
+              if (screenW < 1024 && screenH < 768) {
+                  return ["smartphone"];
+              }
+              else {
+                  return ["tablet"];
+              }
+          }
+
+          // else try with the screen size
+          if (size < 768) {
+              return ["smartphone"];
+          }
+          else if (size < 1025) {
+              return ["tablet"];
+          }
+          else if (size < 1366){
+              return ["notebook"];
+          }
+
+          // else return default : computer
+          else {
+            return ["computer"];
+          }
+
       }
+
+      // get engine layout and version
+      // return [name, version]
+      public static detectLayout(): [string, string] {
+
+          var useragent = navigator.userAgent,
+              result;
+
+          // EdgeHTML :
+          result = this._match(useragent, /(edge)\/?([0-9\.]+)?/i, ['edgeHTML', 2]);
+          if (result) {
+              return result;
+          }
+
+          // Presto :
+          result = this._match(useragent, /(presto)\/?([0-9\.]+)?/i, ['presto', 2]);
+          if (result) {
+              return result;
+          }
+
+          // WebKit | Trident | Netfront :
+          result = this._match(useragent, /(webKit|trident|netfront)\/?([0-9\.]+)?/i, [1, 2]);
+          if (result) {
+              return result;
+          }
+
+          // KHTML :
+          result = this._match(useragent, /(KHTML)\/?([0-9\.]+)?/i, ['KHTML', 2]);
+          if (result) {
+              return result;
+          }
+
+          // Gecko :
+          result = this._match(useragent, /.*[rv:]([0-9]\.+)?.*(Gecko)/i, ['gecko', 1]);
+          if (result) {
+              return result;
+          }
+
+          return null;
+      }
+
+      // get OS + version if possible
+      // return [name, version]
+      public static detectSystem(): [string, string]{
+
+          var useragent = navigator.userAgent,
+              result;
+
+          // windows :
+          result = this._match(useragent, /(windows)\snt\s([0-9\.]+)/i, ['windows', 2]);
+
+          // get version with "nt x.x"
+          if (result && result[1]) {
+              switch (result[1]) {
+                  // xp
+                  case '5.1' || '5.2':
+                      result[1] = 'xp';
+                      break;
+
+                  // vista
+                  case '6.0':
+                      result[1] = 'vista';
+                      break;
+
+                  // 7
+                  case '6.1':
+                      result[1] = '7';
+                      break;
+
+                  // 8
+                  case '6.2':
+                      result[1] = '8';
+                      break;
+
+                  // 8.1
+                  case '6.3':
+                      result[1] = '8.1';
+                      break;
+
+                  // 10
+                  case '10.0':
+                      result[1] = '10';
+                      break;
+
+                  default :
+                      result[1] = null;
+                      break;
+              }
+          }
+          if (result) {
+              return result;
+          }
+
+          // chromium :
+          result = this._match(useragent, /\s(cros)\s/i, ['chromium', null]);
+          if (result) {
+              return result;
+          }
+
+          // ios :
+          result = this._match(useragent, /(fxios|opios|crios|iphone|ipad|ipod).*\sos\s([0-9_\.]+)/i, ['ios', 2]);
+          if (result && result[1]) {
+              result[1] = result[1].replace(/\_/g, '.');
+          }
+          if (result) {
+              return result;
+          }
+
+          // mac :
+          result = this._match(useragent, /(macintosh|mac)\sos\sx\s([0-9_\.]+)/i, ['mac', 2]);
+          if (result && result[1]) {
+              result[1] = result[1].replace(/\_/g, '.');
+          }
+          if (result) {
+              return result;
+          }
+
+          // android :
+          result = this._match(useragent, /(android)\s([0-9\.]+)/i, ['android', 2]);
+          if (result) {
+              return result;
+          }
+
+          // linux | blackberry | firefox:
+          result = this._match(useragent, /(linux|blackberry|firefox)/i, [1, null]);
+          if (result) {
+              return result;
+          }
+
+          return null;
+      }
+
+      // get browser or software name + version
+      // return [name, version]
+      public static detectSoftware(): [string, string] {
+
+          var useragent = navigator.userAgent,
+              result;
+
+          // edge :
+          result = this._match(useragent, /(edge)\/([0-9]+)/i, ['edge', 2]);
+          if (result) {
+              return result;
+          }
+
+          // ie < 11 :
+          result = this._match(useragent, /(msie)\s([0-9]+)/i, ['ie', 2]);
+          if (result) {
+              return result;
+          }
+
+          // ie 11 :
+          result = this._match(useragent, /(trident).*[rv:]([0-9]+)/i, ["ie", 2]);
+          if (result) {
+              return result;
+          }
+
+          // firefox
+          result = this._match(useragent, /(firefox|fxios)\/([0-9]+)/i, ["firefox", 2]);
+          if (result) {
+              return result;
+          }
+
+
+          // opera
+          result = this._match(useragent, /(opios|opr|opera)\/([0-9]+)/i, ["opera", 2]);
+          if (result) {
+              return result;
+          }
+
+          // chrome
+          result = this._match(useragent, /(crmo|crios|chrome)\/([0-9]+)/i, ["chrome", 2]);
+          if (result) {
+              return result;
+          }
+
+          // safari
+          result = this._match(useragent, /Version\/([0-9]+).*(safari)\//i, ["safari", 1]);
+          if (result) {
+              return result;
+          }
+
+          // undefined
+          return null;
+
+      }
+
+
+
+      private static _splitUserAgent(userAgent: string) : userAgentSplittedI{
+
+          let matches = userAgent.match(/([^\(]+)?\(([^\)]*)[\)]\s?([a-z0-9]*\/[0-9a-z\.]+)?\s?\(?(?:([^\)]*)?[\)])?\s?((?:.*\/?[0-9a-z\.]+\s?)*)?/i);
+
+          return {
+              userAgent : userAgent,
+              product : matches[1],
+              system: matches[2],
+              platform: matches[3],
+              platformDetails: matches[4],
+              software : matches[5]
+          };
+
+      }
+
+      // return matches in order you choose.
+      // data returned :
+      // if string : return string
+      // if number : get group in regex matches
+      // if data is undefined, return matches
+      private static _match (str: string, regex : RegExp, data?: Array<string | number>) {
+
+          var result = [],
+              matches = str.match(regex);
+
+          if (data && matches) {
+              var L = data.length,
+                  dataI;
+
+              for (let i = 0; i < L; i++) {
+                  dataI = data[i];
+
+                  // if string
+                  if (typeof dataI === "string") {
+                      result[i] = dataI;
+                      continue;
+                  }
+
+                  // if number & matches[dataI]
+                  if (matches[dataI]) {
+                      result[i] = matches[dataI];
+                      continue;
+                  }
+
+                  result[i] = null;
+              }
+
+              return result;
+          }
+
+          if (matches) {
+              return matches.shift();
+          }
+
+          return null;
+      }
+  }
+
+  // interface to keep original particule system
+  export interface userAgentRegexI {
+      'product' : RegExp;
+      'system' : RegExp;
+      'platform' : RegExp;
+      'platformDetails' : RegExp;
+      'software' : RegExp;
+  }
+
+  export interface userAgentSplittedI {
+      'userAgent' : string;
+      'product' : string;
+      'system' : string;
+      'platform' : string;
+      'platformDetails' : string;
+      'software' : string;
   }
 
 }
