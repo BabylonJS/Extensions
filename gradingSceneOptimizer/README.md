@@ -237,8 +237,6 @@ var customOptimization = {
     lensFlaresEnabled : true,
     renderTargetsEnabled : true,
 
-    assets : [] // TODO : assets to load with grade | introduce a smart load
-
     textures : {
         scale : 0.5, // original texture size * 0.5.
         maxSize : 1024, // if (original texture size * scale) > maxSize, texture size = maxSize.
@@ -266,8 +264,6 @@ var customOptimization = {
     },
 
     shadows : {
-        refreshRate : 0, // TODO : FUTURE FEATURE : Force to calculate once all shadows
-        type : 'useBlurCloseExponentialShadowMap',
         size : 512
     },
 
@@ -277,26 +273,32 @@ var customOptimization = {
         hardwareScaling : 0.5 // screen with 200% pixel density
     },
 
-    view : { // TODO : FUTURE FEATURE
-      distance : 200 // distance of camera
-      fog : 150 // distance of fog
-    }
-
     userInfos : { // enable or disable grade on specifics devices and hardware.
         smartPhoneAllowed : false,
         tabletAllowed : false,
         noteBookAllowed : false,
         computerAllowed : true,
         consoleAllowed : true,
+        tvAllowed : false
         exceptionsAllowed : ['xbox'], // if xbox found in userAgent, this grade is enabled.
-        gpu : string, // gpu name : nvidia, amd, intel.
-        browser : string, // browser name : firefox, chrome, safari, opera, ie, edge.
-        browserVersion : number, // browser version
+        software : string, // browser name : firefox, chrome, safari, opera, ie, edge.
+        softwareVersion : number, // browser version
         os : string, // operating system name : windows, chromium, ios, mac, android, linux, BlackBerry, firefox
         osVersion : number, // browser version
         engine : string, // layout engine : EdgeHTML, Presto, WebKit, Trident, Blink, Gecko, Goanna, Khtml, Netfront
         engineVersion : number // layout engine version
+    },
+
+    // TODO : NEXT FEATURE :
+    assets : { // assets to load with grade | introduce a smart load
+      static : [], // all asset will freeze
+      dynamic : []
     }
+
+    view : {
+        distance : 200 // distance of camera
+        fog : 150 // distance of fog
+    },
 
 };
 

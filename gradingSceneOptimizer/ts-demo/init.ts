@@ -25,8 +25,6 @@ window.onload=function() {
   // Environment Texture
   var hdrTexture = BABYLON.CubeTexture.CreateFromPrefilteredData("assets/environment.dds", scene);
 
-  console.log(hdrTexture)
-
 
   //Adding a light
   var light = new BABYLON.DirectionalLight("spot", new BABYLON.Vector3(-1, -2, 1), scene);
@@ -328,7 +326,7 @@ window.onload=function() {
     drone.parent = emptyDrone;
     emptyDrone.scaling = new BABYLON.Vector3(6,6,6);
     emptyDrone.position = new BABYLON.Vector3(0,6,-6);
-    scene.getMeshByName('node_Scheibe_-6124').isVisible = false;
+    scene.getMeshByName('mesh_Scheibe_11558Scheibe_0').isVisible = false;
 
 
 

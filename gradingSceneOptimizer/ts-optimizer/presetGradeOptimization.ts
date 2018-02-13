@@ -93,7 +93,6 @@ module BABYLON {
                   fresnelEnabled : false
               },
               shadows : {
-                  type : 'usePoissonSampling',
                   size : 256
               },
               renderSize : {
@@ -135,7 +134,6 @@ module BABYLON {
                   fresnelEnabled : true
               },
               shadows : {
-                  type : 'usePoissonSampling',
                   size : 512
               },
               renderSize : {
@@ -177,7 +175,6 @@ module BABYLON {
                   fresnelEnabled : true
               },
               shadows : {
-                  type : 'usePoissonSampling',
                   size : 1024
               },
               renderSize : {
@@ -219,7 +216,6 @@ module BABYLON {
                   fresnelEnabled : true
               },
               shadows : {
-                  type : 'usePoissonSampling',
                   size : 2048
               },
               renderSize : {

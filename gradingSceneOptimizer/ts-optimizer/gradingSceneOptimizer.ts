@@ -44,36 +44,8 @@ module BABYLON {
       // set mesh.isVisible to false
       public minimizeDrawCall: boolean = true; // TODO ( !!! FUTURE FEATURE !!!)
 
-      // device type
-      public deviceType: string | 'smartPhone' | 'tablet' | 'noteBook' | 'computer' = BABYLON.UserInfos._devicesDetection();
-
-      // device name :
-      public device: string;
-
-      // is mobile ?
-      public isMobile: boolean = BABYLON.UserInfos.isMobile;
-
-      // mobile name :
-      public mobile: string;
-
-      // is smartphone ?
-      public isSmartphone: boolean;
-
-      // smartphone name:
-      public smartphone: string;
-
-      // is tablet ?
-      public isTablet: boolean;
-
-      // tablet name:
-      public tablet: string;
-
-      // is dedicated GPU ?
-      public isDedicatedGPU : boolean;
-
-      // gpu name
-      public gpu : string;
-
+      // user info : os, sofware(browser), device, ...
+      public userInfos: UserInfosReport = BABYLON.UserInfos.report();
 
       // to know on wich grade we are.
       private _currentGrade: Grade;
@@ -113,9 +85,6 @@ module BABYLON {
        * @param autoReEval : active auto evaluation
        */
       constructor (engine: Engine, public fpsToReach: number = 48, public evaluationDuration: number = 1000, public autoReEval: boolean = true) {
-
-          // Detect dedicated GPU
-          this.isDedicatedGPU = BABYLON.UserInfos.isDedicatedGPU;
 
           // add resize event
           if (this._resizeEvent) {
@@ -331,50 +300,51 @@ module BABYLON {
       public addGrade(grade: Grade) {
 
           var grades = this.grades,
+              userInfos = this.userInfos,
               devices = grade.devices,
               deviceType = this.deviceType,
 
 
-              isOnAllowedDevice = (params: IParamsDevicesGradeOptimization) : boolean => {
-                  var exceptions = params.exceptionsAllowed,
-                      phoneAllowed = params.smartPhoneAllowed,
-                      tabletAllowed = params.tabletAllowed,
-                      noteBookAllowed = params.noteBookAllowed,
-                      computerAllowed = params.computerAllowed;
+          isEnable = (params: IParamsDevicesGradeOptimization) : boolean => {
+              var exceptions = params.exceptionsAllowed,
+                  phoneAllowed = params.smartPhoneAllowed,
+                  tabletAllowed = params.tabletAllowed,
+                  noteBookAllowed = params.noteBookAllowed,
+                  computerAllowed = params.computerAllowed;
 
-                  // check if exception
-                  if (exceptions && exceptions.length > 0 && BABYLON.UserInfos._isDevices(exceptions)) {
-                      return true;
-                  }
-
-                  // test smartPhone
-                  if (!phoneAllowed && deviceType === 'smartPhone') {
-                      return false;
-                  }
-
-                  // test tablet
-                  if (!tabletAllowed && deviceType === 'tablet') {
-                      return false;
-                  }
-
-                  // test noteBook
-                  if (!noteBookAllowed && deviceType === 'noteBook') {
-                      return false;
-                  }
-
-                  // test general computer
-                  if (!computerAllowed && deviceType === 'computer') {
-                      return false;
-                  }
-
-                  // check if exception
-                  if (exceptions && exceptions.length > 0 && BABYLON.UserInfos._isDevices(exceptions)) {
-                      return false;
-                  }
-
+              // check if exception
+              if (exceptions && exceptions.length > 0 && BABYLON.UserInfos._isDevices(exceptions)) {
                   return true;
-
               }
+
+              // test smartPhone
+              if (!phoneAllowed && deviceType === 'smartPhone') {
+                  return false;
+              }
+
+              // test tablet
+              if (!tabletAllowed && deviceType === 'tablet') {
+                  return false;
+              }
+
+              // test noteBook
+              if (!noteBookAllowed && deviceType === 'noteBook') {
+                  return false;
+              }
+
+              // test general computer
+              if (!computerAllowed && deviceType === 'computer') {
+                  return false;
+              }
+
+              // check if exception
+              if (exceptions && exceptions.length > 0 && BABYLON.UserInfos._isDevices(exceptions)) {
+                  return false;
+              }
+
+              return true;
+
+          }
 
           // add priority to newGrade
           grade.priority = grades.length;
@@ -382,7 +352,7 @@ module BABYLON {
           // look if this grade need to be enabled with devices parameter
           // if no devices options, set enabled to true;
           // if devices option is defined and isOnAllowedDevice return true, set enabled to true
-          if (!devices || (devices && isOnAllowedDevice(devices))) {
+          if (!devices || (devices && isEnable(devices))) {
               // enabled
               grade.enabled = true;
               // add to gso only if enabled
@@ -572,19 +542,16 @@ module BABYLON {
           // for render targets
           if (grade.renderTargetsEnabled != undefined) { // DONE
               scene.renderTargetsEnabled = grade.renderTargetsEnabled;
-              // BABYLON.Optimize.renderTargets(scene, grade.renderTargetsEnabled);
           }
 
           // for postProcess
           if (grade.postProcessesEnabled != undefined) { // DONE
               scene.postProcessesEnabled = grade.postProcessesEnabled;
-              //BABYLON.Optimize.postProcesses(scene, grade.postProcessesEnabled);
           }
 
           // for lensFlare
           if (grade.lensFlaresEnabled != undefined) { // DONE
               scene.lensFlaresEnabled = grade.lensFlaresEnabled;
-              // BABYLON.Optimize.lensFlares(scene, grade.lensFlaresEnabled);
           }
 
           // for shadows
@@ -660,24 +627,6 @@ module BABYLON {
                       "useExtention": true
                   }
               );
-
-              // console.log(textureI);
-
-              // var internText = textureI.getInternalTexture();
-
-              // var reloadedTexture = this.reloadTexture(scene, internText);
-
-              // if (textureI instanceof Texture) {
-              //     textureI.updateURL('/assets/floor.png')
-              // }
-
-              // BABYLON.TextureTools.CreateResizedCopy(textureI, 100, 100);
-
-              // textureI._texture = this.reloadTexture(scene, internText);
-
-              // proxy._swapAndDie(internText);
-              // return;
-
 
           }
 
@@ -838,6 +787,9 @@ module BABYLON {
                   newRate = paramMin;
               }
 
+              // clear particule
+              particleSys.reset();
+
               // update emit rate
               particleSys.emitRate = newRate;
 
@@ -860,28 +812,9 @@ module BABYLON {
               return;
           }
 
-          var shadowsType = [
-                  'usePoissonSampling',
-                  'useExponentialShadowMap',
-                  'useBlurExponentialShadowMap',
-                  'useCloseExponentialShadowMap',
-                  'useBlurCloseExponentialShadowMap'
-              ],
-              lights = scene.lights,
+          var lights = scene.lights,
               paramSize = params.size,
-              paramType = params.type,
-
               shadowMap;
-
-          // change type of shadow
-          var setShadowType = (shadowGenerator: ShadowGenerator) => {
-
-              for (let i = 0; i < shadowsType.length; i++) {
-                  shadowGenerator[shadowsType[i]] = false;
-              }
-              shadowGenerator[paramType] = true;
-
-          }
 
           // for x light
           for (let i = 0; i < lights.length; i++) {
@@ -897,11 +830,6 @@ module BABYLON {
                   shadowMap = sh.getShadowMap();
                   // resize map
                   shadowMap.resize(paramSize);
-              }
-
-              // if need to change type
-              if (paramType) {
-                  setShadowType(sh); // TODO : typescript : 'IShadowGenerator' is not assignable to parameter of type 'ShadowGenerator'
               }
 
           }
@@ -1078,7 +1006,6 @@ module BABYLON {
 
   // interface shadow grade parameter
   export interface IParamsShadowsGradeOptimization {
-      type? : 'usePoissonSampling' | 'useExponentialShadowMap' | 'useBlurExponentialShadowMap' | 'useCloseExponentialShadowMap' | 'useBlurCloseExponentialShadowMap';
       size? : number;
   }
 
