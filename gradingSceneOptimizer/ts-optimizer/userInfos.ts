@@ -438,14 +438,6 @@ module BABYLON {
       }
   }
 
-  // interface to keep original particule system
-  export interface userAgentRegexI {
-      'product' : RegExp;
-      'system' : RegExp;
-      'platform' : RegExp;
-      'platformDetails' : RegExp;
-      'software' : RegExp;
-  }
 
   export interface userAgentSplittedI {
       'userAgent' : string;

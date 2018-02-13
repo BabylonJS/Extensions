@@ -285,8 +285,8 @@ var customOptimization = {
         softwareVersion : number, // browser version
         os : string, // operating system name : windows, chromium, ios, mac, android, linux, BlackBerry, firefox
         osVersion : number, // browser version
-        engine : string, // layout engine : EdgeHTML, Presto, WebKit, Trident, Blink, Gecko, Goanna, Khtml, Netfront
-        engineVersion : number // layout engine version
+        layout : string, // layout engine : EdgeHTML, Presto, WebKit, Trident, Blink, Gecko, Goanna, Khtml, Netfront
+        layoutVersion : number // layout engine version
     },
 
     // TODO : NEXT FEATURE :

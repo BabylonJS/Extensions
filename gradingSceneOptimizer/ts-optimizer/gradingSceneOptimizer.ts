@@ -1047,13 +1047,21 @@ module BABYLON {
 
   // interface shadow grade parameter
   export interface IParamsDevicesGradeOptimization {
-      smartPhoneAllowed? : boolean; // size : 0 - 767 px && mobile detection = true
-      tabletAllowed? : boolean; // size : 768 - 1024 px && mobile detection = true
-      noteBookAllowed? : boolean; // size : < 1280 px && mobile detection = false
-      computerAllowed? : boolean; // size : > 1280 px
+      smartPhoneAllowed? : boolean;
+      tabletAllowed? : boolean;
+      noteBookAllowed? : boolean;
+      computerAllowed? : boolean;
+      consoleAllowed?: boolean;
+      tvAllowed?: boolean;
+
+      software? : string;
+      softwareVersion? : string;
+      os? : string;
+      osVersion? : string;
+      layout? : string;
+      layoutVersion? : string;
+
       exceptionsAllowed? : Array<string>;
-      onlyDedicatedGPU? : boolean;
-      benchmarkScore? : number;
   }
 
   // interface camera grade parameter
