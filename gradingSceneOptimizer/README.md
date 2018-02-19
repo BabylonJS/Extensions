@@ -264,7 +264,7 @@ var customOptimization = {
     },
 
     shadows : {
-        size : 512
+        ratio : 0.5
     },
 
     renderSize : {
@@ -280,25 +280,19 @@ var customOptimization = {
         computerAllowed : true,
         consoleAllowed : true,
         tvAllowed : false
-        exceptionsAllowed : ['xbox'], // if xbox found in userAgent, this grade is enabled.
-        software : string, // browser name : firefox, chrome, safari, opera, ie, edge.
-        softwareVersion : number, // browser version
-        os : string, // operating system name : windows, chromium, ios, mac, android, linux, BlackBerry, firefox
-        osVersion : number, // browser version
-        layout : string, // layout engine : EdgeHTML, Presto, WebKit, Trident, Blink, Gecko, Goanna, Khtml, Netfront
-        layoutVersion : number // layout engine version
+        exceptionsAllowed : ['xbox'] // if xbox found in userAgent, this grade is enabled.
     },
 
     // TODO : NEXT FEATURE :
     assets : { // assets to load with grade | introduce a smart load
-      static : [], // all asset will freeze
-      dynamic : []
-    }
+        static : [], // all asset will freeze
+        dynamic : []
+    },
 
     view : {
         distance : 200 // distance of camera
         fog : 150 // distance of fog
-    },
+    }
 
 };
 
