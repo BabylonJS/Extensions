@@ -1,3 +1,235 @@
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+var BABYLON;
+(function (BABYLON) {
+    /*********
+     * GRADE
+     *********/
+    /**
+          flow :
+            •
+            |
+      1.a onBeforeLoad
+            •
+            |
+      1.b onLoaded
+            •
+            |
+      2.a onBeforeRender
+            •
+            |
+      2.b onRendered ––––––––> onUpdate • ––>
+            •              |                |
+            |              |                |
+            |              <–––––––—–––––––––
+            |
+            |
+      3.a onBeforeDispose
+            •
+            |
+      3.b onDisposed
+            •
+  
+     */
+    // class to customize grade
+    var Grade = /** @class */ (function () {
+        /**
+         * @param _GSO : GradingSceneOptimizer
+         * @param name : name of grade
+         * @param upGradingTask : task to do when this grade is enabled
+         * @param downGradingTask : task to do when this grade is disabled
+         * @param optimization : optimization parameters
+         */
+        function Grade(_GSO, name, optimization, upGradingTask, downGradingTask) {
+            if (upGradingTask === void 0) { upGradingTask = null; }
+            if (downGradingTask === void 0) { downGradingTask = null; }
+            this._GSO = _GSO;
+            this.name = name;
+            this.upGradingTask = upGradingTask;
+            this.downGradingTask = downGradingTask;
+            // "enabled" variable
+            this.postProcessesEnabled = true;
+            this.lensFlaresEnabled = true;
+            this.renderTargetsEnabled = true;
+            this.particlesEnabled = true;
+            this.shadowsEnabled = true;
+            // parameters variable
+            this.particles = null;
+            this.shadows = null;
+            this.renderSize = null;
+            this.materials = null;
+            this.textures = null;
+            this.userInfos = null;
+            this.camera = null;
+            var grades = _GSO.grades, prevGrade, priority, userInfos = _GSO.userInfos, paramsUserInfos, deviceType = userInfos.deviceType;
+            // add priority to newGrade
+            priority = this.priority = grades.length;
+            if (priority > 0) {
+                prevGrade = grades[grades.length - 1];
+                console.log(prevGrade.name);
+            }
+            /**
+             * 1. check if optimization params exist
+             * 2. If not, set optimization params of previous grade
+             * 3. else put params by default
+             */
+            /**
+             * PARAMS
+             */
+            // post process enabled
+            if (optimization.postProcessesEnabled != undefined) {
+                this.postProcessesEnabled = optimization.postProcessesEnabled;
+            }
+            else if (prevGrade && prevGrade.postProcessesEnabled) {
+                this.postProcessesEnabled = prevGrade.postProcessesEnabled;
+            }
+            // lensflare enabled
+            if (optimization.lensFlaresEnabled != undefined) {
+                this.lensFlaresEnabled = optimization.lensFlaresEnabled;
+            }
+            else if (prevGrade && prevGrade.lensFlaresEnabled) {
+                this.lensFlaresEnabled = prevGrade.lensFlaresEnabled;
+            }
+            // render target texture enabled
+            if (optimization.renderTargetsEnabled != undefined) {
+                this.renderTargetsEnabled = optimization.renderTargetsEnabled;
+            }
+            else if (prevGrade && prevGrade.renderTargetsEnabled) {
+                this.renderTargetsEnabled = prevGrade.renderTargetsEnabled;
+            }
+            // particles enabled
+            if (optimization.particlesEnabled != undefined) {
+                this.particlesEnabled = optimization.particlesEnabled;
+            }
+            else if (prevGrade && prevGrade.particlesEnabled) {
+                this.particlesEnabled = prevGrade.particlesEnabled;
+            }
+            // shadow enabled
+            if (optimization.shadowsEnabled != undefined) {
+                this.shadowsEnabled = optimization.shadowsEnabled;
+            }
+            else if (prevGrade && prevGrade.shadowsEnabled) {
+                this.shadowsEnabled = prevGrade.shadowsEnabled;
+            }
+            // particles
+            if (optimization.particles != undefined) {
+                this.particles = optimization.particles;
+            }
+            else if (prevGrade && prevGrade.particles) {
+                this.particles = prevGrade.particles;
+            }
+            // shadow
+            if (optimization.shadows != undefined) {
+                this.shadows = optimization.shadows;
+            }
+            else if (prevGrade && prevGrade.shadows) {
+                this.shadows = prevGrade.shadows;
+            }
+            // render size
+            if (optimization.renderSize != undefined) {
+                this.renderSize = optimization.renderSize;
+            }
+            else if (prevGrade && prevGrade.renderSize) {
+                this.renderSize = prevGrade.renderSize;
+            }
+            // material
+            if (optimization.materials != undefined) {
+                this.materials = optimization.materials;
+            }
+            else if (prevGrade && prevGrade.materials) {
+                this.materials = prevGrade.materials;
+            }
+            // texture
+            if (optimization.textures != undefined) {
+                this.textures = optimization.textures;
+            }
+            else if (prevGrade && prevGrade.textures) {
+                this.textures = prevGrade.textures;
+            }
+            // user infos
+            if (optimization.userInfos != undefined) {
+                paramsUserInfos = this.userInfos = optimization.userInfos;
+            }
+            else if (prevGrade && prevGrade.userInfos) {
+                this.userInfos = prevGrade.userInfos;
+            }
+            /**
+             * IS ON RIGHT SOFTWARE / HARDWARE
+             */
+            // look if grade need to be enabled
+            var isEnable = function (params) {
+                var exceptions = params.exceptionsAllowed, phoneAllowed = params.smartPhoneAllowed, tabletAllowed = params.tabletAllowed, noteBookAllowed = params.noteBookAllowed, computerAllowed = params.computerAllowed, tvAllowed = params.tvAllowed, consoleAllowed = params.consoleAllowed, exeptRegex, matches;
+                // check if exception
+                if (exceptions && exceptions.length > 0) {
+                    var L = exceptions.length, exeptI, strRegex = '(';
+                    for (var i = 0; i < L; i++) {
+                        exeptI = exceptions[i];
+                        strRegex = strRegex + exeptI;
+                        // add "or"
+                        if (i < L - 1) {
+                            strRegex = strRegex + '|';
+                            continue;
+                        }
+                        // add closure
+                        strRegex = strRegex + ')';
+                    }
+                    exeptRegex = new RegExp(strRegex, 'i');
+                    // match it
+                    if (BABYLON.UserInfos.match(userInfos.userAgent, exeptRegex)) {
+                        return true;
+                    }
+                }
+                // test smartPhone
+                if (!phoneAllowed && deviceType === 'smartPhone') {
+                    return false;
+                }
+                // test tablet
+                if (!tabletAllowed && deviceType === 'tablet') {
+                    return false;
+                }
+                // test noteBook
+                if (!noteBookAllowed && deviceType === 'noteBook') {
+                    return false;
+                }
+                // test console
+                if (!consoleAllowed && deviceType === 'console') {
+                    return false;
+                }
+                // test tv
+                if (!tvAllowed && deviceType === 'tv') {
+                    return false;
+                }
+                // test general computer
+                if (!computerAllowed && deviceType === 'computer') {
+                    return false;
+                }
+                return true;
+            };
+            // look if this grade need to be enabled with user info parameter
+            // if no user info options, set enabled to true;
+            // if user info option is defined and isEnable return true, set enabled to true
+            if (!paramsUserInfos || (paramsUserInfos && isEnable(paramsUserInfos))) {
+                // enabled
+                this.enabled = true;
+                // add to gso only if enabled
+                _GSO.grades.push(this);
+            }
+            else {
+                this.enabled = false;
+            }
+        }
+        return Grade;
+    }());
+    BABYLON.Grade = Grade;
+})(BABYLON || (BABYLON = {}));
 /***********************
  * CREATED BY PIERRE GLIBERT
  * Version : alpha_0.0.1
@@ -28,7 +260,7 @@ var BABYLON;
         function GradingSceneOptimizer(engine, fpsToReach, evaluationDuration, autoReEval) {
             if (fpsToReach === void 0) { fpsToReach = 48; }
             if (evaluationDuration === void 0) { evaluationDuration = 1000; }
-            if (autoReEval === void 0) { autoReEval = true; }
+            if (autoReEval === void 0) { autoReEval = false; }
             var _this = this;
             this.fpsToReach = fpsToReach;
             this.evaluationDuration = evaluationDuration;
@@ -50,17 +282,15 @@ var BABYLON;
             // set mesh.isVisible to false
             this.minimizeDrawCall = true; // TODO ( !!! FUTURE FEATURE !!!)
             // user info : os, sofware(browser), device, ...
-            this.userInfos = BABYLON.UserInfos.report();
+            this.userInfos = BABYLON.UserInfos.report;
+            // use texture extention workflow
+            this.useTextureExtWorkflow = false;
             // current priority
             this._currentGradePriority = -1;
             // to know the step of evaluation :
             // 1. try to upgrading.
             // 2. if fps not reached, dowgrading.
             this._isUpGradingStep = true;
-            // to keep original params of particules systems
-            this._originalParticules = [];
-            // to keep original texture size
-            this._originalTextures = [];
             // add resize event
             if (this._resizeEvent) {
                 window.removeEventListener("resize", this._resizeEvent);
@@ -81,24 +311,11 @@ var BABYLON;
          *                       You will get a better accessibility and plug and play concept. It's important for web.
          * @param onReady : callback when GradingSceneOptimizer is ready.
          */
-        GradingSceneOptimizer.prototype.run = function (scene, starterGrade, onReady) {
+        GradingSceneOptimizer.prototype.run = function (scene, onReady) {
             var _this = this;
             var engine = scene.getEngine();
             // If no starterGrade, get the first
-            if (!starterGrade) {
-                starterGrade = this.grades[0];
-            }
-            else if (!starterGrade.enabled) {
-                var grades = this.grades;
-                starterGrade = grades[starterGrade.priority];
-                // If no starterGrade, get the last
-                if (!starterGrade) {
-                    starterGrade = grades[grades.length - 1];
-                }
-            }
-            // get all original references we need
-            // like particules emit rate or original textures size
-            this._getOriginalReferences(scene);
+            var starterGrade = this.grades[0];
             // start update scene by starterGrade
             this.updateSceneByGrade(scene, starterGrade, function () {
                 if (onReady) {
@@ -191,56 +408,9 @@ var BABYLON;
         // create grades
         GradingSceneOptimizer.prototype.createGrade = function (name, optimization, upGradingTask, downGradingTask) {
             // create new grade
-            var newGrade = new BABYLON.Grade(name, optimization, upGradingTask, downGradingTask);
-            // add grade to GSO
-            this.addGrade(newGrade);
+            var newGrade = new BABYLON.Grade(this, name, optimization, upGradingTask, downGradingTask);
             // return grade result
             return newGrade;
-        };
-        // add existing grade
-        GradingSceneOptimizer.prototype.addGrade = function (grade) {
-            var grades = this.grades, userInfos = this.userInfos, devices = grade.devices, deviceType = this.deviceType, isEnable = function (params) {
-                var exceptions = params.exceptionsAllowed, phoneAllowed = params.smartPhoneAllowed, tabletAllowed = params.tabletAllowed, noteBookAllowed = params.noteBookAllowed, computerAllowed = params.computerAllowed;
-                // check if exception
-                if (exceptions && exceptions.length > 0 && BABYLON.UserInfos._isDevices(exceptions)) {
-                    return true;
-                }
-                // test smartPhone
-                if (!phoneAllowed && deviceType === 'smartPhone') {
-                    return false;
-                }
-                // test tablet
-                if (!tabletAllowed && deviceType === 'tablet') {
-                    return false;
-                }
-                // test noteBook
-                if (!noteBookAllowed && deviceType === 'noteBook') {
-                    return false;
-                }
-                // test general computer
-                if (!computerAllowed && deviceType === 'computer') {
-                    return false;
-                }
-                // check if exception
-                if (exceptions && exceptions.length > 0 && BABYLON.UserInfos._isDevices(exceptions)) {
-                    return false;
-                }
-                return true;
-            };
-            // add priority to newGrade
-            grade.priority = grades.length;
-            // look if this grade need to be enabled with devices parameter
-            // if no devices options, set enabled to true;
-            // if devices option is defined and isOnAllowedDevice return true, set enabled to true
-            if (!devices || (devices && isEnable(devices))) {
-                // enabled
-                grade.enabled = true;
-                // add to gso only if enabled
-                this.grades.push(grade);
-            }
-            else {
-                grade.enabled = false;
-            }
         };
         // update scene by render grade name
         GradingSceneOptimizer.prototype.updateSceneByGrade = function (scene, grade, onSuccess) {
@@ -377,40 +547,9 @@ var BABYLON;
             if (grade.materials != undefined) {
                 this.optimizeMaterials(scene, grade.materials); // Done
             }
-            // for particules
-            if (grade.particulesEnabled != undefined) {
-                this.optimizeParticules(scene, grade.particulesEnabled, grade.particules); // done
-            }
-        };
-        ///////////////////
-        // GET ORIGINALS //
-        ///////////////////
-        GradingSceneOptimizer.prototype._getOriginalReferences = function (scene) {
-            // for particules , keep :
-            // -  emitRate
-            var particulesSys = scene.particleSystems, L = particulesSys.length, particulesSysI;
-            for (var i = 0; i < L; i++) {
-                particulesSysI = particulesSys[i];
-                this._originalParticules.push({
-                    "emitRate": particulesSysI.emitRate,
-                    "system": particulesSysI
-                });
-            }
-            // for textures , keep :
-            // - width
-            // - height
-            // - channel
-            // - texture ( only if autorized)
-            var textures = scene.textures, L = textures.length, textureI, size;
-            for (var i = 0; i < L; i++) {
-                textureI = textures[i];
-                size = textureI.getSize();
-                this._originalTextures.push({
-                    "width": size.width,
-                    "height": size.height,
-                    "texture": textureI,
-                    "useExtention": true
-                });
+            // for particles
+            if (grade.particlesEnabled != undefined) {
+                this.optimizeParticles(scene, grade.particlesEnabled, grade.particles); // done
             }
         };
         ////////////////////////////
@@ -418,32 +557,36 @@ var BABYLON;
         ////////////////////////////
         // for textures
         GradingSceneOptimizer.prototype.optimizeTextures = function (scene, params) {
-            // regex :
-            var blobRegex = /^(blob:)/g, // look if a blob
-            extRegex = /\.([0-9]+)\.(?=[^\.]*$)/g; // capture size extention methode
-            var blob = "blob:http://localhost:8889/4a9cad29-06cb-4a23-9e2e-c981a2deea4b", ext = "image.1024.png";
-            var textures = scene.textures, textureI, L = textures.length;
-            // if it's a blob
-            if (!blobRegex) {
+            var textures = scene.textures, L = textures.length;
+            for (var i = 0; i < L; i++) {
+                this.resizeTexture(textures[i], 512);
             }
         };
-        // resize material
-        GradingSceneOptimizer.prototype.resizeChannelsMaterial = function () {
-            var standardChannels = [
-                'diffuseTexture',
-                'ambientTexture',
-                'opacityTexture',
-                'reflectionTexture',
-                'emissiveTexture',
-                'specularTexture',
-                'bumpTexture',
-                'lightmapTexture',
-                'colorGradingTexture',
-                'refractionTexture'
-            ], pbrChannels;
-        };
         // resize texture
-        GradingSceneOptimizer.prototype.resizeTexture = function (texture, width, height) {
+        GradingSceneOptimizer.prototype.resizeTexture = function (texture, size) {
+            // regex :
+            var badUrlRegex = /^(blob:|data:)/i, // look if a blob
+            extRegex = /(.*)\.([0-9]+)\.([^\.]*$)/i, // capture size extention methode
+            url = texture.url, splittedUrl;
+            if (!url) {
+                return;
+            }
+            // if bad url
+            if (url && url.match(badUrlRegex)) {
+                // BABYLON.Tools.Warn("Texture " + texture.name + "can't be resized ! Reason : bad url, the asset path is lost : " + url);
+                return;
+            }
+            if (url && !this.useTextureExtWorkflow && texture.canRescale) {
+                texture.updateURL(url);
+                texture.scale(0.5);
+                return;
+            }
+            splittedUrl = url.match(extRegex);
+            if (splittedUrl) {
+                var newUrl = splittedUrl[1] + '.' + size.toString() + '.' + splittedUrl[3];
+                texture.updateURL(newUrl);
+            }
+            return null;
         };
         // for materials
         GradingSceneOptimizer.prototype.optimizeMaterials = function (scene, params) {
@@ -493,8 +636,8 @@ var BABYLON;
                 StandardMaterial.SpecularTextureEnabled = params.specularTextureEnabled;
             }
         };
-        // for particules
-        GradingSceneOptimizer.prototype.optimizeParticules = function (scene, enabled, params) {
+        // for particles
+        GradingSceneOptimizer.prototype.optimizeParticles = function (scene, enabled, params) {
             if (!enabled) {
                 scene.particlesEnabled = false;
             }
@@ -505,23 +648,18 @@ var BABYLON;
             if (!params) {
                 return;
             }
-            var oParticleSystems = this._originalParticules, // original particles systems
-            oParticleSysL = oParticleSystems.length, oParticleSysI, particleSys, paramRatio = params.ratio, paramMin = params.minEmitRate, paramMax = params.maxEmitRate, originalEmitRate, newRate;
-            for (var i = 0; i < oParticleSysL; i++) {
-                oParticleSysI = oParticleSystems[i];
-                originalEmitRate = oParticleSysI.emitRate;
-                particleSys = oParticleSysI.system;
-                newRate = originalEmitRate * paramRatio;
-                if (paramMax && newRate > paramMax) {
-                    newRate = paramMax;
+            var particleSystems = scene.particleSystems, currentRateRatio = this._currentGrade.particles.rateRatio, particleSysL = particleSystems.length, particleSysI, paramRatio = params.rateRatio, paramMax = params.maxEmitRate, paramMin = params.minEmitRate, newRate;
+            for (var i = 0; i < particleSysL; i++) {
+                particleSysI = particleSystems[i];
+                newRate = Math.round(particleSysI.emitRate * paramRatio / currentRateRatio);
+                // if > max & < min, don't update particle
+                if (newRate >= paramMax || newRate <= paramMin) {
+                    continue; // pass
                 }
-                else if (paramMin && newRate < paramMin) {
-                    newRate = paramMin;
-                }
-                // clear particule
-                particleSys.reset();
+                // clear particle
+                particleSysI.reset();
                 // update emit rate
-                particleSys.emitRate = newRate;
+                particleSysI.emitRate = newRate;
             }
         };
         // for shadows
@@ -577,81 +715,6 @@ var BABYLON;
         return GradingSceneOptimizer;
     }());
     BABYLON.GradingSceneOptimizer = GradingSceneOptimizer;
-    /*********
-     * GRADE
-     *********/
-    // class to customize grade
-    var Grade = /** @class */ (function () {
-        /**
-         * @param GSO : GradingSceneOptimizer
-         * @param name : name of grade
-         * @param upGradingTask : task to do when this grade is enabled
-         * @param downGradingTask : task to do when this grade is disabled
-         * @param optimization : optimization parameters
-         */
-        function Grade(name, optimization, upGradingTask, downGradingTask) {
-            if (upGradingTask === void 0) { upGradingTask = null; }
-            if (downGradingTask === void 0) { downGradingTask = null; }
-            this.name = name;
-            this.upGradingTask = upGradingTask;
-            this.downGradingTask = downGradingTask;
-            // OPTIMIZATION PARAMETERS :
-            // "enabled" variable
-            this.postProcessesEnabled = undefined;
-            this.lensFlaresEnabled = undefined;
-            this.renderTargetsEnabled = undefined;
-            this.particulesEnabled = undefined;
-            this.shadowsEnabled = undefined;
-            // parameters variable
-            this.particules = undefined;
-            this.shadows = undefined;
-            this.renderSize = undefined;
-            this.materials = undefined;
-            this.textures = undefined;
-            this.devices = undefined;
-            this.camera = undefined;
-            // enabled variable
-            if (optimization.postProcessesEnabled != undefined) {
-                this.postProcessesEnabled = optimization.postProcessesEnabled;
-            }
-            if (optimization.lensFlaresEnabled != undefined) {
-                this.lensFlaresEnabled = optimization.lensFlaresEnabled;
-            }
-            if (optimization.renderTargetsEnabled != undefined) {
-                this.renderTargetsEnabled = optimization.renderTargetsEnabled;
-            }
-            if (optimization.particlesEnabled != undefined) {
-                this.particulesEnabled = optimization.particlesEnabled;
-            }
-            if (optimization.shadowsEnabled != undefined) {
-                this.shadowsEnabled = optimization.shadowsEnabled;
-            }
-            // parameters variable
-            if (optimization.particles != undefined) {
-                this.particules = optimization.particles;
-            }
-            if (optimization.shadows != undefined) {
-                this.shadows = optimization.shadows;
-            }
-            if (optimization.renderSize != undefined) {
-                this.renderSize = optimization.renderSize;
-            }
-            if (optimization.materials != undefined) {
-                this.materials = optimization.materials;
-            }
-            if (optimization.textures != undefined) {
-                this.textures = optimization.textures;
-            }
-            if (optimization.devices != undefined) {
-                this.devices = optimization.devices;
-            }
-            if (optimization.camera != undefined) {
-                this.camera = optimization.camera;
-            }
-        }
-        return Grade;
-    }());
-    BABYLON.Grade = Grade;
 })(BABYLON || (BABYLON = {}));
 var BABYLON;
 (function (BABYLON) {
@@ -951,7 +1014,7 @@ var BABYLON;
                 lensFlaresEnabled: false,
                 renderTargetsEnabled: false,
                 textures: {
-                    scale: 0.5,
+                    sizeRatio: 0.5,
                     maxSize: 256,
                     minSize: 128
                 },
@@ -965,7 +1028,7 @@ var BABYLON;
                     maxHeight: 1280,
                     hardwareScaling: 1.5
                 },
-                devices: {
+                userInfos: {
                     smartPhoneAllowed: true,
                     tabletAllowed: true,
                     noteBookAllowed: true,
@@ -983,7 +1046,7 @@ var BABYLON;
                 lensFlaresEnabled: false,
                 renderTargetsEnabled: false,
                 textures: {
-                    scale: 0.5,
+                    sizeRatio: 0.5,
                     maxSize: 512,
                     minSize: 128
                 },
@@ -997,7 +1060,7 @@ var BABYLON;
                     maxHeight: 1440,
                     hardwareScaling: 1
                 },
-                devices: {
+                userInfos: {
                     smartPhoneAllowed: true,
                     tabletAllowed: true,
                     noteBookAllowed: true,
@@ -1015,7 +1078,7 @@ var BABYLON;
                 lensFlaresEnabled: false,
                 renderTargetsEnabled: true,
                 textures: {
-                    scale: 0.5,
+                    sizeRatio: 0.5,
                     maxSize: 512,
                     minSize: 256
                 },
@@ -1025,14 +1088,16 @@ var BABYLON;
                     fresnelEnabled: false
                 },
                 shadows: {
-                    size: 256
+                    sizeRatio: 1,
+                    minSize: 128,
+                    maxSize: 512
                 },
                 renderSize: {
                     maxWidth: 1600,
                     maxHeight: 1600,
                     hardwareScaling: 1
                 },
-                devices: {
+                userInfos: {
                     smartPhoneAllowed: true,
                     tabletAllowed: true,
                     noteBookAllowed: true,
@@ -1050,14 +1115,14 @@ var BABYLON;
                 lensFlaresEnabled: false,
                 renderTargetsEnabled: true,
                 textures: {
-                    scale: 0.75,
+                    sizeRatio: 0.75,
                     maxSize: 1024,
                     minSize: 256
                 },
                 particles: {
-                    ratio: 0.25,
+                    rateRatio: 1,
                     maxEmitRate: 300,
-                    minEmitRate: 100
+                    minEmitRate: 1
                 },
                 materials: {
                     refractionTextureEnabled: true,
@@ -1065,14 +1130,16 @@ var BABYLON;
                     fresnelEnabled: true
                 },
                 shadows: {
-                    size: 512
+                    sizeRatio: 2,
+                    minSize: 128,
+                    maxSize: 1024
                 },
                 renderSize: {
                     maxWidth: 1920,
                     maxHeight: 1920,
                     hardwareScaling: 1
                 },
-                devices: {
+                userInfos: {
                     smartPhoneAllowed: false,
                     tabletAllowed: true,
                     noteBookAllowed: true,
@@ -1090,14 +1157,14 @@ var BABYLON;
                 lensFlaresEnabled: true,
                 renderTargetsEnabled: true,
                 textures: {
-                    scale: 1,
+                    sizeRatio: 1,
                     maxSize: 1024,
                     minSize: 512
                 },
                 particles: {
-                    ratio: 0.5,
+                    rateRatio: 2,
                     maxEmitRate: 5000,
-                    minEmitRate: 100
+                    minEmitRate: 1
                 },
                 materials: {
                     refractionTextureEnabled: true,
@@ -1105,14 +1172,16 @@ var BABYLON;
                     fresnelEnabled: true
                 },
                 shadows: {
-                    size: 1024
+                    sizeRatio: 3,
+                    minSize: 128,
+                    maxSize: 1024
                 },
                 renderSize: {
                     maxWidth: 1920,
                     maxHeight: 1920,
                     hardwareScaling: 1
                 },
-                devices: {
+                userInfos: {
                     smartPhoneAllowed: false,
                     tabletAllowed: false,
                     noteBookAllowed: false,
@@ -1130,14 +1199,14 @@ var BABYLON;
                 lensFlaresEnabled: true,
                 renderTargetsEnabled: true,
                 textures: {
-                    scale: 1,
+                    sizeRatio: 1,
                     maxSize: 2048,
                     minSize: 512
                 },
                 particles: {
-                    ratio: 1,
+                    rateRatio: 3,
                     maxEmitRate: 10000,
-                    minEmitRate: 100
+                    minEmitRate: 1
                 },
                 materials: {
                     refractionTextureEnabled: true,
@@ -1145,14 +1214,16 @@ var BABYLON;
                     fresnelEnabled: true
                 },
                 shadows: {
-                    size: 2048
+                    sizeRatio: 3,
+                    minSize: 128,
+                    maxSize: 2048
                 },
                 renderSize: {
                     maxWidth: 1920,
                     maxHeight: 1920,
                     hardwareScaling: 0.5
                 },
-                devices: {
+                userInfos: {
                     smartPhoneAllowed: false,
                     tabletAllowed: false,
                     noteBookAllowed: false,
@@ -1235,7 +1306,7 @@ var BABYLON;
         function UserInfos() {
         }
         // return a report of user agent
-        UserInfos.report = function () {
+        UserInfos._report = function () {
             // create new report
             var report = new BABYLON.UserInfosReport(), deviceKey, 
             // get user agent
@@ -1264,29 +1335,29 @@ var BABYLON;
         UserInfos.detectDevice = function () {
             var useragent = navigator.userAgent, result;
             // console
-            result = this._match(useragent, /(ouya|nintendo|playstation|xbox)/i, [1]);
+            result = this.match(useragent, /(ouya|nintendo|playstation|xbox)/i, ['console']);
             if (result) {
                 return result;
             }
             // smartphone
-            result = this._match(useragent, /(mobi|phone|ipod|mini)/i, ['smartphone']);
+            result = this.match(useragent, /(mobi|phone|ipod|mini)/i, ['smartphone']);
             if (result) {
                 return result;
             }
             // tablet
-            result = this._match(useragent, /(tab|ipad)/i, ['tablet']);
+            result = this.match(useragent, /(tab|ipad)/i, ['tablet']);
             if (result) {
                 return result;
             }
             // tv
-            result = this._match(useragent, /(tv)/i, ['tv']);
+            result = this.match(useragent, /(tv)/i, ['tv']);
             if (result) {
                 return result;
             }
             // ---> try with the screen size if type is undefined
             var screenW = window.screen.width, screenH = window.screen.height, size = Math.max(screenW, screenH);
             // try to catch if it's a mobile or not
-            result = this._match(useragent, /(android|ios)/i, ['mobile']);
+            result = this.match(useragent, /(android|ios)/i, ['mobile']);
             if (result) {
                 if (screenW < 1024 && screenH < 768) {
                     return ["smartphone"];
@@ -1314,27 +1385,27 @@ var BABYLON;
         UserInfos.detectLayout = function () {
             var useragent = navigator.userAgent, result;
             // EdgeHTML :
-            result = this._match(useragent, /(edge)\/?([0-9\.]+)?/i, ['edgeHTML', 2]);
+            result = this.match(useragent, /(edge)\/?([0-9\.]+)?/i, ['edgeHTML', 2]);
             if (result) {
                 return result;
             }
             // Presto :
-            result = this._match(useragent, /(presto)\/?([0-9\.]+)?/i, ['presto', 2]);
+            result = this.match(useragent, /(presto)\/?([0-9\.]+)?/i, ['presto', 2]);
             if (result) {
                 return result;
             }
             // WebKit | Trident | Netfront :
-            result = this._match(useragent, /(webKit|trident|netfront)\/?([0-9\.]+)?/i, [1, 2]);
+            result = this.match(useragent, /(webKit|trident|netfront)\/?([0-9\.]+)?/i, [1, 2]);
             if (result) {
                 return result;
             }
             // KHTML :
-            result = this._match(useragent, /(KHTML)\/?([0-9\.]+)?/i, ['KHTML', 2]);
+            result = this.match(useragent, /(KHTML)\/?([0-9\.]+)?/i, ['KHTML', 2]);
             if (result) {
                 return result;
             }
             // Gecko :
-            result = this._match(useragent, /.*[rv:]([0-9]\.+)?.*(Gecko)/i, ['gecko', 1]);
+            result = this.match(useragent, /.*[rv:]([0-9]\.+)?.*(Gecko)/i, ['gecko', 1]);
             if (result) {
                 return result;
             }
@@ -1345,7 +1416,7 @@ var BABYLON;
         UserInfos.detectSystem = function () {
             var useragent = navigator.userAgent, result;
             // windows :
-            result = this._match(useragent, /(windows)\snt\s([0-9\.]+)/i, ['windows', 2]);
+            result = this.match(useragent, /(windows)\snt\s([0-9\.]+)/i, ['windows', 2]);
             // get version with "nt x.x"
             if (result && result[1]) {
                 switch (result[1]) {
@@ -1382,12 +1453,12 @@ var BABYLON;
                 return result;
             }
             // chromium :
-            result = this._match(useragent, /\s(cros)\s/i, ['chromium', null]);
+            result = this.match(useragent, /\s(cros)\s/i, ['chromium', null]);
             if (result) {
                 return result;
             }
             // ios :
-            result = this._match(useragent, /(fxios|opios|crios|iphone|ipad|ipod).*\sos\s([0-9_\.]+)/i, ['ios', 2]);
+            result = this.match(useragent, /(fxios|opios|crios|iphone|ipad|ipod).*\sos\s([0-9_\.]+)/i, ['ios', 2]);
             if (result && result[1]) {
                 result[1] = result[1].replace(/\_/g, '.');
             }
@@ -1395,7 +1466,7 @@ var BABYLON;
                 return result;
             }
             // mac :
-            result = this._match(useragent, /(macintosh|mac)\sos\sx\s([0-9_\.]+)/i, ['mac', 2]);
+            result = this.match(useragent, /(macintosh|mac)\sos\sx\s([0-9_\.]+)/i, ['mac', 2]);
             if (result && result[1]) {
                 result[1] = result[1].replace(/\_/g, '.');
             }
@@ -1403,12 +1474,12 @@ var BABYLON;
                 return result;
             }
             // android :
-            result = this._match(useragent, /(android)\s([0-9\.]+)/i, ['android', 2]);
+            result = this.match(useragent, /(android)\s([0-9\.]+)/i, ['android', 2]);
             if (result) {
                 return result;
             }
             // linux | blackberry | firefox:
-            result = this._match(useragent, /(linux|blackberry|firefox)/i, [1, null]);
+            result = this.match(useragent, /(linux|blackberry|firefox)/i, [1, null]);
             if (result) {
                 return result;
             }
@@ -1419,37 +1490,37 @@ var BABYLON;
         UserInfos.detectSoftware = function () {
             var useragent = navigator.userAgent, result;
             // edge :
-            result = this._match(useragent, /(edge)\/([0-9]+)/i, ['edge', 2]);
+            result = this.match(useragent, /(edge)\/([0-9]+)/i, ['edge', 2]);
             if (result) {
                 return result;
             }
             // ie < 11 :
-            result = this._match(useragent, /(msie)\s([0-9]+)/i, ['ie', 2]);
+            result = this.match(useragent, /(msie)\s([0-9]+)/i, ['ie', 2]);
             if (result) {
                 return result;
             }
             // ie 11 :
-            result = this._match(useragent, /(trident).*[rv:]([0-9]+)/i, ["ie", 2]);
+            result = this.match(useragent, /(trident).*[rv:]([0-9]+)/i, ["ie", 2]);
             if (result) {
                 return result;
             }
             // firefox
-            result = this._match(useragent, /(firefox|fxios)\/([0-9]+)/i, ["firefox", 2]);
+            result = this.match(useragent, /(firefox|fxios)\/([0-9]+)/i, ["firefox", 2]);
             if (result) {
                 return result;
             }
             // opera
-            result = this._match(useragent, /(opios|opr|opera)\/([0-9]+)/i, ["opera", 2]);
+            result = this.match(useragent, /(opios|opr|opera)\/([0-9]+)/i, ["opera", 2]);
             if (result) {
                 return result;
             }
             // chrome
-            result = this._match(useragent, /(crmo|crios|chrome)\/([0-9]+)/i, ["chrome", 2]);
+            result = this.match(useragent, /(crmo|crios|chrome)\/([0-9]+)/i, ["chrome", 2]);
             if (result) {
                 return result;
             }
             // safari
-            result = this._match(useragent, /Version\/([0-9]+).*(safari)\//i, ["safari", 1]);
+            result = this.match(useragent, /Version\/([0-9]+).*(safari)\//i, ["safari", 1]);
             if (result) {
                 return result;
             }
@@ -1472,7 +1543,7 @@ var BABYLON;
         // if string : return string
         // if number : get group in regex matches
         // if data is undefined, return matches
-        UserInfos._match = function (str, regex, data) {
+        UserInfos.match = function (str, regex, data) {
             var result = [], matches = str.match(regex);
             if (data && matches) {
                 var L = data.length, dataI;
@@ -1497,7 +1568,72 @@ var BABYLON;
             }
             return null;
         };
+        // navigator.userAgent
+        UserInfos.report = UserInfos._report();
         return UserInfos;
     }());
     BABYLON.UserInfos = UserInfos;
+})(BABYLON || (BABYLON = {}));
+var BABYLON;
+(function (BABYLON) {
+    var AbstractGradingAsset = /** @class */ (function (_super) {
+        __extends(AbstractGradingAsset, _super);
+        function AbstractGradingAsset(name) {
+            return _super.call(this, name) || this;
+        }
+        return AbstractGradingAsset;
+    }(BABYLON.AbstractAssetTask));
+    BABYLON.AbstractGradingAsset = AbstractGradingAsset;
+    var GradingGridZone = /** @class */ (function () {
+        function GradingGridZone() {
+        }
+        return GradingGridZone;
+    }());
+    BABYLON.GradingGridZone = GradingGridZone;
+    var GradingAssetsZone = /** @class */ (function () {
+        function GradingAssetsZone() {
+        }
+        return GradingAssetsZone;
+    }());
+    BABYLON.GradingAssetsZone = GradingAssetsZone;
+    var meshGradingAsset = /** @class */ (function (_super) {
+        __extends(meshGradingAsset, _super);
+        function meshGradingAsset(name) {
+            return _super.call(this, name) || this;
+        }
+        return meshGradingAsset;
+    }(AbstractGradingAsset));
+    BABYLON.meshGradingAsset = meshGradingAsset;
+    var soundGradingAsset = /** @class */ (function (_super) {
+        __extends(soundGradingAsset, _super);
+        function soundGradingAsset(name) {
+            return _super.call(this, name) || this;
+        }
+        return soundGradingAsset;
+    }(AbstractGradingAsset));
+    BABYLON.soundGradingAsset = soundGradingAsset;
+    var animationGradingAsset = /** @class */ (function (_super) {
+        __extends(animationGradingAsset, _super);
+        function animationGradingAsset(name) {
+            return _super.call(this, name) || this;
+        }
+        return animationGradingAsset;
+    }(AbstractGradingAsset));
+    BABYLON.animationGradingAsset = animationGradingAsset;
+    var textureGradingAsset = /** @class */ (function (_super) {
+        __extends(textureGradingAsset, _super);
+        function textureGradingAsset(name) {
+            return _super.call(this, name) || this;
+        }
+        return textureGradingAsset;
+    }(AbstractGradingAsset));
+    BABYLON.textureGradingAsset = textureGradingAsset;
+    var scriptGradingAsset = /** @class */ (function (_super) {
+        __extends(scriptGradingAsset, _super);
+        function scriptGradingAsset(name) {
+            return _super.call(this, name) || this;
+        }
+        return scriptGradingAsset;
+    }(AbstractGradingAsset));
+    BABYLON.scriptGradingAsset = scriptGradingAsset;
 })(BABYLON || (BABYLON = {}));
