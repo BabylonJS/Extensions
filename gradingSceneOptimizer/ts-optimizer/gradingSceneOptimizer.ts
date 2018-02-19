@@ -45,7 +45,10 @@ module BABYLON {
       public minimizeDrawCall: boolean = true; // TODO ( !!! FUTURE FEATURE !!!)
 
       // user info : os, sofware(browser), device, ...
-      public userInfos: UserInfosReport = BABYLON.UserInfos.report();
+      public userInfos: UserInfosReport = UserInfos.report;
+
+      // use texture extention workflow
+      public useTextureExtWorkflow : boolean = false;
 
       // to know on wich grade we are.
       private _currentGrade: Grade;
@@ -70,11 +73,6 @@ module BABYLON {
       // resize event function
       private _resizeEvent: any;
 
-      // to keep original params of particules systems
-      private _originalParticules: Array<IParamsOriginalParticules> = [];
-
-      // to keep original texture size
-      private _originalTextures: Array<IParamsOriginalTexture> = [];
 
 
 
@@ -84,7 +82,7 @@ module BABYLON {
        * @param evaluationDuration : duration for fps evaluation
        * @param autoReEval : active auto evaluation
        */
-      constructor (engine: Engine, public fpsToReach: number = 48, public evaluationDuration: number = 1000, public autoReEval: boolean = true) {
+      constructor (engine: Engine, public fpsToReach: number = 48, public evaluationDuration: number = 1000, public autoReEval: boolean = false) {
 
           // add resize event
           if (this._resizeEvent) {
@@ -109,28 +107,11 @@ module BABYLON {
        *                       You will get a better accessibility and plug and play concept. It's important for web.
        * @param onReady : callback when GradingSceneOptimizer is ready.
        */
-      public run(scene: Scene, starterGrade?: Grade, onReady?: Function) {
+      public run(scene: Scene, onReady?: Function) {
           var engine = scene.getEngine();
 
           // If no starterGrade, get the first
-          if (!starterGrade) {
-              starterGrade = this.grades[0];
-          }
-          else if (!starterGrade.enabled) {
-              var grades = this.grades;
-
-              starterGrade = grades[starterGrade.priority];
-
-              // If no starterGrade, get the last
-              if (!starterGrade) {
-                  starterGrade = grades[grades.length - 1];
-              }
-          }
-
-
-          // get all original references we need
-          // like particules emit rate or original textures size
-          this._getOriginalReferences(scene);
+          var starterGrade = this.grades[0];
 
 
           // start update scene by starterGrade
@@ -286,81 +267,10 @@ module BABYLON {
       public createGrade(name: string, optimization : ParamsGradeOptimizationI, upGradingTask?: Function, downGradingTask?: Function) {
 
           // create new grade
-          var newGrade = new BABYLON.Grade(name, optimization, upGradingTask, downGradingTask);
-
-          // add grade to GSO
-          this.addGrade(newGrade);
+          var newGrade = new BABYLON.Grade(this, name, optimization, upGradingTask, downGradingTask);
 
           // return grade result
           return newGrade;
-
-      }
-
-      // add existing grade
-      public addGrade(grade: Grade) {
-
-          var grades = this.grades,
-              userInfos = this.userInfos,
-              devices = grade.devices,
-              deviceType = this.deviceType,
-
-
-          isEnable = (params: IParamsDevicesGradeOptimization) : boolean => {
-              var exceptions = params.exceptionsAllowed,
-                  phoneAllowed = params.smartPhoneAllowed,
-                  tabletAllowed = params.tabletAllowed,
-                  noteBookAllowed = params.noteBookAllowed,
-                  computerAllowed = params.computerAllowed;
-
-              // check if exception
-              if (exceptions && exceptions.length > 0 && BABYLON.UserInfos._isDevices(exceptions)) {
-                  return true;
-              }
-
-              // test smartPhone
-              if (!phoneAllowed && deviceType === 'smartPhone') {
-                  return false;
-              }
-
-              // test tablet
-              if (!tabletAllowed && deviceType === 'tablet') {
-                  return false;
-              }
-
-              // test noteBook
-              if (!noteBookAllowed && deviceType === 'noteBook') {
-                  return false;
-              }
-
-              // test general computer
-              if (!computerAllowed && deviceType === 'computer') {
-                  return false;
-              }
-
-              // check if exception
-              if (exceptions && exceptions.length > 0 && BABYLON.UserInfos._isDevices(exceptions)) {
-                  return false;
-              }
-
-              return true;
-
-          }
-
-          // add priority to newGrade
-          grade.priority = grades.length;
-
-          // look if this grade need to be enabled with devices parameter
-          // if no devices options, set enabled to true;
-          // if devices option is defined and isOnAllowedDevice return true, set enabled to true
-          if (!devices || (devices && isEnable(devices))) {
-              // enabled
-              grade.enabled = true;
-              // add to gso only if enabled
-              this.grades.push(grade);
-          }
-          else {
-              grade.enabled = false;
-          }
 
       }
 
@@ -523,7 +433,6 @@ module BABYLON {
 
       // clear all timer and tasks
       public stop() {
-
           this._isUpGradingStep = true;
 
           // stop auto run
@@ -531,7 +440,6 @@ module BABYLON {
 
           // stop evaluation interval
           clearTimeout(this._evaluationTimeOutId);
-
       }
 
       // update Render By Optimization parameters
@@ -574,65 +482,12 @@ module BABYLON {
               this.optimizeMaterials(scene, grade.materials); // Done
           }
 
-          // for particules
-          if (grade.particulesEnabled != undefined) {
-              this.optimizeParticules(scene, grade.particulesEnabled, grade.particules); // done
+          // for particles
+          if (grade.particlesEnabled != undefined) {
+              this.optimizeParticles(scene, grade.particlesEnabled, grade.particles); // done
           }
 
       }
-
-
-
-      ///////////////////
-      // GET ORIGINALS //
-      ///////////////////
-
-      private _getOriginalReferences(scene : Scene) {
-
-          // for particules , keep :
-          // -  emitRate
-          var particulesSys = scene.particleSystems,
-              L = particulesSys.length,
-              particulesSysI : IParticleSystem;
-
-          for (let i = 0; i < L; i++) {
-              particulesSysI = particulesSys[i];
-              this._originalParticules.push(
-                  {
-                      "emitRate" : particulesSysI.emitRate,
-                      "system" : particulesSysI
-                  }
-              )
-          }
-
-          // for textures , keep :
-          // - width
-          // - height
-          // - channel
-          // - texture ( only if autorized)
-          var textures = scene.textures,
-              L = textures.length,
-              textureI : BaseTexture,
-              size: ISize;
-
-          for (let i = 0; i < L; i++) {
-              textureI = textures[i];
-              size = textureI.getSize();
-
-              this._originalTextures.push(
-                  {
-                      "width" : size.width,
-                      "height" : size.height,
-                      "texture" : textureI,
-                      "useExtention": true
-                  }
-              );
-
-          }
-
-      }
-
-
 
 
 
@@ -642,48 +497,48 @@ module BABYLON {
 
       // for textures
       public optimizeTextures(scene : Scene, params : IParamsTexturesGradeOptimization) {
-
-          // regex :
-          var blobRegex = /^(blob:)/g, // look if a blob
-              extRegex = /\.([0-9]+)\.(?=[^\.]*$)/g; // capture size extention methode
-
-          var blob = "blob:http://localhost:8889/4a9cad29-06cb-4a23-9e2e-c981a2deea4b",
-              ext = "image.1024.png";
-
           var textures = scene.textures,
-              textureI,
               L = textures.length;
 
-
-          // if it's a blob
-          if (!blobRegex) {
-
+          for (let i = 0; i < L; i++) {
+              this.resizeTexture(textures[i], 512);
           }
-      }
 
-      // resize material
-      public resizeChannelsMaterial() {
-
-          var standardChannels =
-              [
-                  'diffuseTexture',
-                  'ambientTexture',
-                  'opacityTexture',
-                  'reflectionTexture',
-                  'emissiveTexture',
-                  'specularTexture',
-                  'bumpTexture',
-                  'lightmapTexture',
-                  'colorGradingTexture',
-                  'refractionTexture'
-              ],
-
-              pbrChannels;
       }
 
       // resize texture
-      public resizeTexture(texture : Texture, width: number, height: number) {
+      public resizeTexture(texture : Texture, size: number) : Texture {
 
+          // regex :
+          var badUrlRegex = /^(blob:|data:)/i, // look if a blob
+              extRegex = /(.*)\.([0-9]+)\.([^\.]*$)/i, // capture size extention methode
+              url = texture.url,
+              splittedUrl;
+
+          if (!url) {
+              return;
+          }
+
+          // if bad url
+          if (url && url.match(badUrlRegex)) {
+              // BABYLON.Tools.Warn("Texture " + texture.name + "can't be resized ! Reason : bad url, the asset path is lost : " + url);
+              return;
+          }
+
+          if (url && !this.useTextureExtWorkflow && texture.canRescale) {
+              texture.updateURL(url);
+              texture.scale(0.5);
+              return;
+          }
+
+
+          splittedUrl = url.match(extRegex);
+          if (splittedUrl) {
+              var newUrl = splittedUrl[1] + '.' + size.toString() + '.' + splittedUrl[3];
+              texture.updateURL(newUrl);
+          }
+
+          return null;
       }
 
       // for materials
@@ -748,8 +603,8 @@ module BABYLON {
 
       }
 
-      // for particules
-      public optimizeParticules(scene : Scene, enabled: boolean, params: IParamsParticulesGradeOptimization) {
+      // for particles
+      public optimizeParticles(scene : Scene, enabled: boolean, params: IParamsParticlesGradeOptimization) {
 
           if (!enabled) {
               scene.particlesEnabled = false;
@@ -763,35 +618,30 @@ module BABYLON {
               return;
           }
 
-          var oParticleSystems = this._originalParticules, // original particles systems
-              oParticleSysL = oParticleSystems.length,
-              oParticleSysI : IParamsOriginalParticules,
-              particleSys : BABYLON.ParticleSystem,
-              paramRatio = params.ratio,
-              paramMin = params.minEmitRate,
+          var particleSystems = scene.particleSystems,
+              currentRateRatio = this._currentGrade.particles.rateRatio,
+              particleSysL = particleSystems.length,
+              particleSysI : IParticleSystem,
+              paramRatio = params.rateRatio,
               paramMax = params.maxEmitRate,
-              originalEmitRate,
+              paramMin = params.minEmitRate,
               newRate;
 
-          for (let i = 0; i < oParticleSysL; i++) {
+          for (let i = 0; i < particleSysL; i++) {
 
-              oParticleSysI = oParticleSystems[i];
-              originalEmitRate = oParticleSysI.emitRate;
-              particleSys = oParticleSysI.system;
-              newRate = originalEmitRate * paramRatio;
+              particleSysI = particleSystems[i];
+              newRate = Math.round(particleSysI.emitRate * paramRatio / currentRateRatio);
 
-              if (paramMax && newRate > paramMax) {
-                  newRate = paramMax;
-              }
-              else if (paramMin && newRate < paramMin) {
-                  newRate = paramMin;
+              // if > max & < min, don't update particle
+              if (newRate >= paramMax || newRate <= paramMin) {
+                  continue; // pass
               }
 
-              // clear particule
-              particleSys.reset();
+              // clear particle
+              particleSysI.reset();
 
               // update emit rate
-              particleSys.emitRate = newRate;
+              particleSysI.emitRate = newRate;
 
           }
 
@@ -874,213 +724,6 @@ module BABYLON {
 
 
 
-  }
-
-
-
-
-
-  /*********
-   * GRADE
-   *********/
-
-  // class to customize grade
-  export class Grade {
-
-      // priority
-      public priority: number;
-
-      // enabled
-      // ex : if this grade is not allowed on mobile device
-      public enabled: boolean;
-
-      // OPTIMIZATION PARAMETERS :
-      // "enabled" variable
-      postProcessesEnabled? : boolean = undefined;
-      lensFlaresEnabled? : boolean = undefined;
-      renderTargetsEnabled? : boolean = undefined;
-      particulesEnabled? : boolean = undefined;
-      shadowsEnabled?: boolean = undefined;
-
-      // parameters variable
-      particules? : IParamsParticulesGradeOptimization = undefined;
-      shadows? : IParamsShadowsGradeOptimization = undefined;
-      renderSize? : IParamsRenderSizeGradeOptimization = undefined;
-      materials? : IParamsMaterialsGradeOptimization = undefined;
-      textures? : IParamsTexturesGradeOptimization = undefined;
-      devices? : IParamsDevicesGradeOptimization = undefined;
-      camera? : IParamsCameraGradeOptimization = undefined;
-
-      /**
-       * @param GSO : GradingSceneOptimizer
-       * @param name : name of grade
-       * @param upGradingTask : task to do when this grade is enabled
-       * @param downGradingTask : task to do when this grade is disabled
-       * @param optimization : optimization parameters
-       */
-      constructor (public name: string, optimization : ParamsGradeOptimizationI, public upGradingTask: Function = null, public downGradingTask: Function = null) {
-
-          // enabled variable
-          if (optimization.postProcessesEnabled != undefined) {
-              this.postProcessesEnabled = optimization.postProcessesEnabled;
-          }
-
-          if (optimization.lensFlaresEnabled != undefined) {
-              this.lensFlaresEnabled = optimization.lensFlaresEnabled;
-          }
-
-          if (optimization.renderTargetsEnabled != undefined) {
-              this.renderTargetsEnabled = optimization.renderTargetsEnabled;
-          }
-
-          if (optimization.particlesEnabled != undefined) {
-              this.particulesEnabled = optimization.particlesEnabled;
-          }
-
-          if (optimization.shadowsEnabled != undefined) {
-              this.shadowsEnabled = optimization.shadowsEnabled;
-          }
-
-
-
-          // parameters variable
-          if (optimization.particles != undefined) {
-              this.particules = optimization.particles;
-          }
-
-          if (optimization.shadows != undefined) {
-              this.shadows = optimization.shadows;
-          }
-
-          if (optimization.renderSize != undefined) {
-              this.renderSize = optimization.renderSize;
-          }
-
-          if (optimization.materials != undefined) {
-              this.materials = optimization.materials;
-          }
-
-          if (optimization.textures != undefined) {
-              this.textures = optimization.textures;
-          }
-
-          if (optimization.devices != undefined) {
-              this.devices = optimization.devices;
-          }
-
-          if (optimization.camera != undefined) {
-              this.camera = optimization.camera;
-          }
-
-      }
-
-  }
-
-
-
-
-
-  /**************
-   * INTERFACES
-   *************/
-
-  // interface grade parameter
-  export interface ParamsGradeOptimizationI {
-      // ENABLED variable
-      postProcessesEnabled? : boolean;
-      lensFlaresEnabled? : boolean;
-      renderTargetsEnabled? : boolean;
-      particlesEnabled? : boolean;
-      shadowsEnabled?: boolean;
-
-
-      // parameters variable
-      particles? : IParamsParticulesGradeOptimization;
-      shadows? : IParamsShadowsGradeOptimization;
-      renderSize? : IParamsRenderSizeGradeOptimization;
-      materials? : IParamsMaterialsGradeOptimization;
-      textures? : IParamsTexturesGradeOptimization;
-      devices? : IParamsDevicesGradeOptimization;
-      camera? : IParamsCameraGradeOptimization;
-  }
-
-  // interface shadow grade parameter
-  export interface IParamsShadowsGradeOptimization {
-      size? : number;
-  }
-
-  // interface particule grade parameter
-  export interface IParamsParticulesGradeOptimization {
-      ratio : number;
-      maxEmitRate? : number;
-      minEmitRate? : number;
-  }
-
-  // interface render size grade parameter
-  export interface IParamsRenderSizeGradeOptimization {
-      maxWidth : number;
-      maxHeight : number;
-      hardwareScaling? : number;
-  }
-
-  // interface material grade parameter
-  export interface IParamsMaterialsGradeOptimization {
-      diffuseTextureEnabled? : boolean;
-      opacityTextureEnabled? : boolean;
-      reflectionTextureEnabled? : boolean;
-      emissiveTextureEnabled? : boolean;
-      specularTextureEnabled? : boolean;
-      ambientTextureEnabled? : boolean;
-      bumpTextureEnabled? : boolean;
-      lightmapTextureEnabled? : boolean;
-      refractionTextureEnabled? : boolean;
-      colorGradingTextureEnabled? : boolean;
-      fresnelEnabled? : boolean;
-  }
-
-  // interface texture grade parameter
-  export interface IParamsTexturesGradeOptimization {
-      scale : number; // to keep ratio
-      maxSize? : number; // max size
-      minSize? : number;
-  }
-
-  // interface shadow grade parameter
-  export interface IParamsDevicesGradeOptimization {
-      smartPhoneAllowed? : boolean;
-      tabletAllowed? : boolean;
-      noteBookAllowed? : boolean;
-      computerAllowed? : boolean;
-      consoleAllowed?: boolean;
-      tvAllowed?: boolean;
-
-      software? : string;
-      softwareVersion? : string;
-      os? : string;
-      osVersion? : string;
-      layout? : string;
-      layoutVersion? : string;
-
-      exceptionsAllowed? : Array<string>;
-  }
-
-  // interface camera grade parameter
-  export interface IParamsCameraGradeOptimization {
-      viewDistance : number; // TODO
-  }
-
-  // interface to keep original particule system
-  export interface IParamsOriginalParticules {
-      emitRate : number;
-      system : IParticleSystem;
-  }
-
-  // interface to keep original particule system
-  export interface IParamsOriginalTexture {
-      width : number;
-      height : number;
-      texture : BaseTexture;
-      useExtention : boolean; // use extention for load system
   }
 
 }
