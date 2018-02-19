@@ -89,8 +89,13 @@ module BABYLON {
 
   export class UserInfos {
 
+      // navigator.userAgent
+      public static report: UserInfosReport = UserInfos._report();
+
+
+
       // return a report of user agent
-      public static report() : UserInfosReport {
+      private static _report() : UserInfosReport {
 
               // create new report
           var report = new BABYLON.UserInfosReport(),
@@ -135,25 +140,25 @@ module BABYLON {
               result;
 
           // console
-          result = this._match(useragent, /(ouya|nintendo|playstation|xbox)/i, [1]);
+          result = this.match(useragent, /(ouya|nintendo|playstation|xbox)/i, ['console']);
           if (result) {
               return result;
           }
 
           // smartphone
-          result = this._match(useragent, /(mobi|phone|ipod|mini)/i, ['smartphone']);
+          result = this.match(useragent, /(mobi|phone|ipod|mini)/i, ['smartphone']);
           if (result) {
               return result;
           }
 
           // tablet
-          result = this._match(useragent, /(tab|ipad)/i, ['tablet']);
+          result = this.match(useragent, /(tab|ipad)/i, ['tablet']);
           if (result) {
               return result;
           }
 
           // tv
-          result = this._match(useragent, /(tv)/i, ['tv']);
+          result = this.match(useragent, /(tv)/i, ['tv']);
           if (result) {
               return result;
           }
@@ -164,7 +169,7 @@ module BABYLON {
               size = Math.max(screenW, screenH);
 
           // try to catch if it's a mobile or not
-          result = this._match(useragent, /(android|ios)/i, ['mobile']);
+          result = this.match(useragent, /(android|ios)/i, ['mobile']);
           if (result) {
               if (screenW < 1024 && screenH < 768) {
                   return ["smartphone"];
@@ -187,7 +192,7 @@ module BABYLON {
 
           // else return default : computer
           else {
-            return ["computer"];
+              return ["computer"];
           }
 
       }
@@ -200,31 +205,31 @@ module BABYLON {
               result;
 
           // EdgeHTML :
-          result = this._match(useragent, /(edge)\/?([0-9\.]+)?/i, ['edgeHTML', 2]);
+          result = this.match(useragent, /(edge)\/?([0-9\.]+)?/i, ['edgeHTML', 2]);
           if (result) {
               return result;
           }
 
           // Presto :
-          result = this._match(useragent, /(presto)\/?([0-9\.]+)?/i, ['presto', 2]);
+          result = this.match(useragent, /(presto)\/?([0-9\.]+)?/i, ['presto', 2]);
           if (result) {
               return result;
           }
 
           // WebKit | Trident | Netfront :
-          result = this._match(useragent, /(webKit|trident|netfront)\/?([0-9\.]+)?/i, [1, 2]);
+          result = this.match(useragent, /(webKit|trident|netfront)\/?([0-9\.]+)?/i, [1, 2]);
           if (result) {
               return result;
           }
 
           // KHTML :
-          result = this._match(useragent, /(KHTML)\/?([0-9\.]+)?/i, ['KHTML', 2]);
+          result = this.match(useragent, /(KHTML)\/?([0-9\.]+)?/i, ['KHTML', 2]);
           if (result) {
               return result;
           }
 
           // Gecko :
-          result = this._match(useragent, /.*[rv:]([0-9]\.+)?.*(Gecko)/i, ['gecko', 1]);
+          result = this.match(useragent, /.*[rv:]([0-9]\.+)?.*(Gecko)/i, ['gecko', 1]);
           if (result) {
               return result;
           }
@@ -240,7 +245,7 @@ module BABYLON {
               result;
 
           // windows :
-          result = this._match(useragent, /(windows)\snt\s([0-9\.]+)/i, ['windows', 2]);
+          result = this.match(useragent, /(windows)\snt\s([0-9\.]+)/i, ['windows', 2]);
 
           // get version with "nt x.x"
           if (result && result[1]) {
@@ -285,13 +290,13 @@ module BABYLON {
           }
 
           // chromium :
-          result = this._match(useragent, /\s(cros)\s/i, ['chromium', null]);
+          result = this.match(useragent, /\s(cros)\s/i, ['chromium', null]);
           if (result) {
               return result;
           }
 
           // ios :
-          result = this._match(useragent, /(fxios|opios|crios|iphone|ipad|ipod).*\sos\s([0-9_\.]+)/i, ['ios', 2]);
+          result = this.match(useragent, /(fxios|opios|crios|iphone|ipad|ipod).*\sos\s([0-9_\.]+)/i, ['ios', 2]);
           if (result && result[1]) {
               result[1] = result[1].replace(/\_/g, '.');
           }
@@ -300,7 +305,7 @@ module BABYLON {
           }
 
           // mac :
-          result = this._match(useragent, /(macintosh|mac)\sos\sx\s([0-9_\.]+)/i, ['mac', 2]);
+          result = this.match(useragent, /(macintosh|mac)\sos\sx\s([0-9_\.]+)/i, ['mac', 2]);
           if (result && result[1]) {
               result[1] = result[1].replace(/\_/g, '.');
           }
@@ -309,13 +314,13 @@ module BABYLON {
           }
 
           // android :
-          result = this._match(useragent, /(android)\s([0-9\.]+)/i, ['android', 2]);
+          result = this.match(useragent, /(android)\s([0-9\.]+)/i, ['android', 2]);
           if (result) {
               return result;
           }
 
           // linux | blackberry | firefox:
-          result = this._match(useragent, /(linux|blackberry|firefox)/i, [1, null]);
+          result = this.match(useragent, /(linux|blackberry|firefox)/i, [1, null]);
           if (result) {
               return result;
           }
@@ -331,44 +336,44 @@ module BABYLON {
               result;
 
           // edge :
-          result = this._match(useragent, /(edge)\/([0-9]+)/i, ['edge', 2]);
+          result = this.match(useragent, /(edge)\/([0-9]+)/i, ['edge', 2]);
           if (result) {
               return result;
           }
 
           // ie < 11 :
-          result = this._match(useragent, /(msie)\s([0-9]+)/i, ['ie', 2]);
+          result = this.match(useragent, /(msie)\s([0-9]+)/i, ['ie', 2]);
           if (result) {
               return result;
           }
 
           // ie 11 :
-          result = this._match(useragent, /(trident).*[rv:]([0-9]+)/i, ["ie", 2]);
+          result = this.match(useragent, /(trident).*[rv:]([0-9]+)/i, ["ie", 2]);
           if (result) {
               return result;
           }
 
           // firefox
-          result = this._match(useragent, /(firefox|fxios)\/([0-9]+)/i, ["firefox", 2]);
+          result = this.match(useragent, /(firefox|fxios)\/([0-9]+)/i, ["firefox", 2]);
           if (result) {
               return result;
           }
 
 
           // opera
-          result = this._match(useragent, /(opios|opr|opera)\/([0-9]+)/i, ["opera", 2]);
+          result = this.match(useragent, /(opios|opr|opera)\/([0-9]+)/i, ["opera", 2]);
           if (result) {
               return result;
           }
 
           // chrome
-          result = this._match(useragent, /(crmo|crios|chrome)\/([0-9]+)/i, ["chrome", 2]);
+          result = this.match(useragent, /(crmo|crios|chrome)\/([0-9]+)/i, ["chrome", 2]);
           if (result) {
               return result;
           }
 
           // safari
-          result = this._match(useragent, /Version\/([0-9]+).*(safari)\//i, ["safari", 1]);
+          result = this.match(useragent, /Version\/([0-9]+).*(safari)\//i, ["safari", 1]);
           if (result) {
               return result;
           }
@@ -400,7 +405,7 @@ module BABYLON {
       // if string : return string
       // if number : get group in regex matches
       // if data is undefined, return matches
-      private static _match (str: string, regex : RegExp, data?: Array<string | number>) {
+      public static match (str: string, regex : RegExp, data?: Array<string | number>) {
 
           var result = [],
               matches = str.match(regex);
