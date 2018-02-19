@@ -30,9 +30,9 @@ window.onload=function() {
   var light = new BABYLON.DirectionalLight("spot", new BABYLON.Vector3(-1, -2, 1), scene);
   light.position = new BABYLON.Vector3(20, 40, -20);
   light.diffuse = new BABYLON.Color3(1, 0.9, 0.7);
-  light.intensity = 0.5;
-  light.shadowMinZ = 10;
-  light.shadowMaxZ = 60;
+  light.intensity = 0.7;
+  // light.shadowMinZ = 20;
+  // light.shadowMaxZ = 70;
 
   var ambiant02 = new BABYLON.HemisphericLight("Hemi0", new BABYLON.Vector3(10, 10, 10), scene);
   ambiant02.diffuse = new BABYLON.Color3(0.7, 0.7, 1);
@@ -40,14 +40,14 @@ window.onload=function() {
 
 
   // shadow generator
-  var shadowGenerator = new BABYLON.ShadowGenerator(512, light),
+  var shadowGenerator = new BABYLON.ShadowGenerator(2048, light),
       shMap = shadowGenerator.getShadowMap();
-  shadowGenerator.usePoissonSampling = true;
+  shadowGenerator.useBlurExponentialShadowMap = true;
 
   shadowGenerator.forceBackFacesOnly = true;
 
   shadowGenerator.useKernelBlur = true;
-  shadowGenerator.blurKernel = 32;
+  shadowGenerator.blurKernel = 16;
   shadowGenerator.blurBoxOffset = 1;
   shadowGenerator.blurScale = 1;
 
@@ -161,20 +161,20 @@ window.onload=function() {
 
   // Size of each particle (random between...
   particleSystem.minSize = 0.1;
-  particleSystem.maxSize = 0.5;
+  particleSystem.maxSize = 0.8;
 
   // Life time of each particle (random between...
   particleSystem.minLifeTime = 0.3;
-  particleSystem.maxLifeTime = 3;
+  particleSystem.maxLifeTime = 10;
 
   // Emission rate
-  particleSystem.emitRate = 3000;
+  particleSystem.emitRate = 600 / 3;
 
   // Blend mode : BLENDMODE_ONEONE, or BLENDMODE_STANDARD
   particleSystem.blendMode = BABYLON.ParticleSystem.BLENDMODE_ONEONE;
 
   // Set the gravity of all particles
-  particleSystem.gravity = new BABYLON.Vector3(0, -4, 0);
+  particleSystem.gravity = new BABYLON.Vector3(0, -2, 0);
 
   // Direction of each particle after it has been emitted
   particleSystem.direction1 = new BABYLON.Vector3(-1, 2, 1);
@@ -189,6 +189,21 @@ window.onload=function() {
   particleSystem.start();
 
 
+  var fountain2 = BABYLON.Mesh.CreateBox("foutain", 1.0, scene)
+  var part2 = particleSystem.clone("part2", fountain2)
+
+  part2.color1 = new BABYLON.Color4(0.6, 0.2, 0, 0);
+  part2.color2 = new BABYLON.Color4(0.9, 0.3, 0, 1.0);
+  part2.colorDead = new BABYLON.Color4(0, 0, 0, 0.0);
+  // hide fountain
+  fountain2.isVisible = false;
+  // Emission rate
+  part2.emitRate = 60 / 3;
+  part2.gravity = new BABYLON.Vector3(0, 10, 0);
+
+  part2.minEmitBox = new BABYLON.Vector3(-10, -10, -10); // Starting all from
+  part2.maxEmitBox = new BABYLON.Vector3(10, 10, 10); // To...
+
 
 
 
@@ -197,9 +212,9 @@ window.onload=function() {
    */
 
   var godrays = new BABYLON.VolumetricLightScatteringPostProcess('godrays', 1.0, camera, ground, 50, BABYLON.Texture.BILINEAR_SAMPLINGMODE, engine, false);
-	godrays.exposure = 0.2;
+	godrays.exposure = 0.1;
 	godrays.decay = 0.95;
-	godrays.weight = 0.8;
+	godrays.weight = 0.5;
 	godrays.density = 0.5;
 
   new BABYLON.FxaaPostProcess("fxaa", 1.0, camera, null, engine, false);
@@ -314,8 +329,21 @@ window.onload=function() {
   document.body.appendChild(fragment)
 
 
-
-
+  // var assetManager = new BABYLON.AssetsManager(scene);
+  //     assetManager.addMeshTask("mesh", "busterDrone", "assets/busterDrone/", "busterDrone.gltf")
+  //
+  // assetManager.onProgress = (a, b) => {
+  //   console.log(a)
+  //   console.log(b)
+  // }
+  //
+  // assetManager.onProgressObservable.notifyObservers(new BABYLON.AssetsProgressEvent(
+  //     this._waitingTasksCount,
+  //     this._totalTasksCount,
+  //     task
+  // ))
+  //
+  // assetManager.load();
 
   /**
    * Add gltf + asynch load test
@@ -327,6 +355,7 @@ window.onload=function() {
     emptyDrone.scaling = new BABYLON.Vector3(6,6,6);
     emptyDrone.position = new BABYLON.Vector3(0,6,-6);
     scene.getMeshByName('mesh_Scheibe_11558Scheibe_0').isVisible = false;
+
 
 
 
@@ -352,7 +381,7 @@ window.onload=function() {
      * RUN GSO after when loaded
      */
 
-    GSO.run(scene, minGrade, () => {
+    GSO.run(scene, () => {
 
       engine.runRenderLoop( () => {
           scene.render();
