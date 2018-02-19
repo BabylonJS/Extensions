@@ -16,7 +16,7 @@ module BABYLON {
               lensFlaresEnabled : false,
               renderTargetsEnabled : false,
               textures : {
-                  scale : 0.5,
+                  sizeRatio : 0.5,
                   maxSize : 256,
                   minSize : 128
               },
@@ -30,7 +30,7 @@ module BABYLON {
                   maxHeight : 1280,
                   hardwareScaling : 1.5
               },
-              devices : {
+              userInfos : {
                   smartPhoneAllowed : true,
                   tabletAllowed : true,
                   noteBookAllowed : true,
@@ -50,7 +50,7 @@ module BABYLON {
               lensFlaresEnabled : false,
               renderTargetsEnabled : false,
               textures : {
-                  scale : 0.5,
+                  sizeRatio : 0.5,
                   maxSize : 512,
                   minSize : 128
               },
@@ -64,7 +64,7 @@ module BABYLON {
                   maxHeight : 1440,
                   hardwareScaling : 1
               },
-              devices : {
+              userInfos : {
                   smartPhoneAllowed : true,
                   tabletAllowed : true,
                   noteBookAllowed : true,
@@ -83,7 +83,7 @@ module BABYLON {
               lensFlaresEnabled : false,
               renderTargetsEnabled : true,
               textures : {
-                  scale : 0.5,
+                  sizeRatio : 0.5,
                   maxSize : 512,
                   minSize : 256
               },
@@ -93,14 +93,16 @@ module BABYLON {
                   fresnelEnabled : false
               },
               shadows : {
-                  size : 256
+                  sizeRatio : 1,
+                  minSize : 128,
+                  maxSize : 512
               },
               renderSize : {
                   maxWidth : 1600,
                   maxHeight : 1600,
                   hardwareScaling : 1
               },
-              devices : {
+              userInfos : {
                   smartPhoneAllowed : true,
                   tabletAllowed : true,
                   noteBookAllowed : true,
@@ -119,14 +121,14 @@ module BABYLON {
               lensFlaresEnabled : false,
               renderTargetsEnabled : true,
               textures : {
-                  scale : 0.75,
+                  sizeRatio : 0.75,
                   maxSize : 1024,
                   minSize : 256
               },
               particles : {
-                  ratio : 0.25,
+                  rateRatio : 1,
                   maxEmitRate : 300,
-                  minEmitRate : 100
+                  minEmitRate : 1
               },
               materials : {
                   refractionTextureEnabled : true,
@@ -134,14 +136,16 @@ module BABYLON {
                   fresnelEnabled : true
               },
               shadows : {
-                  size : 512
+                  sizeRatio : 2,
+                  minSize : 128,
+                  maxSize : 1024
               },
               renderSize : {
                   maxWidth : 1920,
                   maxHeight : 1920,
                   hardwareScaling : 1
               },
-              devices : {
+              userInfos : {
                   smartPhoneAllowed : false,
                   tabletAllowed : true,
                   noteBookAllowed : true,
@@ -160,14 +164,14 @@ module BABYLON {
               lensFlaresEnabled : true,
               renderTargetsEnabled : true,
               textures : {
-                  scale : 1,
+                  sizeRatio : 1,
                   maxSize : 1024,
                   minSize : 512
               },
               particles : {
-                  ratio : 0.5,
+                  rateRatio : 2,
                   maxEmitRate : 5000,
-                  minEmitRate : 100
+                  minEmitRate : 1
               },
               materials : {
                   refractionTextureEnabled : true,
@@ -175,14 +179,16 @@ module BABYLON {
                   fresnelEnabled : true
               },
               shadows : {
-                  size : 1024
+                  sizeRatio : 3,
+                  minSize : 128,
+                  maxSize : 1024
               },
               renderSize : {
                   maxWidth : 1920,
                   maxHeight : 1920,
                   hardwareScaling : 1
               },
-              devices : {
+              userInfos : {
                   smartPhoneAllowed : false,
                   tabletAllowed : false,
                   noteBookAllowed : false,
@@ -201,14 +207,14 @@ module BABYLON {
               lensFlaresEnabled : true,
               renderTargetsEnabled : true,
               textures : {
-                  scale : 1,
+                  sizeRatio : 1,
                   maxSize : 2048,
                   minSize : 512
               },
               particles : {
-                  ratio : 1,
+                  rateRatio : 3,
                   maxEmitRate : 10000,
-                  minEmitRate : 100
+                  minEmitRate : 1
               },
               materials : {
                   refractionTextureEnabled : true,
@@ -216,14 +222,16 @@ module BABYLON {
                   fresnelEnabled : true
               },
               shadows : {
-                  size : 2048
+                  sizeRatio : 3,
+                  minSize : 128,
+                  maxSize : 2048
               },
               renderSize : {
                   maxWidth : 1920,
                   maxHeight : 1920,
                   hardwareScaling : 0.5
               },
-              devices : {
+              userInfos : {
                   smartPhoneAllowed : false,
                   tabletAllowed : false,
                   noteBookAllowed : false,
