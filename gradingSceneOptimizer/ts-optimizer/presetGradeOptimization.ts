@@ -16,7 +16,7 @@ module BABYLON {
               lensFlaresEnabled : false,
               renderTargetsEnabled : false,
               textures : {
-                  sizeRatio : 0.5,
+                  sizeRatio : 1,
                   maxSize : 256,
                   minSize : 128
               },
@@ -50,7 +50,7 @@ module BABYLON {
               lensFlaresEnabled : false,
               renderTargetsEnabled : false,
               textures : {
-                  sizeRatio : 0.5,
+                  sizeRatio : 1,
                   maxSize : 512,
                   minSize : 128
               },
@@ -83,7 +83,7 @@ module BABYLON {
               lensFlaresEnabled : false,
               renderTargetsEnabled : true,
               textures : {
-                  sizeRatio : 0.5,
+                  sizeRatio : 1,
                   maxSize : 512,
                   minSize : 256
               },
@@ -93,7 +93,7 @@ module BABYLON {
                   fresnelEnabled : false
               },
               shadows : {
-                  sizeRatio : 1,
+                  sizeRatio : 2,
                   minSize : 128,
                   maxSize : 512
               },
@@ -121,7 +121,7 @@ module BABYLON {
               lensFlaresEnabled : false,
               renderTargetsEnabled : true,
               textures : {
-                  sizeRatio : 0.75,
+                  sizeRatio : 2,
                   maxSize : 1024,
                   minSize : 256
               },
@@ -164,7 +164,7 @@ module BABYLON {
               lensFlaresEnabled : true,
               renderTargetsEnabled : true,
               textures : {
-                  sizeRatio : 1,
+                  sizeRatio : 3,
                   maxSize : 1024,
                   minSize : 512
               },
@@ -207,7 +207,7 @@ module BABYLON {
               lensFlaresEnabled : true,
               renderTargetsEnabled : true,
               textures : {
-                  sizeRatio : 1,
+                  sizeRatio : 3,
                   maxSize : 2048,
                   minSize : 512
               },

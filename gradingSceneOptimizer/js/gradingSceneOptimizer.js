@@ -1,44 +1,8 @@
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 var BABYLON;
 (function (BABYLON) {
     /*********
      * GRADE
      *********/
-    /**
-          flow :
-            •
-            |
-      1.a onBeforeLoad
-            •
-            |
-      1.b onLoaded
-            •
-            |
-      2.a onBeforeRender
-            •
-            |
-      2.b onRendered ––––––––> onUpdate • ––>
-            •              |                |
-            |              |                |
-            |              <–––––––—–––––––––
-            |
-            |
-      3.a onBeforeDispose
-            •
-            |
-      3.b onDisposed
-            •
-  
-     */
     // class to customize grade
     var Grade = /** @class */ (function () {
         /**
@@ -257,11 +221,12 @@ var BABYLON;
          * @param evaluationDuration : duration for fps evaluation
          * @param autoReEval : active auto evaluation
          */
-        function GradingSceneOptimizer(engine, fpsToReach, evaluationDuration, autoReEval) {
+        function GradingSceneOptimizer(scene, fpsToReach, evaluationDuration, autoReEval) {
             if (fpsToReach === void 0) { fpsToReach = 48; }
             if (evaluationDuration === void 0) { evaluationDuration = 1000; }
             if (autoReEval === void 0) { autoReEval = false; }
             var _this = this;
+            this.scene = scene;
             this.fpsToReach = fpsToReach;
             this.evaluationDuration = evaluationDuration;
             this.autoReEval = autoReEval;
@@ -291,6 +256,15 @@ var BABYLON;
             // 1. try to upgrading.
             // 2. if fps not reached, dowgrading.
             this._isUpGradingStep = true;
+            //
+            this._texturesRef = [];
+            this._particlesRef = [];
+            var engine = scene.getEngine();
+            // observable event
+            scene.onNewMeshAddedObservable.add(function (e, e2) {
+                console.log(e.material);
+                // this._updateRefs(e);
+            });
             // add resize event
             if (this._resizeEvent) {
                 window.removeEventListener("resize", this._resizeEvent);
@@ -557,9 +531,14 @@ var BABYLON;
         ////////////////////////////
         // for textures
         GradingSceneOptimizer.prototype.optimizeTextures = function (scene, params) {
-            var textures = scene.textures, L = textures.length;
+            var textures = scene.textures, L = textures.length, currentRateRatio = 1, textureI, newSize;
+            if (this._currentGrade) {
+                currentRateRatio = this._currentGrade.textures.sizeRatio;
+            }
             for (var i = 0; i < L; i++) {
-                this.resizeTexture(textures[i], 512);
+                textureI = textures[i];
+                newSize = textureI.getSize().width * params.sizeRatio / currentRateRatio;
+                this.resizeTexture(textureI, newSize);
             }
         };
         // resize texture
@@ -573,12 +552,15 @@ var BABYLON;
             }
             // if bad url
             if (url && url.match(badUrlRegex)) {
-                // BABYLON.Tools.Warn("Texture " + texture.name + "can't be resized ! Reason : bad url, the asset path is lost : " + url);
+                // BABYLON.Tools.Warn("Texture " + texture.name + " can't be resized ! Reason : bad url, the asset path is lost : " + url);
                 return;
             }
-            if (url && !this.useTextureExtWorkflow && texture.canRescale) {
-                texture.updateURL(url);
-                texture.scale(0.5);
+            if (url) {
+                //BABYLON.TextureTools.CreateResizedCopy
+                //console.log(url);
+                //texture.updateURL(url);
+                //texture.scale(0.5);
+                texture.getInternalTexture().updateSize(size, size);
                 return;
             }
             splittedUrl = url.match(extRegex);
@@ -648,7 +630,10 @@ var BABYLON;
             if (!params) {
                 return;
             }
-            var particleSystems = scene.particleSystems, currentRateRatio = this._currentGrade.particles.rateRatio, particleSysL = particleSystems.length, particleSysI, paramRatio = params.rateRatio, paramMax = params.maxEmitRate, paramMin = params.minEmitRate, newRate;
+            var particleSystems = scene.particleSystems, currentRateRatio = 1, particleSysL = particleSystems.length, particleSysI, paramRatio = params.rateRatio, paramMax = params.maxEmitRate, paramMin = params.minEmitRate, newRate;
+            if (this._currentGrade) {
+                currentRateRatio = this._currentGrade.particles.rateRatio;
+            }
             for (var i = 0; i < particleSysL; i++) {
                 particleSysI = particleSystems[i];
                 newRate = Math.round(particleSysI.emitRate * paramRatio / currentRateRatio);
@@ -1014,7 +999,7 @@ var BABYLON;
                 lensFlaresEnabled: false,
                 renderTargetsEnabled: false,
                 textures: {
-                    sizeRatio: 0.5,
+                    sizeRatio: 1,
                     maxSize: 256,
                     minSize: 128
                 },
@@ -1046,7 +1031,7 @@ var BABYLON;
                 lensFlaresEnabled: false,
                 renderTargetsEnabled: false,
                 textures: {
-                    sizeRatio: 0.5,
+                    sizeRatio: 1,
                     maxSize: 512,
                     minSize: 128
                 },
@@ -1078,7 +1063,7 @@ var BABYLON;
                 lensFlaresEnabled: false,
                 renderTargetsEnabled: true,
                 textures: {
-                    sizeRatio: 0.5,
+                    sizeRatio: 1,
                     maxSize: 512,
                     minSize: 256
                 },
@@ -1088,7 +1073,7 @@ var BABYLON;
                     fresnelEnabled: false
                 },
                 shadows: {
-                    sizeRatio: 1,
+                    sizeRatio: 2,
                     minSize: 128,
                     maxSize: 512
                 },
@@ -1115,7 +1100,7 @@ var BABYLON;
                 lensFlaresEnabled: false,
                 renderTargetsEnabled: true,
                 textures: {
-                    sizeRatio: 0.75,
+                    sizeRatio: 2,
                     maxSize: 1024,
                     minSize: 256
                 },
@@ -1157,7 +1142,7 @@ var BABYLON;
                 lensFlaresEnabled: true,
                 renderTargetsEnabled: true,
                 textures: {
-                    sizeRatio: 1,
+                    sizeRatio: 3,
                     maxSize: 1024,
                     minSize: 512
                 },
@@ -1199,7 +1184,7 @@ var BABYLON;
                 lensFlaresEnabled: true,
                 renderTargetsEnabled: true,
                 textures: {
-                    sizeRatio: 1,
+                    sizeRatio: 3,
                     maxSize: 2048,
                     minSize: 512
                 },
@@ -1568,72 +1553,9 @@ var BABYLON;
             }
             return null;
         };
-        // navigator.userAgent
+        // report of user device and sofware informations
         UserInfos.report = UserInfos._report();
         return UserInfos;
     }());
     BABYLON.UserInfos = UserInfos;
-})(BABYLON || (BABYLON = {}));
-var BABYLON;
-(function (BABYLON) {
-    var AbstractGradingAsset = /** @class */ (function (_super) {
-        __extends(AbstractGradingAsset, _super);
-        function AbstractGradingAsset(name) {
-            return _super.call(this, name) || this;
-        }
-        return AbstractGradingAsset;
-    }(BABYLON.AbstractAssetTask));
-    BABYLON.AbstractGradingAsset = AbstractGradingAsset;
-    var GradingGridZone = /** @class */ (function () {
-        function GradingGridZone() {
-        }
-        return GradingGridZone;
-    }());
-    BABYLON.GradingGridZone = GradingGridZone;
-    var GradingAssetsZone = /** @class */ (function () {
-        function GradingAssetsZone() {
-        }
-        return GradingAssetsZone;
-    }());
-    BABYLON.GradingAssetsZone = GradingAssetsZone;
-    var meshGradingAsset = /** @class */ (function (_super) {
-        __extends(meshGradingAsset, _super);
-        function meshGradingAsset(name) {
-            return _super.call(this, name) || this;
-        }
-        return meshGradingAsset;
-    }(AbstractGradingAsset));
-    BABYLON.meshGradingAsset = meshGradingAsset;
-    var soundGradingAsset = /** @class */ (function (_super) {
-        __extends(soundGradingAsset, _super);
-        function soundGradingAsset(name) {
-            return _super.call(this, name) || this;
-        }
-        return soundGradingAsset;
-    }(AbstractGradingAsset));
-    BABYLON.soundGradingAsset = soundGradingAsset;
-    var animationGradingAsset = /** @class */ (function (_super) {
-        __extends(animationGradingAsset, _super);
-        function animationGradingAsset(name) {
-            return _super.call(this, name) || this;
-        }
-        return animationGradingAsset;
-    }(AbstractGradingAsset));
-    BABYLON.animationGradingAsset = animationGradingAsset;
-    var textureGradingAsset = /** @class */ (function (_super) {
-        __extends(textureGradingAsset, _super);
-        function textureGradingAsset(name) {
-            return _super.call(this, name) || this;
-        }
-        return textureGradingAsset;
-    }(AbstractGradingAsset));
-    BABYLON.textureGradingAsset = textureGradingAsset;
-    var scriptGradingAsset = /** @class */ (function (_super) {
-        __extends(scriptGradingAsset, _super);
-        function scriptGradingAsset(name) {
-            return _super.call(this, name) || this;
-        }
-        return scriptGradingAsset;
-    }(AbstractGradingAsset));
-    BABYLON.scriptGradingAsset = scriptGradingAsset;
 })(BABYLON || (BABYLON = {}));

@@ -89,7 +89,7 @@ module BABYLON {
 
   export class UserInfos {
 
-      // navigator.userAgent
+      // report of user device and sofware informations
       public static report: UserInfosReport = UserInfos._report();
 
 
