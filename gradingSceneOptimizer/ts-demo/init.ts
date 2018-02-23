@@ -227,7 +227,7 @@ window.onload=function() {
    * GradingSceneOptimizer
    */
 
-  var GSO = new BABYLON.GradingSceneOptimizer(scene),
+  var GSO = new BABYLON.GradingSceneOptimizer(engine),
 
       minGrade = GSO.createGrade('minimum', BABYLON.PresetGradeOptimization.minimum()),
 
@@ -268,9 +268,6 @@ window.onload=function() {
   // try to minimize draw call of CPU ( for the futur )
   // based on view ditance in optimizations parameters
   GSO.minimizeDrawCall = true; // TODO : FEATURE
-
-  // use texture extention workflow
-  GSO.useTextureExtWorkflow = true;
 
 
 
@@ -351,8 +348,14 @@ window.onload=function() {
   /**
    * Add gltf + asynch load test
    */
-  BABYLON.SceneLoader.ImportMesh("him", "assets/Dude/", "dude.babylon", scene, function () {
-    scene.getMeshByName('him').scaling = new BABYLON.Vector3(0.3,0.3,0.3)
+  BABYLON.SceneLoader.Append("assets/busterDrone/", "busterDrone.gltf", scene, function (scene) {
+    var emptyDrone = new BABYLON.Mesh("emptyDrone", scene)
+    var drone = scene.getMeshByName('__root__');
+    drone.parent = emptyDrone;
+    emptyDrone.scaling = new BABYLON.Vector3(6,6,6);
+    emptyDrone.position = new BABYLON.Vector3(0,6,-6);
+    scene.getMeshByName('mesh_Scheibe_11558Scheibe_0').isVisible = false;
+
 
 
 
@@ -379,15 +382,14 @@ window.onload=function() {
      */
 
     GSO.run(scene, () => {
-        scene.executeWhenReady( () => {
-            engine.runRenderLoop( () => {
-                scene.render();
-            });
 
-            // console.log(engine);
-            // console.log(scene);
-            // console.log(GSO);
-        })
+      engine.runRenderLoop( () => {
+          scene.render();
+      });
+
+      console.log(engine);
+      console.log(scene);
+      console.log(GSO);
 
     });
 

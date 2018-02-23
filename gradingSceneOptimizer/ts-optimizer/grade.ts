@@ -4,11 +4,64 @@ module BABYLON {
    * GRADE
    *********/
 
+  /**
+        flow :
+          •
+          |
+    1.a onBeforeLoad
+          •
+          |
+    1.b onLoaded
+          •
+          |
+    2.a onBeforeRender
+          •
+          |
+    2.b onRendered ––––––––> onUpdate • ––>
+          •              |                |
+          |              |                |
+          |              <–––––––—–––––––––
+          |
+          |
+    3.a onBeforeDispose
+          •
+          |
+    3.b onDisposed
+          •
+
+   */
+
   // class to customize grade
   export class Grade {
 
       // priority
       public priority: number;
+
+      // enabled
+      // ex : if this grade is not allowed on mobile device
+      public enabled: boolean;
+
+      // observable
+      public onBeforeLoad: Function;
+      public onLoaded: Function;
+
+      public onBeforeRender: Function;
+      public onRendered: Function;
+      public onUpdate: Function;
+
+      public onBeforeDispose: Function;
+      public onDisposed: Function;
+
+
+      // OPTIMIZATION PARAMETERS :
+
+      // static assets :
+      // active all trick to get more performance like "freeze" & "refreshRate"
+      public staticAssets : Array<GradingAsset>;
+
+      // dynamic assets :
+      // all asset that need to be updated
+      public dynamicAssets : Array<GradingAsset>;
 
 
       // "enabled" variable

@@ -73,11 +73,6 @@ module BABYLON {
       // resize event function
       private _resizeEvent: any;
 
-      //
-      private _texturesRef : Array<any> = [];
-
-      private _particlesRef : Array<any> = [];
-
 
 
 
@@ -87,15 +82,7 @@ module BABYLON {
        * @param evaluationDuration : duration for fps evaluation
        * @param autoReEval : active auto evaluation
        */
-      constructor (public scene: Scene, public fpsToReach: number = 48, public evaluationDuration: number = 1000, public autoReEval: boolean = false) {
-
-          var engine = scene.getEngine();
-
-          // observable event
-          scene.onNewMeshAddedObservable.add((e, e2) => {
-              console.log(e.material)
-              // this._updateRefs(e);
-          });
+      constructor (engine: Engine, public fpsToReach: number = 48, public evaluationDuration: number = 1000, public autoReEval: boolean = false) {
 
           // add resize event
           if (this._resizeEvent) {
@@ -284,6 +271,7 @@ module BABYLON {
 
           // return grade result
           return newGrade;
+
       }
 
 
@@ -510,20 +498,10 @@ module BABYLON {
       // for textures
       public optimizeTextures(scene : Scene, params : IParamsTexturesGradeOptimization) {
           var textures = scene.textures,
-              L = textures.length,
-              currentRateRatio = 1,
-              textureI,
-              newSize;
-
-          if (this._currentGrade) {
-              currentRateRatio = this._currentGrade.textures.sizeRatio;
-          }
+              L = textures.length;
 
           for (let i = 0; i < L; i++) {
-              textureI = textures[i];
-              newSize = textureI.getSize().width * params.sizeRatio / currentRateRatio;
-
-              this.resizeTexture(textureI, newSize);
+              this.resizeTexture(textures[i], 512);
           }
 
       }
@@ -543,16 +521,13 @@ module BABYLON {
 
           // if bad url
           if (url && url.match(badUrlRegex)) {
-              // BABYLON.Tools.Warn("Texture " + texture.name + " can't be resized ! Reason : bad url, the asset path is lost : " + url);
+              // BABYLON.Tools.Warn("Texture " + texture.name + "can't be resized ! Reason : bad url, the asset path is lost : " + url);
               return;
           }
 
-          if (url) {
-              //BABYLON.TextureTools.CreateResizedCopy
-              //console.log(url);
-              //texture.updateURL(url);
-              //texture.scale(0.5);
-              texture.getInternalTexture().updateSize(size,size)
+          if (url && !this.useTextureExtWorkflow && texture.canRescale) {
+              texture.updateURL(url);
+              texture.scale(0.5);
               return;
           }
 
@@ -560,7 +535,6 @@ module BABYLON {
           splittedUrl = url.match(extRegex);
           if (splittedUrl) {
               var newUrl = splittedUrl[1] + '.' + size.toString() + '.' + splittedUrl[3];
-
               texture.updateURL(newUrl);
           }
 
@@ -645,17 +619,13 @@ module BABYLON {
           }
 
           var particleSystems = scene.particleSystems,
-              currentRateRatio = 1,
+              currentRateRatio = this._currentGrade.particles.rateRatio,
               particleSysL = particleSystems.length,
               particleSysI : IParticleSystem,
               paramRatio = params.rateRatio,
               paramMax = params.maxEmitRate,
               paramMin = params.minEmitRate,
               newRate;
-
-          if (this._currentGrade) {
-              currentRateRatio = this._currentGrade.particles.rateRatio;
-          }
 
           for (let i = 0; i < particleSysL; i++) {
 
@@ -672,6 +642,7 @@ module BABYLON {
 
               // update emit rate
               particleSysI.emitRate = newRate;
+
           }
 
       }
