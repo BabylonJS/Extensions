@@ -1205,8 +1205,6 @@ var BABYLON;
             this.minimizeDrawCall = true; // TODO ( !!! FUTURE FEATURE !!!)
             // user info : os, sofware(browser), device, ...
             this.userInfos = BABYLON.UserInfos.report;
-            // use texture extention workflow
-            this.useTextureExtWorkflow = false;
             // current priority
             this._currentGradePriority = -1;
             // to know the step of evaluation :

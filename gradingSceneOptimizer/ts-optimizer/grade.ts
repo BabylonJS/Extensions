@@ -88,7 +88,7 @@ module BABYLON {
        * @param downGradingTask : task to do when this grade is disabled
        * @param optimization : optimization parameters
        */
-      constructor (private _GSO : GradingSceneOptimizer, public name: string, optimization : ParamsGradeOptimizationI, public upGradingTask: Function = null, public downGradingTask: Function = null) {
+      constructor (private _GSO : GradingRenderWorkflow, public name: string, optimization : ParamsGradeOptimizationI, public upGradingTask: Function = null, public downGradingTask: Function = null) {
 
 
 

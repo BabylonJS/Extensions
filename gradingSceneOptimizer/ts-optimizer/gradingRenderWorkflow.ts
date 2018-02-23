@@ -18,11 +18,11 @@ module BABYLON {
 
 
   /***************************
-   * GRADING SCENE OPTIMIZER
+   * GRADING RENDER WORKFLOW
    **************************/
 
   // class to controle optimizations
-  export class GradingSceneOptimizer {
+  export class GradingRenderWorkflow {
 
       // grade : preset options to optimize scene (ex : low, medium, hight)
       public grades: Array<Grade> = new Array();
@@ -47,9 +47,6 @@ module BABYLON {
       // user info : os, sofware(browser), device, ...
       public userInfos: UserInfosReport = UserInfos.report;
 
-      // use texture extention workflow
-      public useTextureExtWorkflow : boolean = false;
-
       // to know on wich grade we are.
       private _currentGrade: Grade;
 
@@ -73,6 +70,11 @@ module BABYLON {
       // resize event function
       private _resizeEvent: any;
 
+      //
+      private _texturesRef : Array<any> = [];
+
+      private _particlesRef : Array<any> = [];
+
 
 
 
@@ -82,7 +84,9 @@ module BABYLON {
        * @param evaluationDuration : duration for fps evaluation
        * @param autoReEval : active auto evaluation
        */
-      constructor (engine: Engine, public fpsToReach: number = 48, public evaluationDuration: number = 1000, public autoReEval: boolean = false) {
+      constructor (public scene: Scene, public fpsToReach: number = 48, public evaluationDuration: number = 1000, public autoReEval: boolean = false) {
+
+          var engine = scene.getEngine();
 
           // add resize event
           if (this._resizeEvent) {
@@ -99,13 +103,13 @@ module BABYLON {
       }
 
       /**
-       * Run GradingSceneOptimizer
+       * Run GradingRenderWorkflow
        * @param scene : BABYLON scene
-       * @param starterGrade : on wich grade renderGradingSceneOptimizer need to start.
+       * @param starterGrade : on wich grade GradingRenderWorkflow need to start.
        *                       It's interresting to start with the lower grade.
        *                       For exemple, configure your lower grade with only what your scene needed. Load only assets you need allow a best loading time performance.
        *                       You will get a better accessibility and plug and play concept. It's important for web.
-       * @param onReady : callback when GradingSceneOptimizer is ready.
+       * @param onReady : callback when GradingRenderWorkflow is ready.
        */
       public run(scene: Scene, onReady?: Function) {
           var engine = scene.getEngine();
@@ -271,7 +275,6 @@ module BABYLON {
 
           // return grade result
           return newGrade;
-
       }
 
 
@@ -474,7 +477,7 @@ module BABYLON {
 
           // for textures
           if (grade.textures != undefined) {
-              this.optimizeTextures(scene, grade.textures);
+              this._optimizeTextures(scene, grade.textures);
           }
 
           // for materials
@@ -495,16 +498,35 @@ module BABYLON {
       // GSO OPTIMIZE FUNCTIONS //
       ////////////////////////////
 
-      // for textures
-      public optimizeTextures(scene : Scene, params : IParamsTexturesGradeOptimization) {
+      // for texture[S]
+      private _optimizeTextures(scene : Scene, params : IParamsTexturesGradeOptimization) {
           var textures = scene.textures,
-              L = textures.length;
+              L = textures.length,
+              currentRateRatio = 1,
+              textureI,
+              newSize;
+
+          if (this._currentGrade) {
+              currentRateRatio = this._currentGrade.textures.sizeRatio;
+          }
 
           for (let i = 0; i < L; i++) {
-              this.resizeTexture(textures[i], 512);
+              textureI = textures[i];
+              newSize = textureI.getSize().width * params.sizeRatio / currentRateRatio;
+
+              this.resizeTexture(textureI, newSize);
           }
 
       }
+
+      // public optimize texture
+      private _optimizeTexture(texture: Texture) {
+          var params = this._currentGrade.textures;
+
+          this.resizeTexture(texture, newSize);
+      }
+
+
 
       // resize texture
       public resizeTexture(texture : Texture, size: number) : Texture {
@@ -521,13 +543,7 @@ module BABYLON {
 
           // if bad url
           if (url && url.match(badUrlRegex)) {
-              // BABYLON.Tools.Warn("Texture " + texture.name + "can't be resized ! Reason : bad url, the asset path is lost : " + url);
-              return;
-          }
-
-          if (url && !this.useTextureExtWorkflow && texture.canRescale) {
-              texture.updateURL(url);
-              texture.scale(0.5);
+              BABYLON.Tools.Warn("Texture " + texture.name + " can't be resized ! Reason : the type of url is Blob or Data, the asset path is lost : " + url);
               return;
           }
 
@@ -537,8 +553,6 @@ module BABYLON {
               var newUrl = splittedUrl[1] + '.' + size.toString() + '.' + splittedUrl[3];
               texture.updateURL(newUrl);
           }
-
-          return null;
       }
 
       // for materials
@@ -619,13 +633,17 @@ module BABYLON {
           }
 
           var particleSystems = scene.particleSystems,
-              currentRateRatio = this._currentGrade.particles.rateRatio,
+              currentRateRatio = 1,
               particleSysL = particleSystems.length,
               particleSysI : IParticleSystem,
               paramRatio = params.rateRatio,
               paramMax = params.maxEmitRate,
               paramMin = params.minEmitRate,
               newRate;
+
+          if (this._currentGrade) {
+              currentRateRatio = this._currentGrade.particles.rateRatio;
+          }
 
           for (let i = 0; i < particleSysL; i++) {
 
@@ -642,7 +660,6 @@ module BABYLON {
 
               // update emit rate
               particleSysI.emitRate = newRate;
-
           }
 
       }

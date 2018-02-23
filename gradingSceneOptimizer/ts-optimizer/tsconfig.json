@@ -6,7 +6,7 @@
         "removeComments": false,
         "noLib": false,
         "sourceMap": false,
-        "outFile" : "../js/gradingSceneOptimizer.js"
+        "outFile" : "../js/gradingRenderWorkflow.js"
     },
     "include": [
         "**/*.ts"
