@@ -1,4 +1,7 @@
-﻿module BABYLON {
+﻿/// <reference path="babylon.d.ts" />
+/// <reference path="babylon.scenemanager.ts" />
+
+module BABYLON {
     export class AnimationState extends BABYLON.SceneComponent {
         private static EXIT:string = "[EXIT]";
         private _state:BABYLON.MachineState = null;
@@ -29,6 +32,8 @@
             this._autoplay = this.getProperty("automaticPlay", false);
             if (this.owned.metadata != null) {
                 this.owned.metadata.state = {};
+                this.owned.metadata.state.data = {};
+                this.owned.metadata.state.tracks = {};
                 this.owned.metadata.state.floats = {};
                 this.owned.metadata.state.booleans = {};
                 this.owned.metadata.state.triggers = {};
@@ -36,8 +41,6 @@
                 if (this.owned.metadata.properties != null && this.owned.metadata.properties.stateMachineInfo != null) {
                     this._machine = this.owned.metadata.properties.stateMachineInfo;
                     if (this._machine != null) {
-                        //console.log("===> DUMP STATE MACHINE: " + this.owned.name);
-                        //console.log(this._machine);
                         if (this._machine.speed != null) {
                             this._speed = this._machine.speed;
                         }
@@ -67,6 +70,9 @@
                         }
                     }
                 }
+                this.setupMachineStateInfo();
+                //console.log("===> DUMP STATE MACHINE: " + this.owned.name);
+                //console.log(this);
             }
         }
 
@@ -88,6 +94,30 @@
         
         /* Animation Controller State Access Functions */
 
+        public getData(name:string):any {
+            var result:any = null;
+            if (this.owned.metadata != null && this.owned.metadata.state != null && this.owned.metadata.state.data != null && this.owned.metadata.state.data[name] != null) {
+                result = this.owned.metadata.state.data[name];
+            }
+            return result;
+        }
+        public setData(name:string, value:any):void {
+            if (this.owned.metadata != null && this.owned.metadata.state != null && this.owned.metadata.state.data != null) {
+                this.owned.metadata.state.data[name] = value;
+            }
+        }
+        public getTrack(name:string):BABYLON.AnimationTrack {
+            var result:BABYLON.AnimationTrack = null;
+            if (this.owned.metadata != null && this.owned.metadata.state != null && this.owned.metadata.state.tracks != null && this.owned.metadata.state.tracks[name] != null) {
+                result = this.owned.metadata.state.tracks[name];
+            }
+            return result;
+        }
+        public setTrack(name:string, value:BABYLON.AnimationTrack):void {
+            if (this.owned.metadata != null && this.owned.metadata.state != null && this.owned.metadata.state.tracks != null) {
+                this.owned.metadata.state.tracks[name] = value;
+            }
+        }
         public getNumber(name:string):number {
             var result:number = 0.0;
             if (this.owned.metadata != null && this.owned.metadata.state != null && this.owned.metadata.state.floats != null && this.owned.metadata.state.floats[name] != null) {
@@ -129,7 +159,7 @@
                 this.owned.metadata.state.triggers[name] = false;
             }
         }
-
+        
         /* Animation Controller Current State Functions */
         
         public getCurrentState():BABYLON.MachineState {
@@ -294,7 +324,7 @@
                 }
             }
         }
-        private getMachineStateInfo(name:string):BABYLON.MachineState {
+        private setupMachineStateInfo():BABYLON.MachineState {
             var index = 0;
             var result:BABYLON.MachineState = null;
             if (this._machine != null && this._machine.states != null && this._machine.states.length > 0) {
@@ -302,9 +332,10 @@
                 var scount:number = this._machine.states.length;
                 for (index=0; index<scount; index++) {
                     var state:BABYLON.MachineState = slist[index];
-                    if (state != null && state.name === name) {
-                        result = state;
-                        break;
+                    if (state != null && state.name != null) {
+                        var track:BABYLON.AnimationTrack = (state.motion != null && state.motion !== "") ? this.manager.getAnimationTrack(state.motion, this.owned) : null;
+                        this.setTrack(state.motion, track);
+                        this.setData(state.name, state);
                     }
                 }
             }
@@ -314,11 +345,17 @@
             if (name == null || name === "" || name === BABYLON.AnimationState.EXIT) return;
             if (this._state != null && this._state.name === name) return;
             this.resetMachineState(this._state);
-            this._state = this.getMachineStateInfo(name);
+            this._state = this.getData(name);
             if (this._state != null) {
                 this._state.time = this.manager.time;
                 if (this._state.type === BABYLON.MotionType.Clip && this._state.motion != null && this._state.motion !== "") {
-                    this._state.animations = this.manager.playAnimationClip(this._state.motion, this.owned, blending, (this._state.speed * this._speed), true);
+                    //this._state.animations = this.manager.playAnimationClip(this._state.motion, this.owned, blending, (this._state.speed * this._speed), true);
+                    var track:BABYLON.AnimationTrack = this.getTrack(this._state.motion);
+                    if (track != null) {
+                        this._state.animations = this.manager.playAnimationTrack(track, blending, (this._state.speed * this._speed));
+                    } else {
+                        BABYLON.Tools.Warn(this.owned.name + ": No animation track found for state: " + name);
+                    }
                 }
                 if (this.onStateChanged != null) {
                     this.onStateChanged();
@@ -345,17 +382,29 @@
         /* Animation Controller Blend Tree Functions */
 
         private updateBlendingTree():void {
+            // Note: Use Simple Blend Trees To Switch Between Blend Tree Animations (First Threshold Value That Equals True)
             if (this._state != null && this._state.blendtree != null) {
+                /*
                 var branch:BABYLON.IBlendTreeChild = this.getBlendTreeBranch(this._state.blendtree);
                 if (branch != null && branch.motion != null && branch.motion !== "" && this._state.branch !== branch.motion) {
                     this._state.branch = branch.motion;
-                    this._state.animations = this.manager.playAnimationClip(branch.motion, this.owned, this._blending, (branch.timescale * this._state.speed * this._speed), true);
+                    //this._state.animations = this.manager.playAnimationClip(branch.motion, this.owned, this._blending, (branch.timescale * this._state.speed * this._speed), true);
+                    var track:BABYLON.AnimationTrack = this.getTrack(branch.motion);
+                    if (track != null) {
+                        console.log("*** DUMP BLEND TREE TRACK: " + name);
+                        console.log(track);
+                        this._state.animations = this.manager.playAnimationTrack(track, this._blending, (branch.timescale * this._state.speed * this._speed));
+                    } else {
+                        BABYLON.Tools.Warn(this.owned.name + ": No animation track found for blend motion: " + branch.motion);
+                    }
                 }
+                */
             }
         }
         private getBlendTreeBranch(tree:BABYLON.IBlendTree):BABYLON.IBlendTreeChild {
-            // Note: Use Simple Blend Trees To Interpolate Between Animations
+            // Note: Use Simple Blend Trees To Switch Between Blend Tree Animations (First Threshold Value That Equals True)
             var result:BABYLON.IBlendTreeChild = null;
+            /*
             if (tree.children != null && tree.children.length > 0) {
                 var index:number = 0;
                 var valueX = this.getNumber(tree.blendParameterX);
@@ -380,11 +429,11 @@
                     if (result != null) break;
                 }
             }
+            */
             return result;
         }
 
         /* Animation Controller Root Motion Functions */
-
         private validateRootMotion():void {
             // TODO: Include Current Blend Tree Root Motions
             if (this._state != null && this._state.averageSpeed != null && this._state.averageSpeed.length >= 3) {

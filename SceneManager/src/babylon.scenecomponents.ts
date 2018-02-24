@@ -1,7 +1,9 @@
-﻿module BABYLON {
+﻿/// <reference path="babylon.d.ts" />
+/// <reference path="babylon.scenemanager.ts" />
+
+module BABYLON {
     export abstract class SceneComponent {
         public register: () => void = null;
-        public dispose: () => void = null;
 
         protected tick: boolean = false;
         protected start(): void { }
@@ -35,7 +37,6 @@
             instance.register = function () { instance.registerInstance(instance); };
             instance._before = function () { instance.updateInstance(instance); };
             instance._after = function () { instance.afterInstance(instance); };
-            instance.dispose = function () { instance.disposeInstance(instance); };
         }
         public get scene(): BABYLON.Scene { 
             return this._scene;
@@ -97,33 +98,41 @@
         /* Private Scene Component Instance Worker Functions */
         private registerInstance(instance: any): void {
             if (instance.ready) {
-                instance.manager.onready(()=>{
-                    instance.ready();
-                });
+                instance.manager.onready(()=>{ instance.ready(); });
             }
             instance.scene.registerBeforeRender(instance._before);
             instance.scene.registerAfterRender(instance._after);
         }
         private updateInstance(instance: any): void {
-            if (!instance._started) {
-                instance.init();
-                instance.start();
-                instance._started = true;
-            } else if (instance._started && instance.tick) {
-                instance.update();
-                if (instance.updateIntersectionList) {
-                    instance.updateIntersectionList();
+            if (instance != null && instance.owned != null) {
+                if (!instance._started) {
+                    instance.init();
+                    instance.start();
+                    instance._started = true;
+                } else if (instance._before != null && instance._started && instance.tick) {
+                    instance.update();
+                    if (instance.updateIntersectionList) {
+                        instance.updateIntersectionList();
+                    }
                 }
             }
         }
         private afterInstance(instance: any): void {
-            if (instance._started && instance.tick) {
-                instance.after();
+            if (instance != null && instance.owned != null) {
+                if (instance._after != null && instance._started && instance.tick) {
+                    instance.after();
+                }
             }
         }
-        private disposeInstance(instance: any) {
+        //
+        // Public Static Destroy Instance Helper
+        //
+        public static DestroyInstance(instance: any) {
+            //console.log("===> Destroying Instance: " + instance.owned.name);
+            instance.tick = false;
             instance.scene.unregisterBeforeRender(instance._before);
             instance.scene.unregisterAfterRender(instance._after);
+            try{ instance.destroy(); }catch(e){};
             if (instance.disposeSceneComponent) {
                 instance.disposeSceneComponent();
             }
@@ -131,8 +140,6 @@
                 instance._prefab.dispose();
                 instance._prefab = null;
             }
-            instance.destroy();
-            instance.tick = false;
             instance.owned = null;
             instance._started = false;
             instance._before = null;
@@ -187,12 +194,6 @@
                 window.removeEventListener("resize", this.updateOrthographicSize);
                 this._orthoUpdate = false;
                 this._orthoSize = 0;
-            }
-            if (this._camera.metadata != null && this._camera.metadata.properties != null && this._camera.metadata.properties.hdrPipeline != null) {
-                //var pipeline:BABYLON.HDRRenderingPipeline = this._camera.metadata.properties.hdrPipeline as BABYLON.HDRRenderingPipeline;
-                //pipeline.dispose();
-                //pipeline = null;
-                this._camera.metadata.properties.hdrPipeline = null;
             }
             this._camera = null;
         }        
@@ -261,8 +262,6 @@
                 if (anyImpostor.onCollideEvent == null) {
                     anyImpostor.onCollideEvent = this.updatePhysicsCollisionEvent;
                 }
-            } else {
-                BABYLON.Tools.Warn("Physics imposter not defined for mesh: " + this.mesh.name);
             }
         }
         public getCollisionEventHandler():(collider:BABYLON.AbstractMesh, tag:string) => void {
@@ -372,9 +371,9 @@
         
         private disposeSceneComponent():void {
             this.resetIntersectionList();
-            if (this.mesh != null) {
-                if (this._mesh.skeleton != null && this.mesh.skeleton.bones != null && this._mesh.skeleton.bones.length > 0) {
-                    this.mesh.skeleton.bones.forEach((bone) => {
+            if (this._mesh != null) {
+                if (this._mesh.skeleton != null && this._mesh.skeleton.bones != null && this._mesh.skeleton.bones.length > 0) {
+                    this._mesh.skeleton.bones.forEach((bone) => {
                         if (bone != null && bone.metadata != null) {
                             bone.metadata = null;
                         }
@@ -465,7 +464,9 @@
             this._owned = owner;
             this.slerpIdentity = BABYLON.Quaternion.Identity();
         }
+
         /** Rotates the mesh using rotation quaternions */
+        /*
         public rotate(x: number, y: number, z: number, order:BABYLON.RotateOrder = BABYLON.RotateOrder.ZXY):BABYLON.AbstractMesh {
             var result:BABYLON.AbstractMesh = null;
             if (this._owned != null) {
@@ -487,7 +488,9 @@
             }
             return result;
         }
+        //
         /** Rotates the mesh so the forward vector points at a target position using rotation quaternions. (Options: Y-Yall, X-Pitch, Z-Roll) */
+        /*
         public lookAtPosition(position:BABYLON.Vector3, slerp:number = 0.0, yawCor?: number, pitchCor?: number, rollCor?: number, space?: BABYLON.Space):BABYLON.AbstractMesh {
             var result:BABYLON.AbstractMesh = null;
             if (this._owned != null) {
@@ -498,6 +501,45 @@
             }
             return result;
         }
+        */
+        
+        /** Rotates the mesh using rotation quaternions */
+        //
+        public rotate(x: number, y: number, z: number, order:BABYLON.RotateOrder = BABYLON.RotateOrder.ZXY):BABYLON.TransformNode {
+            var result:BABYLON.TransformNode = null;
+            if (this._owned != null) {
+                // Note: Z-X-Y is default Unity Rotation Order
+                if (this._owned.rotationQuaternion == null) this._owned.rotationQuaternion = BABYLON.Quaternion.RotationYawPitchRoll(this._owned.rotation.y, this._owned.rotation.x, this._owned.rotation.z);
+                if (order === BABYLON.RotateOrder.XYZ) {
+                    result = this._owned.addRotation(x, 0, 0).addRotation(0, y, 0).addRotation(0, 0, z);
+                } else if (order === BABYLON.RotateOrder.XZY) {
+                    result = this._owned.addRotation(x, 0, 0).addRotation(0, 0, z).addRotation(0, y, 0);
+                } else if (order === BABYLON.RotateOrder.ZXY) {
+                    result = this._owned.addRotation(0, 0, z).addRotation(x, 0, 0).addRotation(0, y, 0);
+                } else if (order === BABYLON.RotateOrder.ZYX) {
+                    result = this._owned.addRotation(0, 0, z).addRotation(0, y, 0).addRotation(x, 0, 0);
+                } else if (order === BABYLON.RotateOrder.YZX) {
+                    result = this._owned.addRotation(0, y, 0).addRotation(0, 0, z).addRotation(x, 0, 0);
+                } else {
+                    result = this._owned.addRotation(x, y, z); // Note: Default Babylon Y-X-Z Rotate Order
+                }
+            }
+            return result;
+        }
+        //
+        /** Rotates the mesh so the forward vector points at a target position using rotation quaternions. (Options: Y-Yall, X-Pitch, Z-Roll) */
+        //
+        public lookAtPosition(position:BABYLON.Vector3, slerp:number = 0.0, yawCor?: number, pitchCor?: number, rollCor?: number, space?: BABYLON.Space):BABYLON.TransformNode {
+            var result:BABYLON.TransformNode = null;
+            if (this._owned != null) {
+                if (this._owned.rotationQuaternion == null) this._owned.rotationQuaternion = BABYLON.Quaternion.RotationYawPitchRoll(this._owned.rotation.y, this._owned.rotation.x, this._owned.rotation.z);
+                if (this.slerpIdentity != null && slerp > 0.0) this.slerpIdentity.copyFrom(this._owned.rotationQuaternion);
+                result = this._owned.lookAt(position, yawCor, pitchCor, rollCor, space);
+                if (this.slerpIdentity != null && slerp > 0.0) BABYLON.Quaternion.SlerpToRef(this.slerpIdentity, this._owned.rotationQuaternion, slerp, this._owned.rotationQuaternion)
+            }
+            return result;
+        }
+        //
         public dispose():void {
             this._owned = null;
             this.slerpIdentity = null;
@@ -603,6 +645,11 @@
         public offest:number;
         public blending:number;
         public triggered:string[];
+    }
+
+    export class AnimationTrack {
+        public clip:BABYLON.IAnimationClip;
+        public targets:any[];
     }
     
     export enum RotateOrder

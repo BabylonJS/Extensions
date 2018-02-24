@@ -1,3 +1,6 @@
+/// <reference path="babylon.d.ts" />
+/// <reference path="babylon.scenemanager.ts" />
+
 module BABYLON {
     export class Utilities {
         /** TODO: angle */

@@ -1,5 +1,7 @@
 ﻿/* Babylon Character Movement Controller Component */
 /* <reference path="{*path*}/Assets/Babylon/Library/babylon.d.ts" /> */
+/// <reference path="babylon.d.ts" />
+/// <reference path="babylon.scenemanager.ts" />
 
 //////////////////////////////////////////////
 // Notes
@@ -65,8 +67,8 @@ module BABYLON {
 
         /* Public Character Controller Movement Function */
         
-        public move(velocity:BABYLON.Vector3, friction:number = 0.0, jump:number = 0.0):void {
-            this.manager.applyFriction(this.mesh, friction);
+        public move(velocity:BABYLON.Vector3, friction:number = -1.0, jump:number = -1.0):void {
+            if (friction >= 0.0) this.manager.applyFriction(this.mesh, friction);
             if (this.movementType === BABYLON.MovementType.AppliedForces) {
                 this.manager.applyForce(this.mesh, velocity, this.mesh.getAbsolutePosition());
             } else {
@@ -79,7 +81,8 @@ module BABYLON {
                 this.updateGroundingState();
             }
         }
-        public rotate(speed:number):void {
+        public rotate(speed:number, friction:number = -1.0):void {
+            if (friction >= 0.0) this.manager.applyFriction(this.mesh, friction);
             this._angularVelocity.copyFromFloats(0.0, speed, 0.0);
             this.manager.setAngularVelocity(this.mesh, this._angularVelocity);
         }

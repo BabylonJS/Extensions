@@ -1,3 +1,6 @@
+/// <reference path="babylon.d.ts" />
+/// <reference path="babylon.scenemanager.ts" />
+
 module BABYLON {
     /* Universal Material Define Support */
     export class UniversalShaderDefines {
@@ -105,12 +108,12 @@ module BABYLON {
         private _locals:BABYLON.UniversalShaderDefines = null;
         constructor(name: string, scene: BABYLON.Scene, tick:boolean = false) {
             super(name, scene);
-            this.ticking = tick;
             this._locals = new BABYLON.UniversalShaderDefines();
             this.customShaderNameResolve = this._buildCustomShader;
+            this.ticking = tick;
             if (this.ticking) this.initializeInstance();
         }
-
+        
         /* Shader Material Property Define Functions */
 
         private _uniforms:string[] = [];
@@ -828,9 +831,57 @@ module BABYLON {
 
     /* Universal Shader Material Define Support */
     export class UniversalTerrainMaterial extends BABYLON.UniversalShaderMaterial {
-        constructor(name: string, scene: BABYLON.Scene, tick:boolean = false) {
+        private _totalTexturesLoaded:number = 0;
+        private _maxTexturesImageUnits:number = 0;
+        public get totalTexturesLoaded(): number { return this._totalTexturesLoaded; }
+        public get maxTexturesImageUnits(): number { return this._maxTexturesImageUnits; }
+        constructor(name: string, scene: BABYLON.Scene, tick:boolean = true) {
             super(name, scene, tick);
             this.program = "splatmap";
+            var engine = scene.getEngine();
+            var caps:BABYLON.EngineCapabilities = engine.getCaps();
+            this._totalTexturesLoaded = 0;
+            this._maxTexturesImageUnits = caps.maxTexturesImageUnits;
+        }
+
+        /* Terrain Material Life Cycle Functions */
+
+        protected start() {
+            this._totalTexturesLoaded =  0;
+            if (this.diffuseTexture) this._totalTexturesLoaded++;
+            if (this.bumpTexture) this._totalTexturesLoaded++;
+            if (this.lightmapTexture) this._totalTexturesLoaded++;
+            if (this.reflectionTexture) this._totalTexturesLoaded++;
+            if (this.emissiveTexture) this._totalTexturesLoaded++;
+            if (this.specularTexture) this._totalTexturesLoaded++;
+            if (this.ambientTexture) this._totalTexturesLoaded++;
+            if (this.opacityTexture) this._totalTexturesLoaded++;
+            if (this.refractionTexture) this._totalTexturesLoaded++;
+            if (this.cameraColorGradingTexture) this._totalTexturesLoaded++;
+            var name: string;
+            for (name in this.textures) {
+                var texture:BABYLON.Texture = this.textures[name];
+                if (texture) this._totalTexturesLoaded++;
+            }
+            for (name in this.textureArray) {
+                var textures:BABYLON.Texture[] = this.textureArray[name];
+                if (textures) {
+                    textures.forEach((texture) => {
+                        if (texture) this._totalTexturesLoaded++;
+                    });
+                }
+            }
+            if (this.totalTexturesLoaded > this.maxTexturesImageUnits) {
+                BABYLON.Tools.Warn("Babylon.js max terrain texture units exceeded (" + this.totalTexturesLoaded.toString() + " of " + this.maxTexturesImageUnits.toString()+ ")");
+            }
+        }
+
+        protected define(locals:BABYLON.UniversalShaderDefines):void {
+            locals.defineNumeric("TOTAL_TEXTURES_LOADED", this.totalTexturesLoaded);
+            locals.defineNumeric("MAX_TEXTURE_IMAGE_UNITS", this.maxTexturesImageUnits);
+            if (this.totalTexturesLoaded <= this.maxTexturesImageUnits) {
+                locals.defineBoolean("SPLATMAPS_ENABLED");
+            }                
         }
 
         /* Shader Material Factory Class Functions */
