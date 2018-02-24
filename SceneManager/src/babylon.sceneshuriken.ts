@@ -1,3 +1,6 @@
+/// <reference path="babylon.d.ts" />
+/// <reference path="babylon.scenemanager.ts" />
+
 module BABYLON {
     /* Shuriken Particle System Bursts */
     export interface IShurikenBusrt {
