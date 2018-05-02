@@ -176,13 +176,6 @@ module BABYLON {
         public get scaledGravity(): Vector3 {
             return (<any>this)._scaledGravity;
         }
-
-        public recycleParticle(particle: Particle): void {
-            if (this._updateModules != null) {
-                // TODO: With Shuriken Module Support
-            }
-            super.recycleParticle(particle);
-        }
         
         /* Shuriken Particle System Default Update Over Time Functions */
         

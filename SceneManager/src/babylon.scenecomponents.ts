@@ -607,18 +607,18 @@ module BABYLON {
 
     export class MachineState
     {
+        public hash:number;
+        public name:string;
         public tag:string;
         public time:number;
-        public name:string;
         public type:BABYLON.MotionType;
-        public motion:string;
-        public branch:string;
         public rate:number;
         public length:number;
         public layer:string;
-        public index:number;
+        public layerIndex:number;
+        public played:number;
         public machine:string;
-        public interupted:boolean;
+        public interrupted:boolean;
         public apparentSpeed:number;
         public averageAngularSpeed:number;
         public averageDuration:number;
@@ -634,9 +634,9 @@ module BABYLON {
         public speedParameter:string;
         public speedParameterActive:boolean;
         public blendtree:BABYLON.IBlendTree;
-        public animations:BABYLON.Animatable[];
         public transitions:BABYLON.ITransition[];
-        public customCurves:any[];
+        public behaviours:BABYLON.IBehaviour[];
+        public animations:BABYLON.Animatable[];
         public constructor() {}
     }
 
@@ -645,11 +645,6 @@ module BABYLON {
         public offest:number;
         public blending:number;
         public triggered:string[];
-    }
-
-    export class AnimationTrack {
-        public clip:BABYLON.IAnimationClip;
-        public targets:any[];
     }
     
     export enum RotateOrder
@@ -678,6 +673,7 @@ module BABYLON {
     
     export enum Constants
     {
+        NoScale = 1.0,
         Deg2Rad = 0.0174532924,
         Rad2Deg = 57.29578,
         DiagonalSpeed = 0.7071,
@@ -691,12 +687,19 @@ module BABYLON {
         IndexOf = 3
     }
 
+    export enum PlayerNumber {
+        One = 1,
+        Two = 2,
+        Three = 3,
+        Four = 4 
+    }
+    
     export enum GamepadType {
         None = -1,
         Generic = 0,
         Xbox360 = 1
     }
-
+    
     export enum JoystickButton {
         Left = 0,
         Right = 1
@@ -867,7 +870,6 @@ module BABYLON {
     
     export enum BlendTreeType
     {
-        //
         // Summary:
         //     ///
         //     Basic blending using a single parameter.
@@ -900,7 +902,18 @@ module BABYLON {
         //     ///
         //     Direct control of blending weight for each node.
         //     ///
-        Direct = 4
+        Direct = 4,
+        //
+        // Summary:
+        //     ///
+        //     Standard animation clip.
+        //     ///
+        Clip = 5
+    }
+    
+    export enum BlendTreePosition {
+        Lower = 0,
+        Upper = 1,
     }
     
     export type UserInputAction = (index: number) => void;
@@ -942,9 +955,17 @@ module BABYLON {
         tag: any;
     }
     
+    export interface IBehaviour {
+        hash:number;
+        name:string;
+        layerIndex:number;
+        properties:any;
+    }
+
     export interface ITransition {
+        hash:number;
         anyState:boolean;
-        indexLayer:number;
+        layerIndex:number;
         machineLayer:string;        
         machineName:string;        
         canTransitionToSelf:boolean;
@@ -964,15 +985,18 @@ module BABYLON {
     }
 
     export interface ICondition {
+        hash:number;
         mode:BABYLON.ConditionMode;
         parameter:string;
         threshold:number;
     }
 
     export interface IBlendTree {
+        hash:number;
         name:string;
         state:string;
         children:BABYLON.IBlendTreeChild[];
+        layerIndex:number;
         apparentSpeed:number;
         averageAngularSpeed:number;
         averageDuration:number;
@@ -986,18 +1010,36 @@ module BABYLON {
         minThreshold:number;
         maxThreshold:number;
         useAutomaticThresholds:boolean;
+        directBlendMaster:BABYLON.IBlendTreeChild;
+        simpleThresholdEqual:BABYLON.IBlendTreeChild;
+        simpleThresholdLower:BABYLON.IBlendTreeChild;
+        simpleThresholdUpper:BABYLON.IBlendTreeChild;
+        simpleThresholdDelta:number;
+        valueParameterX:number;
+        valueParameterY:number;
     }
 
     export interface IBlendTreeChild {
+        hash:number;
+        layerIndex:number;
         cycleOffset:number;
         directBlendParameter:string;
+        apparentSpeed:number;
+        averageAngularSpeed:number;
+        averageDuration:number;
+        averageSpeed:number[];
         mirror:boolean
         type:BABYLON.MotionType;
         motion:string;
-        position:number[];
+        positionX:number;
+        positionY:number;
         threshold:number;
         timescale:number;
         subtree: BABYLON.IBlendTree;
+        indexs:number[];
+        weight:number;
+        frame:number;
+        track:BABYLON.IAnimationClip;
     }
     
     export interface INavigationArea {
@@ -1067,23 +1109,30 @@ module BABYLON {
         rotationX:number;
         rotationY:number;
         rotationZ:number;
-        prefabName:string;
-        prefabPositionX:number;
-        prefabPositionY:number;
-        prefabPositionZ:number;
-        prefabRotationX:number;
-        prefabRotationY:number;
-        prefabRotationZ:number;
     }
 
+    export interface IAvatarMask {
+        hash:number;
+        maskName:string;
+        transformCount:number;
+        transformPaths:string[];
+        transformIndexs:number[];
+    }
+    
     export interface IAnimationClip {
         type: string;
         name: string;
         start: number;
         stop: number;
-        rate:boolean;
+        rate:number;
+        frames:number;
+        weight:number;
         behavior:number;
-        playback: number;
+        apparentSpeed:number;
+        averageSpeed:number[];
+        averageDuration:number;
+        averageAngularSpeed:number;
+        customCurveKeyNames:string[];        
     }
 
     export interface IAnimationEvent {
@@ -1096,6 +1145,34 @@ module BABYLON {
         objectIdParameter: string;
     }    
 
+    export interface IAnimationLayer {
+        hash:number;
+        name:string;
+        index:number;
+        entry:string;
+        machine:string;
+        iKPass:boolean
+        avatarMask:BABYLON.IAvatarMask;
+        blendingMode:number;
+        defaultWeight:number;
+        syncedLayerIndex:number;
+        syncedLayerAffectsTiming:boolean
+        animationTime:number;
+        animationFrame:number;
+        animationRatio:number;
+        animationNormalize:number;
+        animationReference:number;
+        animationAnimatables:BABYLON.Animatable[];
+        animationBlendLoop:number;
+        animationBlendFrame:number;
+        animationBlendFirst:boolean;
+        animationBlendSpeed:number;
+        animationBlendWeight:number;
+        animationBlendMatrix:BABYLON.Matrix;        
+        animationBlendBuffer:BABYLON.IBlendTreeChild[];        
+        animationStateMachine:BABYLON.MachineState;
+    }
+    
     export interface IAnimationCurve {
         length:number;
         preWrapMode:string;
