@@ -1,4 +1,3 @@
-
 declare module BABYLON {
     class Utilities {
         private static UpVector;
