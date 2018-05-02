@@ -1,23 +1,27 @@
 /// <reference path="winrt.d.ts" />
 /// <reference path="babylon.d.ts" />
+/// <reference path="babylon.gui.d.ts" />
 /// <reference path="babylon.scenecomponents.ts" />
 /// <reference path="babylon.sceneutilities.ts" />
 /// <reference path="babylon.scenenavagent.ts" />
 /// <reference path="babylon.sceneplugins.ts" />
-/// <reference path="babylon.scenestates.ts" />
+//// <reference path="babylon.scenestates.ts" />
 
 module BABYLON {
     export class SceneManager {
-        /** Platform alert message dialog. */
-        public static Alert(text: string, title: string = "Babylon.js"): any {
-            var result = null;
-            if (BABYLON.SceneManager.IsWindows()) {
-                result = new Windows.UI.Popups.MessageDialog(text, title).showAsync();
-            } else {
-                window.alert(text);
-            }
-            return result;
+        /** Get instance of the scene manager. */
+        public static GetInstance(): BABYLON.SceneManager {
+            return (BABYLON.SceneManager.me) ? BABYLON.SceneManager.me : null;
         }
+        /** Get instance of the stats control. */
+        public static GetStatistics():Stats {
+            return (BABYLON.SceneManager.showRenderStats === true && BABYLON.SceneManager.renderStatsInstance != null) ? BABYLON.SceneManager.renderStatsInstance : null;
+        }
+        
+        // *********************************** //
+        // * Babylon Scene Manager Utilities * //
+        // *********************************** //
+
         /** Is mobile web platform agent. */
         public static IsMobile(): boolean {
             var result: boolean = false;
@@ -52,15 +56,17 @@ module BABYLON {
         public static IsWebAssembly(): boolean {
             return (typeof WebAssembly !== "undefined");
         }
-        /** Get main singleton instance of the scene manager. */
-        public static GetInstance(): BABYLON.SceneManager {
-            return (BABYLON.SceneManager.me) ? BABYLON.SceneManager.me : null;
+        /** Are stereo side side camera services available. */
+        public static IsStereoCameras():boolean { 
+            return BABYLON.SceneManager.stereoCameras;
         }
-        /** Creates a new scene and pre parses metadata. */
-        public static CreateScene(engine: BABYLON.Engine): BABYLON.Scene {
-            var scene: BABYLON.Scene = new BABYLON.Scene(engine);
-            BABYLON.SceneManager.parseSceneMetadata("/", scene);
-            return scene;
+        /** Are local multi player view services available. */
+        public static IsMultiPlayerView():boolean { 
+            return BABYLON.SceneManager.multiPlayerView;
+        }
+        /** Get the current local multi player count */
+        public static GetMultiPlayerCount():number { 
+            return BABYLON.SceneManager.multiPlayerCount;
         }
         /** Registers the scene loader function handler. */
         public static RegisterLoader(handler: (root: string, name: string) => void): void {
@@ -84,15 +90,6 @@ module BABYLON {
             scenex.manager = new BABYLON.SceneManager(rootUrl, scene);
             if (scenex.manager != null) scenex.manager._executeWhenReady();
             return scenex.manager;
-        }
-        /** Get html text from markup store. */
-        public static GetHtmlMarkup(name: string): string {
-            var result: string = null;
-            if (name != null && name !== "") {
-                var search: string = name.toLowerCase();
-                result = (BABYLON.SceneManager.MarkupStore[search] != null) ? BABYLON.SceneManager.MarkupStore[search] : null;
-            }
-            return result;
         }
         /** Creates a generic native javascript promise */
         public static CreateGenericPromise(handler: (resolve, reject) => void): any {
@@ -136,40 +133,77 @@ module BABYLON {
             }
             return result;
         }
+        /** Get html text from markup store. */
+        public static GetHtmlMarkup(name: string): string {
+            var result: string = null;
+            if (name != null && name !== "") {
+                var search: string = name.toLowerCase();
+                result = (BABYLON.SceneManager.MarkupStore[search] != null) ? BABYLON.SceneManager.MarkupStore[search] : null;
+            }
+            return result;
+        }
+        /** Creates a new scene and pre parses metadata. */
+        public static CreateScene(engine: BABYLON.Engine): BABYLON.Scene {
+            var scene: BABYLON.Scene = new BABYLON.Scene(engine);
+            BABYLON.SceneManager.parseSceneMetadata("/", scene);
+            return scene;
+        }
+        /** Platform alert message dialog. */
+        public static Alert(text: string, title: string = "Babylon.js"): any {
+            var result = null;
+            if (BABYLON.SceneManager.IsWindows()) {
+                result = new Windows.UI.Popups.MessageDialog(text, title).showAsync();
+            } else {
+                window.alert(text);
+            }
+            return result;
+        }
 
         // *********************************** //
         // * Babylon Scene Manager Component * //
         // *********************************** //
-        public static MarkupStore: any = {};
+        public static MarkupStore:any = {};
         public static get StaticIndex():number { return 30; };
-        public static get PrefabIndex(): number { return 31; };
-
-        private _ie: boolean = false;
-        private _url: string = "";
+        public static get PrefabIndex():number { return 31; };
+        // ..
+        public static GamepadManager:BABYLON.GamepadManager = null;
+        public static GamepadConnected:(pad: BABYLON.Gamepad, state:BABYLON.EventState) => void = null;
+        public static GamepadDisconnected:(pad: BABYLON.Gamepad, state:BABYLON.EventState) => void = null;
+        // ..
+        private _ie:boolean = false;
+        private _url:string = "";
         private _time:number = 0;
         private _timing:boolean = false;
-        private _filename: string = null;
-        private _render: () => void = null;
-        private _running: boolean = false;
-        private _input: boolean = false;
-        private _scene: BABYLON.Scene = null;
-        private _navmesh: BABYLON.AbstractMesh = null;
-        private _navigation: Navigation = null;
-        private _mainCamera:BABYLON.Camera = null;
+        private _filename:string = null;
+        private _render:() => void = null;
+        private _running:boolean = false;
+        private _input:boolean = false;
+        private _scene:BABYLON.Scene = null;
+        private _navmesh:BABYLON.AbstractMesh = null;
+        private _navigation:Navigation = null;
         private _loadQueueIndex:number = 0;
         private _loadQueueCount:number = 0;
         private _loadQueueScenes:string[] = null;
         private _localReadyState:any = null;
         private _localSceneReady:boolean = false;
-        
-        protected updateCamera:BABYLON.FreeCamera = null;
-        protected updateCameraInput:boolean = false;
-        protected cameraInputMoveSpeed:number = 1.0;
-        protected cameraInputRotateSpeed:number = 0.005;
-
+        private _advancedTexture:BABYLON.GUI.AdvancedDynamicTexture = null;
+        private _sunlightDirection:BABYLON.Vector3 = null;
+        private _sunlightIdentifier: string = null;
+        private _environmentTextureName:string = null;
+        // ..
+        private _playerOneCamera:BABYLON.Camera = null;
+        private _playerOneElement:BABYLON.GUI.Rectangle = null;
+        private _playerTwoCamera:BABYLON.Camera = null;
+        private _playerTwoElement:BABYLON.GUI.Rectangle = null;
+        private _playerThreeCamera:BABYLON.Camera = null;
+        private _playerThreeElement:BABYLON.GUI.Rectangle = null;
+        private _playerFourCamera:BABYLON.Camera = null;
+        private _playerFourElement:BABYLON.GUI.Rectangle = null;
+        // ..
         private static me: BABYLON.SceneManager = null;
         private static min: number = Number.MIN_VALUE;
         private static max: number = (Number.MAX_VALUE - 100);
+        private static print: HTMLElement = null;
         private static keymap: any = {};
         private static prefabs: any = null;
         private static wheel: number = 0;
@@ -179,6 +213,18 @@ module BABYLON {
         private static mousey: number = 0;
         private static vertical: number = 0;
         private static horizontal: number = 0;
+        private static mousex2: number = 0;
+        private static mousey2: number = 0;
+        private static vertical2: number = 0;
+        private static horizontal2: number = 0;
+        private static mousex3: number = 0;
+        private static mousey3: number = 0;
+        private static vertical3: number = 0;
+        private static horizontal3: number = 0;
+        private static mousex4: number = 0;
+        private static mousey4: number = 0;
+        private static vertical4: number = 0;
+        private static horizontal4: number = 0;
         private static x_wheel: number = 0;
         private static x_mousex: number = 0;
         private static x_mousey: number = 0;
@@ -192,24 +238,26 @@ module BABYLON {
         private static j_mousey: number = 0;
         private static j_vertical: number = 0;
         private static j_horizontal: number = 0;
-        private static g_mousex: number = 0;
-        private static g_mousey: number = 0;
-        private static g_vertical: number = 0;
-        private static g_horizontal: number = 0;
+        private static g_mousex1: number = 0;
+        private static g_mousey1: number = 0;
+        private static g_vertical1: number = 0;
+        private static g_horizontal1: number = 0;
+        private static g_mousex2: number = 0;
+        private static g_mousey2: number = 0;
+        private static g_vertical2: number = 0;
+        private static g_horizontal2: number = 0;
+        private static g_mousex3: number = 0;
+        private static g_mousey3: number = 0;
+        private static g_vertical3: number = 0;
+        private static g_horizontal3: number = 0;
+        private static g_mousex4: number = 0;
+        private static g_mousey4: number = 0;
+        private static g_vertical4: number = 0;
+        private static g_horizontal4: number = 0;
         private static engine: BABYLON.Engine = null;
         private static orphans: BABYLON.AbstractMesh = null;
-        private static gamepad: BABYLON.Gamepad = null;
-        private static gamepadType: BABYLON.GamepadType = BABYLON.GamepadType.None;
-        private static gamepadManager: BABYLON.GamepadManager = null;
-        private static gamepadConnected: (pad: BABYLON.Gamepad, kind: BABYLON.GamepadType) => void = null;
-        private static gamepadButtonPress: BABYLON.UserInputPress[] = [];
-        private static gamepadButtonDown: BABYLON.UserInputAction[] = [];
-        private static gamepadButtonUp: BABYLON.UserInputAction[] = [];
-        private static gamepadDpadPress: BABYLON.UserInputPress[] = [];
-        private static gamepadDpadDown: BABYLON.UserInputAction[] = [];
-        private static gamepadDpadUp: BABYLON.UserInputAction[] = [];
-        private static gamepadLeftTrigger: BABYLON.UserInputAction[] = [];
-        private static gamepadRightTrigger: BABYLON.UserInputAction[] = [];
+        private static multiPlayerView:boolean = false;
+        private static multiPlayerCount:number = 1;
         private static mouseButtonPress: BABYLON.UserInputPress[] = [];
         private static mouseButtonDown: BABYLON.UserInputAction[] = [];
         private static mouseButtonUp: BABYLON.UserInputAction[] = [];
@@ -229,7 +277,48 @@ module BABYLON {
         private static debugLayerVisible:boolean = false;
         private static previousPosition: { x: number, y: number } = null;
         private static preventDefault: boolean = false;
+        private static stereoCameras:boolean = true;
         private static rightHanded: boolean = true;
+        private static gamepad1: BABYLON.Gamepad = null;
+        private static gamepad1Type: BABYLON.GamepadType = BABYLON.GamepadType.None;
+        private static gamepad1ButtonPress: BABYLON.UserInputPress[] = [];
+        private static gamepad1ButtonDown: BABYLON.UserInputAction[] = [];
+        private static gamepad1ButtonUp: BABYLON.UserInputAction[] = [];
+        private static gamepad1DpadPress: BABYLON.UserInputPress[] = [];
+        private static gamepad1DpadDown: BABYLON.UserInputAction[] = [];
+        private static gamepad1DpadUp: BABYLON.UserInputAction[] = [];
+        private static gamepad1LeftTrigger: BABYLON.UserInputAction[] = [];
+        private static gamepad1RightTrigger: BABYLON.UserInputAction[] = [];
+        private static gamepad2: BABYLON.Gamepad = null;
+        private static gamepad2Type: BABYLON.GamepadType = BABYLON.GamepadType.None;
+        private static gamepad2ButtonPress: BABYLON.UserInputPress[] = [];
+        private static gamepad2ButtonDown: BABYLON.UserInputAction[] = [];
+        private static gamepad2ButtonUp: BABYLON.UserInputAction[] = [];
+        private static gamepad2DpadPress: BABYLON.UserInputPress[] = [];
+        private static gamepad2DpadDown: BABYLON.UserInputAction[] = [];
+        private static gamepad2DpadUp: BABYLON.UserInputAction[] = [];
+        private static gamepad2LeftTrigger: BABYLON.UserInputAction[] = [];
+        private static gamepad2RightTrigger: BABYLON.UserInputAction[] = [];
+        private static gamepad3: BABYLON.Gamepad = null;
+        private static gamepad3Type: BABYLON.GamepadType = BABYLON.GamepadType.None;
+        private static gamepad3ButtonPress: BABYLON.UserInputPress[] = [];
+        private static gamepad3ButtonDown: BABYLON.UserInputAction[] = [];
+        private static gamepad3ButtonUp: BABYLON.UserInputAction[] = [];
+        private static gamepad3DpadPress: BABYLON.UserInputPress[] = [];
+        private static gamepad3DpadDown: BABYLON.UserInputAction[] = [];
+        private static gamepad3DpadUp: BABYLON.UserInputAction[] = [];
+        private static gamepad3LeftTrigger: BABYLON.UserInputAction[] = [];
+        private static gamepad3RightTrigger: BABYLON.UserInputAction[] = [];
+        private static gamepad4: BABYLON.Gamepad = null;
+        private static gamepad4Type: BABYLON.GamepadType = BABYLON.GamepadType.None;
+        private static gamepad4ButtonPress: BABYLON.UserInputPress[] = [];
+        private static gamepad4ButtonDown: BABYLON.UserInputAction[] = [];
+        private static gamepad4ButtonUp: BABYLON.UserInputAction[] = [];
+        private static gamepad4DpadPress: BABYLON.UserInputPress[] = [];
+        private static gamepad4DpadDown: BABYLON.UserInputAction[] = [];
+        private static gamepad4DpadUp: BABYLON.UserInputAction[] = [];
+        private static gamepad4LeftTrigger: BABYLON.UserInputAction[] = [];
+        private static gamepad4RightTrigger: BABYLON.UserInputAction[] = [];
         private static loader: (root: string, name: string) => void = null;
         public get ie():boolean { return this._ie; }
         public get url():string { return this._url; }
@@ -250,21 +339,32 @@ module BABYLON {
             this._onready = [];
             this._navmesh = null;
             this._navigation = null;
-            this._mainCamera = null;
             this._loadQueueIndex = 0;
             this._loadQueueCount = 0;
             this._loadQueueScenes = null;
             this._localSceneReady = false;
-
-            // Reset local ready state
             this._localReadyState = { state: "localReadyState" };
-            this.addLoadingState(this._localReadyState);
-
+            this._sunlightDirection = BABYLON.Vector3.Zero();
+            this._sunlightIdentifier = null;
+            this._advancedTexture = null;
+            this._playerOneCamera = null;
+            this._playerOneElement = null;
+            this._playerTwoCamera = null;
+            this._playerTwoElement = null;
+            this._playerThreeCamera = null;
+            this._playerThreeElement = null;
+            this._playerFourCamera = null;
+            this._playerFourElement = null;
+            this._environmentTextureName = null;
+            
             // Reset scene manager engine instance
             BABYLON.SceneManager.me = this;
             BABYLON.SceneManager.engine = this._scene.getEngine();
             BABYLON.SceneManager.prefabs = {};
             BABYLON.SceneManager.orphans = null;
+            BABYLON.SceneManager.stereoCameras = true;
+            BABYLON.SceneManager.multiPlayerView = false;
+            BABYLON.SceneManager.multiPlayerCount = 1;
             BABYLON.SceneManager.rightHanded = this._scene.useRightHandedSystem;
             BABYLON.SceneManager.showRenderStats = false;
             BABYLON.SceneManager.sceneRenderStats = 0;
@@ -272,20 +372,32 @@ module BABYLON {
             BABYLON.SceneManager.showDebugSockets = false;
             BABYLON.SceneManager.colliderVisibility = 0.25;
             BABYLON.SceneManager.socketColliderSize = 0.125;
-            
-            // Reset auto camer user input
-            this.updateCamera = null;
-            this.updateCameraInput = false;
-            this.cameraInputMoveSpeed = 1.0;
-            this.cameraInputRotateSpeed = 0.005;
 
             // Validate WegGL version information
             if (BABYLON.SceneManager.engine.webGLVersion < 2) {
                 BABYLON.Tools.Warn("Babylon.js performance monitor detected webgl version 1.");
             }
+            // Reset local ready state
+            this.addLoadingState(this._localReadyState);
 
-            // Parse scene metadata            
+            // Parse scene metadata properties
+            //BABYLON.SceneManager.parseSceneEnvironment(this._scene);
             if (this._scene.metadata != null && this._scene.metadata.properties != null) {
+                if (this._scene.metadata.properties.sceneFilename && this._scene.metadata.properties.sceneFilename != null) {
+                    this._filename = this._scene.metadata.properties.sceneFilename;
+                }
+                if (this._scene.metadata.properties.sunlightIndentifier && this._scene.metadata.properties.sunlightIndentifier != null) {
+                    this._sunlightIdentifier = this._scene.metadata.properties.sunlightIndentifier;
+                }
+                if (this._scene.metadata.properties.sunlightDirection && this._scene.metadata.properties.sunlightDirection != null) {
+                    var sunlight:number[] = this._scene.metadata.properties.sunlightDirection;
+                    if (sunlight != null && sunlight.length >= 3) {
+                        this._sunlightDirection = new BABYLON.Vector3(sunlight[0], sunlight[1], sunlight[2]);
+                    }
+                }
+                if (this._scene.metadata.properties.environmentTextureName && this._scene.metadata.properties.environmentTextureName != null) {
+                    this._environmentTextureName = this._scene.metadata.properties.environmentTextureName;
+                }
                 if (this._scene.metadata.properties.colliderVisibility && this._scene.metadata.properties.colliderVisibility != null) {
                     BABYLON.SceneManager.colliderVisibility = this._scene.metadata.properties.colliderVisibility;
                 }
@@ -311,6 +423,10 @@ module BABYLON {
                     var physicsPlugin: BABYLON.IPhysicsEnginePlugin = new BABYLON.CannonJSPlugin(false, 10);
                     this._scene.enablePhysics(this._scene.gravity, physicsPlugin);
                 }
+                // Setup Graphic User Interface
+                if (this._scene.metadata.properties.hasOwnProperty("graphicUserInterface") && this._scene.metadata.properties.graphicUserInterface === true) {
+                    this._advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+                }
             }
 
             // Parse, create and store component instances
@@ -321,6 +437,7 @@ module BABYLON {
 
             // Register scene component ticklist
             if (ticklist.length > 0) {
+                // Sort In Ascending Order
                 ticklist.sort((left, right): number => {
                     if (left.order < right.order) return -1;
                     if (left.order > right.order) return 1;
@@ -378,6 +495,7 @@ module BABYLON {
             BABYLON.SceneManager.engine = null;
             BABYLON.SceneManager.prefabs = null;
             BABYLON.SceneManager.orphans = null;
+            BABYLON.SceneManager.stereoCameras = true;
             BABYLON.SceneManager.rightHanded = true;
             if (BABYLON.SceneManager.orphans != null) {
                 BABYLON.SceneManager.orphans.dispose();
@@ -390,10 +508,39 @@ module BABYLON {
             this._timing = false;
             this._onready = null;
             this._navigation = null;
-            this.updateCamera = null;
-            this.updateCameraInput = false;
-            this.cameraInputMoveSpeed = 1.0;
-            this.cameraInputRotateSpeed = 0.005;
+            this._playerOneCamera = null;
+            if (this._playerTwoCamera != null) {
+                this._playerTwoCamera.dispose();
+                this._playerTwoCamera = null;
+            }
+            if (this._playerThreeCamera != null) {
+                this._playerThreeCamera.dispose();
+                this._playerThreeCamera = null;
+            }
+            if (this._playerFourCamera != null) {
+                this._playerFourCamera.dispose();
+                this._playerFourCamera = null;
+            }
+            if (this._playerOneElement != null) {
+                this._playerOneElement.dispose();
+                this._playerOneElement = null;
+            }
+            if (this._playerTwoElement != null) {
+                this._playerTwoElement.dispose();
+                this._playerTwoElement = null;
+            }
+            if (this._playerThreeElement != null) {
+                this._playerThreeElement.dispose();
+                this._playerThreeElement = null;
+            }
+            if (this._playerFourElement != null) {
+                this._playerFourElement.dispose();
+                this._playerFourElement = null;
+            }
+            if (this._advancedTexture != null) {
+                this._advancedTexture.dispose();
+                this._advancedTexture = null;
+            }
             var scenex: any = (<any>this._scene);
             if (scenex.manager) scenex.manager = null;
             scenex = null;
@@ -476,40 +623,48 @@ module BABYLON {
             if (delay > 0.0) this.delay(()=>{ BABYLON.SceneManager.DisposeOwner(owner); }, delay);
             else BABYLON.SceneManager.DisposeOwner(owner);
         }
+        /** Gets the main camera for a player */
+        public getMainCamera(player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One):BABYLON.Camera {
+            var result:BABYLON.Camera = null;
+            switch (player) {
+                case BABYLON.PlayerNumber.One:
+                    result = this._playerOneCamera;
+                    break;
+                case BABYLON.PlayerNumber.Two:
+                    result = this._playerTwoCamera;
+                    break;
+                case BABYLON.PlayerNumber.Three:
+                    result = this._playerThreeCamera;
+                    break;
+                case BABYLON.PlayerNumber.Four:
+                    result = this._playerFourCamera;
+                    break;
+            }
+            return result;
+        }
         /** Get the scene formatted name. */
         public getSceneName(): string {
-            if  (this._filename == null || this._filename === "") {
-                if (this._scene.database != null) {
-                    var filename: string = (<any>this._scene.database).currentSceneUrl;
-                    var length:number = filename.length;
-                    var index:number = filename.lastIndexOf("/");
-                    if (index < 0) index = 0; else index++;
-                    this._filename = filename.substr(index, length);
-                }
-            }
             return (this._filename != null && this._filename !== "") ? this._filename : "Unknown.babylon";
         }
         /** Gets the formatted scene path. */
         public getScenePath(): string {
-            if  (this._url == null || this._url === "") {
-                // Note: Lookup only if no rootUrl from constructor
-                if (this._scene.database != null) {
-                    var url: string = (<any>this._scene.database).currentSceneUrl;
-                    this._url = url.substr(0, url.lastIndexOf("/")) + "/";
-                }
-            }
             return (this._url != null && this._url !== "") ? this._url : "/";
         }
-        /** Gets the scene main camera by tag */
-        public getMainCamera():BABYLON.Camera {
-            // Built-In Main Camera Support
-            if (this._mainCamera == null) {
-                var cameras = this._scene.getCamerasByTags("MainCamera");
-                if (cameras != null && cameras.length > 0) {
-                    this._mainCamera = cameras[0];
-                }
-            }
-            return this._mainCamera;
+        /** Gets the scene sunlight */
+        public getSunlight():BABYLON.Light {
+            return (this._sunlightIdentifier != null && this._sunlightIdentifier !== "") ? this._scene.getLightByID(this._sunlightIdentifier) : null;
+        }        
+        /** Gets the scene sunlight direction */
+        public getSunlightDirection():BABYLON.Vector3 {
+            return this._sunlightDirection;
+        }      
+        /** Gets the scene advanded texture gui. */
+        public getAdvancedTexture(): BABYLON.GUI.AdvancedDynamicTexture {
+            return this._advancedTexture;
+        }
+        /** Gets the scene environment texture name. */
+        public getEnvironmentTextureName(): string {
+            return this._environmentTextureName;
         }
         /** Enters browser full screen mode. */
         public showFullscreen(element:HTMLElement = null): void {
@@ -534,7 +689,6 @@ module BABYLON {
         // * Scene Execute Local Ready Support * //
         // ************************************* //
 
-        /** Internal on ready function list. */
         private _onready:Function[] = [];
         private onready(func:()=>void):void {
             if (func != null) {
@@ -709,6 +863,283 @@ module BABYLON {
             }            
         }
 
+        // ************************************ //
+        // * Scene Local Multi Player Support * //
+        // ************************************ //
+
+        /** Sets the multi player camera view layout */
+        public setMultiPlayerViewLayout(totalNumPlayers:number):boolean {
+            var result:boolean = false;
+            var players:number = BABYLON.Scalar.Clamp(totalNumPlayers, 1, 4);
+            if (BABYLON.SceneManager.IsMultiPlayerView()) {
+                var cameras:BABYLON.Camera[] = [];
+                if (this._playerOneCamera != null && this._playerTwoCamera != null && this._playerThreeCamera != null && this._playerFourCamera != null) {
+                    if (players === 1) {
+                        this._playerOneCamera.viewport = new BABYLON.Viewport(0, 0, 1, 1);
+                        this._playerTwoCamera.viewport = new BABYLON.Viewport(0, 0, 0, 0);
+                        this._playerTwoCamera.setEnabled(false);
+                        this._playerThreeCamera.viewport = new BABYLON.Viewport(0, 0, 0, 0);
+                        this._playerThreeCamera.setEnabled(false);
+                        this._playerFourCamera.viewport = new BABYLON.Viewport(0, 0, 0, 0);
+                        this._playerFourCamera.setEnabled(false);
+                        cameras.push(this._playerOneCamera);
+                    } else if (players === 2) {
+                        if (BABYLON.SceneManager.stereoCameras === true) {
+                            this._playerOneCamera.viewport = new BABYLON.Viewport(0, 0, 0.5, 1);
+                            this._playerTwoCamera.viewport = new BABYLON.Viewport(0.5, 0, 0.5, 1);
+                        } else {
+                            this._playerOneCamera.viewport = new BABYLON.Viewport(0, 0.5, 1, 0.5);
+                            this._playerTwoCamera.viewport = new BABYLON.Viewport(0, 0, 1, 0.5);
+                        }
+                        this._playerTwoCamera.setEnabled(true);
+                        this._playerThreeCamera.viewport = new BABYLON.Viewport(0, 0, 0, 0);
+                        this._playerThreeCamera.setEnabled(false);
+                        this._playerFourCamera.viewport = new BABYLON.Viewport(0, 0, 0, 0);
+                        this._playerFourCamera.setEnabled(false);
+                        cameras.push(this._playerOneCamera);
+                        cameras.push(this._playerTwoCamera);
+                    } else if (players === 3) {
+                        this._playerOneCamera.viewport = new BABYLON.Viewport(0, 0, 0.5, 1);
+                        this._playerTwoCamera.viewport = new BABYLON.Viewport(0.5, 0.5, 0.5, 0.5);
+                        this._playerTwoCamera.setEnabled(true);
+                        this._playerThreeCamera.viewport = new BABYLON.Viewport(0.5, 0, 0.5, 0.5);
+                        this._playerThreeCamera.setEnabled(true);
+                        this._playerFourCamera.viewport = new BABYLON.Viewport(0, 0, 0, 0);
+                        this._playerFourCamera.setEnabled(false);
+                        cameras.push(this._playerOneCamera);
+                        cameras.push(this._playerTwoCamera);
+                        cameras.push(this._playerThreeCamera);
+                    } else if (players === 4) {
+                        this._playerOneCamera.viewport = new BABYLON.Viewport(0, 0.5, 0.5, 0.5);
+                        this._playerTwoCamera.viewport = new BABYLON.Viewport(0, 0, 0.5, 0.5);
+                        this._playerTwoCamera.setEnabled(true);
+                        this._playerThreeCamera.viewport = new BABYLON.Viewport(0.5, 0.5, 0.5, 0.5);
+                        this._playerThreeCamera.setEnabled(true);
+                        this._playerFourCamera.viewport = new BABYLON.Viewport(0.5, 0, 0.5, 0.5);
+                        this._playerFourCamera.setEnabled(true);
+                        cameras.push(this._playerOneCamera);
+                        cameras.push(this._playerTwoCamera);
+                        cameras.push(this._playerThreeCamera);
+                        cameras.push(this._playerFourCamera);
+                    }
+                } else {
+                    BABYLON.Tools.Warn("Babylon.js camera rig failed to initialize multi player cameras");
+                }
+                if (cameras.length > 0) {
+                    BABYLON.SceneManager.multiPlayerCount = players;
+                    this._scene.activeCameras = cameras;
+                    result = true;
+                } else {
+                    BABYLON.Tools.Warn("Babylon.js camera rig failed to initialize multi player views");
+                }
+            } else {
+                BABYLON.Tools.Warn("Babylon.js camera rig multi player view option not enabled");
+            }
+            return result;
+        }
+
+        /* USE AS REFERENCE
+        public setMultiPlayerView(totalNumPlayers:number):boolean {
+            var result:boolean = false;
+            var players:number = BABYLON.Scalar.Clamp(totalNumPlayers, 1, 4);
+            if (BABYLON.SceneManager.IsMultiPlayerView()) {
+                var cameras:BABYLON.Camera[] = [];
+                if (this._playerOneCamera != null && this._playerTwoCamera != null && this._playerThreeCamera != null && this._playerFourCamera != null) {
+                    if (players === 1) {
+                        this._playerOneCamera.viewport = new BABYLON.Viewport(0, 0, 1, 1);
+                        if (this._playerOneElement != null) {
+                            this._playerOneElement.style.top = "0px";
+                            this._playerOneElement.style.left = "0px";
+                            this._playerOneElement.style.width = "100%";
+                            this._playerOneElement.style.height = "100%";
+                        }
+                        this._playerTwoCamera.viewport = new BABYLON.Viewport(0, 0, 0, 0);
+                        this._playerTwoCamera.setEnabled(false);
+                        if (this._playerTwoElement != null) {
+                            this._playerTwoElement.style.top = "0px";
+                            this._playerTwoElement.style.left = "0px";
+                            this._playerTwoElement.style.width = "0px";
+                            this._playerTwoElement.style.height = "0px";
+                        }
+                        this._playerThreeCamera.viewport = new BABYLON.Viewport(0, 0, 0, 0);
+                        this._playerThreeCamera.setEnabled(false);
+                        if (this._playerThreeElement != null) {
+                            this._playerThreeElement.style.top = "0px";
+                            this._playerThreeElement.style.left = "0px";
+                            this._playerThreeElement.style.width = "0px";
+                            this._playerThreeElement.style.height = "0px";
+                        }
+                        this._playerFourCamera.viewport = new BABYLON.Viewport(0, 0, 0, 0);
+                        this._playerFourCamera.setEnabled(false);
+                        if (this._playerFourElement != null) {
+                            this._playerFourElement.style.top = "0px";
+                            this._playerFourElement.style.left = "0px";
+                            this._playerFourElement.style.width = "0px";
+                            this._playerFourElement.style.height = "0px";
+                        }
+                        cameras.push(this._playerOneCamera);
+                    } else if (players === 2) {
+                        if (BABYLON.SceneManager.stereoCameras === true) {
+                            this._playerOneCamera.viewport = new BABYLON.Viewport(0, 0, 0.5, 1);
+                            if (this._playerOneElement != null) {
+                                this._playerOneElement.style.top = "0px";
+                                this._playerOneElement.style.left = "0px";
+                                this._playerOneElement.style.width = "50%";
+                                this._playerOneElement.style.height = "100%";
+                            }
+                            this._playerTwoCamera.viewport = new BABYLON.Viewport(0.5, 0, 0.5, 1);
+                            if (this._playerTwoElement != null) {
+                                this._playerTwoElement.style.top = "0px";
+                                this._playerTwoElement.style.left = "50%";
+                                this._playerTwoElement.style.width = "50%";
+                                this._playerTwoElement.style.height = "100%";
+                            }
+                        } else {
+                            this._playerOneCamera.viewport = new BABYLON.Viewport(0, 0.5, 1, 0.5);
+                            if (this._playerOneElement != null) {
+                                this._playerOneElement.style.top = "0px";
+                                this._playerOneElement.style.left = "0px";
+                                this._playerOneElement.style.width = "100%";
+                                this._playerOneElement.style.height = "50%";
+                            }
+                            this._playerTwoCamera.viewport = new BABYLON.Viewport(0, 0, 1, 0.5);
+                            if (this._playerTwoElement != null) {
+                                this._playerTwoElement.style.top = "50%";
+                                this._playerTwoElement.style.left = "0px";
+                                this._playerTwoElement.style.width = "100%";
+                                this._playerTwoElement.style.height = "50%";
+                            }
+                        }
+                        this._playerTwoCamera.setEnabled(true);
+                        this._playerThreeCamera.viewport = new BABYLON.Viewport(0, 0, 0, 0);
+                        this._playerThreeCamera.setEnabled(false);
+                        if (this._playerThreeElement != null) {
+                            this._playerThreeElement.style.top = "0px";
+                            this._playerThreeElement.style.left = "0px";
+                            this._playerThreeElement.style.width = "0px";
+                            this._playerThreeElement.style.height = "0px";
+                        }
+                        this._playerFourCamera.viewport = new BABYLON.Viewport(0, 0, 0, 0);
+                        this._playerFourCamera.setEnabled(false);
+                        if (this._playerFourElement != null) {
+                            this._playerFourElement.style.top = "0px";
+                            this._playerFourElement.style.left = "0px";
+                            this._playerFourElement.style.width = "0px";
+                            this._playerFourElement.style.height = "0px";
+                        }
+                        cameras.push(this._playerOneCamera);
+                        cameras.push(this._playerTwoCamera);
+                    } else if (players === 3) {
+                        this._playerOneCamera.viewport = new BABYLON.Viewport(0, 0, 0.5, 1);
+                        if (this._playerOneElement != null) {
+                            this._playerOneElement.style.top = "0px";
+                            this._playerOneElement.style.left = "0px";
+                            this._playerOneElement.style.width = "50%";
+                            this._playerOneElement.style.height = "100%";
+                        }
+                        this._playerTwoCamera.viewport = new BABYLON.Viewport(0.5, 0.5, 0.5, 0.5);
+                        this._playerTwoCamera.setEnabled(true);
+                        if (this._playerTwoElement != null) {
+                            this._playerTwoElement.style.top = "0px";
+                            this._playerTwoElement.style.left = "50%";
+                            this._playerTwoElement.style.width = "50%";
+                            this._playerTwoElement.style.height = "50%";
+                        }
+                        this._playerThreeCamera.viewport = new BABYLON.Viewport(0.5, 0, 0.5, 0.5);
+                        this._playerThreeCamera.setEnabled(true);
+                        if (this._playerThreeElement != null) {
+                            this._playerThreeElement.style.top = "50%";
+                            this._playerThreeElement.style.left = "50%";
+                            this._playerThreeElement.style.width = "50%";
+                            this._playerThreeElement.style.height = "50%";
+                        }
+                        this._playerFourCamera.viewport = new BABYLON.Viewport(0, 0, 0, 0);
+                        this._playerFourCamera.setEnabled(false);
+                        if (this._playerFourElement != null) {
+                            this._playerFourElement.style.top = "0px";
+                            this._playerFourElement.style.left = "0px";
+                            this._playerFourElement.style.width = "0px";
+                            this._playerFourElement.style.height = "0px";
+                        }
+                        cameras.push(this._playerOneCamera);
+                        cameras.push(this._playerTwoCamera);
+                        cameras.push(this._playerThreeCamera);
+                    } else if (players === 4) {
+                        this._playerOneCamera.viewport = new BABYLON.Viewport(0, 0.5, 0.5, 0.5);
+                        if (this._playerOneElement != null) {
+                            this._playerOneElement.style.top = "0px";
+                            this._playerOneElement.style.left = "0px";
+                            this._playerOneElement.style.width = "50%";
+                            this._playerOneElement.style.height = "50%";
+                        }
+                        this._playerTwoCamera.viewport = new BABYLON.Viewport(0, 0, 0.5, 0.5);
+                        this._playerTwoCamera.setEnabled(true);
+                        if (this._playerTwoElement != null) {
+                            this._playerTwoElement.style.top = "50%";
+                            this._playerTwoElement.style.left = "0px";
+                            this._playerTwoElement.style.width = "50%";
+                            this._playerTwoElement.style.height = "50%";
+                        }
+                        this._playerThreeCamera.viewport = new BABYLON.Viewport(0.5, 0.5, 0.5, 0.5);
+                        this._playerThreeCamera.setEnabled(true);
+                        if (this._playerThreeElement != null) {
+                            this._playerThreeElement.style.top = "0px";
+                            this._playerThreeElement.style.left = "50%";
+                            this._playerThreeElement.style.width = "50%";
+                            this._playerThreeElement.style.height = "50%";
+                        }
+                        this._playerFourCamera.viewport = new BABYLON.Viewport(0.5, 0, 0.5, 0.5);
+                        this._playerFourCamera.setEnabled(true);
+                        if (this._playerFourElement != null) {
+                            this._playerFourElement.style.top = "50%";
+                            this._playerFourElement.style.left = "50%";
+                            this._playerFourElement.style.width = "50%";
+                            this._playerFourElement.style.height = "50%";
+                        }
+                        cameras.push(this._playerOneCamera);
+                        cameras.push(this._playerTwoCamera);
+                        cameras.push(this._playerThreeCamera);
+                        cameras.push(this._playerFourCamera);
+                    }
+                } else {
+                    BABYLON.Tools.Warn("Babylon.js camera rig failed to initialize multi player cameras");
+                }
+                if (cameras.length > 0) {
+                    BABYLON.SceneManager.multiPlayerCount = players;
+                    this._scene.activeCameras = cameras;
+                    result = true;
+                } else {
+                    BABYLON.Tools.Warn("Babylon.js camera rig failed to initialize multi player views");
+                }
+            } else {
+                BABYLON.Tools.Warn("Babylon.js camera rig multi player view option not enabled");
+            }
+            return result;
+        }
+        */
+       
+        /** Gets the multi player view rectangle element */
+        public getMultiPlayerViewElement(player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One):BABYLON.GUI.Rectangle {
+            var result:BABYLON.GUI.Rectangle = null;
+            if (BABYLON.SceneManager.IsMultiPlayerView()) {
+                switch (player) {
+                    case BABYLON.PlayerNumber.One:
+                        result = this._playerOneElement;
+                        break;
+                    case BABYLON.PlayerNumber.Two:
+                        result = this._playerTwoElement;
+                        break;
+                    case BABYLON.PlayerNumber.Three:
+                        result = this._playerThreeElement;
+                        break;
+                    case BABYLON.PlayerNumber.Four:
+                        result = this._playerFourElement;
+                        break;
+                }
+            }
+            return result;
+        }
+        
         // *********************************** //
         // *  Scene Ray Cast Helper Support  * //
         // *********************************** //
@@ -892,16 +1323,15 @@ module BABYLON {
         // *********************************** //
         
         /** Plays the specified animation clip by name on the owner target objects. */
-        public playAnimationClip(clip:string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, blending:number = 0.0, speed:number = 0.0, decendants:boolean = true, onAnimationEnd:()=>void = null): BABYLON.Animatable[] {
+        public playAnimationClip(motion:string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, blending:number = 0.0, playback:number = 1.0, decendants:boolean = true, animations: Animation[] = null, onAnimationEnd:()=>void = null): BABYLON.Animatable[] {
             var result:BABYLON.Animatable[] = null;
-            var playback:number = (speed > 0.0) ? speed : 1.0;
             var starting:number = -1;
             var stopping:number = -1;
             var behavior:number = 0;
             var looping:boolean = false;
             var attached:boolean = false;
             var phandler:()=>void = null;
-            var animation:BABYLON.IAnimationClip = this.findSceneAnimationClip(clip, owner);
+            var animation:BABYLON.IAnimationClip = this.findSceneAnimationClip(motion, owner);
             if (animation != null) {
                 attached = true;
                 phandler = onAnimationEnd;
@@ -910,7 +1340,6 @@ module BABYLON {
                     stopping = animation.stop;
                     behavior = animation.behavior;
                     looping = animation.behavior < 2;
-                    playback = (speed > 0.0) ? speed : animation.playback;
                 }
             }
             if (decendants) {
@@ -919,7 +1348,7 @@ module BABYLON {
                     for (var i:number = 0; i < children.length; i++) {
                         var child:BABYLON.AbstractMesh = children[i];
                         var chandler:()=>void = null;
-                        var canimation:BABYLON.IAnimationClip = this.findSceneAnimationClip(clip, child);
+                        var canimation:BABYLON.IAnimationClip = this.findSceneAnimationClip(motion, child);
                         if (canimation != null) {
                             if (attached === false) {
                                 attached = true;
@@ -930,11 +1359,15 @@ module BABYLON {
                                 stopping = canimation.stop;
                                 behavior = canimation.behavior;
                                 looping = canimation.behavior < 2;
-                                playback = (speed > 0.0) ? speed : canimation.playback;
                             }
                             if (starting >= 0 && stopping >= 0) {
-                                this.setupAnimationProperties(child, behavior, blending);
-                                var canim:BABYLON.Animatable = this._scene.beginAnimation(child, starting, stopping, looping, playback, chandler);
+                                this.setAnimationProperties(child, behavior, blending);
+                                var canim:BABYLON.Animatable = null;
+                                if (animations != null) {
+                                    this._scene.beginDirectAnimation(child, animations, starting, stopping, looping, playback, chandler);
+                                } else {
+                                    this._scene.beginAnimation(child, starting, stopping, looping, playback, chandler);
+                                }
                                 if (canim != null) {
                                     if (result == null) result = [];
                                     result.push(canim);
@@ -946,8 +1379,13 @@ module BABYLON {
             }
             // Note: Always Play Owner Animations At Found Ranges
             if (starting >= 0 && stopping >= 0) {
-                this.setupAnimationProperties(owner, behavior, blending);
-                var panim:BABYLON.Animatable = this._scene.beginAnimation(owner, starting, stopping, looping, playback, phandler);
+                this.setAnimationProperties(owner, behavior, blending);
+                var panim:BABYLON.Animatable = null;
+                if (animations != null) {
+                    this._scene.beginDirectAnimation(owner, animations, starting, stopping, looping, playback, phandler);
+                } else {
+                    this._scene.beginAnimation(owner, starting, stopping, looping, playback, phandler);
+                }
                 if (panim != null) {
                     if (result == null) result = [];
                     result.push(panim);
@@ -955,71 +1393,44 @@ module BABYLON {
             }
             return result;
         }
-        /** Get the specified animation track info for the owner target objects. */
-        public getAnimationTrack(clip:string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, decendants:boolean = true, directDecendantsOnly:boolean = false): BABYLON.AnimationTrack {
-            var result:BABYLON.AnimationTrack = new BABYLON.AnimationTrack();
-            result.clip = this.findSceneAnimationClip(clip, owner);
-            if (owner.metadata.animationClips != null && owner.metadata.animationClips.length > 0) {
-                if (result.targets == null) result.targets = [];
-                result.targets.push(owner);
+        /** Gets all the animation clips for the owner target object. */
+        public getAnimationClips(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, decendants:boolean = true, directDecendantsOnly:boolean = false): BABYLON.IAnimationClip[] {
+            var result:BABYLON.IAnimationClip[] = this.findSceneAnimationClips(owner);
+            if (result == null && decendants === true) {
+                var children:BABYLON.AbstractMesh[] = owner.getChildMeshes(directDecendantsOnly);
+                if (children != null && children.length > 0) {
+                    for (var i:number = 0; i < children.length; i++) {
+                        var child:BABYLON.AbstractMesh = children[i];
+                        result = this.findSceneAnimationClips(child);
+                        if (result != null) break;
+                    }
+                }
+            }
+            return result;
+        }
+        /** Gets all the animation targets with clips for the specified owner. */
+        public getAnimationTargets(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, decendants:boolean = true, directDecendantsOnly:boolean = false): any[] {
+            var result:any[] = null;
+            if (owner.metadata != null && owner.metadata.animationClips != null && owner.metadata.animationClips.length > 0) {
+                if (result == null) result = [];
+                result.push(owner);
             }
             if (decendants === true) {
                 var children:BABYLON.AbstractMesh[] = owner.getChildMeshes(directDecendantsOnly);
                 if (children != null && children.length > 0) {
                     for (var i:number = 0; i < children.length; i++) {
                         var child:BABYLON.AbstractMesh = children[i];
-                        var anim:BABYLON.IAnimationClip = this.findSceneAnimationClip(clip, child);
-                        if (anim != null) {
-                            if (result.clip == null) result.clip = anim;
-                            if (result.targets == null) result.targets = [];
-                            result.targets.push(child);
+                        if (child != null && child.metadata != null && child.metadata.animationClips != null && child.metadata.animationClips.length > 0) {
+                            if (result == null) result = [];
+                            result.push(child);
                         }
                     }
                 }
             }
             return result;
         }
-        /** Plays the specified animation track info on the owner target objects. */
-        public playAnimationTrack(track:BABYLON.AnimationTrack, blending:number = 0.0, speed:number = 0.0, onAnimationEnd:()=>void = null): BABYLON.Animatable[] {
-            var result:BABYLON.Animatable[] = null;
-            var playback:number = (speed > 0.0) ? speed : 1.0;
-            var starting:number = -1;
-            var stopping:number = -1;
-            var behavior:number = 0;
-            var looping:boolean = false;
-            var attached:boolean = false;
-            if (track != null && track.clip != null && track.targets != null && track.targets.length > 0) {
-                starting = track.clip.start;
-                stopping = track.clip.stop;
-                behavior = track.clip.behavior;
-                looping = track.clip.behavior < 2;
-                playback = (speed > 0.0) ? speed : track.clip.playback;
-                if (starting >= 0 && stopping >= 0) {
-                    var tcount:number = track.targets.length;
-                    if (tcount > 0) {
-                        var index:number = 0;
-                        for (index = 0; index < tcount; index++) {
-                            var target: any = track.targets[index];
-                            if (target != null) {
-                                var ahandler:()=>void = null;
-                                if (attached === false) {
-                                    attached = true;
-                                    ahandler = onAnimationEnd;
-                                }
-                                this.setupAnimationProperties(target, behavior, blending);
-                                var anim:BABYLON.Animatable = this._scene.beginAnimation(target, starting, stopping, looping, playback, ahandler);
-                                if (anim != null) {
-                                    if (result == null) result = [];
-                                    result.push(anim);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            return result;
-        }
-        private setupAnimationProperties(owner:BABYLON.IAnimatable, behavior:number, blending:number):void {
+        /** Sets the specified animation transition properties */
+        public setAnimationProperties(owner:BABYLON.IAnimatable, behavior:number, blending:number):void {
             if (owner != null) {
                 if (owner.animations != null && owner.animations.length > 0) {
                     BABYLON.SceneManager.SetAnimationLooping(owner, behavior);
@@ -1057,7 +1468,9 @@ module BABYLON {
         public applyFriction(owner:BABYLON.AbstractMesh, friction:number):void {
             if (owner != null) {
                 if (owner.physicsImpostor != null && owner.physicsImpostor.physicsBody != null && owner.physicsImpostor.physicsBody.material != null) {
-                    owner.physicsImpostor.physicsBody.material.friction = friction;
+                    if (owner.physicsImpostor.physicsBody.material.friction !== friction) {
+                        owner.physicsImpostor.physicsBody.material.friction = friction;
+                    }
                 }
             }
         }
@@ -1298,13 +1711,13 @@ module BABYLON {
         }
         /** Finds the specfied socket mesh of owner in the scene. */
         public findSceneSocketMesh(name:string, owner:BABYLON.AbstractMesh, directDecendantsOnly:boolean = true, predicate:(node:BABYLON.Node)=>boolean = null):BABYLON.Mesh {
-            var result:BABYLON.Mesh = BABYLON.SceneManager.locateOwnerSocketMesh(name, owner);
+            var result:BABYLON.Mesh = BABYLON.SceneManager.LocateOwnerSocketMesh(name, owner);
             if (result == null) {
                 var children:BABYLON.AbstractMesh[] = owner.getChildMeshes(directDecendantsOnly, predicate);
                 if (children != null && children.length > 0) {
                     for (var i:number = 0; i < children.length; i++) {
                         var child:BABYLON.AbstractMesh = children[i];
-                        result = BABYLON.SceneManager.locateOwnerSocketMesh(name, child);
+                        result = BABYLON.SceneManager.LocateOwnerSocketMesh(name, child);
                         if (result != null) break;
                     }
                 }
@@ -1313,13 +1726,13 @@ module BABYLON {
         }
         /** Finds all the socket meshes of owner in the scene. */
         public findSceneSocketMeshes(owner:BABYLON.AbstractMesh, directDecendantsOnly:boolean = true, predicate:(node:BABYLON.Node)=>boolean = null):BABYLON.Mesh[] {
-            var result:BABYLON.Mesh[] = BABYLON.SceneManager.locateOwnerSocketMeshes(owner);
+            var result:BABYLON.Mesh[] = BABYLON.SceneManager.LocateOwnerSocketMeshes(owner);
             if (result == null) {
                 var children:BABYLON.AbstractMesh[] = owner.getChildMeshes(directDecendantsOnly, predicate);
                 if (children != null && children.length > 0) {
                     for (var i:number = 0; i < children.length; i++) {
                         var child:BABYLON.AbstractMesh = children[i];
-                        result = BABYLON.SceneManager.locateOwnerSocketMeshes(child);
+                        result = BABYLON.SceneManager.LocateOwnerSocketMeshes(child);
                         if (result != null) break;
                     }
                 }
@@ -1347,7 +1760,7 @@ module BABYLON {
             }
             return result;
         }
-        /** Finds all animations clips of owner in the scene. */
+        /** Finds any animation clips of owner in the scene. */
         public findSceneAnimationClips(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): BABYLON.IAnimationClip[] {
             var result:BABYLON.IAnimationClip[] = null;
             if (owner != null && owner.metadata != null && owner.metadata.api) {
@@ -1431,6 +1844,18 @@ module BABYLON {
             BABYLON.SceneManager.mousey = 0;
             BABYLON.SceneManager.vertical = 0;
             BABYLON.SceneManager.horizontal = 0;
+            BABYLON.SceneManager.mousex2 = 0;
+            BABYLON.SceneManager.mousey2 = 0;
+            BABYLON.SceneManager.vertical2 = 0;
+            BABYLON.SceneManager.horizontal2 = 0;
+            BABYLON.SceneManager.mousex3 = 0;
+            BABYLON.SceneManager.mousey3 = 0;
+            BABYLON.SceneManager.vertical3 = 0;
+            BABYLON.SceneManager.horizontal3 = 0;
+            BABYLON.SceneManager.mousex4 = 0;
+            BABYLON.SceneManager.mousey4 = 0;
+            BABYLON.SceneManager.vertical4 = 0;
+            BABYLON.SceneManager.horizontal4 = 0;
             BABYLON.SceneManager.x_wheel = 0;
             BABYLON.SceneManager.x_mousex = 0;
             BABYLON.SceneManager.x_mousey = 0;
@@ -1444,33 +1869,69 @@ module BABYLON {
             BABYLON.SceneManager.j_mousey = 0;
             BABYLON.SceneManager.j_vertical = 0;
             BABYLON.SceneManager.j_horizontal = 0;
-            BABYLON.SceneManager.g_mousex = 0;
-            BABYLON.SceneManager.g_mousey = 0;
-            BABYLON.SceneManager.g_vertical = 0;
-            BABYLON.SceneManager.g_horizontal = 0;
+            BABYLON.SceneManager.g_mousex1 = 0;
+            BABYLON.SceneManager.g_mousey1 = 0;
+            BABYLON.SceneManager.g_vertical1 = 0;
+            BABYLON.SceneManager.g_horizontal1 = 0;
+            BABYLON.SceneManager.g_mousex2 = 0;
+            BABYLON.SceneManager.g_mousey2 = 0;
+            BABYLON.SceneManager.g_vertical2 = 0;
+            BABYLON.SceneManager.g_horizontal2 = 0;
+            BABYLON.SceneManager.g_mousex3 = 0;
+            BABYLON.SceneManager.g_mousey3 = 0;
+            BABYLON.SceneManager.g_vertical3 = 0;
+            BABYLON.SceneManager.g_horizontal3 = 0;
+            BABYLON.SceneManager.g_mousex4 = 0;
+            BABYLON.SceneManager.g_mousey4 = 0;
+            BABYLON.SceneManager.g_vertical4 = 0;
+            BABYLON.SceneManager.g_horizontal4 = 0;
             BABYLON.SceneManager.preventDefault = false;
-            BABYLON.SceneManager.gamepadButtonUp = [];
-            BABYLON.SceneManager.gamepadButtonDown = [];
-            BABYLON.SceneManager.gamepadButtonPress = [];
-            BABYLON.SceneManager.gamepadDpadUp = [];
-            BABYLON.SceneManager.gamepadDpadDown = [];
-            BABYLON.SceneManager.gamepadDpadPress = [];
-            BABYLON.SceneManager.gamepadLeftTrigger = [];
-            BABYLON.SceneManager.gamepadRightTrigger = [];
             BABYLON.SceneManager.mouseButtonUp = [];
             BABYLON.SceneManager.mouseButtonDown = [];
             BABYLON.SceneManager.mouseButtonPress = [];
             BABYLON.SceneManager.keyButtonUp = [];
             BABYLON.SceneManager.keyButtonDown = [];
             BABYLON.SceneManager.keyButtonPress = [];
+            BABYLON.SceneManager.gamepad1ButtonUp = [];
+            BABYLON.SceneManager.gamepad1ButtonDown = [];
+            BABYLON.SceneManager.gamepad1ButtonPress = [];
+            BABYLON.SceneManager.gamepad1DpadUp = [];
+            BABYLON.SceneManager.gamepad1DpadDown = [];
+            BABYLON.SceneManager.gamepad1DpadPress = [];
+            BABYLON.SceneManager.gamepad1LeftTrigger = [];
+            BABYLON.SceneManager.gamepad1RightTrigger = [];
+            BABYLON.SceneManager.gamepad2ButtonUp = [];
+            BABYLON.SceneManager.gamepad2ButtonDown = [];
+            BABYLON.SceneManager.gamepad2ButtonPress = [];
+            BABYLON.SceneManager.gamepad2DpadUp = [];
+            BABYLON.SceneManager.gamepad2DpadDown = [];
+            BABYLON.SceneManager.gamepad2DpadPress = [];
+            BABYLON.SceneManager.gamepad2LeftTrigger = [];
+            BABYLON.SceneManager.gamepad2RightTrigger = [];
+            BABYLON.SceneManager.gamepad3ButtonUp = [];
+            BABYLON.SceneManager.gamepad3ButtonDown = [];
+            BABYLON.SceneManager.gamepad3ButtonPress = [];
+            BABYLON.SceneManager.gamepad3DpadUp = [];
+            BABYLON.SceneManager.gamepad3DpadDown = [];
+            BABYLON.SceneManager.gamepad3DpadPress = [];
+            BABYLON.SceneManager.gamepad3LeftTrigger = [];
+            BABYLON.SceneManager.gamepad3RightTrigger = [];
+            BABYLON.SceneManager.gamepad4ButtonUp = [];
+            BABYLON.SceneManager.gamepad4ButtonDown = [];
+            BABYLON.SceneManager.gamepad4ButtonPress = [];
+            BABYLON.SceneManager.gamepad4DpadUp = [];
+            BABYLON.SceneManager.gamepad4DpadDown = [];
+            BABYLON.SceneManager.gamepad4DpadPress = [];
+            BABYLON.SceneManager.gamepad4LeftTrigger = [];
+            BABYLON.SceneManager.gamepad4RightTrigger = [];
         }
         /** Enables user input state in the scene. */
-        public enableUserInput(options: { preventDefault?: boolean, useCapture?: boolean, enableVirtualJoystick?: boolean, disableRightStick?:boolean, gamepadConnected?: (pad: BABYLON.Gamepad, kind: BABYLON.GamepadType) => void } = null): void {
+        public enableUserInput(options: { preventDefault?: boolean, useCapture?: boolean, enableVirtualJoystick?: boolean, disableRightStick?:boolean } = null): void {
             var preventDefault: boolean = (options != null && options.preventDefault) ? options.preventDefault : false;
             var useCapture: boolean = (options != null && options.useCapture) ? options.useCapture : false;
             var enableVirtualJoystick: boolean = (options != null && options.enableVirtualJoystick) ? options.enableVirtualJoystick : false;
             var disableRightJoystick: boolean = (options != null && options.disableRightStick) ? options.disableRightStick : false;
-            var gamepadConnected: (pad: BABYLON.Gamepad, kind: BABYLON.GamepadType) => void = (options != null && options.gamepadConnected) ? options.gamepadConnected : null;
+
             if (!this._input) {
                 this.resetUserInput();
                 // Document element event listeners
@@ -1483,10 +1944,10 @@ module BABYLON {
                 document.documentElement.addEventListener("onwheel" in document ? "wheel" : "mousewheel", BABYLON.SceneManager.inputPointerWheelHandler, useCapture);
                 BABYLON.SceneManager.preventDefault = preventDefault;
                 // Note: Only Enable Gamepad Manager Once
-                if (BABYLON.SceneManager.gamepadManager == null) {
-                    BABYLON.SceneManager.gamepadConnected = gamepadConnected;
-                    BABYLON.SceneManager.gamepadManager = new BABYLON.GamepadManager(); // Note: Do Not Use Scene.GameManager Instance
-                    BABYLON.SceneManager.gamepadManager.onGamepadConnectedObservable.add(BABYLON.SceneManager.inputGamepadConnected)
+                if (BABYLON.SceneManager.GamepadManager == null) {
+                    BABYLON.SceneManager.GamepadManager = new BABYLON.GamepadManager(); // Note: Do Not Use Scene.GameManager Instance
+                    BABYLON.SceneManager.GamepadManager.onGamepadConnectedObservable.add(BABYLON.SceneManager.inputManagerGamepadConnected)
+                    BABYLON.SceneManager.GamepadManager.onGamepadDisconnectedObservable.add(BABYLON.SceneManager.inputManagerGamepadDisconnected)
                 }
                 // Note: Only Enable Virtual Joysticks Once
                 if (BABYLON.SceneManager.virtualJoystick === false) {
@@ -1523,48 +1984,68 @@ module BABYLON {
                 this._input = false;
             }
         }
-        /** Get current user input state from the scene. */
-        public getUserInput(input: BABYLON.UserInputAxis): number {
+        /** Get user input state from the scene. */
+        public getUserInput(input: BABYLON.UserInputAxis, player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One): number {
             var result: number = 0;
             if (this._input) {
                 switch (input) {
                     case BABYLON.UserInputAxis.Vertical:
                     case BABYLON.UserInputAxis.Horizontal:
-                        result = (input === BABYLON.UserInputAxis.Horizontal) ? BABYLON.SceneManager.horizontal : BABYLON.SceneManager.vertical;
+                        if (player === BABYLON.PlayerNumber.Four) {
+                            result = (input === BABYLON.UserInputAxis.Horizontal) ? BABYLON.SceneManager.horizontal4 : BABYLON.SceneManager.vertical4;
+                        } else if (player === BABYLON.PlayerNumber.Three) {
+                            result = (input === BABYLON.UserInputAxis.Horizontal) ? BABYLON.SceneManager.horizontal3 : BABYLON.SceneManager.vertical3;
+                        } else if (player === BABYLON.PlayerNumber.Two) {
+                            result = (input === BABYLON.UserInputAxis.Horizontal) ? BABYLON.SceneManager.horizontal2 : BABYLON.SceneManager.vertical2;
+                        } else {
+                            result = (input === BABYLON.UserInputAxis.Horizontal) ? BABYLON.SceneManager.horizontal : BABYLON.SceneManager.vertical;
+                        }
                         break;
                     case BABYLON.UserInputAxis.MouseX:
                     case BABYLON.UserInputAxis.MouseY:
-                        result = (input === BABYLON.UserInputAxis.MouseX) ? BABYLON.SceneManager.mousex : BABYLON.SceneManager.mousey;
+                        if (player === BABYLON.PlayerNumber.Four) {
+                            result = (input === BABYLON.UserInputAxis.MouseX) ? BABYLON.SceneManager.mousex4 : BABYLON.SceneManager.mousey4;
+                        } else if (player === BABYLON.PlayerNumber.Three) {
+                            result = (input === BABYLON.UserInputAxis.MouseX) ? BABYLON.SceneManager.mousex3 : BABYLON.SceneManager.mousey3;
+                        } else if (player === BABYLON.PlayerNumber.Two) {
+                            result = (input === BABYLON.UserInputAxis.MouseX) ? BABYLON.SceneManager.mousex2 : BABYLON.SceneManager.mousey2;
+                        } else {
+                            result = (input === BABYLON.UserInputAxis.MouseX) ? BABYLON.SceneManager.mousex : BABYLON.SceneManager.mousey;
+                        }
                         break;
                     case BABYLON.UserInputAxis.ClientX:
                     case BABYLON.UserInputAxis.ClientY:
-                        result = (input === BABYLON.UserInputAxis.ClientX) ? BABYLON.SceneManager.clientx : BABYLON.SceneManager.clienty;
+                        if (player === BABYLON.PlayerNumber.One) {
+                            result = (input === BABYLON.UserInputAxis.ClientX) ? BABYLON.SceneManager.clientx : BABYLON.SceneManager.clienty;
+                        }
                         break;
                     case BABYLON.UserInputAxis.Wheel:
-                        result = BABYLON.SceneManager.wheel;
+                        if (player === BABYLON.PlayerNumber.One) {
+                            result = BABYLON.SceneManager.wheel;
+                        }
                         break;
                 }
             }
             return result;
         }
-
+        
         // ********************************* //
         // *  Scene Keycode State Support  * //
         // ********************************* //
 
-        public onKeyUp(callback: (keycode: number) => void): void {
+        public onKeyboardUp(callback: (keycode: number) => void): void {
             if (this._input) BABYLON.SceneManager.keyButtonUp.push(callback);
         }
-        public onKeyDown(callback: (keycode: number) => void): void {
+        public onKeyboardDown(callback: (keycode: number) => void): void {
             if (this._input) BABYLON.SceneManager.keyButtonDown.push(callback);
         }
-        public onKeyPress(keycode: number, callback: () => void): void {
+        public onKeyboardPress(keycode: number, callback: () => void): void {
             if (this._input) BABYLON.SceneManager.keyButtonPress.push({ index: keycode, action: callback });
         }
-        public getKeyInput(keycode: number): boolean {
+        public getKeyboardInput(keycode: number): boolean {
             var result: boolean = false;
             if (this._input) {
-                var key: string = "k" + keycode.toString();
+                var key: string = "k:" + keycode.toString();
                 if (BABYLON.SceneManager.keymap[key] != null) {
                     result = BABYLON.SceneManager.keymap[key];
                 }
@@ -1588,86 +2069,13 @@ module BABYLON {
         public getPointerInput(button: number): boolean {
             var result: boolean = false;
             if (this._input) {
-                var key: string = "p" + button.toString();
+                var key: string = "p:" + button.toString();
                 if (BABYLON.SceneManager.keymap[key] != null) {
                     result = BABYLON.SceneManager.keymap[key];
                 }
             }
             return result;
         }
-
-        // ********************************* //
-        // *  Scene Gamepad State Support  * //
-        // ********************************* //
-
-        public onButtonUp(callback: (button: number) => void): void {
-            if (this._input) BABYLON.SceneManager.gamepadButtonUp.push(callback);
-        }
-        public onButtonDown(callback: (button: number) => void): void {
-            if (this._input) BABYLON.SceneManager.gamepadButtonDown.push(callback);
-        }
-        public onButtonPress(button: number, callback: () => void): void {
-            if (this._input) BABYLON.SceneManager.gamepadButtonPress.push({ index: button, action: callback });
-        }
-        public getButtonInput(button: number): boolean {
-            var result: boolean = false;
-            if (this._input) {
-                var key: string = "b" + button.toString();
-                if (BABYLON.SceneManager.keymap[key] != null) {
-                    result = BABYLON.SceneManager.keymap[key];
-                }
-            }
-            return result;
-        }
-        public onDpadUp(callback: (direction: number) => void): void {
-            if (this._input) BABYLON.SceneManager.gamepadDpadUp.push(callback);
-        }
-        public onDpadDown(callback: (direction: number) => void): void {
-            if (this._input) BABYLON.SceneManager.gamepadDpadDown.push(callback);
-        }
-        public onDpadPress(direction: number, callback: () => void): void {
-            if (this._input) BABYLON.SceneManager.gamepadDpadPress.push({ index: direction, action: callback });
-        }
-        public getDpadInput(direction: number): boolean {
-            var result: boolean = false;
-            if (this._input) {
-                var key: string = "d" + direction.toString();
-                if (BABYLON.SceneManager.keymap[key] != null) {
-                    result = BABYLON.SceneManager.keymap[key];
-                }
-            }
-            return result;
-        }
-        public onTriggerLeft(callback: (value: number) => void): void {
-            if (this._input) BABYLON.SceneManager.gamepadLeftTrigger.push(callback);
-        }
-        public onTriggerRight(callback: (value: number) => void): void {
-            if (this._input) BABYLON.SceneManager.gamepadRightTrigger.push(callback);
-        }
-        public getTriggerInput(trigger: number): number {
-            var result: number = 0;
-            if (this._input) {
-                var key: string = "t" + trigger.toString();
-                if (BABYLON.SceneManager.keymap[key] != null) {
-                    result = BABYLON.SceneManager.keymap[key];
-                }
-            }
-            return result;
-        }
-        public getConnectedGamepad(): BABYLON.Gamepad {
-            return (this._input) ? BABYLON.SceneManager.gamepad : null;
-        }
-        public getConnectedGamepadType(): BABYLON.GamepadType {
-            return (this._input) ? BABYLON.SceneManager.gamepadType : BABYLON.GamepadType.None;
-        }
-        //public disposeConnectedGamepad(): void {
-        //    if (this._input) {
-        //        BABYLON.SceneManager.gamepad = null;
-        //        BABYLON.SceneManager.gamepadType = BABYLON.GamepadType.None;
-        //        BABYLON.SceneManager.gamepadManager = null;
-        //        BABYLON.SceneManager.gamepadConnected = null;
-        //    }
-        //}
 
         // ********************************** //
         // *  Scene Joystick State Support  * //
@@ -1703,11 +2111,282 @@ module BABYLON {
                 BABYLON.SceneManager.virtualJoystick = false;
             }
         }
+        
+        // ********************************* //
+        // *  Scene Gamepad State Support  * //
+        // ********************************* //
+
+        public onGamepadButtonUp(callback: (button: number) => void, player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One): void {
+            if (this._input) {
+                switch(player) {
+                    case BABYLON.PlayerNumber.One:
+                        BABYLON.SceneManager.gamepad1ButtonUp.push(callback);
+                        break;
+                    case BABYLON.PlayerNumber.Two:
+                        BABYLON.SceneManager.gamepad2ButtonUp.push(callback);
+                        break;
+                    case BABYLON.PlayerNumber.Three:
+                        BABYLON.SceneManager.gamepad3ButtonUp.push(callback);
+                        break;
+                    case BABYLON.PlayerNumber.Four:
+                        BABYLON.SceneManager.gamepad4ButtonUp.push(callback);
+                        break;
+                }
+            }
+        }
+        public onGamepadButtonDown(callback: (button: number) => void, player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One): void {
+            if (this._input) {
+                switch(player) {
+                    case BABYLON.PlayerNumber.One:
+                        BABYLON.SceneManager.gamepad1ButtonDown.push(callback);
+                        break;
+                    case BABYLON.PlayerNumber.Two:
+                        BABYLON.SceneManager.gamepad2ButtonDown.push(callback);
+                        break;
+                    case BABYLON.PlayerNumber.Three:
+                        BABYLON.SceneManager.gamepad3ButtonDown.push(callback);
+                        break;
+                    case BABYLON.PlayerNumber.Four:
+                        BABYLON.SceneManager.gamepad4ButtonDown.push(callback);
+                        break;
+                }
+            }
+        }
+        public onGamepadButtonPress(button: number, callback: () => void, player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One): void {
+            if (this._input) {
+                switch(player) {
+                    case BABYLON.PlayerNumber.One:
+                        BABYLON.SceneManager.gamepad1ButtonPress.push({ index: button, action: callback });
+                        break;
+                    case BABYLON.PlayerNumber.Two:
+                        BABYLON.SceneManager.gamepad2ButtonPress.push({ index: button, action: callback });
+                        break;
+                    case BABYLON.PlayerNumber.Three:
+                        BABYLON.SceneManager.gamepad3ButtonPress.push({ index: button, action: callback });
+                        break;
+                    case BABYLON.PlayerNumber.Four:
+                        BABYLON.SceneManager.gamepad4ButtonPress.push({ index: button, action: callback });
+                        break;
+                }
+            }
+        }
+        public getGamepadButtonInput(button: number, player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One): boolean {
+            var result: boolean = false;
+            if (this._input) {
+                var key: string = null;
+                switch(player) {
+                    case BABYLON.PlayerNumber.One:
+                        key = "b1:" + button.toString();
+                        break;
+                    case BABYLON.PlayerNumber.Two:
+                        key = "b2:" + button.toString();
+                        break;
+                    case BABYLON.PlayerNumber.Three:
+                        key = "b3:" + button.toString();
+                        break;
+                    case BABYLON.PlayerNumber.Four:
+                        key = "b4:" + button.toString();
+                        break;
+                }
+                if (key != null && BABYLON.SceneManager.keymap[key] != null) {
+                    result = BABYLON.SceneManager.keymap[key];
+                }
+            }
+            return result;
+        }
+        public onGamepadDirectionUp(callback: (direction: number) => void, player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One): void {
+            if (this._input) {
+                switch(player) {
+                    case BABYLON.PlayerNumber.One:
+                        BABYLON.SceneManager.gamepad1DpadUp.push(callback);
+                        break;
+                    case BABYLON.PlayerNumber.Two:
+                        BABYLON.SceneManager.gamepad2DpadUp.push(callback);
+                        break;
+                    case BABYLON.PlayerNumber.Three:
+                        BABYLON.SceneManager.gamepad3DpadUp.push(callback);
+                        break;
+                    case BABYLON.PlayerNumber.Four:
+                        BABYLON.SceneManager.gamepad4DpadUp.push(callback);
+                        break;
+                }
+            }
+        }
+        public onGamepadDirectionDown(callback: (direction: number) => void, player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One): void {
+            if (this._input) {
+                switch(player) {
+                    case BABYLON.PlayerNumber.One:
+                        BABYLON.SceneManager.gamepad1DpadDown.push(callback);
+                        break;
+                    case BABYLON.PlayerNumber.Two:
+                        BABYLON.SceneManager.gamepad2DpadDown.push(callback);
+                        break;
+                    case BABYLON.PlayerNumber.Three:
+                        BABYLON.SceneManager.gamepad3DpadDown.push(callback);
+                        break;
+                    case BABYLON.PlayerNumber.Four:
+                        BABYLON.SceneManager.gamepad4DpadDown.push(callback);
+                        break;
+                }
+            }
+        }
+        public onGamepadDirectionPress(direction: number, callback: () => void, player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One): void {
+            if (this._input) {
+                switch(player) {
+                    case BABYLON.PlayerNumber.One:
+                        BABYLON.SceneManager.gamepad1DpadPress.push({ index: direction, action: callback });
+                        break;
+                    case BABYLON.PlayerNumber.Two:
+                        BABYLON.SceneManager.gamepad2DpadPress.push({ index: direction, action: callback });
+                        break;
+                    case BABYLON.PlayerNumber.Three:
+                        BABYLON.SceneManager.gamepad3DpadPress.push({ index: direction, action: callback });
+                        break;
+                    case BABYLON.PlayerNumber.Four:
+                        BABYLON.SceneManager.gamepad4DpadPress.push({ index: direction, action: callback });
+                        break;
+                }
+            }
+        }
+        public getGamepadDirectionInput(direction: number, player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One): boolean {
+            var result: boolean = false;
+            if (this._input) {
+                var key: string = null;
+                switch(player) {
+                    case BABYLON.PlayerNumber.One:
+                        key = "d1:" + direction.toString();
+                        break;
+                    case BABYLON.PlayerNumber.Two:
+                        key = "d2:" + direction.toString();
+                        break;
+                    case BABYLON.PlayerNumber.Three:
+                        key = "d3:" + direction.toString();
+                        break;
+                    case BABYLON.PlayerNumber.Four:
+                        key = "d4:" + direction.toString();
+                        break;
+                }
+                if (key != null && BABYLON.SceneManager.keymap[key] != null) {
+                    result = BABYLON.SceneManager.keymap[key];
+                }
+            }
+            return result;
+        }
+        public onGamepadTriggerLeft(callback: (value: number) => void, player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One): void {
+            if (this._input) {
+                switch(player) {
+                    case BABYLON.PlayerNumber.One:
+                        BABYLON.SceneManager.gamepad1LeftTrigger.push(callback);
+                        break;
+                    case BABYLON.PlayerNumber.Two:
+                        BABYLON.SceneManager.gamepad2LeftTrigger.push(callback);
+                        break;
+                    case BABYLON.PlayerNumber.Three:
+                        BABYLON.SceneManager.gamepad3LeftTrigger.push(callback);
+                        break;
+                    case BABYLON.PlayerNumber.Four:
+                        BABYLON.SceneManager.gamepad4LeftTrigger.push(callback);
+                        break;
+                }
+            }
+        }
+        public onGamepadTriggerRight(callback: (value: number) => void, player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One): void {
+            if (this._input) {
+                switch(player) {
+                    case BABYLON.PlayerNumber.One:
+                        BABYLON.SceneManager.gamepad1RightTrigger.push(callback);
+                        break;
+                    case BABYLON.PlayerNumber.Two:
+                        BABYLON.SceneManager.gamepad2RightTrigger.push(callback);
+                        break;
+                    case BABYLON.PlayerNumber.Three:
+                        BABYLON.SceneManager.gamepad3RightTrigger.push(callback);
+                        break;
+                    case BABYLON.PlayerNumber.Four:
+                        BABYLON.SceneManager.gamepad4RightTrigger.push(callback);
+                        break;
+                }
+            }
+        }
+        public getGamepadTriggerInput(trigger: number, player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One): number {
+            var result: number = 0;
+            if (this._input) {
+                var key: string = null;
+                switch(player) {
+                    case BABYLON.PlayerNumber.One:
+                        key = "t1:" + trigger.toString();
+                        break;
+                    case BABYLON.PlayerNumber.Two:
+                        key = "t2:" + trigger.toString();
+                        break;
+                    case BABYLON.PlayerNumber.Three:
+                        key = "t3:" + trigger.toString();
+                        break;
+                    case BABYLON.PlayerNumber.Four:
+                        key = "t4:" + trigger.toString();
+                        break;
+                }
+                if (key != null && BABYLON.SceneManager.keymap[key] != null) {
+                    result = BABYLON.SceneManager.keymap[key];
+                }
+            }
+            return result;
+        }
+        public getGamepad(player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One): BABYLON.Gamepad {
+            var pad:BABYLON.Gamepad = null;
+            if (this._input) {
+                switch(player) {
+                    case BABYLON.PlayerNumber.One:
+                        pad = BABYLON.SceneManager.gamepad1;
+                        break;
+                    case BABYLON.PlayerNumber.Two:
+                        pad = BABYLON.SceneManager.gamepad2;
+                        break;
+                    case BABYLON.PlayerNumber.Three:
+                        pad = BABYLON.SceneManager.gamepad3;
+                        break;
+                    case BABYLON.PlayerNumber.Four:
+                        pad = BABYLON.SceneManager.gamepad4;
+                        break;
+                }
+            }
+            return pad;
+        }
+        public getGamepadType(player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One): BABYLON.GamepadType {
+            var type:BABYLON.GamepadType = BABYLON.GamepadType.None;
+            if (this._input) {
+                switch(player) {
+                    case BABYLON.PlayerNumber.One:
+                        type = BABYLON.SceneManager.gamepad1Type;
+                        break;
+                    case BABYLON.PlayerNumber.Two:
+                        type = BABYLON.SceneManager.gamepad2Type;
+                        break;
+                    case BABYLON.PlayerNumber.Three:
+                        type = BABYLON.SceneManager.gamepad3Type;
+                        break;
+                    case BABYLON.PlayerNumber.Four:
+                        type = BABYLON.SceneManager.gamepad4Type;
+                        break;
+                }
+            }
+            return type;
+        }
 
         // ************************************ //
         // *   Update Camera Helper Support   * //
         // ************************************ //
 
+        public updateCameraUserInput(camera: BABYLON.FreeCamera, movementSpeed: number, rotationSpeed: number, player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One): void {
+            if (camera != null) {
+                var horizontal: number = this.getUserInput(BABYLON.UserInputAxis.Horizontal, player);
+                var vertical: number = this.getUserInput(BABYLON.UserInputAxis.Vertical, player);
+                var mousex: number = this.getUserInput(BABYLON.UserInputAxis.MouseX, player);
+                var mousey: number = this.getUserInput(BABYLON.UserInputAxis.MouseY, player);
+                this.updateCameraPosition(camera, horizontal, vertical, movementSpeed);
+                this.updateCameraRotation(camera, mousex, mousey, rotationSpeed);
+            }
+        }
         public updateCameraPosition(camera: BABYLON.FreeCamera, horizontal: number, vertical: number, speed: number): void {
             if (camera != null) {
                 var local = camera._computeLocalCameraSpeed() * speed;
@@ -1720,33 +2399,6 @@ module BABYLON {
             if (camera != null) {
                 camera.cameraRotation = camera.cameraRotation.add(new BABYLON.Vector2(mousey * speed, mousex * speed));
             }
-        }
-        public updateCameraUserInput(camera: BABYLON.FreeCamera, movementSpeed: number, rotationSpeed: number): void {
-            if (camera != null) {
-                var horizontal: number = this.getUserInput(BABYLON.UserInputAxis.Horizontal);
-                var vertical: number = this.getUserInput(BABYLON.UserInputAxis.Vertical);
-                var mousex: number = this.getUserInput(BABYLON.UserInputAxis.MouseX);
-                var mousey: number = this.getUserInput(BABYLON.UserInputAxis.MouseY);
-                this.updateCameraPosition(camera, horizontal, vertical, movementSpeed);
-                this.updateCameraRotation(camera, mousex, mousey, rotationSpeed);
-            }
-        }
-        public enableAutoCameraUserInput(camera: BABYLON.FreeCamera, movementSpeed: number, rotationSpeed: number):void {
-            if (camera != null) {
-                this.updateCamera = camera;
-                this.cameraInputMoveSpeed = movementSpeed;
-                this.cameraInputRotateSpeed = rotationSpeed;
-                this.updateCameraInput = true;
-            }
-        }
-        public clearAutoCameraUserInput():void {
-            this.updateCamera = null;
-            this.cameraInputMoveSpeed = 1.0;
-            this.cameraInputRotateSpeed = 0.005;
-            this.updateCameraInput = false;
-        }
-        private autoUpdateCameraUserInput(): void {
-            this.updateCameraUserInput(this.updateCamera, this.cameraInputMoveSpeed, this.cameraInputRotateSpeed);
         }
         
         // *********************************** //
@@ -1868,7 +2520,7 @@ module BABYLON {
         // ********************************** //
 
         private static inputKeyDownHandler(e: KeyboardEvent): any {
-            var key:string = "k" + e.keyCode.toString();
+            var key:string = "k:" + e.keyCode.toString();
             var pressed: boolean = false;
             if (BABYLON.SceneManager.keymap[key] != null) {
                 pressed = BABYLON.SceneManager.keymap[key];
@@ -1910,7 +2562,7 @@ module BABYLON {
             return true;
         }
         private static inputKeyUpHandler(e: KeyboardEvent): any {
-            var key:string = "k" + e.keyCode.toString();
+            var key:string = "k:" + e.keyCode.toString();
             BABYLON.SceneManager.keymap[key] = false;
             switch (e.keyCode) {
                 case 39: // Right
@@ -1951,7 +2603,7 @@ module BABYLON {
                     y: e.clientY
                 };
             }
-            var key:string = "p" + e.button.toString();
+            var key:string = "p:" + e.button.toString();
             var pressed: boolean = false;
             if (BABYLON.SceneManager.keymap[key] != null) {
                 pressed = BABYLON.SceneManager.keymap[key];
@@ -1980,7 +2632,7 @@ module BABYLON {
                 BABYLON.SceneManager.k_mousex = 0;
                 BABYLON.SceneManager.k_mousey = 0;
             }
-            var key:string = "p" + e.button.toString();
+            var key:string = "p:" + e.button.toString();
             BABYLON.SceneManager.keymap[key] = false;
             if (BABYLON.SceneManager.mouseButtonUp != null && BABYLON.SceneManager.mouseButtonUp.length > 0) {
                 BABYLON.SceneManager.mouseButtonUp.forEach((callback) => {
@@ -2019,147 +2671,6 @@ module BABYLON {
             if (BABYLON.SceneManager.preventDefault) e.preventDefault();
             return true;
         }
-        
-        private static inputButtonDownHandler(button: number): void {
-            if (BABYLON.SceneManager.gamepad != null) {
-                var key:string = "b" + button.toString();
-                var pressed: boolean = false;
-                if (BABYLON.SceneManager.keymap[key] != null) {
-                    pressed = BABYLON.SceneManager.keymap[key];
-                }
-                BABYLON.SceneManager.keymap[key] = true;
-                if (BABYLON.SceneManager.gamepadButtonDown != null && BABYLON.SceneManager.gamepadButtonDown.length > 0) {
-                    BABYLON.SceneManager.gamepadButtonDown.forEach((callback) => {
-                        callback(button);
-                    });
-                }
-                if (!pressed) {
-                    if (BABYLON.SceneManager.gamepadButtonPress != null && BABYLON.SceneManager.gamepadButtonPress.length > 0) {
-                        BABYLON.SceneManager.gamepadButtonPress.forEach((press) => {
-                            if (press.index === button) {
-                                press.action();
-                            }
-                        });
-                    }
-                }
-            }
-        }
-        private static inputButtonUpHandler(button: number): void {
-            if (BABYLON.SceneManager.gamepad != null) {
-                var key:string = "b" + button.toString();
-                BABYLON.SceneManager.keymap[key] = false;
-                if (BABYLON.SceneManager.gamepadButtonUp != null && BABYLON.SceneManager.gamepadButtonUp.length > 0) {
-                    BABYLON.SceneManager.gamepadButtonUp.forEach((callback) => {
-                        callback(button);
-                    });
-                }
-            }
-        }
-        private static inputXboxDPadDownHandler(dPadPressed: BABYLON.Xbox360Dpad): void {
-            if (BABYLON.SceneManager.gamepad != null) {
-                var key:string = "d" + dPadPressed.toString();
-                var pressed: boolean = false;
-                if (BABYLON.SceneManager.keymap[key] != null) {
-                    pressed = BABYLON.SceneManager.keymap[key];
-                }
-                BABYLON.SceneManager.keymap[key] = true;
-                if (BABYLON.SceneManager.gamepadDpadDown != null && BABYLON.SceneManager.gamepadDpadDown.length > 0) {
-                    BABYLON.SceneManager.gamepadDpadDown.forEach((callback) => {
-                        callback(dPadPressed);
-                    });
-                }
-                if (!pressed) {
-                    if (BABYLON.SceneManager.gamepadDpadPress != null && BABYLON.SceneManager.gamepadDpadPress.length > 0) {
-                        BABYLON.SceneManager.gamepadDpadPress.forEach((press) => {
-                            if (press.index === dPadPressed) {
-                                press.action();
-                            }
-                        });
-                    }
-                }
-            }
-        }
-        private static inputXboxDPadUpHandler(dPadReleased: BABYLON.Xbox360Dpad): void {
-            if (BABYLON.SceneManager.gamepad != null) {
-                var key:string = "d" + dPadReleased.toString();
-                BABYLON.SceneManager.keymap[key] = false;
-                if (BABYLON.SceneManager.gamepadDpadUp != null && BABYLON.SceneManager.gamepadDpadUp.length > 0) {
-                    BABYLON.SceneManager.gamepadDpadUp.forEach((callback) => {
-                        callback(dPadReleased);
-                    });
-                }
-            }
-        }
-        private static inputXboxLeftTriggerHandler(value: number): void {
-            if (BABYLON.SceneManager.gamepad != null) {
-                BABYLON.SceneManager.keymap["t0"] = value;
-                if (BABYLON.SceneManager.gamepadLeftTrigger != null && BABYLON.SceneManager.gamepadLeftTrigger.length > 0) {
-                    BABYLON.SceneManager.gamepadLeftTrigger.forEach((callback) => {
-                        callback(value);
-                    });
-                }
-            }
-        }
-        private static inputXboxRightTriggerHandler(value: number): void {
-            if (BABYLON.SceneManager.gamepad != null) {
-                BABYLON.SceneManager.keymap["t1"] = value;
-                if (BABYLON.SceneManager.gamepadRightTrigger != null && BABYLON.SceneManager.gamepadRightTrigger.length > 0) {
-                    BABYLON.SceneManager.gamepadRightTrigger.forEach((callback) => {
-                        callback(value);
-                    });
-                }
-            }
-        }
-        private static inputLeftStickHandler(values: BABYLON.StickValues): void {
-            if (BABYLON.SceneManager.gamepad != null) {
-                var LSValues:BABYLON.StickValues = values;
-                var normalizedLX:number = LSValues.x * BABYLON.UserInputOptions.GamepadLStickSensibility;
-                var normalizedLY:number = LSValues.y * BABYLON.UserInputOptions.GamepadLStickSensibility;
-                LSValues.x = Math.abs(normalizedLX) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedLX : 0;
-                LSValues.y = Math.abs(normalizedLY) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedLY : 0;
-                BABYLON.SceneManager.g_horizontal = (BABYLON.UserInputOptions.GamepadLStickXInverted) ? -LSValues.x : LSValues.x;
-                BABYLON.SceneManager.g_vertical = (BABYLON.UserInputOptions.GamepadLStickYInverted) ? LSValues.y : -LSValues.y;
-            }
-        }
-        private static inputRightStickHandler(values: BABYLON.StickValues): void {
-            if (BABYLON.SceneManager.gamepad != null) {
-                var RSValues:BABYLON.StickValues = values;
-                var normalizedRX:number = RSValues.x * BABYLON.UserInputOptions.GamepadRStickSensibility;
-                var normalizedRY:number = RSValues.y * BABYLON.UserInputOptions.GamepadRStickSensibility;
-                RSValues.x = Math.abs(normalizedRX) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedRX : 0;
-                RSValues.y = Math.abs(normalizedRY) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedRY : 0;
-                BABYLON.SceneManager.g_mousex = (BABYLON.UserInputOptions.GamepadRStickXInverted) ? -RSValues.x : RSValues.x;
-                BABYLON.SceneManager.g_mousey = (BABYLON.UserInputOptions.GamepadRStickYInverted) ? -RSValues.y : RSValues.y;
-            }
-        }
-        private static inputGamepadConnected(pad: BABYLON.Gamepad, state:BABYLON.EventState) {
-            if (pad != null && pad.index === 0 && BABYLON.SceneManager.gamepad == null) {
-                BABYLON.SceneManager.gamepad = pad;
-                BABYLON.Tools.Log("Gamepad Connected: " + BABYLON.SceneManager.gamepad.id);
-                if ((<string>BABYLON.SceneManager.gamepad.id).search("Xbox 360") !== -1 || (<string>BABYLON.SceneManager.gamepad.id).search("Xbox One") !== -1 || (<string>BABYLON.SceneManager.gamepad.id).search("xinput") !== -1) {
-                    BABYLON.SceneManager.gamepadType = BABYLON.GamepadType.Xbox360;
-                    var xbox360Pad: BABYLON.Xbox360Pad = BABYLON.SceneManager.gamepad as BABYLON.Xbox360Pad;
-                    xbox360Pad.onbuttonup(BABYLON.SceneManager.inputButtonUpHandler);
-                    xbox360Pad.onbuttondown(BABYLON.SceneManager.inputButtonDownHandler);
-                    xbox360Pad.onleftstickchanged(BABYLON.SceneManager.inputLeftStickHandler);
-                    xbox360Pad.onrightstickchanged(BABYLON.SceneManager.inputRightStickHandler);
-                    xbox360Pad.ondpadup(BABYLON.SceneManager.inputXboxDPadUpHandler);
-                    xbox360Pad.ondpaddown(BABYLON.SceneManager.inputXboxDPadDownHandler);
-                    xbox360Pad.onlefttriggerchanged(BABYLON.SceneManager.inputXboxLeftTriggerHandler);
-                    xbox360Pad.onrighttriggerchanged(BABYLON.SceneManager.inputXboxRightTriggerHandler);
-                } else {
-                    BABYLON.SceneManager.gamepadType = BABYLON.GamepadType.Generic;
-                    var genericPad: BABYLON.GenericPad = BABYLON.SceneManager.gamepad as BABYLON.GenericPad;
-                    genericPad.onbuttonup(BABYLON.SceneManager.inputButtonUpHandler);
-                    genericPad.onbuttondown(BABYLON.SceneManager.inputButtonDownHandler);
-                    genericPad.onleftstickchanged(BABYLON.SceneManager.inputLeftStickHandler);
-                    genericPad.onrightstickchanged(BABYLON.SceneManager.inputRightStickHandler);
-                }
-                if (BABYLON.SceneManager.gamepadConnected != null) {
-                    BABYLON.SceneManager.gamepadConnected(BABYLON.SceneManager.gamepad, BABYLON.SceneManager.gamepadType);
-                }
-            }
-        }
         private static inputVirtualJoysticks(): void {
             if (BABYLON.SceneManager.leftJoystick != null) {
                 // Update left virtual joystick values
@@ -2188,6 +2699,561 @@ module BABYLON {
                 BABYLON.SceneManager.j_mousey = RSDelta.y;
             }
         }
+        
+        private static inputOneButtonDownHandler(button: number): void {
+            if (BABYLON.SceneManager.gamepad1 != null) {
+                var key:string = "b1:" + button.toString();
+                var pressed: boolean = false;
+                if (BABYLON.SceneManager.keymap[key] != null) {
+                    pressed = BABYLON.SceneManager.keymap[key];
+                }
+                BABYLON.SceneManager.keymap[key] = true;
+                if (BABYLON.SceneManager.gamepad1ButtonDown != null && BABYLON.SceneManager.gamepad1ButtonDown.length > 0) {
+                    BABYLON.SceneManager.gamepad1ButtonDown.forEach((callback) => {
+                        callback(button);
+                    });
+                }
+                if (!pressed) {
+                    if (BABYLON.SceneManager.gamepad1ButtonPress != null && BABYLON.SceneManager.gamepad1ButtonPress.length > 0) {
+                        BABYLON.SceneManager.gamepad1ButtonPress.forEach((press) => {
+                            if (press.index === button) {
+                                press.action();
+                            }
+                        });
+                    }
+                }
+            }
+        }
+        private static inputOneButtonUpHandler(button: number): void {
+            if (BABYLON.SceneManager.gamepad1 != null) {
+                var key:string = "b1:" + button.toString();
+                BABYLON.SceneManager.keymap[key] = false;
+                if (BABYLON.SceneManager.gamepad1ButtonUp != null && BABYLON.SceneManager.gamepad1ButtonUp.length > 0) {
+                    BABYLON.SceneManager.gamepad1ButtonUp.forEach((callback) => {
+                        callback(button);
+                    });
+                }
+            }
+        }
+        private static inputOneXboxDPadDownHandler(dPadPressed: BABYLON.Xbox360Dpad): void {
+            if (BABYLON.SceneManager.gamepad1 != null) {
+                var key:string = "d1:" + dPadPressed.toString();
+                var pressed: boolean = false;
+                if (BABYLON.SceneManager.keymap[key] != null) {
+                    pressed = BABYLON.SceneManager.keymap[key];
+                }
+                BABYLON.SceneManager.keymap[key] = true;
+                if (BABYLON.SceneManager.gamepad1DpadDown != null && BABYLON.SceneManager.gamepad1DpadDown.length > 0) {
+                    BABYLON.SceneManager.gamepad1DpadDown.forEach((callback) => {
+                        callback(dPadPressed);
+                    });
+                }
+                if (!pressed) {
+                    if (BABYLON.SceneManager.gamepad1DpadPress != null && BABYLON.SceneManager.gamepad1DpadPress.length > 0) {
+                        BABYLON.SceneManager.gamepad1DpadPress.forEach((press) => {
+                            if (press.index === dPadPressed) {
+                                press.action();
+                            }
+                        });
+                    }
+                }
+            }
+        }
+        private static inputOneXboxDPadUpHandler(dPadReleased: BABYLON.Xbox360Dpad): void {
+            if (BABYLON.SceneManager.gamepad1 != null) {
+                var key:string = "d1:" + dPadReleased.toString();
+                BABYLON.SceneManager.keymap[key] = false;
+                if (BABYLON.SceneManager.gamepad1DpadUp != null && BABYLON.SceneManager.gamepad1DpadUp.length > 0) {
+                    BABYLON.SceneManager.gamepad1DpadUp.forEach((callback) => {
+                        callback(dPadReleased);
+                    });
+                }
+            }
+        }
+        private static inputOneXboxLeftTriggerHandler(value: number): void {
+            if (BABYLON.SceneManager.gamepad1 != null) {
+                BABYLON.SceneManager.keymap["t1:0"] = value;
+                if (BABYLON.SceneManager.gamepad1LeftTrigger != null && BABYLON.SceneManager.gamepad1LeftTrigger.length > 0) {
+                    BABYLON.SceneManager.gamepad1LeftTrigger.forEach((callback) => {
+                        callback(value);
+                    });
+                }
+            }
+        }
+        private static inputOneXboxRightTriggerHandler(value: number): void {
+            if (BABYLON.SceneManager.gamepad1 != null) {
+                BABYLON.SceneManager.keymap["t1:1"] = value;
+                if (BABYLON.SceneManager.gamepad1RightTrigger != null && BABYLON.SceneManager.gamepad1RightTrigger.length > 0) {
+                    BABYLON.SceneManager.gamepad1RightTrigger.forEach((callback) => {
+                        callback(value);
+                    });
+                }
+            }
+        }
+        private static inputOneLeftStickHandler(values: BABYLON.StickValues): void {
+            if (BABYLON.SceneManager.gamepad1 != null) {
+                var LSValues:BABYLON.StickValues = values;
+                var normalizedLX:number = LSValues.x * BABYLON.UserInputOptions.GamepadLStickSensibility;
+                var normalizedLY:number = LSValues.y * BABYLON.UserInputOptions.GamepadLStickSensibility;
+                LSValues.x = Math.abs(normalizedLX) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedLX : 0;
+                LSValues.y = Math.abs(normalizedLY) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedLY : 0;
+                BABYLON.SceneManager.g_horizontal1 = (BABYLON.UserInputOptions.GamepadLStickXInverted) ? -LSValues.x : LSValues.x;
+                BABYLON.SceneManager.g_vertical1 = (BABYLON.UserInputOptions.GamepadLStickYInverted) ? LSValues.y : -LSValues.y;
+            }
+        }
+        private static inputOneRightStickHandler(values: BABYLON.StickValues): void {
+            if (BABYLON.SceneManager.gamepad1 != null) {
+                var RSValues:BABYLON.StickValues = values;
+                var normalizedRX:number = RSValues.x * BABYLON.UserInputOptions.GamepadRStickSensibility;
+                var normalizedRY:number = RSValues.y * BABYLON.UserInputOptions.GamepadRStickSensibility;
+                RSValues.x = Math.abs(normalizedRX) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedRX : 0;
+                RSValues.y = Math.abs(normalizedRY) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedRY : 0;
+                BABYLON.SceneManager.g_mousex1 = (BABYLON.UserInputOptions.GamepadRStickXInverted) ? -RSValues.x : RSValues.x;
+                BABYLON.SceneManager.g_mousey1 = (BABYLON.UserInputOptions.GamepadRStickYInverted) ? -RSValues.y : RSValues.y;
+            }
+        }
+
+        private static inputTwoButtonDownHandler(button: number): void {
+            if (BABYLON.SceneManager.gamepad2 != null) {
+                var key:string = "b2:" + button.toString();
+                var pressed: boolean = false;
+                if (BABYLON.SceneManager.keymap[key] != null) {
+                    pressed = BABYLON.SceneManager.keymap[key];
+                }
+                BABYLON.SceneManager.keymap[key] = true;
+                if (BABYLON.SceneManager.gamepad2ButtonDown != null && BABYLON.SceneManager.gamepad2ButtonDown.length > 0) {
+                    BABYLON.SceneManager.gamepad2ButtonDown.forEach((callback) => {
+                        callback(button);
+                    });
+                }
+                if (!pressed) {
+                    if (BABYLON.SceneManager.gamepad2ButtonPress != null && BABYLON.SceneManager.gamepad2ButtonPress.length > 0) {
+                        BABYLON.SceneManager.gamepad2ButtonPress.forEach((press) => {
+                            if (press.index === button) {
+                                press.action();
+                            }
+                        });
+                    }
+                }
+            }
+        }
+        private static inputTwoButtonUpHandler(button: number): void {
+            if (BABYLON.SceneManager.gamepad2 != null) {
+                var key:string = "b2:" + button.toString();
+                BABYLON.SceneManager.keymap[key] = false;
+                if (BABYLON.SceneManager.gamepad2ButtonUp != null && BABYLON.SceneManager.gamepad2ButtonUp.length > 0) {
+                    BABYLON.SceneManager.gamepad2ButtonUp.forEach((callback) => {
+                        callback(button);
+                    });
+                }
+            }
+        }
+        private static inputTwoXboxDPadDownHandler(dPadPressed: BABYLON.Xbox360Dpad): void {
+            if (BABYLON.SceneManager.gamepad2 != null) {
+                var key:string = "d2:" + dPadPressed.toString();
+                var pressed: boolean = false;
+                if (BABYLON.SceneManager.keymap[key] != null) {
+                    pressed = BABYLON.SceneManager.keymap[key];
+                }
+                BABYLON.SceneManager.keymap[key] = true;
+                if (BABYLON.SceneManager.gamepad2DpadDown != null && BABYLON.SceneManager.gamepad2DpadDown.length > 0) {
+                    BABYLON.SceneManager.gamepad2DpadDown.forEach((callback) => {
+                        callback(dPadPressed);
+                    });
+                }
+                if (!pressed) {
+                    if (BABYLON.SceneManager.gamepad2DpadPress != null && BABYLON.SceneManager.gamepad2DpadPress.length > 0) {
+                        BABYLON.SceneManager.gamepad2DpadPress.forEach((press) => {
+                            if (press.index === dPadPressed) {
+                                press.action();
+                            }
+                        });
+                    }
+                }
+            }
+        }
+        private static inputTwoXboxDPadUpHandler(dPadReleased: BABYLON.Xbox360Dpad): void {
+            if (BABYLON.SceneManager.gamepad2 != null) {
+                var key:string = "d2:" + dPadReleased.toString();
+                BABYLON.SceneManager.keymap[key] = false;
+                if (BABYLON.SceneManager.gamepad2DpadUp != null && BABYLON.SceneManager.gamepad2DpadUp.length > 0) {
+                    BABYLON.SceneManager.gamepad2DpadUp.forEach((callback) => {
+                        callback(dPadReleased);
+                    });
+                }
+            }
+        }
+        private static inputTwoXboxLeftTriggerHandler(value: number): void {
+            if (BABYLON.SceneManager.gamepad2 != null) {
+                BABYLON.SceneManager.keymap["t2:0"] = value;
+                if (BABYLON.SceneManager.gamepad2LeftTrigger != null && BABYLON.SceneManager.gamepad2LeftTrigger.length > 0) {
+                    BABYLON.SceneManager.gamepad2LeftTrigger.forEach((callback) => {
+                        callback(value);
+                    });
+                }
+            }
+        }
+        private static inputTwoXboxRightTriggerHandler(value: number): void {
+            if (BABYLON.SceneManager.gamepad2 != null) {
+                BABYLON.SceneManager.keymap["t2:1"] = value;
+                if (BABYLON.SceneManager.gamepad2RightTrigger != null && BABYLON.SceneManager.gamepad2RightTrigger.length > 0) {
+                    BABYLON.SceneManager.gamepad2RightTrigger.forEach((callback) => {
+                        callback(value);
+                    });
+                }
+            }
+        }
+        private static inputTwoLeftStickHandler(values: BABYLON.StickValues): void {
+            if (BABYLON.SceneManager.gamepad2 != null) {
+                var LSValues:BABYLON.StickValues = values;
+                var normalizedLX:number = LSValues.x * BABYLON.UserInputOptions.GamepadLStickSensibility;
+                var normalizedLY:number = LSValues.y * BABYLON.UserInputOptions.GamepadLStickSensibility;
+                LSValues.x = Math.abs(normalizedLX) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedLX : 0;
+                LSValues.y = Math.abs(normalizedLY) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedLY : 0;
+                BABYLON.SceneManager.g_horizontal2 = (BABYLON.UserInputOptions.GamepadLStickXInverted) ? -LSValues.x : LSValues.x;
+                BABYLON.SceneManager.g_vertical2 = (BABYLON.UserInputOptions.GamepadLStickYInverted) ? LSValues.y : -LSValues.y;
+            }
+        }
+        private static inputTwoRightStickHandler(values: BABYLON.StickValues): void {
+            if (BABYLON.SceneManager.gamepad2 != null) {
+                var RSValues:BABYLON.StickValues = values;
+                var normalizedRX:number = RSValues.x * BABYLON.UserInputOptions.GamepadRStickSensibility;
+                var normalizedRY:number = RSValues.y * BABYLON.UserInputOptions.GamepadRStickSensibility;
+                RSValues.x = Math.abs(normalizedRX) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedRX : 0;
+                RSValues.y = Math.abs(normalizedRY) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedRY : 0;
+                BABYLON.SceneManager.g_mousex2 = (BABYLON.UserInputOptions.GamepadRStickXInverted) ? -RSValues.x : RSValues.x;
+                BABYLON.SceneManager.g_mousey2 = (BABYLON.UserInputOptions.GamepadRStickYInverted) ? -RSValues.y : RSValues.y;
+            }
+        }
+
+        private static inputThreeButtonDownHandler(button: number): void {
+            if (BABYLON.SceneManager.gamepad3 != null) {
+                var key:string = "b3:" + button.toString();
+                var pressed: boolean = false;
+                if (BABYLON.SceneManager.keymap[key] != null) {
+                    pressed = BABYLON.SceneManager.keymap[key];
+                }
+                BABYLON.SceneManager.keymap[key] = true;
+                if (BABYLON.SceneManager.gamepad3ButtonDown != null && BABYLON.SceneManager.gamepad3ButtonDown.length > 0) {
+                    BABYLON.SceneManager.gamepad3ButtonDown.forEach((callback) => {
+                        callback(button);
+                    });
+                }
+                if (!pressed) {
+                    if (BABYLON.SceneManager.gamepad3ButtonPress != null && BABYLON.SceneManager.gamepad3ButtonPress.length > 0) {
+                        BABYLON.SceneManager.gamepad3ButtonPress.forEach((press) => {
+                            if (press.index === button) {
+                                press.action();
+                            }
+                        });
+                    }
+                }
+            }
+        }
+        private static inputThreeButtonUpHandler(button: number): void {
+            if (BABYLON.SceneManager.gamepad3 != null) {
+                var key:string = "b3:" + button.toString();
+                BABYLON.SceneManager.keymap[key] = false;
+                if (BABYLON.SceneManager.gamepad3ButtonUp != null && BABYLON.SceneManager.gamepad3ButtonUp.length > 0) {
+                    BABYLON.SceneManager.gamepad3ButtonUp.forEach((callback) => {
+                        callback(button);
+                    });
+                }
+            }
+        }
+        private static inputThreeXboxDPadDownHandler(dPadPressed: BABYLON.Xbox360Dpad): void {
+            if (BABYLON.SceneManager.gamepad3 != null) {
+                var key:string = "d3:" + dPadPressed.toString();
+                var pressed: boolean = false;
+                if (BABYLON.SceneManager.keymap[key] != null) {
+                    pressed = BABYLON.SceneManager.keymap[key];
+                }
+                BABYLON.SceneManager.keymap[key] = true;
+                if (BABYLON.SceneManager.gamepad3DpadDown != null && BABYLON.SceneManager.gamepad3DpadDown.length > 0) {
+                    BABYLON.SceneManager.gamepad3DpadDown.forEach((callback) => {
+                        callback(dPadPressed);
+                    });
+                }
+                if (!pressed) {
+                    if (BABYLON.SceneManager.gamepad3DpadPress != null && BABYLON.SceneManager.gamepad3DpadPress.length > 0) {
+                        BABYLON.SceneManager.gamepad3DpadPress.forEach((press) => {
+                            if (press.index === dPadPressed) {
+                                press.action();
+                            }
+                        });
+                    }
+                }
+            }
+        }
+        private static inputThreeXboxDPadUpHandler(dPadReleased: BABYLON.Xbox360Dpad): void {
+            if (BABYLON.SceneManager.gamepad3 != null) {
+                var key:string = "d3:" + dPadReleased.toString();
+                BABYLON.SceneManager.keymap[key] = false;
+                if (BABYLON.SceneManager.gamepad3DpadUp != null && BABYLON.SceneManager.gamepad3DpadUp.length > 0) {
+                    BABYLON.SceneManager.gamepad3DpadUp.forEach((callback) => {
+                        callback(dPadReleased);
+                    });
+                }
+            }
+        }
+        private static inputThreeXboxLeftTriggerHandler(value: number): void {
+            if (BABYLON.SceneManager.gamepad3 != null) {
+                BABYLON.SceneManager.keymap["t3:0"] = value;
+                if (BABYLON.SceneManager.gamepad3LeftTrigger != null && BABYLON.SceneManager.gamepad3LeftTrigger.length > 0) {
+                    BABYLON.SceneManager.gamepad3LeftTrigger.forEach((callback) => {
+                        callback(value);
+                    });
+                }
+            }
+        }
+        private static inputThreeXboxRightTriggerHandler(value: number): void {
+            if (BABYLON.SceneManager.gamepad3 != null) {
+                BABYLON.SceneManager.keymap["t3:1"] = value;
+                if (BABYLON.SceneManager.gamepad3RightTrigger != null && BABYLON.SceneManager.gamepad3RightTrigger.length > 0) {
+                    BABYLON.SceneManager.gamepad3RightTrigger.forEach((callback) => {
+                        callback(value);
+                    });
+                }
+            }
+        }
+        private static inputThreeLeftStickHandler(values: BABYLON.StickValues): void {
+            if (BABYLON.SceneManager.gamepad3 != null) {
+                var LSValues:BABYLON.StickValues = values;
+                var normalizedLX:number = LSValues.x * BABYLON.UserInputOptions.GamepadLStickSensibility;
+                var normalizedLY:number = LSValues.y * BABYLON.UserInputOptions.GamepadLStickSensibility;
+                LSValues.x = Math.abs(normalizedLX) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedLX : 0;
+                LSValues.y = Math.abs(normalizedLY) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedLY : 0;
+                BABYLON.SceneManager.g_horizontal3 = (BABYLON.UserInputOptions.GamepadLStickXInverted) ? -LSValues.x : LSValues.x;
+                BABYLON.SceneManager.g_vertical3 = (BABYLON.UserInputOptions.GamepadLStickYInverted) ? LSValues.y : -LSValues.y;
+            }
+        }
+        private static inputThreeRightStickHandler(values: BABYLON.StickValues): void {
+            if (BABYLON.SceneManager.gamepad3 != null) {
+                var RSValues:BABYLON.StickValues = values;
+                var normalizedRX:number = RSValues.x * BABYLON.UserInputOptions.GamepadRStickSensibility;
+                var normalizedRY:number = RSValues.y * BABYLON.UserInputOptions.GamepadRStickSensibility;
+                RSValues.x = Math.abs(normalizedRX) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedRX : 0;
+                RSValues.y = Math.abs(normalizedRY) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedRY : 0;
+                BABYLON.SceneManager.g_mousex3 = (BABYLON.UserInputOptions.GamepadRStickXInverted) ? -RSValues.x : RSValues.x;
+                BABYLON.SceneManager.g_mousey3 = (BABYLON.UserInputOptions.GamepadRStickYInverted) ? -RSValues.y : RSValues.y;
+            }
+        }
+
+        private static inputFourButtonDownHandler(button: number): void {
+            if (BABYLON.SceneManager.gamepad4 != null) {
+                var key:string = "b4:" + button.toString();
+                var pressed: boolean = false;
+                if (BABYLON.SceneManager.keymap[key] != null) {
+                    pressed = BABYLON.SceneManager.keymap[key];
+                }
+                BABYLON.SceneManager.keymap[key] = true;
+                if (BABYLON.SceneManager.gamepad4ButtonDown != null && BABYLON.SceneManager.gamepad4ButtonDown.length > 0) {
+                    BABYLON.SceneManager.gamepad4ButtonDown.forEach((callback) => {
+                        callback(button);
+                    });
+                }
+                if (!pressed) {
+                    if (BABYLON.SceneManager.gamepad4ButtonPress != null && BABYLON.SceneManager.gamepad4ButtonPress.length > 0) {
+                        BABYLON.SceneManager.gamepad4ButtonPress.forEach((press) => {
+                            if (press.index === button) {
+                                press.action();
+                            }
+                        });
+                    }
+                }
+            }
+        }
+        private static inputFourButtonUpHandler(button: number): void {
+            if (BABYLON.SceneManager.gamepad4 != null) {
+                var key:string = "b4:" + button.toString();
+                BABYLON.SceneManager.keymap[key] = false;
+                if (BABYLON.SceneManager.gamepad4ButtonUp != null && BABYLON.SceneManager.gamepad4ButtonUp.length > 0) {
+                    BABYLON.SceneManager.gamepad4ButtonUp.forEach((callback) => {
+                        callback(button);
+                    });
+                }
+            }
+        }
+        private static inputFourXboxDPadDownHandler(dPadPressed: BABYLON.Xbox360Dpad): void {
+            if (BABYLON.SceneManager.gamepad4 != null) {
+                var key:string = "d4:" + dPadPressed.toString();
+                var pressed: boolean = false;
+                if (BABYLON.SceneManager.keymap[key] != null) {
+                    pressed = BABYLON.SceneManager.keymap[key];
+                }
+                BABYLON.SceneManager.keymap[key] = true;
+                if (BABYLON.SceneManager.gamepad4DpadDown != null && BABYLON.SceneManager.gamepad4DpadDown.length > 0) {
+                    BABYLON.SceneManager.gamepad4DpadDown.forEach((callback) => {
+                        callback(dPadPressed);
+                    });
+                }
+                if (!pressed) {
+                    if (BABYLON.SceneManager.gamepad4DpadPress != null && BABYLON.SceneManager.gamepad4DpadPress.length > 0) {
+                        BABYLON.SceneManager.gamepad4DpadPress.forEach((press) => {
+                            if (press.index === dPadPressed) {
+                                press.action();
+                            }
+                        });
+                    }
+                }
+            }
+        }
+        private static inputFourXboxDPadUpHandler(dPadReleased: BABYLON.Xbox360Dpad): void {
+            if (BABYLON.SceneManager.gamepad4 != null) {
+                var key:string = "d4:" + dPadReleased.toString();
+                BABYLON.SceneManager.keymap[key] = false;
+                if (BABYLON.SceneManager.gamepad4DpadUp != null && BABYLON.SceneManager.gamepad4DpadUp.length > 0) {
+                    BABYLON.SceneManager.gamepad4DpadUp.forEach((callback) => {
+                        callback(dPadReleased);
+                    });
+                }
+            }
+        }
+        private static inputFourXboxLeftTriggerHandler(value: number): void {
+            if (BABYLON.SceneManager.gamepad4 != null) {
+                BABYLON.SceneManager.keymap["t4:0"] = value;
+                if (BABYLON.SceneManager.gamepad4LeftTrigger != null && BABYLON.SceneManager.gamepad4LeftTrigger.length > 0) {
+                    BABYLON.SceneManager.gamepad4LeftTrigger.forEach((callback) => {
+                        callback(value);
+                    });
+                }
+            }
+        }
+        private static inputFourXboxRightTriggerHandler(value: number): void {
+            if (BABYLON.SceneManager.gamepad4 != null) {
+                BABYLON.SceneManager.keymap["t4:1"] = value;
+                if (BABYLON.SceneManager.gamepad4RightTrigger != null && BABYLON.SceneManager.gamepad4RightTrigger.length > 0) {
+                    BABYLON.SceneManager.gamepad4RightTrigger.forEach((callback) => {
+                        callback(value);
+                    });
+                }
+            }
+        }
+        private static inputFourLeftStickHandler(values: BABYLON.StickValues): void {
+            if (BABYLON.SceneManager.gamepad4 != null) {
+                var LSValues:BABYLON.StickValues = values;
+                var normalizedLX:number = LSValues.x * BABYLON.UserInputOptions.GamepadLStickSensibility;
+                var normalizedLY:number = LSValues.y * BABYLON.UserInputOptions.GamepadLStickSensibility;
+                LSValues.x = Math.abs(normalizedLX) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedLX : 0;
+                LSValues.y = Math.abs(normalizedLY) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedLY : 0;
+                BABYLON.SceneManager.g_horizontal4 = (BABYLON.UserInputOptions.GamepadLStickXInverted) ? -LSValues.x : LSValues.x;
+                BABYLON.SceneManager.g_vertical4 = (BABYLON.UserInputOptions.GamepadLStickYInverted) ? LSValues.y : -LSValues.y;
+            }
+        }
+        private static inputFourRightStickHandler(values: BABYLON.StickValues): void {
+            if (BABYLON.SceneManager.gamepad4 != null) {
+                var RSValues:BABYLON.StickValues = values;
+                var normalizedRX:number = RSValues.x * BABYLON.UserInputOptions.GamepadRStickSensibility;
+                var normalizedRY:number = RSValues.y * BABYLON.UserInputOptions.GamepadRStickSensibility;
+                RSValues.x = Math.abs(normalizedRX) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedRX : 0;
+                RSValues.y = Math.abs(normalizedRY) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedRY : 0;
+                BABYLON.SceneManager.g_mousex4 = (BABYLON.UserInputOptions.GamepadRStickXInverted) ? -RSValues.x : RSValues.x;
+                BABYLON.SceneManager.g_mousey4 = (BABYLON.UserInputOptions.GamepadRStickYInverted) ? -RSValues.y : RSValues.y;
+            }
+        }
+
+        private static inputManagerGamepadConnected(pad: BABYLON.Gamepad, state:BABYLON.EventState) {
+            if (BABYLON.SceneManager.gamepad1 == null && pad.index === 0) {
+                BABYLON.SceneManager.gamepad1 = pad;
+                BABYLON.Tools.Log("Gamepad One Connected: " + BABYLON.SceneManager.gamepad1.id);
+                if ((<string>BABYLON.SceneManager.gamepad1.id).search("Xbox 360") !== -1 || (<string>BABYLON.SceneManager.gamepad1.id).search("Xbox One") !== -1 || (<string>BABYLON.SceneManager.gamepad1.id).search("xinput") !== -1) {
+                    BABYLON.SceneManager.gamepad1Type = BABYLON.GamepadType.Xbox360;
+                    var xbox360Pad1: BABYLON.Xbox360Pad = BABYLON.SceneManager.gamepad1 as BABYLON.Xbox360Pad;
+                    xbox360Pad1.onbuttonup(BABYLON.SceneManager.inputOneButtonUpHandler);
+                    xbox360Pad1.onbuttondown(BABYLON.SceneManager.inputOneButtonDownHandler);
+                    xbox360Pad1.onleftstickchanged(BABYLON.SceneManager.inputOneLeftStickHandler);
+                    xbox360Pad1.onrightstickchanged(BABYLON.SceneManager.inputOneRightStickHandler);
+                    xbox360Pad1.ondpadup(BABYLON.SceneManager.inputOneXboxDPadUpHandler);
+                    xbox360Pad1.ondpaddown(BABYLON.SceneManager.inputOneXboxDPadDownHandler);
+                    xbox360Pad1.onlefttriggerchanged(BABYLON.SceneManager.inputOneXboxLeftTriggerHandler);
+                    xbox360Pad1.onrighttriggerchanged(BABYLON.SceneManager.inputOneXboxRightTriggerHandler);
+                } else {
+                    BABYLON.SceneManager.gamepad1Type = BABYLON.GamepadType.Generic;
+                    var genericPad1: BABYLON.GenericPad = BABYLON.SceneManager.gamepad1 as BABYLON.GenericPad;
+                    genericPad1.onbuttonup(BABYLON.SceneManager.inputOneButtonUpHandler);
+                    genericPad1.onbuttondown(BABYLON.SceneManager.inputOneButtonDownHandler);
+                    genericPad1.onleftstickchanged(BABYLON.SceneManager.inputOneLeftStickHandler);
+                    genericPad1.onrightstickchanged(BABYLON.SceneManager.inputOneRightStickHandler);
+                }
+            }
+            if (BABYLON.SceneManager.gamepad2 == null && pad.index === 1) {
+                BABYLON.SceneManager.gamepad2 = pad;
+                BABYLON.Tools.Log("Gamepad Two Connected: " + BABYLON.SceneManager.gamepad2.id);
+                if ((<string>BABYLON.SceneManager.gamepad2.id).search("Xbox 360") !== -1 || (<string>BABYLON.SceneManager.gamepad2.id).search("Xbox One") !== -1 || (<string>BABYLON.SceneManager.gamepad2.id).search("xinput") !== -1) {
+                    BABYLON.SceneManager.gamepad2Type = BABYLON.GamepadType.Xbox360;
+                    var xbox360Pad2: BABYLON.Xbox360Pad = BABYLON.SceneManager.gamepad2 as BABYLON.Xbox360Pad;
+                    xbox360Pad2.onbuttonup(BABYLON.SceneManager.inputTwoButtonUpHandler);
+                    xbox360Pad2.onbuttondown(BABYLON.SceneManager.inputTwoButtonDownHandler);
+                    xbox360Pad2.onleftstickchanged(BABYLON.SceneManager.inputTwoLeftStickHandler);
+                    xbox360Pad2.onrightstickchanged(BABYLON.SceneManager.inputTwoRightStickHandler);
+                    xbox360Pad2.ondpadup(BABYLON.SceneManager.inputTwoXboxDPadUpHandler);
+                    xbox360Pad2.ondpaddown(BABYLON.SceneManager.inputTwoXboxDPadDownHandler);
+                    xbox360Pad2.onlefttriggerchanged(BABYLON.SceneManager.inputTwoXboxLeftTriggerHandler);
+                    xbox360Pad2.onrighttriggerchanged(BABYLON.SceneManager.inputTwoXboxRightTriggerHandler);
+                } else {
+                    BABYLON.SceneManager.gamepad2Type = BABYLON.GamepadType.Generic;
+                    var genericPad2: BABYLON.GenericPad = BABYLON.SceneManager.gamepad2 as BABYLON.GenericPad;
+                    genericPad2.onbuttonup(BABYLON.SceneManager.inputTwoButtonUpHandler);
+                    genericPad2.onbuttondown(BABYLON.SceneManager.inputTwoButtonDownHandler);
+                    genericPad2.onleftstickchanged(BABYLON.SceneManager.inputTwoLeftStickHandler);
+                    genericPad2.onrightstickchanged(BABYLON.SceneManager.inputTwoRightStickHandler);
+                }
+            }
+            if (BABYLON.SceneManager.gamepad3 == null && pad.index === 2) {
+                BABYLON.SceneManager.gamepad3 = pad;
+                BABYLON.Tools.Log("Gamepad Three Connected: " + BABYLON.SceneManager.gamepad3.id);
+                if ((<string>BABYLON.SceneManager.gamepad3.id).search("Xbox 360") !== -1 || (<string>BABYLON.SceneManager.gamepad3.id).search("Xbox One") !== -1 || (<string>BABYLON.SceneManager.gamepad3.id).search("xinput") !== -1) {
+                    BABYLON.SceneManager.gamepad3Type = BABYLON.GamepadType.Xbox360;
+                    var xbox360Pad3: BABYLON.Xbox360Pad = BABYLON.SceneManager.gamepad3 as BABYLON.Xbox360Pad;
+                    xbox360Pad3.onbuttonup(BABYLON.SceneManager.inputThreeButtonUpHandler);
+                    xbox360Pad3.onbuttondown(BABYLON.SceneManager.inputThreeButtonDownHandler);
+                    xbox360Pad3.onleftstickchanged(BABYLON.SceneManager.inputThreeLeftStickHandler);
+                    xbox360Pad3.onrightstickchanged(BABYLON.SceneManager.inputThreeRightStickHandler);
+                    xbox360Pad3.ondpadup(BABYLON.SceneManager.inputThreeXboxDPadUpHandler);
+                    xbox360Pad3.ondpaddown(BABYLON.SceneManager.inputThreeXboxDPadDownHandler);
+                    xbox360Pad3.onlefttriggerchanged(BABYLON.SceneManager.inputThreeXboxLeftTriggerHandler);
+                    xbox360Pad3.onrighttriggerchanged(BABYLON.SceneManager.inputThreeXboxRightTriggerHandler);
+                } else {
+                    BABYLON.SceneManager.gamepad3Type = BABYLON.GamepadType.Generic;
+                    var genericPad3: BABYLON.GenericPad = BABYLON.SceneManager.gamepad3 as BABYLON.GenericPad;
+                    genericPad3.onbuttonup(BABYLON.SceneManager.inputThreeButtonUpHandler);
+                    genericPad3.onbuttondown(BABYLON.SceneManager.inputThreeButtonDownHandler);
+                    genericPad3.onleftstickchanged(BABYLON.SceneManager.inputThreeLeftStickHandler);
+                    genericPad3.onrightstickchanged(BABYLON.SceneManager.inputThreeRightStickHandler);
+                }
+            }
+            if (BABYLON.SceneManager.gamepad4 == null && pad.index === 3) {
+                BABYLON.SceneManager.gamepad4 = pad;
+                BABYLON.Tools.Log("Gamepad Four Connected: " + BABYLON.SceneManager.gamepad4.id);
+                if ((<string>BABYLON.SceneManager.gamepad4.id).search("Xbox 360") !== -1 || (<string>BABYLON.SceneManager.gamepad4.id).search("Xbox One") !== -1 || (<string>BABYLON.SceneManager.gamepad4.id).search("xinput") !== -1) {
+                    BABYLON.SceneManager.gamepad4Type = BABYLON.GamepadType.Xbox360;
+                    var xbox360Pad4: BABYLON.Xbox360Pad = BABYLON.SceneManager.gamepad4 as BABYLON.Xbox360Pad;
+                    xbox360Pad4.onbuttonup(BABYLON.SceneManager.inputFourButtonUpHandler);
+                    xbox360Pad4.onbuttondown(BABYLON.SceneManager.inputFourButtonDownHandler);
+                    xbox360Pad4.onleftstickchanged(BABYLON.SceneManager.inputFourLeftStickHandler);
+                    xbox360Pad4.onrightstickchanged(BABYLON.SceneManager.inputFourRightStickHandler);
+                    xbox360Pad4.ondpadup(BABYLON.SceneManager.inputFourXboxDPadUpHandler);
+                    xbox360Pad4.ondpaddown(BABYLON.SceneManager.inputFourXboxDPadDownHandler);
+                    xbox360Pad4.onlefttriggerchanged(BABYLON.SceneManager.inputFourXboxLeftTriggerHandler);
+                    xbox360Pad4.onrighttriggerchanged(BABYLON.SceneManager.inputFourXboxRightTriggerHandler);
+                } else {
+                    BABYLON.SceneManager.gamepad4Type = BABYLON.GamepadType.Generic;
+                    var genericPad4: BABYLON.GenericPad = BABYLON.SceneManager.gamepad4 as BABYLON.GenericPad;
+                    genericPad4.onbuttonup(BABYLON.SceneManager.inputFourButtonUpHandler);
+                    genericPad4.onbuttondown(BABYLON.SceneManager.inputFourButtonDownHandler);
+                    genericPad4.onleftstickchanged(BABYLON.SceneManager.inputFourLeftStickHandler);
+                    genericPad4.onrightstickchanged(BABYLON.SceneManager.inputFourRightStickHandler);
+                }
+            }
+            if (BABYLON.SceneManager.GamepadConnected != null) {
+                BABYLON.SceneManager.GamepadConnected(pad, state);
+            }
+        }
+        private static inputManagerGamepadDisconnected(pad: BABYLON.Gamepad, state:BABYLON.EventState) {
+            if (BABYLON.SceneManager.GamepadDisconnected != null) {
+                BABYLON.SceneManager.GamepadDisconnected(pad, state);
+            }
+        }        
 
         // ************************************** //
         // *  Private User Input State Support  * //
@@ -2205,29 +3271,29 @@ module BABYLON {
                 BABYLON.SceneManager.x_horizontal = BABYLON.SceneManager.j_horizontal;
             } else if (BABYLON.SceneManager.k_horizontal !== 0) {
                 BABYLON.SceneManager.x_horizontal = BABYLON.SceneManager.k_horizontal;
-            } else if (BABYLON.SceneManager.g_horizontal !== 0) {
-                BABYLON.SceneManager.x_horizontal = BABYLON.SceneManager.g_horizontal;
+            } else if (BABYLON.SceneManager.g_horizontal1 !== 0) {
+                BABYLON.SceneManager.x_horizontal = BABYLON.SceneManager.g_horizontal1;
             }
             if (BABYLON.SceneManager.j_vertical !== 0) {
                 BABYLON.SceneManager.x_vertical = BABYLON.SceneManager.j_vertical;
             } else if (BABYLON.SceneManager.k_vertical !== 0) {
                 BABYLON.SceneManager.x_vertical = BABYLON.SceneManager.k_vertical;
-            } else if (BABYLON.SceneManager.g_vertical !== 0) {
-                BABYLON.SceneManager.x_vertical = BABYLON.SceneManager.g_vertical;
+            } else if (BABYLON.SceneManager.g_vertical1 !== 0) {
+                BABYLON.SceneManager.x_vertical = BABYLON.SceneManager.g_vertical1;
             }
             if (BABYLON.SceneManager.j_mousex !== 0) {
                 BABYLON.SceneManager.x_mousex = BABYLON.SceneManager.j_mousex;
             } else if (BABYLON.SceneManager.k_mousex !== 0) {
                 BABYLON.SceneManager.x_mousex = BABYLON.SceneManager.k_mousex;
-            } else if (BABYLON.SceneManager.g_mousex !== 0) {
-                BABYLON.SceneManager.x_mousex = BABYLON.SceneManager.g_mousex;
+            } else if (BABYLON.SceneManager.g_mousex1 !== 0) {
+                BABYLON.SceneManager.x_mousex = BABYLON.SceneManager.g_mousex1;
             }
             if (BABYLON.SceneManager.j_mousey !== 0) {
                 BABYLON.SceneManager.x_mousey = BABYLON.SceneManager.j_mousey;
             } else if (BABYLON.SceneManager.k_mousey !== 0) {
                 BABYLON.SceneManager.x_mousey = BABYLON.SceneManager.k_mousey;
-            } else if (BABYLON.SceneManager.g_mousey !== 0) {
-                BABYLON.SceneManager.x_mousey = BABYLON.SceneManager.g_mousey;
+            } else if (BABYLON.SceneManager.g_mousey1 !== 0) {
+                BABYLON.SceneManager.x_mousey = BABYLON.SceneManager.g_mousey1;
             }
             // Update global user input state buffers
             BABYLON.SceneManager.horizontal = BABYLON.SceneManager.x_horizontal;
@@ -2235,12 +3301,23 @@ module BABYLON {
             BABYLON.SceneManager.mousex = BABYLON.SceneManager.x_mousex;
             BABYLON.SceneManager.mousey = BABYLON.SceneManager.x_mousey;
             BABYLON.SceneManager.wheel = BABYLON.SceneManager.x_wheel;
-            // Reset Mouse Wheel Buffer
+            // Update gamepad two user input 
+            BABYLON.SceneManager.horizontal2 = BABYLON.SceneManager.g_horizontal2;
+            BABYLON.SceneManager.vertical2 = BABYLON.SceneManager.g_vertical2;
+            BABYLON.SceneManager.mousex2 = BABYLON.SceneManager.g_mousex2;
+            BABYLON.SceneManager.mousey2 = BABYLON.SceneManager.g_mousey2;
+            // Update gamepad three user input 
+            BABYLON.SceneManager.horizontal3 = BABYLON.SceneManager.g_horizontal3;
+            BABYLON.SceneManager.vertical3 = BABYLON.SceneManager.g_vertical3;
+            BABYLON.SceneManager.mousex3 = BABYLON.SceneManager.g_mousex3;
+            BABYLON.SceneManager.mousey3 = BABYLON.SceneManager.g_mousey3;
+            // Update gamepad four user input 
+            BABYLON.SceneManager.horizontal4 = BABYLON.SceneManager.g_horizontal4;
+            BABYLON.SceneManager.vertical4 = BABYLON.SceneManager.g_vertical4;
+            BABYLON.SceneManager.mousex4 = BABYLON.SceneManager.g_mousex4;
+            BABYLON.SceneManager.mousey4 = BABYLON.SceneManager.g_mousey4;
+            // Reset mouse wheel user input buffer
             BABYLON.SceneManager.x_mousey = 0;
-            // Auto update camera user input buffer
-            if (BABYLON.SceneManager.me.updateCameraInput === true && BABYLON.SceneManager.me.updateCamera != null) {
-                BABYLON.SceneManager.me.autoUpdateCameraUserInput();
-            }
         }
 
         // *********************************** //
@@ -2280,12 +3357,75 @@ module BABYLON {
             }
             (<any>window).parsing = false;
         }
+        /*
+        private static parseSceneEnvironment(scene:BABYLON.Scene):void {
+            if (scene.metadata != null && scene.metadata.properties != null && scene.metadata.properties.environmentTexture != null) {
+                var type:string = (scene.metadata.properties.environmentTexture.customType) ? scene.metadata.properties.environmentTexture.customType : null;
+                if (type != null && type !== "") {
+                    var parsed:any = scene.metadata.properties.environmentTexture;
+                    if (type === "BABYLON.HDRCubeTexture") {
+                        var parseHDR = function(parsedTexture: any, scene: BABYLON.Scene, rootUrl: string): BABYLON.Nullable<BABYLON.HDRCubeTexture> {
+                            var texture:BABYLON.HDRCubeTexture = null;
+                            if (parsedTexture.name && !parsedTexture.isRenderTarget) {
+                                var size = parsedTexture.isBABYLONPreprocessed ? null : parsedTexture.size;
+                                texture = new BABYLON.HDRCubeTexture(rootUrl + parsedTexture.name, scene, size, parsedTexture.noMipmap, parsedTexture.generateHarmonics, parsedTexture.useInGammaSpace, parsedTexture.usePMREMGenerator, parsedTexture.isPanorama);
+                                texture.name = parsedTexture.name;
+                                texture.hasAlpha = parsedTexture.hasAlpha;
+                                texture.level = parsedTexture.level;
+                                texture.coordinatesMode = parsedTexture.coordinatesMode;
+                                texture.isBlocking = parsedTexture.isBlocking;
+                                if (parsedTexture.boundingBoxPosition) {
+                                    texture.boundingBoxPosition = BABYLON.Vector3.FromArray(parsedTexture.boundingBoxPosition);
+                                }
+                                if (parsedTexture.boundingBoxSize) {
+                                    texture.boundingBoxSize = BABYLON.Vector3.FromArray(parsedTexture.boundingBoxSize);
+                                }
+                                if (parsedTexture.rotationY) {
+                                    texture.rotationY = parsedTexture.rotationY;
+                                }
+                            }
+                            return texture;
+                        };
+                        scene.environmentTexture = parseHDR(parsed, scene, BABYLON.SceneManager.GetInstance().getScenePath());
+                    } else if (type === "BABYLON.CubeTexture") {
+                        var parseCUBE = function(parsedTexture: any, scene: BABYLON.Scene, rootUrl: string): BABYLON.CubeTexture {
+                            var texture = BABYLON.SerializationHelper.Parse(() => {
+                                var prefiltered:boolean = false;
+                                if (parsedTexture.prefiltered) {
+                                    prefiltered = parsedTexture.prefiltered;
+                                }
+                                return new BABYLON.CubeTexture(rootUrl + parsedTexture.name, scene, parsedTexture.extensions, false, null, null, null, undefined, prefiltered);                                
+                            }, parsedTexture, scene);
+                            // Local Cubemaps
+                            if (parsedTexture.boundingBoxPosition) {
+                                texture.boundingBoxPosition = BABYLON.Vector3.FromArray(parsedTexture.boundingBoxPosition);
+                            }
+                            if (parsedTexture.boundingBoxSize) {
+                                texture.boundingBoxSize = BABYLON.Vector3.FromArray(parsedTexture.boundingBoxSize);
+                            }
+                            // Animations
+                            if (parsedTexture.animations) {
+                                for (var animationIndex = 0; animationIndex < parsedTexture.animations.length; animationIndex++) {
+                                    var parsedAnimation = parsedTexture.animations[animationIndex];
+                                    texture.animations.push(BABYLON.Animation.Parse(parsedAnimation));
+                                }
+                            }
+                            return texture;
+                        };
+                        scene.environmentTexture = parseCUBE(parsed, scene, BABYLON.SceneManager.GetInstance().getScenePath());
+                    }
+                }
+            }
+        }
+        */
         private static parseSceneCameras(cameras: BABYLON.Camera[], scene: BABYLON.Scene, ticklist: BABYLON.IScriptComponent[]): void {
             if (cameras != null && cameras.length > 0) {
                 cameras.forEach((camera) => {
                     if (camera.metadata != null && camera.metadata.api) {
                         // Setup metadata cloning
                         camera.metadata.clone = () => { return BABYLON.SceneManager.CloneMetadata(camera.metadata); };
+                        // Camera rigging options
+                        BABYLON.SceneManager.setupCameraRigOptions(camera, scene);
                         // Camera component scripts
                         var metadata: BABYLON.IObjectMetadata = camera.metadata as BABYLON.IObjectMetadata;
                         if (metadata.components != null && metadata.components.length > 0) {
@@ -2301,10 +3441,6 @@ module BABYLON {
                                 }
                             });
                         }
-                        // Camera rigging options
-                        BABYLON.SceneManager.setupCameraRigOptions(camera, scene, ticklist);
-                        // Camera animation state
-                        BABYLON.SceneManager.setupAnimationState(camera, scene);
                     }
                 });
             }
@@ -2330,8 +3466,6 @@ module BABYLON {
                                 }
                             });
                         }
-                        // Light animation state
-                        BABYLON.SceneManager.setupAnimationState(light, scene);
                     }
                 });
             }
@@ -2353,8 +3487,8 @@ module BABYLON {
                             BABYLON.SceneManager.setupLodGroups(mesh, scene, false);
                             // Mesh navigation setup
                             if (mesh.name === "sceneNavigationMesh" && scene.metadata.properties.hasNavigationMesh != null && scene.metadata.properties.hasNavigationMesh === true) {
-                                if (BABYLON.SceneManager.me.hasNavigationMesh() === false) {
-                                    BABYLON.SceneManager.me.buildNavigationMesh(mesh);
+                                if (BABYLON.SceneManager.GetInstance().hasNavigationMesh() === false) {
+                                    BABYLON.SceneManager.GetInstance().buildNavigationMesh(mesh);
                                 } else {
                                     BABYLON.Tools.Warn("Scene navigation mesh already exists. Ignoring navigation zone building for mesh: " + mesh.name);
                                 }
@@ -2374,8 +3508,6 @@ module BABYLON {
                                     }
                                 });
                             }
-                            // Setup animation state
-                            BABYLON.SceneManager.setupAnimationState(mesh, scene);
                             // Setup socket meshes
                             BABYLON.SceneManager.setupSocketMeshes(mesh, scene);
                             // Setup detail meshes
@@ -2519,7 +3651,7 @@ module BABYLON {
                                             instance.parent = null;
                                             instance.metadata.tagName = null;
                                             instance.metadata.prefabSource = null;
-                                            BABYLON.SceneManager.me.safeDestroy(instance);
+                                            BABYLON.SceneManager.GetInstance().safeDestroy(instance);
                                         }
                                     }
                                 }
@@ -2644,8 +3776,8 @@ module BABYLON {
                         var prefab_position:Vector3 = new BABYLON.Vector3(tree_position[0], tree_position[1], tree_position[2]);
                         var prefab_rotation:Vector3 = new BABYLON.Vector3(0.0, tree_rotation, 0.0);
                         var prefab_scaling:BABYLON.Vector3 = new BABYLON.Vector3(tree_widthScale, tree_heightScale, tree_widthScale);
-                        BABYLON.SceneManager.me.onready(()=>{
-                            BABYLON.SceneManager.me.instantiatePrefab(tree_prefab, tree_label, prefab_position, prefab_rotation, prefab_scaling, prefab_parent);
+                        BABYLON.SceneManager.GetInstance().onready(()=>{
+                            BABYLON.SceneManager.GetInstance().instantiatePrefab(tree_prefab, tree_label, prefab_position, prefab_rotation, prefab_scaling, prefab_parent);
                         });
                     });
                 }
@@ -2682,13 +3814,6 @@ module BABYLON {
                             socket.socketMesh.rotation = new BABYLON.Vector3(socket.rotationX, socket.rotationY, socket.rotationZ);
                             socket.socketMesh.checkCollisions = false;
                             socket.socketMesh.attachToBone(bone, mesh);
-                            if (socket.prefabName != null && socket.prefabName !== "") {
-                                var prefabPosition:BABYLON.Vector3 = new BABYLON.Vector3(socket.prefabPositionX, socket.prefabPositionY, socket.prefabPositionZ);
-                                var prefabRotation:BABYLON.Vector3 = new BABYLON.Vector3(socket.prefabRotationX, socket.prefabRotationY, socket.prefabRotationZ);
-                                BABYLON.SceneManager.me.onready(()=>{
-                                    BABYLON.SceneManager.me.instantiatePrefab(socket.prefabName, socket.prefabName, prefabPosition, prefabRotation, null, socket.socketMesh);
-                                });
-                            }
                         }
                     });
                 }
@@ -2699,16 +3824,8 @@ module BABYLON {
                 var sharedSkeletonId:string = mesh.metadata.properties.sharedSkeletonId;
                 var source:BABYLON.AbstractMesh = scene.getMeshByID(sharedSkeletonId);
                 if (source != null && source.skeleton != null) {
-                    var new_animationClips:any[] = [];
-                    if (source.metadata.animationClips != null && source.metadata.animationClips.length > 0) {
-                        source.metadata.animationClips.forEach((state) => {
-                            var new_state_properties:any = {};
-                            BABYLON.SceneManager.DeepCopyProperties(state, new_state_properties);
-                            new_animationClips.push(new_state_properties);
-                        });
-                    }
-                    mesh.metadata.animationClips = new_animationClips;
-                    mesh.skeleton = source.skeleton.clone(mesh.name, mesh.name + ".Clone." + BABYLON.Tools.RandomId());
+                    mesh.metadata.animationClips = null;
+                    mesh.skeleton = source.skeleton;
                 } else {
                     BABYLON.Tools.Warn("Failed to locate source skeleton: " + sharedSkeletonId);
                 }
@@ -2742,45 +3859,153 @@ module BABYLON {
                 });
             }
         }
-        private static setupCameraRigOptions(camera:BABYLON.Camera, scene:BABYLON.Scene, ticklist: BABYLON.IScriptComponent[]):void {
+        private static setupCameraRigOptions(camera:BABYLON.Camera, scene:BABYLON.Scene):void {
             if (camera != null && camera.metadata != null && camera.metadata.properties != null) {
-                // Check Orthographic Camera Mode
-                if (camera.mode === BABYLON.Camera.ORTHOGRAPHIC_CAMERA) {
-                    var size:number = camera.metadata.properties.orthographicSize || 5;
-                    var klass:string = "BABYLON.OrthoController";
-                    var resize:boolean = (scene.metadata != null && scene.metadata.properties != null && scene.metadata.properties.hasOwnProperty("resizeCameras")) ? scene.metadata.properties.resizeCameras : true;
-                    var metadata: BABYLON.IObjectMetadata = camera.metadata as BABYLON.IObjectMetadata;
-                    if (metadata.components == null) {
-                        metadata.components = [];
-                    }
-                    var OrthoComponentClass = BABYLON.Tools.Instantiate(klass);
-                    if (OrthoComponentClass != null) {
-                        var bag:any = { orthoSize: size, resizeCameras: resize };
-                        var ortho:BABYLON.SceneComponent = new OrthoComponentClass(camera, scene, false, bag);
-                        if (ortho != null) {
-                            var compscript: BABYLON.IScriptComponent = {
-                                order: 1000,
-                                name: "EditorScriptComponent",
-                                klass: klass,
-                                update: false,
-                                properties: bag,
-                                instance: ortho,
-                                tag: {}
-                            };
-                            metadata.components.push(compscript);
-                            ortho.register();
-                        }
+                // Set Main Camera
+                if (camera.metadata.properties.mainCamera && BABYLON.SceneManager.GetInstance()._playerOneCamera == null) {
+                    camera.viewport = new BABYLON.Viewport(0, 0, 1, 1);
+                    BABYLON.SceneManager.GetInstance()._playerOneCamera = camera;
+                    if (camera.metadata.properties.hasOwnProperty("stereoscopicSideBySide")) {
+                        BABYLON.SceneManager.stereoCameras = camera.metadata.properties.stereoscopicSideBySide;
                     }
                 }
-                // Check VR Device Orientation Camera
+                // Parse Camera Metadata Options
                 if (camera.metadata.properties.cameraType) {
                     var cameraType:string = camera.metadata.properties.cameraType;
-                    if (cameraType === "WebVRFreeCamera" || cameraType === "WebVRGamepadCamera") {
+                    if (cameraType === "UniversalCamera") {
+                        if (camera.metadata.properties.mainCamera && camera.metadata.properties.localMultiPlayerViewCamera) {
+                            var mainCamera:BABYLON.Camera = camera;
+                            var mainCameraName = mainCamera.name;
+                            var playerElements:boolean = camera.metadata.properties.localMultiPlayerElements;
+                            // ..
+                            var playerTwoName:string = mainCameraName + ".2";
+                            var playerTwoCamera:BABYLON.Camera = mainCamera.clone(playerTwoName);
+                            playerTwoCamera.name = playerTwoName;
+                            playerTwoCamera.viewport = new BABYLON.Viewport(0, 0, 0, 0);
+                            playerTwoCamera.setEnabled(false);
+                            BABYLON.SceneManager.GetInstance()._playerTwoCamera = playerTwoCamera;
+                            //
+                            var playerThreeName:string = mainCameraName + ".3";
+                            var playerThreeCamera:BABYLON.Camera = mainCamera.clone(playerThreeName);
+                            playerThreeCamera.name = playerThreeName;
+                            playerThreeCamera.viewport = new BABYLON.Viewport(0, 0, 0, 0);
+                            playerThreeCamera.setEnabled(false);                            
+                            BABYLON.SceneManager.GetInstance()._playerThreeCamera = playerThreeCamera;
+                            // ..
+                            var playerFourName:string = mainCameraName + ".4";
+                            var playerFourCamera:BABYLON.Camera = mainCamera.clone(playerFourName);
+                            playerFourCamera.name = playerFourName;
+                            playerFourCamera.viewport = new BABYLON.Viewport(0, 0, 0, 0);
+                            playerFourCamera.setEnabled(false);
+                            BABYLON.SceneManager.GetInstance()._playerFourCamera = playerFourCamera;
+                            // ..
+                            
+                            
+                            /* USE AS REFERENCE
+                            var playerTwoName:string = mainCameraName + ".2";
+                            var playerTwoCamera:BABYLON.Camera = mainCamera.clone(playerTwoName);
+                            playerTwoCamera.name = playerTwoName;
+                            playerTwoCamera.viewport = new BABYLON.Viewport(0, 0, 0, 0);
+                            playerTwoCamera.setEnabled(false);
+                            BABYLON.SceneManager.GetInstance()._playerTwoCamera = playerTwoCamera;
+                            var playerTwoElement:HTMLDivElement = document.createElement("div");
+                            playerTwoElement.id = "player_two";
+                            playerTwoElement.style.position = "absolute";
+                            playerTwoElement.style.top = "0px";
+                            playerTwoElement.style.left = "0px";
+                            playerTwoElement.style.width = "0px";
+                            playerTwoElement.style.height = "0px";
+                            playerTwoElement.style.padding = "0px";
+                            playerTwoElement.style.margin = "0px";
+                            playerTwoElement.style.opacity = "0";
+                            //playerTwoElement.style.zIndex = "2";
+                            playerTwoElement.style.outline = "none";
+                            playerTwoElement.style.overflow = "hidden";
+                            playerTwoElement.style.touchAction = "none";
+                            playerTwoElement.style.msTouchAction = "none";
+                            playerTwoElement.style.backgroundColor = "transparent";
+                            BABYLON.SceneManager.GetPlayElement().appendChild(playerTwoElement);
+                            BABYLON.SceneManager.GetInstance()._playerTwoElement = playerTwoElement;
+                            //
+                            var playerThreeName:string = mainCameraName + ".3";
+                            var playerThreeCamera:BABYLON.Camera = mainCamera.clone(playerThreeName);
+                            playerThreeCamera.name = playerThreeName;
+                            playerThreeCamera.viewport = new BABYLON.Viewport(0, 0, 0, 0);
+                            playerThreeCamera.setEnabled(false);                            
+                            BABYLON.SceneManager.GetInstance()._playerThreeCamera = playerThreeCamera;
+                            var playerThreeElement:HTMLDivElement = document.createElement("div");
+                            playerThreeElement.id = "player_three";
+                            playerThreeElement.style.position = "absolute";
+                            playerThreeElement.style.top = "0px";
+                            playerThreeElement.style.left = "0px";
+                            playerThreeElement.style.width = "0px";
+                            playerThreeElement.style.height = "0px";
+                            playerThreeElement.style.padding = "0px";
+                            playerThreeElement.style.margin = "0px";
+                            playerThreeElement.style.opacity = "0";
+                            //playerThreeElement.style.zIndex = "2";
+                            playerThreeElement.style.outline = "none";
+                            playerThreeElement.style.overflow = "hidden";
+                            playerThreeElement.style.touchAction = "none";
+                            playerThreeElement.style.msTouchAction = "none";
+                            playerThreeElement.style.backgroundColor = "transparent";
+                            BABYLON.SceneManager.GetPlayElement().appendChild(playerThreeElement);
+                            BABYLON.SceneManager.GetInstance()._playerThreeElement = playerThreeElement;
+                            // ..
+                            var playerFourName:string = mainCameraName + ".4";
+                            var playerFourCamera:BABYLON.Camera = mainCamera.clone(playerFourName);
+                            playerFourCamera.name = playerFourName;
+                            playerFourCamera.viewport = new BABYLON.Viewport(0, 0, 0, 0);
+                            playerFourCamera.setEnabled(false);
+                            BABYLON.SceneManager.GetInstance()._playerFourCamera = playerFourCamera;
+                            var playerFourElement:HTMLDivElement = document.createElement("div");
+                            playerFourElement.id = "player_four";
+                            playerFourElement.style.position = "absolute";
+                            playerFourElement.style.top = "0px";
+                            playerFourElement.style.left = "0px";
+                            playerFourElement.style.width = "0px";
+                            playerFourElement.style.height = "0px";
+                            playerFourElement.style.padding = "0px";
+                            playerFourElement.style.margin = "0px";
+                            playerFourElement.style.opacity = "0";
+                            //playerFourElement.style.zIndex = "2";
+                            playerFourElement.style.outline = "none";
+                            playerFourElement.style.overflow = "hidden";
+                            playerFourElement.style.touchAction = "none";
+                            playerFourElement.style.msTouchAction = "none";
+                            playerFourElement.style.backgroundColor = "transparent";
+                            BABYLON.SceneManager.GetPlayElement().appendChild(playerFourElement);
+                            BABYLON.SceneManager.GetInstance()._playerFourElement = playerFourElement;
+                            */
+
+
+
+                            mainCamera.name = mainCameraName + ".1";
+                            BABYLON.SceneManager.multiPlayerView = true;                                
+                        }
+                    } else if (cameraType === "ArcRotateCamera") {
+                        var arcRotateCamera:BABYLON.ArcRotateCamera = camera as BABYLON.ArcRotateCamera;
+                        var arcRotateAlpha:number = camera.metadata.properties.arcRotateAlpha;
+                        var arcRotateBeta:number = camera.metadata.properties.arcRotateBeta;
+                        var arcRotateRadius:number = camera.metadata.properties.arcRotateRadius;
+                        var arcRotateTarget:number[] = camera.metadata.properties.arcRotateTarget;
+                        var arcRotateLowerRadiusLimit:number = camera.metadata.properties.arcRotateLowerRadiusLimit;
+                        var arcRotateUpperRadiusLimit:number = camera.metadata.properties.arcRotateUpperRadiusLimit;
+                        var arcRotateWheelDeltaPercentage:number = camera.metadata.properties.arcRotateWheelDeltaPercentage;
+                        // Arc Rotate Camera Options
+                        arcRotateCamera.alpha = arcRotateAlpha;
+                        arcRotateCamera.beta = arcRotateBeta;
+                        arcRotateCamera.radius = arcRotateRadius;
+                        arcRotateCamera.target = BABYLON.Vector3.FromArray(arcRotateTarget);
+                        arcRotateCamera.lowerRadiusLimit = arcRotateLowerRadiusLimit;
+                        arcRotateCamera.upperRadiusLimit = arcRotateUpperRadiusLimit;
+                        arcRotateCamera.wheelDeltaPercentage = arcRotateWheelDeltaPercentage;
+                    } else if (cameraType === "WebVRFreeCamera" || cameraType === "WebVRGamepadCamera") {
                         var wvrDeviceCamera:BABYLON.WebVRFreeCamera = camera as BABYLON.WebVRFreeCamera;
                         var cameraTrackPosition:number = camera.metadata.properties.wvrTrackPosition;
                         var cameraPositionScale:number = camera.metadata.properties.wvrPositionScale;
                         var cameraDisplayName:number = camera.metadata.properties.wvrDisplayName;
-                        // WebVR Camera Rig Options
+                        // TODO: WebVR Camera Rig Options
                     } else if (cameraType === "VRDeviceOrientationFreeCamera" || cameraType === "VRDeviceOrientationGamepadCamera") {
                         var cameraBridge:number = camera.metadata.properties.vrCameraBridge;
                         var cameraEyeToScreen:number = camera.metadata.properties.vrEyeToScreen;
@@ -2817,51 +4042,42 @@ module BABYLON {
                         scene.clearColor = new BABYLON.Color4(0,0,0,1);
                     }
                 }
-                // Check Attached Rendering Canvas Control
-                if (camera.metadata.properties.cameraInput && camera.metadata.properties.cameraInput > 0) {
-                    var cameraInput:number = camera.metadata.properties.cameraInput;
-                    if (cameraInput === 1) {
-                        var preventDefault:boolean = (camera.metadata.properties.hasOwnProperty("preventDefaultEvents")) ? camera.metadata.properties.preventDefaultEvents : false;
-                        camera.attachControl(scene.getEngine().getRenderingCanvas(), !preventDefault);
-                    } else if (cameraInput === 2) {
-                        if (camera instanceof BABYLON.FreeCamera) {
-                            var cameraMoveSpeed:number = 1.0;
-                            var cameraRotateSpeed:number = 0.005;
-                            if (camera.metadata.properties.cameraMoveSpeed) cameraMoveSpeed = camera.metadata.properties.cameraMoveSpeed;
-                            if (camera.metadata.properties.cameraRotateSpeed) cameraRotateSpeed = camera.metadata.properties.cameraRotateSpeed;
-                            BABYLON.SceneManager.me.enableAutoCameraUserInput(camera as BABYLON.FreeCamera, cameraMoveSpeed, cameraRotateSpeed);
+                // Check Orthographic Camera Mode
+                if (camera.mode === BABYLON.Camera.ORTHOGRAPHIC_CAMERA) {
+                    var size:number = camera.metadata.properties.orthographicSize || 5;
+                    var klass:string = "BABYLON.OrthoController";
+                    var resize:boolean = (scene.metadata != null && scene.metadata.properties != null && scene.metadata.properties.hasOwnProperty("resizeCameras")) ? scene.metadata.properties.resizeCameras : true;
+                    var metadata: BABYLON.IObjectMetadata = camera.metadata as BABYLON.IObjectMetadata;
+                    if (metadata.components == null) {
+                        metadata.components = [];
+                    }
+                    var OrthoComponentClass = BABYLON.Tools.Instantiate(klass);
+                    if (OrthoComponentClass != null) {
+                        var bag:any = { orthoSize: size, resizeCameras: resize };
+                        var ortho:BABYLON.SceneComponent = new OrthoComponentClass(camera, scene, false, bag);
+                        if (ortho != null) {
+                            var compscript: BABYLON.IScriptComponent = {
+                                order: 1000,
+                                name: "EditorScriptComponent",
+                                klass: klass,
+                                update: false,
+                                properties: bag,
+                                instance: ortho,
+                                tag: {}
+                            };
+                            metadata.components.push(compscript);
+                            ortho.register();
                         }
                     }
                 }
             }
         }
-        private static setupAnimationState(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, scene: BABYLON.Scene) : void {
-            if (owner != null && owner.metadata != null && owner.metadata.api) {
-                var metadata: BABYLON.IObjectMetadata = owner.metadata as BABYLON.IObjectMetadata;
-                var machine:BABYLON.AnimationState = BABYLON.SceneManager.me.findSceneComponent("BABYLON.AnimationState", owner);
-                if (machine != null) {
-                    // Setup Animation Events
-                    if (metadata.animationEvents != null && metadata.animationEvents.length > 0 && metadata.components != null && metadata.components.length > 0) {
-                        var track:BABYLON.Animation = BABYLON.SceneManager.locateOwnerAnimationTrack(0, owner, false);
-                        if (track != null) {
-                            metadata.animationEvents.forEach((evt) => {
-                                if (evt.functionName != null && evt.functionName !== "") {
-                                    var functionName:string = evt.functionName.toLowerCase();
-                                    track.addEvent(new BABYLON.AnimationEvent(evt.frame, ()=>{
-                                        var ownerinstance:any = (<any>machine);
-                                        if (ownerinstance._handlers != null && ownerinstance._handlers[functionName]) {
-                                            var handler:(evt:BABYLON.IAnimationEvent)=>void = ownerinstance._handlers[functionName];
-                                            if (handler) handler(evt);
-                                        }
-                                    }));
-                                }
-                            });
-                        }
-                    }
-                }
-            }            
-        }
-        private static locateOwnerSocketMesh(name:string, owner: BABYLON.AbstractMesh, searchType:BABYLON.SearchType = BABYLON.SearchType.StartsWith):BABYLON.Mesh {
+
+        // ********************************** //
+        // *  Public Scene Locate Support   * //
+        // ********************************** //
+        
+        public static LocateOwnerSocketMesh(name:string, owner: BABYLON.AbstractMesh, searchType:BABYLON.SearchType = BABYLON.SearchType.StartsWith):BABYLON.Mesh {
             var result:BABYLON.Mesh = null;
             if (owner != null && owner.metadata && owner.metadata != null && owner.metadata.socketList && owner.metadata.socketList != null && owner.metadata.socketList.length > 0) {
                 var sockets:BABYLON.ISocketData[] = owner.metadata.socketList;
@@ -2894,7 +4110,7 @@ module BABYLON {
             }
             return result;
         }
-        private static locateOwnerSocketMeshes(owner: BABYLON.AbstractMesh):BABYLON.Mesh[] {
+        public static LocateOwnerSocketMeshes(owner: BABYLON.AbstractMesh):BABYLON.Mesh[] {
             var result:BABYLON.Mesh[] = null;
             if (owner != null && owner.metadata && owner.metadata != null && owner.metadata.socketList && owner.metadata.socketList != null && owner.metadata.socketList.length > 0) {
                 result = [];
@@ -2905,7 +4121,7 @@ module BABYLON {
             }
             return result;
         }
-        private static locateOwnerAnimationTrack(index:number, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, directDecendantsOnly:boolean = true, predicate:(node:BABYLON.Node)=>boolean = null):BABYLON.Animation {
+        public static LocateOwnerAnimationTrack(index:number, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, directDecendantsOnly:boolean = true, predicate:(node:BABYLON.Node)=>boolean = null):BABYLON.Animation {
             var result:BABYLON.Animation = null;
             if (owner != null && owner instanceof BABYLON.AbstractMesh) {
                 var mesh:BABYLON.AbstractMesh = owner as BABYLON.AbstractMesh;
@@ -3000,6 +4216,30 @@ module BABYLON {
             }
             owner.dispose();
         }
+
+        // *********************************** //
+        // * Public Print To Screen Support  * //
+        // *********************************** //
+
+        public static PrintToScreen(text:string, color:string = "white") {
+            BABYLON.SceneManager.print = document.getElementById("print");
+            if (BABYLON.SceneManager.print == null) {
+                var printer = document.createElement("div");
+                printer.id = "print";
+                printer.style.position = "absolute";
+                printer.style.left = "6px";
+                printer.style.bottom = "3px";
+                printer.style.fontSize = "12px";
+                printer.style.zIndex = "10000";
+                printer.style.color = "#0c0";
+                document.body.appendChild(printer);
+                BABYLON.SceneManager.print = printer;
+            }
+            if (BABYLON.SceneManager.print != null && BABYLON.SceneManager.print.innerHTML !== text) {
+                if (BABYLON.SceneManager.print.style.color !== color) BABYLON.SceneManager.print.style.color = color;
+                BABYLON.SceneManager.print.innerHTML = text;
+            }
+        }
         
         // *********************************** //
         // *   Public Blend Tools Support    * //
@@ -3016,24 +4256,26 @@ module BABYLON {
         
         public static SetSkeletonLooping(skeleton:BABYLON.Skeleton, loopBehavior:number) {
             if (skeleton != null) {
-                var owned:any = skeleton;
-                if (owned.metadata == null) owned.metadata = {};
-                owned.metadata.loopMode = loopBehavior;
+                if (skeleton.animationPropertiesOverride == null) skeleton.animationPropertiesOverride = new BABYLON.AnimationPropertiesOverride();
+                skeleton.animationPropertiesOverride.loopMode = loopBehavior;
             }
         }
     
         public static SetSkeletonBlending(skeleton:BABYLON.Skeleton, blendingSpeed:number) {
             if (skeleton != null) {
-                var owned:any = skeleton;
-                if (owned.metadata == null) owned.metadata = {};
-                owned.metadata.enableBlending = (blendingSpeed > 0.0);
-                owned.metadata.blendingSpeed = blendingSpeed;
+                if (skeleton.animationPropertiesOverride == null) skeleton.animationPropertiesOverride = new BABYLON.AnimationPropertiesOverride();
+                skeleton.animationPropertiesOverride.enableBlending = (blendingSpeed > 0.0);
+                skeleton.animationPropertiesOverride.blendingSpeed = blendingSpeed;
             }
         }
 
         public static SetSkeletonProperties(skeleton:BABYLON.Skeleton, loopBehavior:number, blendingSpeed:number) {
-            BABYLON.SceneManager.SetSkeletonLooping(skeleton, loopBehavior);
-            BABYLON.SceneManager.SetSkeletonBlending(skeleton, blendingSpeed);
+            if (skeleton != null) {
+                if (skeleton.animationPropertiesOverride == null) skeleton.animationPropertiesOverride = new BABYLON.AnimationPropertiesOverride();
+                skeleton.animationPropertiesOverride.loopMode = loopBehavior;
+                skeleton.animationPropertiesOverride.enableBlending = (blendingSpeed > 0.0);
+                skeleton.animationPropertiesOverride.blendingSpeed = blendingSpeed;
+            }
         }
 
         // *********************************** //
@@ -3417,49 +4659,22 @@ module BABYLON {
             return customMesh;
         }
 
-        // ********************************* //
-        // *  Scene Markup Helper Support  * //
-        // ********************************* //
+        // ************************************* //
+        // * Babylon Windows Runtime Functions * //
+        // ************************************* //
+        
+        /** Set the Windows Runtime preferred launch windowing mode. */
+        public static SetWindowsLaunchMode(mode:Windows.UI.ViewManagement.ApplicationViewWindowingMode): void {
+            if (BABYLON.SceneManager.IsWindows() && typeof Windows.UI.ViewManagement !== "undefined" &&typeof Windows.UI.ViewManagement.ApplicationView !== "undefined") {
+                Windows.UI.ViewManagement.ApplicationView.preferredLaunchWindowingMode = Windows.UI.ViewManagement.ApplicationViewWindowingMode.fullScreen
+            }
+        }
 
-        /** Gets the index page root element. */
-        public static GetRootElement(): Element {
-            var root: Element = document.getElementById("root");
-            return (root != null) ? root : document.body;
-        }
-        /** Gets the index page gui element. */
-        public static GetGuiElement(): Element {
-            var result: Element = document.getElementById("gui");
-            if (result == null) {
-                var gui: HTMLDivElement = document.createElement("div");
-                gui.id = "gui";
-                gui.style.position = "absolute";
-                gui.style.minHeight = "100%";
-                gui.style.width = "100%";
-                gui.style.height = "100%";
-                gui.style.padding = "0px";
-                gui.style.margin = "0px";
-                gui.style.opacity = "1";
-                gui.style.zIndex = "10";
-                gui.style.outline = "none";
-                gui.style.overflow = "hidden";
-                gui.style.touchAction = "none";
-                gui.style.msTouchAction = "none";
-                gui.style.backgroundColor = "transparent";
-                BABYLON.SceneManager.GetRootElement().appendChild(gui);
-                result = gui;
+        /** Quit the Windows Runtime host application. */
+        public static QuitWindowsApplication(): void {
+            if (BABYLON.SceneManager.IsWindows()) {
+                window.close();
             }
-            return result;
-        }
-        /** Draws the scene html markup text. */
-        public static DrawSceneMarkup(markup: string, element:Element = null): void {
-            var html:Element = (element != null) ? element : BABYLON.SceneManager.GetGuiElement();
-            if (html != null) {
-                html.innerHTML = markup;
-            }
-        }
-        /** Clears the scene markup text. */
-        public static ClearSceneMarkup(element:Element = null): void {
-            BABYLON.SceneManager.DrawSceneMarkup("", element);
         }
 
         // ************************************* //
@@ -3471,49 +4686,147 @@ module BABYLON {
             return ((<any>window).isWebAssemblyPluginEnabled) ? (<any>window).isWebAssemblyPluginEnabled() : false;
         }
         /** Loads and instantiates a web assembly module */
-        public static LoadWebAssemblyModule(url:string, importObject:any):Promise<WebAssembly.Instance> {
+        public static LoadWebAssemblyModule(url:string, importObject:any):Promise<any> {
             return fetch(url).then(response => response.arrayBuffer()).then(bytes => WebAssembly.instantiate(bytes, importObject)).then(results => results.instance);
         }
 
-        // ************************************** //
-        // * Babylon Xbox Live Plugin Functions * //
-        // ************************************** //
+        // *************************************** //
+        // * Babylon Xbox Live Sign In Functions * //
+        // *************************************** //
 
         /** Are xbox live platform services available and user enabled. */
         public static IsXboxLivePluginEnabled(): boolean {
             return ((<any>window).isXboxLivePluginEnabled) ? (<any>window).isXboxLivePluginEnabled() : false;
         }
         /** Is xbox live user signed in if platform services enabled. */
-        public static IsXboxLiveUserSignedIn(systemUser: Windows.System.User = null): boolean {
+        public static IsXboxLiveUserSignedIn(systemUser: Windows.System.User = null, player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One): boolean {
             if (BABYLON.SceneManager.IsXboxLivePluginEnabled()) {
-                var user: Microsoft.Xbox.Services.System.XboxLiveUser = (systemUser != null) ? BABYLON.SceneManager.GetXboxLiveSystemUser(systemUser) : BABYLON.SceneManager.GetXboxLiveUser();
+                var user: Microsoft.Xbox.Services.System.XboxLiveUser = (systemUser != null) ? BABYLON.SceneManager.GetXboxLiveSystemUser(systemUser, player) : BABYLON.SceneManager.GetXboxLiveUser(player);
                 return (user != null && user.isSignedIn == true);
             } else {
                 return false;
             }
         }
-        /** Get xbox live user if platform services available. */
-        public static GetXboxLiveUser(): Microsoft.Xbox.Services.System.XboxLiveUser {
-            return (BABYLON.SceneManager.IsXboxLivePluginEnabled()) ? (<any>window).BabylonToolkit.XboxLive.Plugin.getXboxLiveUser() : null;
-        }
-        /** Get xbox live user if platform services available. */
-        public static GetXboxLiveSystemUser(systemUser: Windows.System.User): Microsoft.Xbox.Services.System.XboxLiveUser {
-            return (BABYLON.SceneManager.IsXboxLivePluginEnabled()) ? (<any>window).BabylonToolkit.XboxLive.Plugin.getXboxLiveSystemUser(systemUser) : null;
-        }
-        /** Get xbox live user context if platform services available. */
-        public static GetXboxLiveContext(): Microsoft.Xbox.Services.XboxLiveContext {
-            return (BABYLON.SceneManager.IsXboxLivePluginEnabled()) ? (<any>window).BabylonToolkit.XboxLive.Plugin.getXboxLiveContext() : null;
-        }
-        /** Get xbox live user profile if platform services available. */
-        public static GetXboxLiveProfile(): Microsoft.Xbox.Services.Social.XboxUserProfile {
-            return (BABYLON.SceneManager.IsXboxLivePluginEnabled()) ? (<any>window).BabylonToolkit.XboxLive.Plugin.getXboxLiveProfile() : null;
-        }
-        /** Resets xbox live user context if platform services available. */
-        public static ResetXboxLiveUserContext(): void {
+        /** Validated sign in xbox live user if platform services available. */
+        public static XboxLiveUserSignIn(player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One, oncomplete?: (result: Microsoft.Xbox.Services.System.SignInResult) => void, onerror?: (error: any) => void, onprogress?: (progress: any) => void): void {
             if (BABYLON.SceneManager.IsXboxLivePluginEnabled()) {
-                (<any>window).BabylonToolkit.XboxLive.Plugin.resetXboxLiveUserContext()
+                BABYLON.SceneManager.XboxLiveUserSilentSignIn(player, (first: Microsoft.Xbox.Services.System.SignInResult) => {
+                    if (first.status === Microsoft.Xbox.Services.System.SignInStatus.userInteractionRequired) {
+                        BABYLON.SceneManager.XboxLiveUserDialogSignIn(player, (second: Microsoft.Xbox.Services.System.SignInResult) => {
+                            if (oncomplete) oncomplete(second);
+                        }, onerror, onprogress);
+                    } else {
+                        if (oncomplete) oncomplete(first);
+                    }
+                }, onerror, onprogress);
             }
         }
+        /** Silent sign in xbox live user if platform services available. */
+        public static XboxLiveUserSilentSignIn(player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One, oncomplete?: (result: Microsoft.Xbox.Services.System.SignInResult) => void, onerror?: (error: any) => void, onprogress?: (progress: any) => void): Windows.Foundation.Projections.Promise<void> {
+            return (BABYLON.SceneManager.IsXboxLivePluginEnabled()) ? BABYLON.SceneManager.GetXboxLiveUser(player).signInSilentlyAsync(null).then(oncomplete, onerror, onprogress) : null;
+        }
+        /** Dialog sign in xbox live user if platform services available. */
+        public static XboxLiveUserDialogSignIn(player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One, oncomplete?: (result: Microsoft.Xbox.Services.System.SignInResult) => void, onerror?: (error: any) => void, onprogress?: (progress: any) => void): Windows.Foundation.Projections.Promise<void> {
+            return (BABYLON.SceneManager.IsXboxLivePluginEnabled()) ? BABYLON.SceneManager.GetXboxLiveUser(player).signInAsync(null).then(oncomplete, onerror, onprogress) : null;
+        }
+        /** Loads a xbox live user profile if platform services available. */
+        public static LoadXboxLiveUserProfile(player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One, oncomplete?: (result: Microsoft.Xbox.Services.Social.XboxUserProfile) => void, onerror?: (error: any) => void, onprogress?: (progress: any) => void): Windows.Foundation.Projections.Promise<void> {
+            return (BABYLON.SceneManager.IsXboxLivePluginEnabled()) ? BABYLON.SceneManager.GetXboxLiveUserContext(player).profileService.getUserProfileAsync(BABYLON.SceneManager.GetXboxLiveUser(player).xboxUserId).then(oncomplete, onerror, onprogress) : null;
+        }
+        
+        // ************************************** //
+        // * Babylon Xbox Live Player Functions * //
+        // ************************************** //
+       
+        /** Get xbox live user if platform services available. */
+        public static GetXboxLiveUser(player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One): Microsoft.Xbox.Services.System.XboxLiveUser {
+            var user: Microsoft.Xbox.Services.System.XboxLiveUser = null;
+            if (BABYLON.SceneManager.IsXboxLivePluginEnabled()) {
+                switch (player) {
+                    case BABYLON.PlayerNumber.One:
+                        user = (<any>window).BabylonToolkit.XboxLive.Plugin.getXboxLiveUserOne();
+                        break;
+                    case BABYLON.PlayerNumber.Two:
+                        user = (<any>window).BabylonToolkit.XboxLive.Plugin.getXboxLiveUserTwo();
+                        break;
+                    case BABYLON.PlayerNumber.Three:
+                        user = (<any>window).BabylonToolkit.XboxLive.Plugin.getXboxLiveUserThree();
+                        break;
+                    case BABYLON.PlayerNumber.Four:
+                        user = (<any>window).BabylonToolkit.XboxLive.Plugin.getXboxLiveUserFour();
+                        break;
+               }
+            }
+            return user;
+        }
+        /** Get xbox live user if platform services available. */
+        public static GetXboxLiveSystemUser(systemUser: Windows.System.User, player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One): Microsoft.Xbox.Services.System.XboxLiveUser {
+            var user: Microsoft.Xbox.Services.System.XboxLiveUser = null;
+            if (BABYLON.SceneManager.IsXboxLivePluginEnabled()) {
+                switch (player) {
+                    case BABYLON.PlayerNumber.One:
+                        user = (<any>window).BabylonToolkit.XboxLive.Plugin.getXboxLiveSystemUserOne(systemUser);
+                        break;
+                    case BABYLON.PlayerNumber.Two:
+                        user = (<any>window).BabylonToolkit.XboxLive.Plugin.getXboxLiveSystemUserTwo(systemUser);
+                        break;
+                    case BABYLON.PlayerNumber.Three:
+                        user = (<any>window).BabylonToolkit.XboxLive.Plugin.getXboxLiveSystemUserThree(systemUser);
+                        break;
+                    case BABYLON.PlayerNumber.Four:
+                        user = (<any>window).BabylonToolkit.XboxLive.Plugin.getXboxLiveSystemUserFour(systemUser);
+                        break;
+               }
+            }
+            return user;
+        }
+        /** Get xbox live user context if platform services available. */
+        public static GetXboxLiveUserContext(player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One): Microsoft.Xbox.Services.XboxLiveContext {
+            var context: Microsoft.Xbox.Services.XboxLiveContext = null;
+            if (BABYLON.SceneManager.IsXboxLivePluginEnabled()) {
+                switch (player) {
+                    case BABYLON.PlayerNumber.One:
+                        context = (<any>window).BabylonToolkit.XboxLive.Plugin.getXboxLiveContextOne();
+                        break;
+                    case BABYLON.PlayerNumber.Two:
+                        context = (<any>window).BabylonToolkit.XboxLive.Plugin.getXboxLiveContextTwo();
+                        break;
+                    case BABYLON.PlayerNumber.Three:
+                        context = (<any>window).BabylonToolkit.XboxLive.Plugin.getXboxLiveContextThree();
+                        break;
+                    case BABYLON.PlayerNumber.Four:
+                        context = (<any>window).BabylonToolkit.XboxLive.Plugin.getXboxLiveContextFour();
+                        break;
+               }
+            }
+            return context;
+        }
+        /** Resets xbox live user context if platform services available. */
+        public static ResetXboxLiveUserContext(player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One): void {
+            if (BABYLON.SceneManager.IsXboxLivePluginEnabled()) {
+                if (BABYLON.SceneManager.IsXboxLivePluginEnabled()) {
+                    switch (player) {
+                        case BABYLON.PlayerNumber.One:
+                            (<any>window).BabylonToolkit.XboxLive.Plugin.resetXboxLiveUserContextOne()
+                            break;
+                        case BABYLON.PlayerNumber.Two:
+                            (<any>window).BabylonToolkit.XboxLive.Plugin.resetXboxLiveUserContextTwo()
+                            break;
+                        case BABYLON.PlayerNumber.Three:
+                            (<any>window).BabylonToolkit.XboxLive.Plugin.resetXboxLiveUserContextThree()
+                            break;
+                        case BABYLON.PlayerNumber.Four:
+                            (<any>window).BabylonToolkit.XboxLive.Plugin.resetXboxLiveUserContextFour()
+                            break;
+                   }
+                }
+            }
+        }
+
+        // *************************************** //
+        // * Babylon Xbox Live Context Functions * //
+        // *************************************** //
+
         /** Get xbox live context property if platform services available. */
         public static GetXboxLiveContextProperty(name:any): any {
             return (BABYLON.SceneManager.IsXboxLivePluginEnabled()) ? (<any>window).BabylonToolkit.XboxLive.Plugin.getXboxLiveContextProperty(name) : null;
@@ -3525,49 +4838,16 @@ module BABYLON {
             }
         }
         /** Resets xbox live property context bag if platform services available. */
-        public static ResetXboxLivePropertyContext(): void {
+        public static ResetXboxLivePropertyContexts(): void {
             if (BABYLON.SceneManager.IsXboxLivePluginEnabled()) {
-                (<any>window).BabylonToolkit.XboxLive.Plugin.resetXboxLivePropertyContext()
+                (<any>window).BabylonToolkit.XboxLive.Plugin.resetXboxLivePropertyContexts()
             }
         }
-        /** Validated sign in xbox live user if platform services available. */
-        public static XboxLiveSignIn(oncomplete?: (result: Microsoft.Xbox.Services.System.SignInResult) => void, onerror?: (error: any) => void, onprogress?: (progress: any) => void): void {
-            if (BABYLON.SceneManager.IsXboxLivePluginEnabled()) {
-                BABYLON.SceneManager.XboxLiveSilentSignIn((first: Microsoft.Xbox.Services.System.SignInResult) => {
-                    if (first.status === Microsoft.Xbox.Services.System.SignInStatus.userInteractionRequired) {
-                        BABYLON.SceneManager.XboxLiveDialogSignIn((second: Microsoft.Xbox.Services.System.SignInResult) => {
-                            if (oncomplete) oncomplete(second);
-                        }, onerror, onprogress);
-                    } else {
-                        if (oncomplete) oncomplete(first);
-                    }
-                }, onerror, onprogress);
-            }
-        }
-        /** Silent sign in xbox live user if platform services available. */
-        public static XboxLiveSilentSignIn(oncomplete?: (result: Microsoft.Xbox.Services.System.SignInResult) => void, onerror?: (error: any) => void, onprogress?: (progress: any) => void): Windows.Foundation.Projections.Promise<void> {
-            return (BABYLON.SceneManager.IsXboxLivePluginEnabled()) ? BABYLON.SceneManager.GetXboxLiveUser().signInSilentlyAsync(null).then(oncomplete, onerror, onprogress) : null;
-        }
-        /** Dialog sign in xbox live user if platform services available. */
-        public static XboxLiveDialogSignIn(oncomplete?: (result: Microsoft.Xbox.Services.System.SignInResult) => void, onerror?: (error: any) => void, onprogress?: (progress: any) => void): Windows.Foundation.Projections.Promise<void> {
-            return (BABYLON.SceneManager.IsXboxLivePluginEnabled()) ? BABYLON.SceneManager.GetXboxLiveUser().signInAsync(null).then(oncomplete, onerror, onprogress) : null;
-        }
-        /** Loads a xbox live user profile if platform services available. */
-        public static LoadXboxLiveUserProfile(oncomplete?: (result: Microsoft.Xbox.Services.Social.XboxUserProfile) => void, onerror?: (error: any) => void, onprogress?: (progress: any) => void): Windows.Foundation.Projections.Promise<void> {
-            if (BABYLON.SceneManager.IsXboxLivePluginEnabled()) {
-                var xboxLiveProfile: Microsoft.Xbox.Services.Social.XboxUserProfile = BABYLON.SceneManager.GetXboxLiveProfile();
-                if (xboxLiveProfile != null) {
-                    if (oncomplete) oncomplete(xboxLiveProfile);
-                    return BABYLON.SceneManager.ResolveGenericPromise(xboxLiveProfile) as Windows.Foundation.Projections.Promise<void>;
-                } else {
-                    var xboxLiveUser = BABYLON.SceneManager.GetXboxLiveUser();
-                    return BABYLON.SceneManager.GetXboxLiveContext().profileService.getUserProfileAsync(xboxLiveUser.xboxUserId).then(function (result) {
-                        (<any>window).BabylonToolkit.XboxLive.Plugin.setXboxLiveProfile(result);
-                        if (oncomplete) oncomplete(result);
-                    }, onerror, onprogress);
-                }
-            }
-        }
+
+        // **************************************** //
+        // * Babylon Xbox Live Sign Out Functions * //
+        // **************************************** //
+        
         /** Sets the Xbox User Sign Out Complete Handler */
         public static SetXboxLiveSignOutHandler(handler: (result: Microsoft.Xbox.Services.System.SignOutCompletedEventArgs) => void = null): void {
             if (BABYLON.SceneManager.IsXboxLivePluginEnabled()) {
