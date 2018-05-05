@@ -1,8 +1,35 @@
+/// <reference path="babylon.d.ts" />
+/// <reference path="babylon.scenemanager.ts" />
+
 module BABYLON {
     export class Utilities {
+        private static UpVector:BABYLON.Vector3 = BABYLON.Vector3.Up();
+        private static ZeroVector:BABYLON.Vector3 = BABYLON.Vector3.Zero();
+        private static TempMatrix:BABYLON.Matrix = BABYLON.Matrix.Zero();
         /** TODO: angle */
 		public static Angle(from:BABYLON.Vector3, to:BABYLON.Vector3):number {
 			return Math.acos(BABYLON.Scalar.Clamp(BABYLON.Vector3.Dot(from.normalize(), to.normalize()), -1, 1)) * 57.29578;
+        }
+        /** TODO: clamp angle */
+        public static ClampAngle(angle:number, min:number, max:number):number {
+            var result:number = angle;
+            do {
+                if (result < -360) {
+                    result += 360;
+                }
+                if (result > 360) {
+                    result -= 360;
+                }
+            } while (result < -360 || result > 360)
+            return BABYLON.Scalar.Clamp(result, min, max);
+        }
+        /** Returns a new radion converted from degree */
+		public static Deg2Rad(degree:number):number {
+			return degree * BABYLON.Constants.Deg2Rad;
+        }
+        /** Returns a new degree converted from radion */
+		public static Rad2Deg(radion:number):number {
+			return radion * BABYLON.Constants.Rad2Deg;
         }
         /** Returns a new Quaternion set from the passed Euler float angles (x, y, z). */
         public static Euler(eulerX:number, eulerY:number, eulerZ:number) : BABYLON.Quaternion {
@@ -20,19 +47,6 @@ module BABYLON {
         public static MatrixToRef(eulerX:number, eulerY:number, eulerZ:number, result:BABYLON.Matrix): void {
             BABYLON.Matrix.RotationYawPitchRollToRef(eulerY, eulerX, eulerZ, result);
         }
-        /** TODO: clamp angle */
-        public static ClampAngle(angle:number, min:number, max:number):number {
-            var result:number = angle;
-            do {
-                if (result < -360) {
-                    result += 360;
-                }
-                if (result > 360) {
-                    result -= 360;
-                }
-            } while (result < -360 || result > 360)
-            return BABYLON.Scalar.Clamp(result, min, max);
-        }
         /** Multplies a quaternion by a vector (rotates vector) */
         public static RotateVector(vec: BABYLON.Vector3, quat: BABYLON.Quaternion): BABYLON.Vector3 {
             var tx:number = 2 * (quat.y * vec.z - quat.z * vec.y);
@@ -49,31 +63,20 @@ module BABYLON {
             result.y = vec.y + quat.w * ty + (quat.z * tx - quat.x * tz);
             result.z = vec.z + quat.w * tz + (quat.x * ty - quat.y * tx);
         }
-        /** TODO: move towards vector */
-        public static MoveTowardsVector(current:BABYLON.Vector3, target:BABYLON.Vector3, maxDistanceDelta:number):BABYLON.Vector3 {
-			var a:BABYLON.Vector3 = target.subtract(current);
-			var magnitude:number = a.length();
-			var result:BABYLON.Vector3;
-			if (magnitude <= maxDistanceDelta || magnitude === 0) {
-				result = target;
-			} else {
-				//result = current + a / magnitude * maxDistanceDelta;
-			}
-			return result;
-        }        
-        /** TODO: move torward angle */
-        public static MoveTowardsAngle(current:number, target:number, maxDelta:number):number {
-			var num:number = BABYLON.Scalar.DeltaAngle(current, target);
-			var result:number;
-			if (-maxDelta < num && num < maxDelta) {
-				result = target;
-			} else {
-				target = current + num;
-				result = BABYLON.Scalar.MoveTowards(current, target, maxDelta);
-			}
-			return result;
-        }       
-        
+        /** Returns a new Quaternion set from the passed vector position. */
+        public static LookRotation(position:BABYLON.Vector3):BABYLON.Quaternion {
+            var result:BABYLON.Quaternion = BABYLON.Quaternion.Zero();
+            BABYLON.Utilities.LookRotationToRef(position, result);
+            return result;
+        }
+        /** Returns a new Quaternion set from the passed vector position. */
+        public static LookRotationToRef(position:BABYLON.Vector3, result:BABYLON.Quaternion):void {
+            BABYLON.Utilities.TempMatrix.reset();
+            BABYLON.Matrix.LookAtLHToRef(BABYLON.Utilities.ZeroVector, position, BABYLON.Utilities.UpVector, BABYLON.Utilities.TempMatrix)
+            BABYLON.Utilities.TempMatrix.invert()
+            BABYLON.Quaternion.FromRotationMatrixToRef(BABYLON.Utilities.TempMatrix, result);
+        }
+
         // *********************************** //
         // *  Scene Transform Tools Support  * //
         // *********************************** //
@@ -131,55 +134,6 @@ module BABYLON {
         public static GetUpVectorToRef(owner: BABYLON.AbstractMesh | BABYLON.Camera, result:BABYLON.Vector3):void {
             owner.getDirectionToRef(BABYLON.Vector3.Up(), result);
         }
-
-        // ************************************* //
-        // *  Public Quaternion Tools Support  * //
-        // ************************************* //
-
-        /** Computes the Quaternion forward vector */
-        public static GetQuaternionForwardVector(quat:Quaternion):BABYLON.Vector3 {
-            return new BABYLON.Vector3( 2 * (quat.x * quat.z + quat.w * quat.y), 2 * (quat.y * quat.x - quat.w * quat.x), 1 - 2 * (quat.x * quat.x + quat.y * quat.y));
-        }
-        /** Computes the Quaternion forward vector */
-        public static GetQuaternionForwardVectorToRef(quat:Quaternion, result:BABYLON.Vector3):void {
-            if (result != null) {
-                result.x = 2 * (quat.x * quat.z + quat.w * quat.y);
-                result.y = 2 * (quat.y * quat.x - quat.w * quat.x);
-                result.z = 1 - 2 * (quat.x * quat.x + quat.y * quat.y);
-            }
-        }
-        /** Computes the Quaternion right vector */
-        public static GetQuaternionRightVector(quat:Quaternion):BABYLON.Vector3  {
-            return new BABYLON.Vector3( 1 - 2 * (quat.y * quat.y + quat.z * quat.z), 2 * (quat.x * quat.y + quat.w * quat.z), 2 * (quat.x * quat.z - quat.w * quat.y));
-        }
-        /** Computes the Quaternion right vector */
-        public static GetQuaternionRightVectorToRef(quat:Quaternion, result:BABYLON.Vector3):void  {
-            if (result != null) {
-                result.x = 1 - 2 * (quat.y * quat.y + quat.z * quat.z);
-                result.y = 2 * (quat.x * quat.y + quat.w * quat.z);
-                result.z = 2 * (quat.x * quat.z - quat.w * quat.y);
-            }
-        }
-        /** Computes the Quaternion up vector */
-        public static GetQuaternionUpVector(quat:Quaternion): BABYLON.Vector3 {
-            return new BABYLON.Vector3( 2 * (quat.x * quat.y - quat.w * quat.z), 1 - 2 * (quat.x * quat.x + quat.z * quat.z), 2 * (quat.y * quat.z + quat.w * quat.x));
-        }
-        /** Computes the Quaternion up vector */
-        public static GetQuaternionUpVectorToRef(quat:Quaternion, result:BABYLON.Vector3): void {
-            if (result != null) {
-                result.x = 2 * (quat.x * quat.y - quat.w * quat.z);
-                result.y = 1 - 2 * (quat.x * quat.x + quat.z * quat.z);
-                result.z = 2 * (quat.y * quat.z + quat.w * quat.x);
-            }
-        }
-        
-        // ********************************** //
-        // * Public Blending Speed Support  * //
-        // ********************************** //
-
-        public static ComputeBlendingSpeed(rate:number, duration:number):number {
-            return 1 / (rate * duration);
-        }
         
         // *********************************** //
         // *   Public Parse Tools Support    * //
@@ -234,7 +188,11 @@ module BABYLON {
             }
             return result;
         }
-
+        
+        public static ParseTransform(source:any, defaultValue:any = null):any {
+            return null; // TODO: Support Transform Serialization
+        }
+        
         // ************************************ //
         // * Public String Tools Support * //
         // ************************************ //
@@ -322,6 +280,140 @@ module BABYLON {
                 BABYLON.Tools.Warn("Failed to load pako library.");
             }
             return result;
+        }
+        
+        // ************************************ //
+        // *  Scene Animation Sampling Tools  * //
+        // ************************************ //
+        
+        /** Set the passed matrix "result" as the sampled key frame value for the specfied animation track. */
+        public static SampleAnimationMatrix(animation:BABYLON.Animation, frame: number, loopMode:number, result:BABYLON.Matrix): void {
+            if (animation != null && animation.dataType === BABYLON.Animation.ANIMATIONTYPE_MATRIX) {
+                var keys:BABYLON.IAnimationKey[] = animation.getKeys();
+                if (frame < keys[0].frame) {
+                    frame = keys[0].frame;
+                } else if (frame > keys[keys.length - 1].frame) {
+                    frame = keys[keys.length - 1].frame;
+                }
+                BABYLON.Utilities.FastMatrixInterpolate(animation, frame, loopMode, result);
+            }
+        }
+        /** Gets the float "result" as the sampled key frame value for the specfied animation track. */
+        public static SampleAnimationFloat(animation:BABYLON.Animation, frame: number, repeatCount: number, loopMode:number, offsetValue:any = null, highLimitValue: any = null): number {
+            var result:number = 0;
+            if (animation != null && animation.dataType === BABYLON.Animation.ANIMATIONTYPE_FLOAT) {
+                var keys:BABYLON.IAnimationKey[] = animation.getKeys();
+                if (frame < keys[0].frame) {
+                    frame = keys[0].frame;
+                } else if (frame > keys[keys.length - 1].frame) {
+                    frame = keys[keys.length - 1].frame;
+                }
+                result = BABYLON.Utilities.FastFloatInterpolate(animation, frame, repeatCount, loopMode, offsetValue, highLimitValue);
+            }
+            return result;
+        }
+        /** Set the passed matrix "result" as the interpolated values for "gradient" (float) between the ones of the matrices "startValue" and "endValue". */
+        public static FastMatrixLerp(startValue:BABYLON.Matrix, endValue:BABYLON.Matrix, gradient:number, result:BABYLON.Matrix): void {
+            BABYLON.Matrix.LerpToRef(startValue, endValue, gradient, result);
+        }
+        /** Set the passed matrix "result" as the spherical interpolated values for "gradient" (float) between the ones of the matrices "startValue" and "endValue". */
+        public static FastMatrixSlerp(startValue:BABYLON.Matrix, endValue:BABYLON.Matrix, gradient:number, result:BABYLON.Matrix): void {
+            BABYLON.Matrix.DecomposeLerpToRef(startValue, endValue, gradient, result);
+        }
+        /** Set the passed matrix "result" as the interpolated values for animation key frame sampling. */
+        public static FastMatrixInterpolate(animation:BABYLON.Animation, currentFrame: number, loopMode:number, result:BABYLON.Matrix):void {
+            var keys:BABYLON.IAnimationKey[] = animation.getKeys();
+            var startKeyIndex = Math.max(0, Math.min(keys.length - 1, Math.floor(keys.length * (currentFrame - keys[0].frame) / (keys[keys.length - 1].frame - keys[0].frame)) - 1));
+            if (keys[startKeyIndex].frame >= currentFrame) {
+                while (startKeyIndex - 1 >= 0 && keys[startKeyIndex].frame >= currentFrame) {
+                    startKeyIndex--;
+                }
+            }
+            for (var key = startKeyIndex; key < keys.length; key++) {
+                var endKey = keys[key + 1];
+                if (endKey.frame >= currentFrame) {
+                    var startKey = keys[key];
+                    var startValue = startKey.value;
+                    if (startKey.interpolation === AnimationKeyInterpolation.STEP) {
+                        result.copyFrom(startValue);
+                        return;
+                    }
+                    var endValue = endKey.value;
+                    var useTangent = startKey.outTangent !== undefined && endKey.inTangent !== undefined;
+                    var frameDelta = endKey.frame - startKey.frame;
+                    // Gradient : percent of currentFrame between the frame inf and the frame sup
+                    var gradient = (currentFrame - startKey.frame) / frameDelta;
+                    // Check for easingFunction and correction of gradient
+                    let easingFunction = animation.getEasingFunction();
+                    if (easingFunction != null) {
+                        gradient = easingFunction.ease(gradient);
+                    }
+                    // Switch anmimation matrix type
+                    switch (loopMode) {
+                        case Animation.ANIMATIONLOOPMODE_CYCLE:
+                        case Animation.ANIMATIONLOOPMODE_CONSTANT:
+                            BABYLON.Utilities.FastMatrixSlerp(startValue, endValue, gradient, result);
+                            return;
+                        case Animation.ANIMATIONLOOPMODE_RELATIVE:
+                            result.copyFrom(startValue);
+                            return;
+                    }
+                    break;
+                }
+            }
+            result.copyFrom(keys[keys.length - 1].value);
+        }
+        /** Returns float result as the interpolated values for animation key frame sampling. */
+        public static FastFloatInterpolate(animation:BABYLON.Animation, currentFrame: number, repeatCount: number, loopMode:number, offsetValue:any = null, highLimitValue: any = null):number {
+            if (loopMode === Animation.ANIMATIONLOOPMODE_CONSTANT && repeatCount > 0) {
+                return highLimitValue.clone ? highLimitValue.clone() : highLimitValue;
+            }
+            var keys:BABYLON.IAnimationKey[] = animation.getKeys();
+            var startKeyIndex = Math.max(0, Math.min(keys.length - 1, Math.floor(keys.length * (currentFrame - keys[0].frame) / (keys[keys.length - 1].frame - keys[0].frame)) - 1));
+            if (keys[startKeyIndex].frame >= currentFrame) {
+                while (startKeyIndex - 1 >= 0 && keys[startKeyIndex].frame >= currentFrame) {
+                    startKeyIndex--;
+                }
+            }
+            for (var key = startKeyIndex; key < keys.length; key++) {
+                var endKey = keys[key + 1];
+                if (endKey.frame >= currentFrame) {
+                    var startKey = keys[key];
+                    var startValue = startKey.value;
+                    if (startKey.interpolation === AnimationKeyInterpolation.STEP) {
+                        return startValue;
+                    }
+                    var endValue = endKey.value;
+                    var useTangent = startKey.outTangent !== undefined && endKey.inTangent !== undefined;
+                    var frameDelta = endKey.frame - startKey.frame;
+                    // Gradient : percent of currentFrame between the frame inf and the frame sup
+                    var gradient = (currentFrame - startKey.frame) / frameDelta;
+                    // Check for easingFunction and correction of gradient
+                    let easingFunction = animation.getEasingFunction();
+                    if (easingFunction != null) {
+                        gradient = easingFunction.ease(gradient);
+                    }
+                    // Switch anmimation float type
+                    var floatValue = useTangent ? animation.floatInterpolateFunctionWithTangents(startValue, startKey.outTangent * frameDelta, endValue, endKey.inTangent * frameDelta, gradient) : animation.floatInterpolateFunction(startValue, endValue, gradient);
+                    switch (loopMode) {
+                        case Animation.ANIMATIONLOOPMODE_CYCLE:
+                        case Animation.ANIMATIONLOOPMODE_CONSTANT:
+                            return floatValue;
+                        case Animation.ANIMATIONLOOPMODE_RELATIVE:
+                            return offsetValue * repeatCount + floatValue;
+                    }
+                    break;
+                }
+            }
+            return keys[keys.length - 1].value;
+        }
+
+        // ********************************** //
+        // * Public Blending Speed Support  * //
+        // ********************************** //
+
+        public static ComputeBlendingSpeed(rate:number, duration:number):number {
+            return 1 / (rate * duration);
         }
     }
 }

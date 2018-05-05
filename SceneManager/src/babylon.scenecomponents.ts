@@ -1,7 +1,9 @@
-﻿module BABYLON {
+﻿/// <reference path="babylon.d.ts" />
+/// <reference path="babylon.scenemanager.ts" />
+
+module BABYLON {
     export abstract class SceneComponent {
         public register: () => void = null;
-        public dispose: () => void = null;
 
         protected tick: boolean = false;
         protected start(): void { }
@@ -35,7 +37,6 @@
             instance.register = function () { instance.registerInstance(instance); };
             instance._before = function () { instance.updateInstance(instance); };
             instance._after = function () { instance.afterInstance(instance); };
-            instance.dispose = function () { instance.disposeInstance(instance); };
         }
         public get scene(): BABYLON.Scene { 
             return this._scene;
@@ -97,33 +98,41 @@
         /* Private Scene Component Instance Worker Functions */
         private registerInstance(instance: any): void {
             if (instance.ready) {
-                instance.manager.onready(()=>{
-                    instance.ready();
-                });
+                instance.manager.onready(()=>{ instance.ready(); });
             }
             instance.scene.registerBeforeRender(instance._before);
             instance.scene.registerAfterRender(instance._after);
         }
         private updateInstance(instance: any): void {
-            if (!instance._started) {
-                instance.init();
-                instance.start();
-                instance._started = true;
-            } else if (instance._started && instance.tick) {
-                instance.update();
-                if (instance.updateIntersectionList) {
-                    instance.updateIntersectionList();
+            if (instance != null && instance.owned != null) {
+                if (!instance._started) {
+                    instance.init();
+                    instance.start();
+                    instance._started = true;
+                } else if (instance._before != null && instance._started && instance.tick) {
+                    instance.update();
+                    if (instance.updateIntersectionList) {
+                        instance.updateIntersectionList();
+                    }
                 }
             }
         }
         private afterInstance(instance: any): void {
-            if (instance._started && instance.tick) {
-                instance.after();
+            if (instance != null && instance.owned != null) {
+                if (instance._after != null && instance._started && instance.tick) {
+                    instance.after();
+                }
             }
         }
-        private disposeInstance(instance: any) {
+        //
+        // Public Static Destroy Instance Helper
+        //
+        public static DestroyInstance(instance: any) {
+            //console.log("===> Destroying Instance: " + instance.owned.name);
+            instance.tick = false;
             instance.scene.unregisterBeforeRender(instance._before);
             instance.scene.unregisterAfterRender(instance._after);
+            try{ instance.destroy(); }catch(e){};
             if (instance.disposeSceneComponent) {
                 instance.disposeSceneComponent();
             }
@@ -131,8 +140,6 @@
                 instance._prefab.dispose();
                 instance._prefab = null;
             }
-            instance.destroy();
-            instance.tick = false;
             instance.owned = null;
             instance._started = false;
             instance._before = null;
@@ -187,12 +194,6 @@
                 window.removeEventListener("resize", this.updateOrthographicSize);
                 this._orthoUpdate = false;
                 this._orthoSize = 0;
-            }
-            if (this._camera.metadata != null && this._camera.metadata.properties != null && this._camera.metadata.properties.hdrPipeline != null) {
-                //var pipeline:BABYLON.HDRRenderingPipeline = this._camera.metadata.properties.hdrPipeline as BABYLON.HDRRenderingPipeline;
-                //pipeline.dispose();
-                //pipeline = null;
-                this._camera.metadata.properties.hdrPipeline = null;
             }
             this._camera = null;
         }        
@@ -261,8 +262,6 @@
                 if (anyImpostor.onCollideEvent == null) {
                     anyImpostor.onCollideEvent = this.updatePhysicsCollisionEvent;
                 }
-            } else {
-                BABYLON.Tools.Warn("Physics imposter not defined for mesh: " + this.mesh.name);
             }
         }
         public getCollisionEventHandler():(collider:BABYLON.AbstractMesh, tag:string) => void {
@@ -372,9 +371,9 @@
         
         private disposeSceneComponent():void {
             this.resetIntersectionList();
-            if (this.mesh != null) {
-                if (this._mesh.skeleton != null && this.mesh.skeleton.bones != null && this._mesh.skeleton.bones.length > 0) {
-                    this.mesh.skeleton.bones.forEach((bone) => {
+            if (this._mesh != null) {
+                if (this._mesh.skeleton != null && this._mesh.skeleton.bones != null && this._mesh.skeleton.bones.length > 0) {
+                    this._mesh.skeleton.bones.forEach((bone) => {
                         if (bone != null && bone.metadata != null) {
                             bone.metadata = null;
                         }
@@ -465,7 +464,9 @@
             this._owned = owner;
             this.slerpIdentity = BABYLON.Quaternion.Identity();
         }
+
         /** Rotates the mesh using rotation quaternions */
+        /*
         public rotate(x: number, y: number, z: number, order:BABYLON.RotateOrder = BABYLON.RotateOrder.ZXY):BABYLON.AbstractMesh {
             var result:BABYLON.AbstractMesh = null;
             if (this._owned != null) {
@@ -487,7 +488,9 @@
             }
             return result;
         }
+        //
         /** Rotates the mesh so the forward vector points at a target position using rotation quaternions. (Options: Y-Yall, X-Pitch, Z-Roll) */
+        /*
         public lookAtPosition(position:BABYLON.Vector3, slerp:number = 0.0, yawCor?: number, pitchCor?: number, rollCor?: number, space?: BABYLON.Space):BABYLON.AbstractMesh {
             var result:BABYLON.AbstractMesh = null;
             if (this._owned != null) {
@@ -498,6 +501,45 @@
             }
             return result;
         }
+        */
+        
+        /** Rotates the mesh using rotation quaternions */
+        //
+        public rotate(x: number, y: number, z: number, order:BABYLON.RotateOrder = BABYLON.RotateOrder.ZXY):BABYLON.TransformNode {
+            var result:BABYLON.TransformNode = null;
+            if (this._owned != null) {
+                // Note: Z-X-Y is default Unity Rotation Order
+                if (this._owned.rotationQuaternion == null) this._owned.rotationQuaternion = BABYLON.Quaternion.RotationYawPitchRoll(this._owned.rotation.y, this._owned.rotation.x, this._owned.rotation.z);
+                if (order === BABYLON.RotateOrder.XYZ) {
+                    result = this._owned.addRotation(x, 0, 0).addRotation(0, y, 0).addRotation(0, 0, z);
+                } else if (order === BABYLON.RotateOrder.XZY) {
+                    result = this._owned.addRotation(x, 0, 0).addRotation(0, 0, z).addRotation(0, y, 0);
+                } else if (order === BABYLON.RotateOrder.ZXY) {
+                    result = this._owned.addRotation(0, 0, z).addRotation(x, 0, 0).addRotation(0, y, 0);
+                } else if (order === BABYLON.RotateOrder.ZYX) {
+                    result = this._owned.addRotation(0, 0, z).addRotation(0, y, 0).addRotation(x, 0, 0);
+                } else if (order === BABYLON.RotateOrder.YZX) {
+                    result = this._owned.addRotation(0, y, 0).addRotation(0, 0, z).addRotation(x, 0, 0);
+                } else {
+                    result = this._owned.addRotation(x, y, z); // Note: Default Babylon Y-X-Z Rotate Order
+                }
+            }
+            return result;
+        }
+        //
+        /** Rotates the mesh so the forward vector points at a target position using rotation quaternions. (Options: Y-Yall, X-Pitch, Z-Roll) */
+        //
+        public lookAtPosition(position:BABYLON.Vector3, slerp:number = 0.0, yawCor?: number, pitchCor?: number, rollCor?: number, space?: BABYLON.Space):BABYLON.TransformNode {
+            var result:BABYLON.TransformNode = null;
+            if (this._owned != null) {
+                if (this._owned.rotationQuaternion == null) this._owned.rotationQuaternion = BABYLON.Quaternion.RotationYawPitchRoll(this._owned.rotation.y, this._owned.rotation.x, this._owned.rotation.z);
+                if (this.slerpIdentity != null && slerp > 0.0) this.slerpIdentity.copyFrom(this._owned.rotationQuaternion);
+                result = this._owned.lookAt(position, yawCor, pitchCor, rollCor, space);
+                if (this.slerpIdentity != null && slerp > 0.0) BABYLON.Quaternion.SlerpToRef(this.slerpIdentity, this._owned.rotationQuaternion, slerp, this._owned.rotationQuaternion)
+            }
+            return result;
+        }
+        //
         public dispose():void {
             this._owned = null;
             this.slerpIdentity = null;
@@ -565,18 +607,18 @@
 
     export class MachineState
     {
+        public hash:number;
+        public name:string;
         public tag:string;
         public time:number;
-        public name:string;
         public type:BABYLON.MotionType;
-        public motion:string;
-        public branch:string;
         public rate:number;
         public length:number;
         public layer:string;
-        public index:number;
+        public layerIndex:number;
+        public played:number;
         public machine:string;
-        public interupted:boolean;
+        public interrupted:boolean;
         public apparentSpeed:number;
         public averageAngularSpeed:number;
         public averageDuration:number;
@@ -592,9 +634,9 @@
         public speedParameter:string;
         public speedParameterActive:boolean;
         public blendtree:BABYLON.IBlendTree;
-        public animations:BABYLON.Animatable[];
         public transitions:BABYLON.ITransition[];
-        public customCurves:any[];
+        public behaviours:BABYLON.IBehaviour[];
+        public animations:BABYLON.Animatable[];
         public constructor() {}
     }
 
@@ -631,6 +673,7 @@
     
     export enum Constants
     {
+        NoScale = 1.0,
         Deg2Rad = 0.0174532924,
         Rad2Deg = 57.29578,
         DiagonalSpeed = 0.7071,
@@ -644,12 +687,19 @@
         IndexOf = 3
     }
 
+    export enum PlayerNumber {
+        One = 1,
+        Two = 2,
+        Three = 3,
+        Four = 4 
+    }
+    
     export enum GamepadType {
         None = -1,
         Generic = 0,
         Xbox360 = 1
     }
-
+    
     export enum JoystickButton {
         Left = 0,
         Right = 1
@@ -820,7 +870,6 @@
     
     export enum BlendTreeType
     {
-        //
         // Summary:
         //     ///
         //     Basic blending using a single parameter.
@@ -853,7 +902,18 @@
         //     ///
         //     Direct control of blending weight for each node.
         //     ///
-        Direct = 4
+        Direct = 4,
+        //
+        // Summary:
+        //     ///
+        //     Standard animation clip.
+        //     ///
+        Clip = 5
+    }
+    
+    export enum BlendTreePosition {
+        Lower = 0,
+        Upper = 1,
     }
     
     export type UserInputAction = (index: number) => void;
@@ -895,9 +955,17 @@
         tag: any;
     }
     
+    export interface IBehaviour {
+        hash:number;
+        name:string;
+        layerIndex:number;
+        properties:any;
+    }
+
     export interface ITransition {
+        hash:number;
         anyState:boolean;
-        indexLayer:number;
+        layerIndex:number;
         machineLayer:string;        
         machineName:string;        
         canTransitionToSelf:boolean;
@@ -917,15 +985,18 @@
     }
 
     export interface ICondition {
+        hash:number;
         mode:BABYLON.ConditionMode;
         parameter:string;
         threshold:number;
     }
 
     export interface IBlendTree {
+        hash:number;
         name:string;
         state:string;
         children:BABYLON.IBlendTreeChild[];
+        layerIndex:number;
         apparentSpeed:number;
         averageAngularSpeed:number;
         averageDuration:number;
@@ -939,18 +1010,36 @@
         minThreshold:number;
         maxThreshold:number;
         useAutomaticThresholds:boolean;
+        directBlendMaster:BABYLON.IBlendTreeChild;
+        simpleThresholdEqual:BABYLON.IBlendTreeChild;
+        simpleThresholdLower:BABYLON.IBlendTreeChild;
+        simpleThresholdUpper:BABYLON.IBlendTreeChild;
+        simpleThresholdDelta:number;
+        valueParameterX:number;
+        valueParameterY:number;
     }
 
     export interface IBlendTreeChild {
+        hash:number;
+        layerIndex:number;
         cycleOffset:number;
         directBlendParameter:string;
+        apparentSpeed:number;
+        averageAngularSpeed:number;
+        averageDuration:number;
+        averageSpeed:number[];
         mirror:boolean
         type:BABYLON.MotionType;
         motion:string;
-        position:number[];
+        positionX:number;
+        positionY:number;
         threshold:number;
         timescale:number;
         subtree: BABYLON.IBlendTree;
+        indexs:number[];
+        weight:number;
+        frame:number;
+        track:BABYLON.IAnimationClip;
     }
     
     export interface INavigationArea {
@@ -1020,23 +1109,30 @@
         rotationX:number;
         rotationY:number;
         rotationZ:number;
-        prefabName:string;
-        prefabPositionX:number;
-        prefabPositionY:number;
-        prefabPositionZ:number;
-        prefabRotationX:number;
-        prefabRotationY:number;
-        prefabRotationZ:number;
     }
 
+    export interface IAvatarMask {
+        hash:number;
+        maskName:string;
+        transformCount:number;
+        transformPaths:string[];
+        transformIndexs:number[];
+    }
+    
     export interface IAnimationClip {
         type: string;
         name: string;
         start: number;
         stop: number;
-        rate:boolean;
+        rate:number;
+        frames:number;
+        weight:number;
         behavior:number;
-        playback: number;
+        apparentSpeed:number;
+        averageSpeed:number[];
+        averageDuration:number;
+        averageAngularSpeed:number;
+        customCurveKeyNames:string[];        
     }
 
     export interface IAnimationEvent {
@@ -1049,6 +1145,34 @@
         objectIdParameter: string;
     }    
 
+    export interface IAnimationLayer {
+        hash:number;
+        name:string;
+        index:number;
+        entry:string;
+        machine:string;
+        iKPass:boolean
+        avatarMask:BABYLON.IAvatarMask;
+        blendingMode:number;
+        defaultWeight:number;
+        syncedLayerIndex:number;
+        syncedLayerAffectsTiming:boolean
+        animationTime:number;
+        animationFrame:number;
+        animationRatio:number;
+        animationNormalize:number;
+        animationReference:number;
+        animationAnimatables:BABYLON.Animatable[];
+        animationBlendLoop:number;
+        animationBlendFrame:number;
+        animationBlendFirst:boolean;
+        animationBlendSpeed:number;
+        animationBlendWeight:number;
+        animationBlendMatrix:BABYLON.Matrix;        
+        animationBlendBuffer:BABYLON.IBlendTreeChild[];        
+        animationStateMachine:BABYLON.MachineState;
+    }
+    
     export interface IAnimationCurve {
         length:number;
         preWrapMode:string;

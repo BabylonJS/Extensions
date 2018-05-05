@@ -1,3 +1,6 @@
+/// <reference path="babylon.d.ts" />
+/// <reference path="babylon.scenemanager.ts" />
+
 declare class Navigation {
     // Babylon Navigation Mesh Tool
     // https://github.com/wanadev/babylon-navigation-mesh

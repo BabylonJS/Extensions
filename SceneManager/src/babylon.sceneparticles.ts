@@ -1,4 +1,9 @@
-﻿module BABYLON {
+﻿/// <reference path="babylon.d.ts" />
+/// <reference path="babylon.scenemanager.ts" />
+/// <reference path="babylon.sceneshuriken.ts" />
+/// <reference path="babylon.sceneutilities.ts" />
+
+module BABYLON {
     /* Universal Particle System Controller */
     export class UniversalParticleSystem extends BABYLON.MeshComponent {
         private _time:number = 0.0;

@@ -1,5 +1,7 @@
 ﻿/* Babylon Character Movement Controller Component */
 /* <reference path="{*path*}/Assets/Babylon/Library/babylon.d.ts" /> */
+/// <reference path="babylon.d.ts" />
+/// <reference path="babylon.scenemanager.ts" />
 
 //////////////////////////////////////////////
 // Notes
@@ -12,6 +14,7 @@
 module BABYLON {
     export class CharacterController extends BABYLON.MeshComponent {
         public movementType:number = BABYLON.MovementType.DirectVelocity;
+        public avatarControl:number = 0; //  Zero: Non Player Character
         public avatarHeight:number = 2.0;
         public avatarRadius:number = 0.25;
         public fallingVelocity:number = 0.1;
@@ -35,6 +38,7 @@ module BABYLON {
         public constructor(owner: BABYLON.AbstractMesh, scene: BABYLON.Scene, tick: boolean = true, propertyBag: any = {}) {
             super(owner, scene, tick, propertyBag);
             this.movementType = this.getProperty("movementType", BABYLON.MovementType.DirectVelocity);
+            this.avatarControl = this.getProperty("avatarControl", 0);
             this.avatarHeight = this.getProperty("avatarHeight", 2.0);
             this.avatarRadius = this.getProperty("avatarRadius", 0.25);
             this.fallingVelocity = this.getProperty("fallingVelocity", 0.1);
@@ -65,8 +69,8 @@ module BABYLON {
 
         /* Public Character Controller Movement Function */
         
-        public move(velocity:BABYLON.Vector3, friction:number = 0.0, jump:number = 0.0):void {
-            this.manager.applyFriction(this.mesh, friction);
+        public move(velocity:BABYLON.Vector3, friction:number = -1.0, jump:number = -1.0):void {
+            if (friction >= 0.0) this.manager.applyFriction(this.mesh, friction);
             if (this.movementType === BABYLON.MovementType.AppliedForces) {
                 this.manager.applyForce(this.mesh, velocity, this.mesh.getAbsolutePosition());
             } else {
@@ -79,7 +83,8 @@ module BABYLON {
                 this.updateGroundingState();
             }
         }
-        public rotate(speed:number):void {
+        public rotate(speed:number, friction:number = -1.0):void {
+            if (friction >= 0.0) this.manager.applyFriction(this.mesh, friction);
             this._angularVelocity.copyFromFloats(0.0, speed, 0.0);
             this.manager.setAngularVelocity(this.mesh, this._angularVelocity);
         }
