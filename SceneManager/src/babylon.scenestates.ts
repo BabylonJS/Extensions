@@ -3,12 +3,14 @@
 
 module BABYLON {
     export class AnimationState extends BABYLON.SceneComponent {
+        ///////////////////////////////////////////////////////////
+        // public debug:any = null;
+        ///////////////////////////////////////////////////////////
         private static EXIT:string = "[EXIT]";
         private static TIMER:number = 3.0;
         private _fps:number = 30;
         private _targets:any[] = null;
         private _machine:any = null;
-        private _enabled:boolean = false;
         private _skeletal:boolean = false;
         private _autoplay:boolean = false;
         private _executed:boolean = false;
@@ -17,9 +19,12 @@ module BABYLON {
         private _boneWeight:number = 0;
         private _boneMatrix:BABYLON.Matrix = BABYLON.Matrix.Zero();
         private _sampleMatrix:BABYLON.Matrix = BABYLON.Matrix.Zero();
+        private _inputPosition:BABYLON.Vector2 = BABYLON.Vector2.Zero();
+        private _childPosition:BABYLON.Vector2 = BABYLON.Vector2.Zero();
         private _onAnimationFrameHandler:()=>void = null;
         private _onAnimationEventHandlers:any = null;
         private _onAnimationBehaveHandlers:any = null;
+        public enabled:boolean = false;
         public speedRatio:number = 1.0;
         public autoTicking:boolean = true;
         public directBlendSpeed:number = 1.0;
@@ -34,12 +39,15 @@ module BABYLON {
             this._onAnimationFrameHandler = null;
             this._onAnimationEventHandlers = {};
             this._onAnimationBehaveHandlers = {};
-            this._fps = this.getProperty("timelineStep", 30);
-            this._enabled = this.getProperty("enableStateMachine", false);
-            this._autoplay = this.getProperty("automaticPlay", false);
-            this._skeletal = (this.getProperty<number>("controlType", 0) === 2);
             this.directBlendSpeed = 1;
             this.speedRatio = 1;
+            // ..
+            // Get Machine State Properties
+            // ..
+            this._fps = this.getProperty("timelineStep", 30);
+            this._autoplay = this.getProperty("automaticPlay", false);
+            this._skeletal = (this.getProperty<number>("controlType", 0) === 2);
+            this.enabled = this.getProperty("enableStateMachine", false);
             // ..
             // Setup Animation State Machine
             // ..
@@ -53,32 +61,32 @@ module BABYLON {
                 this.owned.metadata.state.parameters = {};
                 if (this.owned.metadata.properties != null && this.owned.metadata.properties.stateMachineInfo != null) {
                     this._machine = this.owned.metadata.properties.stateMachineInfo;
-                    if (this._machine != null) {
-                        if (this._machine.speed != null) {
-                            this.speedRatio = this._machine.speed;
-                        }
-                        if (this._machine.parameters != null && this._machine.parameters.length > 0) {
-                            var plist:any[] = this._machine.parameters;
-                            plist.forEach((parameter) => {
-                                var name:string = parameter.name;
-                                var type:BABYLON.AnimatorParameterType = parameter.type;
-                                var curve:boolean = parameter.curve;
-                                var defaultFloat:number = parameter.defaultFloat;
-                                var defaultBool:boolean = parameter.defaultBool;
-                                var defaultInt:number = parameter.defaultInt;
-                                this.owned.metadata.state.parameters[name] = type;
-                                if (type === BABYLON.AnimatorParameterType.Bool) {
-                                    this.setBool(name, defaultBool);
-                                } else if (type === BABYLON.AnimatorParameterType.Float) {
-                                    this.setFloat(name, defaultFloat);
-                                } else if (type === BABYLON.AnimatorParameterType.Int) {
-                                    this.setInteger(name, defaultInt);
-                                } else if (type === BABYLON.AnimatorParameterType.Trigger) {
-                                    this.resetTrigger(name);
-                                }
-                            });
-                        }
+                    if (this._machine.speed != null) {
+                        this.speedRatio = this._machine.speed;
                     }
+                    if (this._machine.parameters != null && this._machine.parameters.length > 0) {
+                        var plist:any[] = this._machine.parameters;
+                        plist.forEach((parameter) => {
+                            var name:string = parameter.name;
+                            var type:BABYLON.AnimatorParameterType = parameter.type;
+                            var curve:boolean = parameter.curve;
+                            var defaultFloat:number = parameter.defaultFloat;
+                            var defaultBool:boolean = parameter.defaultBool;
+                            var defaultInt:number = parameter.defaultInt;
+                            this.owned.metadata.state.parameters[name] = type;
+                            if (type === BABYLON.AnimatorParameterType.Bool) {
+                                this.setBool(name, defaultBool);
+                            } else if (type === BABYLON.AnimatorParameterType.Float) {
+                                this.setFloat(name, defaultFloat);
+                            } else if (type === BABYLON.AnimatorParameterType.Int) {
+                                this.setInteger(name, defaultInt);
+                            } else if (type === BABYLON.AnimatorParameterType.Trigger) {
+                                this.resetTrigger(name);
+                            }
+                        });
+                    }
+                } else {
+                    BABYLON.Tools.Warn("Babylon.js cannot locate owner animation state machine info metadata for: " + this.owned.name);
                 }
             }
             // ..
@@ -135,7 +143,6 @@ module BABYLON {
                 }
             }
         }
-        protected ready(): void { this.setupStateMachine(); }
         protected start(): void { this.startStateMachine(); }
         protected update(): void { if (this.autoTicking === true) this.updateStateMachine(); }
         protected destroy(): void {
@@ -145,6 +152,8 @@ module BABYLON {
             this._boneAnim = null;
             this._boneWeight = 0;
             this._boneMatrix = null;
+            this._inputPosition = null;
+            this._childPosition = null;
             this._onAnimationFrameHandler = null;
             this._onAnimationEventHandlers = null;
             this._onAnimationBehaveHandlers = null;
@@ -155,9 +164,9 @@ module BABYLON {
         
         /* Animation Controller Play State Function */
         
-        public play(name:string, blending:number = 0, layer:number = 0):void {
-            if (this._machine.layers != null && this._machine.layers.length > layer) {
-                this.setCurrentAnimationState(this._machine.layers[layer], name, blending);
+        public play(state:string, transitionDuration:number = 0, animationLayer:number = 0):void {
+            if (this.enabled === true && this._machine.layers != null && this._machine.layers.length > animationLayer) {
+                this.setCurrentAnimationState(this._machine.layers[animationLayer], state, BABYLON.Utilities.ComputeBlendingSpeed(this._fps, transitionDuration));
             }
         }
 
@@ -241,18 +250,18 @@ module BABYLON {
             }
             return result;
         }
-        public onAnimationFrame(handler:()=>void):void {
-            this._onAnimationFrameHandler = handler;
-        }
-        public onAnimationEvent(name:string, handler:(evt:BABYLON.IAnimationEvent)=>void):void {
-            if (name != null && name !== "") {
-                this._onAnimationEventHandlers[name.toLowerCase()] = handler;
-            }
-        }
         public onAnimationBehaviour(name:string, handler:(state:string, event:string)=>void):void {
             if (name != null && name !== "") {
                 this._onAnimationBehaveHandlers[name.toLowerCase()] = handler;
             }
+        }
+        public onAnimationTrackEvent(name:string, handler:(evt:BABYLON.IAnimationEvent)=>void):void {
+            if (name != null && name !== "") {
+                this._onAnimationEventHandlers[name.toLowerCase()] = handler;
+            }
+        }
+        public onAnimationFrameUpdate(handler:()=>void):void {
+            this._onAnimationFrameHandler = handler;
         }
 
         /* Animation Controller Private Worker Functions */
@@ -335,7 +344,7 @@ module BABYLON {
 
         /* Animation Controller State Machine Functions */
         
-        private setupStateMachine():void {
+        private startStateMachine():void {
             // Map Animation Clips
             var clips:BABYLON.IAnimationClip[] = this.manager.getAnimationClips(this.owned);
             if (clips != null && clips.length > 0) {
@@ -354,15 +363,11 @@ module BABYLON {
                     }
                 });
             }
-            // Dump State Machine Debug Information
-            //console.log("===> Setup State Machine: " + this.owned.name);
-            //console.log(this);
-        }
-        private startStateMachine():void {
+            // Start Animmation State Machine
             if (this._executed === false) {
                 this._executed = true;
-                if (this._enabled === true) {
-                    // Enable State Machine Mode
+                if (this.enabled === true) {
+                    // Start In State Machine Mode
                     if (this._autoplay === true && this._machine.layers != null && this._machine.layers.length > 0) {
                         if (this._skeletal == true) {
                             this._machine.layers.forEach((layer:BABYLON.IAnimationLayer) => {
@@ -373,40 +378,45 @@ module BABYLON {
                         }
                     }
                 } else {
-                    // Enable Standard Animation Mode
+                    // Start In Standard Animation Mode
                     if (this._autoplay === true) {
                         this.manager.playAnimationClip(null, this.owned);
                     }
                 }
             }
             // Dump State Machine Debug Information
-            //console.log("===> Start State Machine: " + this.owned.name);
-            //console.log(this);
+            console.log("*** Dump State Machine: " + this.owned.name);
+            console.log(this);
         }
         private updateStateMachine():void {
-            this.updateAnimationCurves();
-            if (this._machine.layers != null && this._machine.layers.length > 0) {
-                if (this._skeletal == true) {
-                    this._machine.layers.forEach((layer:BABYLON.IAnimationLayer) => {
-                        if (layer != null) {
-                            this.processStateMachine(layer);
+            if (this.enabled === true) {
+                this.updateAnimationCurves();
+                if (this._machine.layers != null && this._machine.layers.length > 0) {
+                    if (this._skeletal == true) {
+                        this._machine.layers.forEach((layer:BABYLON.IAnimationLayer) => {
+                            if (layer != null) {
+                                this.processStateMachine(layer);
+                            }
+                        });
+                    } else {
+                        if (this._machine.layers[0] != null) {
+                            this.processStateMachine(this._machine.layers[0]);
                         }
-                    });
-                } else {
-                    if (this._machine.layers[0] != null) {
-                        this.processStateMachine(this._machine.layers[0]);
                     }
                 }
-            }
-            this.updateAnimationSkeletons();
-            if (this._onAnimationFrameHandler != null) {
-                this._onAnimationFrameHandler();
+                this.updateAnimationTargets();
+                // ..
+                // Dispatch Final Frame Update Event
+                // ..
+                if (this._onAnimationFrameHandler != null) {
+                    this._onAnimationFrameHandler();
+                }
             }
         }
         private updateAnimationCurves():void {
             // TODO: Update Custom Animation Curves
         }
-        private updateAnimationSkeletons() :void {
+        private updateAnimationTargets() :void {
             if (this._skeletal === true && this._targets != null && this._targets.length > 0) {
                 this._targets.forEach((target) => {
                     if (target != null && target instanceof BABYLON.AbstractMesh) {
@@ -426,6 +436,9 @@ module BABYLON {
                                 if (bone.animations != null && bone.animations.length > 0) {
                                     for (let index = 0; index < bone.animations.length; index++) {
                                         const element = bone.animations[index];
+                                        // ..
+                                        // TODO: Replace string comparison for performance
+                                        // ..
                                         if (element.name.substr(0, 9) === "skeleton:" && element.dataType === Animation.ANIMATIONTYPE_MATRIX) {
                                             this._boneAnim = element;
                                             break;
@@ -435,35 +448,39 @@ module BABYLON {
                                         var blendingSpeed:number = avatar.skeleton.animationPropertiesOverride ? avatar.skeleton.animationPropertiesOverride.blendingSpeed : this._boneAnim.blendingSpeed;
                                         if (this._machine.layers != null && this._machine.layers.length > 0) {
                                             this._machine.layers.forEach((layer:BABYLON.IAnimationLayer) => {
-                                                layer.animationBlendWeight = 0;
-                                                layer.animationBlendMatrix.reset();
-                                                if (layer.index === 0 || layer.defaultWeight > 0) {
-                                                    if (layer.index === 0 || layer.avatarMask == null || layer.avatarMask.transformIndexs == null || this.filterBoneTransformIndex(layer, bone)) {
-                                                        if (layer.animationStateMachine.type === BABYLON.MotionType.Tree || (layer.animationStateMachine.type === BABYLON.MotionType.Clip && layer.animationBlendFrame >= 0 && (layer.animationBlendFirst || layer.animationBlendLoop < 2))) {
-                                                            if (layer.animationBlendBuffer != null && layer.animationBlendBuffer.length > 0) {
-                                                                layer.animationBlendBuffer.forEach((blender) => {
-                                                                    if (blender.track != null) {
-                                                                        this._sampleMatrix.reset();
-                                                                        BABYLON.Utilities.SampleAnimationMatrix(this._boneAnim, blender.frame, BABYLON.Scalar.Clamp(blender.track.behavior, 0, 1), this._sampleMatrix);
-                                                                        if (blender.mirror === true) {
-                                                                            // ..
-                                                                            // FIXME: this._sampleMatrix.multiplyToRef(BABYLON.Matrix.Scaling(1,-1,-1), this._sampleMatrix);
-                                                                            // ..
+                                                if (layer.animationStateMachine != null) {
+                                                    layer.animationBlendWeight = 0;
+                                                    layer.animationBlendMatrix.reset();
+                                                    if (layer.index === 0 || layer.defaultWeight > 0) {
+                                                        if (layer.index === 0 || layer.avatarMask == null || layer.avatarMask.transformIndexs == null || this.filterBoneTransformIndex(layer, bone)) {
+                                                            if (layer.animationStateMachine.type === BABYLON.MotionType.Tree || (layer.animationStateMachine.type === BABYLON.MotionType.Clip && layer.animationBlendFrame >= 0 && (layer.animationBlendFirst || layer.animationBlendLoop < 2))) {
+                                                                if (layer.animationBlendBuffer != null && layer.animationBlendBuffer.length > 0) {
+                                                                    layer.animationBlendBuffer.forEach((blender) => {
+                                                                        if (blender.track != null) {
+                                                                            this._sampleMatrix.reset();
+                                                                            BABYLON.Utilities.SampleAnimationMatrix(this._boneAnim, blender.frame, BABYLON.Scalar.Clamp(blender.track.behavior, 0, 1), this._sampleMatrix);
+                                                                            if (blender.mirror === true) {
+                                                                                // ..
+                                                                                // TODO: this._sampleMatrix.multiplyToRef(BABYLON.Matrix.Scaling(1,-1,-1), this._sampleMatrix);
+                                                                                // ..
+                                                                            }
+                                                                            this.blendAnimationMatrix(layer, this._sampleMatrix, blender.weight);
                                                                         }
-                                                                        this.blendAnimationMatrix(layer, this._sampleMatrix, blender.weight);
-                                                                    }
-                                                                });
+                                                                    });
+                                                                }
                                                             }
                                                         }
                                                     }
-                                                }
-                                                if (layer.animationBlendWeight > 0) {
-                                                    if (layer.animationBlendSpeed > blendingSpeed) blendingSpeed = layer.animationBlendSpeed;
-                                                    this.blendBoneMatrix(layer.animationBlendMatrix, ((layer.index === 0) ? 1.0 : layer.defaultWeight));
+                                                    if (layer.animationBlendWeight > 0) {
+                                                        if (layer.animationBlendSpeed > blendingSpeed) blendingSpeed = layer.animationBlendSpeed;
+                                                        this.blendBoneMatrix(layer.animationBlendMatrix, ((layer.index === 0) ? 1.0 : layer.defaultWeight));
+                                                    }
                                                 }
                                             });
                                         }
-                                        if (this._boneWeight > 0) this.updateBoneMatrix(bone, (blendingSpeed > 0.0), blendingSpeed);
+                                        if (this._boneWeight > 0) { 
+                                            this.updateBoneMatrix(bone, (blendingSpeed > 0.0), blendingSpeed);
+                                        }
                                     }
                                 }
                             });
@@ -478,7 +495,7 @@ module BABYLON {
         /* Animation Controller Machine Layers Functions */
 
         private processStateMachine(layer:BABYLON.IAnimationLayer):void {
-            layer.animationTime += (this.manager.deltaTime * (layer.animationRatio * this.speedRatio));
+            layer.animationTime += (this.manager.deltaTime * ((layer.animationRatio * this.speedRatio) * BABYLON.Constants.SpeedCompensator));
             if (layer.animationTime > layer.animationNormalize) layer.animationTime = 0;
             layer.animationFrame = BABYLON.Scalar.Normalize(layer.animationTime, 0, layer.animationNormalize);
             // .. 
@@ -515,6 +532,37 @@ module BABYLON {
             }
             // Parse Skeletal Animation Systems
             this.parseSkeletalAnimationTrackLayer(layer);
+            // Parse Animation State System Events
+            this.parseAnimationStateMachineEvents(layer);
+            
+        }
+        private parseAnimationStateMachineEvents(layer:BABYLON.IAnimationLayer):void {
+
+            // TODO: Dispatch State Behaviour Events For Layer
+
+
+            // TODO: Dispatch Animation Track Events For Layer
+
+            /*
+            // Setup Animation Events
+            if (metadata.animationEvents != null && metadata.animationEvents.length > 0 && metadata.components != null && metadata.components.length > 0) {
+                var track:BABYLON.Animation = BABYLON.SceneManager.LocateOwnerAnimationTrack(0, owner, false);
+                if (track != null) {
+                    metadata.animationEvents.forEach((evt) => {
+                        if (evt.functionName != null && evt.functionName !== "") {
+                            var functionName:string = evt.functionName.toLowerCase();
+                            track.addEvent(new BABYLON.AnimationEvent(evt.frame, ()=>{
+                                var ownerinstance:any = (<any>machine);
+                                if (ownerinstance._handlers != null && ownerinstance._handlers[functionName]) {
+                                    var handler:(evt:BABYLON.IAnimationEvent)=>void = ownerinstance._handlers[functionName];
+                                    if (handler) handler(evt);
+                                }
+                            }));
+                        }
+                    });
+                }
+            }
+            */
         }
         private setCurrentAnimationState(layer:BABYLON.IAnimationLayer, name:string, blending:number):void {
             if (name == null || name === "" || name === BABYLON.AnimationState.EXIT) return;
@@ -707,80 +755,7 @@ module BABYLON {
             }
             return result;
         }
-        
-        /* Animation Controller Blend Tree Functions */
-        
-        private setTreeThresholds(layer:BABYLON.IAnimationLayer, tree:BABYLON.IBlendTree):void {
-            tree.directBlendMaster = null;
-            tree.simpleThresholdEqual = null;
-            tree.simpleThresholdLower = null;
-            tree.simpleThresholdUpper = null;
-            tree.simpleThresholdDelta = 1.0;
-            tree.valueParameterX = parseFloat(this.getFloat(tree.blendParameterX).toFixed(2));
-            tree.valueParameterY = parseFloat(this.getFloat(tree.blendParameterY).toFixed(2));
-            if (tree.children != null && tree.children.length > 0) {
-                tree.children.forEach((child) => {
-                    child.indexs = (layer.avatarMask != null && layer.avatarMask.transformIndexs != null && layer.avatarMask.transformIndexs.length > 0) ? layer.avatarMask.transformIndexs : null;
-                    child.weight = -1;
-                    child.frame = -1;
-                    // ..
-                    // Parse Simple Blend Tree Threasholds
-                    // ..
-                    if (tree.blendType === BABYLON.BlendTreeType.Simple1D) {
-                        if (tree.simpleThresholdEqual == null) {
-                            if (tree.valueParameterX === child.threshold) {
-                                tree.simpleThresholdEqual = child;
-                                tree.simpleThresholdLower = null;
-                                tree.simpleThresholdUpper = null;
-                            } else if (tree.valueParameterX > child.threshold) {
-                                // Get Closest Lower Threshold
-                                if (tree.simpleThresholdLower == null) {
-                                    tree.simpleThresholdLower = child;
-                                } else {
-                                    if (child.threshold > tree.simpleThresholdLower.threshold) {
-                                        tree.simpleThresholdLower = child;
-                                    }
-                                }
-                            } else if (tree.valueParameterX < child.threshold) {
-                                // Get Closest Upper Threshold
-                                if (tree.simpleThresholdUpper == null) {
-                                    tree.simpleThresholdUpper = child;
-                                } else {
-                                    if (child.threshold < tree.simpleThresholdUpper.threshold) {
-                                        tree.simpleThresholdUpper = child;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    if (child.type === BABYLON.MotionType.Tree) {
-                        this.setTreeThresholds(layer, child.subtree);
-                    }
-                });
-                // ..
-                // Syncronize Simple Blend Tree Threasholds
-                // ..
-                if (tree.blendType === BABYLON.BlendTreeType.Simple1D) {
-                    if (tree.simpleThresholdEqual == null) {
-                        if (tree.simpleThresholdLower != null && tree.simpleThresholdUpper == null) {
-                            tree.simpleThresholdEqual = tree.simpleThresholdLower;
-                            tree.simpleThresholdLower = null;
-                            tree.simpleThresholdUpper = null;
-                        } else if (tree.simpleThresholdUpper != null && tree.simpleThresholdLower == null) {
-                            tree.simpleThresholdEqual = tree.simpleThresholdUpper;
-                            tree.simpleThresholdLower = null;
-                            tree.simpleThresholdUpper = null;
-                        }
-                    }
-                    if (tree.simpleThresholdLower != null && tree.simpleThresholdUpper != null) {
-                        tree.simpleThresholdDelta = parseFloat(BABYLON.Scalar.Normalize(tree.valueParameterX, tree.simpleThresholdLower.threshold, tree.simpleThresholdUpper.threshold).toFixed(2));
-                    } else {
-                        tree.simpleThresholdDelta = 1.0;
-                    }
-                }
-            }
-        }
-        private sortBlendBuffer(layer:BABYLON.IAnimationLayer):void {
+        private sortBlendingBuffer(layer:BABYLON.IAnimationLayer):void {
             if (layer.animationBlendBuffer != null && layer.animationBlendBuffer.length > 0) {
                 // Sort In Descending Order
                 layer.animationBlendBuffer.sort((left, right): number => {
@@ -790,6 +765,100 @@ module BABYLON {
                 });
             }
         }
+
+        /* Animation Controller Reset Tree Functions */
+        
+        private resetTreeBranches(layer:BABYLON.IAnimationLayer, tree:BABYLON.IBlendTree):void {
+            tree.directBlendMaster = null;
+            tree.simpleThresholdEqual = null;
+            tree.simpleThresholdLower = null;
+            tree.simpleThresholdUpper = null;
+            tree.simpleThresholdDelta = 1.0;
+            tree.valueParameterX = parseFloat(this.getFloat(tree.blendParameterX).toFixed(2));
+            tree.valueParameterY = parseFloat(this.getFloat(tree.blendParameterY).toFixed(2));
+            if (tree.children != null && tree.children.length > 0) {
+                tree.children.forEach((child) => {
+                    child.input = -1;
+                    child.frame = -1;
+                    child.weight = -1;
+                    child.indexs = (layer.avatarMask != null && layer.avatarMask.transformIndexs != null && layer.avatarMask.transformIndexs.length > 0) ? layer.avatarMask.transformIndexs : null;
+                    this.resetInputDistanceWeight(tree, child);
+                    if (child.type === BABYLON.MotionType.Tree) {
+                        this.resetTreeBranches(layer, child.subtree);
+                    }
+                });
+                this.resetInputDistanceThreasholds(tree);
+            }
+        }
+        private resetInputDistanceWeight(parent:BABYLON.IBlendTree, child:BABYLON.IBlendTreeChild):void {
+            this._childPosition.x = child.positionX;
+            this._childPosition.y = child.positionY;
+            this._inputPosition.x = parent.valueParameterX;
+            this._inputPosition.y = parent.valueParameterY;
+            switch(parent.blendType) {
+                case BABYLON.BlendTreeType.Simple1D: {
+                    if (parent.simpleThresholdEqual == null) {
+                        if (parent.valueParameterX === child.threshold) {
+                            parent.simpleThresholdEqual = child;
+                            parent.simpleThresholdLower = null;
+                            parent.simpleThresholdUpper = null;
+                        } else if (parent.valueParameterX > child.threshold) {
+                            // Get Closest Lower Threshold
+                            if (parent.simpleThresholdLower == null) {
+                                parent.simpleThresholdLower = child;
+                            } else {
+                                if (child.threshold > parent.simpleThresholdLower.threshold) {
+                                    parent.simpleThresholdLower = child;
+                                }
+                            }
+                        } else if (parent.valueParameterX < child.threshold) {
+                            // Get Closest Upper Threshold
+                            if (parent.simpleThresholdUpper == null) {
+                                parent.simpleThresholdUpper = child;
+                            } else {
+                                if (child.threshold < parent.simpleThresholdUpper.threshold) {
+                                    parent.simpleThresholdUpper = child;
+                                }
+                            }
+                        }
+                    }
+                    break;
+                }
+                case BABYLON.BlendTreeType.SimpleDirectional2D:
+                    child.input = this.computeSimpleDirectionalWeight(parent, this._inputPosition, this._childPosition);
+                    break;
+                case BABYLON.BlendTreeType.FreeformDirectional2D:
+                    child.input = this.computeFreeformDirectionalWeight(parent, this._inputPosition, this._childPosition);
+                    break;
+                case BABYLON.BlendTreeType.FreeformCartesian2D: {
+                    child.input = this.computeFreeformCartesianWeight(parent, this._inputPosition, this._childPosition);
+                    break;
+                }
+            }
+        }
+        private resetInputDistanceThreasholds(parent:BABYLON.IBlendTree):void {
+            if (parent.blendType === BABYLON.BlendTreeType.Simple1D) {
+                if (parent.simpleThresholdEqual == null) {
+                    if (parent.simpleThresholdLower != null && parent.simpleThresholdUpper == null) {
+                        parent.simpleThresholdEqual = parent.simpleThresholdLower;
+                        parent.simpleThresholdLower = null;
+                        parent.simpleThresholdUpper = null;
+                    } else if (parent.simpleThresholdUpper != null && parent.simpleThresholdLower == null) {
+                        parent.simpleThresholdEqual = parent.simpleThresholdUpper;
+                        parent.simpleThresholdLower = null;
+                        parent.simpleThresholdUpper = null;
+                    }
+                }
+                if (parent.simpleThresholdLower != null && parent.simpleThresholdUpper != null) {
+                    parent.simpleThresholdDelta = parseFloat(BABYLON.Scalar.Normalize(parent.valueParameterX, parent.simpleThresholdLower.threshold, parent.simpleThresholdUpper.threshold).toFixed(2));
+                } else {
+                    parent.simpleThresholdDelta = 1.0;
+                }
+            }
+        }
+
+        /* Animation Controller Parse Blend Tree Functions */
+        
         private parseTreeBranches(layer:BABYLON.IAnimationLayer, tree:BABYLON.IBlendTree, frame:number):void {
             if (tree != null && tree.children != null && tree.children.length > 0) {
                 tree.children.forEach((child) => {
@@ -815,15 +884,7 @@ module BABYLON {
                     }
                     if (child.weight > 0) {
                         if (layer.animationBlendBuffer == null) layer.animationBlendBuffer = [];
-                        if (tree.blendType === BABYLON.BlendTreeType.Simple1D) {
-                            if (layer.animationBlendBuffer.length < 2) {
-                                layer.animationBlendBuffer.push(child);
-                            } else {
-                                BABYLON.Tools.Warn("Babylon.js orphan simple blend tree hash encountered: " + child.hash.toString());
-                            }
-                        } else {
-                            layer.animationBlendBuffer.push(child);
-                        }                        
+                        layer.animationBlendBuffer.push(child);
                     }
                 });
             }
@@ -879,16 +940,46 @@ module BABYLON {
             }
         }
         private parseSimpleDirectionalTreeItem(layer:BABYLON.IAnimationLayer, parent:BABYLON.IBlendTree, child:BABYLON.IBlendTreeChild, frame:number):void {
+            if (child != null && parent != null) {
+                if (child.type === BABYLON.MotionType.Tree) {
+                    this.parseTreeBranches(layer, child.subtree, frame);
+                } else if (child.type === BABYLON.MotionType.Clip) {
+                    if (child.track != null && layer.animationStateMachine != null) {
+                        child.frame = this.getDenormalizedFrame(child.track, frame);
+                        child.weight = 0; // TODO: Use child.input weight if applicable to simple directional
+                    }
+                }
+            }
         }
         private parseFreeformDirectionalTreeItem(layer:BABYLON.IAnimationLayer, parent:BABYLON.IBlendTree, child:BABYLON.IBlendTreeChild, frame:number):void {
+            if (child != null && parent != null) {
+                if (child.type === BABYLON.MotionType.Tree) {
+                    this.parseTreeBranches(layer, child.subtree, frame);
+                } else if (child.type === BABYLON.MotionType.Clip) {
+                    if (child.track != null && layer.animationStateMachine != null) {
+                        child.frame = this.getDenormalizedFrame(child.track, frame);
+                        child.weight = 0; // TODO: Use child.input weight if applicable to freeform directional
+                    }
+                }
+            }
         }
         private parseFreeformCartesianTreeItem(layer:BABYLON.IAnimationLayer, parent:BABYLON.IBlendTree, child:BABYLON.IBlendTreeChild, frame:number):void {
+            if (child != null && parent != null) {
+                if (child.type === BABYLON.MotionType.Tree) {
+                    this.parseTreeBranches(layer, child.subtree, frame);
+                } else if (child.type === BABYLON.MotionType.Clip) {
+                    if (child.track != null && layer.animationStateMachine != null) {
+                        child.frame = this.getDenormalizedFrame(child.track, frame);
+                        child.weight = 0; // TODO: Use child.input weight if applicable to freeform cartesian
+                    }
+                }
+            }
         }
         private parseSkeletalAnimationTrackLayer(layer:BABYLON.IAnimationLayer) :void {
             if (this._skeletal === true) {
                 if (layer.animationStateMachine != null && layer.animationStateMachine.blendtree != null) {
                     if (layer.animationStateMachine.type === BABYLON.MotionType.Clip && layer.animationStateMachine.played !== -1) layer.animationStateMachine.played += (this.manager.deltaTime * this._fps);
-                    this.setTreeThresholds(layer, layer.animationStateMachine.blendtree);
+                    this.resetTreeBranches(layer, layer.animationStateMachine.blendtree);
                     this.parseTreeBranches(layer, layer.animationStateMachine.blendtree, layer.animationFrame);
                     if (layer.animationBlendBuffer != null && layer.animationBlendBuffer.length > 0) {
                         if (layer.animationStateMachine.type === BABYLON.MotionType.Clip) {
@@ -898,7 +989,7 @@ module BABYLON {
                             // Parse Blend Tree Speed Ratio
                             switch(layer.animationStateMachine.blendtree.blendType) {
                                 case BABYLON.BlendTreeType.Direct:
-                                    this.sortBlendBuffer(layer);
+                                    this.sortBlendingBuffer(layer);
                                     if (layer.animationStateMachine.blendtree.directBlendMaster != null) {
                                         layer.animationRatio = this.computeSpeedRatio(layer, layer.animationStateMachine.blendtree.directBlendMaster.track, null, 1.0, layer.animationStateMachine.blendtree.directBlendMaster.timescale) * this.directBlendSpeed;
                                     }
@@ -914,13 +1005,16 @@ module BABYLON {
                                     }
                                     break;
                                 case BABYLON.BlendTreeType.SimpleDirectional2D:
-                                    this.sortBlendBuffer(layer);
+                                    this.sortBlendingBuffer(layer);
+                                    // TODO: Update layer.animationRatio
                                     break;
                                 case BABYLON.BlendTreeType.FreeformDirectional2D:
-                                    this.sortBlendBuffer(layer);
+                                    this.sortBlendingBuffer(layer);
+                                    // TODO: Update layer.animationRatio
                                     break;
                                 case BABYLON.BlendTreeType.FreeformCartesian2D:
-                                    this.sortBlendBuffer(layer);
+                                    this.sortBlendingBuffer(layer);
+                                    // TODO: Update layer.animationRatio
                                     break;
                             }
                         }
@@ -928,35 +1022,47 @@ module BABYLON {
                 }
             }
         }
-        /* DEPRECIATED - Animation State Machine Will Handle Events
-        private static setupAnimationState(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, scene: BABYLON.Scene) : void {
-            if (owner != null && owner.metadata != null && owner.metadata.api) {
-                var metadata: BABYLON.IObjectMetadata = owner.metadata as BABYLON.IObjectMetadata;
-                // FIXME
-                //var machine:BABYLON.AnimationState = BABYLON.SceneManager.GetInstance().findSceneComponent("BABYLON.AnimationState", owner);
-                var machine:any = BABYLON.SceneManager.GetInstance().findSceneComponent("BABYLON.AnimationState", owner);
-                if (machine != null) {
-                    // Setup Animation Events
-                    if (metadata.animationEvents != null && metadata.animationEvents.length > 0 && metadata.components != null && metadata.components.length > 0) {
-                        var track:BABYLON.Animation = BABYLON.SceneManager.LocateOwnerAnimationTrack(0, owner, false);
-                        if (track != null) {
-                            metadata.animationEvents.forEach((evt) => {
-                                if (evt.functionName != null && evt.functionName !== "") {
-                                    var functionName:string = evt.functionName.toLowerCase();
-                                    track.addEvent(new BABYLON.AnimationEvent(evt.frame, ()=>{
-                                        var ownerinstance:any = (<any>machine);
-                                        if (ownerinstance._handlers != null && ownerinstance._handlers[functionName]) {
-                                            var handler:(evt:BABYLON.IAnimationEvent)=>void = ownerinstance._handlers[functionName];
-                                            if (handler) handler(evt);
-                                        }
-                                    }));
-                                }
-                            });
-                        }
-                    }
-                }
-            }            
+
+        /* Animation Controller Compute Blend Child Weights Functions */
+        
+        private computeSimpleDirectionalWeight(parentTree:BABYLON.IBlendTree, inputPosition:BABYLON.Vector2, childPosition:BABYLON.Vector2):number {
+            var weight:number = 0;
+            var inputDistance:number = inputPosition.subtract(childPosition).lengthSquared();
+            // var inputAngle:number = BABYLON.Vector2.Angle(inputPosition, childPosition);
+            // cosinus similarity from -1f to -1f shifted to 0 to 1f( same angle cosinus similarity=0f and max opposite direction -1f)
+            // 1/d1+1/d2+1/d3...
+            // ..
+            // var inputAngle:number = (BABYLON.Scalar.Clamp(BABYLON.Vector2.Dot(inputPosition.normalize(), childPosition.normalize()), -1, 1)-1) * (-0.5);
+            // ..
+            // TODO: Calculate Weight based on input distance and angle - ???            
+            // ..
+            return weight;
         }
-        */
+        private computeFreeformDirectionalWeight(parentTree:BABYLON.IBlendTree, inputPosition:BABYLON.Vector2, childPosition:BABYLON.Vector2):number {
+            var weight:number = 0;
+            var inputDistance:number = inputPosition.subtract(childPosition).lengthSquared();
+            // var inputAngle:number = BABYLON.Vector2.Angle(inputPosition, childPosition);
+            // cosinus similarity from -1f to -1f shifted to 0 to 1f( same angle cosinus similarity=0f and max opposite direction -1f)
+            // 1/d1+1/d2+1/d3...
+            // ..
+            // var inputAngle:number = (BABYLON.Scalar.Clamp(BABYLON.Vector2.Dot(inputPosition.normalize(), childPosition.normalize()), -1, 1)-1) * (-0.5);
+            // ..
+            // TODO: Calculate Weight based on input distance and angle - ???            
+            // ..
+            return weight;
+        }
+        private computeFreeformCartesianWeight(parentTree:BABYLON.IBlendTree, inputPosition:BABYLON.Vector2, childPosition:BABYLON.Vector2):number {
+            var weight:number = 0;
+            var inputDistance:number = inputPosition.subtract(childPosition).lengthSquared();
+            // var inputAngle:number = BABYLON.Vector2.Angle(inputPosition, childPosition);
+            // cosinus similarity from -1f to -1f shifted to 0 to 1f( same angle cosinus similarity=0f and max opposite direction -1f)
+            // 1/d1+1/d2+1/d3...
+            // ..
+            // var inputAngle:number = (BABYLON.Scalar.Clamp(BABYLON.Vector2.Dot(inputPosition.normalize(), childPosition.normalize()), -1, 1)-1) * (-0.5);
+            // ..
+            // TODO: Calculate Weight based on input distance and angle - ???            
+            // ..
+            return weight;
+        }
     }
 }

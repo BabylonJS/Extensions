@@ -25,7 +25,8 @@ var files = [
     "./temp/babylon.sceneshaders.js",
     "./temp/babylon.sceneshuriken.js",
     "./temp/babylon.scenestates.js",
-    "./temp/babylon.sceneutilities.js"
+    "./temp/babylon.sceneutilities.js",
+    "./temp/babylon.scenewindows.js"
 ]
 
 gulp.task("compile", function () {
@@ -35,7 +36,7 @@ gulp.task("compile", function () {
 
     return merge2([
         tsResult.dts
-            .pipe(concat("babylon.scenemanager.d.ts"))
+            .pipe(concat("babylon.manager.d.ts"))
             .pipe(gulp.dest("./dist")),
         tsResult.js
             .pipe(sourcemaps.write("./", 
@@ -51,7 +52,7 @@ gulp.task("compile", function () {
 
 gulp.task("default", ["compile"], function () {
     return merge2(gulp.src(files))
-        .pipe(concat("babylon.scenemanager.js"))
+        .pipe(concat("babylon.manager.js"))
         .pipe(uglify())
         .pipe(gulp.dest("./dist/"));
 });

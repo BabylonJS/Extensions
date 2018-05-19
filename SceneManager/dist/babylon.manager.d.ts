@@ -151,6 +151,93 @@ declare module TVJS {
 declare var TimerPlugin: any;
 
 declare module BABYLON {
+    class AnimationState extends BABYLON.SceneComponent {
+        private static EXIT;
+        private static TIMER;
+        private _fps;
+        private _targets;
+        private _machine;
+        private _skeletal;
+        private _autoplay;
+        private _executed;
+        private _checkers;
+        private _boneAnim;
+        private _boneWeight;
+        private _boneMatrix;
+        private _sampleMatrix;
+        private _inputPosition;
+        private _childPosition;
+        private _onAnimationFrameHandler;
+        private _onAnimationEventHandlers;
+        private _onAnimationBehaveHandlers;
+        enabled: boolean;
+        speedRatio: number;
+        autoTicking: boolean;
+        directBlendSpeed: number;
+        readonly fps: number;
+        readonly skeletal: boolean;
+        readonly executing: boolean;
+        constructor(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, scene: BABYLON.Scene, tick?: boolean, propertyBag?: any);
+        protected start(): void;
+        protected update(): void;
+        protected destroy(): void;
+        play(state: string, transitionDuration?: number, animationLayer?: number): void;
+        getBool(name: string): boolean;
+        setBool(name: string, value: boolean): void;
+        getFloat(name: string): number;
+        setFloat(name: string, value: number): void;
+        getInteger(name: string): number;
+        setInteger(name: string, value: number): void;
+        getTrigger(name: string): boolean;
+        setTrigger(name: string): void;
+        resetTrigger(name: string): void;
+        tickStateMachine(): void;
+        getCurrentState(layer: number): BABYLON.MachineState;
+        getTargetSkeletons(): BABYLON.Skeleton[];
+        onAnimationBehaviour(name: string, handler: (state: string, event: string) => void): void;
+        onAnimationTrackEvent(name: string, handler: (evt: BABYLON.IAnimationEvent) => void): void;
+        onAnimationFrameUpdate(handler: () => void): void;
+        private getMachineState(name);
+        private setMachineState(name, value);
+        private getAnimationClip(name);
+        private setAnimationClip(name, value);
+        private getDenormalizedFrame(clip, frame);
+        private getAnimationFrames(clip);
+        private setTreeBranches(tree);
+        private blendBoneMatrix(matrix, weight?);
+        private updateBoneMatrix(bone, enableBlending?, blendingSpeed?);
+        private startStateMachine();
+        private updateStateMachine();
+        private updateAnimationCurves();
+        private updateAnimationTargets();
+        private processStateMachine(layer);
+        private parseAnimationStateMachineEvents(layer);
+        private setCurrentAnimationState(layer, name, blending);
+        private setupBaseAnimationState(layer, blending?, playback?);
+        private checkStateTransitions(layer, transitions, time, length, rate);
+        private computeSpeedRatio(layer, start, end?, delta?, playback?);
+        private blendAnimationMatrix(layer, matrix, weight?);
+        private checkBoneTransformPath(layer, transformPath);
+        private filterBoneTransformIndex(layer, bone);
+        private sortBlendingBuffer(layer);
+        private resetTreeBranches(layer, tree);
+        private resetInputDistanceWeight(parent, child);
+        private resetInputDistanceThreasholds(parent);
+        private parseTreeBranches(layer, tree, frame);
+        private parseClipTreeItem(layer, parent, child, frame);
+        private parseDirectTreeItem(layer, parent, child, frame);
+        private parseSimpleTreeItem(layer, parent, child, frame);
+        private parseSimpleDirectionalTreeItem(layer, parent, child, frame);
+        private parseFreeformDirectionalTreeItem(layer, parent, child, frame);
+        private parseFreeformCartesianTreeItem(layer, parent, child, frame);
+        private parseSkeletalAnimationTrackLayer(layer);
+        private computeSimpleDirectionalWeight(parentTree, inputPosition, childPosition);
+        private computeFreeformDirectionalWeight(parentTree, inputPosition, childPosition);
+        private computeFreeformCartesianWeight(parentTree, inputPosition, childPosition);
+    }
+}
+
+declare module BABYLON {
     class SceneManager {
         /** Get instance of the scene manager. */
         static GetInstance(): BABYLON.SceneManager;
@@ -548,19 +635,33 @@ declare module BABYLON {
         updateCameraUserInput(camera: BABYLON.FreeCamera, movementSpeed: number, rotationSpeed: number, player?: BABYLON.PlayerNumber): void;
         updateCameraPosition(camera: BABYLON.FreeCamera, horizontal: number, vertical: number, speed: number): void;
         updateCameraRotation(camera: BABYLON.FreeCamera, mousex: number, mousey: number, speed: number): void;
+        /** Gets the native babylon mesh navigation tool */
         getNavigationTool(): Navigation;
+        /** Gets the current navigation zone */
         getNavigationZone(): string;
+        /** Finds a navigation path and returns a array of navigation positions */
         findNavigationPath(origin: BABYLON.Vector3, destination: BABYLON.Vector3): BABYLON.Vector3[];
+        /** Gets true if the scene has a navigation mesh */
         hasNavigationMesh(): boolean;
+        /** Returns the current scene's navigation mesh */
         getNavigationMesh(): BABYLON.AbstractMesh;
+        /** Builds the current scene's navigation nodes */
         buildNavigationMesh(mesh: BABYLON.AbstractMesh): any;
+        /** Returns a picked navigation point */
         getNavigationPoint(position: BABYLON.Vector3, raise?: number, length?: number): BABYLON.Vector3;
+        /** Moves the specified navigation again along a path of positions */
         moveNavigationAgent(agent: BABYLON.AbstractMesh, path: BABYLON.Vector3[], speed?: number, loop?: boolean, callback?: () => void): void;
+        /** Returns an array of navigation agents */
         getNavigationAgents(): BABYLON.Mesh[];
+        /** Returns the specfied navigation agent info */
         getNavigationAgentInfo(agent: BABYLON.AbstractMesh): BABYLON.NavigationAgent;
+        /** Returns the current scene's navigation area table */
         getNavigationAreaTable(): BABYLON.INavigationArea[];
+        /** Returns the current scene's navigation area indexes */
         getNavigationAreaIndexes(): number[];
+        /** Returns the current scene's navigation area names */
         getNavigationAreaName(index: number): string;
+        /** Returns the current scene's navigation area cost */
         getNavigationAreaCost(index: number): number;
         private static inputKeyDownHandler(e);
         private static inputKeyUpHandler(e);
@@ -897,6 +998,14 @@ declare module BABYLON {
         blending: number;
         triggered: string[];
     }
+    enum Constants {
+        NoScale = 1,
+        Deg2Rad = 0.0174532924,
+        Rad2Deg = 57.29578,
+        DiagonalSpeed = 0.7071,
+        MinimumTimeout = 0.25,
+        SpeedCompensator = 1.05,
+    }
     enum RotateOrder {
         YXZ = 0,
         YZX = 1,
@@ -914,13 +1023,6 @@ declare module BABYLON {
         Int = 3,
         Bool = 4,
         Trigger = 9,
-    }
-    enum Constants {
-        NoScale = 1,
-        Deg2Rad = 0.0174532924,
-        Rad2Deg = 57.29578,
-        DiagonalSpeed = 0.7071,
-        MinimumTimeout = 0.25,
     }
     enum SearchType {
         ExactMatch = 0,
@@ -1219,6 +1321,7 @@ declare module BABYLON {
         indexs: number[];
         weight: number;
         frame: number;
+        input: number;
         track: BABYLON.IAnimationClip;
     }
     interface INavigationArea {
@@ -1390,20 +1493,19 @@ declare module BABYLON {
         outTangent: number;
         tangentMode: number;
     }
+    type IShurikenParticleSystem = BABYLON.ShurikenParticleSystem | BABYLON.GPUShurikenParticleSystem;
     class ShurikenParticleSystem extends BABYLON.ParticleSystem {
         static readonly EMISSION_RATE: number;
         static readonly EMISSION_BURST: number;
         emitType: number;
         loopPlay: boolean;
         delayTime: number;
+        private _self;
         private _duration;
         private _startSpeed;
-        private _enableTime;
-        private _cycleHandler;
         private _emissionBurst;
-        private _updateModules;
-        readonly modules: BABYLON.ShurikenUpdateModules;
-        constructor(name: string, capacity: number, scene: BABYLON.Scene, duration?: number, emission?: number, startSpeed?: number, emissionBurst?: BABYLON.IShurikenBusrt[], updateModules?: BABYLON.ShurikenUpdateModules, customEffect?: BABYLON.Effect);
+        getDuration(): number;
+        constructor(name: string, capacity: number, scene: BABYLON.Scene, duration?: number, emission?: number, startSpeed?: number, emissionBurst?: BABYLON.IShurikenBusrt[]);
         /** Babylon Particle System Overrides */
         start(): void;
         stop(): void;
@@ -1413,27 +1515,26 @@ declare module BABYLON {
         private internalCycle();
         private internalStart(min, max);
         private internalStop(force?);
-        getParticles(): Array<Particle>;
-        readonly stockParticles: Array<Particle>;
-        readonly scaledUpdateSpeed: number;
-        readonly scaledDirection: Vector3;
-        readonly scaledColorStep: Color4;
-        readonly scaledGravity: Vector3;
-        defaultStartDirectionFunctionHandler(emitPower: number, worldMatrix: BABYLON.Matrix, directionToUpdate: BABYLON.Vector3, particle: BABYLON.Particle): void;
-        defaultStartPositionFunctionHandler(worldMatrix: BABYLON.Matrix, positionToUpdate: BABYLON.Vector3, particle: BABYLON.Particle): void;
-        defaultUpdateOverTimeFunctionHandler(particles: BABYLON.Particle[]): void;
+        getParticles(): Array<BABYLON.Particle>;
+        defaultUpdateFunctionHandler(particles: BABYLON.Particle[]): void;
     }
-    class ShurikenUpdateModules {
-        updateOverTime: boolean;
-        framesPerSecond: number;
-        speedModule: any;
-        emissionModule: any;
-        velocityModule: any;
-        colorModule: any;
-        sizingModule: any;
-        rotationModule: any;
-        updateEffectTime: boolean;
-        maximumEffectTime: number;
+    class GPUShurikenParticleSystem extends BABYLON.GPUParticleSystem {
+        loopPlay: boolean;
+        delayTime: number;
+        private _self;
+        private _duration;
+        private _startSpeed;
+        getDuration(): number;
+        constructor(name: string, capacity: number, scene: BABYLON.Scene, size?: number, duration?: number, startSpeed?: number);
+        /** Babylon Particle System Overrides */
+        start(): void;
+        stop(): void;
+        dispose(): void;
+        private readonly internalScene;
+        private internalPlay(delay?, min?, max?);
+        private internalCycle();
+        private internalStart(min, max);
+        private internalStop(force?);
     }
 }
 
@@ -1441,86 +1542,16 @@ declare module BABYLON {
     class UniversalParticleSystem extends BABYLON.MeshComponent {
         private _time;
         private _auto;
-        private _shader;
-        private _effect;
+        private _mode;
+        private _size;
+        private _shape;
         private _shuriken;
-        updateTime: boolean;
-        maximumTime: number;
-        readonly shuriken: BABYLON.ShurikenParticleSystem;
+        readonly mode: number;
+        readonly shape: number;
+        readonly shuriken: BABYLON.IShurikenParticleSystem;
         constructor(owner: BABYLON.AbstractMesh, scene: BABYLON.Scene, tick?: boolean, propertyBag?: any);
         protected start(): void;
-        protected update(): void;
         protected destroy(): void;
-        private _uniforms;
-        private _samplers;
-        private _textures;
-        private _textureArrays;
-        private _floats;
-        private _floatsArrays;
-        private _colors3;
-        private _colors4;
-        private _vectors2;
-        private _vectors3;
-        private _vectors4;
-        private _matrices;
-        private _matrices3x3;
-        private _matrices2x2;
-        private _vectors3Arrays;
-        readonly textures: {
-            [name: string]: BABYLON.Texture;
-        };
-        readonly textureArray: {
-            [name: string]: BABYLON.Texture[];
-        };
-        readonly floats: {
-            [name: string]: number;
-        };
-        readonly floatsArrays: {
-            [name: string]: number[];
-        };
-        readonly colors3: {
-            [name: string]: BABYLON.Color3;
-        };
-        readonly colors4: {
-            [name: string]: BABYLON.Color4;
-        };
-        readonly vectors2: {
-            [name: string]: BABYLON.Vector2;
-        };
-        readonly vectors3: {
-            [name: string]: BABYLON.Vector3;
-        };
-        readonly vectors4: {
-            [name: string]: BABYLON.Vector4;
-        };
-        readonly matrices: {
-            [name: string]: BABYLON.Matrix;
-        };
-        readonly matrices3x3: {
-            [name: string]: Float32Array;
-        };
-        readonly matrices2x2: {
-            [name: string]: Float32Array;
-        };
-        readonly vectors3Arrays: {
-            [name: string]: number[];
-        };
-        setTexture(name: string, texture: BABYLON.Texture): BABYLON.UniversalParticleSystem;
-        setTextureArray(name: string, textures: BABYLON.Texture[]): BABYLON.UniversalParticleSystem;
-        setFloat(name: string, value: number): BABYLON.UniversalParticleSystem;
-        setFloats(name: string, value: number[]): BABYLON.UniversalParticleSystem;
-        setColor3(name: string, value: BABYLON.Color3): BABYLON.UniversalParticleSystem;
-        setColor4(name: string, value: BABYLON.Color4): BABYLON.UniversalParticleSystem;
-        setVector2(name: string, value: BABYLON.Vector2): BABYLON.UniversalParticleSystem;
-        setVector3(name: string, value: BABYLON.Vector3): BABYLON.UniversalParticleSystem;
-        setVector4(name: string, value: BABYLON.Vector4): BABYLON.UniversalParticleSystem;
-        setMatrix(name: string, value: BABYLON.Matrix): BABYLON.UniversalParticleSystem;
-        setMatrix3x3(name: string, value: Float32Array): BABYLON.UniversalParticleSystem;
-        setMatrix2x2(name: string, value: Float32Array): BABYLON.UniversalParticleSystem;
-        setArray3(name: string, value: number[]): BABYLON.UniversalParticleSystem;
-        private getEffectTime();
-        private setEffectTime(time);
-        private bindParticleSystemEffect(me, effect);
         private initializeParticleSystem();
     }
 }
@@ -1706,87 +1737,6 @@ declare module BABYLON {
         clone(name: string): BABYLON.UniversalTerrainMaterial;
         serialize(): any;
         static Parse(source: any, scene: BABYLON.Scene, rootUrl: string): BABYLON.UniversalTerrainMaterial;
-    }
-}
-
-declare module BABYLON {
-    class AnimationState extends BABYLON.SceneComponent {
-        private static EXIT;
-        private static TIMER;
-        private _fps;
-        private _targets;
-        private _machine;
-        private _enabled;
-        private _skeletal;
-        private _autoplay;
-        private _executed;
-        private _checkers;
-        private _boneAnim;
-        private _boneWeight;
-        private _boneMatrix;
-        private _sampleMatrix;
-        private _onAnimationFrameHandler;
-        private _onAnimationEventHandlers;
-        private _onAnimationBehaveHandlers;
-        speedRatio: number;
-        autoTicking: boolean;
-        directBlendSpeed: number;
-        readonly fps: number;
-        readonly skeletal: boolean;
-        readonly executing: boolean;
-        constructor(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, scene: BABYLON.Scene, tick?: boolean, propertyBag?: any);
-        protected ready(): void;
-        protected start(): void;
-        protected update(): void;
-        protected destroy(): void;
-        play(name: string, blending?: number, layer?: number): void;
-        getBool(name: string): boolean;
-        setBool(name: string, value: boolean): void;
-        getFloat(name: string): number;
-        setFloat(name: string, value: number): void;
-        getInteger(name: string): number;
-        setInteger(name: string, value: number): void;
-        getTrigger(name: string): boolean;
-        setTrigger(name: string): void;
-        resetTrigger(name: string): void;
-        tickStateMachine(): void;
-        getCurrentState(layer: number): BABYLON.MachineState;
-        getTargetSkeletons(): BABYLON.Skeleton[];
-        onAnimationFrame(handler: () => void): void;
-        onAnimationEvent(name: string, handler: (evt: BABYLON.IAnimationEvent) => void): void;
-        onAnimationBehaviour(name: string, handler: (state: string, event: string) => void): void;
-        private getMachineState(name);
-        private setMachineState(name, value);
-        private getAnimationClip(name);
-        private setAnimationClip(name, value);
-        private getDenormalizedFrame(clip, frame);
-        private getAnimationFrames(clip);
-        private setTreeBranches(tree);
-        private blendBoneMatrix(matrix, weight?);
-        private updateBoneMatrix(bone, enableBlending?, blendingSpeed?);
-        private setupStateMachine();
-        private startStateMachine();
-        private updateStateMachine();
-        private updateAnimationCurves();
-        private updateAnimationSkeletons();
-        private processStateMachine(layer);
-        private setCurrentAnimationState(layer, name, blending);
-        private setupBaseAnimationState(layer, blending?, playback?);
-        private checkStateTransitions(layer, transitions, time, length, rate);
-        private computeSpeedRatio(layer, start, end?, delta?, playback?);
-        private blendAnimationMatrix(layer, matrix, weight?);
-        private checkBoneTransformPath(layer, transformPath);
-        private filterBoneTransformIndex(layer, bone);
-        private setTreeThresholds(layer, tree);
-        private sortBlendBuffer(layer);
-        private parseTreeBranches(layer, tree, frame);
-        private parseClipTreeItem(layer, parent, child, frame);
-        private parseDirectTreeItem(layer, parent, child, frame);
-        private parseSimpleTreeItem(layer, parent, child, frame);
-        private parseSimpleDirectionalTreeItem(layer, parent, child, frame);
-        private parseFreeformDirectionalTreeItem(layer, parent, child, frame);
-        private parseFreeformCartesianTreeItem(layer, parent, child, frame);
-        private parseSkeletalAnimationTrackLayer(layer);
     }
 }
 
