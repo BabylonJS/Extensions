@@ -647,6 +647,16 @@ module BABYLON {
         public triggered:string[];
     }
     
+    export enum Constants
+    {
+        NoScale = 1.0,
+        Deg2Rad = 0.0174532924,
+        Rad2Deg = 57.29578,
+        DiagonalSpeed = 0.7071,
+        MinimumTimeout = 0.25,
+        SpeedCompensator = 1.05
+    }
+    
     export enum RotateOrder
     {
         YXZ = 0,
@@ -669,15 +679,6 @@ module BABYLON {
         Int = 3,
         Bool = 4,
         Trigger = 9
-    }
-    
-    export enum Constants
-    {
-        NoScale = 1.0,
-        Deg2Rad = 0.0174532924,
-        Rad2Deg = 57.29578,
-        DiagonalSpeed = 0.7071,
-        MinimumTimeout = 0.25,
     }
     
     export enum SearchType {
@@ -1039,6 +1040,7 @@ module BABYLON {
         indexs:number[];
         weight:number;
         frame:number;
+        input:number;
         track:BABYLON.IAnimationClip;
     }
     

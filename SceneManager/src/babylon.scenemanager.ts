@@ -5,7 +5,7 @@
 /// <reference path="babylon.sceneutilities.ts" />
 /// <reference path="babylon.scenenavagent.ts" />
 /// <reference path="babylon.sceneplugins.ts" />
-//// <reference path="babylon.scenestates.ts" />
+/// <reference path="babylon.scenestates.ts" />
 
 module BABYLON {
     export class SceneManager {
@@ -619,9 +619,15 @@ module BABYLON {
         /** Safely destroys a scene object. */
         public safeDestroy(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, delay:number = 5, disable:boolean = false):void {
             if (disable === true) owner.setEnabled(false);
-            BABYLON.SceneManager.DestroyComponents(owner);
-            if (delay > 0.0) this.delay(()=>{ BABYLON.SceneManager.DisposeOwner(owner); }, delay);
-            else BABYLON.SceneManager.DisposeOwner(owner);
+            if (delay > 0.0) { 
+                this.delay(()=>{ 
+                    BABYLON.SceneManager.DestroyComponents(owner);
+                    BABYLON.SceneManager.DisposeOwner(owner);
+                }, delay);
+            } else { 
+                BABYLON.SceneManager.DestroyComponents(owner);
+                BABYLON.SceneManager.DisposeOwner(owner);
+            }
         }
         /** Gets the main camera for a player */
         public getMainCamera(player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One):BABYLON.Camera {
@@ -1198,16 +1204,15 @@ module BABYLON {
                             if (newRotation != null) result.rotation = newRotation;
                             if (newScaling != null) result.scaling = newScaling;
                             // Recurse all prefab clones
-                            var clones:BABYLON.Mesh[] = [result];
-                            var children:BABYLON.AbstractMesh[] = result.getChildMeshes(false);
-                            if (children != null && children.length > 0) {
-                                children.forEach((child) => {
-                                    child.name = BABYLON.Utilities.ReplaceAll(child.name, "Prefab.", "");
-                                    clones.push(child as BABYLON.Mesh);
-                                });
-                            }
+                            var clones:BABYLON.Mesh[] = null;
+                            var childs:BABYLON.AbstractMesh[] = result.getChildMeshes(false);
+                            if (childs != null) clones = childs as BABYLON.Mesh[]
+                            if (clones == null) clones = [result];
+                            else clones.unshift(result);
                             // Parse cloned mesh sources
+                            var sharedSkeletonMap:any = {};
                             clones.forEach((clone) => {
+                                clone.name = BABYLON.Utilities.ReplaceAll(clone.name, "Prefab.", "");
                                 clone.setEnabled(true);
                                 if (clone.source != null) {
                                     // Clone source skeleton
@@ -1216,28 +1221,31 @@ module BABYLON {
                                         var skeletonName:string = clone.source.skeleton.name + ".Skeleton";
                                         var skeletonIdentity:string = skeletonName + "." + clone.source.skeleton.id;
                                         clone.skeleton = clone.source.skeleton.clone(skeletonName, skeletonIdentity);
-                                    }
-                                    // Clone source lod levels
-                                    if ((aclone._LODLevels == null || aclone._LODLevels.length <= 0) && aclone.source != null && aclone.source._LODLevels != null && aclone.source._LODLevels.length > 0) {
-                                        var levels:any[] = aclone.source._LODLevels;
-                                        var count:number = levels.length;
-                                        var index:number = 0;
-                                        var copies:any[] = [];
-                                        for(index=0; index<count; index++) {
-                                            var level:any = levels[index]
-                                            var lod:BABYLON.Mesh = level.mesh;
-                                            var copy:BABYLON.Mesh = (lod != null) ? lod.clone(lod.name.replace("Prefab.", ""), clone, false, false) : null;
-                                            copies.push({ "distance": level.distance, "mesh": copy });
-                                        }
-                                        if (copies != null && copies.length > 0) {
-                                            copies.forEach((level) => { clone.addLODLevel(level.distance, level.mesh); });
+                                        sharedSkeletonMap[clone.source.id] = clone.id;
+                                        // Clone bone metadata
+                                        if (clone.skeleton != null && clone.skeleton.bones != null && clone.source.skeleton.bones != null) {
+                                            if (clone.skeleton.bones.length === clone.source.skeleton.bones.length) {
+                                                var boneCount:number = clone.skeleton.bones.length;
+                                                for (let boneIndex = 0; boneIndex < boneCount; boneIndex++) {
+                                                    if (clone.skeleton.bones[boneIndex].metadata == null && clone.source.skeleton.bones[boneIndex].metadata != null) {
+                                                        clone.skeleton.bones[boneIndex].metadata = clone.source.skeleton.bones[boneIndex].metadata;
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
+                                } else {
+                                    BABYLON.Tools.Warn("Babylon.js encountered a null clone source for: " + clone.name);
                                 }
                             });
                             // Check all child mesh sources
                             var checked:BABYLON.AbstractMesh[] = [];
                             clones.forEach((check) => {
+                                // Reset Sharded Skeletons
+                                if (check.metadata != null && check.metadata.properties != null && check.metadata.properties.sharedSkeletonId && check.metadata.properties.sharedSkeletonId !== "") {
+                                    check.metadata.properties.sharedSkeletonId = sharedSkeletonMap[check.metadata.properties.sharedSkeletonId];
+                                }
+                                // Create Tree Instances
                                 if (check.metadata != null && check.metadata.tagName && check.metadata.tagName != null && check.metadata.tagName === "[INSTANCE]") {
                                     // Instanced Mesh
                                     if (check.metadata.properties && check.metadata.properties != null && check.metadata.properties.prefabSource && check.metadata.properties.prefabSource != null && check.metadata.properties.prefabSource !== "") {
@@ -1272,6 +1280,7 @@ module BABYLON {
                                     checked.push(check);
                                 }
                             });
+                            sharedSkeletonMap = null;
                             if (checked != null && checked.length > 0) {
                                 BABYLON.SceneManager.parseMeshMetadata(checked, this._scene);
                             }
@@ -2405,6 +2414,7 @@ module BABYLON {
         // *  Scene Navigation Tool Support  * //
         // *********************************** //
 
+        /** Gets the native babylon mesh navigation tool */
         public getNavigationTool(): Navigation {
             // Babylon Navigation Mesh Tool
             // https://github.com/wanadev/babylon-navigation-mesh
@@ -2413,9 +2423,11 @@ module BABYLON {
             }
             return this._navigation;
         }
+        /** Gets the current navigation zone */
         public getNavigationZone(): string {
             return "scene";
         }
+        /** Finds a navigation path and returns a array of navigation positions */
         public findNavigationPath(origin: BABYLON.Vector3, destination: BABYLON.Vector3): BABYLON.Vector3[] {
             if (this._navigation == null || this._navmesh == null || origin == null || destination == null) return null;
             var zone: string = this.getNavigationZone();
@@ -2427,12 +2439,15 @@ module BABYLON {
         // *  Scene Navigation Mesh Support  * //
         // *********************************** //
 
+        /** Gets true if the scene has a navigation mesh */
         public hasNavigationMesh(): boolean {
             return (this._navmesh != null);
         }
+        /** Returns the current scene's navigation mesh */
         public getNavigationMesh(): BABYLON.AbstractMesh {
             return this._navmesh;
         }
+        /** Builds the current scene's navigation nodes */
         public buildNavigationMesh(mesh:BABYLON.AbstractMesh):any {
             if (mesh != null) {
                 this._navmesh = mesh;
@@ -2445,6 +2460,7 @@ module BABYLON {
                 }
             }
         }
+        /** Returns a picked navigation point */
         public getNavigationPoint(position:BABYLON.Vector3, raise:number = 2.0, length:number = Number.MAX_VALUE): BABYLON.Vector3 {
             if (this._navmesh == null || position == null) return null;
             var pos = new BABYLON.Vector3(position.x, (position.y + raise), position.z);
@@ -2452,6 +2468,7 @@ module BABYLON {
             var info = this._scene.pickWithRay(ray, (mesh) => { return (mesh === this._navmesh); });
             return (info.hit && info.pickedPoint) ? info.pickedPoint : null;
         }
+        /** Moves the specified navigation again along a path of positions */
         public moveNavigationAgent(agent: BABYLON.AbstractMesh, path: BABYLON.Vector3[], speed?: number, loop?: boolean, callback?: () => void): void {
             if (path && path.length > 0) {
                 var length = 0;
@@ -2472,18 +2489,23 @@ module BABYLON {
                 this._scene.beginAnimation(agent, 0, length, loop, speed, callback);
             }
         }
+        /** Returns an array of navigation agents */
         public getNavigationAgents(): BABYLON.Mesh[] {
             return this._scene.getMeshesByTags("[NAVAGENT]");
         }
+        /** Returns the specfied navigation agent info */
         public getNavigationAgentInfo(agent: BABYLON.AbstractMesh): BABYLON.NavigationAgent {
             return new BABYLON.NavigationAgent(agent);
         }
+        /** Returns the current scene's navigation area table */
         public getNavigationAreaTable(): BABYLON.INavigationArea[] {
             return (this._navmesh.metadata != null && this._navmesh.metadata.properties != null && this._navmesh.metadata.properties.table != null) ? this._navmesh.metadata.properties.table : [];
         }
+        /** Returns the current scene's navigation area indexes */
         public getNavigationAreaIndexes(): number[] {
             return (this._navmesh.metadata != null && this._navmesh.metadata.properties != null && this._navmesh.metadata.properties.areas != null) ? this._navmesh.metadata.properties.areas : [];
         }
+        /** Returns the current scene's navigation area names */
         public getNavigationAreaName(index: number): string {
             var result:string = "";
             if (this._navmesh.metadata != null && this._navmesh.metadata.properties != null && this._navmesh.metadata.properties.table != null) {
@@ -2499,6 +2521,7 @@ module BABYLON {
             }
             return result;
         }
+        /** Returns the current scene's navigation area cost */
         public getNavigationAreaCost(index: number): number {
             var result:number = -1;
             if (this._navmesh.metadata != null && this._navmesh.metadata.properties != null) {
@@ -3357,67 +3380,6 @@ module BABYLON {
             }
             (<any>window).parsing = false;
         }
-        /*
-        private static parseSceneEnvironment(scene:BABYLON.Scene):void {
-            if (scene.metadata != null && scene.metadata.properties != null && scene.metadata.properties.environmentTexture != null) {
-                var type:string = (scene.metadata.properties.environmentTexture.customType) ? scene.metadata.properties.environmentTexture.customType : null;
-                if (type != null && type !== "") {
-                    var parsed:any = scene.metadata.properties.environmentTexture;
-                    if (type === "BABYLON.HDRCubeTexture") {
-                        var parseHDR = function(parsedTexture: any, scene: BABYLON.Scene, rootUrl: string): BABYLON.Nullable<BABYLON.HDRCubeTexture> {
-                            var texture:BABYLON.HDRCubeTexture = null;
-                            if (parsedTexture.name && !parsedTexture.isRenderTarget) {
-                                var size = parsedTexture.isBABYLONPreprocessed ? null : parsedTexture.size;
-                                texture = new BABYLON.HDRCubeTexture(rootUrl + parsedTexture.name, scene, size, parsedTexture.noMipmap, parsedTexture.generateHarmonics, parsedTexture.useInGammaSpace, parsedTexture.usePMREMGenerator, parsedTexture.isPanorama);
-                                texture.name = parsedTexture.name;
-                                texture.hasAlpha = parsedTexture.hasAlpha;
-                                texture.level = parsedTexture.level;
-                                texture.coordinatesMode = parsedTexture.coordinatesMode;
-                                texture.isBlocking = parsedTexture.isBlocking;
-                                if (parsedTexture.boundingBoxPosition) {
-                                    texture.boundingBoxPosition = BABYLON.Vector3.FromArray(parsedTexture.boundingBoxPosition);
-                                }
-                                if (parsedTexture.boundingBoxSize) {
-                                    texture.boundingBoxSize = BABYLON.Vector3.FromArray(parsedTexture.boundingBoxSize);
-                                }
-                                if (parsedTexture.rotationY) {
-                                    texture.rotationY = parsedTexture.rotationY;
-                                }
-                            }
-                            return texture;
-                        };
-                        scene.environmentTexture = parseHDR(parsed, scene, BABYLON.SceneManager.GetInstance().getScenePath());
-                    } else if (type === "BABYLON.CubeTexture") {
-                        var parseCUBE = function(parsedTexture: any, scene: BABYLON.Scene, rootUrl: string): BABYLON.CubeTexture {
-                            var texture = BABYLON.SerializationHelper.Parse(() => {
-                                var prefiltered:boolean = false;
-                                if (parsedTexture.prefiltered) {
-                                    prefiltered = parsedTexture.prefiltered;
-                                }
-                                return new BABYLON.CubeTexture(rootUrl + parsedTexture.name, scene, parsedTexture.extensions, false, null, null, null, undefined, prefiltered);                                
-                            }, parsedTexture, scene);
-                            // Local Cubemaps
-                            if (parsedTexture.boundingBoxPosition) {
-                                texture.boundingBoxPosition = BABYLON.Vector3.FromArray(parsedTexture.boundingBoxPosition);
-                            }
-                            if (parsedTexture.boundingBoxSize) {
-                                texture.boundingBoxSize = BABYLON.Vector3.FromArray(parsedTexture.boundingBoxSize);
-                            }
-                            // Animations
-                            if (parsedTexture.animations) {
-                                for (var animationIndex = 0; animationIndex < parsedTexture.animations.length; animationIndex++) {
-                                    var parsedAnimation = parsedTexture.animations[animationIndex];
-                                    texture.animations.push(BABYLON.Animation.Parse(parsedAnimation));
-                                }
-                            }
-                            return texture;
-                        };
-                        scene.environmentTexture = parseCUBE(parsed, scene, BABYLON.SceneManager.GetInstance().getScenePath());
-                    }
-                }
-            }
-        }
-        */
         private static parseSceneCameras(cameras: BABYLON.Camera[], scene: BABYLON.Scene, ticklist: BABYLON.IScriptComponent[]): void {
             if (cameras != null && cameras.length > 0) {
                 cameras.forEach((camera) => {
@@ -3482,11 +3444,11 @@ module BABYLON {
                         if (mesh.metadata.prefab === true) {
                             mesh.setEnabled(false);
                             BABYLON.SceneManager.prefabs[mesh.name] = mesh;
-                            BABYLON.SceneManager.setupLodGroups(mesh, scene, true);
                         } else {
+                            // Level of detail setup
                             BABYLON.SceneManager.setupLodGroups(mesh, scene, false);
                             // Mesh navigation setup
-                            if (mesh.name === "sceneNavigationMesh" && scene.metadata.properties.hasNavigationMesh != null && scene.metadata.properties.hasNavigationMesh === true) {
+                            if (mesh.name === "SceneNavigationMesh" && scene.metadata.properties.hasNavigationMesh != null && scene.metadata.properties.hasNavigationMesh === true) {
                                 if (BABYLON.SceneManager.GetInstance().hasNavigationMesh() === false) {
                                     BABYLON.SceneManager.GetInstance().buildNavigationMesh(mesh);
                                 } else {
@@ -3594,6 +3556,7 @@ module BABYLON {
         }
         private static setupLodGroups(mesh:BABYLON.AbstractMesh, scene: BABYLON.Scene, prefab:boolean):void {
             if (mesh != null && mesh.metadata != null && mesh.metadata.properties && mesh.metadata.properties != null && mesh.metadata.properties.lodGroupInfo && mesh.metadata.properties.lodGroupInfo != null) {
+                var lodIndex:number = 0;
                 var lodGroup:any = mesh.metadata.properties.lodGroupInfo;
                 var lodDetails:any[] = lodGroup.lodDetails;
                 var startCulling:number = lodGroup.startCulling;
@@ -3602,9 +3565,13 @@ module BABYLON {
                 //var crossFading:boolean = lodGroup.crossFading;
                 //var nearClipingPlane:number = lodGroup.nearClipingPlane;
                 //var farClipingPlane:number = lodGroup.farClipingPlane;
-                //var cameraDistanceFactor:number = lodGroup.cameraDistanceFactor;
-                var childMeshes:BABYLON.AbstractMesh[] = mesh.getChildMeshes(false);
-                if (lodDetails != null && lodDetails.length > 0 && childMeshes != null && childMeshes.length > 0) {
+                var searchMeshes:BABYLON.AbstractMesh[] = mesh.getChildMeshes(false);
+                if (searchMeshes == null) {
+                    searchMeshes = [mesh];
+                } else {
+                    searchMeshes.unshift(mesh);
+                }
+                if (lodDetails != null && lodDetails.length > 0) {
                     var masterLevel:BABYLON.Mesh = null;
                     lodDetails.forEach((detail) => {
                         //var startingPercent:number = detail.startingPercent;
@@ -3616,47 +3583,26 @@ module BABYLON {
                         if (lodRenderers != null && lodRenderers.length > 0) {
                             var renderer:any = lodRenderers[0];
                             var name:string = renderer.name;
-                            var check:AbstractMesh = BABYLON.SceneManager.FindMesh(name, childMeshes, BABYLON.SearchType.IndexOf);
-                            var instance:AbstractMesh = null;
+                            var check:AbstractMesh = BABYLON.SceneManager.FindMesh(name, searchMeshes, BABYLON.SearchType.IndexOf);
                             if (check != null) {
-                                // Check instance mesh place holder
-                                if (check.metadata != null && check.metadata.tagName && check.metadata.tagName != null && check.metadata.tagName === "[INSTANCE]") {
-                                    if (check.metadata.properties && check.metadata.properties != null && check.metadata.properties.prefabSource && check.metadata.properties.prefabSource != null && check.metadata.properties.prefabSource !== "") {
-                                        instance = check;
-                                        check = scene.getMeshByID(check.metadata.properties.prefabSource);
-                                    }
-                                }
                                 // Parse all lod detail group levels
-                                if (check != null) {
-                                    if (masterLevel == null) {
-                                        //LOD0 - Master Level
-                                        masterLevel = check as BABYLON.Mesh;
-                                        masterLevel.setEnabled(false);
-                                    }
-                                    if (check != masterLevel) {
-                                        // LOD++ Additional Levels
-                                        if (prefab === true) {
-                                            if (BABYLON.SceneManager.orphans == null) {
-                                                BABYLON.SceneManager.orphans = new BABYLON.Mesh("Prefab.Orphans", scene);
-                                                BABYLON.SceneManager.orphans.setEnabled(true);
-                                                BABYLON.SceneManager.orphans.isVisible = true;
-                                            }
-                                            check.parent = BABYLON.SceneManager.orphans;
-                                        } else {
-                                            check.parent = masterLevel;
-                                        }
-                                        masterLevel.addLODLevel(startRange, check as BABYLON.Mesh);
-                                        if (instance != null) {
-                                            // Remove source instance place holder
-                                            instance.parent = null;
-                                            instance.metadata.tagName = null;
-                                            instance.metadata.prefabSource = null;
-                                            BABYLON.SceneManager.GetInstance().safeDestroy(instance);
-                                        }
-                                    }
+                                if (masterLevel == null) {
+                                    //LOD0 - Master Level
+                                    masterLevel = check as BABYLON.Mesh;
+                                    masterLevel.setEnabled(false);
                                 }
+                                if (check != masterLevel) {
+                                    // LOD++ Additional Levels
+                                    check.parent = masterLevel;
+                                    masterLevel.addLODLevel(startRange, check as BABYLON.Mesh);
+                                }
+                            } else {
+                                BABYLON.Tools.Warn("Babylon.js cannot locate lod renderer: '" + name + "' for: " + mesh.name + " at group index: " + lodIndex.toString());
                             }
+                        } else {
+                            BABYLON.Tools.Warn("Babylon.js no level of detail renderers found for: " + mesh.name + " at group index: " + lodIndex.toString());
                         }
+                        lodIndex++;
                     });
                     // Master lod detail complete
                     if (masterLevel != null) {

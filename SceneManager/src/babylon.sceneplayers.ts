@@ -1,6 +1,4 @@
-﻿/* Babylon Character Movement Controller Component */
-/* <reference path="{*path*}/Assets/Babylon/Library/babylon.d.ts" /> */
-/// <reference path="babylon.d.ts" />
+﻿/// <reference path="babylon.d.ts" />
 /// <reference path="babylon.scenemanager.ts" />
 
 //////////////////////////////////////////////
