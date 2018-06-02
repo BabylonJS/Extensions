@@ -155,11 +155,12 @@ declare module BABYLON {
         private static EXIT;
         private static TIMER;
         private _fps;
+        private _legacy;
         private _targets;
         private _machine;
         private _skeletal;
-        private _autoplay;
         private _executed;
+        private _autoplay;
         private _checkers;
         private _boneAnim;
         private _boneWeight;
@@ -175,6 +176,7 @@ declare module BABYLON {
         autoTicking: boolean;
         directBlendSpeed: number;
         readonly fps: number;
+        readonly legacy: boolean;
         readonly skeletal: boolean;
         readonly executing: boolean;
         constructor(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, scene: BABYLON.Scene, tick?: boolean, propertyBag?: any);
@@ -955,6 +957,7 @@ declare module BABYLON {
         readonly navAgent: BABYLON.INavigationAgent;
         readonly meshLink: BABYLON.INavigationLink;
         readonly meshObstacle: BABYLON.INavigationObstacle;
+        readonly shadowCastingMode: number;
         readonly socketList: BABYLON.ISocketData[];
         setProperty(name: string, propertyValue: any): void;
         getProperty<T>(name: string, defaultValue?: T): T;
@@ -1225,6 +1228,7 @@ declare module BABYLON {
         navAgent: BABYLON.INavigationAgent;
         meshLink: BABYLON.INavigationLink;
         meshObstacle: BABYLON.INavigationObstacle;
+        shadowCastingMode: number;
         socketList: BABYLON.ISocketData[];
         animationClips: BABYLON.IAnimationClip[];
         animationEvents: BABYLON.IAnimationEvent[];
@@ -1395,6 +1399,7 @@ declare module BABYLON {
     }
     interface IAnimationClip {
         type: string;
+        wrap: number;
         name: string;
         start: number;
         stop: number;

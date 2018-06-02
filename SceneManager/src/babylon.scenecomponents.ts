@@ -587,6 +587,9 @@ module BABYLON {
         public get meshObstacle(): BABYLON.INavigationObstacle {
             return this._metadata.meshObstacle;
         }
+        public get shadowCastingMode(): number {
+            return this._metadata.shadowCastingMode;
+        }
         public get socketList(): BABYLON.ISocketData[] {
             return this._metadata.socketList;
         }
@@ -938,6 +941,7 @@ module BABYLON {
         navAgent: BABYLON.INavigationAgent;
         meshLink: BABYLON.INavigationLink;
         meshObstacle: BABYLON.INavigationObstacle;
+        shadowCastingMode:number;
         socketList:BABYLON.ISocketData[];
         animationClips: BABYLON.IAnimationClip[];
         animationEvents:BABYLON.IAnimationEvent[];
@@ -1123,6 +1127,7 @@ module BABYLON {
     
     export interface IAnimationClip {
         type: string;
+        wrap: number;
         name: string;
         start: number;
         stop: number;

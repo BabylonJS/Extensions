@@ -1214,6 +1214,17 @@ module BABYLON {
                             clones.forEach((clone) => {
                                 clone.name = BABYLON.Utilities.ReplaceAll(clone.name, "Prefab.", "");
                                 clone.setEnabled(true);
+                                // ..
+                                // Light Shadow Generator Render List (TODO: Support Specific Meshes Or Layers Or Tags)
+                                // ..
+                                if (clone.metadata != null && clone.metadata.shadowCastingMode != null && clone.metadata.shadowCastingMode !== 0) {
+                                    this._scene.lights.forEach((light:BABYLON.Light) => {
+                                        var shadowGenerator:BABYLON.IShadowGenerator = light.getShadowGenerator();
+                                        if (shadowGenerator != null) {
+                                            shadowGenerator.getShadowMap().renderList.push(clone);
+                                        }
+                                    });
+                                }
                                 if (clone.source != null) {
                                     // Clone source skeleton
                                     var aclone:any = clone;
@@ -1585,6 +1596,7 @@ module BABYLON {
                     navAgent: null,
                     meshLink: null,
                     meshObstacle: null,
+                    shadowCastingMode: 0,
                     socketList: [],
                     animationClips: [],
                     animationEvents: [],
@@ -4338,6 +4350,7 @@ module BABYLON {
                     layerIndex: (source.prefab === false) ? source.layerIndex : 0,
                     layerName: (source.prefab === false) ? source.layerName : "Default",
                     areaIndex: source.areaIndex,
+                    shadowCastingMode: source.shadowCastingMode,
                     navAgent: new_navagent,
                     meshLink: new_meshlink,
                     meshObstacle: new_meshobstacle,
