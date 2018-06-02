@@ -9,11 +9,12 @@ module BABYLON {
         private static EXIT:string = "[EXIT]";
         private static TIMER:number = 3.0;
         private _fps:number = 30;
+        private _legacy:boolean = false;
         private _targets:any[] = null;
         private _machine:any = null;
         private _skeletal:boolean = false;
-        private _autoplay:boolean = false;
         private _executed:boolean = false;
+        private _autoplay:boolean = true;
         private _checkers:BABYLON.TransitionCheck = new BABYLON.TransitionCheck();
         private _boneAnim:BABYLON.Animation = null;
         private _boneWeight:number = 0;
@@ -29,13 +30,16 @@ module BABYLON {
         public autoTicking:boolean = true;
         public directBlendSpeed:number = 1.0;
         public get fps():number { return this._fps; }
+        public get legacy():boolean { return this._legacy; }
         public get skeletal():boolean { return this._skeletal; }
         public get executing():boolean { return this._executed; }
         public constructor(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, scene: BABYLON.Scene, tick: boolean = true, propertyBag: any = {}) {
             super(owner, scene, tick, propertyBag);
             this._targets = null;
             this._machine = null;
+            this._legacy = false;
             this._executed = false;
+            this._autoplay = true;
             this._onAnimationFrameHandler = null;
             this._onAnimationEventHandlers = {};
             this._onAnimationBehaveHandlers = {};
@@ -45,7 +49,6 @@ module BABYLON {
             // Get Machine State Properties
             // ..
             this._fps = this.getProperty("timelineStep", 30);
-            this._autoplay = this.getProperty("automaticPlay", false);
             this._skeletal = (this.getProperty<number>("controlType", 0) === 2);
             this.enabled = this.getProperty("enableStateMachine", false);
             // ..
@@ -61,6 +64,10 @@ module BABYLON {
                 this.owned.metadata.state.parameters = {};
                 if (this.owned.metadata.properties != null && this.owned.metadata.properties.stateMachineInfo != null) {
                     this._machine = this.owned.metadata.properties.stateMachineInfo;
+                    this._legacy = this._machine.legacy;
+                    if (this._legacy === true) {
+                        this._autoplay = this._machine.auto;
+                    }
                     if (this._machine.speed != null) {
                         this.speedRatio = this._machine.speed;
                     }
@@ -366,21 +373,19 @@ module BABYLON {
             // Start Animmation State Machine
             if (this._executed === false) {
                 this._executed = true;
-                if (this.enabled === true) {
-                    // Start In State Machine Mode
-                    if (this._autoplay === true && this._machine.layers != null && this._machine.layers.length > 0) {
-                        if (this._skeletal == true) {
-                            this._machine.layers.forEach((layer:BABYLON.IAnimationLayer) => {
-                                this.setCurrentAnimationState(layer, layer.entry, 0);
-                            });
-                        } else {
-                            this.setCurrentAnimationState(this._machine.layers[0], this._machine.layers[0].entry, 0);
-                        }
-                    }
-                } else {
-                    // Start In Standard Animation Mode
-                    if (this._autoplay === true) {
+                if (this.enabled === true && this._autoplay === true) {
+                    if (this._legacy === true) {
                         this.manager.playAnimationClip(null, this.owned);
+                    } else {
+                        if (this._machine.layers != null && this._machine.layers.length > 0) {
+                            if (this._skeletal == true) {
+                                this._machine.layers.forEach((layer:BABYLON.IAnimationLayer) => {
+                                    this.setCurrentAnimationState(layer, layer.entry, 0);
+                                });
+                            } else {
+                                this.setCurrentAnimationState(this._machine.layers[0], this._machine.layers[0].entry, 0);
+                            }
+                        }
                     }
                 }
             }
