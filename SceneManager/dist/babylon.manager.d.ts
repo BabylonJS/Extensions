@@ -3,6 +3,7 @@ declare module BABYLON {
         private static UpVector;
         private static ZeroVector;
         private static TempMatrix;
+        private static PrintElement;
         /** TODO: angle */
         static Angle(from: BABYLON.Vector3, to: BABYLON.Vector3): number;
         /** TODO: clamp angle */
@@ -27,6 +28,9 @@ declare module BABYLON {
         static LookRotation(position: BABYLON.Vector3): BABYLON.Quaternion;
         /** Returns a new Quaternion set from the passed vector position. */
         static LookRotationToRef(position: BABYLON.Vector3, result: BABYLON.Quaternion): void;
+        /** Resets the physics parent and positioning */
+        static ResetPhysicsPosition(position: BABYLON.Vector3, parent: BABYLON.Node): void;
+        static PrintToScreen(text: string, color?: string): void;
         /** Transforms position from local space to world space. */
         static TransformPosition(owner: BABYLON.AbstractMesh | BABYLON.Camera, position: BABYLON.Vector3): BABYLON.Vector3;
         /** Transforms position from local space to world space. */
@@ -322,7 +326,6 @@ declare module BABYLON {
         private static me;
         private static min;
         private static max;
-        private static print;
         private static keymap;
         private static prefabs;
         private static wheel;
@@ -724,7 +727,6 @@ declare module BABYLON {
         static LocateOwnerAnimationTrack(index: number, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, directDecendantsOnly?: boolean, predicate?: (node: BABYLON.Node) => boolean): BABYLON.Animation;
         static DestroyComponents(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, destroyMetadata?: boolean): void;
         static DisposeOwner(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): void;
-        static PrintToScreen(text: string, color?: string): void;
         static SetAnimationLooping(owner: BABYLON.IAnimatable, loopBehavior: number): void;
         static SetSkeletonLooping(skeleton: BABYLON.Skeleton, loopBehavior: number): void;
         static SetSkeletonBlending(skeleton: BABYLON.Skeleton, blendingSpeed: number): void;
