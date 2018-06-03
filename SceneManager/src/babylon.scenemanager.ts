@@ -203,7 +203,6 @@ module BABYLON {
         private static me: BABYLON.SceneManager = null;
         private static min: number = Number.MIN_VALUE;
         private static max: number = (Number.MAX_VALUE - 100);
-        private static print: HTMLElement = null;
         private static keymap: any = {};
         private static prefabs: any = null;
         private static wheel: number = 0;
@@ -3510,6 +3509,7 @@ module BABYLON {
                             if (isTerrainMesh === false && mesh.metadata.properties != null && mesh.metadata.properties.physicsTag != null) {
                                 var physicsTag: string = mesh.metadata.properties.physicsTag;
                                 var physicsMass: number = mesh.metadata.properties.physicsMass;
+                                var physicsDetach: boolean = mesh.metadata.properties.physicsDetach;
                                 var physicsFriction: number = mesh.metadata.properties.physicsFriction;
                                 var physicsRestitution: number = mesh.metadata.properties.physicsRestitution;
                                 var physicsImpostor: number = mesh.metadata.properties.physicsImpostor;
@@ -3518,6 +3518,11 @@ module BABYLON {
                                 var physicsCollisionGroup: number = mesh.metadata.properties.physicsCollisionGroup;
                                 var physicsCollisionMask: number = mesh.metadata.properties.physicsCollisionMask;
                                 var physicsEnginePlugin: number = mesh.metadata.properties.physicsEnginePlugin;
+                                // Detach physics parent
+                                if (physicsDetach === true && mesh.parent != null) {
+                                    BABYLON.Utilities.ResetPhysicsPosition(mesh.position, mesh.parent);
+                                    mesh.parent = null;
+                                }
                                 mesh.physicsImpostor = new BABYLON.PhysicsImpostor(mesh, physicsImpostor, { mass:physicsMass, friction:physicsFriction, restitution:physicsRestitution }, scene);
                                 BABYLON.SceneManager.setupPhysicsImpostor(mesh, physicsEnginePlugin, physicsFriction, physicsCollisions, physicsRotation, physicsCollisionGroup, physicsCollisionMask);
                             }
@@ -3642,6 +3647,7 @@ module BABYLON {
                 var physics:boolean = (mesh.metadata.properties.physicsTag != null);
                 var physicsTag: string = (mesh.metadata.properties.physicsTag) ? mesh.metadata.properties.physicsTag : "";
                 var physicsMass: number = (mesh.metadata.properties.physicsMass) ? mesh.metadata.properties.physicsMass : 0;
+                var physicsDetach: boolean = (mesh.metadata.properties.physicsDetach) ? mesh.metadata.properties.physicsDetach : false;
                 var physicsFriction: number = (mesh.metadata.properties.physicsFriction) ? mesh.metadata.properties.physicsFriction : 0;
                 var physicsRestitution: number = (mesh.metadata.properties.physicsRestitution) ? mesh.metadata.properties.physicsRestitution : 0;
                 var physicsImpostor: number = (mesh.metadata.properties.physicsImpostor) ? mesh.metadata.properties.physicsImpostor : 0;
@@ -3693,6 +3699,11 @@ module BABYLON {
                                 if (physics === true) {
                                     ground.parent = null;
                                     ground.checkCollisions = false;
+                                    // Detach physics parent
+                                    if (physicsDetach === true && ground.parent != null) {
+                                        BABYLON.Utilities.ResetPhysicsPosition(ground.position, ground.parent);
+                                        ground.parent = null;
+                                    }
                                     ground.physicsImpostor = new BABYLON.PhysicsImpostor(ground, physicsImpostor, { mass:physicsMass, friction:physicsFriction, restitution:physicsRestitution }, scene);
                                     BABYLON.SceneManager.setupPhysicsImpostor(ground, physicsEnginePlugin, physicsFriction, physicsCollisions, physicsRotation, physicsCollisionGroup, physicsCollisionMask);
                                 } else {
@@ -3703,6 +3714,11 @@ module BABYLON {
                             if (physics === true) {
                                 ground.parent = null;
                                 ground.checkCollisions = false;
+                                // Detach physics parent
+                                if (physicsDetach === true && ground.parent != null) {
+                                    BABYLON.Utilities.ResetPhysicsPosition(ground.position, ground.parent);
+                                    ground.parent = null;
+                                }
                                 ground.physicsImpostor = new BABYLON.PhysicsImpostor(ground, physicsImpostor, { mass:physicsMass, friction:physicsFriction, restitution:physicsRestitution }, scene);
                                 BABYLON.SceneManager.setupPhysicsImpostor(ground, physicsEnginePlugin, physicsFriction, physicsCollisions, physicsRotation, physicsCollisionGroup, physicsCollisionMask);
                             } else {
@@ -4173,30 +4189,6 @@ module BABYLON {
                 }
             }
             owner.dispose();
-        }
-
-        // *********************************** //
-        // * Public Print To Screen Support  * //
-        // *********************************** //
-
-        public static PrintToScreen(text:string, color:string = "white") {
-            BABYLON.SceneManager.print = document.getElementById("print");
-            if (BABYLON.SceneManager.print == null) {
-                var printer = document.createElement("div");
-                printer.id = "print";
-                printer.style.position = "absolute";
-                printer.style.left = "6px";
-                printer.style.bottom = "3px";
-                printer.style.fontSize = "12px";
-                printer.style.zIndex = "10000";
-                printer.style.color = "#0c0";
-                document.body.appendChild(printer);
-                BABYLON.SceneManager.print = printer;
-            }
-            if (BABYLON.SceneManager.print != null && BABYLON.SceneManager.print.innerHTML !== text) {
-                if (BABYLON.SceneManager.print.style.color !== color) BABYLON.SceneManager.print.style.color = color;
-                BABYLON.SceneManager.print.innerHTML = text;
-            }
         }
         
         // *********************************** //

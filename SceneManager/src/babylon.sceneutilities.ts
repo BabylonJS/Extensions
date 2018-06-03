@@ -6,6 +6,7 @@ module BABYLON {
         private static UpVector:BABYLON.Vector3 = BABYLON.Vector3.Up();
         private static ZeroVector:BABYLON.Vector3 = BABYLON.Vector3.Zero();
         private static TempMatrix:BABYLON.Matrix = BABYLON.Matrix.Zero();
+        private static PrintElement: HTMLElement = null;
         /** TODO: angle */
 		public static Angle(from:BABYLON.Vector3, to:BABYLON.Vector3):number {
 			return Math.acos(BABYLON.Scalar.Clamp(BABYLON.Vector3.Dot(from.normalize(), to.normalize()), -1, 1)) * 57.29578;
@@ -76,7 +77,41 @@ module BABYLON {
             BABYLON.Utilities.TempMatrix.invert()
             BABYLON.Quaternion.FromRotationMatrixToRef(BABYLON.Utilities.TempMatrix, result);
         }
+        /** Resets the physics parent and positioning */
+        public static ResetPhysicsPosition(position:BABYLON.Vector3, parent:BABYLON.Node):void {
+            var check:any = parent;
+            if (check.position) {
+                position.addInPlace(check.position);
+            }
+            if (check.parent != null) {
+                BABYLON.Utilities.ResetPhysicsPosition(position, check.parent);
+            }
+        }
 
+        // *********************************** //
+        // * Public Print To Screen Support  * //
+        // *********************************** //
+
+        public static PrintToScreen(text:string, color:string = "white") {
+            BABYLON.Utilities.PrintElement = document.getElementById("print");
+            if (BABYLON.Utilities.PrintElement == null) {
+                var printer = document.createElement("div");
+                printer.id = "print";
+                printer.style.position = "absolute";
+                printer.style.left = "6px";
+                printer.style.bottom = "3px";
+                printer.style.fontSize = "12px";
+                printer.style.zIndex = "10000";
+                printer.style.color = "#0c0";
+                document.body.appendChild(printer);
+                BABYLON.Utilities.PrintElement = printer;
+            }
+            if (BABYLON.Utilities.PrintElement != null && BABYLON.Utilities.PrintElement.innerHTML !== text) {
+                if (BABYLON.Utilities.PrintElement.style.color !== color) BABYLON.Utilities.PrintElement.style.color = color;
+                BABYLON.Utilities.PrintElement.innerHTML = text;
+            }
+        }
+        
         // *********************************** //
         // *  Scene Transform Tools Support  * //
         // *********************************** //
