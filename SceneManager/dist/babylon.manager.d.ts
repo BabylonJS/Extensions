@@ -3,6 +3,8 @@ declare module BABYLON {
         private static UpVector;
         private static ZeroVector;
         private static TempMatrix;
+        private static TempVector2;
+        private static TempVector3;
         private static PrintElement;
         /** TODO: angle */
         static Angle(from: BABYLON.Vector3, to: BABYLON.Vector3): number;
@@ -64,12 +66,6 @@ declare module BABYLON {
         static StartsWith(source: string, word: string): boolean;
         static EndsWith(source: string, word: string): boolean;
         static ReplaceAll(source: string, word: string, replace: string): string;
-        static EncodeBinay(obj: any): Uint8Array;
-        static DecodeBinary<T>(data: Uint8Array): T;
-        static CompressToString(data: Uint8Array): string;
-        static CompressToArray(data: Uint8Array): Uint8Array;
-        static DecompressToString(data: Uint8Array): string;
-        static DecompressToArray(data: Uint8Array): Uint8Array;
         /** Set the passed matrix "result" as the sampled key frame value for the specfied animation track. */
         static SampleAnimationMatrix(animation: BABYLON.Animation, frame: number, loopMode: number, result: BABYLON.Matrix): void;
         /** Gets the float "result" as the sampled key frame value for the specfied animation track. */
@@ -112,6 +108,21 @@ declare module BABYLON {
         static Loader: BABYLON.ISceneLoaderPlugin;
         static Warning(message: string): void;
     }
+    class ToolkitProgress implements BABYLON.ILoadingScreen {
+        loadingUIText: string;
+        borderPrefix: string;
+        panelElement: HTMLElement;
+        loaderElement: HTMLElement;
+        statusElement: HTMLElement;
+        projectElement: HTMLElement;
+        loadingUIBackgroundColor: string;
+        constructor(loadingUIText: string);
+        private _statusColor;
+        statusColor: string;
+        displayLoadingUI(): void;
+        updateLoadingUI(): void;
+        hideLoadingUI(): void;
+    }
     class JsonSceneLoader implements BABYLON.ISceneLoaderPlugin {
         constructor();
         name: string;
@@ -132,25 +143,6 @@ declare class Stats {
     update(): void;
     addPanel(pane: any): any;
     static Panel: any;
-}
-declare module TVJS {
-    interface KeyCodeMap {
-        left: number[];
-        right: number[];
-        up: number[];
-        down: number[];
-        accept: number[];
-    }
-    class DirectionalNavigation {
-        static enabled: boolean;
-        static focusRoot: Element;
-        static keyCodeMap: TVJS.KeyCodeMap;
-        static focusableSelectors: string[];
-        static moveFocus(direction: string | number | Element, options: any): Element;
-        static findNextFocusElement(direction: string | number | Element, options: any): Element;
-        static addEventListener(type: any, listener: any, useCapture?: boolean): any;
-        static removeEventListener(type: any, listener: any, useCapture?: boolean): any;
-    }
 }
 declare var TimerPlugin: any;
 
@@ -245,14 +237,44 @@ declare module BABYLON {
 
 declare module BABYLON {
     class SceneManager {
-        /** Get instance of the scene manager. */
+        /** Get the current scene manager version information. */
+        static readonly Version: string;
+        /** Get the current instance of the registered scene manager. */
         static GetInstance(): BABYLON.SceneManager;
-        /** Get instance of the stats control. */
-        static GetStatistics(): Stats;
+        /** Creates and registers new manager instance on the scene object */
+        static CreateInstance(scene: BABYLON.Scene, rootUrl?: any): BABYLON.SceneManager;
+        /** Registers a function handler to be executed when window is loaded. */
+        static OnWindowLoad(func: () => any): void;
+        /** Registers a function handler to be executed when device is ready. */
+        static OnDeviceReady(func: () => any): void;
+        /** Registers a function handler to be executed when scene is ready. */
+        static ExecuteWhenReady(func: (scene: BABYLON.Scene, manager: BABYLON.SceneManager) => void): void;
+        /** Is windows phone platform agent. */
+        static IsWindowsPhone(): boolean;
+        /** Is blackberry web platform agent. */
+        static IsBlackBerry(): boolean;
+        /** Is opera web platform agent. */
+        static IsOperaMini(): boolean;
+        /** Is android web platform agent. */
+        static IsAndroid(): boolean;
+        /** Is web os platform agent. */
+        static IsWebOS(): boolean;
+        /** Is ios web platform agent. */
+        static IsIOS(): boolean;
+        /** Is iphone web platform agent. */
+        static IsIPHONE(): boolean;
+        /** Is ipad web platform agent. */
+        static IsIPAD(): boolean;
+        /** Is ipod web platform agent. */
+        static IsIPOD(): boolean;
         /** Is mobile web platform agent. */
         static IsMobile(): boolean;
+        /** Are cordova platform services available. */
+        static IsCordova(): boolean;
         /** Are unversial windows platform services available. */
         static IsWindows(): boolean;
+        /** Are playstation platform services available. */
+        static IsPlaystation(): boolean;
         /** Are xbox one platform services available. */
         static IsXboxOne(): boolean;
         /** Are xbox live platform services available. */
@@ -265,43 +287,42 @@ declare module BABYLON {
         static IsMultiPlayerView(): boolean;
         /** Get the current local multi player count */
         static GetMultiPlayerCount(): number;
-        /** Registers the scene loader function handler. */
-        static RegisterLoader(handler: (root: string, name: string) => void): void;
-        /** Registers a function handler to be executed when window is loaded. */
-        static OnWindowLoad(func: () => any): void;
-        /** Registers a function handler to be executed when scene is ready. */
-        static ExecuteWhenReady(func: (scene: BABYLON.Scene, manager: BABYLON.SceneManager) => void): void;
-        /** Creates and registers a new scene manager session instance */
-        static CreateManagerSession(rootUrl: any, scene: BABYLON.Scene): BABYLON.SceneManager;
-        /** Creates a generic native javascript promise */
+        /** Are firelight audio platform services available */
+        static IsFirelightEnabled(): boolean;
+        /** Get firelight studio platform api library mode. */
+        static GetFirelightAudioMode(): number;
+        /** Creates a generic native javascript promise. */
         static CreateGenericPromise(handler: (resolve, reject) => void): any;
-        /** Resolve a generic native javascript promise object */
+        /** Resolve a generic native javascript promise object. */
         static ResolveGenericPromise(resolveObject: any): any;
-        /**  Gets the names query string from page url */
+        /**  Gets the names query string from page url. */
         static GetQueryStringParam(name: string, url: string): string;
-        /** Gets the current engine WebGL version string info */
+        /** Gets the current engine WebGL version string info. */
         static GetWebGLVersionString(): string;
-        /** Gets the current engine WebGL version number info */
+        /** Gets the current engine WebGL version number info. */
         static GetWebGLVersionNumber(): number;
-        /** Get html text from markup store. */
-        static GetHtmlMarkup(name: string): string;
-        /** Creates a new scene and pre parses metadata. */
-        static CreateScene(engine: BABYLON.Engine): BABYLON.Scene;
+        /** Get instance of the stats control. */
+        static GetStatistics(): Stats;
+        /** Creates an parses scene import mesh metadata. */
+        static CreateMeshMetadata(meshes: BABYLON.AbstractMesh[], scene: BABYLON.Scene): void;
         /** Platform alert message dialog. */
-        static Alert(text: string, title?: string): any;
-        static MarkupStore: any;
+        static AlertMessage(text: string, title?: string): any;
         static readonly StaticIndex: number;
         static readonly PrefabIndex: number;
         static GamepadManager: BABYLON.GamepadManager;
         static GamepadConnected: (pad: BABYLON.Gamepad, state: BABYLON.EventState) => void;
         static GamepadDisconnected: (pad: BABYLON.Gamepad, state: BABYLON.EventState) => void;
+        private static TempMatrix;
+        private static TempVector2;
+        private static TempVector3;
+        private static AuxMatrix;
+        private static AuxVector2;
+        private static AuxVector3;
         private _ie;
         private _url;
         private _time;
         private _timing;
         private _filename;
-        private _render;
-        private _running;
         private _input;
         private _scene;
         private _navmesh;
@@ -445,11 +466,12 @@ declare module BABYLON {
         readonly ie: boolean;
         readonly url: string;
         readonly time: number;
-        readonly running: boolean;
         readonly deltaTime: number;
         getScene(): BABYLON.Scene;
         private static readies;
         constructor(rootUrl: string, scene: BABYLON.Scene);
+        private _beforeRender();
+        private _afterRender();
         dispose(): void;
         /** Opens a platform alert message dialog */
         alert(text: string, title?: string): any;
@@ -467,10 +489,6 @@ declare module BABYLON {
         enableTime(): void;
         /** Disables time managment in scene. */
         disableTime(): void;
-        /** Load a new level into scene. */
-        loadLevel(name: string, path?: string): void;
-        /** Import meshes info current scene. */
-        importMeshes(filename: string, onsuccess?: () => void, onprogress?: () => void, onerror?: (scene: BABYLON.Scene, message: string, exception: any) => void): void;
         /** Safely destroys a scene object. */
         safeDestroy(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, delay?: number, disable?: boolean): void;
         /** Gets the main camera for a player */
@@ -487,10 +505,6 @@ declare module BABYLON {
         getAdvancedTexture(): BABYLON.GUI.AdvancedDynamicTexture;
         /** Gets the scene environment texture name. */
         getEnvironmentTextureName(): string;
-        /** Enters browser full screen mode. */
-        showFullscreen(element?: HTMLElement): void;
-        /** Exits browser full screen mode. */
-        exitFullscreen(): void;
         /** Adds a pending scene loading state. */
         addLoadingState(state: any): void;
         /** Removes a pending scene loading state. */
@@ -500,18 +514,6 @@ declare module BABYLON {
         private _executeWhenReady();
         private _executeLocalReady();
         private _loadQueueImports();
-        /** Starts the scene render loop. */
-        start(): void;
-        /** Stops the scene render loop. */
-        stop(): void;
-        /** Toggle the scene render loop on and off. */
-        toggle(): void;
-        /** Steps the scene render loop frame at a time. */
-        stepFrame(): void;
-        /** Pauses the scene audio tracks. */
-        pauseAudio(): void;
-        /** Resumes the scene audio tracks. */
-        resumeAudio(): void;
         /** Popup debug layer in window. */
         popupDebug(tab?: number): void;
         /** Toggle debug layer on and off. */
@@ -553,6 +555,14 @@ declare module BABYLON {
         applyImpulse(owner: BABYLON.AbstractMesh, impusle: BABYLON.Vector3, contact: BABYLON.Vector3): void;
         /** Applies friction to owner using physics imposter. */
         applyFriction(owner: BABYLON.AbstractMesh, friction: number): void;
+        /** Gets mass of owner using physics imposter. */
+        getMass(owner: BABYLON.AbstractMesh): number;
+        /** Sets mass to owner using physics imposter. */
+        setMass(owner: BABYLON.AbstractMesh, mass: number): void;
+        /** Gets restitution of owner using physics imposter. */
+        getRestitution(owner: BABYLON.AbstractMesh): number;
+        /** Sets restitution to owner using physics imposter. */
+        setRestitution(owner: BABYLON.AbstractMesh, restitution: number): void;
         /** Gets owner friction level using physics imposter. */
         getFrictionLevel(owner: BABYLON.AbstractMesh): number;
         /** Gets owner linear velocity using physics imposter. */
@@ -637,7 +647,7 @@ declare module BABYLON {
         getGamepadTriggerInput(trigger: number, player?: BABYLON.PlayerNumber): number;
         getGamepad(player?: BABYLON.PlayerNumber): BABYLON.Gamepad;
         getGamepadType(player?: BABYLON.PlayerNumber): BABYLON.GamepadType;
-        updateCameraUserInput(camera: BABYLON.FreeCamera, movementSpeed: number, rotationSpeed: number, player?: BABYLON.PlayerNumber): void;
+        updateCameraInput(camera: BABYLON.FreeCamera, movementSpeed: number, rotationSpeed: number, player?: BABYLON.PlayerNumber): void;
         updateCameraPosition(camera: BABYLON.FreeCamera, horizontal: number, vertical: number, speed: number): void;
         updateCameraRotation(camera: BABYLON.FreeCamera, mousex: number, mousey: number, speed: number): void;
         /** Gets the native babylon mesh navigation tool */
@@ -710,8 +720,6 @@ declare module BABYLON {
         private static inputManagerGamepadConnected(pad, state);
         private static inputManagerGamepadDisconnected(pad, state);
         private static updateUserInput();
-        private static parseSceneMetadata(rootUrl, scene);
-        private static parseMeshMetadata(meshes, scene);
         private static parseSceneCameras(cameras, scene, ticklist);
         private static parseSceneLights(lights, scene, ticklist);
         private static parseSceneMeshes(meshes, scene, ticklist);
@@ -735,47 +743,6 @@ declare module BABYLON {
         static CloneValue(source: any, destinationObject: any): any;
         static CloneMetadata(source: BABYLON.IObjectMetadata): BABYLON.IObjectMetadata;
         static DeepCopyProperties(source: any, destination: any, doNotCopyList?: string[], mustCopyList?: string[]): void;
-        /**
-         * Creates a terrain mesh from a packed height map.
-         * tuto : http://doc.babylonjs.com/tutorials/14._Height_Map
-         * tuto : http://doc.babylonjs.com/tutorials/Mesh_CreateXXX_Methods_With_Options_Parameter#ground-from-a-height-map
-         * The parameter `url` sets the URL of the height map image resource.
-         * The parameter `lodGroup` sets the LOD group info of the height map image resource.
-         * The parameter `width` and `height` (positive floats, default 10) set the ground width and height sizes.
-         * The parameter `resolution` (positive integer for height resolution) sets the number of subdivisions per side for each lod level.
-         * The parameter `minHeight` (float, default 0) is the minimum altitude on the ground.
-         * The parameter `maxHeight` (float, default 1) is the maximum altitude on the ground.
-         * The parameter 'updatable' sets the mesh to updatable with the boolean parameter (default false) if its internal geometry is supposed to change once created.
-         * The parameter `onReady` is a javascript callback function that will be called  once the meshes are built (the height map download can last some time).
-         * This function is passed the newly built meshes :
-         * ```javascript
-         * function(meshes) { // do things
-         *     return; }
-         * ```
-         */
-        static GenerateTerrainFromHeightMap(name: string, url: string, lodGroup: any, options: {
-            width?: number;
-            height?: number;
-            resolution?: number;
-            minHeight?: number;
-            maxHeight?: number;
-            updatable?: boolean;
-            onReady?: (meshes: BABYLON.GroundMesh[]) => void;
-        }, scene: BABYLON.Scene): void;
-        /**
-         * Creates the VertexData of the Terrain designed from a packed heightmap.
-         */
-        static GenerateTerrainVertexData(options: {
-            width: number;
-            height: number;
-            subdivisions: number;
-            minHeight: number;
-            maxHeight: number;
-            buffer: Uint8Array;
-            bufferWidth: number;
-            bufferHeight: number;
-        }): BABYLON.VertexData;
-        static CreateMeshFromSubmesh(source: BABYLON.Mesh, index: number, scene: BABYLON.Scene, reOrigin?: boolean, isUpdateable?: boolean, customMesh?: BABYLON.Mesh): BABYLON.Mesh;
         /** Set the Windows Runtime preferred launch windowing mode. */
         static SetWindowsLaunchMode(mode: Windows.UI.ViewManagement.ApplicationViewWindowingMode): void;
         /** Quit the Windows Runtime host application. */
@@ -898,6 +865,21 @@ declare module BABYLON {
         private updateIntersectionList();
         /*************************************/
         /*************************************/
+        private disposeSceneComponent();
+    }
+    class GenericComponent extends BABYLON.SceneComponent {
+        onready: () => void;
+        onstart: () => void;
+        onupdate: () => void;
+        onafter: () => void;
+        ondestroy: () => void;
+        constructor(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, scene: BABYLON.Scene, tick?: boolean, propertyBag?: any);
+        getOwner(): BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light;
+        protected ready(): void;
+        protected start(): void;
+        protected update(): void;
+        protected after(): void;
+        protected destroy(): void;
         private disposeSceneComponent();
     }
     class OrthoController extends BABYLON.CameraComponent {
@@ -1571,6 +1553,7 @@ declare module BABYLON {
         avatarRadius: number;
         fallingVelocity: number;
         slidingVelocity: number;
+        synchronizeVelocity: boolean;
         isJumping(): boolean;
         isFalling(): boolean;
         isSliding(): boolean;
@@ -1593,7 +1576,7 @@ declare module BABYLON {
         protected after(): void;
         protected updateGroundingState(): void;
         move(velocity: BABYLON.Vector3, friction?: number, jump?: number): void;
-        rotate(speed: number, friction?: number): void;
+        turn(speed: number, friction?: number): void;
     }
 }
 
