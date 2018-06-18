@@ -1,0 +1,6 @@
+class ColorTableGenerator{
+
+    constructor(){};
+
+    generate(){};
+}
