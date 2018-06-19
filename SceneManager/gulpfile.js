@@ -8,14 +8,18 @@ var uglify = require("gulp-uglify");
 var tsConfig = {
     noExternalResolve: true,
     target: 'ES5',
+    module: 'system',
     declarationFiles: true,
     typescript: require('typescript'),
     experimentalDecorators: true,
-    isolatedModules: false
+    isolatedModules: false,
+    removeComments: false
 };
 var tsProject = typescript.createProject(tsConfig);
 
 var files = [
+    "./libs/stats.js",
+    "./libs/terrains.js",
     "./temp/babylon.scenecomponents.js",
     "./temp/babylon.scenemanager.js",
     "./temp/babylon.scenenavagent.js",

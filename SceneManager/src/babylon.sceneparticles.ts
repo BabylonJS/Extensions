@@ -154,8 +154,9 @@ module BABYLON {
             
             // Parse particle system textures
             var texture:any = this.getProperty("textureImage", null);
+            var texturePath:string = this.manager.getScenePath();
             if (texture != null && texture.name && texture.name !== "") {
-                this._shuriken.particleTexture = new BABYLON.Texture((this.manager.getScenePath() + texture.name), this.scene);
+                this._shuriken.particleTexture = new BABYLON.Texture((texturePath + texture.name), this.scene);
             }
         }
     }

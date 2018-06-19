@@ -28,6 +28,7 @@ module BABYLON {
         public enabled:boolean = false;
         public speedRatio:number = 1.0;
         public autoTicking:boolean = true;
+        public enableTransitions:boolean = true;
         public directBlendSpeed:number = 1.0;
         public get fps():number { return this._fps; }
         public get legacy():boolean { return this._legacy; }
@@ -51,6 +52,7 @@ module BABYLON {
             this._fps = this.getProperty("timelineStep", 30);
             this._skeletal = (this.getProperty<number>("controlType", 0) === 2);
             this.enabled = this.getProperty("enableStateMachine", false);
+            this.enableTransitions = this.getProperty("enableTransitions", true);
             // ..
             // Setup Animation State Machine
             // ..
@@ -633,7 +635,7 @@ module BABYLON {
             return result;
         }
         private checkStateTransitions(layer:BABYLON.IAnimationLayer, transitions:BABYLON.ITransition[], time:number, length:number, rate:number):any {
-            if (transitions != null && transitions.length > 0) {
+            if (this.enableTransitions === true && transitions != null && transitions.length > 0) {
                 var i:number = 0; var ii:number = 0; var solo:number = -1;
                 // ..
                 // Check Has Solo Transitions

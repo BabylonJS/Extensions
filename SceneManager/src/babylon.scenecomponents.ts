@@ -32,11 +32,14 @@ module BABYLON {
             this._engine = scene.getEngine();
             this._scene = scene;
 
+            /** TODO: Optimize the scene.register before and after to us ()=>{} */
+            /** Then remome the internal instance wrappers thruout the component */
+
             /* Scene Component Instance Handlers */
             var instance: BABYLON.SceneComponent = this;
-            instance.register = function () { instance.registerInstance(instance); };
-            instance._before = function () { instance.updateInstance(instance); };
-            instance._after = function () { instance.afterInstance(instance); };
+            instance.register = () => { instance.registerInstance(instance); };
+            instance._before = () => { instance.updateInstance(instance); };
+            instance._after = () => { instance.afterInstance(instance); };
         }
         public get scene(): BABYLON.Scene { 
             return this._scene;
@@ -392,6 +395,42 @@ module BABYLON {
             this._intersector = null;
             this._mesh = null;
         }
+    }
+
+    export class GenericComponent extends BABYLON.SceneComponent {
+        public onready:()=>void = null;
+        public onstart:()=>void = null;
+        public onupdate:()=>void = null;
+        public onafter:()=>void = null;
+        public ondestroy:()=>void = null;
+        public constructor(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, scene: BABYLON.Scene, tick: boolean = true, propertyBag: any = {}) {
+            super(owner, scene, tick, propertyBag);
+        }
+        public getOwner():BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light {
+            return this.owned
+        }
+        protected ready() :void {
+            if (this.onready != null) this.onready();
+        }
+        protected start() :void {
+            if (this.onstart != null) this.onstart();
+        }
+        protected update() :void {
+            if (this.onupdate != null) this.onupdate();
+        }
+        protected after() :void {
+            if (this.onafter != null) this.onafter();
+        }
+        protected destroy() :void {
+            if (this.ondestroy != null) this.ondestroy();
+        }
+        private disposeSceneComponent():void {
+            this.onready = null;
+            this.onstart = null;
+            this.onupdate = null;
+            this.onafter = null;
+            this.ondestroy = null;
+        }        
     }
 
     export class OrthoController extends BABYLON.CameraComponent {
@@ -836,7 +875,8 @@ module BABYLON {
     export enum MovementType
     {
         DirectVelocity = 0,
-        AppliedForces = 1
+        AppliedForces = 1,
+        CheckCollision = 2
     }
     
     export enum CollisionContact
@@ -930,6 +970,7 @@ module BABYLON {
     export interface IObjectMetadata {
         api: boolean;
         type: string;
+        parsed:boolean;
         prefab:boolean;
         state:any;
         objectName: string;

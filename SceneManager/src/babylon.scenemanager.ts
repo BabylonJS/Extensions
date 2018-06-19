@@ -9,33 +9,194 @@
 
 module BABYLON {
     export class SceneManager {
-        /** Get instance of the scene manager. */
-        public static GetInstance(): BABYLON.SceneManager {
-            return (BABYLON.SceneManager.me) ? BABYLON.SceneManager.me : null;
-        }
+        /** Get the current scene manager version information. */
+        public static GetVersion(): string { return "3.3.0"; }
+        /** Get the current instance of the registered scene manager. */
+        public static GetInstance(): BABYLON.SceneManager { return (BABYLON.SceneManager.me) ? BABYLON.SceneManager.me : null; }
         /** Get instance of the stats control. */
-        public static GetStatistics():Stats {
-            return (BABYLON.SceneManager.showRenderStats === true && BABYLON.SceneManager.renderStatsInstance != null) ? BABYLON.SceneManager.renderStatsInstance : null;
-        }
-        
-        // *********************************** //
-        // * Babylon Scene Manager Utilities * //
-        // *********************************** //
+        public static GetStatistics():Stats { return (BABYLON.SceneManager.showRenderStats === true && BABYLON.SceneManager.renderStatsInstance != null) ? BABYLON.SceneManager.renderStatsInstance : null; }
 
-        /** Is mobile web platform agent. */
-        public static IsMobile(): boolean {
+        // ********************************** //
+        // * Babylon Scene Manager Helpers  * //
+        // ********************************** //
+
+        /** Create a new scene and registers a manager instance */        
+        public static CreateScene(engine:BABYLON.Engine):BABYLON.Scene {
+            var scene:BABYLON.Scene = new BABYLON.Scene(engine);
+            BABYLON.Utilities.RegisterSceneManager(scene);
+            return scene;
+        }
+        /** Load and parse a new scene and registers a manager instance */        
+        public static LoadScene(rootUrl: string, sceneFilename: any, engine: Engine, onSuccess?: Nullable<(scene: Scene) => void>, onProgress?: Nullable<(event: SceneLoaderProgressEvent) => void>, onError?: Nullable<(scene: Scene, message: string, exception?: any) => void>, pluginExtension?: Nullable<string>): Nullable<ISceneLoaderPlugin | ISceneLoaderPluginAsync> {
+            return BABYLON.SceneManager.AppendScene(rootUrl, sceneFilename, BABYLON.SceneManager.CreateScene(engine), onSuccess, onProgress, onError, pluginExtension);
+        }
+        /** Append and parse scene objects from a filename url */        
+        public static AppendScene(rootUrl: string, sceneFilename?: any, scene?: Nullable<Scene>, onSuccess?: Nullable<(scene: Scene) => void>, onProgress?: Nullable<(event: SceneLoaderProgressEvent) => void>, onError?: Nullable<(scene: Scene, message: string, exception?: any) => void>, pluginExtension?: Nullable<string>):Nullable<ISceneLoaderPlugin | ISceneLoaderPluginAsync> {
+            var scenex: any = <any>scene;
+            if (scenex.manager == null) BABYLON.Utilities.RegisterSceneManager(scene);
+            if (scenex.manager != null) scenex.manager._url = rootUrl;
+            var onSuccessWrapper:(scene:BABYLON.Scene)=>void = (sx:BABYLON.Scene)=> {
+                BABYLON.Utilities.ParseSceneMetadata(sx);
+                BABYLON.Utilities.ExecuteSceneReady(sx);
+                if (onSuccess != null) onSuccess(sx);
+            };
+            return BABYLON.SceneLoader.Append(rootUrl, sceneFilename, scene, onSuccessWrapper, onProgress, onError, pluginExtension);
+        }
+        /** Import and parse meshes from a filename url */        
+        public static ImportMeshes(meshNames: any, rootUrl: string, sceneFilename?: any, scene?: Nullable<Scene>, onSuccess?: Nullable<(meshes: AbstractMesh[], particleSystems: ParticleSystem[], skeletons: Skeleton[], animationGroups: AnimationGroup[]) => void>, onProgress?: Nullable<(event: SceneLoaderProgressEvent) => void>, onError?: Nullable<(scene: Scene, message: string, exception?: any) => void>, pluginExtension?: Nullable<string>): Nullable<ISceneLoaderPlugin | ISceneLoaderPluginAsync> {
+            var scenex: any = <any>scene;
+            if (scenex.manager == null) BABYLON.Utilities.RegisterSceneManager(scene);
+            var onSuccessWrapper:(meshes: AbstractMesh[], particleSystems: ParticleSystem[], skeletons: Skeleton[], animationGroups: AnimationGroup[])=>void = (mx: AbstractMesh[], px: ParticleSystem[], sx: Skeleton[], ax: AnimationGroup[])=> {
+                BABYLON.Utilities.ParseImportMetadata(mx, scene);
+                if (onSuccess != null) onSuccess(mx, px, sx, ax);
+            };
+            return BABYLON.SceneLoader.ImportMesh(meshNames, rootUrl, sceneFilename, scene, onSuccessWrapper, onProgress, onError, pluginExtension);
+        }
+
+        // ********************************** //
+        // * Babylon Scene Manager Handers  * //
+        // ********************************** //
+
+        /** Registers a function handler to be executed when window is loaded. */
+        public static OnWindowLoad(func: () => any): void {
+            if (func != null) (<any>window).ontoolkitload = func;
+        }
+        /** Registers a function handler to be executed when device is ready. */
+        public static OnDeviceReady(func: () => any): void {
+            if (func != null) (<any>window).ontoolkitdevice = func;
+        }
+        /** Registers a function handler to be executed when scene is ready. */
+        public static ExecuteWhenReady(func: (scene: BABYLON.Scene, manager: BABYLON.SceneManager) => void): void {
+            if (func != null) BABYLON.SceneManager.readies.push(func);
+        }
+
+        // ********************************** //
+        // *  Babylon Scene Manager Agents  * //
+        // ********************************** //
+
+        /** Is windows phone platform agent. */
+        public static IsWindowsPhone(): boolean {
             var result: boolean = false;
             if (navigator != null && navigator.userAgent != null) {
-                var n = navigator.userAgent;
-                if (n.match(/Android/i) || n.match(/webOS/i) || n.match(/iPhone/i) || n.match(/iPad/i) || n.match(/iPod/i) || n.match(/BlackBerry/i) || n.match(/Windows Phone/i)) {
+                if (navigator.userAgent.match(/Windows Phone/i)) {
                     result = true;
                 }
             }
             return result;
         }
+        /** Is blackberry web platform agent. */
+        public static IsBlackBerry(): boolean {
+            var result: boolean = false;
+            if (navigator != null && navigator.userAgent != null) {
+                if (navigator.userAgent.match(/BlackBerry/i)) {
+                    result = true;
+                }
+            }
+            return result;
+        }
+        /** Is opera web platform agent. */
+        public static IsOperaMini(): boolean {
+            var result: boolean = false;
+            if (navigator != null && navigator.userAgent != null) {
+                if (navigator.userAgent.match(/Opera Mini/i)) {
+                    result = true;
+                }
+            }
+            return result;
+        }
+        /** Is android web platform agent. */
+        public static IsAndroid(): boolean {
+            var result: boolean = false;
+            if (navigator != null && navigator.userAgent != null) {
+                if (navigator.userAgent.match(/Android/i)) {
+                    result = true;
+                }
+            }
+            return result;
+        }
+        /** Is web os platform agent. */
+        public static IsWebOS(): boolean {
+            var result: boolean = false;
+            if (navigator != null && navigator.userAgent != null) {
+                if (navigator.userAgent.match(/webOS/i)) {
+                    result = true;
+                }
+            }
+            return result;
+        }
+        /** Is ios web platform agent. */
+        public static IsIOS(): boolean {
+            var result: boolean = false;
+            if (navigator != null && navigator.userAgent != null) {
+                if (navigator.userAgent.match(/iPhone|iPad|iPod/i)) {
+                    result = true;
+                }
+            }
+            return result;
+        }
+        /** Is iphone web platform agent. */
+        public static IsIPHONE(): boolean {
+            var result: boolean = false;
+            if (navigator != null && navigator.userAgent != null) {
+                if (navigator.userAgent.match(/iPhone/i)) {
+                    result = true;
+                }
+            }
+            return result;
+        }
+        /** Is ipad web platform agent. */
+        public static IsIPAD(): boolean {
+            var result: boolean = false;
+            if (navigator != null && navigator.userAgent != null) {
+                if (navigator.userAgent.match(/iPad/i)) {
+                    result = true;
+                }
+            }
+            return result;
+        }
+        /** Is ipod web platform agent. */
+        public static IsIPOD(): boolean {
+            var result: boolean = false;
+            if (navigator != null && navigator.userAgent != null) {
+                if (navigator.userAgent.match(/iPod/i)) {
+                    result = true;
+                }
+            }
+            return result;
+        }
+        /** Is mobile web platform agent. */
+        public static IsMobile(): boolean {
+            var result: boolean = false;
+            if (navigator != null && navigator.userAgent != null) {
+                var n = navigator.userAgent;
+                if (n.match(/Android/i) || n.match(/webOS/i) || n.match(/iPhone|iPad|iPod/i) || n.match(/BlackBerry/i) || n.match(/Opera Mini/i) || n.match(/Windows Phone/i)) {
+                    result = true;
+                }
+            }
+            return result;
+        }
+
+        // *********************************** //
+        // * Babylon Scene Manager Utilities * //
+        // *********************************** //
+
+        /** Are cordova platform services available. */
+        public static IsCordova(): boolean {
+            return ((<any>window).cordova != null);
+        }
         /** Are unversial windows platform services available. */
         public static IsWindows(): boolean {
             return (typeof Windows !== "undefined" && typeof Windows.UI !== "undefined" && typeof Windows.System !== "undefined" && typeof Windows.Foundation !== "undefined");
+        }
+        /** Are playstation platform services available. */
+        public static IsPlaystation(): boolean {
+            var result: boolean = false;
+            if (navigator != null && navigator.userAgent != null) {
+                if (navigator.userAgent.match(/Playstation/i)) {
+                    result = true;
+                }
+            }
+            return result;
         }
         /** Are xbox one platform services available. */
         public static IsXboxOne(): boolean {
@@ -68,38 +229,23 @@ module BABYLON {
         public static GetMultiPlayerCount():number { 
             return BABYLON.SceneManager.multiPlayerCount;
         }
-        /** Registers the scene loader function handler. */
-        public static RegisterLoader(handler: (root: string, name: string) => void): void {
-            BABYLON.SceneManager.loader = handler;
+        /** Are firelight audio platform services available */
+        public static IsFirelightEnabled(): boolean {
+            return ((<any>window).FMODModule != null);
         }
-        /** Registers a function handler to be executed when window is loaded. */
-        public static OnWindowLoad(func: () => any): void {
-            if (func != null) (<any>window).onload = func;
+        /** Get firelight studio platform api library mode. */
+        public static GetFirelightAudioMode(): number {
+            return ((<any>window).firelightAudio != null) ? (<any>window).firelightAudio : 0;
         }
-        /** Registers a function handler to be executed when scene is ready. */
-        public static ExecuteWhenReady(func: (scene: BABYLON.Scene, manager: BABYLON.SceneManager) => void): void {
-            if (func != null) BABYLON.SceneManager.readies.push(func);
-        }
-        /** Creates and registers a new scene manager session instance */
-        public static CreateManagerSession(rootUrl: any, scene: BABYLON.Scene) : BABYLON.SceneManager {
-            var scenex: any = <any>scene;
-            if (scenex.manager != null) {
-                scenex.manager.dispose();
-                scenex.manager = null;
-            }                
-            scenex.manager = new BABYLON.SceneManager(rootUrl, scene);
-            if (scenex.manager != null) scenex.manager._executeWhenReady();
-            return scenex.manager;
-        }
-        /** Creates a generic native javascript promise */
+        /** Creates a generic native javascript promise. */
         public static CreateGenericPromise(handler: (resolve, reject) => void): any {
             return ((<any>window).createGenericPromise) ? (<any>window).createGenericPromise(handler) : null;
         }
-        /** Resolve a generic native javascript promise object */
+        /** Resolve a generic native javascript promise object. */
         public static ResolveGenericPromise(resolveObject:any): any {
             return ((<any>window).resolveGenericPromise) ? (<any>window).resolveGenericPromise(resolveObject) : null;
         }
-        /**  Gets the names query string from page url */
+        /**  Gets the names query string from page url. */
         public static GetQueryStringParam(name: string, url: string): string {
             if (!url) url = window.location.href;
             name = name.replace(/[\[\]]/g, "\\$&");
@@ -108,7 +254,7 @@ module BABYLON {
             if (!results[2]) return '';
             return decodeURIComponent(results[2].replace(/\+/g, " "));
         }
-        /** Gets the current engine WebGL version string info */
+        /** Gets the current engine WebGL version string info. */
         public static GetWebGLVersionString(): string {
             var result = "WebGL - Unknown";
             if (BABYLON.SceneManager.engine != null) {
@@ -122,7 +268,7 @@ module BABYLON {
             }
             return result;
         }
-        /** Gets the current engine WebGL version number info */
+        /** Gets the current engine WebGL version number info. */
         public static GetWebGLVersionNumber(): number {
             var result = 0;
             if (BABYLON.SceneManager.engine != null) {
@@ -133,23 +279,8 @@ module BABYLON {
             }
             return result;
         }
-        /** Get html text from markup store. */
-        public static GetHtmlMarkup(name: string): string {
-            var result: string = null;
-            if (name != null && name !== "") {
-                var search: string = name.toLowerCase();
-                result = (BABYLON.SceneManager.MarkupStore[search] != null) ? BABYLON.SceneManager.MarkupStore[search] : null;
-            }
-            return result;
-        }
-        /** Creates a new scene and pre parses metadata. */
-        public static CreateScene(engine: BABYLON.Engine): BABYLON.Scene {
-            var scene: BABYLON.Scene = new BABYLON.Scene(engine);
-            BABYLON.SceneManager.parseSceneMetadata("/", scene);
-            return scene;
-        }
         /** Platform alert message dialog. */
-        public static Alert(text: string, title: string = "Babylon.js"): any {
+        public static AlertMessage(text: string, title: string = "Babylon.js"): any {
             var result = null;
             if (BABYLON.SceneManager.IsWindows()) {
                 result = new Windows.UI.Popups.MessageDialog(text, title).showAsync();
@@ -162,7 +293,6 @@ module BABYLON {
         // *********************************** //
         // * Babylon Scene Manager Component * //
         // *********************************** //
-        public static MarkupStore:any = {};
         public static get StaticIndex():number { return 30; };
         public static get PrefabIndex():number { return 31; };
         // ..
@@ -170,13 +300,19 @@ module BABYLON {
         public static GamepadConnected:(pad: BABYLON.Gamepad, state:BABYLON.EventState) => void = null;
         public static GamepadDisconnected:(pad: BABYLON.Gamepad, state:BABYLON.EventState) => void = null;
         // ..
+        private static TempMatrix:BABYLON.Matrix = BABYLON.Matrix.Zero();
+        private static TempVector2:BABYLON.Vector2 = BABYLON.Vector2.Zero();
+        private static TempVector3:BABYLON.Vector3 = BABYLON.Vector3.Zero();
+        // ..
+        private static AuxMatrix:BABYLON.Matrix = BABYLON.Matrix.Zero();
+        private static AuxVector2:BABYLON.Vector2 = BABYLON.Vector2.Zero();
+        private static AuxVector3:BABYLON.Vector3 = BABYLON.Vector3.Zero();
+        // ..
         private _ie:boolean = false;
-        private _url:string = "";
+        private _url:string = "/";
         private _time:number = 0;
         private _timing:boolean = false;
         private _filename:string = null;
-        private _render:() => void = null;
-        private _running:boolean = false;
         private _input:boolean = false;
         private _scene:BABYLON.Scene = null;
         private _navmesh:BABYLON.AbstractMesh = null;
@@ -278,6 +414,8 @@ module BABYLON {
         private static preventDefault: boolean = false;
         private static stereoCameras:boolean = true;
         private static rightHanded: boolean = true;
+        private static pointerLocked:boolean = false;
+        private static enableLocking:boolean = false;
         private static gamepad1: BABYLON.Gamepad = null;
         private static gamepad1Type: BABYLON.GamepadType = BABYLON.GamepadType.None;
         private static gamepad1ButtonPress: BABYLON.UserInputPress[] = [];
@@ -320,16 +458,14 @@ module BABYLON {
         private static gamepad4RightTrigger: BABYLON.UserInputAction[] = [];
         private static loader: (root: string, name: string) => void = null;
         public get ie():boolean { return this._ie; }
-        public get url():string { return this._url; }
         public get time():number { return this._time; }
-        public get running(): boolean { return this._running }
         public get deltaTime(): number { return (BABYLON.SceneManager.engine != null) ? BABYLON.SceneManager.engine.getDeltaTime() / 1000.0 : 0; }
         public getScene(): BABYLON.Scene { return this._scene; }
         private static readies: Function[] = []; // Note: Only ExecuteWhenReady Resets Ready Handlers
-        public constructor(rootUrl: string, scene: BABYLON.Scene) {
+        public constructor(scene: BABYLON.Scene) {
             if (scene == null) throw new Error("Null host scene obejct specified.");
             this._ie = document.all ? true : false
-            this._url = rootUrl;
+            this._url = "/";
             this._time = 0;
             this._timing = false;
             this._filename = null;
@@ -361,6 +497,8 @@ module BABYLON {
             BABYLON.SceneManager.engine = this._scene.getEngine();
             BABYLON.SceneManager.prefabs = {};
             BABYLON.SceneManager.orphans = null;
+            BABYLON.SceneManager.enableLocking = false;
+            BABYLON.SceneManager.pointerLocked = false;
             BABYLON.SceneManager.stereoCameras = true;
             BABYLON.SceneManager.multiPlayerView = false;
             BABYLON.SceneManager.multiPlayerCount = 1;
@@ -376,11 +514,52 @@ module BABYLON {
             if (BABYLON.SceneManager.engine.webGLVersion < 2) {
                 BABYLON.Tools.Warn("Babylon.js performance monitor detected webgl version 1.");
             }
+            
             // Reset local ready state
             this.addLoadingState(this._localReadyState);
 
-            // Parse scene metadata properties
-            //BABYLON.SceneManager.parseSceneEnvironment(this._scene);
+            // Enable Time Management
+            this.enableTime();            
+
+            // Scene component start, update and destroy proxies 
+            var instance: BABYLON.SceneManager = this;
+            this._scene.onDispose = function () {
+                if (instance != null) {
+                    instance.dispose();
+                }
+            };
+
+            // Register pointer lock change events
+            document.addEventListener("pointerlockchange", this.pointerLockHandler);
+            document.addEventListener("mspointerlockchange", this.pointerLockHandler);
+            document.addEventListener("mozpointerlockchange", this.pointerLockHandler);
+            document.addEventListener("webkitpointerlockchange", this.pointerLockHandler);
+
+            // Register scene render loop handlers
+            this._scene.registerBeforeRender(this._beforeRender);
+            this._scene.registerAfterRender(this._afterRender);
+        }
+        private _beforeRender():void {
+            if (BABYLON.SceneManager.showRenderStats === true && BABYLON.SceneManager.renderStatsInstance != null) {
+                BABYLON.SceneManager.renderStatsInstance.begin();
+            }
+        }
+        private _afterRender():void {
+            if (BABYLON.SceneManager.showRenderStats === true && BABYLON.SceneManager.renderStatsInstance != null) {
+                BABYLON.SceneManager.renderStatsInstance.end();
+            }
+            var instance: BABYLON.SceneManager = BABYLON.SceneManager.me;
+            if (instance != null) {
+                if (instance._timing) {
+                    instance._time += instance.deltaTime;
+                    if (instance._time >= BABYLON.SceneManager.max) instance._time = 0;
+                }
+                if (instance._input) {
+                    BABYLON.SceneManager.updateUserInput();
+                }
+            }
+        }
+        private _parseSceneMetadata():void {
             if (this._scene.metadata != null && this._scene.metadata.properties != null) {
                 if (this._scene.metadata.properties.sceneFilename && this._scene.metadata.properties.sceneFilename != null) {
                     this._filename = this._scene.metadata.properties.sceneFilename;
@@ -427,13 +606,13 @@ module BABYLON {
                     this._advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
                 }
             }
-
+            // ..
             // Parse, create and store component instances
+            // ..
             var ticklist: BABYLON.IScriptComponent[] = [];
             BABYLON.SceneManager.parseSceneCameras(this._scene.cameras, this._scene, ticklist);
             BABYLON.SceneManager.parseSceneLights(this._scene.lights, this._scene, ticklist);
             BABYLON.SceneManager.parseSceneMeshes(this._scene.meshes, this._scene, ticklist);
-
             // Register scene component ticklist
             if (ticklist.length > 0) {
                 // Sort In Ascending Order
@@ -446,7 +625,6 @@ module BABYLON {
                     scriptComponent.instance.register();
                 });
             }
-
             // Validate scene render stats options
             if (typeof Stats !== "undefined" && BABYLON.SceneManager.showRenderStats === true) {
                 if (BABYLON.SceneManager.renderStatsInstance == null) {
@@ -455,41 +633,16 @@ module BABYLON {
                     document.body.appendChild(BABYLON.SceneManager.renderStatsInstance.dom);
                 }
             }
-
-            // Scene component start, update and destroy proxies 
-            var instance: BABYLON.SceneManager = this;
-            this._render = function () {
-                if (instance != null && instance._running === true) {
-                    /////////////////////////////////////////////////////////////////////////////////
-                    // Managed Scene Render Loop                                                   //
-                    /////////////////////////////////////////////////////////////////////////////////
-                    if (BABYLON.SceneManager.showRenderStats === true && BABYLON.SceneManager.renderStatsInstance != null) {
-                        BABYLON.SceneManager.renderStatsInstance.begin();
-                    }
-                    if (instance._timing) {
-                        instance._time += instance.deltaTime;
-                        if (instance._time >= BABYLON.SceneManager.max) instance._time = 0;
-                    }
-                    if (instance._input) {
-                        BABYLON.SceneManager.updateUserInput();
-                    }
-                    if (instance._scene != null) {
-                        instance._scene.render();
-                    }
-                    if (BABYLON.SceneManager.showRenderStats === true && BABYLON.SceneManager.renderStatsInstance != null) {
-                        BABYLON.SceneManager.renderStatsInstance.end();
-                    }
-                    /////////////////////////////////////////////////////////////////////////////////
-                }
-            };
-            this._scene.onDispose = function () {
-                if (instance != null) {
-                    instance.dispose();
-                }
-            };
         }
+
         /* Dispose scene manager and all resources. */
         public dispose(): void {
+            this._scene.unregisterBeforeRender(this._beforeRender);
+            this._scene.unregisterAfterRender(this._afterRender);
+            document.removeEventListener("pointerlockchange", this.pointerLockHandler);
+            document.removeEventListener("mspointerlockchange", this.pointerLockHandler);
+            document.removeEventListener("mozpointerlockchange", this.pointerLockHandler);
+            document.removeEventListener("webkitpointerlockchange", this.pointerLockHandler);
             BABYLON.SceneManager.me = null;
             BABYLON.SceneManager.engine = null;
             BABYLON.SceneManager.prefabs = null;
@@ -502,7 +655,6 @@ module BABYLON {
             }
             this.disableUserInput();
             this._time = 0;
-            this._render = null;
             this._navmesh = null;
             this._timing = false;
             this._onready = null;
@@ -547,7 +699,7 @@ module BABYLON {
         }
         /** Opens a platform alert message dialog */
         public alert(text: string, title: string = "Babylon.js"): any {
-            return BABYLON.SceneManager.Alert(text, title);
+            return BABYLON.SceneManager.AlertMessage(text, title);
         }
         /** Execute a function once during render loop. */
         public once(func:()=>void):void {
@@ -600,21 +752,6 @@ module BABYLON {
             this._time = 0;
             this._timing = false;
         }
-        /** Load a new level into scene. */
-        public loadLevel(name: string, path: string = null): void {
-            if (BABYLON.SceneManager.loader != null) {
-                var folder: string = (path != null && path !== "") ? path : this.getScenePath();
-                this.stop();
-                this._scene.dispose();
-                BABYLON.SceneManager.loader(folder, name);
-            } else {
-                throw new Error("No scene loader function registered.");
-            }
-        }
-        /** Import meshes info current scene. */
-        public importMeshes(filename:string, onsuccess:()=>void = null, onprogress:()=>void = null, onerror:(scene:BABYLON.Scene, message:string, exception:any)=>void = null):void {
-            BABYLON.SceneLoader.ImportMesh("", this.getScenePath(), filename, this._scene, (meshes: BABYLON.AbstractMesh[], particleSystems: BABYLON.ParticleSystem[], skeletons: BABYLON.Skeleton[])=>{ if (onsuccess != null) onsuccess(); }, onprogress, onerror);
-        }
         /** Safely destroys a scene object. */
         public safeDestroy(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, delay:number = 5, disable:boolean = false):void {
             if (disable === true) owner.setEnabled(false);
@@ -653,7 +790,7 @@ module BABYLON {
         }
         /** Gets the formatted scene path. */
         public getScenePath(): string {
-            return (this._url != null && this._url !== "") ? this._url : "/";
+            return this._url;
         }
         /** Gets the scene sunlight */
         public getSunlight():BABYLON.Light {
@@ -670,16 +807,6 @@ module BABYLON {
         /** Gets the scene environment texture name. */
         public getEnvironmentTextureName(): string {
             return this._environmentTextureName;
-        }
-        /** Enters browser full screen mode. */
-        public showFullscreen(element:HTMLElement = null): void {
-            var fullScreenElement:HTMLElement = (element != null) ? element : document.documentElement;
-            BABYLON.Tools.RequestFullscreen(fullScreenElement);
-            fullScreenElement.focus();
-        }
-        /** Exits browser full screen mode. */
-        public exitFullscreen(): void {
-            BABYLON.Tools.ExitFullscreen();
         }
         /** Adds a pending scene loading state. */
         public addLoadingState(state: any): void {
@@ -734,9 +861,6 @@ module BABYLON {
             }
             this._localSceneReady = true;
             if (this._scene.metadata != null && this._scene.metadata.properties != null) {
-                if (this._scene.metadata.properties.timeManagement === true) {
-                    this.enableTime();
-                }
                 if (this._scene.metadata.properties.enableUserInput === true) {
                     var userInput:any = this._scene.metadata.properties.userInput;
                     var joystick:number = userInput.joystickInputValue;
@@ -765,6 +889,10 @@ module BABYLON {
                     BABYLON.UserInputOptions.PointerAngularSensibility = userInput.mouseAngularLevel;
                     BABYLON.UserInputOptions.PointerWheelDeadZone = userInput.wheelDeadZone;
                 }
+                if (this._scene.metadata.properties.pointerLock === true) {
+                    this.attachPointerLock();
+                    this.enablePointerLock();
+                }
             }
             if (this._localReadyState != null) {
                 this.removeLoadingState(this._localReadyState);
@@ -780,59 +908,14 @@ module BABYLON {
                 this._executeLocalReady();
             } else {
                 var sceneName:string = this._loadQueueScenes[this._loadQueueIndex];
-                BABYLON.Tools.Log("Importing scene meshes: " + sceneName);
+                BABYLON.Tools.Log("Babylon.js importing scene meshes from: " + sceneName);
                 this._loadQueueIndex++;
-                this.importMeshes(sceneName, ()=>{
+                (<any>navigator).project.importMeshes(sceneName, ()=>{
                     this._loadQueueImports();
                 }, null, (scene:BABYLON.Scene, message:string, exception:any)=>{
                     BABYLON.Tools.Warn(message);
                     this._loadQueueImports();
                 });
-            }
-        }
-
-        // ********************************** //
-        // * Scene Start Stop Pause Support * //
-        // ********************************** //
-
-        /** Starts the scene render loop. */
-        public start(): void {
-            this._running = true;
-            this._scene.getEngine().runRenderLoop(this._render);
-        }
-        /** Stops the scene render loop. */
-        public stop(): void {
-            this._running = false;
-            this._scene.getEngine().stopRenderLoop(this._render);
-        }
-        /** Toggle the scene render loop on and off. */
-        public toggle(): void {
-            if (!this._running) {
-                this.resumeAudio();
-                this.start();
-            } else {
-                this.pauseAudio();
-                this.stop();
-            }
-        }
-        /** Steps the scene render loop frame at a time. */
-        public stepFrame(): void {
-            if (!this._running) {
-                this._render();
-            } else {
-                this.toggle();
-            }
-        }
-        /** Pauses the scene audio tracks. */
-        public pauseAudio(): void {
-            if (this._scene.audioEnabled === true) {
-                this._scene.audioEnabled = false;
-            }
-        }
-        /** Resumes the scene audio tracks. */
-        public resumeAudio(): void {
-            if (this._scene.audioEnabled === false) {
-                this._scene.audioEnabled = true;
             }
         }
 
@@ -1292,7 +1375,7 @@ module BABYLON {
                             });
                             sharedSkeletonMap = null;
                             if (checked != null && checked.length > 0) {
-                                BABYLON.SceneManager.parseMeshMetadata(checked, this._scene);
+                                BABYLON.Utilities.ParseImportMetadata(checked, this._scene);
                             }
                         } else {
                             BABYLON.Tools.Warn("Failed to create prefab of: " + realPrefab);
@@ -1493,6 +1576,43 @@ module BABYLON {
                 }
             }
         }
+        /** Gets mass of owner using physics imposter. */
+        public getMass(owner:BABYLON.AbstractMesh):number {
+            var result:number = -1;
+            if (owner != null) {
+                if (owner.physicsImpostor != null) {
+                    result = owner.physicsImpostor.mass;
+                }
+            }
+            return result;
+        }
+        /** Sets mass to owner using physics imposter. */
+        public setMass(owner:BABYLON.AbstractMesh, mass:number):void {
+            if (owner != null) {
+                if (owner.physicsImpostor != null) {
+                    owner.physicsImpostor.mass = mass;
+                    //owner.physicsImpostor.setMass(mass);
+                }
+            }
+        }
+        /** Gets restitution of owner using physics imposter. */
+        public getRestitution(owner:BABYLON.AbstractMesh):number {
+            var result:number = -1;
+            if (owner != null) {
+                if (owner.physicsImpostor != null) {
+                    result = owner.physicsImpostor.restitution;
+                }
+            }
+            return result;
+        }
+        /** Sets restitution to owner using physics imposter. */
+        public setRestitution(owner:BABYLON.AbstractMesh, restitution:number):void {
+            if (owner != null) {
+                if (owner.physicsImpostor != null) {
+                    owner.physicsImpostor.restitution = restitution;
+                }
+            }
+        }
         /** Gets owner friction level using physics imposter. */
         public getFrictionLevel(owner:BABYLON.AbstractMesh):number {
             var result:number = 0;
@@ -1584,6 +1704,7 @@ module BABYLON {
                 var metadata: BABYLON.IObjectMetadata = {
                     api: true,
                     type: "Babylon",
+                    parsed: false,
                     prefab: false,
                     state: {},
                     objectName: "Scene Component",
@@ -1851,6 +1972,40 @@ module BABYLON {
         }
 
         // ********************************* //
+        // *   Scene Pointer Lock Support   * //
+        // ********************************* //
+
+        public enablePointerLock():void {
+            BABYLON.SceneManager.enableLocking = true;
+        }
+        public disablePointerLock():void {
+            BABYLON.SceneManager.enableLocking = false;
+        }
+        private pointerLockHandler():void {
+            var ple = document.pointerLockElement || document.msPointerLockElement || document.mozPointerLockElement || document.webkitPointerLockElement || null;
+            if (ple) BABYLON.SceneManager.pointerLocked = true;
+            else BABYLON.SceneManager.pointerLocked = false;
+        }
+        private attachPointerLock():void {
+            this._scene.onPointerObservable.add((evt) => {
+                if (BABYLON.SceneManager.enableLocking === true && BABYLON.SceneManager.pointerLocked === false) {
+                    var canvas:HTMLCanvasElement = BABYLON.SceneManager.engine.getRenderingCanvas();
+                    if (canvas != null) {
+                        if (canvas.requestPointerLock != null) {
+                            canvas.requestPointerLock();
+                        } else if (canvas.msRequestPointerLock != null) {
+                            canvas.msRequestPointerLock();
+                        } else if (canvas.mozRequestPointerLock != null) {
+                            canvas.mozRequestPointerLock();
+                        } else if (canvas.webkitRequestPointerLock != null) {
+                            canvas.webkitRequestPointerLock();
+                        }
+                    }
+                }
+            }, BABYLON.PointerEventTypes.POINTERDOWN)            
+        }
+
+        // ********************************* //
         // *   Scene Input State Support   * //
         // ********************************* //
 
@@ -1905,6 +2060,8 @@ module BABYLON {
             BABYLON.SceneManager.g_mousey4 = 0;
             BABYLON.SceneManager.g_vertical4 = 0;
             BABYLON.SceneManager.g_horizontal4 = 0;
+            BABYLON.SceneManager.enableLocking = false;
+            BABYLON.SceneManager.pointerLocked = false;
             BABYLON.SceneManager.preventDefault = false;
             BABYLON.SceneManager.mouseButtonUp = [];
             BABYLON.SceneManager.mouseButtonDown = [];
@@ -2397,7 +2554,7 @@ module BABYLON {
         // *   Update Camera Helper Support   * //
         // ************************************ //
 
-        public updateCameraUserInput(camera: BABYLON.FreeCamera, movementSpeed: number, rotationSpeed: number, player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One): void {
+        public updateCameraInput(camera:BABYLON.FreeCamera, movementSpeed: number, rotationSpeed: number, player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One): void {
             if (camera != null) {
                 var horizontal: number = this.getUserInput(BABYLON.UserInputAxis.Horizontal, player);
                 var vertical: number = this.getUserInput(BABYLON.UserInputAxis.Vertical, player);
@@ -2407,17 +2564,23 @@ module BABYLON {
                 this.updateCameraRotation(camera, mousex, mousey, rotationSpeed);
             }
         }
-        public updateCameraPosition(camera: BABYLON.FreeCamera, horizontal: number, vertical: number, speed: number): void {
+        public updateCameraPosition(camera:BABYLON.FreeCamera, horizontal: number, vertical: number, speed: number): void {
             if (camera != null) {
-                var local = camera._computeLocalCameraSpeed() * speed;
-                var cameraTransform:BABYLON.Matrix = BABYLON.Matrix.RotationYawPitchRoll(camera.rotation.y, camera.rotation.x, 0);
-                var deltaTransform:BABYLON.Vector3 = BABYLON.Vector3.TransformCoordinates(new BABYLON.Vector3(horizontal * local, 0, vertical * local), cameraTransform);
-                camera.cameraDirection = camera.cameraDirection.add(deltaTransform);
+                var cameraLocal:number = (camera._computeLocalCameraSpeed() * speed);
+                // Camera Transform Translation
+                BABYLON.SceneManager.TempMatrix.reset();
+                BABYLON.Matrix.RotationYawPitchRollToRef(camera.rotation.y, camera.rotation.x, 0, BABYLON.SceneManager.TempMatrix);
+                // Camera Transform Position Delta
+                BABYLON.SceneManager.AuxVector3.copyFromFloats(0, 0, 0);
+                BABYLON.SceneManager.TempVector3.copyFromFloats((horizontal * cameraLocal), 0, (vertical * cameraLocal));
+                BABYLON.Vector3.TransformCoordinatesToRef(BABYLON.SceneManager.TempVector3, BABYLON.SceneManager.TempMatrix, BABYLON.SceneManager.AuxVector3);
+                camera.cameraDirection.addInPlace(BABYLON.SceneManager.AuxVector3);
             }
         }
-        public updateCameraRotation(camera: BABYLON.FreeCamera, mousex: number, mousey: number, speed: number): void {
+        public updateCameraRotation(camera:BABYLON.FreeCamera, mousex: number, mousey: number, speed: number): void {
             if (camera != null) {
-                camera.cameraRotation = camera.cameraRotation.add(new BABYLON.Vector2(mousey * speed, mousex * speed));
+                BABYLON.SceneManager.TempVector2.copyFromFloats(mousey * speed, mousex * speed);
+                camera.cameraRotation.addInPlace(BABYLON.SceneManager.TempVector2);
             }
         }
         
@@ -3358,43 +3521,11 @@ module BABYLON {
         // *  Private Scene Parsing Support  * //
         // *********************************** //
 
-        private static parseSceneMetadata(rootUrl: string, scene: BABYLON.Scene): void {
-            (<any>window).parsing = true;
-            var scenex: any = <any>scene;
-            if (scenex.manager == null) {
-                BABYLON.SceneManager.CreateManagerSession(rootUrl, scene);
-                if (scenex.manager == null) BABYLON.Tools.Warn("Failed to create a new manager session for current scene.");                    
-            } else {
-                BABYLON.Tools.Warn("Current scene has already been parsed.");
-            }
-            (<any>window).parsing = false;
-        }
-        private static parseMeshMetadata(meshes: BABYLON.AbstractMesh[], scene: BABYLON.Scene): void {
-            (<any>window).parsing = true;
-            var scenex: any = <any>scene;
-            if (scenex.manager != null) {
-                var manager: BABYLON.SceneManager = scenex.manager as BABYLON.SceneManager;
-                var ticklist: BABYLON.IScriptComponent[] = [];
-                BABYLON.SceneManager.parseSceneMeshes(meshes, scene, ticklist);
-                if (ticklist.length > 0) {
-                    ticklist.sort((left, right): number => {
-                        if (left.order < right.order) return -1;
-                        if (left.order > right.order) return 1;
-                        return 0;
-                    });
-                    ticklist.forEach((scriptComponent) => {
-                        scriptComponent.instance.register();
-                    });
-                }
-            } else {
-                BABYLON.Tools.Warn("No scene manager detected for current scene.");
-            }
-            (<any>window).parsing = false;
-        }
         private static parseSceneCameras(cameras: BABYLON.Camera[], scene: BABYLON.Scene, ticklist: BABYLON.IScriptComponent[]): void {
             if (cameras != null && cameras.length > 0) {
                 cameras.forEach((camera) => {
-                    if (camera.metadata != null && camera.metadata.api) {
+                    if (camera.metadata != null && camera.metadata.api && camera.metadata.parsed === false) {
+                        camera.metadata.parsed = true;
                         // Setup metadata cloning
                         camera.metadata.clone = () => { return BABYLON.SceneManager.CloneMetadata(camera.metadata); };
                         // Camera rigging options
@@ -3421,7 +3552,8 @@ module BABYLON {
         private static parseSceneLights(lights: BABYLON.Light[], scene: BABYLON.Scene, ticklist: BABYLON.IScriptComponent[]): void {
             if (lights != null && lights.length > 0) {
                 lights.forEach((light) => {
-                    if (light.metadata != null && light.metadata.api) {
+                    if (light.metadata != null && light.metadata.api && light.metadata.parsed === false) {
+                        light.metadata.parsed = true;
                         // Setup metadata cloning
                         light.metadata.clone = () => { return BABYLON.SceneManager.CloneMetadata(light.metadata); };
                         // Light component scripts
@@ -3446,7 +3578,8 @@ module BABYLON {
         private static parseSceneMeshes(meshes: BABYLON.AbstractMesh[], scene: BABYLON.Scene, ticklist: BABYLON.IScriptComponent[]): void {
             if (meshes != null && meshes.length > 0) {
                 meshes.forEach((mesh) => {
-                    if (mesh.metadata != null && mesh.metadata.api) {
+                    if (mesh.metadata != null && mesh.metadata.api && mesh.metadata.parsed === false) {
+                        mesh.metadata.parsed = true;
                         // Setup metadata cloning
                         mesh.metadata.clone = () => { return BABYLON.SceneManager.CloneMetadata(mesh.metadata); };
                         // Setup shared skeleton
@@ -3693,12 +3826,12 @@ module BABYLON {
                         // ..
                         //console.log("===> Parsed terrain ground mesh " + ground.name + " with " + ground.getTotalVertices().toString() + " vertices");
                         // ..
+                        ground.checkCollisions = terrainCollision;
                         if (colliders > 1) {
-                            // Validate Collision Meshes                            
+                            // Validate Collision Meshes - ???                     
                             if (collider === true) {
                                 if (physics === true) {
                                     ground.parent = null;
-                                    ground.checkCollisions = false;
                                     // Detach physics parent
                                     if (physicsDetach === true && ground.parent != null) {
                                         BABYLON.Utilities.ResetPhysicsPosition(ground.position, ground.parent);
@@ -3706,14 +3839,11 @@ module BABYLON {
                                     }
                                     ground.physicsImpostor = new BABYLON.PhysicsImpostor(ground, physicsImpostor, { mass:physicsMass, friction:physicsFriction, restitution:physicsRestitution }, scene);
                                     BABYLON.SceneManager.setupPhysicsImpostor(ground, physicsEnginePlugin, physicsFriction, physicsCollisions, physicsRotation, physicsCollisionGroup, physicsCollisionMask);
-                                } else {
-                                    ground.checkCollisions = terrainCollision;
                                 }
                             }
                         } else {
                             if (physics === true) {
                                 ground.parent = null;
-                                ground.checkCollisions = false;
                                 // Detach physics parent
                                 if (physicsDetach === true && ground.parent != null) {
                                     BABYLON.Utilities.ResetPhysicsPosition(ground.position, ground.parent);
@@ -3721,8 +3851,6 @@ module BABYLON {
                                 }
                                 ground.physicsImpostor = new BABYLON.PhysicsImpostor(ground, physicsImpostor, { mass:physicsMass, friction:physicsFriction, restitution:physicsRestitution }, scene);
                                 BABYLON.SceneManager.setupPhysicsImpostor(ground, physicsEnginePlugin, physicsFriction, physicsCollisions, physicsRotation, physicsCollisionGroup, physicsCollisionMask);
-                            } else {
-                                ground.checkCollisions = terrainCollision;
                             }
                         }
                     });
@@ -3843,6 +3971,36 @@ module BABYLON {
                         BABYLON.SceneManager.stereoCameras = camera.metadata.properties.stereoscopicSideBySide;
                     }
                 }
+
+                var followTarget:string = camera.metadata.properties.followTarget;
+                var followRadius:number = camera.metadata.properties.followRadius;
+                var followHeightOffset:number = camera.metadata.properties.followHeightOffset;
+                var followRotationOffset:number = camera.metadata.properties.followRotationOffset;
+                var followCameraAcceleration:number = camera.metadata.properties.followCameraAcceleration;
+                var followMaxCameraSpeed:number = camera.metadata.properties.followMaxCameraSpeed;
+
+                var arcFollowTarget:string = camera.metadata.properties.followTarget;
+                var arcRotateAlpha:number = camera.metadata.properties.arcRotateAlpha;
+                var arcRotateBeta:number = camera.metadata.properties.arcRotateBeta;
+                var arcRotateRadius:number = camera.metadata.properties.arcRotateRadius;
+                var arcRotateTarget:number[] = camera.metadata.properties.arcRotateTarget;
+                var arcRotateLowerRadiusLimit:number = camera.metadata.properties.arcRotateLowerRadiusLimit;
+                var arcRotateUpperRadiusLimit:number = camera.metadata.properties.arcRotateUpperRadiusLimit;
+                var arcRotateWheelDeltaPercentage:number = camera.metadata.properties.arcRotateWheelDeltaPercentage;
+
+                var cameraBridge:number = camera.metadata.properties.vrCameraBridge;
+                var cameraEyeToScreen:number = camera.metadata.properties.vrEyeToScreen;
+                var cameraInterpupillary:number = camera.metadata.properties.vrInterpupillary;
+                var cameraScreenCenter:number = camera.metadata.properties.vrScreenCenter;
+                var cameraVerticalRes:number = camera.metadata.properties.vrVerticalRes;
+                var cameraHorizontalRes:number = camera.metadata.properties.vrHorizontalRes;
+                var cameraVerticalScreen:number = camera.metadata.properties.vrVerticalScreen;
+                var cameraHorizontalScreen:number = camera.metadata.properties.vrHorizontalScreen;
+                var cameraLensCenterOffset:number = camera.metadata.properties.vrLensCenterOffset;
+                var cameraLensSeperation:number = camera.metadata.properties.vrLensSeparation;
+                var cameraPostProcessScale:number = camera.metadata.properties.vrPostProcessScale;
+                var cameraCompensateDistortion:boolean = camera.metadata.properties.vrCompensateDistortion;
+
                 // Parse Camera Metadata Options
                 if (camera.metadata.properties.cameraType) {
                     var cameraType:string = camera.metadata.properties.cameraType;
@@ -3873,7 +4031,6 @@ module BABYLON {
                             playerFourCamera.setEnabled(false);
                             BABYLON.SceneManager.GetInstance()._playerFourCamera = playerFourCamera;
                             // ..
-                            
                             
                             /* USE AS REFERENCE
                             var playerTwoName:string = mainCameraName + ".2";
@@ -3952,20 +4109,40 @@ module BABYLON {
                             BABYLON.SceneManager.GetInstance()._playerFourElement = playerFourElement;
                             */
 
-
-
                             mainCamera.name = mainCameraName + ".1";
                             BABYLON.SceneManager.multiPlayerView = true;                                
                         }
+                    } else if (cameraType === "FollowCamera") {
+                        var followCamera:BABYLON.FollowCamera = camera as BABYLON.FollowCamera;
+                        if (followTarget != null && followTarget !== "") {
+                            var targetMesh:BABYLON.AbstractMesh = scene.getMeshByID(followTarget);
+                            if (targetMesh != null) {
+                                followCamera.position = targetMesh.position.clone();
+                                followCamera.lockedTarget = targetMesh;
+                            }
+                        }
+                        // Follow Camera Options
+                        followCamera.radius = followRadius;
+                        followCamera.heightOffset = followHeightOffset;
+                        followCamera.rotationOffset = followRotationOffset;
+                        followCamera.cameraAcceleration = followCameraAcceleration;
+                        followCamera.maxCameraSpeed = followMaxCameraSpeed;
+                    } else if (cameraType === "ArcFollowCamera") {
+                        var arcFollowCamera:BABYLON.ArcFollowCamera = camera as BABYLON.ArcFollowCamera;
+                        if (arcFollowTarget != null && arcFollowTarget !== "") {
+                            var arcTargetMesh:BABYLON.AbstractMesh = scene.getMeshByID(arcFollowTarget);
+                            if (arcTargetMesh != null) {
+                                arcFollowCamera.position = arcTargetMesh.position.clone();
+                                arcFollowCamera.lockedTarget = arcTargetMesh;
+                            }
+                        }
+                        // Arc Follow Camera Options
+                        arcFollowCamera.alpha = arcRotateAlpha;
+                        arcFollowCamera.beta = arcRotateBeta;
+                        arcFollowCamera.radius = arcRotateRadius;
+                        //arcFollowCamera.radius = followRadius;
                     } else if (cameraType === "ArcRotateCamera") {
                         var arcRotateCamera:BABYLON.ArcRotateCamera = camera as BABYLON.ArcRotateCamera;
-                        var arcRotateAlpha:number = camera.metadata.properties.arcRotateAlpha;
-                        var arcRotateBeta:number = camera.metadata.properties.arcRotateBeta;
-                        var arcRotateRadius:number = camera.metadata.properties.arcRotateRadius;
-                        var arcRotateTarget:number[] = camera.metadata.properties.arcRotateTarget;
-                        var arcRotateLowerRadiusLimit:number = camera.metadata.properties.arcRotateLowerRadiusLimit;
-                        var arcRotateUpperRadiusLimit:number = camera.metadata.properties.arcRotateUpperRadiusLimit;
-                        var arcRotateWheelDeltaPercentage:number = camera.metadata.properties.arcRotateWheelDeltaPercentage;
                         // Arc Rotate Camera Options
                         arcRotateCamera.alpha = arcRotateAlpha;
                         arcRotateCamera.beta = arcRotateBeta;
@@ -3981,18 +4158,6 @@ module BABYLON {
                         var cameraDisplayName:number = camera.metadata.properties.wvrDisplayName;
                         // TODO: WebVR Camera Rig Options
                     } else if (cameraType === "VRDeviceOrientationFreeCamera" || cameraType === "VRDeviceOrientationGamepadCamera") {
-                        var cameraBridge:number = camera.metadata.properties.vrCameraBridge;
-                        var cameraEyeToScreen:number = camera.metadata.properties.vrEyeToScreen;
-                        var cameraInterpupillary:number = camera.metadata.properties.vrInterpupillary;
-                        var cameraScreenCenter:number = camera.metadata.properties.vrScreenCenter;
-                        var cameraVerticalRes:number = camera.metadata.properties.vrVerticalRes;
-                        var cameraHorizontalRes:number = camera.metadata.properties.vrHorizontalRes;
-                        var cameraVerticalScreen:number = camera.metadata.properties.vrVerticalScreen;
-                        var cameraHorizontalScreen:number = camera.metadata.properties.vrHorizontalScreen;
-                        var cameraLensCenterOffset:number = camera.metadata.properties.vrLensCenterOffset;
-                        var cameraLensSeperation:number = camera.metadata.properties.vrLensSeparation;
-                        var cameraPostProcessScale:number = camera.metadata.properties.vrPostProcessScale;
-                        var cameraCompensateDistortion:boolean = camera.metadata.properties.vrCompensateDistortion;
                         // VR Device Camera Options
                         var vrDeviceCamera:BABYLON.VRDeviceOrientationFreeCamera = camera as BABYLON.VRDeviceOrientationFreeCamera;
                         var viewWidth:number = 0.5 - cameraBridge;
@@ -4334,6 +4499,7 @@ module BABYLON {
                 result = {
                     api: true,
                     type: source.type,
+                    parsed: false,
                     prefab: false,
                     state: {},
                     objectName: source.objectName,
@@ -4397,217 +4563,6 @@ module BABYLON {
                     destination[prop] = sourceValue;
                 }
             }
-        }
-
-        /**
-         * Creates a terrain mesh from a packed height map.    
-         * tuto : http://doc.babylonjs.com/tutorials/14._Height_Map   
-         * tuto : http://doc.babylonjs.com/tutorials/Mesh_CreateXXX_Methods_With_Options_Parameter#ground-from-a-height-map  
-         * The parameter `url` sets the URL of the height map image resource.  
-         * The parameter `lodGroup` sets the LOD group info of the height map image resource.
-         * The parameter `width` and `height` (positive floats, default 10) set the ground width and height sizes.     
-         * The parameter `resolution` (positive integer for height resolution) sets the number of subdivisions per side for each lod level.
-         * The parameter `minHeight` (float, default 0) is the minimum altitude on the ground.     
-         * The parameter `maxHeight` (float, default 1) is the maximum altitude on the ground.   
-         * The parameter 'updatable' sets the mesh to updatable with the boolean parameter (default false) if its internal geometry is supposed to change once created.  
-         * The parameter `onReady` is a javascript callback function that will be called  once the meshes are built (the height map download can last some time).  
-         * This function is passed the newly built meshes : 
-         * ```javascript
-         * function(meshes) { // do things
-         *     return; }
-         * ```
-         */
-        public static GenerateTerrainFromHeightMap(name:string, url: string, lodGroup:any, options: { width?: number, height?: number, resolution?: number, minHeight?: number, maxHeight?: number, updatable?: boolean, onReady?: (meshes: BABYLON.GroundMesh[]) => void }, scene: BABYLON.Scene): void {
-            var width = options.width || 10.0;
-            var height = options.height || 10.0;
-            var minHeight = options.minHeight || 0.0;
-            var maxHeight = options.maxHeight || 1.0;
-            var resolution = options.resolution || 1;
-            var updatable = options.updatable;
-            var lodDetails:any[] = (lodGroup != null) ? lodGroup.lodDetails : null;
-            var startCulling:number = (lodGroup != null) ? lodGroup.startCulling : 0;
-            // Validate default lod group level
-            if (lodDetails == null || lodDetails.length <= 0) {
-                lodDetails = [{ startingPercent: 1 }];
-            }
-            // Load heightmap pixel image data
-            var onReady = options.onReady;
-            var onload = (img: HTMLImageElement) => {
-                var meshes:BABYLON.GroundMesh[] = null;
-                // Getting height map data
-                var canvas = document.createElement("canvas");
-                var context = canvas.getContext("2d");
-                if (!context) {
-                    throw new Error("Unable to get 2d context for CreateGroundFromHeightMap");
-                }
-                if (scene.isDisposed) {
-                    return;
-                }
-                if (lodDetails != null && lodDetails.length > 0) {
-                    var bufferWidth = img.width;
-                    var bufferHeight = img.height;
-                    canvas.width = bufferWidth;
-                    canvas.height = bufferHeight;
-                    context.drawImage(img, 0, 0);
-                    // Create VertexData from map data
-                    // Cast is due to wrong definition in lib.d.ts from ts 1.3 - https://github.com/Microsoft/TypeScript/issues/949
-                    var buffer = <Uint8Array>(<any>context.getImageData(0, 0, bufferWidth, bufferHeight).data);
-                    for (let index = 0; index < lodDetails.length; index++) {
-                        const detail:any = lodDetails[index];
-                        var percent:number = detail.startingPercent;
-                        var subdivisions:number = (resolution * percent);
-                        // ..
-                        var ground:BABYLON.GroundMesh = new BABYLON.GroundMesh((name + ".LOD" + index.toString()), scene)            
-                        ground.setEnabled(false);
-                        ground._subdivisionsX = subdivisions;
-                        ground._subdivisionsY = subdivisions;
-                        ground._width = width;
-                        ground._height = height;
-                        ground._maxX = ground._width / 2.0;
-                        ground._maxZ = ground._height / 2.0;
-                        ground._minX = -ground._maxX;
-                        ground._minZ = -ground._maxZ;
-                        // ..
-                        var vertexData:BABYLON.VertexData = BABYLON.SceneManager.GenerateTerrainVertexData({
-                            width: width, height: height,
-                            subdivisions: subdivisions,
-                            minHeight: minHeight, maxHeight: maxHeight,
-                            buffer: buffer, bufferWidth: bufferWidth, bufferHeight: bufferHeight
-                        });
-                        vertexData.applyToMesh(ground, updatable);
-                        ground._setReady(true);
-                        // ..
-                        if (meshes == null) meshes = [];
-                        meshes.push(ground);
-                    }
-                }
-                //execute ready callback, if set
-                if (onReady) {
-                    onReady(meshes);
-                }
-            };
-            BABYLON.Tools.LoadImage(url, onload, () => { }, scene.database);
-            return;
-        }
-
-        /**
-         * Creates the VertexData of the Terrain designed from a packed heightmap.  
-         */
-        public static GenerateTerrainVertexData(options: { width: number, height: number, subdivisions: number, minHeight: number, maxHeight: number, buffer: Uint8Array, bufferWidth: number, bufferHeight: number }): BABYLON.VertexData {
-            var indices = [];
-            var positions = [];
-            var normals = [];
-            var uvs = [];
-            var row, col;
-
-            // Heightmap
-            var floatView:Float32Array = new Float32Array(options.buffer.buffer);
-
-            // Vertices
-            for (row = 0; row <= options.subdivisions; row++) {
-                for (col = 0; col <= options.subdivisions; col++) {
-                    var position:BABYLON.Vector3 = new BABYLON.Vector3((col * options.width) / options.subdivisions - (options.width / 2.0), 0, ((options.subdivisions - row) * options.height) / options.subdivisions - (options.height / 2.0));
-
-                    // Compute heights
-                    var heightMapX = (((position.x + options.width / 2) / options.width) * (options.bufferWidth - 1)) | 0;
-                    var heightMapY = ((1.0 - (position.z + options.height / 2) / options.height) * (options.bufferHeight - 1)) | 0;
-
-                    // Unpack pixel
-                    var pos = (heightMapX + heightMapY * options.bufferWidth);
-                    var gradient = floatView[pos];
-
-                    // Set elevation
-                    position.y = options.minHeight + (options.maxHeight - options.minHeight) * gradient;
-
-                    // Add  vertex
-                    positions.push(position.x, position.y, position.z);
-                    normals.push(0, 0, 0);
-                    uvs.push(col / options.subdivisions, 1.0 - row / options.subdivisions);
-                }
-            }            
-
-            // Indices
-            for (row = 0; row < options.subdivisions; row++) {
-                for (col = 0; col < options.subdivisions; col++) {
-                    indices.push(col + 1 + (row + 1) * (options.subdivisions + 1));
-                    indices.push(col + 1 + row * (options.subdivisions + 1));
-                    indices.push(col + row * (options.subdivisions + 1));
-
-                    indices.push(col + (row + 1) * (options.subdivisions + 1));
-                    indices.push(col + 1 + (row + 1) * (options.subdivisions + 1));
-                    indices.push(col + row * (options.subdivisions + 1));
-                }
-            }
-
-            // Normals
-            BABYLON.VertexData.ComputeNormals(positions, indices, normals);
-
-            // Result
-            var vertexData:BABYLON.VertexData = new BABYLON.VertexData();
-
-            vertexData.indices = indices;
-            vertexData.positions = positions;
-            vertexData.normals = normals;
-            vertexData.uvs = uvs;
-
-            return vertexData;
-        }
-
-        public static CreateMeshFromSubmesh(source:BABYLON.Mesh, index:number, scene:BABYLON.Scene, reOrigin:boolean = false, isUpdateable:boolean = false, customMesh:BABYLON.Mesh = null):BABYLON.Mesh
-        {
-            var subMesh = source.subMeshes[index];
-        
-            var result = new BABYLON.VertexData();
-            result.positions = [];
-            result.normals = [];
-            result.indices = [];
-            var positions = subMesh.getMesh().getVerticesData(BABYLON.VertexBuffer.PositionKind);
-            var normals = subMesh.getMesh().getVerticesData(BABYLON.VertexBuffer.NormalKind);
-            var indices = subMesh.getMesh().getIndices();
-            var relIndex;
-            var newIndex = 0;
-            
-            var xo = 0;
-            var yo = 0;
-            var zo = 0;
-        
-            for (var index = subMesh.indexStart; index < subMesh.indexStart + subMesh.indexCount; index+=3) {                    
-                for (var vertexIndex = 0; vertexIndex<3; vertexIndex++) {
-                    result.indices.push(newIndex++);
-                    relIndex = indices[index + vertexIndex];
-                    result.positions.push(positions[3 * relIndex], positions[3 * relIndex + 1], positions[3 * relIndex + 2]);
-                    result.normals.push(normals[3 * relIndex], normals[3 * relIndex + 1], normals[3 * relIndex + 2]);
-                    if (reOrigin) {
-                        xo += positions[3 * relIndex];
-                        yo += positions[3 * relIndex + 1];
-                        zo += positions[3 * relIndex + 2];
-                    }
-                }
-            }
-            
-            if(reOrigin) {
-                var indicesNb = result.indices.length;
-                xo /= indicesNb;
-                yo /= indicesNb;
-                zo /= indicesNb;
-                for(var index = 0; index < indicesNb; index++) {
-                    result.positions[3 * index] -= xo;
-                    result.positions[3 * index + 1] -= yo;
-                    result.positions[3 * index + 2] -= zo;
-                }
-            }
-           
-            if (customMesh == null) {
-                var name:string = source.name + "." + index.toString();
-                customMesh = new BABYLON.Mesh(name, scene);
-            }
-            result.applyToMesh(customMesh, isUpdateable);
-            
-            if(reOrigin) {
-                customMesh.position = new BABYLON.Vector3(xo, yo, zo);
-            }
-        
-            return customMesh;
         }
 
         // ************************************* //

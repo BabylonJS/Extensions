@@ -3,46 +3,42 @@
 /// <reference path="babylon.scenemanager.ts" />
 
 module BABYLON {
-    export class ToolkitPlugin { 
-        public static Loader:BABYLON.ISceneLoaderPlugin = null;
-        public static Warning(message:string):void { BABYLON.Tools.Warn(message); }
-    }
-    export class JsonSceneLoader implements BABYLON.ISceneLoaderPlugin {
-        public constructor() {}
-        public name = "toolkit.json";
-        public extensions: BABYLON.ISceneLoaderPluginExtensions = { ".babylon": {isBinary: false}, };
-        public canDirectLoad?: (data: string) => boolean;
-        public rewriteRootURL?: (rootUrl: string, responseURL?: string) => string;
-        public load(scene: BABYLON.Scene, data: any, rootUrl: string): boolean {
-            var result:boolean = false;
-            if (BABYLON.ToolkitPlugin.Loader != null) {
-                result = BABYLON.ToolkitPlugin.Loader.load(scene, data, rootUrl, BABYLON.ToolkitPlugin.Warning);
-                if (result === true) {
-                    (<any>BABYLON.SceneManager).parseSceneMetadata(rootUrl, scene);
-                } else {
-                    BABYLON.Tools.Warn("Babylon.js failed to load json scene data");
-                }
-            } else {
-                BABYLON.Tools.Warn("Babylon.js null registered babylon file loader plugin");
+    export class ToolkitProgress implements BABYLON.ILoadingScreen {
+        public borderPrefix:string = "4px solid";
+        public panelElement:HTMLElement = null;
+        public loaderElement:HTMLElement = null;
+        public statusElement:HTMLElement = null;
+        public projectElement:HTMLElement = null;
+        //optional, but needed due to interface definitions
+        public loadingUIBackgroundColor: string
+        constructor(public loadingUIText: string) {}
+        //optional, status element progress coloring
+        private _statusColor:string = "#0000ff";
+        public get statusColor():string { return this._statusColor }
+        public set statusColor(color:string) {
+            this._statusColor = color;
+            if (this.loaderElement != null) {
+                this.loaderElement.style.borderTop = (this.borderPrefix + " " + this._statusColor);
             }
-            return result;
         }
-        public importMesh(meshesNames: any, scene: BABYLON.Scene, data: any, rootUrl: string, meshes: BABYLON.AbstractMesh[], particleSystems: BABYLON.ParticleSystem[], skeletons: BABYLON.Skeleton[]): boolean {
-            var result:boolean = false;
-            if (BABYLON.ToolkitPlugin.Loader != null) {
-                result = BABYLON.ToolkitPlugin.Loader.importMesh(meshesNames, scene, data, rootUrl, meshes, particleSystems, skeletons, BABYLON.ToolkitPlugin.Warning);
-                if (result === true) {
-                    (<any>BABYLON.SceneManager).parseMeshMetadata(meshes, scene);
-                } else {
-                    BABYLON.Tools.Warn("Babylon.js failed to load json scene data");
-                }
-            } else {
-                BABYLON.Tools.Warn("Babylon.js null registered babylon file loader plugin");
+        //required, and needed due to interface definitions
+        public displayLoadingUI() {
+            if (this.panelElement != null) this.panelElement.className = "";
+            if (this.loaderElement != null) this.loaderElement.className = "";
+            if (this.statusElement != null) this.statusElement.className = "";
+            if (this.projectElement != null) this.projectElement.className = "";
+            this.updateLoadingUI();
+        }
+        public updateLoadingUI() {
+            if (this.statusElement != null && this.statusElement.innerHTML !== this.loadingUIText) {
+                this.statusElement.innerHTML = this.loadingUIText;
             }
-            return result;
         }
-        public loadAssetContainer(scene: BABYLON.Scene, data: string, rootUrl: string, onError?: (message: string, exception?: any) => void): BABYLON.AssetContainer {
-            return BABYLON.ToolkitPlugin.Loader.loadAssetContainer(scene, data, rootUrl, onError);
+        public hideLoadingUI() {
+            if (this.panelElement != null) this.panelElement.className = "hidden";
+            if (this.loaderElement != null) this.loaderElement.className = "hidden";
+            if (this.statusElement != null) this.statusElement.className = "hidden";
+            if (this.projectElement != null) this.projectElement.className = "hidden";
         }
     }
 }
@@ -58,28 +54,6 @@ declare class Stats {
 	update(): void;
 	addPanel(pane: any): any;
 	static Panel: any;
-}
-// ..
-// TVJS Plugin Support
-// ..
-declare module TVJS {
-    interface KeyCodeMap {
-        left: number[];
-        right: number[];
-        up: number[];
-        down: number[];
-        accept: number[];
-    }
-    class DirectionalNavigation {
-        public static enabled:boolean;        
-        public static focusRoot:Element;
-        public static keyCodeMap: TVJS.KeyCodeMap;
-        public static focusableSelectors: string[];
-        public static moveFocus(direction:string|number|Element, options:any): Element;
-        public static findNextFocusElement(direction:string|number|Element, options:any): Element;
-        public static addEventListener(type, listener, useCapture?:boolean):any;
-        public static removeEventListener(type, listener, useCapture?:boolean):any;
-    }
 }
 // ..
 // requestAnimationFrame() Original Shim By: Paul Irish
@@ -178,7 +152,7 @@ TimerPlugin.getTimeMilliseconds = function () {
     return BABYLON.Tools.Now;
 }
 // ..
-// Unversial Windows Platform Support
+// Validate Unversial Windows Platform Support
 // ..
 if (BABYLON.SceneManager.IsWindows()) {
     if (typeof Windows.UI.ViewManagement !== "undefined" && typeof Windows.UI.ViewManagement.ApplicationViewBoundsMode !== "undefined" && typeof Windows.UI.ViewManagement.ApplicationViewBoundsMode.useCoreWindow !== "undefined") {
@@ -186,9 +160,18 @@ if (BABYLON.SceneManager.IsWindows()) {
     }
 }
 // ..
-// Register Babylon.js Toolkit Plugins
+// Process Window Load And Device Ready Handlers
 // ..
-if (typeof TVJS !== "undefined" && typeof TVJS.DirectionalNavigation !== "undefined") TVJS.DirectionalNavigation.enabled = false; // Note: Disable Direction Navigation By Default
-BABYLON.ToolkitPlugin.Loader = BABYLON.SceneLoader.GetPluginForExtension(".babylon") as BABYLON.ISceneLoaderPlugin;
-BABYLON.SceneLoader.RegisterPlugin(new BABYLON.JsonSceneLoader());
-BABYLON.Tools.Log("Babylon.js toolkit plugins registered");
+window.addEventListener("load", ()=>{
+    if ((<any>window).ontoolkitload) {
+        (<any>window).ontoolkitload();
+    }
+    document.addEventListener("deviceready", ()=>{
+        if ((<any>navigator).splashscreen) {
+            (<any>navigator).splashscreen.hide();
+        }
+        if ((<any>window).ontoolkitdevice) {
+            (<any>window).ontoolkitdevice();
+        }
+    }, false);
+}, false);

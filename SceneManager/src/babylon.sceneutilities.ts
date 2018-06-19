@@ -6,6 +6,8 @@ module BABYLON {
         private static UpVector:BABYLON.Vector3 = BABYLON.Vector3.Up();
         private static ZeroVector:BABYLON.Vector3 = BABYLON.Vector3.Zero();
         private static TempMatrix:BABYLON.Matrix = BABYLON.Matrix.Zero();
+        private static TempVector2:BABYLON.Vector2 = BABYLON.Vector2.Zero();
+        private static TempVector3:BABYLON.Vector3 = BABYLON.Vector3.Zero();
         private static PrintElement: HTMLElement = null;
         /** TODO: angle */
 		public static Angle(from:BABYLON.Vector3, to:BABYLON.Vector3):number {
@@ -244,79 +246,6 @@ module BABYLON {
             return source.replace(new RegExp(word, 'g'), replace);            
         }
         
-        // *********************************** //
-        // *   Public Binary Tools Support   * //
-        // *********************************** //
-        
-        public static EncodeBinay(obj:any):Uint8Array {
-            var result:Uint8Array = null;
-            var wnd:any = <any>window;
-            if (wnd.msgpack) {
-                result = wnd.msgpack.encode(obj);
-            } else {
-                BABYLON.Tools.Warn("Failed to load msgpack library.");
-            }
-            return result;
-        }
-
-        public static DecodeBinary<T>(data:Uint8Array):T {
-            var result:any = null;
-            var wnd:any = <any>window;
-            if (wnd.msgpack) {
-                result = wnd.msgpack.decode(data);
-            } else {
-                BABYLON.Tools.Warn("Failed to load msgpack library.");
-            }
-            return (result != null) ? result as T : null;
-        }
-
-        // ************************************ //
-        // * Public Compression Tools Support * //
-        // ************************************ //
-
-        public static CompressToString(data:Uint8Array):string { 
-            var result:string = null;
-            var wnd:any = <any>window;
-            if (wnd.pako) {
-                result = wnd.pako.deflate(data, { to: 'string' });
-            } else {
-                BABYLON.Tools.Warn("Failed to load pako library.");
-            }
-            return result;
-        }
-
-        public static CompressToArray(data:Uint8Array):Uint8Array { 
-            var result:Uint8Array = null;
-            var wnd:any = <any>window;
-            if (wnd.pako) {
-                result = wnd.pako.deflate(data);
-            } else {
-                BABYLON.Tools.Warn("Failed to load pako library.");
-            }
-            return result;
-        }
-        
-        public static DecompressToString(data:Uint8Array):string { 
-            var result:string = null;
-            var wnd:any = <any>window;
-            if (wnd.pako) {
-                result = wnd.pako.inflate(data, { to: 'string' });
-            } else {
-                BABYLON.Tools.Warn("Failed to load pako library.");
-            }
-            return result;
-        }
-        public static DecompressToArray(data:Uint8Array):Uint8Array { 
-            var result:Uint8Array = null;
-            var wnd:any = <any>window;
-            if (wnd.pako) {
-                result = wnd.pako.inflate(data);
-            } else {
-                BABYLON.Tools.Warn("Failed to load pako library.");
-            }
-            return result;
-        }
-        
         // ************************************ //
         // *  Scene Animation Sampling Tools  * //
         // ************************************ //
@@ -447,8 +376,63 @@ module BABYLON {
         // * Public Blending Speed Support  * //
         // ********************************** //
 
+        /** Computes the transition duration blending speed */
         public static ComputeBlendingSpeed(rate:number, duration:number):number {
             return 1 / (rate * duration);
+        }
+
+        // ********************************** //
+        // * Public Scene Manager Register  * //
+        // ********************************** //
+
+        /** Registers new manager instance on the scene object */
+        public static RegisterSceneManager(scene: BABYLON.Scene) : BABYLON.SceneManager {
+            var scenex: any = <any>scene;
+            if (scenex.manager != null) {
+                scenex.manager.dispose();
+                scenex.manager = null;
+            }                
+            scenex.manager = new BABYLON.SceneManager(scene);
+            return scenex.manager;
+        }
+        /** Parses the registered scene manager object metadata */
+        public static ParseSceneMetadata(scene: BABYLON.Scene) : void {
+            var scenex: any = <any>scene;
+            if (scenex.manager != null) {
+                scenex.manager._parseSceneMetadata();
+            } else {
+                BABYLON.Tools.Warn("Babylon.js no scene manager instance detected. Failed to parse scene metadata.");
+            }
+        }
+        /** Parses the registered scene manager import metadata */
+        public static ParseImportMetadata(meshes: BABYLON.AbstractMesh[], scene: BABYLON.Scene): void {
+            var scenex: any = <any>scene;
+            if (scenex.manager != null) {
+                var manager: BABYLON.SceneManager = scenex.manager as BABYLON.SceneManager;
+                var ticklist: BABYLON.IScriptComponent[] = [];
+                (<any>BABYLON.SceneManager).parseSceneMeshes(meshes, scene, ticklist);
+                if (ticklist.length > 0) {
+                    ticklist.sort((left, right): number => {
+                        if (left.order < right.order) return -1;
+                        if (left.order > right.order) return 1;
+                        return 0;
+                    });
+                    ticklist.forEach((scriptComponent) => {
+                        scriptComponent.instance.register();
+                    });
+                }
+            } else {
+                BABYLON.Tools.Warn("Babylon.js no scene manager instance detected. Failed to parse scene metadata.");
+            }
+        }
+        /** Fire the manager instance internal scene ready function */
+        public static ExecuteSceneReady(scene: BABYLON.Scene) : void {
+            var scenex: any = <any>scene;
+            if (scenex.manager != null) {
+                scenex.manager._executeWhenReady();
+            } else {
+                BABYLON.Tools.Warn("Babylon.js no scene manager instance detected. Failed to execute scene ready.");
+            }
         }
     }
 }
