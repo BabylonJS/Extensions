@@ -1,4 +1,4 @@
-import {ColorTableGenerator} from '../ColorGenerator'
+import {ColorTableGenerator} from '../ColorTableGenerator'
 import { expect } from 'chai';
 import 'mocha';
 
