@@ -29,10 +29,6 @@ describe('EncodedImage', () => {
             expect(results.write('string')).to.throw();
         }); */
 
-        // it('should only add one number to the data property', () => {
-        //     expect(results.write(2)).to.increase(data, "length");
-        // })
-
         it('should push only one number onto data', () => {
             const length = data.length;
             results.write(24);
@@ -42,15 +38,22 @@ describe('EncodedImage', () => {
     });
 
     describe('writeArray()', () => {
-        it('should take 2 and only 2 arguments', () => {
-            // expect(results.writeArray([1], 1)).to
+        it('given array of size n should add n elements to data property', () => {
+            const length = data.length;
+            results.writeArray([43,43,22], 3)
+            expect(data.length).to.equal(length + 3);
         });
     });
 
     describe('writeUTF()', () => {
-        it('should only take a string as an argument', () => {
-            
-        });
+        it('string argument should only consist of 0-9a-fA-F', () => {
+            const errFunc = () => { results.writeUTF('ff3k')};
+            const errFunc2 = () => { results.writeUTF('fM3k')};
+            const passFunc = () => { results.writeUTF('fFA')};
+            expect(errFunc).to.throw();
+            expect(errFunc2).to.throw();
+            expect(passFunc).to.not.throw()
+        })
     });
 
     describe('writeColor()', () => {
@@ -63,9 +66,11 @@ describe('EncodedImage', () => {
         });
         it('should only take strings of length 6', () => {
             const errFunc = () => { results.writeColor('00dd') };
+            const errFunc2 = () => { results.writeColor('00ddffwf') };
             expect(errFunc).to.throw();
+            expect(errFunc2).to.throw();
         });
-        it('string argument should only consist of 0-9a-f', () => {
+        it('string argument should only consist of 0-9a-fA-F', () => {
             const errFunc = () => { results.writeColor('0f0kmk')}
             expect(errFunc).to.throw();
         })

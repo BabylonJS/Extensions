@@ -19,12 +19,13 @@ export class EncodedImage {
 
     writeUTF(UTF:string){
         for(let i = 0; i < UTF.length; i++){
-            this.write(UTF.charCodeAt(i));
+            if(!/(^[0-9|a-f]{1}$)/i.test(UTF[i])) throw new Error('Image encoding error, color string validation error');
+            else{this.write(UTF.charCodeAt(i))};
         }
     }
 
     writeColor(color:string){
-        if(!/(^[0-9a-fA-F]{5})\w/.test(color)) throw new Error('Image encoding error, color string validation error')
+        if(!/(^[0-9|a-f]{6}$)/i.test(color)) throw new Error('Image encoding error, color string validation error')
         else{
             for (let i = 0; i < color.length; i+=2) {
                 const intValue : number = parseInt(color[i]+color[i+1], 16);
