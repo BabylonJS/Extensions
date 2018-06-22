@@ -80,10 +80,10 @@ TimerPlugin.requestInterval = function(fn, delay) {
         !TimerPlugin.msRequestAnimationFrame)
 			return TimerPlugin.setInterval(fn, delay);
 			
-    var start = TimerPlugin.getTimeMilliseconds();
-	var	handle:any = new Object();
+    let start = TimerPlugin.getTimeMilliseconds();
+	let	handle:any = new Object();
 	function loop() {
-		var current = TimerPlugin.getTimeMilliseconds(), delta = current - start;
+		let current = TimerPlugin.getTimeMilliseconds(), delta = current - start;
 		if(delta >= delay) {
 			fn.call();
 			start = TimerPlugin.getTimeMilliseconds();
@@ -121,10 +121,10 @@ TimerPlugin.requestTimeout = function(fn, delay) {
 		!TimerPlugin.msRequestAnimationFrame)
 			return TimerPlugin.setTimeout(fn, delay);
 			
-	var start = TimerPlugin.getTimeMilliseconds();
-    var	handle:any = new Object();
+	let start = TimerPlugin.getTimeMilliseconds();
+    let	handle:any = new Object();
 	function loop(){
-		var current = TimerPlugin.getTimeMilliseconds(), delta = current - start;
+		let current = TimerPlugin.getTimeMilliseconds(), delta = current - start;
 		delta >= delay ? fn.call() : handle.value = TimerPlugin.requestAnimFrame(loop);
     };
     // ..

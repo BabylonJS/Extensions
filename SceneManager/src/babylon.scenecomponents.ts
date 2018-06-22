@@ -10,13 +10,13 @@ module BABYLON {
         protected update(): void { }
         protected after(): void { }
         protected destroy(): void { }
-        
-        private _engine: BABYLON.Engine = null;
-        private _scene: BABYLON.Scene = null;
+
+        /** TODO: Optimize render loop with instances */
         private _before: () => void = null;
         private _after: () => void = null;
-        private _started: boolean = false;
-        private _initialized: boolean = false;
+
+        private _engine: BABYLON.Engine = null;
+        private _scene: BABYLON.Scene = null;
         private _properties: any = null;
         private _manager: BABYLON.SceneManager = null;
         protected owned: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light = null;
@@ -25,21 +25,17 @@ module BABYLON {
             if (scene == null) throw new Error("Null host scene obejct specified.");
             this.tick = tick;
             this.owned = owner;
-            this._started = false;
             this._manager = null;
-            this._initialized = false;
             this._properties = propertyBag;
             this._engine = scene.getEngine();
             this._scene = scene;
 
             /** TODO: Optimize the scene.register before and after to us ()=>{} */
             /** Then remome the internal instance wrappers thruout the component */
-
-            /* Scene Component Instance Handlers */
-            var instance: BABYLON.SceneComponent = this;
-            instance.register = () => { instance.registerInstance(instance); };
-            instance._before = () => { instance.updateInstance(instance); };
-            instance._after = () => { instance.afterInstance(instance); };
+            const me: BABYLON.SceneComponent = this;
+            me.register = () => { me.registerInstance(me); };
+            me._before = () => { me.updateInstance(me); };
+            me._after = () => { me.afterInstance(me); };
         }
         public get scene(): BABYLON.Scene { 
             return this._scene;
@@ -61,7 +57,7 @@ module BABYLON {
             }
         }
         public getProperty<T>(name: string, defaultValue: T = null): T {
-            var result: any = null
+            let result: any = null
             if (this._properties != null) {
                 result = this._properties[name];
             }
@@ -69,19 +65,19 @@ module BABYLON {
             return (result != null) ? result as T : null;
         }
         public getClassname():string {
-            var funcNameRegex = /function (.{1,})\(/;
-            var results = (funcNameRegex).exec((<any> this).constructor.toString());
+            let funcNameRegex = /function (.{1,})\(/;
+            let results = (funcNameRegex).exec((<any> this).constructor.toString());
             return (results && results.length > 1) ? results[1] : "";
         }        
         public getMetadata(): BABYLON.ObjectMetadata {
             return this.manager.findSceneMetadata(this.owned);
         }
         public getComponent<T extends BABYLON.SceneComponent>(klass: string): T {
-            var result:any = this.manager.findSceneComponent<T>(klass, this.owned);
+            let result:any = this.manager.findSceneComponent<T>(klass, this.owned);
             return (result != null) ? result as T : null;
         }
         public getComponents<T extends BABYLON.SceneComponent>(klass: string): T[] {
-            var result:any = this.manager.findSceneComponents<T>(klass, this.owned);
+            let result:any = this.manager.findSceneComponents<T>(klass, this.owned);
             return (result != null) ? result as T[] : null;
         }
         public getLensFlareSystem(flareName:string): BABYLON.LensFlareSystem {
@@ -91,70 +87,71 @@ module BABYLON {
             return this.manager.findSceneLensFlareSystems(this.owned);
         }
 
-        /* Scene Component Initialize Helper Function */
-        private init(): void {
-            if (this.owned.metadata != null) {
-                // Handle pre-start initilization
-            }
-        }
+        ////////////////////////////////////////////////////////////////////////////////////
+        // Component Instance Render Looping
+        ////////////////////////////////////////////////////////////////////////////////////
 
-        /* Private Scene Component Instance Worker Functions */
-        private registerInstance(instance: any): void {
-            if (instance.ready) {
-                instance.manager.onready(()=>{ instance.ready(); });
+        /** TODO: Optimize render loop with instances */
+
+        private registerInstance(me: any): void {
+            if (me.ready) {
+                me.manager.onready(()=>{ me.ready(); });
             }
-            instance.scene.registerBeforeRender(instance._before);
-            instance.scene.registerAfterRender(instance._after);
+            me.scene.registerBeforeRender(me._before);
+            me.scene.registerAfterRender(me._after);
         }
-        private updateInstance(instance: any): void {
-            if (instance != null && instance.owned != null) {
-                if (!instance._started) {
-                    instance.init();
-                    instance.start();
-                    instance._started = true;
-                } else if (instance._before != null && instance._started && instance.tick) {
-                    instance.update();
-                    if (instance.updateIntersectionList) {
-                        instance.updateIntersectionList();
+        private updateInstance(me: any): void {
+            if (me != null && me.owned != null) {
+                if (!me._started) {
+                    me.start();
+                    me._started = true;
+                } else if (me._before != null && me._started && me.tick) {
+                    me.update();
+                    if (me.updateIntersectionList) {
+                        me.updateIntersectionList();
                     }
                 }
             }
         }
-        private afterInstance(instance: any): void {
-            if (instance != null && instance.owned != null) {
-                if (instance._after != null && instance._started && instance.tick) {
-                    instance.after();
+        private afterInstance(me: any): void {
+            if (me != null && me.owned != null) {
+                if (me._after != null && me._started && me.tick) {
+                    me.after();
                 }
             }
         }
         //
         // Public Static Destroy Instance Helper
         //
-        public static DestroyInstance(instance: any) {
-            //console.log("===> Destroying Instance: " + instance.owned.name);
-            instance.tick = false;
-            instance.scene.unregisterBeforeRender(instance._before);
-            instance.scene.unregisterAfterRender(instance._after);
-            try{ instance.destroy(); }catch(e){};
-            if (instance.disposeSceneComponent) {
-                instance.disposeSceneComponent();
+        public static DestroyInstance(me: any) {
+            //console.log("===> Destroying Instance: " + me.owned.name);
+            me.tick = false;
+            me.scene.unregisterBeforeRender(me._before);
+            me.scene.unregisterAfterRender(me._after);
+            try{ me.destroy(); }catch(e){};
+            if (me.disposeSceneComponent) {
+                me.disposeSceneComponent();
             }
-            if (instance._prefab != null) {
-                instance._prefab.dispose();
-                instance._prefab = null;
+            if (me._prefab != null) {
+                me._prefab.dispose();
+                me._prefab = null;
             }
-            instance.owned = null;
-            instance._started = false;
-            instance._before = null;
-            instance._after = null;
-            instance._properties = null;
-            instance._engine = null;
-            instance._scene = null;
-            instance._manager = null;
-            instance.register = null;
-            instance.dispose = null;
+            me.owned = null;
+            me._started = false;
+            me._before = null;
+            me._after = null;
+            me._properties = null;
+            me._engine = null;
+            me._scene = null;
+            me._manager = null;
+            me.register = null;
+            me.dispose = null;
         }
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////
+    // Managed Scene Component Sub Classes
+    ////////////////////////////////////////////////////////////////////////////////////
 
     export abstract class CameraComponent extends BABYLON.SceneComponent {
         private _camera: BABYLON.Camera = null;
@@ -168,7 +165,7 @@ module BABYLON {
             return this._camera;
         }
         private setupOrthographicCamera(size:number, updateOnResize:boolean):void {
-            var result:boolean = false;
+            let result:boolean = false;
             if (this.camera != null && this._camera.mode === BABYLON.Camera.ORTHOGRAPHIC_CAMERA) {
                 this._orthoSize = size;
                 this.updateOrthographicSize();
@@ -182,10 +179,10 @@ module BABYLON {
         }
         private updateOrthographicSize():void {
             if (this.camera != null && this._orthoSize !== 0) {
-                var client:ClientRect = this.scene.getEngine().getRenderingCanvasClientRect();
-                var aspect:number = client.width / client.height;
-                var vertical:number = this._orthoSize;
-                var horizontal:number = vertical * aspect;
+                let client:ClientRect = this.scene.getEngine().getRenderingCanvasClientRect();
+                let aspect:number = client.width / client.height;
+                let vertical:number = this._orthoSize;
+                let horizontal:number = vertical * aspect;
                 this._camera.orthoTop = vertical;
                 this._camera.orthoBottom = -vertical;
                 this._camera.orthoLeft = -horizontal;
@@ -261,14 +258,14 @@ module BABYLON {
                 this._mesh.metadata.collisionEvent = handler;
             }
             if (this._mesh.physicsImpostor != null) {
-                var anyImpostor:any = (<any>this._mesh.physicsImpostor);
+                let anyImpostor:any = (<any>this._mesh.physicsImpostor);
                 if (anyImpostor.onCollideEvent == null) {
                     anyImpostor.onCollideEvent = this.updatePhysicsCollisionEvent;
                 }
             }
         }
         public getCollisionEventHandler():(collider:BABYLON.AbstractMesh, tag:string) => void {
-            var result:(collider:BABYLON.AbstractMesh, tag:string) => void = null;
+            let result:(collider:BABYLON.AbstractMesh, tag:string) => void = null;
             if (this._mesh.metadata != null && this._mesh.metadata.api && this._mesh.metadata.collisionEvent != null) {
                 result = this._mesh.metadata.collisionEvent;
             }
@@ -276,11 +273,11 @@ module BABYLON {
         }
         private updatePhysicsCollisionEvent(collider: BABYLON.PhysicsImpostor, collidedAgainst:BABYLON.PhysicsImpostor) : void {
             if (collider.object != null && collidedAgainst.object != null) {
-                var colliderAny:any = collider.object;
+                let colliderAny:any = collider.object;
                 if (colliderAny != null && colliderAny.metadata != null && colliderAny.metadata.collisionEvent != null) {
-                    var collidedAgainstAny:any = collidedAgainst.object;
+                    let collidedAgainstAny:any = collidedAgainst.object;
                     if (collidedAgainstAny != null) {
-                        var collidedAgainstTag:string = "Untagged";
+                        let collidedAgainstTag:string = "Untagged";
                         if (collidedAgainstAny.metadata != null && collidedAgainstAny.metadata.tagName != null && collidedAgainstAny.metadata.tagName !== "") {
                             collidedAgainstTag = collidedAgainstAny.metadata.tagName;
                         }
@@ -296,7 +293,7 @@ module BABYLON {
 
         public addIntersectionMesh(mesh:BABYLON.AbstractMesh):void {
             if (mesh != null) {
-                var collisionMesh:BABYLON.AbstractMesh = this.manager.findSceneCollisionMesh(mesh);
+                let collisionMesh:BABYLON.AbstractMesh = this.manager.findSceneCollisionMesh(mesh);
                 if (collisionMesh != null) {
                     this._intersections.push({ mesh: collisionMesh, intersecting: false });
                 }
@@ -306,7 +303,7 @@ module BABYLON {
             if (meshes != null) {
                 meshes.forEach((mesh) => {
                     if (mesh != null) {
-                        var collisionMesh:BABYLON.AbstractMesh = this.manager.findSceneCollisionMesh(mesh);
+                        let collisionMesh:BABYLON.AbstractMesh = this.manager.findSceneCollisionMesh(mesh);
                         if (collisionMesh != null) {
                             this._intersections.push({ mesh: collisionMesh, intersecting: false });
                         }
@@ -316,11 +313,11 @@ module BABYLON {
         }
         public removeIntersectionMesh(mesh:BABYLON.AbstractMesh):void {
             if (mesh != null && this._intersections != null && this._intersections.length > 0) {
-                var count:number = this._intersections.length;
-                var marker:number = -1;
-                var index:number = 0;
+                let count:number = this._intersections.length;
+                let marker:number = -1;
+                let index:number = 0;
                 for(index=0; index<count; index++) {
-                    var istate:BABYLON.IIntersectionState = this._intersections[index];
+                    let istate:BABYLON.IIntersectionState = this._intersections[index];
                     if (istate.mesh != null && istate.mesh === mesh) {
                         marker = index;
                         break;
@@ -383,7 +380,7 @@ module BABYLON {
                     });
                 }
                 if (this._mesh.physicsImpostor != null) {
-                    var anyImpostor:any = (<any>this._mesh.physicsImpostor);
+                    let anyImpostor:any = (<any>this._mesh.physicsImpostor);
                     if (anyImpostor.onCollideEvent != null) {
                         anyImpostor.onCollideEvent = null;
                     }
@@ -397,48 +394,12 @@ module BABYLON {
         }
     }
 
-    export class GenericComponent extends BABYLON.SceneComponent {
-        public onready:()=>void = null;
-        public onstart:()=>void = null;
-        public onupdate:()=>void = null;
-        public onafter:()=>void = null;
-        public ondestroy:()=>void = null;
-        public constructor(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, scene: BABYLON.Scene, tick: boolean = true, propertyBag: any = {}) {
-            super(owner, scene, tick, propertyBag);
-        }
-        public getOwner():BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light {
-            return this.owned
-        }
-        protected ready() :void {
-            if (this.onready != null) this.onready();
-        }
-        protected start() :void {
-            if (this.onstart != null) this.onstart();
-        }
-        protected update() :void {
-            if (this.onupdate != null) this.onupdate();
-        }
-        protected after() :void {
-            if (this.onafter != null) this.onafter();
-        }
-        protected destroy() :void {
-            if (this.ondestroy != null) this.ondestroy();
-        }
-        private disposeSceneComponent():void {
-            this.onready = null;
-            this.onstart = null;
-            this.onupdate = null;
-            this.onafter = null;
-            this.ondestroy = null;
-        }        
-    }
-
     export class OrthoController extends BABYLON.CameraComponent {
         protected start() :void {
-            var me:any = this;
+            let me:any = this;
             if (me.setupOrthographicCamera) {
-                var size:number = this.getProperty("orthoSize", 5);
-                var update:boolean = this.getProperty("resizeCameras", true);
+                let size:number = this.getProperty("orthoSize", 5);
+                let update:boolean = this.getProperty("resizeCameras", true);
                 me.setupOrthographicCamera(size, update);
             }
         }
@@ -460,17 +421,17 @@ module BABYLON {
          */
         public SmoothDamp(current:number, target:number, smoothTime:number, deltaTime:number, maxSpeed:number = Number.MAX_VALUE):number {
             smoothTime = Math.max(0.0001, smoothTime);
-            var num:number = 2.0 / smoothTime;
-            var num2:number = num * deltaTime;
-            var num3:number = 1.0 / (1.0 + num2 + 0.48 * num2 * num2 + 0.235 * num2 * num2 * num2);
-            var num4:number = current - target;
-            var num5:number = target;
-            var num6:number = maxSpeed * smoothTime;
+            let num:number = 2.0 / smoothTime;
+            let num2:number = num * deltaTime;
+            let num3:number = 1.0 / (1.0 + num2 + 0.48 * num2 * num2 + 0.235 * num2 * num2 * num2);
+            let num4:number = current - target;
+            let num5:number = target;
+            let num6:number = maxSpeed * smoothTime;
             num4 = BABYLON.Scalar.Clamp(num4, -num6, num6);
             target = current - num4;
-            var num7:number = (this.currentVelocity + num * num4) * deltaTime;
+            let num7:number = (this.currentVelocity + num * num4) * deltaTime;
             this.currentVelocity = (this.currentVelocity - num * num7) * num3;
-            var num8 = target + (num4 + num7) * num3;
+            let num8 = target + (num4 + num7) * num3;
             if (num5 - current > 0.0 == num8 > num5) {
                 num8 = num5;
                 this.currentVelocity = (num8 - num5) / deltaTime;
@@ -507,7 +468,7 @@ module BABYLON {
         /** Rotates the mesh using rotation quaternions */
         /*
         public rotate(x: number, y: number, z: number, order:BABYLON.RotateOrder = BABYLON.RotateOrder.ZXY):BABYLON.AbstractMesh {
-            var result:BABYLON.AbstractMesh = null;
+            let result:BABYLON.AbstractMesh = null;
             if (this._owned != null) {
                 // Note: Z-X-Y is default Unity Rotation Order
                 if (this._owned.rotationQuaternion == null) this._owned.rotationQuaternion = BABYLON.Quaternion.RotationYawPitchRoll(this._owned.rotation.y, this._owned.rotation.x, this._owned.rotation.z);
@@ -531,7 +492,7 @@ module BABYLON {
         /** Rotates the mesh so the forward vector points at a target position using rotation quaternions. (Options: Y-Yall, X-Pitch, Z-Roll) */
         /*
         public lookAtPosition(position:BABYLON.Vector3, slerp:number = 0.0, yawCor?: number, pitchCor?: number, rollCor?: number, space?: BABYLON.Space):BABYLON.AbstractMesh {
-            var result:BABYLON.AbstractMesh = null;
+            let result:BABYLON.AbstractMesh = null;
             if (this._owned != null) {
                 if (this._owned.rotationQuaternion == null) this._owned.rotationQuaternion = BABYLON.Quaternion.RotationYawPitchRoll(this._owned.rotation.y, this._owned.rotation.x, this._owned.rotation.z);
                 if (this.slerpIdentity != null && slerp > 0.0) this.slerpIdentity.copyFrom(this._owned.rotationQuaternion);
@@ -545,7 +506,7 @@ module BABYLON {
         /** Rotates the mesh using rotation quaternions */
         //
         public rotate(x: number, y: number, z: number, order:BABYLON.RotateOrder = BABYLON.RotateOrder.ZXY):BABYLON.TransformNode {
-            var result:BABYLON.TransformNode = null;
+            let result:BABYLON.TransformNode = null;
             if (this._owned != null) {
                 // Note: Z-X-Y is default Unity Rotation Order
                 if (this._owned.rotationQuaternion == null) this._owned.rotationQuaternion = BABYLON.Quaternion.RotationYawPitchRoll(this._owned.rotation.y, this._owned.rotation.x, this._owned.rotation.z);
@@ -569,7 +530,7 @@ module BABYLON {
         /** Rotates the mesh so the forward vector points at a target position using rotation quaternions. (Options: Y-Yall, X-Pitch, Z-Roll) */
         //
         public lookAtPosition(position:BABYLON.Vector3, slerp:number = 0.0, yawCor?: number, pitchCor?: number, rollCor?: number, space?: BABYLON.Space):BABYLON.TransformNode {
-            var result:BABYLON.TransformNode = null;
+            let result:BABYLON.TransformNode = null;
             if (this._owned != null) {
                 if (this._owned.rotationQuaternion == null) this._owned.rotationQuaternion = BABYLON.Quaternion.RotationYawPitchRoll(this._owned.rotation.y, this._owned.rotation.x, this._owned.rotation.z);
                 if (this.slerpIdentity != null && slerp > 0.0) this.slerpIdentity.copyFrom(this._owned.rotationQuaternion);
@@ -638,7 +599,7 @@ module BABYLON {
             }
         }
         public getProperty<T>(name: string, defaultValue: T = null): T {
-            var result: any = null
+            let result: any = null
             if (this._metadata.properties != null) {
                 result = this._metadata.properties[name];
             }
