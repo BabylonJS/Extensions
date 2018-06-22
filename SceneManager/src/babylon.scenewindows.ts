@@ -39,10 +39,10 @@ module BABYLON {
                     if (this.multiPlayerStart > 1) this.manager.setMultiPlayerViewLayout(this.multiPlayerStart);
                 }
             } else if (this.cameraInput === BABYLON.UniversalCameraRig.RENDER_CANVAS) {
-                var camera:BABYLON.Camera = this.manager.getMainCamera(BABYLON.PlayerNumber.One);
+                let camera:BABYLON.Camera = this.manager.getMainCamera(BABYLON.PlayerNumber.One);
                 camera.attachControl(this.engine.getRenderingCanvas(), this.preventDefaultEvents);
                 if (camera instanceof BABYLON.FreeCamera) {
-                    var freeCamera:BABYLON.FreeCamera = camera as BABYLON.FreeCamera;
+                    let freeCamera:BABYLON.FreeCamera = camera as BABYLON.FreeCamera;
                     if (this.movementKeys === true) {
                         freeCamera.keysUp.push('w'.charCodeAt(0));
                         freeCamera.keysUp.push('W'.charCodeAt(0));
@@ -63,7 +63,7 @@ module BABYLON {
                     this.manager.updateCameraInput(this.playerOneCamera as BABYLON.FreeCamera, this.cameraMoveSpeed, this.cameraRotateSpeed, BABYLON.PlayerNumber.One);
                 }
                 if (this.multiPlayerView === true) {
-                    var playerCount:number = BABYLON.SceneManager.GetMultiPlayerCount();
+                    let playerCount:number = BABYLON.SceneManager.GetMultiPlayerCount();
                     if (playerCount >= 2 && this.playerTwoCamera != null) {
                         this.manager.updateCameraInput(this.playerTwoCamera as BABYLON.FreeCamera, this.cameraMoveSpeed, this.cameraRotateSpeed, BABYLON.PlayerNumber.Two);
                     }

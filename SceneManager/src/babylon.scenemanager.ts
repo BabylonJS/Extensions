@@ -22,7 +22,7 @@ module BABYLON {
 
         /** Create a new scene and registers a manager instance */        
         public static CreateScene(engine:BABYLON.Engine):BABYLON.Scene {
-            var scene:BABYLON.Scene = new BABYLON.Scene(engine);
+            let scene:BABYLON.Scene = new BABYLON.Scene(engine);
             BABYLON.Utilities.RegisterSceneManager(scene);
             return scene;
         }
@@ -32,10 +32,10 @@ module BABYLON {
         }
         /** Append and parse scene objects from a filename url */        
         public static AppendScene(rootUrl: string, sceneFilename?: any, scene?: Nullable<Scene>, onSuccess?: Nullable<(scene: Scene) => void>, onProgress?: Nullable<(event: SceneLoaderProgressEvent) => void>, onError?: Nullable<(scene: Scene, message: string, exception?: any) => void>, pluginExtension?: Nullable<string>):Nullable<ISceneLoaderPlugin | ISceneLoaderPluginAsync> {
-            var scenex: any = <any>scene;
+            let scenex: any = <any>scene;
             if (scenex.manager == null) BABYLON.Utilities.RegisterSceneManager(scene);
             if (scenex.manager != null) scenex.manager._url = rootUrl;
-            var onSuccessWrapper:(scene:BABYLON.Scene)=>void = (sx:BABYLON.Scene)=> {
+            let onSuccessWrapper:(scene:BABYLON.Scene)=>void = (sx:BABYLON.Scene)=> {
                 BABYLON.Utilities.ParseSceneMetadata(sx);
                 BABYLON.Utilities.ExecuteSceneReady(sx);
                 if (onSuccess != null) onSuccess(sx);
@@ -44,9 +44,9 @@ module BABYLON {
         }
         /** Import and parse meshes from a filename url */        
         public static ImportMeshes(meshNames: any, rootUrl: string, sceneFilename?: any, scene?: Nullable<Scene>, onSuccess?: Nullable<(meshes: AbstractMesh[], particleSystems: ParticleSystem[], skeletons: Skeleton[], animationGroups: AnimationGroup[]) => void>, onProgress?: Nullable<(event: SceneLoaderProgressEvent) => void>, onError?: Nullable<(scene: Scene, message: string, exception?: any) => void>, pluginExtension?: Nullable<string>): Nullable<ISceneLoaderPlugin | ISceneLoaderPluginAsync> {
-            var scenex: any = <any>scene;
+            let scenex: any = <any>scene;
             if (scenex.manager == null) BABYLON.Utilities.RegisterSceneManager(scene);
-            var onSuccessWrapper:(meshes: AbstractMesh[], particleSystems: ParticleSystem[], skeletons: Skeleton[], animationGroups: AnimationGroup[])=>void = (mx: AbstractMesh[], px: ParticleSystem[], sx: Skeleton[], ax: AnimationGroup[])=> {
+            let onSuccessWrapper:(meshes: AbstractMesh[], particleSystems: ParticleSystem[], skeletons: Skeleton[], animationGroups: AnimationGroup[])=>void = (mx: AbstractMesh[], px: ParticleSystem[], sx: Skeleton[], ax: AnimationGroup[])=> {
                 BABYLON.Utilities.ParseImportMetadata(mx, scene);
                 if (onSuccess != null) onSuccess(mx, px, sx, ax);
             };
@@ -74,9 +74,13 @@ module BABYLON {
         // *  Babylon Scene Manager Agents  * //
         // ********************************** //
 
+        /** Is internet explorer 11 platform agent. */
+        public static IsIE11():boolean {
+            return (navigator.msMaxTouchPoints !== void 0);
+        }
         /** Is windows phone platform agent. */
         public static IsWindowsPhone(): boolean {
-            var result: boolean = false;
+            let result: boolean = false;
             if (navigator != null && navigator.userAgent != null) {
                 if (navigator.userAgent.match(/Windows Phone/i)) {
                     result = true;
@@ -86,7 +90,7 @@ module BABYLON {
         }
         /** Is blackberry web platform agent. */
         public static IsBlackBerry(): boolean {
-            var result: boolean = false;
+            let result: boolean = false;
             if (navigator != null && navigator.userAgent != null) {
                 if (navigator.userAgent.match(/BlackBerry/i)) {
                     result = true;
@@ -96,7 +100,7 @@ module BABYLON {
         }
         /** Is opera web platform agent. */
         public static IsOperaMini(): boolean {
-            var result: boolean = false;
+            let result: boolean = false;
             if (navigator != null && navigator.userAgent != null) {
                 if (navigator.userAgent.match(/Opera Mini/i)) {
                     result = true;
@@ -106,7 +110,7 @@ module BABYLON {
         }
         /** Is android web platform agent. */
         public static IsAndroid(): boolean {
-            var result: boolean = false;
+            let result: boolean = false;
             if (navigator != null && navigator.userAgent != null) {
                 if (navigator.userAgent.match(/Android/i)) {
                     result = true;
@@ -116,7 +120,7 @@ module BABYLON {
         }
         /** Is web os platform agent. */
         public static IsWebOS(): boolean {
-            var result: boolean = false;
+            let result: boolean = false;
             if (navigator != null && navigator.userAgent != null) {
                 if (navigator.userAgent.match(/webOS/i)) {
                     result = true;
@@ -126,7 +130,7 @@ module BABYLON {
         }
         /** Is ios web platform agent. */
         public static IsIOS(): boolean {
-            var result: boolean = false;
+            let result: boolean = false;
             if (navigator != null && navigator.userAgent != null) {
                 if (navigator.userAgent.match(/iPhone|iPad|iPod/i)) {
                     result = true;
@@ -136,7 +140,7 @@ module BABYLON {
         }
         /** Is iphone web platform agent. */
         public static IsIPHONE(): boolean {
-            var result: boolean = false;
+            let result: boolean = false;
             if (navigator != null && navigator.userAgent != null) {
                 if (navigator.userAgent.match(/iPhone/i)) {
                     result = true;
@@ -146,7 +150,7 @@ module BABYLON {
         }
         /** Is ipad web platform agent. */
         public static IsIPAD(): boolean {
-            var result: boolean = false;
+            let result: boolean = false;
             if (navigator != null && navigator.userAgent != null) {
                 if (navigator.userAgent.match(/iPad/i)) {
                     result = true;
@@ -156,7 +160,7 @@ module BABYLON {
         }
         /** Is ipod web platform agent. */
         public static IsIPOD(): boolean {
-            var result: boolean = false;
+            let result: boolean = false;
             if (navigator != null && navigator.userAgent != null) {
                 if (navigator.userAgent.match(/iPod/i)) {
                     result = true;
@@ -166,9 +170,9 @@ module BABYLON {
         }
         /** Is mobile web platform agent. */
         public static IsMobile(): boolean {
-            var result: boolean = false;
+            let result: boolean = false;
             if (navigator != null && navigator.userAgent != null) {
-                var n = navigator.userAgent;
+                let n = navigator.userAgent;
                 if (n.match(/Android/i) || n.match(/webOS/i) || n.match(/iPhone|iPad|iPod/i) || n.match(/BlackBerry/i) || n.match(/Opera Mini/i) || n.match(/Windows Phone/i)) {
                     result = true;
                 }
@@ -190,7 +194,7 @@ module BABYLON {
         }
         /** Are playstation platform services available. */
         public static IsPlaystation(): boolean {
-            var result: boolean = false;
+            let result: boolean = false;
             if (navigator != null && navigator.userAgent != null) {
                 if (navigator.userAgent.match(/Playstation/i)) {
                     result = true;
@@ -200,9 +204,9 @@ module BABYLON {
         }
         /** Are xbox one platform services available. */
         public static IsXboxOne(): boolean {
-            var result: boolean = false;
+            let result: boolean = false;
             if (BABYLON.SceneManager.IsWindows() && typeof Windows.System.Profile !== "undefined" && typeof Windows.System.Profile.AnalyticsInfo !== "undefined" && typeof Windows.System.Profile.AnalyticsInfo.versionInfo !== "undefined" && typeof Windows.System.Profile.AnalyticsInfo.versionInfo.deviceFamily !== "undefined") {
-                var n:string = Windows.System.Profile.AnalyticsInfo.versionInfo.deviceFamily;
+                let n:string = Windows.System.Profile.AnalyticsInfo.versionInfo.deviceFamily;
                 if (n.match(/Xbox/i)) {
                     result = true;
                 }
@@ -249,18 +253,18 @@ module BABYLON {
         public static GetQueryStringParam(name: string, url: string): string {
             if (!url) url = window.location.href;
             name = name.replace(/[\[\]]/g, "\\$&");
-            var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"), results = regex.exec(url);
+            let regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"), results = regex.exec(url);
             if (!results) return null;
             if (!results[2]) return '';
             return decodeURIComponent(results[2].replace(/\+/g, " "));
         }
         /** Gets the current engine WebGL version string info. */
         public static GetWebGLVersionString(): string {
-            var result = "WebGL - Unknown";
+            let result = "WebGL - Unknown";
             if (BABYLON.SceneManager.engine != null) {
-                var engine:BABYLON.Engine = BABYLON.SceneManager.engine;
+                let engine:BABYLON.Engine = BABYLON.SceneManager.engine;
                 if (engine != null) {
-                    var glinfo = engine.getGlInfo();
+                    let glinfo = engine.getGlInfo();
                     if (glinfo != null) {
                         result = (glinfo.version + " - " + glinfo.renderer);
                     }
@@ -270,9 +274,9 @@ module BABYLON {
         }
         /** Gets the current engine WebGL version number info. */
         public static GetWebGLVersionNumber(): number {
-            var result = 0;
+            let result = 0;
             if (BABYLON.SceneManager.engine != null) {
-                var engine:BABYLON.Engine = BABYLON.SceneManager.engine;
+                let engine:BABYLON.Engine = BABYLON.SceneManager.engine;
                 if (engine != null) {
                     result = engine.webGLVersion
                 }
@@ -281,7 +285,7 @@ module BABYLON {
         }
         /** Platform alert message dialog. */
         public static AlertMessage(text: string, title: string = "Babylon.js"): any {
-            var result = null;
+            let result = null;
             if (BABYLON.SceneManager.IsWindows()) {
                 result = new Windows.UI.Popups.MessageDialog(text, title).showAsync();
             } else {
@@ -308,7 +312,6 @@ module BABYLON {
         private static AuxVector2:BABYLON.Vector2 = BABYLON.Vector2.Zero();
         private static AuxVector3:BABYLON.Vector3 = BABYLON.Vector3.Zero();
         // ..
-        private _ie:boolean = false;
         private _url:string = "/";
         private _time:number = 0;
         private _timing:boolean = false;
@@ -457,17 +460,15 @@ module BABYLON {
         private static gamepad4LeftTrigger: BABYLON.UserInputAction[] = [];
         private static gamepad4RightTrigger: BABYLON.UserInputAction[] = [];
         private static loader: (root: string, name: string) => void = null;
-        public get ie():boolean { return this._ie; }
         public get time():number { return this._time; }
         public get deltaTime(): number { return (BABYLON.SceneManager.engine != null) ? BABYLON.SceneManager.engine.getDeltaTime() / 1000.0 : 0; }
         public getScene(): BABYLON.Scene { return this._scene; }
         private static readies: Function[] = []; // Note: Only ExecuteWhenReady Resets Ready Handlers
         public constructor(scene: BABYLON.Scene) {
             if (scene == null) throw new Error("Null host scene obejct specified.");
-            this._ie = document.all ? true : false
             this._url = "/";
             this._time = 0;
-            this._timing = false;
+            this._timing = true;
             this._filename = null;
             this._scene = scene;
             this._input = false;
@@ -510,24 +511,13 @@ module BABYLON {
             BABYLON.SceneManager.colliderVisibility = 0.25;
             BABYLON.SceneManager.socketColliderSize = 0.125;
 
+            // Reset local ready state
+            this.addLoadingState(this._localReadyState);
+
             // Validate WegGL version information
             if (BABYLON.SceneManager.engine.webGLVersion < 2) {
                 BABYLON.Tools.Warn("Babylon.js performance monitor detected webgl version 1.");
             }
-            
-            // Reset local ready state
-            this.addLoadingState(this._localReadyState);
-
-            // Enable Time Management
-            this.enableTime();            
-
-            // Scene component start, update and destroy proxies 
-            var instance: BABYLON.SceneManager = this;
-            this._scene.onDispose = function () {
-                if (instance != null) {
-                    instance.dispose();
-                }
-            };
 
             // Register pointer lock change events
             document.addEventListener("pointerlockchange", this.pointerLockHandler);
@@ -538,6 +528,9 @@ module BABYLON {
             // Register scene render loop handlers
             this._scene.registerBeforeRender(this._beforeRender);
             this._scene.registerAfterRender(this._afterRender);
+
+            // Register scene manager dispose handler
+            this._scene.onDispose = () => { this.dispose(); };
         }
         private _beforeRender():void {
             if (BABYLON.SceneManager.showRenderStats === true && BABYLON.SceneManager.renderStatsInstance != null) {
@@ -548,7 +541,7 @@ module BABYLON {
             if (BABYLON.SceneManager.showRenderStats === true && BABYLON.SceneManager.renderStatsInstance != null) {
                 BABYLON.SceneManager.renderStatsInstance.end();
             }
-            var instance: BABYLON.SceneManager = BABYLON.SceneManager.me;
+            let instance: BABYLON.SceneManager = BABYLON.SceneManager.me;
             if (instance != null) {
                 if (instance._timing) {
                     instance._time += instance.deltaTime;
@@ -568,7 +561,7 @@ module BABYLON {
                     this._sunlightIdentifier = this._scene.metadata.properties.sunlightIndentifier;
                 }
                 if (this._scene.metadata.properties.sunlightDirection && this._scene.metadata.properties.sunlightDirection != null) {
-                    var sunlight:number[] = this._scene.metadata.properties.sunlightDirection;
+                    let sunlight:number[] = this._scene.metadata.properties.sunlightDirection;
                     if (sunlight != null && sunlight.length >= 3) {
                         this._sunlightDirection = new BABYLON.Vector3(sunlight[0], sunlight[1], sunlight[2]);
                     }
@@ -595,10 +588,10 @@ module BABYLON {
                     BABYLON.SceneManager.staticVertexLimit = this._scene.metadata.properties.staticVertexLimit;
                 }
                 // Setup Scene Physics Engine
-                var physicsEngine: string = (this._scene.metadata.properties.physicsEngine) ? this._scene.metadata.properties.physicsEngine : "cannon";
-                var enablePhysics: boolean = (this._scene.metadata.properties.enablePhysics) ? this._scene.metadata.properties.enablePhysics : false;
+                let physicsEngine: string = (this._scene.metadata.properties.physicsEngine) ? this._scene.metadata.properties.physicsEngine : "cannon";
+                let enablePhysics: boolean = (this._scene.metadata.properties.enablePhysics) ? this._scene.metadata.properties.enablePhysics : false;
                 if (enablePhysics === true) {
-                    var physicsPlugin: BABYLON.IPhysicsEnginePlugin = new BABYLON.CannonJSPlugin(false, 10);
+                    let physicsPlugin: BABYLON.IPhysicsEnginePlugin = new BABYLON.CannonJSPlugin(false, 10);
                     this._scene.enablePhysics(this._scene.gravity, physicsPlugin);
                 }
                 // Setup Graphic User Interface
@@ -609,7 +602,7 @@ module BABYLON {
             // ..
             // Parse, create and store component instances
             // ..
-            var ticklist: BABYLON.IScriptComponent[] = [];
+            let ticklist: BABYLON.IScriptComponent[] = [];
             BABYLON.SceneManager.parseSceneCameras(this._scene.cameras, this._scene, ticklist);
             BABYLON.SceneManager.parseSceneLights(this._scene.lights, this._scene, ticklist);
             BABYLON.SceneManager.parseSceneMeshes(this._scene.meshes, this._scene, ticklist);
@@ -625,12 +618,16 @@ module BABYLON {
                     scriptComponent.instance.register();
                 });
             }
+            // ..
             // Validate scene render stats options
-            if (typeof Stats !== "undefined" && BABYLON.SceneManager.showRenderStats === true) {
-                if (BABYLON.SceneManager.renderStatsInstance == null) {
-                    BABYLON.SceneManager.renderStatsInstance = new Stats();
-                    BABYLON.SceneManager.renderStatsInstance.showPanel(BABYLON.SceneManager.sceneRenderStats); // 0: fps, 1: ms
-                    document.body.appendChild(BABYLON.SceneManager.renderStatsInstance.dom);
+            // ..
+            if (!BABYLON.SceneManager.IsIE11()) {
+                if (typeof Stats !== "undefined" && BABYLON.SceneManager.showRenderStats === true) {
+                    if (BABYLON.SceneManager.renderStatsInstance == null) {
+                        BABYLON.SceneManager.renderStatsInstance = new Stats();
+                        BABYLON.SceneManager.renderStatsInstance.showPanel(BABYLON.SceneManager.sceneRenderStats); // 0: fps, 1: ms
+                        document.body.appendChild(BABYLON.SceneManager.renderStatsInstance.dom);
+                    }
                 }
             }
         }
@@ -692,7 +689,7 @@ module BABYLON {
                 this._advancedTexture.dispose();
                 this._advancedTexture = null;
             }
-            var scenex: any = (<any>this._scene);
+            let scenex: any = (<any>this._scene);
             if (scenex.manager) scenex.manager = null;
             scenex = null;
             this._scene = null;
@@ -704,8 +701,8 @@ module BABYLON {
         /** Execute a function once during render loop. */
         public once(func:()=>void):void {
             if (func != null) {
-                var ran:boolean = false;
-                var one:()=>void = null;
+                let ran:boolean = false;
+                let one:()=>void = null;
                 one = ()=> {
                     this._scene.unregisterBeforeRender(one);
                     one = null;
@@ -719,7 +716,7 @@ module BABYLON {
         }
         /** Delays a function call using window.requestTimeeout. Returns a handle object */
         public delay(func:()=>void, timeout:number):any {
-            var handle:any = null;
+            let handle:any = null;
             handle = (<any>window).requestTimeout(()=>{
                 if (handle != null) {
                     this.cancelDelay(handle);
@@ -767,7 +764,7 @@ module BABYLON {
         }
         /** Gets the main camera for a player */
         public getMainCamera(player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One):BABYLON.Camera {
-            var result:BABYLON.Camera = null;
+            let result:BABYLON.Camera = null;
             switch (player) {
                 case BABYLON.PlayerNumber.One:
                     result = this._playerOneCamera;
@@ -862,8 +859,8 @@ module BABYLON {
             this._localSceneReady = true;
             if (this._scene.metadata != null && this._scene.metadata.properties != null) {
                 if (this._scene.metadata.properties.enableUserInput === true) {
-                    var userInput:any = this._scene.metadata.properties.userInput;
-                    var joystick:number = userInput.joystickInputValue;
+                    let userInput:any = this._scene.metadata.properties.userInput;
+                    let joystick:number = userInput.joystickInputValue;
                     if (joystick !== 0 && this._scene.metadata.properties.virtualJoystickAttached === true) {
                         joystick = 0;
                         BABYLON.Tools.Warn("Virtual joystick camera attached, disabled manual joystick input.");
@@ -874,7 +871,7 @@ module BABYLON {
                         enableVirtualJoystick: (joystick === 1 || (joystick === 2 && BABYLON.SceneManager.IsMobile())),
                         disableRightStick: userInput.disableRightStick
                     });
-                    var colorText:string = userInput.joystickRightColorText;
+                    let colorText:string = userInput.joystickRightColorText;
                     if (colorText != null && colorText !== "") BABYLON.UserInputOptions.JoystickRightHandleColor = colorText;
                     BABYLON.UserInputOptions.JoystickLeftSensibility = userInput.joystickLeftLevel;
                     BABYLON.UserInputOptions.JoystickRightSensibility = userInput.joystickRightLevel;
@@ -900,14 +897,14 @@ module BABYLON {
             }
         }
         private _loadQueueImports() {
-            var ctr:number = this._loadQueueIndex + 1;
+            let ctr:number = this._loadQueueIndex + 1;
             if (ctr > this._loadQueueCount) {
                 this._loadQueueIndex = 0;
                 this._loadQueueCount = 0;
                 this._loadQueueScenes = null;
                 this._executeLocalReady();
             } else {
-                var sceneName:string = this._loadQueueScenes[this._loadQueueIndex];
+                let sceneName:string = this._loadQueueScenes[this._loadQueueIndex];
                 BABYLON.Tools.Log("Babylon.js importing scene meshes from: " + sceneName);
                 this._loadQueueIndex++;
                 (<any>navigator).project.importMeshes(sceneName, ()=>{
@@ -936,14 +933,14 @@ module BABYLON {
                 if (BABYLON.SceneManager.debugLayerVisible === true) {
                     BABYLON.SceneManager.debugLayerVisible = false;                
                     if (BABYLON.SceneManager.renderStatsInstance != null && BABYLON.SceneManager.renderStatsInstance.dom != null) {
-                        var statsElement:HTMLElement = BABYLON.SceneManager.renderStatsInstance.dom as HTMLElement;
+                        let statsElement:HTMLElement = BABYLON.SceneManager.renderStatsInstance.dom as HTMLElement;
                         statsElement.style.visibility = "visible";
                     }
                     this._scene.debugLayer.hide();
                 } else {
                     BABYLON.SceneManager.debugLayerVisible = true;
                     if (BABYLON.SceneManager.renderStatsInstance != null && BABYLON.SceneManager.renderStatsInstance.dom != null) {
-                        var statsElement:HTMLElement = BABYLON.SceneManager.renderStatsInstance.dom as HTMLElement;
+                        let statsElement:HTMLElement = BABYLON.SceneManager.renderStatsInstance.dom as HTMLElement;
                         statsElement.style.visibility = "hidden";
                     }
                     this._scene.debugLayer.show({ popup: popups, initialTab: tab, parentElement: parent });
@@ -957,10 +954,10 @@ module BABYLON {
 
         /** Sets the multi player camera view layout */
         public setMultiPlayerViewLayout(totalNumPlayers:number):boolean {
-            var result:boolean = false;
-            var players:number = BABYLON.Scalar.Clamp(totalNumPlayers, 1, 4);
+            let result:boolean = false;
+            let players:number = BABYLON.Scalar.Clamp(totalNumPlayers, 1, 4);
             if (BABYLON.SceneManager.IsMultiPlayerView()) {
-                var cameras:BABYLON.Camera[] = [];
+                let cameras:BABYLON.Camera[] = [];
                 if (this._playerOneCamera != null && this._playerTwoCamera != null && this._playerThreeCamera != null && this._playerFourCamera != null) {
                     if (players === 1) {
                         this._playerOneCamera.viewport = new BABYLON.Viewport(0, 0, 1, 1);
@@ -1028,10 +1025,10 @@ module BABYLON {
 
         /* USE AS REFERENCE
         public setMultiPlayerView(totalNumPlayers:number):boolean {
-            var result:boolean = false;
-            var players:number = BABYLON.Scalar.Clamp(totalNumPlayers, 1, 4);
+            let result:boolean = false;
+            let players:number = BABYLON.Scalar.Clamp(totalNumPlayers, 1, 4);
             if (BABYLON.SceneManager.IsMultiPlayerView()) {
-                var cameras:BABYLON.Camera[] = [];
+                let cameras:BABYLON.Camera[] = [];
                 if (this._playerOneCamera != null && this._playerTwoCamera != null && this._playerThreeCamera != null && this._playerFourCamera != null) {
                     if (players === 1) {
                         this._playerOneCamera.viewport = new BABYLON.Viewport(0, 0, 1, 1);
@@ -1208,7 +1205,7 @@ module BABYLON {
        
         /** Gets the multi player view rectangle element */
         public getMultiPlayerViewElement(player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One):BABYLON.GUI.Rectangle {
-            var result:BABYLON.GUI.Rectangle = null;
+            let result:BABYLON.GUI.Rectangle = null;
             if (BABYLON.SceneManager.IsMultiPlayerView()) {
                 switch (player) {
                     case BABYLON.PlayerNumber.One:
@@ -1245,7 +1242,7 @@ module BABYLON {
 
         /** Gets the instanced material from scene. If does not exists, execute a optional defaultinstance handler. */
         public getMaterialInstance<T>(name:string, defaultInstance:(newName:String)=>BABYLON.Material = null): T {
-            var result:any = this._scene.getMaterialByName(name);
+            let result:any = this._scene.getMaterialByName(name);
             if (result == null && defaultInstance != null) {
                 result = defaultInstance(name);
             }
@@ -1258,13 +1255,13 @@ module BABYLON {
 
         /** Checks the scene has the specified prefab mesh. */
         public hasPrefabMesh(prefabName:string): boolean {
-            var realPrefab:string = "Prefab." + prefabName;
+            let realPrefab:string = "Prefab." + prefabName;
             return (BABYLON.SceneManager.prefabs[realPrefab] != null);
         }
         /** Gets ths the specified prefab mesh from scene. */
         public getPrefabMesh(prefabName:string): BABYLON.Mesh {
-            var result:BABYLON.Mesh = null;
-            var realPrefab:string = "Prefab." + prefabName;
+            let result:BABYLON.Mesh = null;
+            let realPrefab:string = "Prefab." + prefabName;
             if (this.hasPrefabMesh(prefabName)) {
                 result = BABYLON.SceneManager.prefabs[realPrefab] as BABYLON.Mesh;
             }
@@ -1272,11 +1269,11 @@ module BABYLON {
         }
         /** Instantiates the specfied prefab object into scene. */
         public instantiatePrefab(prefabName:string, cloneName: string, newPosition:BABYLON.Vector3 = null, newRotation:BABYLON.Vector3 = null, newScaling:BABYLON.Vector3 = null, newParent: Node = null): BABYLON.Mesh {
-            var result:BABYLON.Mesh = null;
+            let result:BABYLON.Mesh = null;
             if (this._scene != null) {
-                var realPrefab:string = "Prefab." + prefabName;
+                let realPrefab:string = "Prefab." + prefabName;
                 if (this.hasPrefabMesh(prefabName)) {
-                    var prefab:BABYLON.Mesh = this.getPrefabMesh(prefabName);
+                    let prefab:BABYLON.Mesh = this.getPrefabMesh(prefabName);
                     if (prefab != null) {
                         result = prefab.clone(cloneName, newParent, false, false);
                         if (result != null) {
@@ -1286,13 +1283,13 @@ module BABYLON {
                             if (newRotation != null) result.rotation = newRotation;
                             if (newScaling != null) result.scaling = newScaling;
                             // Recurse all prefab clones
-                            var clones:BABYLON.Mesh[] = null;
-                            var childs:BABYLON.AbstractMesh[] = result.getChildMeshes(false);
+                            let clones:BABYLON.Mesh[] = null;
+                            let childs:BABYLON.AbstractMesh[] = result.getChildMeshes(false);
                             if (childs != null) clones = childs as BABYLON.Mesh[]
                             if (clones == null) clones = [result];
                             else clones.unshift(result);
                             // Parse cloned mesh sources
-                            var sharedSkeletonMap:any = {};
+                            let sharedSkeletonMap:any = {};
                             clones.forEach((clone) => {
                                 clone.name = BABYLON.Utilities.ReplaceAll(clone.name, "Prefab.", "");
                                 clone.setEnabled(true);
@@ -1301,7 +1298,7 @@ module BABYLON {
                                 // ..
                                 if (clone.metadata != null && clone.metadata.shadowCastingMode != null && clone.metadata.shadowCastingMode !== 0) {
                                     this._scene.lights.forEach((light:BABYLON.Light) => {
-                                        var shadowGenerator:BABYLON.IShadowGenerator = light.getShadowGenerator();
+                                        let shadowGenerator:BABYLON.IShadowGenerator = light.getShadowGenerator();
                                         if (shadowGenerator != null) {
                                             shadowGenerator.getShadowMap().renderList.push(clone);
                                         }
@@ -1309,16 +1306,16 @@ module BABYLON {
                                 }
                                 if (clone.source != null) {
                                     // Clone source skeleton
-                                    var aclone:any = clone;
+                                    let aclone:any = clone;
                                     if (clone.skeleton == null && clone.source.skeleton != null) {
-                                        var skeletonName:string = clone.source.skeleton.name + ".Skeleton";
-                                        var skeletonIdentity:string = skeletonName + "." + clone.source.skeleton.id;
+                                        let skeletonName:string = clone.source.skeleton.name + ".Skeleton";
+                                        let skeletonIdentity:string = skeletonName + "." + clone.source.skeleton.id;
                                         clone.skeleton = clone.source.skeleton.clone(skeletonName, skeletonIdentity);
                                         sharedSkeletonMap[clone.source.id] = clone.id;
                                         // Clone bone metadata
                                         if (clone.skeleton != null && clone.skeleton.bones != null && clone.source.skeleton.bones != null) {
                                             if (clone.skeleton.bones.length === clone.source.skeleton.bones.length) {
-                                                var boneCount:number = clone.skeleton.bones.length;
+                                                let boneCount:number = clone.skeleton.bones.length;
                                                 for (let boneIndex = 0; boneIndex < boneCount; boneIndex++) {
                                                     if (clone.skeleton.bones[boneIndex].metadata == null && clone.source.skeleton.bones[boneIndex].metadata != null) {
                                                         clone.skeleton.bones[boneIndex].metadata = clone.source.skeleton.bones[boneIndex].metadata;
@@ -1332,7 +1329,7 @@ module BABYLON {
                                 }
                             });
                             // Check all child mesh sources
-                            var checked:BABYLON.AbstractMesh[] = [];
+                            let checked:BABYLON.AbstractMesh[] = [];
                             clones.forEach((check) => {
                                 // Reset Sharded Skeletons
                                 if (check.metadata != null && check.metadata.properties != null && check.metadata.properties.sharedSkeletonId && check.metadata.properties.sharedSkeletonId !== "") {
@@ -1342,13 +1339,13 @@ module BABYLON {
                                 if (check.metadata != null && check.metadata.tagName && check.metadata.tagName != null && check.metadata.tagName === "[INSTANCE]") {
                                     // Instanced Mesh
                                     if (check.metadata.properties && check.metadata.properties != null && check.metadata.properties.prefabSource && check.metadata.properties.prefabSource != null && check.metadata.properties.prefabSource !== "") {
-                                        var prefabSource:string = check.metadata.properties.prefabSource;
-                                        var prefabOffset:boolean = check.metadata.properties.prefabOffset;
-                                        var prefabPosition:number[] = check.metadata.properties.prefabPosition;
-                                        var prefabSourceMesh:BABYLON.AbstractMesh = this._scene.getMeshByID(prefabSource);
+                                        let prefabSource:string = check.metadata.properties.prefabSource;
+                                        let prefabOffset:boolean = check.metadata.properties.prefabOffset;
+                                        let prefabPosition:number[] = check.metadata.properties.prefabPosition;
+                                        let prefabSourceMesh:BABYLON.AbstractMesh = this._scene.getMeshByID(prefabSource);
                                         if (prefabSourceMesh != null) {
-                                            var prefabInstanceName:string = check.name;
-                                            var prefabInstanceMesh:InstancedMesh = (<BABYLON.Mesh>prefabSourceMesh).createInstance(prefabInstanceName);
+                                            let prefabInstanceName:string = check.name;
+                                            let prefabInstanceMesh:InstancedMesh = (<BABYLON.Mesh>prefabSourceMesh).createInstance(prefabInstanceName);
                                             if (prefabInstanceMesh != null) {
                                                 prefabInstanceMesh.parent = check.parent;
                                                 if (prefabSourceMesh.metadata != null) {
@@ -1396,25 +1393,25 @@ module BABYLON {
 
         /** Tweens (animates) the target property using BABYLON.Animations. */
         public tween(node: BABYLON.Node, targetProperty: string, from: any, to: any, frames:number, fps: number = 30, easing: BABYLON.EasingFunction = null, speedRatio:number = 1.0, callback:()=>void = null, loopMode: number = BABYLON.Animation.ANIMATIONLOOPMODE_RELATIVE, enableBlending:boolean = false): BABYLON.Animatable {
-            var label:string = "Tween_" + this.time.toString();
+            let label:string = "Tween_" + this.time.toString();
             return BABYLON.Animation.CreateAndStartAnimation(label, node, targetProperty, fps, frames, from, to, loopMode, easing, callback);
         }
         /** Tweens (animates) the target property with keys using BABYLON.Animations. */
         public tweenKeys(target:any, targetProperty:string, keys: Array<{frame: number; value: any; }>, frames:number, fps: number = 30, easing:BABYLON.EasingFunction = null, speedRatio:number = 1.0, callback:() => void = null, dataType:number = BABYLON.Animation.ANIMATIONTYPE_VECTOR3, loopMode: number = BABYLON.Animation.ANIMATIONLOOPMODE_RELATIVE, enableBlending:boolean = false): BABYLON.Animatable {
-            var rate:number = (fps != null && fps > 0) ? fps : 30;
-            var label:string = "Tween_" + this.time.toString();
-            var animation = new BABYLON.Animation(label, targetProperty, rate, dataType, loopMode, enableBlending); 
+            let rate:number = (fps != null && fps > 0) ? fps : 30;
+            let label:string = "Tween_" + this.time.toString();
+            let animation = new BABYLON.Animation(label, targetProperty, rate, dataType, loopMode, enableBlending); 
             if (easing != null) animation.setEasingFunction(easing);
             animation.setKeys(keys); 
             return this._scene.beginDirectAnimation(target, [animation], 0, frames, (loopMode == BABYLON.Animation.ANIMATIONLOOPMODE_RELATIVE), speedRatio, callback);
         }
         /** Tweens (animates) the target property with a float value using BABYLON.Animations. */
         public tweenFloat(target:any, targetProperty:string, start:number, end:number, frames:number, fps: number = 30, easing:BABYLON.EasingFunction = null, speedRatio:number = 1.0, callback:() => void = null, loopMode: number = BABYLON.Animation.ANIMATIONLOOPMODE_RELATIVE, enableBlending:boolean = false): BABYLON.Animatable {
-            var rate:number = (fps != null && fps > 0) ? fps : 30;
-            var keys = [{ frame: 0, value: start }, { frame: frames, value: end }]; 
-            var label:string = "Tween_" + this.time.toString();
-            var dataType = Animation.ANIMATIONTYPE_FLOAT; 
-            var animation = new BABYLON.Animation(label, targetProperty, rate, dataType, loopMode, enableBlending); 
+            let rate:number = (fps != null && fps > 0) ? fps : 30;
+            let keys = [{ frame: 0, value: start }, { frame: frames, value: end }]; 
+            let label:string = "Tween_" + this.time.toString();
+            let dataType = Animation.ANIMATIONTYPE_FLOAT; 
+            let animation = new BABYLON.Animation(label, targetProperty, rate, dataType, loopMode, enableBlending); 
             if (easing != null) animation.setEasingFunction(easing);
             animation.setKeys(keys); 
             return this._scene.beginDirectAnimation(target, [animation], 0, frames, (loopMode == BABYLON.Animation.ANIMATIONLOOPMODE_RELATIVE), speedRatio, callback);
@@ -1426,14 +1423,14 @@ module BABYLON {
         
         /** Plays the specified animation clip by name on the owner target objects. */
         public playAnimationClip(motion:string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, blending:number = 0.0, playback:number = 1.0, decendants:boolean = true, animations: Animation[] = null, onAnimationEnd:()=>void = null): BABYLON.Animatable[] {
-            var result:BABYLON.Animatable[] = null;
-            var starting:number = -1;
-            var stopping:number = -1;
-            var behavior:number = 0;
-            var looping:boolean = false;
-            var attached:boolean = false;
-            var phandler:()=>void = null;
-            var animation:BABYLON.IAnimationClip = this.findSceneAnimationClip(motion, owner);
+            let result:BABYLON.Animatable[] = null;
+            let starting:number = -1;
+            let stopping:number = -1;
+            let behavior:number = 0;
+            let looping:boolean = false;
+            let attached:boolean = false;
+            let phandler:()=>void = null;
+            let animation:BABYLON.IAnimationClip = this.findSceneAnimationClip(motion, owner);
             if (animation != null) {
                 attached = true;
                 phandler = onAnimationEnd;
@@ -1445,12 +1442,12 @@ module BABYLON {
                 }
             }
             if (decendants) {
-                var children:BABYLON.AbstractMesh[] = owner.getChildMeshes(false);
+                let children:BABYLON.AbstractMesh[] = owner.getChildMeshes(false);
                 if (children != null && children.length > 0) {
-                    for (var i:number = 0; i < children.length; i++) {
-                        var child:BABYLON.AbstractMesh = children[i];
-                        var chandler:()=>void = null;
-                        var canimation:BABYLON.IAnimationClip = this.findSceneAnimationClip(motion, child);
+                    for (let i:number = 0; i < children.length; i++) {
+                        let child:BABYLON.AbstractMesh = children[i];
+                        let chandler:()=>void = null;
+                        let canimation:BABYLON.IAnimationClip = this.findSceneAnimationClip(motion, child);
                         if (canimation != null) {
                             if (attached === false) {
                                 attached = true;
@@ -1464,7 +1461,7 @@ module BABYLON {
                             }
                             if (starting >= 0 && stopping >= 0) {
                                 this.setAnimationProperties(child, behavior, blending);
-                                var canim:BABYLON.Animatable = null;
+                                let canim:BABYLON.Animatable = null;
                                 if (animations != null) {
                                     this._scene.beginDirectAnimation(child, animations, starting, stopping, looping, playback, chandler);
                                 } else {
@@ -1482,7 +1479,7 @@ module BABYLON {
             // Note: Always Play Owner Animations At Found Ranges
             if (starting >= 0 && stopping >= 0) {
                 this.setAnimationProperties(owner, behavior, blending);
-                var panim:BABYLON.Animatable = null;
+                let panim:BABYLON.Animatable = null;
                 if (animations != null) {
                     this._scene.beginDirectAnimation(owner, animations, starting, stopping, looping, playback, phandler);
                 } else {
@@ -1497,12 +1494,12 @@ module BABYLON {
         }
         /** Gets all the animation clips for the owner target object. */
         public getAnimationClips(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, decendants:boolean = true, directDecendantsOnly:boolean = false): BABYLON.IAnimationClip[] {
-            var result:BABYLON.IAnimationClip[] = this.findSceneAnimationClips(owner);
+            let result:BABYLON.IAnimationClip[] = this.findSceneAnimationClips(owner);
             if (result == null && decendants === true) {
-                var children:BABYLON.AbstractMesh[] = owner.getChildMeshes(directDecendantsOnly);
+                let children:BABYLON.AbstractMesh[] = owner.getChildMeshes(directDecendantsOnly);
                 if (children != null && children.length > 0) {
-                    for (var i:number = 0; i < children.length; i++) {
-                        var child:BABYLON.AbstractMesh = children[i];
+                    for (let i:number = 0; i < children.length; i++) {
+                        let child:BABYLON.AbstractMesh = children[i];
                         result = this.findSceneAnimationClips(child);
                         if (result != null) break;
                     }
@@ -1512,16 +1509,16 @@ module BABYLON {
         }
         /** Gets all the animation targets with clips for the specified owner. */
         public getAnimationTargets(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, decendants:boolean = true, directDecendantsOnly:boolean = false): any[] {
-            var result:any[] = null;
+            let result:any[] = null;
             if (owner.metadata != null && owner.metadata.animationClips != null && owner.metadata.animationClips.length > 0) {
                 if (result == null) result = [];
                 result.push(owner);
             }
             if (decendants === true) {
-                var children:BABYLON.AbstractMesh[] = owner.getChildMeshes(directDecendantsOnly);
+                let children:BABYLON.AbstractMesh[] = owner.getChildMeshes(directDecendantsOnly);
                 if (children != null && children.length > 0) {
-                    for (var i:number = 0; i < children.length; i++) {
-                        var child:BABYLON.AbstractMesh = children[i];
+                    for (let i:number = 0; i < children.length; i++) {
+                        let child:BABYLON.AbstractMesh = children[i];
                         if (child != null && child.metadata != null && child.metadata.animationClips != null && child.metadata.animationClips.length > 0) {
                             if (result == null) result = [];
                             result.push(child);
@@ -1538,7 +1535,7 @@ module BABYLON {
                     BABYLON.SceneManager.SetAnimationLooping(owner, behavior);
                 }
                 if (owner instanceof BABYLON.AbstractMesh) {
-                    var mesh:BABYLON.AbstractMesh = owner;
+                    let mesh:BABYLON.AbstractMesh = owner;
                     if (mesh.skeleton != null) {
                         BABYLON.SceneManager.SetSkeletonProperties(mesh.skeleton, behavior, blending);
                     }
@@ -1578,7 +1575,7 @@ module BABYLON {
         }
         /** Gets mass of owner using physics imposter. */
         public getMass(owner:BABYLON.AbstractMesh):number {
-            var result:number = -1;
+            let result:number = -1;
             if (owner != null) {
                 if (owner.physicsImpostor != null) {
                     result = owner.physicsImpostor.mass;
@@ -1597,7 +1594,7 @@ module BABYLON {
         }
         /** Gets restitution of owner using physics imposter. */
         public getRestitution(owner:BABYLON.AbstractMesh):number {
-            var result:number = -1;
+            let result:number = -1;
             if (owner != null) {
                 if (owner.physicsImpostor != null) {
                     result = owner.physicsImpostor.restitution;
@@ -1615,7 +1612,7 @@ module BABYLON {
         }
         /** Gets owner friction level using physics imposter. */
         public getFrictionLevel(owner:BABYLON.AbstractMesh):number {
-            var result:number = 0;
+            let result:number = 0;
             if (owner != null) {
                 if (owner.physicsImpostor != null && owner.physicsImpostor.physicsBody != null && owner.physicsImpostor.physicsBody.material != null) {
                     result = owner.physicsImpostor.physicsBody.material.friction;
@@ -1625,7 +1622,7 @@ module BABYLON {
         }
         /** Gets owner linear velocity using physics imposter. */
         public getLinearVelocity(owner:BABYLON.AbstractMesh):BABYLON.Vector3 {
-            var result:BABYLON.Vector3 = null;
+            let result:BABYLON.Vector3 = null;
             if (owner != null) {
                 if (owner.physicsImpostor != null && owner.physicsImpostor.physicsBody != null) {
                     result = owner.physicsImpostor.getLinearVelocity();
@@ -1643,7 +1640,7 @@ module BABYLON {
         }
         /** Gets owner angular velocity using physics imposter. */
         public getAngularVelocity(owner:BABYLON.AbstractMesh):BABYLON.Vector3 {
-            var result:BABYLON.Vector3 = null;
+            let result:BABYLON.Vector3 = null;
             if (owner != null) {
                 if (owner.physicsImpostor != null && owner.physicsImpostor.physicsBody != null) {
                     result = owner.physicsImpostor.getAngularVelocity();
@@ -1661,7 +1658,7 @@ module BABYLON {
         }
         /** Checks collision contact of the owner using physics imposter. */
         public checkCollisionContact(owner:BABYLON.AbstractMesh, collider:BABYLON.AbstractMesh, contact:BABYLON.CollisionContact, threashold:number = 0.5):boolean {
-            var result:boolean = false;
+            let result:boolean = false;
             if (owner != null) {
                 if (owner.physicsImpostor != null && owner.physicsImpostor.physicsBody != null) {
                     // TODO: Valid Grounding Contact
@@ -1676,18 +1673,21 @@ module BABYLON {
         // *********************************** //
         
         /** Moves owner using collisions. */
-        public moveWithCollisions(owner:BABYLON.AbstractMesh, velocity:BABYLON.Vector3, rotation:number = 0.0) : void {
+        public moveWithCollisions(owner:BABYLON.AbstractMesh, velocity:BABYLON.Vector3) : void {
             if (owner != null) {
-                if (rotation != 0.0) owner.rotate(BABYLON.Axis.Y, rotation);
                 if (velocity != null) owner.moveWithCollisions(velocity);
             }
         }
-
         /** Moves owner using positions. */
-        public moveWithTranslation(owner:BABYLON.AbstractMesh, velocity:BABYLON.Vector3, rotation:number = 0.0) : void {
+        public moveWithTranslation(owner:BABYLON.AbstractMesh, velocity:BABYLON.Vector3) : void {
             if (owner != null) {
-                if (rotation != 0.0) owner.rotate(BABYLON.Axis.Y, rotation);
                 if (velocity != null) owner.position.addInPlace(velocity);
+            }
+        }
+        /** Turns owner using rotations. */
+        public turnWithRotation(owner:BABYLON.AbstractMesh, rotation:number = 0.0) : void {
+            if (owner != null) {
+                if (rotation != 0.0) owner.rotate(BABYLON.Axis.Y, rotation * BABYLON.Constants.Deg2Rad);
             }
         }
 
@@ -1696,12 +1696,10 @@ module BABYLON {
         // ************************************ //
 
         /** Adds a managed scene component to the scene. */
-        public addSceneComponent(klass: string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, enableUpdate: boolean = true, propertyBag: any = {}): BABYLON.SceneComponent {
-            var result: BABYLON.SceneComponent = null;
+        public addSceneComponent(comp: BABYLON.SceneComponent, klass:string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, enableUpdate: boolean = true, propertyBag: any = {}):void {
             if (owner == null) throw new Error("Null owner scene obejct specified.");
-            if (klass == null || klass === "") throw new Error("Null scene obejct klass specified.");
             if (owner.metadata == null || !owner.metadata.api) {
-                var metadata: BABYLON.IObjectMetadata = {
+                let metadata: BABYLON.IObjectMetadata = {
                     api: true,
                     type: "Babylon",
                     parsed: false,
@@ -1727,39 +1725,32 @@ module BABYLON {
                 owner.metadata = metadata;
             }
             if (owner.metadata != null && owner.metadata.api) {
-                var metadata: BABYLON.IObjectMetadata = owner.metadata as BABYLON.IObjectMetadata;
+                let metadata: BABYLON.IObjectMetadata = owner.metadata as BABYLON.IObjectMetadata;
                 if (metadata.components == null) {
                     metadata.components = [];
                 }
                 if (metadata.components != null) {
-                    var SceneComponentClass = BABYLON.Tools.Instantiate(klass);
-                    if (SceneComponentClass != null) {
-                        result = new SceneComponentClass(owner, this._scene, enableUpdate, propertyBag);
-                        if (result != null) {
-                            var compscript: BABYLON.IScriptComponent = {
-                                order: 1000,
-                                name: "EditorScriptComponent",
-                                klass: klass,
-                                update: enableUpdate,
-                                properties: propertyBag,
-                                instance: result,
-                                tag: {}
-                            };
-                            metadata.components.push(compscript);
-                            result.register();
-                        } else {
-                            BABYLON.Tools.Error("Failed to create component instance");
-                        }
-                    } else {
-                        BABYLON.Tools.Error("Failed to create component class");
-                    }
+                    let compscript: BABYLON.IScriptComponent = {
+                        order: 1000,
+                        name: "EditorScriptComponent",
+                        klass: klass,
+                        update: enableUpdate,
+                        properties: propertyBag,
+                        instance: comp,
+                        tag: {}
+                    };
+                    metadata.components.push(compscript);
+                    comp.register();
+                    // ..
+                    // Fire Component Ready
+                    // ..
+                    (<any>comp).ready();
                 } else {
                     BABYLON.Tools.Error("Failed to parse metadata components");
                 }
             } else {
                 BABYLON.Tools.Error("Null owner object metadata");
             }
-            return result;
         }
         
         // ************************************ //
@@ -1768,13 +1759,13 @@ module BABYLON {
         
         /** Finds a scene component in the scene with the specfied klass name. */
         public findSceneComponent<T extends BABYLON.SceneComponent>(klass: string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): T {
-            var result: any = null;
+            let result: any = null;
             if (owner == null) throw new Error("Null owner scene obejct specified.");
             if (owner.metadata != null && owner.metadata.api) {
-                var metadata: BABYLON.IObjectMetadata = owner.metadata as BABYLON.IObjectMetadata;
+                let metadata: BABYLON.IObjectMetadata = owner.metadata as BABYLON.IObjectMetadata;
                 if (metadata.components != null && metadata.components.length > 0) {
-                    for (var ii: number = 0; ii < metadata.components.length; ii++) {
-                        var ownerscript: BABYLON.IScriptComponent = metadata.components[ii];
+                    for (let ii: number = 0; ii < metadata.components.length; ii++) {
+                        let ownerscript: BABYLON.IScriptComponent = metadata.components[ii];
                         if (ownerscript.instance != null && ownerscript.klass === klass) {
                             result = ownerscript.instance;
                             break;
@@ -1786,13 +1777,13 @@ module BABYLON {
         }
         /** Finds all scene components in the scene with the specfied klass name. */
         public findSceneComponents<T extends BABYLON.SceneComponent>(klass: string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): T[] {
-            var result: any[] = null;
+            let result: any[] = null;
             if (owner == null) throw new Error("Null owner scene obejct specified.");
             if (owner.metadata != null && owner.metadata.api) {
-                var metadata: BABYLON.IObjectMetadata = owner.metadata as BABYLON.IObjectMetadata;
+                let metadata: BABYLON.IObjectMetadata = owner.metadata as BABYLON.IObjectMetadata;
                 if (metadata.components != null && metadata.components.length > 0) {
-                    for (var ii: number = 0; ii < metadata.components.length; ii++) {
-                        var ownerscript: BABYLON.IScriptComponent = metadata.components[ii];
+                    for (let ii: number = 0; ii < metadata.components.length; ii++) {
+                        let ownerscript: BABYLON.IScriptComponent = metadata.components[ii];
                         if (ownerscript.instance != null && ownerscript.klass === klass) {
                             result.push(ownerscript.instance);
                         }
@@ -1803,27 +1794,27 @@ module BABYLON {
         }
         /** Finds the owner object metedata in the scene. */
         public findSceneMetadata(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): BABYLON.ObjectMetadata {
-            var result: BABYLON.ObjectMetadata = null;
+            let result: BABYLON.ObjectMetadata = null;
             if (owner.metadata != null && owner.metadata.api) {
-                var metadata: BABYLON.IObjectMetadata = owner.metadata as BABYLON.IObjectMetadata;
+                let metadata: BABYLON.IObjectMetadata = owner.metadata as BABYLON.IObjectMetadata;
                 result = new BABYLON.ObjectMetadata(metadata);
             }
             return result;
         }
         /** Finds the specfied child mesh of owner in the scene. */
         public findSceneChildMesh(name:string, owner:BABYLON.AbstractMesh, searchType:BABYLON.SearchType = BABYLON.SearchType.StartsWith, directDecendantsOnly:boolean = true, predicate:(node:BABYLON.Node)=>boolean = null):BABYLON.AbstractMesh {
-            var result:BABYLON.AbstractMesh = null;
-            var search:BABYLON.SearchType = (searchType != null) ? searchType : BABYLON.SearchType.StartsWith;
-            var children:BABYLON.AbstractMesh[] = owner.getChildMeshes(directDecendantsOnly, predicate);
+            let result:BABYLON.AbstractMesh = null;
+            let search:BABYLON.SearchType = (searchType != null) ? searchType : BABYLON.SearchType.StartsWith;
+            let children:BABYLON.AbstractMesh[] = owner.getChildMeshes(directDecendantsOnly, predicate);
             return BABYLON.SceneManager.FindMesh(name, children, searchType);            
         }
         /** Finds the specfied collision mesh of owner in the scene. */
         public findSceneCollisionMesh(owner:BABYLON.AbstractMesh, directDecendantsOnly:boolean = true, predicate:(node:BABYLON.Node)=>boolean = null):BABYLON.AbstractMesh {
-            var result:BABYLON.AbstractMesh = null;
-            var children:BABYLON.AbstractMesh[] = owner.getChildMeshes(directDecendantsOnly, predicate);
+            let result:BABYLON.AbstractMesh = null;
+            let children:BABYLON.AbstractMesh[] = owner.getChildMeshes(directDecendantsOnly, predicate);
             if (children != null && children.length > 0) {
-                for (var i:number = 0; i < children.length; i++) {
-                    var child:BABYLON.AbstractMesh = children[i];
+                for (let i:number = 0; i < children.length; i++) {
+                    let child:BABYLON.AbstractMesh = children[i];
                     if (child.name === "Collider" || child.name.indexOf("_Collider") >= 0 || child.name.indexOf(":Collider") >= 0) {
                         result = child;
                         break;
@@ -1835,13 +1826,13 @@ module BABYLON {
         }
         /** Finds specfied skeleton in the scene. */
         public findSceneSkeleton(skeletonId:string):BABYLON.Skeleton {
-            var skeleton:BABYLON.Skeleton = null;
-            var count:number = (this._scene.skeletons != null) ? this._scene.skeletons.length : 0;
+            let skeleton:BABYLON.Skeleton = null;
+            let count:number = (this._scene.skeletons != null) ? this._scene.skeletons.length : 0;
             if (count > 0) {
-                var index:number = 0;
+                let index:number = 0;
                 for (index=0; index< count; index++) {
-                    var check:any = this._scene.skeletons[index];
-                    var ident:string = ("" + check.id);
+                    let check:any = this._scene.skeletons[index];
+                    let ident:string = ("" + check.id);
                     if (ident === skeletonId) {
                         skeleton = check;
                         break;
@@ -1852,12 +1843,12 @@ module BABYLON {
         }
         /** Finds the specfied socket mesh of owner in the scene. */
         public findSceneSocketMesh(name:string, owner:BABYLON.AbstractMesh, directDecendantsOnly:boolean = true, predicate:(node:BABYLON.Node)=>boolean = null):BABYLON.Mesh {
-            var result:BABYLON.Mesh = BABYLON.SceneManager.LocateOwnerSocketMesh(name, owner);
+            let result:BABYLON.Mesh = BABYLON.SceneManager.LocateOwnerSocketMesh(name, owner);
             if (result == null) {
-                var children:BABYLON.AbstractMesh[] = owner.getChildMeshes(directDecendantsOnly, predicate);
+                let children:BABYLON.AbstractMesh[] = owner.getChildMeshes(directDecendantsOnly, predicate);
                 if (children != null && children.length > 0) {
-                    for (var i:number = 0; i < children.length; i++) {
-                        var child:BABYLON.AbstractMesh = children[i];
+                    for (let i:number = 0; i < children.length; i++) {
+                        let child:BABYLON.AbstractMesh = children[i];
                         result = BABYLON.SceneManager.LocateOwnerSocketMesh(name, child);
                         if (result != null) break;
                     }
@@ -1867,12 +1858,12 @@ module BABYLON {
         }
         /** Finds all the socket meshes of owner in the scene. */
         public findSceneSocketMeshes(owner:BABYLON.AbstractMesh, directDecendantsOnly:boolean = true, predicate:(node:BABYLON.Node)=>boolean = null):BABYLON.Mesh[] {
-            var result:BABYLON.Mesh[] = BABYLON.SceneManager.LocateOwnerSocketMeshes(owner);
+            let result:BABYLON.Mesh[] = BABYLON.SceneManager.LocateOwnerSocketMeshes(owner);
             if (result == null) {
-                var children:BABYLON.AbstractMesh[] = owner.getChildMeshes(directDecendantsOnly, predicate);
+                let children:BABYLON.AbstractMesh[] = owner.getChildMeshes(directDecendantsOnly, predicate);
                 if (children != null && children.length > 0) {
-                    for (var i:number = 0; i < children.length; i++) {
-                        var child:BABYLON.AbstractMesh = children[i];
+                    for (let i:number = 0; i < children.length; i++) {
+                        let child:BABYLON.AbstractMesh = children[i];
                         result = BABYLON.SceneManager.LocateOwnerSocketMeshes(child);
                         if (result != null) break;
                     }
@@ -1882,12 +1873,12 @@ module BABYLON {
         }
         /** Finds the specfied animation clip of owner in the scene. */
         public findSceneAnimationClip(clip:string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): BABYLON.IAnimationClip {
-            var result:BABYLON.IAnimationClip = null;
+            let result:BABYLON.IAnimationClip = null;
             if (owner != null && owner.metadata != null && owner.metadata.api) {
-                var metadata: BABYLON.IObjectMetadata = owner.metadata as BABYLON.IObjectMetadata;
+                let metadata: BABYLON.IObjectMetadata = owner.metadata as BABYLON.IObjectMetadata;
                 if (metadata.animationClips != null && metadata.animationClips.length > 0) {
                     if (clip != null && clip !== "") {
-                        var ii:number = 0;
+                        let ii:number = 0;
                         for(ii = 0; ii < metadata.animationClips.length; ii++) {
                             if (metadata.animationClips[ii].name === clip) {
                                 result = metadata.animationClips[ii];
@@ -1903,9 +1894,9 @@ module BABYLON {
         }
         /** Finds any animation clips of owner in the scene. */
         public findSceneAnimationClips(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): BABYLON.IAnimationClip[] {
-            var result:BABYLON.IAnimationClip[] = null;
+            let result:BABYLON.IAnimationClip[] = null;
             if (owner != null && owner.metadata != null && owner.metadata.api) {
-                var metadata: BABYLON.IObjectMetadata = owner.metadata as BABYLON.IObjectMetadata;
+                let metadata: BABYLON.IObjectMetadata = owner.metadata as BABYLON.IObjectMetadata;
                 if (metadata.animationClips != null && metadata.animationClips.length > 0) {
                     result = metadata.animationClips as BABYLON.IAnimationClip[];
                 }
@@ -1914,12 +1905,12 @@ module BABYLON {
         }
         /** Finds the specfied particle system of owner in the scene. */
         public findSceneParticleSystem(name:string, owner: BABYLON.AbstractMesh | BABYLON.Vector3): BABYLON.IParticleSystem {
-            var result:BABYLON.IParticleSystem = null;
+            let result:BABYLON.IParticleSystem = null;
             if (owner == null) throw new Error("Null owner scene obejct specified.");
             if (this._scene.particleSystems != null && this._scene.particleSystems.length > 0) {
-                var psystems:number = this._scene.particleSystems.length;
-                for (var ii:number = 0; ii < psystems; ii++) {
-                    var psystem:BABYLON.IParticleSystem = this._scene.particleSystems[ii];
+                let psystems:number = this._scene.particleSystems.length;
+                for (let ii:number = 0; ii < psystems; ii++) {
+                    let psystem:BABYLON.IParticleSystem = this._scene.particleSystems[ii];
                     if (psystem.emitter === owner && psystem.name === name) {
                         result = psystem;
                         break;
@@ -1930,7 +1921,7 @@ module BABYLON {
         }
         /** Finds all the particle systems of owner in the scene. */
         public findSceneParticleSystems(owner: BABYLON.AbstractMesh | BABYLON.Vector3): BABYLON.IParticleSystem[] {
-            var result:BABYLON.IParticleSystem[] = [];
+            let result:BABYLON.IParticleSystem[] = [];
             if (owner == null) throw new Error("Null owner scene obejct specified.");
             if (this._scene.particleSystems != null && this._scene.particleSystems.length > 0) {
                 this._scene.particleSystems.forEach((psystem) => {
@@ -1943,12 +1934,12 @@ module BABYLON {
         }
         /** Finds the specfied lens flare system of owner in the scene. */
         public findSceneLensFlareSystem(name:string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): BABYLON.LensFlareSystem {
-            var result:BABYLON.LensFlareSystem = null;
+            let result:BABYLON.LensFlareSystem = null;
             if (owner == null) throw new Error("Null owner scene obejct specified.");
             if (this._scene.lensFlareSystems != null && this._scene.lensFlareSystems.length > 0) {
-                var fsystems:number = this._scene.lensFlareSystems.length;
-                for (var ii:number = 0; ii < fsystems; ii++) {
-                    var fsystem:BABYLON.LensFlareSystem = this._scene.lensFlareSystems[ii];
+                let fsystems:number = this._scene.lensFlareSystems.length;
+                for (let ii:number = 0; ii < fsystems; ii++) {
+                    let fsystem:BABYLON.LensFlareSystem = this._scene.lensFlareSystems[ii];
                     if (fsystem.getEmitter() === owner && fsystem.name === name) {
                         result = fsystem;
                         break;
@@ -1959,7 +1950,7 @@ module BABYLON {
         }
         /** Finds all the lens flare systems of owner in the scene. */
         public findSceneLensFlareSystems(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): BABYLON.LensFlareSystem[] {
-            var result:BABYLON.LensFlareSystem[] = [];
+            let result:BABYLON.LensFlareSystem[] = [];
             if (owner == null) throw new Error("Null owner scene obejct specified.");
             if (this._scene.lensFlareSystems != null && this._scene.lensFlareSystems.length > 0) {
                 this._scene.lensFlareSystems.forEach((fsystem) => {
@@ -1982,14 +1973,14 @@ module BABYLON {
             BABYLON.SceneManager.enableLocking = false;
         }
         private pointerLockHandler():void {
-            var ple = document.pointerLockElement || document.msPointerLockElement || document.mozPointerLockElement || document.webkitPointerLockElement || null;
+            let ple = document.pointerLockElement || document.msPointerLockElement || document.mozPointerLockElement || document.webkitPointerLockElement || null;
             if (ple) BABYLON.SceneManager.pointerLocked = true;
             else BABYLON.SceneManager.pointerLocked = false;
         }
         private attachPointerLock():void {
             this._scene.onPointerObservable.add((evt) => {
                 if (BABYLON.SceneManager.enableLocking === true && BABYLON.SceneManager.pointerLocked === false) {
-                    var canvas:HTMLCanvasElement = BABYLON.SceneManager.engine.getRenderingCanvas();
+                    let canvas:HTMLCanvasElement = BABYLON.SceneManager.engine.getRenderingCanvas();
                     if (canvas != null) {
                         if (canvas.requestPointerLock != null) {
                             canvas.requestPointerLock();
@@ -2104,10 +2095,10 @@ module BABYLON {
         }
         /** Enables user input state in the scene. */
         public enableUserInput(options: { preventDefault?: boolean, useCapture?: boolean, enableVirtualJoystick?: boolean, disableRightStick?:boolean } = null): void {
-            var preventDefault: boolean = (options != null && options.preventDefault) ? options.preventDefault : false;
-            var useCapture: boolean = (options != null && options.useCapture) ? options.useCapture : false;
-            var enableVirtualJoystick: boolean = (options != null && options.enableVirtualJoystick) ? options.enableVirtualJoystick : false;
-            var disableRightJoystick: boolean = (options != null && options.disableRightStick) ? options.disableRightStick : false;
+            let preventDefault: boolean = (options != null && options.preventDefault) ? options.preventDefault : false;
+            let useCapture: boolean = (options != null && options.useCapture) ? options.useCapture : false;
+            let enableVirtualJoystick: boolean = (options != null && options.enableVirtualJoystick) ? options.enableVirtualJoystick : false;
+            let disableRightJoystick: boolean = (options != null && options.disableRightStick) ? options.disableRightStick : false;
 
             if (!this._input) {
                 this.resetUserInput();
@@ -2163,7 +2154,7 @@ module BABYLON {
         }
         /** Get user input state from the scene. */
         public getUserInput(input: BABYLON.UserInputAxis, player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One): number {
-            var result: number = 0;
+            let result: number = 0;
             if (this._input) {
                 switch (input) {
                     case BABYLON.UserInputAxis.Vertical:
@@ -2220,9 +2211,9 @@ module BABYLON {
             if (this._input) BABYLON.SceneManager.keyButtonPress.push({ index: keycode, action: callback });
         }
         public getKeyboardInput(keycode: number): boolean {
-            var result: boolean = false;
+            let result: boolean = false;
             if (this._input) {
-                var key: string = "k:" + keycode.toString();
+                let key: string = "k:" + keycode.toString();
                 if (BABYLON.SceneManager.keymap[key] != null) {
                     result = BABYLON.SceneManager.keymap[key];
                 }
@@ -2244,9 +2235,9 @@ module BABYLON {
             if (this._input) BABYLON.SceneManager.mouseButtonPress.push({ index: button, action: callback });
         }
         public getPointerInput(button: number): boolean {
-            var result: boolean = false;
+            let result: boolean = false;
             if (this._input) {
-                var key: string = "p:" + button.toString();
+                let key: string = "p:" + button.toString();
                 if (BABYLON.SceneManager.keymap[key] != null) {
                     result = BABYLON.SceneManager.keymap[key];
                 }
@@ -2265,7 +2256,7 @@ module BABYLON {
             return (this._input) ? BABYLON.SceneManager.rightJoystick : null;
         }
         public getJoystickPress(button:number): boolean {
-            var result: boolean = false;
+            let result: boolean = false;
             if (this._input) {
                 if (button === BABYLON.JoystickButton.Left && BABYLON.SceneManager.leftJoystick != null && BABYLON.SceneManager.leftJoystick.pressed === true) {
                     result = true;
@@ -2348,9 +2339,9 @@ module BABYLON {
             }
         }
         public getGamepadButtonInput(button: number, player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One): boolean {
-            var result: boolean = false;
+            let result: boolean = false;
             if (this._input) {
-                var key: string = null;
+                let key: string = null;
                 switch(player) {
                     case BABYLON.PlayerNumber.One:
                         key = "b1:" + button.toString();
@@ -2426,9 +2417,9 @@ module BABYLON {
             }
         }
         public getGamepadDirectionInput(direction: number, player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One): boolean {
-            var result: boolean = false;
+            let result: boolean = false;
             if (this._input) {
-                var key: string = null;
+                let key: string = null;
                 switch(player) {
                     case BABYLON.PlayerNumber.One:
                         key = "d1:" + direction.toString();
@@ -2486,9 +2477,9 @@ module BABYLON {
             }
         }
         public getGamepadTriggerInput(trigger: number, player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One): number {
-            var result: number = 0;
+            let result: number = 0;
             if (this._input) {
-                var key: string = null;
+                let key: string = null;
                 switch(player) {
                     case BABYLON.PlayerNumber.One:
                         key = "t1:" + trigger.toString();
@@ -2510,7 +2501,7 @@ module BABYLON {
             return result;
         }
         public getGamepad(player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One): BABYLON.Gamepad {
-            var pad:BABYLON.Gamepad = null;
+            let pad:BABYLON.Gamepad = null;
             if (this._input) {
                 switch(player) {
                     case BABYLON.PlayerNumber.One:
@@ -2530,7 +2521,7 @@ module BABYLON {
             return pad;
         }
         public getGamepadType(player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One): BABYLON.GamepadType {
-            var type:BABYLON.GamepadType = BABYLON.GamepadType.None;
+            let type:BABYLON.GamepadType = BABYLON.GamepadType.None;
             if (this._input) {
                 switch(player) {
                     case BABYLON.PlayerNumber.One:
@@ -2556,17 +2547,17 @@ module BABYLON {
 
         public updateCameraInput(camera:BABYLON.FreeCamera, movementSpeed: number, rotationSpeed: number, player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One): void {
             if (camera != null) {
-                var horizontal: number = this.getUserInput(BABYLON.UserInputAxis.Horizontal, player);
-                var vertical: number = this.getUserInput(BABYLON.UserInputAxis.Vertical, player);
-                var mousex: number = this.getUserInput(BABYLON.UserInputAxis.MouseX, player);
-                var mousey: number = this.getUserInput(BABYLON.UserInputAxis.MouseY, player);
+                let horizontal: number = this.getUserInput(BABYLON.UserInputAxis.Horizontal, player);
+                let vertical: number = this.getUserInput(BABYLON.UserInputAxis.Vertical, player);
+                let mousex: number = this.getUserInput(BABYLON.UserInputAxis.MouseX, player);
+                let mousey: number = this.getUserInput(BABYLON.UserInputAxis.MouseY, player);
                 this.updateCameraPosition(camera, horizontal, vertical, movementSpeed);
                 this.updateCameraRotation(camera, mousex, mousey, rotationSpeed);
             }
         }
         public updateCameraPosition(camera:BABYLON.FreeCamera, horizontal: number, vertical: number, speed: number): void {
             if (camera != null) {
-                var cameraLocal:number = (camera._computeLocalCameraSpeed() * speed);
+                let cameraLocal:number = (camera._computeLocalCameraSpeed() * speed);
                 // Camera Transform Translation
                 BABYLON.SceneManager.TempMatrix.reset();
                 BABYLON.Matrix.RotationYawPitchRollToRef(camera.rotation.y, camera.rotation.x, 0, BABYLON.SceneManager.TempMatrix);
@@ -2604,8 +2595,8 @@ module BABYLON {
         /** Finds a navigation path and returns a array of navigation positions */
         public findNavigationPath(origin: BABYLON.Vector3, destination: BABYLON.Vector3): BABYLON.Vector3[] {
             if (this._navigation == null || this._navmesh == null || origin == null || destination == null) return null;
-            var zone: string = this.getNavigationZone();
-            var group: number = this._navigation.getGroup(zone, origin);
+            let zone: string = this.getNavigationZone();
+            let group: number = this._navigation.getGroup(zone, origin);
             return this._navigation.findPath(origin, destination, zone, group);
         }
 
@@ -2625,8 +2616,8 @@ module BABYLON {
         public buildNavigationMesh(mesh:BABYLON.AbstractMesh):any {
             if (mesh != null) {
                 this._navmesh = mesh;
-                var navigation: Navigation = this.getNavigationTool();
-                var zoneNodes: any = navigation.buildNodes(this._navmesh);
+                let navigation: Navigation = this.getNavigationTool();
+                let zoneNodes: any = navigation.buildNodes(this._navmesh);
                 if (zoneNodes != null) {
                     navigation.setZoneData(this.getNavigationZone(), zoneNodes);
                 } else {
@@ -2637,27 +2628,29 @@ module BABYLON {
         /** Returns a picked navigation point */
         public getNavigationPoint(position:BABYLON.Vector3, raise:number = 2.0, length:number = Number.MAX_VALUE): BABYLON.Vector3 {
             if (this._navmesh == null || position == null) return null;
-            var pos = new BABYLON.Vector3(position.x, (position.y + raise), position.z);
-            var ray = new BABYLON.Ray(position, new BABYLON.Vector3(0.0, -1.0, 0.0), length);
-            var info = this._scene.pickWithRay(ray, (mesh) => { return (mesh === this._navmesh); });
+            // ..
+            // let pos = new BABYLON.Vector3(position.x, (position.y + raise), position.z);
+            // ..
+            let ray = new BABYLON.Ray(position, new BABYLON.Vector3(0.0, -1.0, 0.0), length);
+            let info = this._scene.pickWithRay(ray, (mesh) => { return (mesh === this._navmesh); });
             return (info.hit && info.pickedPoint) ? info.pickedPoint : null;
         }
         /** Moves the specified navigation again along a path of positions */
         public moveNavigationAgent(agent: BABYLON.AbstractMesh, path: BABYLON.Vector3[], speed?: number, loop?: boolean, callback?: () => void): void {
             if (path && path.length > 0) {
-                var length = 0;
-                var direction = [{
+                let length = 0;
+                let direction = [{
                     frame: 0,
                     value: agent.position
                 }];
-                for (var i = 0; i < path.length; i++) {
+                for (let i = 0; i < path.length; i++) {
                     length += BABYLON.Vector3.Distance(direction[i].value, path[i]);
                     direction.push({
                         frame: length,
                         value: path[i]
                     });
                 }
-                var move: BABYLON.Animation = new BABYLON.Animation("Move", "position", 3, BABYLON.Animation.ANIMATIONTYPE_VECTOR3, BABYLON.Animation.ANIMATIONLOOPMODE_RELATIVE);
+                let move: BABYLON.Animation = new BABYLON.Animation("Move", "position", 3, BABYLON.Animation.ANIMATIONTYPE_VECTOR3, BABYLON.Animation.ANIMATIONLOOPMODE_RELATIVE);
                 move.setKeys(direction);
                 agent.animations.push(move);
                 this._scene.beginAnimation(agent, 0, length, loop, speed, callback);
@@ -2681,11 +2674,11 @@ module BABYLON {
         }
         /** Returns the current scene's navigation area names */
         public getNavigationAreaName(index: number): string {
-            var result:string = "";
+            let result:string = "";
             if (this._navmesh.metadata != null && this._navmesh.metadata.properties != null && this._navmesh.metadata.properties.table != null) {
-                var areaTable: BABYLON.INavigationArea[] = this._navmesh.metadata.properties.table;
+                let areaTable: BABYLON.INavigationArea[] = this._navmesh.metadata.properties.table;
                 if (areaTable != null) {
-                    for (var ii: number = 0; ii < areaTable.length; ii++) {
+                    for (let ii: number = 0; ii < areaTable.length; ii++) {
                         if (areaTable[ii].index === index) {
                             result = areaTable[ii].area;
                             break;
@@ -2697,11 +2690,11 @@ module BABYLON {
         }
         /** Returns the current scene's navigation area cost */
         public getNavigationAreaCost(index: number): number {
-            var result:number = -1;
+            let result:number = -1;
             if (this._navmesh.metadata != null && this._navmesh.metadata.properties != null) {
-                var areaTable: INavigationArea[] = this._navmesh.metadata.properties.table;
+                let areaTable: INavigationArea[] = this._navmesh.metadata.properties.table;
                 if (areaTable != null) {
-                    for (var ii: number = 0; ii < areaTable.length; ii++) {
+                    for (let ii: number = 0; ii < areaTable.length; ii++) {
                         if (areaTable[ii].index === index) {
                             result = areaTable[ii].cost;
                             break;
@@ -2717,8 +2710,8 @@ module BABYLON {
         // ********************************** //
 
         private static inputKeyDownHandler(e: KeyboardEvent): any {
-            var key:string = "k:" + e.keyCode.toString();
-            var pressed: boolean = false;
+            let key:string = "k:" + e.keyCode.toString();
+            let pressed: boolean = false;
             if (BABYLON.SceneManager.keymap[key] != null) {
                 pressed = BABYLON.SceneManager.keymap[key];
             }
@@ -2759,7 +2752,7 @@ module BABYLON {
             return true;
         }
         private static inputKeyUpHandler(e: KeyboardEvent): any {
-            var key:string = "k:" + e.keyCode.toString();
+            let key:string = "k:" + e.keyCode.toString();
             BABYLON.SceneManager.keymap[key] = false;
             switch (e.keyCode) {
                 case 39: // Right
@@ -2785,9 +2778,9 @@ module BABYLON {
         }
 
         private static inputPointerWheelHandler(e:any): any {
-            //var e = window.event || e; // old IE support
-            //var delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));
-            var delta = e.deltaY ? -e.deltaY : e.wheelDelta / 40;
+            //let e = window.event || e; // old IE support
+            //let delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));
+            let delta = e.deltaY ? -e.deltaY : e.wheelDelta / 40;
             BABYLON.SceneManager.x_wheel = Math.abs(delta) > BABYLON.UserInputOptions.PointerWheelDeadZone ? 0 + delta : 0;            
             if (BABYLON.SceneManager.preventDefault) e.preventDefault();
             return true;
@@ -2800,8 +2793,8 @@ module BABYLON {
                     y: e.clientY
                 };
             }
-            var key:string = "p:" + e.button.toString();
-            var pressed: boolean = false;
+            let key:string = "p:" + e.button.toString();
+            let pressed: boolean = false;
             if (BABYLON.SceneManager.keymap[key] != null) {
                 pressed = BABYLON.SceneManager.keymap[key];
             }
@@ -2829,7 +2822,7 @@ module BABYLON {
                 BABYLON.SceneManager.k_mousex = 0;
                 BABYLON.SceneManager.k_mousey = 0;
             }
-            var key:string = "p:" + e.button.toString();
+            let key:string = "p:" + e.button.toString();
             BABYLON.SceneManager.keymap[key] = false;
             if (BABYLON.SceneManager.mouseButtonUp != null && BABYLON.SceneManager.mouseButtonUp.length > 0) {
                 BABYLON.SceneManager.mouseButtonUp.forEach((callback) => {
@@ -2845,14 +2838,14 @@ module BABYLON {
                 if (BABYLON.SceneManager.previousPosition != null) {
                     BABYLON.SceneManager.clientx = e.clientX;
                     BABYLON.SceneManager.clienty = e.clientY;
-                    var offsetX = e.clientX - BABYLON.SceneManager.previousPosition.x;
-                    var offsetY = e.clientY - BABYLON.SceneManager.previousPosition.y;
+                    let offsetX = e.clientX - BABYLON.SceneManager.previousPosition.x;
+                    let offsetY = e.clientY - BABYLON.SceneManager.previousPosition.y;
                     BABYLON.SceneManager.previousPosition = {
                         x: e.clientX,
                         y: e.clientY
                     };
-                    var mousex:number = offsetX * (BABYLON.UserInputOptions.PointerAngularSensibility / 10);
-                    var mousey:number = offsetY * (BABYLON.UserInputOptions.PointerAngularSensibility / 10);
+                    let mousex:number = offsetX * (BABYLON.UserInputOptions.PointerAngularSensibility / 10);
+                    let mousey:number = offsetY * (BABYLON.UserInputOptions.PointerAngularSensibility / 10);
                     if (mousex != 0) {
                         BABYLON.SceneManager.k_mousex = mousex;
                     }
@@ -2871,12 +2864,12 @@ module BABYLON {
         private static inputVirtualJoysticks(): void {
             if (BABYLON.SceneManager.leftJoystick != null) {
                 // Update left virtual joystick values
-                var LSDelta:BABYLON.Vector3 = BABYLON.SceneManager.leftJoystick.deltaPosition;
+                let LSDelta:BABYLON.Vector3 = BABYLON.SceneManager.leftJoystick.deltaPosition;
                 if (!BABYLON.SceneManager.leftJoystick.pressed) {
                     LSDelta = LSDelta.scale(0.9);
                 }
-                var normalizedLX:number = LSDelta.x;
-                var normalizedLY:number = LSDelta.y;
+                let normalizedLX:number = LSDelta.x;
+                let normalizedLY:number = LSDelta.y;
                 LSDelta.x = Math.abs(normalizedLX) > BABYLON.UserInputOptions.JoystickDeadStickValue ? 0 + normalizedLX : 0;
                 LSDelta.y = Math.abs(normalizedLY) > BABYLON.UserInputOptions.JoystickDeadStickValue ? 0 + normalizedLY : 0;
                 BABYLON.SceneManager.j_horizontal = LSDelta.x;
@@ -2884,12 +2877,12 @@ module BABYLON {
             }
             if (BABYLON.SceneManager.rightJoystick != null) {
                 // Update right virtual joystick values
-                var RSDelta:BABYLON.Vector3 = BABYLON.SceneManager.rightJoystick.deltaPosition;
+                let RSDelta:BABYLON.Vector3 = BABYLON.SceneManager.rightJoystick.deltaPosition;
                 if (!BABYLON.SceneManager.rightJoystick.pressed) {
                     RSDelta = RSDelta.scale(0.9);
                 }
-                var normalizedRX:number = RSDelta.x;
-                var normalizedRY:number = RSDelta.y;
+                let normalizedRX:number = RSDelta.x;
+                let normalizedRY:number = RSDelta.y;
                 RSDelta.x = Math.abs(normalizedRX) > BABYLON.UserInputOptions.JoystickDeadStickValue ? 0 + normalizedRX : 0;
                 RSDelta.y = Math.abs(normalizedRY) > BABYLON.UserInputOptions.JoystickDeadStickValue ? 0 + normalizedRY : 0;
                 BABYLON.SceneManager.j_mousex = RSDelta.x;
@@ -2899,8 +2892,8 @@ module BABYLON {
         
         private static inputOneButtonDownHandler(button: number): void {
             if (BABYLON.SceneManager.gamepad1 != null) {
-                var key:string = "b1:" + button.toString();
-                var pressed: boolean = false;
+                let key:string = "b1:" + button.toString();
+                let pressed: boolean = false;
                 if (BABYLON.SceneManager.keymap[key] != null) {
                     pressed = BABYLON.SceneManager.keymap[key];
                 }
@@ -2923,7 +2916,7 @@ module BABYLON {
         }
         private static inputOneButtonUpHandler(button: number): void {
             if (BABYLON.SceneManager.gamepad1 != null) {
-                var key:string = "b1:" + button.toString();
+                let key:string = "b1:" + button.toString();
                 BABYLON.SceneManager.keymap[key] = false;
                 if (BABYLON.SceneManager.gamepad1ButtonUp != null && BABYLON.SceneManager.gamepad1ButtonUp.length > 0) {
                     BABYLON.SceneManager.gamepad1ButtonUp.forEach((callback) => {
@@ -2934,8 +2927,8 @@ module BABYLON {
         }
         private static inputOneXboxDPadDownHandler(dPadPressed: BABYLON.Xbox360Dpad): void {
             if (BABYLON.SceneManager.gamepad1 != null) {
-                var key:string = "d1:" + dPadPressed.toString();
-                var pressed: boolean = false;
+                let key:string = "d1:" + dPadPressed.toString();
+                let pressed: boolean = false;
                 if (BABYLON.SceneManager.keymap[key] != null) {
                     pressed = BABYLON.SceneManager.keymap[key];
                 }
@@ -2958,7 +2951,7 @@ module BABYLON {
         }
         private static inputOneXboxDPadUpHandler(dPadReleased: BABYLON.Xbox360Dpad): void {
             if (BABYLON.SceneManager.gamepad1 != null) {
-                var key:string = "d1:" + dPadReleased.toString();
+                let key:string = "d1:" + dPadReleased.toString();
                 BABYLON.SceneManager.keymap[key] = false;
                 if (BABYLON.SceneManager.gamepad1DpadUp != null && BABYLON.SceneManager.gamepad1DpadUp.length > 0) {
                     BABYLON.SceneManager.gamepad1DpadUp.forEach((callback) => {
@@ -2989,9 +2982,9 @@ module BABYLON {
         }
         private static inputOneLeftStickHandler(values: BABYLON.StickValues): void {
             if (BABYLON.SceneManager.gamepad1 != null) {
-                var LSValues:BABYLON.StickValues = values;
-                var normalizedLX:number = LSValues.x * BABYLON.UserInputOptions.GamepadLStickSensibility;
-                var normalizedLY:number = LSValues.y * BABYLON.UserInputOptions.GamepadLStickSensibility;
+                let LSValues:BABYLON.StickValues = values;
+                let normalizedLX:number = LSValues.x * BABYLON.UserInputOptions.GamepadLStickSensibility;
+                let normalizedLY:number = LSValues.y * BABYLON.UserInputOptions.GamepadLStickSensibility;
                 LSValues.x = Math.abs(normalizedLX) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedLX : 0;
                 LSValues.y = Math.abs(normalizedLY) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedLY : 0;
                 BABYLON.SceneManager.g_horizontal1 = (BABYLON.UserInputOptions.GamepadLStickXInverted) ? -LSValues.x : LSValues.x;
@@ -3000,9 +2993,9 @@ module BABYLON {
         }
         private static inputOneRightStickHandler(values: BABYLON.StickValues): void {
             if (BABYLON.SceneManager.gamepad1 != null) {
-                var RSValues:BABYLON.StickValues = values;
-                var normalizedRX:number = RSValues.x * BABYLON.UserInputOptions.GamepadRStickSensibility;
-                var normalizedRY:number = RSValues.y * BABYLON.UserInputOptions.GamepadRStickSensibility;
+                let RSValues:BABYLON.StickValues = values;
+                let normalizedRX:number = RSValues.x * BABYLON.UserInputOptions.GamepadRStickSensibility;
+                let normalizedRY:number = RSValues.y * BABYLON.UserInputOptions.GamepadRStickSensibility;
                 RSValues.x = Math.abs(normalizedRX) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedRX : 0;
                 RSValues.y = Math.abs(normalizedRY) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedRY : 0;
                 BABYLON.SceneManager.g_mousex1 = (BABYLON.UserInputOptions.GamepadRStickXInverted) ? -RSValues.x : RSValues.x;
@@ -3012,8 +3005,8 @@ module BABYLON {
 
         private static inputTwoButtonDownHandler(button: number): void {
             if (BABYLON.SceneManager.gamepad2 != null) {
-                var key:string = "b2:" + button.toString();
-                var pressed: boolean = false;
+                let key:string = "b2:" + button.toString();
+                let pressed: boolean = false;
                 if (BABYLON.SceneManager.keymap[key] != null) {
                     pressed = BABYLON.SceneManager.keymap[key];
                 }
@@ -3036,7 +3029,7 @@ module BABYLON {
         }
         private static inputTwoButtonUpHandler(button: number): void {
             if (BABYLON.SceneManager.gamepad2 != null) {
-                var key:string = "b2:" + button.toString();
+                let key:string = "b2:" + button.toString();
                 BABYLON.SceneManager.keymap[key] = false;
                 if (BABYLON.SceneManager.gamepad2ButtonUp != null && BABYLON.SceneManager.gamepad2ButtonUp.length > 0) {
                     BABYLON.SceneManager.gamepad2ButtonUp.forEach((callback) => {
@@ -3047,8 +3040,8 @@ module BABYLON {
         }
         private static inputTwoXboxDPadDownHandler(dPadPressed: BABYLON.Xbox360Dpad): void {
             if (BABYLON.SceneManager.gamepad2 != null) {
-                var key:string = "d2:" + dPadPressed.toString();
-                var pressed: boolean = false;
+                let key:string = "d2:" + dPadPressed.toString();
+                let pressed: boolean = false;
                 if (BABYLON.SceneManager.keymap[key] != null) {
                     pressed = BABYLON.SceneManager.keymap[key];
                 }
@@ -3071,7 +3064,7 @@ module BABYLON {
         }
         private static inputTwoXboxDPadUpHandler(dPadReleased: BABYLON.Xbox360Dpad): void {
             if (BABYLON.SceneManager.gamepad2 != null) {
-                var key:string = "d2:" + dPadReleased.toString();
+                let key:string = "d2:" + dPadReleased.toString();
                 BABYLON.SceneManager.keymap[key] = false;
                 if (BABYLON.SceneManager.gamepad2DpadUp != null && BABYLON.SceneManager.gamepad2DpadUp.length > 0) {
                     BABYLON.SceneManager.gamepad2DpadUp.forEach((callback) => {
@@ -3102,9 +3095,9 @@ module BABYLON {
         }
         private static inputTwoLeftStickHandler(values: BABYLON.StickValues): void {
             if (BABYLON.SceneManager.gamepad2 != null) {
-                var LSValues:BABYLON.StickValues = values;
-                var normalizedLX:number = LSValues.x * BABYLON.UserInputOptions.GamepadLStickSensibility;
-                var normalizedLY:number = LSValues.y * BABYLON.UserInputOptions.GamepadLStickSensibility;
+                let LSValues:BABYLON.StickValues = values;
+                let normalizedLX:number = LSValues.x * BABYLON.UserInputOptions.GamepadLStickSensibility;
+                let normalizedLY:number = LSValues.y * BABYLON.UserInputOptions.GamepadLStickSensibility;
                 LSValues.x = Math.abs(normalizedLX) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedLX : 0;
                 LSValues.y = Math.abs(normalizedLY) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedLY : 0;
                 BABYLON.SceneManager.g_horizontal2 = (BABYLON.UserInputOptions.GamepadLStickXInverted) ? -LSValues.x : LSValues.x;
@@ -3113,9 +3106,9 @@ module BABYLON {
         }
         private static inputTwoRightStickHandler(values: BABYLON.StickValues): void {
             if (BABYLON.SceneManager.gamepad2 != null) {
-                var RSValues:BABYLON.StickValues = values;
-                var normalizedRX:number = RSValues.x * BABYLON.UserInputOptions.GamepadRStickSensibility;
-                var normalizedRY:number = RSValues.y * BABYLON.UserInputOptions.GamepadRStickSensibility;
+                let RSValues:BABYLON.StickValues = values;
+                let normalizedRX:number = RSValues.x * BABYLON.UserInputOptions.GamepadRStickSensibility;
+                let normalizedRY:number = RSValues.y * BABYLON.UserInputOptions.GamepadRStickSensibility;
                 RSValues.x = Math.abs(normalizedRX) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedRX : 0;
                 RSValues.y = Math.abs(normalizedRY) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedRY : 0;
                 BABYLON.SceneManager.g_mousex2 = (BABYLON.UserInputOptions.GamepadRStickXInverted) ? -RSValues.x : RSValues.x;
@@ -3125,8 +3118,8 @@ module BABYLON {
 
         private static inputThreeButtonDownHandler(button: number): void {
             if (BABYLON.SceneManager.gamepad3 != null) {
-                var key:string = "b3:" + button.toString();
-                var pressed: boolean = false;
+                let key:string = "b3:" + button.toString();
+                let pressed: boolean = false;
                 if (BABYLON.SceneManager.keymap[key] != null) {
                     pressed = BABYLON.SceneManager.keymap[key];
                 }
@@ -3149,7 +3142,7 @@ module BABYLON {
         }
         private static inputThreeButtonUpHandler(button: number): void {
             if (BABYLON.SceneManager.gamepad3 != null) {
-                var key:string = "b3:" + button.toString();
+                let key:string = "b3:" + button.toString();
                 BABYLON.SceneManager.keymap[key] = false;
                 if (BABYLON.SceneManager.gamepad3ButtonUp != null && BABYLON.SceneManager.gamepad3ButtonUp.length > 0) {
                     BABYLON.SceneManager.gamepad3ButtonUp.forEach((callback) => {
@@ -3160,8 +3153,8 @@ module BABYLON {
         }
         private static inputThreeXboxDPadDownHandler(dPadPressed: BABYLON.Xbox360Dpad): void {
             if (BABYLON.SceneManager.gamepad3 != null) {
-                var key:string = "d3:" + dPadPressed.toString();
-                var pressed: boolean = false;
+                let key:string = "d3:" + dPadPressed.toString();
+                let pressed: boolean = false;
                 if (BABYLON.SceneManager.keymap[key] != null) {
                     pressed = BABYLON.SceneManager.keymap[key];
                 }
@@ -3184,7 +3177,7 @@ module BABYLON {
         }
         private static inputThreeXboxDPadUpHandler(dPadReleased: BABYLON.Xbox360Dpad): void {
             if (BABYLON.SceneManager.gamepad3 != null) {
-                var key:string = "d3:" + dPadReleased.toString();
+                let key:string = "d3:" + dPadReleased.toString();
                 BABYLON.SceneManager.keymap[key] = false;
                 if (BABYLON.SceneManager.gamepad3DpadUp != null && BABYLON.SceneManager.gamepad3DpadUp.length > 0) {
                     BABYLON.SceneManager.gamepad3DpadUp.forEach((callback) => {
@@ -3215,9 +3208,9 @@ module BABYLON {
         }
         private static inputThreeLeftStickHandler(values: BABYLON.StickValues): void {
             if (BABYLON.SceneManager.gamepad3 != null) {
-                var LSValues:BABYLON.StickValues = values;
-                var normalizedLX:number = LSValues.x * BABYLON.UserInputOptions.GamepadLStickSensibility;
-                var normalizedLY:number = LSValues.y * BABYLON.UserInputOptions.GamepadLStickSensibility;
+                let LSValues:BABYLON.StickValues = values;
+                let normalizedLX:number = LSValues.x * BABYLON.UserInputOptions.GamepadLStickSensibility;
+                let normalizedLY:number = LSValues.y * BABYLON.UserInputOptions.GamepadLStickSensibility;
                 LSValues.x = Math.abs(normalizedLX) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedLX : 0;
                 LSValues.y = Math.abs(normalizedLY) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedLY : 0;
                 BABYLON.SceneManager.g_horizontal3 = (BABYLON.UserInputOptions.GamepadLStickXInverted) ? -LSValues.x : LSValues.x;
@@ -3226,9 +3219,9 @@ module BABYLON {
         }
         private static inputThreeRightStickHandler(values: BABYLON.StickValues): void {
             if (BABYLON.SceneManager.gamepad3 != null) {
-                var RSValues:BABYLON.StickValues = values;
-                var normalizedRX:number = RSValues.x * BABYLON.UserInputOptions.GamepadRStickSensibility;
-                var normalizedRY:number = RSValues.y * BABYLON.UserInputOptions.GamepadRStickSensibility;
+                let RSValues:BABYLON.StickValues = values;
+                let normalizedRX:number = RSValues.x * BABYLON.UserInputOptions.GamepadRStickSensibility;
+                let normalizedRY:number = RSValues.y * BABYLON.UserInputOptions.GamepadRStickSensibility;
                 RSValues.x = Math.abs(normalizedRX) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedRX : 0;
                 RSValues.y = Math.abs(normalizedRY) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedRY : 0;
                 BABYLON.SceneManager.g_mousex3 = (BABYLON.UserInputOptions.GamepadRStickXInverted) ? -RSValues.x : RSValues.x;
@@ -3238,8 +3231,8 @@ module BABYLON {
 
         private static inputFourButtonDownHandler(button: number): void {
             if (BABYLON.SceneManager.gamepad4 != null) {
-                var key:string = "b4:" + button.toString();
-                var pressed: boolean = false;
+                let key:string = "b4:" + button.toString();
+                let pressed: boolean = false;
                 if (BABYLON.SceneManager.keymap[key] != null) {
                     pressed = BABYLON.SceneManager.keymap[key];
                 }
@@ -3262,7 +3255,7 @@ module BABYLON {
         }
         private static inputFourButtonUpHandler(button: number): void {
             if (BABYLON.SceneManager.gamepad4 != null) {
-                var key:string = "b4:" + button.toString();
+                let key:string = "b4:" + button.toString();
                 BABYLON.SceneManager.keymap[key] = false;
                 if (BABYLON.SceneManager.gamepad4ButtonUp != null && BABYLON.SceneManager.gamepad4ButtonUp.length > 0) {
                     BABYLON.SceneManager.gamepad4ButtonUp.forEach((callback) => {
@@ -3273,8 +3266,8 @@ module BABYLON {
         }
         private static inputFourXboxDPadDownHandler(dPadPressed: BABYLON.Xbox360Dpad): void {
             if (BABYLON.SceneManager.gamepad4 != null) {
-                var key:string = "d4:" + dPadPressed.toString();
-                var pressed: boolean = false;
+                let key:string = "d4:" + dPadPressed.toString();
+                let pressed: boolean = false;
                 if (BABYLON.SceneManager.keymap[key] != null) {
                     pressed = BABYLON.SceneManager.keymap[key];
                 }
@@ -3297,7 +3290,7 @@ module BABYLON {
         }
         private static inputFourXboxDPadUpHandler(dPadReleased: BABYLON.Xbox360Dpad): void {
             if (BABYLON.SceneManager.gamepad4 != null) {
-                var key:string = "d4:" + dPadReleased.toString();
+                let key:string = "d4:" + dPadReleased.toString();
                 BABYLON.SceneManager.keymap[key] = false;
                 if (BABYLON.SceneManager.gamepad4DpadUp != null && BABYLON.SceneManager.gamepad4DpadUp.length > 0) {
                     BABYLON.SceneManager.gamepad4DpadUp.forEach((callback) => {
@@ -3328,9 +3321,9 @@ module BABYLON {
         }
         private static inputFourLeftStickHandler(values: BABYLON.StickValues): void {
             if (BABYLON.SceneManager.gamepad4 != null) {
-                var LSValues:BABYLON.StickValues = values;
-                var normalizedLX:number = LSValues.x * BABYLON.UserInputOptions.GamepadLStickSensibility;
-                var normalizedLY:number = LSValues.y * BABYLON.UserInputOptions.GamepadLStickSensibility;
+                let LSValues:BABYLON.StickValues = values;
+                let normalizedLX:number = LSValues.x * BABYLON.UserInputOptions.GamepadLStickSensibility;
+                let normalizedLY:number = LSValues.y * BABYLON.UserInputOptions.GamepadLStickSensibility;
                 LSValues.x = Math.abs(normalizedLX) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedLX : 0;
                 LSValues.y = Math.abs(normalizedLY) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedLY : 0;
                 BABYLON.SceneManager.g_horizontal4 = (BABYLON.UserInputOptions.GamepadLStickXInverted) ? -LSValues.x : LSValues.x;
@@ -3339,9 +3332,9 @@ module BABYLON {
         }
         private static inputFourRightStickHandler(values: BABYLON.StickValues): void {
             if (BABYLON.SceneManager.gamepad4 != null) {
-                var RSValues:BABYLON.StickValues = values;
-                var normalizedRX:number = RSValues.x * BABYLON.UserInputOptions.GamepadRStickSensibility;
-                var normalizedRY:number = RSValues.y * BABYLON.UserInputOptions.GamepadRStickSensibility;
+                let RSValues:BABYLON.StickValues = values;
+                let normalizedRX:number = RSValues.x * BABYLON.UserInputOptions.GamepadRStickSensibility;
+                let normalizedRY:number = RSValues.y * BABYLON.UserInputOptions.GamepadRStickSensibility;
                 RSValues.x = Math.abs(normalizedRX) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedRX : 0;
                 RSValues.y = Math.abs(normalizedRY) > BABYLON.UserInputOptions.GamepadDeadStickValue ? 0 + normalizedRY : 0;
                 BABYLON.SceneManager.g_mousex4 = (BABYLON.UserInputOptions.GamepadRStickXInverted) ? -RSValues.x : RSValues.x;
@@ -3355,7 +3348,7 @@ module BABYLON {
                 BABYLON.Tools.Log("Gamepad One Connected: " + BABYLON.SceneManager.gamepad1.id);
                 if ((<string>BABYLON.SceneManager.gamepad1.id).search("Xbox 360") !== -1 || (<string>BABYLON.SceneManager.gamepad1.id).search("Xbox One") !== -1 || (<string>BABYLON.SceneManager.gamepad1.id).search("xinput") !== -1) {
                     BABYLON.SceneManager.gamepad1Type = BABYLON.GamepadType.Xbox360;
-                    var xbox360Pad1: BABYLON.Xbox360Pad = BABYLON.SceneManager.gamepad1 as BABYLON.Xbox360Pad;
+                    let xbox360Pad1: BABYLON.Xbox360Pad = BABYLON.SceneManager.gamepad1 as BABYLON.Xbox360Pad;
                     xbox360Pad1.onbuttonup(BABYLON.SceneManager.inputOneButtonUpHandler);
                     xbox360Pad1.onbuttondown(BABYLON.SceneManager.inputOneButtonDownHandler);
                     xbox360Pad1.onleftstickchanged(BABYLON.SceneManager.inputOneLeftStickHandler);
@@ -3366,7 +3359,7 @@ module BABYLON {
                     xbox360Pad1.onrighttriggerchanged(BABYLON.SceneManager.inputOneXboxRightTriggerHandler);
                 } else {
                     BABYLON.SceneManager.gamepad1Type = BABYLON.GamepadType.Generic;
-                    var genericPad1: BABYLON.GenericPad = BABYLON.SceneManager.gamepad1 as BABYLON.GenericPad;
+                    let genericPad1: BABYLON.GenericPad = BABYLON.SceneManager.gamepad1 as BABYLON.GenericPad;
                     genericPad1.onbuttonup(BABYLON.SceneManager.inputOneButtonUpHandler);
                     genericPad1.onbuttondown(BABYLON.SceneManager.inputOneButtonDownHandler);
                     genericPad1.onleftstickchanged(BABYLON.SceneManager.inputOneLeftStickHandler);
@@ -3378,7 +3371,7 @@ module BABYLON {
                 BABYLON.Tools.Log("Gamepad Two Connected: " + BABYLON.SceneManager.gamepad2.id);
                 if ((<string>BABYLON.SceneManager.gamepad2.id).search("Xbox 360") !== -1 || (<string>BABYLON.SceneManager.gamepad2.id).search("Xbox One") !== -1 || (<string>BABYLON.SceneManager.gamepad2.id).search("xinput") !== -1) {
                     BABYLON.SceneManager.gamepad2Type = BABYLON.GamepadType.Xbox360;
-                    var xbox360Pad2: BABYLON.Xbox360Pad = BABYLON.SceneManager.gamepad2 as BABYLON.Xbox360Pad;
+                    let xbox360Pad2: BABYLON.Xbox360Pad = BABYLON.SceneManager.gamepad2 as BABYLON.Xbox360Pad;
                     xbox360Pad2.onbuttonup(BABYLON.SceneManager.inputTwoButtonUpHandler);
                     xbox360Pad2.onbuttondown(BABYLON.SceneManager.inputTwoButtonDownHandler);
                     xbox360Pad2.onleftstickchanged(BABYLON.SceneManager.inputTwoLeftStickHandler);
@@ -3389,7 +3382,7 @@ module BABYLON {
                     xbox360Pad2.onrighttriggerchanged(BABYLON.SceneManager.inputTwoXboxRightTriggerHandler);
                 } else {
                     BABYLON.SceneManager.gamepad2Type = BABYLON.GamepadType.Generic;
-                    var genericPad2: BABYLON.GenericPad = BABYLON.SceneManager.gamepad2 as BABYLON.GenericPad;
+                    let genericPad2: BABYLON.GenericPad = BABYLON.SceneManager.gamepad2 as BABYLON.GenericPad;
                     genericPad2.onbuttonup(BABYLON.SceneManager.inputTwoButtonUpHandler);
                     genericPad2.onbuttondown(BABYLON.SceneManager.inputTwoButtonDownHandler);
                     genericPad2.onleftstickchanged(BABYLON.SceneManager.inputTwoLeftStickHandler);
@@ -3401,7 +3394,7 @@ module BABYLON {
                 BABYLON.Tools.Log("Gamepad Three Connected: " + BABYLON.SceneManager.gamepad3.id);
                 if ((<string>BABYLON.SceneManager.gamepad3.id).search("Xbox 360") !== -1 || (<string>BABYLON.SceneManager.gamepad3.id).search("Xbox One") !== -1 || (<string>BABYLON.SceneManager.gamepad3.id).search("xinput") !== -1) {
                     BABYLON.SceneManager.gamepad3Type = BABYLON.GamepadType.Xbox360;
-                    var xbox360Pad3: BABYLON.Xbox360Pad = BABYLON.SceneManager.gamepad3 as BABYLON.Xbox360Pad;
+                    let xbox360Pad3: BABYLON.Xbox360Pad = BABYLON.SceneManager.gamepad3 as BABYLON.Xbox360Pad;
                     xbox360Pad3.onbuttonup(BABYLON.SceneManager.inputThreeButtonUpHandler);
                     xbox360Pad3.onbuttondown(BABYLON.SceneManager.inputThreeButtonDownHandler);
                     xbox360Pad3.onleftstickchanged(BABYLON.SceneManager.inputThreeLeftStickHandler);
@@ -3412,7 +3405,7 @@ module BABYLON {
                     xbox360Pad3.onrighttriggerchanged(BABYLON.SceneManager.inputThreeXboxRightTriggerHandler);
                 } else {
                     BABYLON.SceneManager.gamepad3Type = BABYLON.GamepadType.Generic;
-                    var genericPad3: BABYLON.GenericPad = BABYLON.SceneManager.gamepad3 as BABYLON.GenericPad;
+                    let genericPad3: BABYLON.GenericPad = BABYLON.SceneManager.gamepad3 as BABYLON.GenericPad;
                     genericPad3.onbuttonup(BABYLON.SceneManager.inputThreeButtonUpHandler);
                     genericPad3.onbuttondown(BABYLON.SceneManager.inputThreeButtonDownHandler);
                     genericPad3.onleftstickchanged(BABYLON.SceneManager.inputThreeLeftStickHandler);
@@ -3424,7 +3417,7 @@ module BABYLON {
                 BABYLON.Tools.Log("Gamepad Four Connected: " + BABYLON.SceneManager.gamepad4.id);
                 if ((<string>BABYLON.SceneManager.gamepad4.id).search("Xbox 360") !== -1 || (<string>BABYLON.SceneManager.gamepad4.id).search("Xbox One") !== -1 || (<string>BABYLON.SceneManager.gamepad4.id).search("xinput") !== -1) {
                     BABYLON.SceneManager.gamepad4Type = BABYLON.GamepadType.Xbox360;
-                    var xbox360Pad4: BABYLON.Xbox360Pad = BABYLON.SceneManager.gamepad4 as BABYLON.Xbox360Pad;
+                    let xbox360Pad4: BABYLON.Xbox360Pad = BABYLON.SceneManager.gamepad4 as BABYLON.Xbox360Pad;
                     xbox360Pad4.onbuttonup(BABYLON.SceneManager.inputFourButtonUpHandler);
                     xbox360Pad4.onbuttondown(BABYLON.SceneManager.inputFourButtonDownHandler);
                     xbox360Pad4.onleftstickchanged(BABYLON.SceneManager.inputFourLeftStickHandler);
@@ -3435,7 +3428,7 @@ module BABYLON {
                     xbox360Pad4.onrighttriggerchanged(BABYLON.SceneManager.inputFourXboxRightTriggerHandler);
                 } else {
                     BABYLON.SceneManager.gamepad4Type = BABYLON.GamepadType.Generic;
-                    var genericPad4: BABYLON.GenericPad = BABYLON.SceneManager.gamepad4 as BABYLON.GenericPad;
+                    let genericPad4: BABYLON.GenericPad = BABYLON.SceneManager.gamepad4 as BABYLON.GenericPad;
                     genericPad4.onbuttonup(BABYLON.SceneManager.inputFourButtonUpHandler);
                     genericPad4.onbuttondown(BABYLON.SceneManager.inputFourButtonDownHandler);
                     genericPad4.onleftstickchanged(BABYLON.SceneManager.inputFourLeftStickHandler);
@@ -3531,11 +3524,11 @@ module BABYLON {
                         // Camera rigging options
                         BABYLON.SceneManager.setupCameraRigOptions(camera, scene);
                         // Camera component scripts
-                        var metadata: BABYLON.IObjectMetadata = camera.metadata as BABYLON.IObjectMetadata;
+                        let metadata: BABYLON.IObjectMetadata = camera.metadata as BABYLON.IObjectMetadata;
                         if (metadata.components != null && metadata.components.length > 0) {
                             metadata.components.forEach((camerascript) => {
                                 if (camerascript.klass != null && camerascript.klass !== "" && camerascript.klass !== "BABYLON.SceneComponent" && camerascript.klass !== "BABYLON.OrthoController") {
-                                    var CameraComponentClass = BABYLON.Tools.Instantiate(camerascript.klass);
+                                    let CameraComponentClass = BABYLON.Tools.Instantiate(camerascript.klass);
                                     if (CameraComponentClass != null) {
                                         camerascript.instance = new CameraComponentClass(camera, scene, camerascript.update, camerascript.properties);
                                         if (camerascript.instance != null) {
@@ -3557,11 +3550,11 @@ module BABYLON {
                         // Setup metadata cloning
                         light.metadata.clone = () => { return BABYLON.SceneManager.CloneMetadata(light.metadata); };
                         // Light component scripts
-                        var metadata: BABYLON.IObjectMetadata = light.metadata as BABYLON.IObjectMetadata;
+                        let metadata: BABYLON.IObjectMetadata = light.metadata as BABYLON.IObjectMetadata;
                         if (metadata.components != null && metadata.components.length > 0) {
                             metadata.components.forEach((lightscript) => {
                                 if (lightscript.klass != null && lightscript.klass !== "" && lightscript.klass !== "BABYLON.SceneComponent" && lightscript.klass !== "BABYLON.OrthoController") {
-                                    var LightComponentClass = BABYLON.Tools.Instantiate(lightscript.klass);
+                                    let LightComponentClass = BABYLON.Tools.Instantiate(lightscript.klass);
                                     if (LightComponentClass != null) {
                                         lightscript.instance = new LightComponentClass(light, scene, lightscript.update, lightscript.properties);
                                         if (lightscript.instance != null) {
@@ -3600,11 +3593,11 @@ module BABYLON {
                                 }
                             }
                             // Mesh component scripts
-                            var metadata: BABYLON.IObjectMetadata = mesh.metadata as BABYLON.IObjectMetadata;
+                            let metadata: BABYLON.IObjectMetadata = mesh.metadata as BABYLON.IObjectMetadata;
                             if (metadata.components != null && metadata.components.length > 0) {
                                 metadata.components.forEach((meshscript) => {
                                     if (meshscript.klass != null && meshscript.klass !== "" && meshscript.klass !== "BABYLON.SceneComponent" && meshscript.klass !== "BABYLON.OrthoController") {
-                                        var MeshComponentClass = BABYLON.Tools.Instantiate(meshscript.klass);
+                                        let MeshComponentClass = BABYLON.Tools.Instantiate(meshscript.klass);
                                         if (MeshComponentClass != null) {
                                             meshscript.instance = new MeshComponentClass(mesh, scene, meshscript.update, meshscript.properties);
                                             if (meshscript.instance != null) {
@@ -3619,11 +3612,11 @@ module BABYLON {
                             // Setup detail meshes
                             if (mesh.metadata != null && mesh.metadata.properties && mesh.metadata.properties != null) {
                                 if (mesh.metadata.properties.defaultEllipsoid && mesh.metadata.properties.defaultEllipsoid != null && mesh.metadata.properties.defaultEllipsoid.length >= 3) {
-                                    var defaultEllipsoid:number[] = mesh.metadata.properties.defaultEllipsoid;
+                                    let defaultEllipsoid:number[] = mesh.metadata.properties.defaultEllipsoid;
                                     mesh.ellipsoid = new BABYLON.Vector3(defaultEllipsoid[0], defaultEllipsoid[1], defaultEllipsoid[2]);
                                 }
                                 if (mesh.metadata.properties.ellipsoidOffset && mesh.metadata.properties.ellipsoidOffset != null && mesh.metadata.properties.ellipsoidOffset.length >= 3) {
-                                    var ellipsoidOffset:number[] = mesh.metadata.properties.ellipsoidOffset;
+                                    let ellipsoidOffset:number[] = mesh.metadata.properties.ellipsoidOffset;
                                     mesh.ellipsoidOffset = new BABYLON.Vector3(ellipsoidOffset[0], ellipsoidOffset[1], ellipsoidOffset[2]);
                                 }
                                 if (mesh.metadata.properties.hasOwnProperty("freezeWorldMatrix") && mesh.metadata.properties.freezeWorldMatrix === true) {
@@ -3637,20 +3630,20 @@ module BABYLON {
                                 }
                             }
                             // Setup terrain meshes
-                            var isTerrainMesh:boolean = BABYLON.SceneManager.setupTerrainMeshes(mesh, scene);
+                            let isTerrainMesh:boolean = BABYLON.SceneManager.setupTerrainMeshes(mesh, scene);
                             // Setup physics imposters
                             if (isTerrainMesh === false && mesh.metadata.properties != null && mesh.metadata.properties.physicsTag != null) {
-                                var physicsTag: string = mesh.metadata.properties.physicsTag;
-                                var physicsMass: number = mesh.metadata.properties.physicsMass;
-                                var physicsDetach: boolean = mesh.metadata.properties.physicsDetach;
-                                var physicsFriction: number = mesh.metadata.properties.physicsFriction;
-                                var physicsRestitution: number = mesh.metadata.properties.physicsRestitution;
-                                var physicsImpostor: number = mesh.metadata.properties.physicsImpostor;
-                                var physicsRotation: number = mesh.metadata.properties.physicsRotation;
-                                var physicsCollisions: boolean = mesh.metadata.properties.physicsCollisions;
-                                var physicsCollisionGroup: number = mesh.metadata.properties.physicsCollisionGroup;
-                                var physicsCollisionMask: number = mesh.metadata.properties.physicsCollisionMask;
-                                var physicsEnginePlugin: number = mesh.metadata.properties.physicsEnginePlugin;
+                                let physicsTag: string = mesh.metadata.properties.physicsTag;
+                                let physicsMass: number = mesh.metadata.properties.physicsMass;
+                                let physicsDetach: boolean = mesh.metadata.properties.physicsDetach;
+                                let physicsFriction: number = mesh.metadata.properties.physicsFriction;
+                                let physicsRestitution: number = mesh.metadata.properties.physicsRestitution;
+                                let physicsImpostor: number = mesh.metadata.properties.physicsImpostor;
+                                let physicsRotation: number = mesh.metadata.properties.physicsRotation;
+                                let physicsCollisions: boolean = mesh.metadata.properties.physicsCollisions;
+                                let physicsCollisionGroup: number = mesh.metadata.properties.physicsCollisionGroup;
+                                let physicsCollisionMask: number = mesh.metadata.properties.physicsCollisionMask;
+                                let physicsEnginePlugin: number = mesh.metadata.properties.physicsEnginePlugin;
                                 // Detach physics parent
                                 if (physicsDetach === true && mesh.parent != null) {
                                     BABYLON.Utilities.ResetPhysicsPosition(mesh.position, mesh.parent);
@@ -3667,7 +3660,7 @@ module BABYLON {
         }
         private static postParseSceneMeshes(meshes: BABYLON.AbstractMesh[], scene: BABYLON.Scene):void {
             if (meshes != null && meshes.length > 0) {
-                var statics:any = {};
+                let statics:any = {};
                 meshes.forEach((mesh) => {
                     if (mesh.metadata != null && mesh.metadata.api) {
                         if (BABYLON.SceneManager.staticVertexLimit === false) {
@@ -3675,8 +3668,8 @@ module BABYLON {
                             if (mesh.metadata.layerIndex === BABYLON.SceneManager.StaticIndex) {
                                 if (mesh.name.indexOf("_StaticMesh_") >= 0) {
                                     mesh.metadata.layerIndex = -99;
-                                    var key:string = mesh.material.id;
-                                    var list:BABYLON.Mesh[] = null;
+                                    let key:string = mesh.material.id;
+                                    let list:BABYLON.Mesh[] = null;
                                     if (statics.hasOwnProperty(key)) {
                                         list = statics[key];
                                     } else {
@@ -3691,12 +3684,12 @@ module BABYLON {
                 });
                 // Merge Static Vertex Limit Meshes
                 if (BABYLON.SceneManager.staticVertexLimit === false) {
-                    for (var key in statics) {
+                    for (let key in statics) {
                         if (statics.hasOwnProperty(key)) {
-                            var list:BABYLON.Mesh[] = statics[key];
+                            let list:BABYLON.Mesh[] = statics[key];
                             if (list != null && list.length > 1) {
-                                var staticParent:BABYLON.Node = list[0].parent;
-                                var staticMesh:BABYLON.Mesh = BABYLON.Mesh.MergeMeshes(list, true, true);
+                                let staticParent:BABYLON.Node = list[0].parent;
+                                let staticMesh:BABYLON.Mesh = BABYLON.Mesh.MergeMeshes(list, true, true);
                                 if (staticMesh != null) staticMesh.parent = staticParent;
                             }
                         }
@@ -3706,34 +3699,34 @@ module BABYLON {
         }
         private static setupLodGroups(mesh:BABYLON.AbstractMesh, scene: BABYLON.Scene, prefab:boolean):void {
             if (mesh != null && mesh.metadata != null && mesh.metadata.properties && mesh.metadata.properties != null && mesh.metadata.properties.lodGroupInfo && mesh.metadata.properties.lodGroupInfo != null) {
-                var lodIndex:number = 0;
-                var lodGroup:any = mesh.metadata.properties.lodGroupInfo;
-                var lodDetails:any[] = lodGroup.lodDetails;
-                var startCulling:number = lodGroup.startCulling;
-                //var lodCount:number = lodGroup.lodCount;
-                //var fadeMode:string = lodGroup.fadeMode;
-                //var crossFading:boolean = lodGroup.crossFading;
-                //var nearClipingPlane:number = lodGroup.nearClipingPlane;
-                //var farClipingPlane:number = lodGroup.farClipingPlane;
-                var searchMeshes:BABYLON.AbstractMesh[] = mesh.getChildMeshes(false);
+                let lodIndex:number = 0;
+                let lodGroup:any = mesh.metadata.properties.lodGroupInfo;
+                let lodDetails:any[] = lodGroup.lodDetails;
+                let startCulling:number = lodGroup.startCulling;
+                //let lodCount:number = lodGroup.lodCount;
+                //let fadeMode:string = lodGroup.fadeMode;
+                //let crossFading:boolean = lodGroup.crossFading;
+                //let nearClipingPlane:number = lodGroup.nearClipingPlane;
+                //let farClipingPlane:number = lodGroup.farClipingPlane;
+                let searchMeshes:BABYLON.AbstractMesh[] = mesh.getChildMeshes(false);
                 if (searchMeshes == null) {
                     searchMeshes = [mesh];
                 } else {
                     searchMeshes.unshift(mesh);
                 }
                 if (lodDetails != null && lodDetails.length > 0) {
-                    var masterLevel:BABYLON.Mesh = null;
+                    let masterLevel:BABYLON.Mesh = null;
                     lodDetails.forEach((detail) => {
-                        //var startingPercent:number = detail.startingPercent;
-                        //var endingPercent:number = detail.endingPercent;
-                        //var rendererCount:number = detail.rendererCount;
-                        //var lodDistance:number = detail.lodDistance;
-                        var lodRenderers:any[] = detail.lodRenderers;
-                        var startRange:number = detail.startRange;
+                        //let startingPercent:number = detail.startingPercent;
+                        //let endingPercent:number = detail.endingPercent;
+                        //let rendererCount:number = detail.rendererCount;
+                        //let lodDistance:number = detail.lodDistance;
+                        let lodRenderers:any[] = detail.lodRenderers;
+                        let startRange:number = detail.startRange;
                         if (lodRenderers != null && lodRenderers.length > 0) {
-                            var renderer:any = lodRenderers[0];
-                            var name:string = renderer.name;
-                            var check:AbstractMesh = BABYLON.SceneManager.FindMesh(name, searchMeshes, BABYLON.SearchType.IndexOf);
+                            let renderer:any = lodRenderers[0];
+                            let name:string = renderer.name;
+                            let check:AbstractMesh = BABYLON.SceneManager.FindMesh(name, searchMeshes, BABYLON.SearchType.IndexOf);
                             if (check != null) {
                                 // Parse all lod detail group levels
                                 if (masterLevel == null) {
@@ -3765,48 +3758,48 @@ module BABYLON {
             }
         }        
         private static setupTerrainMeshes(mesh:BABYLON.AbstractMesh, scene: BABYLON.Scene):boolean {
-            var result:boolean = false;
+            let result:boolean = false;
             if (mesh != null && mesh.metadata != null && mesh.metadata.properties && mesh.metadata.properties != null && mesh.metadata.properties.terrain === true) {
                 result = true;
-                var index:number = 0;
+                let index:number = 0;
                 // ..
-                //var position:number[] = (mesh.metadata.properties.position) ? mesh.metadata.properties.position : [0.0, 0.0, 0.0];
-                //var rotation:number[] = (mesh.metadata.properties.rotation) ? mesh.metadata.properties.rotation : [0.0, 0.0, 0.0];
-                //var scaling:number[] = (mesh.metadata.properties.scaling) ? mesh.metadata.properties.scaling : [1.0, 1.0, 1.0];
+                //let position:number[] = (mesh.metadata.properties.position) ? mesh.metadata.properties.position : [0.0, 0.0, 0.0];
+                //let rotation:number[] = (mesh.metadata.properties.rotation) ? mesh.metadata.properties.rotation : [0.0, 0.0, 0.0];
+                //let scaling:number[] = (mesh.metadata.properties.scaling) ? mesh.metadata.properties.scaling : [1.0, 1.0, 1.0];
                 //
-                var segments:number = (mesh.metadata.properties.segments) ? mesh.metadata.properties.segments : 1;
-                var colliders:number = (mesh.metadata.properties.colliders) ? mesh.metadata.properties.colliders : 1;
+                let segments:number = (mesh.metadata.properties.segments) ? mesh.metadata.properties.segments : 1;
+                let colliders:number = (mesh.metadata.properties.colliders) ? mesh.metadata.properties.colliders : 1;
                 // ..
-                var physics:boolean = (mesh.metadata.properties.physicsTag != null);
-                var physicsTag: string = (mesh.metadata.properties.physicsTag) ? mesh.metadata.properties.physicsTag : "";
-                var physicsMass: number = (mesh.metadata.properties.physicsMass) ? mesh.metadata.properties.physicsMass : 0;
-                var physicsDetach: boolean = (mesh.metadata.properties.physicsDetach) ? mesh.metadata.properties.physicsDetach : false;
-                var physicsFriction: number = (mesh.metadata.properties.physicsFriction) ? mesh.metadata.properties.physicsFriction : 0;
-                var physicsRestitution: number = (mesh.metadata.properties.physicsRestitution) ? mesh.metadata.properties.physicsRestitution : 0;
-                var physicsImpostor: number = (mesh.metadata.properties.physicsImpostor) ? mesh.metadata.properties.physicsImpostor : 0;
-                var physicsRotation: number = (mesh.metadata.properties.physicsRotation) ? mesh.metadata.properties.physicsRotation : 0;
-                var physicsCollisions: boolean = (mesh.metadata.properties.physicsCollisions) ? mesh.metadata.properties.physicsCollisions : false;
-                var physicsCollisionGroup: number = (mesh.metadata.properties.physicsCollisionGroup) ? mesh.metadata.properties.physicsCollisionGroup : 0;
-                var physicsCollisionMask: number = (mesh.metadata.properties.physicsCollisionMask) ? mesh.metadata.properties.physicsCollisionMask : 0;
-                var physicsEnginePlugin: number = (mesh.metadata.properties.physicsEnginePlugin) ? mesh.metadata.properties.physicsEnginePlugin : 0;
-                var terrainLodGroupInfo: any = (mesh.metadata.properties.terrainLodGroupInfo) ? mesh.metadata.properties.terrainLodGroupInfo : null;
-                var terrainCollision:boolean = (mesh.metadata.properties.terrainCollision) ? mesh.metadata.properties.terrainCollision : false;
+                let physics:boolean = (mesh.metadata.properties.physicsTag != null);
+                let physicsTag: string = (mesh.metadata.properties.physicsTag) ? mesh.metadata.properties.physicsTag : "";
+                let physicsMass: number = (mesh.metadata.properties.physicsMass) ? mesh.metadata.properties.physicsMass : 0;
+                let physicsDetach: boolean = (mesh.metadata.properties.physicsDetach) ? mesh.metadata.properties.physicsDetach : false;
+                let physicsFriction: number = (mesh.metadata.properties.physicsFriction) ? mesh.metadata.properties.physicsFriction : 0;
+                let physicsRestitution: number = (mesh.metadata.properties.physicsRestitution) ? mesh.metadata.properties.physicsRestitution : 0;
+                let physicsImpostor: number = (mesh.metadata.properties.physicsImpostor) ? mesh.metadata.properties.physicsImpostor : 0;
+                let physicsRotation: number = (mesh.metadata.properties.physicsRotation) ? mesh.metadata.properties.physicsRotation : 0;
+                let physicsCollisions: boolean = (mesh.metadata.properties.physicsCollisions) ? mesh.metadata.properties.physicsCollisions : false;
+                let physicsCollisionGroup: number = (mesh.metadata.properties.physicsCollisionGroup) ? mesh.metadata.properties.physicsCollisionGroup : 0;
+                let physicsCollisionMask: number = (mesh.metadata.properties.physicsCollisionMask) ? mesh.metadata.properties.physicsCollisionMask : 0;
+                let physicsEnginePlugin: number = (mesh.metadata.properties.physicsEnginePlugin) ? mesh.metadata.properties.physicsEnginePlugin : 0;
+                let terrainLodGroupInfo: any = (mesh.metadata.properties.terrainLodGroupInfo) ? mesh.metadata.properties.terrainLodGroupInfo : null;
+                let terrainCollision:boolean = (mesh.metadata.properties.terrainCollision) ? mesh.metadata.properties.terrainCollision : false;
                 // ..
-                //var terrainWidth:number = (mesh.metadata.properties.width) ? mesh.metadata.properties.width : 1;
-                //var terrainLength:number = (mesh.metadata.properties.length) ? mesh.metadata.properties.length : 1;
-                //var terrainHeight:number = (mesh.metadata.properties.height) ? mesh.metadata.properties.height : 1;
-                //var terrainResolution:number = (mesh.metadata.properties.resolution) ? mesh.metadata.properties.resolution: 1;
+                //let terrainWidth:number = (mesh.metadata.properties.width) ? mesh.metadata.properties.width : 1;
+                //let terrainLength:number = (mesh.metadata.properties.length) ? mesh.metadata.properties.length : 1;
+                //let terrainHeight:number = (mesh.metadata.properties.height) ? mesh.metadata.properties.height : 1;
+                //let terrainResolution:number = (mesh.metadata.properties.resolution) ? mesh.metadata.properties.resolution: 1;
                 // ..
-                var lodDetails:any[] = (terrainLodGroupInfo != null) ? terrainLodGroupInfo.lodDetails : null;
-                var lodSettings:ISimplificationSettings[] = null
+                let lodDetails:any[] = (terrainLodGroupInfo != null) ? terrainLodGroupInfo.lodDetails : null;
+                let lodSettings:ISimplificationSettings[] = null
                 // Validate default lod group level
                 if (lodDetails != null && lodDetails.length > 0) {
                     index = 0;
                     for (index = 0; index < lodDetails.length; index++) {
                         const detail:any = lodDetails[index];
-                        var percent:number = detail.startingPercent;
+                        let percent:number = detail.startingPercent;
                         if (percent < 1) {
-                            var distance:number = detail.startRange;
+                            let distance:number = detail.startRange;
                             if (lodSettings == null) lodSettings = [];
                             lodSettings.push(new BABYLON.SimplificationSettings(percent, distance, true));
                         }
@@ -3815,11 +3808,11 @@ module BABYLON {
                 // ..
                 // Process ground meshes
                 // ..
-                var children = mesh.getChildMeshes(true);
+                let children = mesh.getChildMeshes(true);
                 if (children != null && children.length > 0) {
                     children.forEach((child) => {
-                        var ground:BABYLON.Mesh = child as BABYLON.Mesh;
-                        var collider:boolean = (ground.name.indexOf(".Collider.") >= 0);
+                        let ground:BABYLON.Mesh = child as BABYLON.Mesh;
+                        let collider:boolean = (ground.name.indexOf(".Collider.") >= 0);
                         if (collider === false && lodSettings != null) {
                             ground.simplify(lodSettings, true, BABYLON.SimplificationType.QUADRATIC);
                         }
@@ -3860,24 +3853,26 @@ module BABYLON {
                 // ..
                 index = 0;
                 if (mesh.metadata.properties.treeInstances && mesh.metadata.properties.treeInstances != null && mesh.metadata.properties.treeInstances.length > 0) {
-                    var trees:any[] = mesh.metadata.properties.treeInstances;
+                    let trees:any[] = mesh.metadata.properties.treeInstances;
                     trees.forEach((tree) => {
                         index++;
-                        var tree_prefab:string = tree.prefab;
-                        var tree_color:number[] = tree.color;
-                        var tree_heightScale:number = tree.heightScale;
-                        var tree_lightmapColor:number[] = tree.lightmapColor;
-                        var tree_position:number[] = tree.position;
-                        var tree_rotation:number = tree.rotation;
-                        var tree_widthScale:number = tree.widthScale;
-                        var tree_label:string = (tree_prefab + "_" + index.toString());
+                        let tree_prefab:string = tree.prefab;
+                        // ..
+                        // let tree_color:number[] = tree.color;
+                        // let tree_lightmapColor:number[] = tree.lightmapColor;
+                        // ..
+                        let tree_heightScale:number = tree.heightScale;
+                        let tree_position:number[] = tree.position;
+                        let tree_rotation:number = tree.rotation;
+                        let tree_widthScale:number = tree.widthScale;
+                        let tree_label:string = (tree_prefab + "_" + index.toString());
                         // ..
                         // Instantiate tree prefab
                         // ..
-                        var prefab_parent:BABYLON.Node = mesh;
-                        var prefab_position:Vector3 = new BABYLON.Vector3(tree_position[0], tree_position[1], tree_position[2]);
-                        var prefab_rotation:Vector3 = new BABYLON.Vector3(0.0, tree_rotation, 0.0);
-                        var prefab_scaling:BABYLON.Vector3 = new BABYLON.Vector3(tree_widthScale, tree_heightScale, tree_widthScale);
+                        let prefab_parent:BABYLON.Node = mesh;
+                        let prefab_position:Vector3 = new BABYLON.Vector3(tree_position[0], tree_position[1], tree_position[2]);
+                        let prefab_rotation:Vector3 = new BABYLON.Vector3(0.0, tree_rotation, 0.0);
+                        let prefab_scaling:BABYLON.Vector3 = new BABYLON.Vector3(tree_widthScale, tree_heightScale, tree_widthScale);
                         BABYLON.SceneManager.GetInstance().onready(()=>{
                             BABYLON.SceneManager.GetInstance().instantiatePrefab(tree_prefab, tree_label, prefab_position, prefab_rotation, prefab_scaling, prefab_parent);
                         });
@@ -3888,7 +3883,7 @@ module BABYLON {
                 // ..
                 index = 0;
                 if (mesh.metadata.properties.detailPrototypes && mesh.metadata.properties.detailPrototypes != null && mesh.metadata.properties.detailPrototypes.length > 0) {
-                    var details:any[] = mesh.metadata.properties.detailPrototypes;
+                    let details:any[] = mesh.metadata.properties.detailPrototypes;
                     details.forEach((detail) => {
                         // TODO: Place terrain grass and detail prototypes
                     });
@@ -3899,11 +3894,11 @@ module BABYLON {
         private static setupSocketMeshes(mesh:BABYLON.AbstractMesh, scene: BABYLON.Scene):void {
             if (mesh != null && mesh.metadata.socketList != null && mesh.metadata.socketList.length > 0) {
                 if (mesh.skeleton != null && mesh.skeleton.bones != null && mesh.skeleton.bones.length > 0) {
-                    var sockets:BABYLON.ISocketData[] = mesh.metadata.socketList;
+                    let sockets:BABYLON.ISocketData[] = mesh.metadata.socketList;
                     sockets.forEach((socket) => {
                         if (mesh.skeleton.bones.length >= (socket.boneIndex + 1)) {
-                            var bone:BABYLON.Bone = mesh.skeleton.bones[socket.boneIndex];
-                            var bname:string = socket.boneName + ".Socket.";
+                            let bone:BABYLON.Bone = mesh.skeleton.bones[socket.boneIndex];
+                            let bname:string = socket.boneName + ".Socket.";
                             if (mesh.parent != null) bname += (mesh.parent.name + ".");
                             bname += (mesh.name + "." + BABYLON.Tools.RandomId());
                             if (BABYLON.SceneManager.showDebugSockets === true) {
@@ -3923,8 +3918,8 @@ module BABYLON {
         }
         private static setupSharedSkeleton(mesh:BABYLON.AbstractMesh, scene: BABYLON.Scene):void {
             if (mesh != null && mesh.metadata != null && mesh.metadata.properties && mesh.metadata.properties != null && mesh.metadata.properties.sharedSkeletonId && mesh.metadata.properties.sharedSkeletonId !== "") {
-                var sharedSkeletonId:string = mesh.metadata.properties.sharedSkeletonId;
-                var source:BABYLON.AbstractMesh = scene.getMeshByID(sharedSkeletonId);
+                let sharedSkeletonId:string = mesh.metadata.properties.sharedSkeletonId;
+                let source:BABYLON.AbstractMesh = scene.getMeshByID(sharedSkeletonId);
                 if (source != null && source.skeleton != null) {
                     mesh.metadata.animationClips = null;
                     mesh.skeleton = source.skeleton;
@@ -3972,60 +3967,61 @@ module BABYLON {
                     }
                 }
 
-                var followTarget:string = camera.metadata.properties.followTarget;
-                var followRadius:number = camera.metadata.properties.followRadius;
-                var followHeightOffset:number = camera.metadata.properties.followHeightOffset;
-                var followRotationOffset:number = camera.metadata.properties.followRotationOffset;
-                var followCameraAcceleration:number = camera.metadata.properties.followCameraAcceleration;
-                var followMaxCameraSpeed:number = camera.metadata.properties.followMaxCameraSpeed;
+                let followTarget:string = camera.metadata.properties.followTarget;
+                let followRadius:number = camera.metadata.properties.followRadius;
+                let followHeightOffset:number = camera.metadata.properties.followHeightOffset;
+                let followRotationOffset:number = camera.metadata.properties.followRotationOffset;
+                let followCameraAcceleration:number = camera.metadata.properties.followCameraAcceleration;
+                let followMaxCameraSpeed:number = camera.metadata.properties.followMaxCameraSpeed;
 
-                var arcFollowTarget:string = camera.metadata.properties.followTarget;
-                var arcRotateAlpha:number = camera.metadata.properties.arcRotateAlpha;
-                var arcRotateBeta:number = camera.metadata.properties.arcRotateBeta;
-                var arcRotateRadius:number = camera.metadata.properties.arcRotateRadius;
-                var arcRotateTarget:number[] = camera.metadata.properties.arcRotateTarget;
-                var arcRotateLowerRadiusLimit:number = camera.metadata.properties.arcRotateLowerRadiusLimit;
-                var arcRotateUpperRadiusLimit:number = camera.metadata.properties.arcRotateUpperRadiusLimit;
-                var arcRotateWheelDeltaPercentage:number = camera.metadata.properties.arcRotateWheelDeltaPercentage;
+                let arcFollowTarget:string = camera.metadata.properties.followTarget;
+                let arcRotateAlpha:number = camera.metadata.properties.arcRotateAlpha;
+                let arcRotateBeta:number = camera.metadata.properties.arcRotateBeta;
+                let arcRotateRadius:number = camera.metadata.properties.arcRotateRadius;
+                let arcRotateTarget:number[] = camera.metadata.properties.arcRotateTarget;
+                let arcRotateLowerRadiusLimit:number = camera.metadata.properties.arcRotateLowerRadiusLimit;
+                let arcRotateUpperRadiusLimit:number = camera.metadata.properties.arcRotateUpperRadiusLimit;
+                let arcRotateCollisionRadius:number[] = camera.metadata.properties.arcRotateCollisionRadius;
+                let arcRotateWheelDeltaPercentage:number = camera.metadata.properties.arcRotateWheelDeltaPercentage;
 
-                var cameraBridge:number = camera.metadata.properties.vrCameraBridge;
-                var cameraEyeToScreen:number = camera.metadata.properties.vrEyeToScreen;
-                var cameraInterpupillary:number = camera.metadata.properties.vrInterpupillary;
-                var cameraScreenCenter:number = camera.metadata.properties.vrScreenCenter;
-                var cameraVerticalRes:number = camera.metadata.properties.vrVerticalRes;
-                var cameraHorizontalRes:number = camera.metadata.properties.vrHorizontalRes;
-                var cameraVerticalScreen:number = camera.metadata.properties.vrVerticalScreen;
-                var cameraHorizontalScreen:number = camera.metadata.properties.vrHorizontalScreen;
-                var cameraLensCenterOffset:number = camera.metadata.properties.vrLensCenterOffset;
-                var cameraLensSeperation:number = camera.metadata.properties.vrLensSeparation;
-                var cameraPostProcessScale:number = camera.metadata.properties.vrPostProcessScale;
-                var cameraCompensateDistortion:boolean = camera.metadata.properties.vrCompensateDistortion;
+                let cameraBridge:number = camera.metadata.properties.vrCameraBridge;
+                let cameraEyeToScreen:number = camera.metadata.properties.vrEyeToScreen;
+                let cameraInterpupillary:number = camera.metadata.properties.vrInterpupillary;
+                let cameraScreenCenter:number = camera.metadata.properties.vrScreenCenter;
+                let cameraVerticalRes:number = camera.metadata.properties.vrVerticalRes;
+                let cameraHorizontalRes:number = camera.metadata.properties.vrHorizontalRes;
+                let cameraVerticalScreen:number = camera.metadata.properties.vrVerticalScreen;
+                let cameraHorizontalScreen:number = camera.metadata.properties.vrHorizontalScreen;
+                let cameraLensCenterOffset:number = camera.metadata.properties.vrLensCenterOffset;
+                let cameraLensSeperation:number = camera.metadata.properties.vrLensSeparation;
+                let cameraPostProcessScale:number = camera.metadata.properties.vrPostProcessScale;
+                let cameraCompensateDistortion:boolean = camera.metadata.properties.vrCompensateDistortion;
 
                 // Parse Camera Metadata Options
                 if (camera.metadata.properties.cameraType) {
-                    var cameraType:string = camera.metadata.properties.cameraType;
+                    let cameraType:string = camera.metadata.properties.cameraType;
                     if (cameraType === "UniversalCamera") {
                         if (camera.metadata.properties.mainCamera && camera.metadata.properties.localMultiPlayerViewCamera) {
-                            var mainCamera:BABYLON.Camera = camera;
-                            var mainCameraName = mainCamera.name;
-                            var playerElements:boolean = camera.metadata.properties.localMultiPlayerElements;
+                            let mainCamera:BABYLON.Camera = camera;
+                            let mainCameraName = mainCamera.name;
+                            let playerElements:boolean = camera.metadata.properties.localMultiPlayerElements;
                             // ..
-                            var playerTwoName:string = mainCameraName + ".2";
-                            var playerTwoCamera:BABYLON.Camera = mainCamera.clone(playerTwoName);
+                            let playerTwoName:string = mainCameraName + ".2";
+                            let playerTwoCamera:BABYLON.Camera = mainCamera.clone(playerTwoName);
                             playerTwoCamera.name = playerTwoName;
                             playerTwoCamera.viewport = new BABYLON.Viewport(0, 0, 0, 0);
                             playerTwoCamera.setEnabled(false);
                             BABYLON.SceneManager.GetInstance()._playerTwoCamera = playerTwoCamera;
                             //
-                            var playerThreeName:string = mainCameraName + ".3";
-                            var playerThreeCamera:BABYLON.Camera = mainCamera.clone(playerThreeName);
+                            let playerThreeName:string = mainCameraName + ".3";
+                            let playerThreeCamera:BABYLON.Camera = mainCamera.clone(playerThreeName);
                             playerThreeCamera.name = playerThreeName;
                             playerThreeCamera.viewport = new BABYLON.Viewport(0, 0, 0, 0);
                             playerThreeCamera.setEnabled(false);                            
                             BABYLON.SceneManager.GetInstance()._playerThreeCamera = playerThreeCamera;
                             // ..
-                            var playerFourName:string = mainCameraName + ".4";
-                            var playerFourCamera:BABYLON.Camera = mainCamera.clone(playerFourName);
+                            let playerFourName:string = mainCameraName + ".4";
+                            let playerFourCamera:BABYLON.Camera = mainCamera.clone(playerFourName);
                             playerFourCamera.name = playerFourName;
                             playerFourCamera.viewport = new BABYLON.Viewport(0, 0, 0, 0);
                             playerFourCamera.setEnabled(false);
@@ -4033,13 +4029,13 @@ module BABYLON {
                             // ..
                             
                             /* USE AS REFERENCE
-                            var playerTwoName:string = mainCameraName + ".2";
-                            var playerTwoCamera:BABYLON.Camera = mainCamera.clone(playerTwoName);
+                            let playerTwoName:string = mainCameraName + ".2";
+                            let playerTwoCamera:BABYLON.Camera = mainCamera.clone(playerTwoName);
                             playerTwoCamera.name = playerTwoName;
                             playerTwoCamera.viewport = new BABYLON.Viewport(0, 0, 0, 0);
                             playerTwoCamera.setEnabled(false);
                             BABYLON.SceneManager.GetInstance()._playerTwoCamera = playerTwoCamera;
-                            var playerTwoElement:HTMLDivElement = document.createElement("div");
+                            let playerTwoElement:HTMLDivElement = document.createElement("div");
                             playerTwoElement.id = "player_two";
                             playerTwoElement.style.position = "absolute";
                             playerTwoElement.style.top = "0px";
@@ -4058,13 +4054,13 @@ module BABYLON {
                             BABYLON.SceneManager.GetPlayElement().appendChild(playerTwoElement);
                             BABYLON.SceneManager.GetInstance()._playerTwoElement = playerTwoElement;
                             //
-                            var playerThreeName:string = mainCameraName + ".3";
-                            var playerThreeCamera:BABYLON.Camera = mainCamera.clone(playerThreeName);
+                            let playerThreeName:string = mainCameraName + ".3";
+                            let playerThreeCamera:BABYLON.Camera = mainCamera.clone(playerThreeName);
                             playerThreeCamera.name = playerThreeName;
                             playerThreeCamera.viewport = new BABYLON.Viewport(0, 0, 0, 0);
                             playerThreeCamera.setEnabled(false);                            
                             BABYLON.SceneManager.GetInstance()._playerThreeCamera = playerThreeCamera;
-                            var playerThreeElement:HTMLDivElement = document.createElement("div");
+                            let playerThreeElement:HTMLDivElement = document.createElement("div");
                             playerThreeElement.id = "player_three";
                             playerThreeElement.style.position = "absolute";
                             playerThreeElement.style.top = "0px";
@@ -4083,13 +4079,13 @@ module BABYLON {
                             BABYLON.SceneManager.GetPlayElement().appendChild(playerThreeElement);
                             BABYLON.SceneManager.GetInstance()._playerThreeElement = playerThreeElement;
                             // ..
-                            var playerFourName:string = mainCameraName + ".4";
-                            var playerFourCamera:BABYLON.Camera = mainCamera.clone(playerFourName);
+                            let playerFourName:string = mainCameraName + ".4";
+                            let playerFourCamera:BABYLON.Camera = mainCamera.clone(playerFourName);
                             playerFourCamera.name = playerFourName;
                             playerFourCamera.viewport = new BABYLON.Viewport(0, 0, 0, 0);
                             playerFourCamera.setEnabled(false);
                             BABYLON.SceneManager.GetInstance()._playerFourCamera = playerFourCamera;
-                            var playerFourElement:HTMLDivElement = document.createElement("div");
+                            let playerFourElement:HTMLDivElement = document.createElement("div");
                             playerFourElement.id = "player_four";
                             playerFourElement.style.position = "absolute";
                             playerFourElement.style.top = "0px";
@@ -4113,9 +4109,9 @@ module BABYLON {
                             BABYLON.SceneManager.multiPlayerView = true;                                
                         }
                     } else if (cameraType === "FollowCamera") {
-                        var followCamera:BABYLON.FollowCamera = camera as BABYLON.FollowCamera;
+                        let followCamera:BABYLON.FollowCamera = camera as BABYLON.FollowCamera;
                         if (followTarget != null && followTarget !== "") {
-                            var targetMesh:BABYLON.AbstractMesh = scene.getMeshByID(followTarget);
+                            let targetMesh:BABYLON.AbstractMesh = scene.getMeshByID(followTarget);
                             if (targetMesh != null) {
                                 followCamera.position = targetMesh.position.clone();
                                 followCamera.lockedTarget = targetMesh;
@@ -4128,9 +4124,9 @@ module BABYLON {
                         followCamera.cameraAcceleration = followCameraAcceleration;
                         followCamera.maxCameraSpeed = followMaxCameraSpeed;
                     } else if (cameraType === "ArcFollowCamera") {
-                        var arcFollowCamera:BABYLON.ArcFollowCamera = camera as BABYLON.ArcFollowCamera;
+                        let arcFollowCamera:BABYLON.ArcFollowCamera = camera as BABYLON.ArcFollowCamera;
                         if (arcFollowTarget != null && arcFollowTarget !== "") {
-                            var arcTargetMesh:BABYLON.AbstractMesh = scene.getMeshByID(arcFollowTarget);
+                            let arcTargetMesh:BABYLON.AbstractMesh = scene.getMeshByID(arcFollowTarget);
                             if (arcTargetMesh != null) {
                                 arcFollowCamera.position = arcTargetMesh.position.clone();
                                 arcFollowCamera.lockedTarget = arcTargetMesh;
@@ -4142,7 +4138,7 @@ module BABYLON {
                         arcFollowCamera.radius = arcRotateRadius;
                         //arcFollowCamera.radius = followRadius;
                     } else if (cameraType === "ArcRotateCamera") {
-                        var arcRotateCamera:BABYLON.ArcRotateCamera = camera as BABYLON.ArcRotateCamera;
+                        let arcRotateCamera:BABYLON.ArcRotateCamera = camera as BABYLON.ArcRotateCamera;
                         // Arc Rotate Camera Options
                         arcRotateCamera.alpha = arcRotateAlpha;
                         arcRotateCamera.beta = arcRotateBeta;
@@ -4150,19 +4146,20 @@ module BABYLON {
                         arcRotateCamera.target = BABYLON.Vector3.FromArray(arcRotateTarget);
                         arcRotateCamera.lowerRadiusLimit = arcRotateLowerRadiusLimit;
                         arcRotateCamera.upperRadiusLimit = arcRotateUpperRadiusLimit;
+                        arcRotateCamera.collisionRadius = BABYLON.Vector3.FromArray(arcRotateCollisionRadius);
                         arcRotateCamera.wheelDeltaPercentage = arcRotateWheelDeltaPercentage;
                     } else if (cameraType === "WebVRFreeCamera" || cameraType === "WebVRGamepadCamera") {
-                        var wvrDeviceCamera:BABYLON.WebVRFreeCamera = camera as BABYLON.WebVRFreeCamera;
-                        var cameraTrackPosition:number = camera.metadata.properties.wvrTrackPosition;
-                        var cameraPositionScale:number = camera.metadata.properties.wvrPositionScale;
-                        var cameraDisplayName:number = camera.metadata.properties.wvrDisplayName;
+                        let wvrDeviceCamera:BABYLON.WebVRFreeCamera = camera as BABYLON.WebVRFreeCamera;
+                        let cameraTrackPosition:number = camera.metadata.properties.wvrTrackPosition;
+                        let cameraPositionScale:number = camera.metadata.properties.wvrPositionScale;
+                        let cameraDisplayName:number = camera.metadata.properties.wvrDisplayName;
                         // TODO: WebVR Camera Rig Options
                     } else if (cameraType === "VRDeviceOrientationFreeCamera" || cameraType === "VRDeviceOrientationGamepadCamera") {
                         // VR Device Camera Options
-                        var vrDeviceCamera:BABYLON.VRDeviceOrientationFreeCamera = camera as BABYLON.VRDeviceOrientationFreeCamera;
-                        var viewWidth:number = 0.5 - cameraBridge;
-                        var viewOffset:number = 0.5 + cameraBridge;
-                        var viewMetrics:VRCameraMetrics = BABYLON.VRCameraMetrics.GetDefault();
+                        let vrDeviceCamera:BABYLON.VRDeviceOrientationFreeCamera = camera as BABYLON.VRDeviceOrientationFreeCamera;
+                        let viewWidth:number = 0.5 - cameraBridge;
+                        let viewOffset:number = 0.5 + cameraBridge;
+                        let viewMetrics:VRCameraMetrics = BABYLON.VRCameraMetrics.GetDefault();
                         viewMetrics.eyeToScreenDistance = cameraEyeToScreen;
                         viewMetrics.interpupillaryDistance = cameraInterpupillary;
                         viewMetrics.lensSeparationDistance = cameraLensSeperation;
@@ -4183,19 +4180,19 @@ module BABYLON {
                 }
                 // Check Orthographic Camera Mode
                 if (camera.mode === BABYLON.Camera.ORTHOGRAPHIC_CAMERA) {
-                    var size:number = camera.metadata.properties.orthographicSize || 5;
-                    var klass:string = "BABYLON.OrthoController";
-                    var resize:boolean = (scene.metadata != null && scene.metadata.properties != null && scene.metadata.properties.hasOwnProperty("resizeCameras")) ? scene.metadata.properties.resizeCameras : true;
-                    var metadata: BABYLON.IObjectMetadata = camera.metadata as BABYLON.IObjectMetadata;
+                    let size:number = camera.metadata.properties.orthographicSize || 5;
+                    let klass:string = "BABYLON.OrthoController";
+                    let resize:boolean = (scene.metadata != null && scene.metadata.properties != null && scene.metadata.properties.hasOwnProperty("resizeCameras")) ? scene.metadata.properties.resizeCameras : true;
+                    let metadata: BABYLON.IObjectMetadata = camera.metadata as BABYLON.IObjectMetadata;
                     if (metadata.components == null) {
                         metadata.components = [];
                     }
-                    var OrthoComponentClass = BABYLON.Tools.Instantiate(klass);
+                    let OrthoComponentClass = BABYLON.Tools.Instantiate(klass);
                     if (OrthoComponentClass != null) {
-                        var bag:any = { orthoSize: size, resizeCameras: resize };
-                        var ortho:BABYLON.SceneComponent = new OrthoComponentClass(camera, scene, false, bag);
+                        let bag:any = { orthoSize: size, resizeCameras: resize };
+                        let ortho:BABYLON.SceneComponent = new OrthoComponentClass(camera, scene, false, bag);
                         if (ortho != null) {
-                            var compscript: BABYLON.IScriptComponent = {
+                            let compscript: BABYLON.IScriptComponent = {
                                 order: 1000,
                                 name: "EditorScriptComponent",
                                 klass: klass,
@@ -4217,13 +4214,13 @@ module BABYLON {
         // ********************************** //
         
         public static LocateOwnerSocketMesh(name:string, owner: BABYLON.AbstractMesh, searchType:BABYLON.SearchType = BABYLON.SearchType.StartsWith):BABYLON.Mesh {
-            var result:BABYLON.Mesh = null;
+            let result:BABYLON.Mesh = null;
             if (owner != null && owner.metadata && owner.metadata != null && owner.metadata.socketList && owner.metadata.socketList != null && owner.metadata.socketList.length > 0) {
-                var sockets:BABYLON.ISocketData[] = owner.metadata.socketList;
-                var search:BABYLON.SearchType = (searchType != null) ? searchType : BABYLON.SearchType.StartsWith;
-                var index:number = 0;
+                let sockets:BABYLON.ISocketData[] = owner.metadata.socketList;
+                let search:BABYLON.SearchType = (searchType != null) ? searchType : BABYLON.SearchType.StartsWith;
+                let index:number = 0;
                 for(index = 0; index < sockets.length; index++) {
-                    var socket:BABYLON.ISocketData = sockets[index];
+                    let socket:BABYLON.ISocketData = sockets[index];
                     if (search === BABYLON.SearchType.StartsWith) {
                         if (BABYLON.Utilities.StartsWith(socket.boneName, name)) {
                             result = socket.socketMesh;
@@ -4250,10 +4247,10 @@ module BABYLON {
             return result;
         }
         public static LocateOwnerSocketMeshes(owner: BABYLON.AbstractMesh):BABYLON.Mesh[] {
-            var result:BABYLON.Mesh[] = null;
+            let result:BABYLON.Mesh[] = null;
             if (owner != null && owner.metadata && owner.metadata != null && owner.metadata.socketList && owner.metadata.socketList != null && owner.metadata.socketList.length > 0) {
                 result = [];
-                var sockets:BABYLON.ISocketData[] = owner.metadata.socketList;
+                let sockets:BABYLON.ISocketData[] = owner.metadata.socketList;
                 sockets.forEach((socket) => {
                     result.push(socket.socketMesh);                    
                 });
@@ -4261,11 +4258,11 @@ module BABYLON {
             return result;
         }
         public static LocateOwnerAnimationTrack(index:number, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, directDecendantsOnly:boolean = true, predicate:(node:BABYLON.Node)=>boolean = null):BABYLON.Animation {
-            var result:BABYLON.Animation = null;
+            let result:BABYLON.Animation = null;
             if (owner != null && owner instanceof BABYLON.AbstractMesh) {
-                var mesh:BABYLON.AbstractMesh = owner as BABYLON.AbstractMesh;
+                let mesh:BABYLON.AbstractMesh = owner as BABYLON.AbstractMesh;
                 if (mesh.skeleton != null && mesh.skeleton.bones != null && mesh.skeleton.bones.length > 0 && mesh.skeleton.bones[0]) {
-                    var bone:BABYLON.Bone = mesh.skeleton.bones[0];
+                    let bone:BABYLON.Bone = mesh.skeleton.bones[0];
                     if (bone.animations != null && bone.animations.length > index && bone.animations[index] != null) {
                         result = bone.animations[index];
                     }
@@ -4275,12 +4272,12 @@ module BABYLON {
                 result = owner.animations[index];
             }
             if (result == null && owner instanceof BABYLON.AbstractMesh) {
-                var children:BABYLON.AbstractMesh[] = owner.getChildMeshes(directDecendantsOnly, predicate);
+                let children:BABYLON.AbstractMesh[] = owner.getChildMeshes(directDecendantsOnly, predicate);
                 if (children != null && children.length > 0) {
-                    for (var i:number = 0; i < children.length; i++) {
-                        var child:BABYLON.AbstractMesh = children[i];
+                    for (let i:number = 0; i < children.length; i++) {
+                        let child:BABYLON.AbstractMesh = children[i];
                         if (child.skeleton != null && child.skeleton.bones != null && child.skeleton.bones.length > 0 && child.skeleton.bones[0]) {
-                            var cbone:BABYLON.Bone = child.skeleton.bones[0];
+                            let cbone:BABYLON.Bone = child.skeleton.bones[0];
                             if (cbone.animations != null && cbone.animations.length > index && cbone.animations[index] != null) {
                                 result = cbone.animations[index];
                                 break;
@@ -4302,7 +4299,7 @@ module BABYLON {
 
         public static DestroyComponents(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, destroyMetadata: boolean = true): void {
             if (owner != null && owner.metadata != null && owner.metadata.api) {
-                var metadata: BABYLON.IObjectMetadata = owner.metadata as BABYLON.IObjectMetadata;
+                let metadata: BABYLON.IObjectMetadata = owner.metadata as BABYLON.IObjectMetadata;
                 if (metadata.components != null && metadata.components.length > 0) {
                     metadata.components.forEach((ownerscript) => {
                         if (ownerscript.instance != null) {
@@ -4345,9 +4342,9 @@ module BABYLON {
         
         public static DisposeOwner(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light)
         {
-            var nx:string = owner.name
+            let nx:string = owner.name
             if (owner instanceof BABYLON.AbstractMesh) {
-                var mesh:BABYLON.AbstractMesh = owner as BABYLON.AbstractMesh;
+                let mesh:BABYLON.AbstractMesh = owner as BABYLON.AbstractMesh;
                 if (mesh.physicsImpostor != null) {
                     mesh.physicsImpostor.dispose();
                     mesh.physicsImpostor = null;
@@ -4362,8 +4359,8 @@ module BABYLON {
 
         public static SetAnimationLooping(owner:BABYLON.IAnimatable, loopBehavior:number): void {
             if (owner != null && owner.animations != null && owner.animations.length > 0) {
-                var animations = owner.animations;
-                for (var index = 0; index < animations.length; index++) {
+                let animations = owner.animations;
+                for (let index = 0; index < animations.length; index++) {
                     animations[index].loopMode = loopBehavior;
                 }
             }
@@ -4398,11 +4395,11 @@ module BABYLON {
         // *********************************** //
 
         public static FindMesh(name:string, meshes:BABYLON.AbstractMesh[], searchType:BABYLON.SearchType = BABYLON.SearchType.StartsWith):BABYLON.AbstractMesh {
-            var result:BABYLON.AbstractMesh = null;
-            var search:BABYLON.SearchType = (searchType != null) ? searchType : BABYLON.SearchType.StartsWith;
+            let result:BABYLON.AbstractMesh = null;
+            let search:BABYLON.SearchType = (searchType != null) ? searchType : BABYLON.SearchType.StartsWith;
             if (meshes != null && meshes.length > 0) {
-                for (var i:number = 0; i < meshes.length; i++) {
-                    var mesh:BABYLON.AbstractMesh = meshes[i];
+                for (let i:number = 0; i < meshes.length; i++) {
+                    let mesh:BABYLON.AbstractMesh = meshes[i];
                     if (search === BABYLON.SearchType.StartsWith) {
                         if (BABYLON.Utilities.StartsWith(mesh.name, name)) {
                             result = mesh;
@@ -4446,51 +4443,51 @@ module BABYLON {
         }
 
         public static CloneMetadata(source:BABYLON.IObjectMetadata): BABYLON.IObjectMetadata {
-            var result:BABYLON.IObjectMetadata = null;
+            let result:BABYLON.IObjectMetadata = null;
             if (source != null) {
-                var new_properties:any = {};
+                let new_properties:any = {};
                 BABYLON.SceneManager.DeepCopyProperties(source.properties, new_properties);
                 
-                var new_navagent:any = {};
+                let new_navagent:any = {};
                 BABYLON.SceneManager.DeepCopyProperties(source.navAgent, new_navagent);
 
-                var new_meshlink:any = {};
+                let new_meshlink:any = {};
                 BABYLON.SceneManager.DeepCopyProperties(source.meshLink, new_meshlink);
 
-                var new_meshobstacle:any = {};
+                let new_meshobstacle:any = {};
                 BABYLON.SceneManager.DeepCopyProperties(source.meshObstacle, new_meshobstacle);
                 
-                var new_socketlist:any[] = [];
+                let new_socketlist:any[] = [];
                 if (source.socketList != null && source.socketList.length > 0) {
                     source.socketList.forEach((socket) => {
-                        var new_socket_properties:any = {};
+                        let new_socket_properties:any = {};
                         BABYLON.SceneManager.DeepCopyProperties(socket, new_socket_properties);
                         new_socketlist.push(new_socket_properties);
                     });
                 }
                
-                var new_animationClips:any[] = [];
+                let new_animationClips:any[] = [];
                 if (source.animationClips != null && source.animationClips.length > 0) {
                     source.animationClips.forEach((clip) => {
-                        var new_clip_properties:any = {};
+                        let new_clip_properties:any = {};
                         BABYLON.SceneManager.DeepCopyProperties(clip, new_clip_properties);
                         new_animationClips.push(new_clip_properties);
                     });
                 }
 
-                var new_animationevents:any[] = [];
+                let new_animationevents:any[] = [];
                 if (source.animationEvents != null && source.animationEvents.length > 0) {
                     source.animationEvents.forEach((evt) => {
-                        var new_event_properties:any = {};
+                        let new_event_properties:any = {};
                         BABYLON.SceneManager.DeepCopyProperties(evt, new_event_properties);
                         new_animationevents.push(new_event_properties);
                     });
                 }
 
-                var new_components:BABYLON.IScriptComponent[] = [];
+                let new_components:BABYLON.IScriptComponent[] = [];
                 if (source.components != null && source.components.length > 0) {
                     source.components.forEach((comp) => {
-                        var new_comp_properties:any = {};
+                        let new_comp_properties:any = {};
                         BABYLON.SceneManager.DeepCopyProperties(comp.properties, new_comp_properties);
                         new_components.push({ name: comp.name, klass: comp.klass, order:comp.order, tag: comp.tag, update: comp.update, properties: new_comp_properties, instance: null });
                     });
@@ -4524,7 +4521,7 @@ module BABYLON {
         }
 
         public static DeepCopyProperties(source:any, destination:any, doNotCopyList?: string[], mustCopyList?: string[]): void {
-            for (var prop in source) {
+            for (let prop in source) {
 
                 if (prop[0] === "_" && (!mustCopyList || mustCopyList.indexOf(prop) === -1)) {
                     continue;
@@ -4533,8 +4530,8 @@ module BABYLON {
                 if (doNotCopyList && doNotCopyList.indexOf(prop) !== -1) {
                     continue;
                 }
-                var sourceValue = source[prop];
-                var typeOfSourceValue = typeof sourceValue;
+                let sourceValue = source[prop];
+                let typeOfSourceValue = typeof sourceValue;
 
                 if (typeOfSourceValue === "function") {
                     continue;
@@ -4546,8 +4543,8 @@ module BABYLON {
 
                         if (sourceValue.length > 0) {
                             if (typeof sourceValue[0] == "object") {
-                                for (var index = 0; index < sourceValue.length; index++) {
-                                    var clonedValue = BABYLON.SceneManager.CloneValue(sourceValue[index], destination);
+                                for (let index = 0; index < sourceValue.length; index++) {
+                                    let clonedValue = BABYLON.SceneManager.CloneValue(sourceValue[index], destination);
                                     if (destination[prop].indexOf(clonedValue) === -1) { // Test if auto inject was not done
                                         destination[prop].push(clonedValue);
                                     }
@@ -4607,7 +4604,7 @@ module BABYLON {
         /** Is xbox live user signed in if platform services enabled. */
         public static IsXboxLiveUserSignedIn(systemUser: Windows.System.User = null, player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One): boolean {
             if (BABYLON.SceneManager.IsXboxLivePluginEnabled()) {
-                var user: Microsoft.Xbox.Services.System.XboxLiveUser = (systemUser != null) ? BABYLON.SceneManager.GetXboxLiveSystemUser(systemUser, player) : BABYLON.SceneManager.GetXboxLiveUser(player);
+                let user: Microsoft.Xbox.Services.System.XboxLiveUser = (systemUser != null) ? BABYLON.SceneManager.GetXboxLiveSystemUser(systemUser, player) : BABYLON.SceneManager.GetXboxLiveUser(player);
                 return (user != null && user.isSignedIn == true);
             } else {
                 return false;
@@ -4646,7 +4643,7 @@ module BABYLON {
        
         /** Get xbox live user if platform services available. */
         public static GetXboxLiveUser(player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One): Microsoft.Xbox.Services.System.XboxLiveUser {
-            var user: Microsoft.Xbox.Services.System.XboxLiveUser = null;
+            let user: Microsoft.Xbox.Services.System.XboxLiveUser = null;
             if (BABYLON.SceneManager.IsXboxLivePluginEnabled()) {
                 switch (player) {
                     case BABYLON.PlayerNumber.One:
@@ -4667,7 +4664,7 @@ module BABYLON {
         }
         /** Get xbox live user if platform services available. */
         public static GetXboxLiveSystemUser(systemUser: Windows.System.User, player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One): Microsoft.Xbox.Services.System.XboxLiveUser {
-            var user: Microsoft.Xbox.Services.System.XboxLiveUser = null;
+            let user: Microsoft.Xbox.Services.System.XboxLiveUser = null;
             if (BABYLON.SceneManager.IsXboxLivePluginEnabled()) {
                 switch (player) {
                     case BABYLON.PlayerNumber.One:
@@ -4688,7 +4685,7 @@ module BABYLON {
         }
         /** Get xbox live user context if platform services available. */
         public static GetXboxLiveUserContext(player:BABYLON.PlayerNumber = BABYLON.PlayerNumber.One): Microsoft.Xbox.Services.XboxLiveContext {
-            var context: Microsoft.Xbox.Services.XboxLiveContext = null;
+            let context: Microsoft.Xbox.Services.XboxLiveContext = null;
             if (BABYLON.SceneManager.IsXboxLivePluginEnabled()) {
                 switch (player) {
                     case BABYLON.PlayerNumber.One:

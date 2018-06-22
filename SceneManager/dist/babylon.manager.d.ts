@@ -253,6 +253,8 @@ declare module BABYLON {
         static OnDeviceReady(func: () => any): void;
         /** Registers a function handler to be executed when scene is ready. */
         static ExecuteWhenReady(func: (scene: BABYLON.Scene, manager: BABYLON.SceneManager) => void): void;
+        /** Is internet explorer 11 platform agent. */
+        static IsIE11(): boolean;
         /** Is windows phone platform agent. */
         static IsWindowsPhone(): boolean;
         /** Is blackberry web platform agent. */
@@ -318,7 +320,6 @@ declare module BABYLON {
         private static AuxMatrix;
         private static AuxVector2;
         private static AuxVector3;
-        private _ie;
         private _url;
         private _time;
         private _timing;
@@ -465,7 +466,6 @@ declare module BABYLON {
         private static gamepad4LeftTrigger;
         private static gamepad4RightTrigger;
         private static loader;
-        readonly ie: boolean;
         readonly time: number;
         readonly deltaTime: number;
         getScene(): BABYLON.Scene;
@@ -578,11 +578,13 @@ declare module BABYLON {
         /** Checks collision contact of the owner using physics imposter. */
         checkCollisionContact(owner: BABYLON.AbstractMesh, collider: BABYLON.AbstractMesh, contact: BABYLON.CollisionContact, threashold?: number): boolean;
         /** Moves owner using collisions. */
-        moveWithCollisions(owner: BABYLON.AbstractMesh, velocity: BABYLON.Vector3, rotation?: number): void;
+        moveWithCollisions(owner: BABYLON.AbstractMesh, velocity: BABYLON.Vector3): void;
         /** Moves owner using positions. */
-        moveWithTranslation(owner: BABYLON.AbstractMesh, velocity: BABYLON.Vector3, rotation?: number): void;
+        moveWithTranslation(owner: BABYLON.AbstractMesh, velocity: BABYLON.Vector3): void;
+        /** Turns owner using rotations. */
+        turnWithRotation(owner: BABYLON.AbstractMesh, rotation?: number): void;
         /** Adds a managed scene component to the scene. */
-        addSceneComponent(klass: string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, enableUpdate?: boolean, propertyBag?: any): BABYLON.SceneComponent;
+        addSceneComponent(comp: BABYLON.SceneComponent, klass: string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, enableUpdate?: boolean, propertyBag?: any): void;
         /** Finds a scene component in the scene with the specfied klass name. */
         findSceneComponent<T extends BABYLON.SceneComponent>(klass: string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): T;
         /** Finds all scene components in the scene with the specfied klass name. */
@@ -796,12 +798,11 @@ declare module BABYLON {
         protected update(): void;
         protected after(): void;
         protected destroy(): void;
-        private _engine;
-        private _scene;
+        /** TODO: Optimize render loop with instances */
         private _before;
         private _after;
-        private _started;
-        private _initialized;
+        private _engine;
+        private _scene;
         private _properties;
         private _manager;
         protected owned: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light;
@@ -817,11 +818,11 @@ declare module BABYLON {
         getComponents<T extends BABYLON.SceneComponent>(klass: string): T[];
         getLensFlareSystem(flareName: string): BABYLON.LensFlareSystem;
         getLensFlareSystems(): BABYLON.LensFlareSystem[];
-        private init();
-        private registerInstance(instance);
-        private updateInstance(instance);
-        private afterInstance(instance);
-        static DestroyInstance(instance: any): void;
+        /** TODO: Optimize render loop with instances */
+        private registerInstance(me);
+        private updateInstance(me);
+        private afterInstance(me);
+        static DestroyInstance(me: any): void;
     }
     abstract class CameraComponent extends BABYLON.SceneComponent {
         private _camera;
@@ -871,21 +872,6 @@ declare module BABYLON {
         private updateIntersectionList();
         /*************************************/
         /*************************************/
-        private disposeSceneComponent();
-    }
-    class GenericComponent extends BABYLON.SceneComponent {
-        onready: () => void;
-        onstart: () => void;
-        onupdate: () => void;
-        onafter: () => void;
-        ondestroy: () => void;
-        constructor(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, scene: BABYLON.Scene, tick?: boolean, propertyBag?: any);
-        getOwner(): BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light;
-        protected ready(): void;
-        protected start(): void;
-        protected update(): void;
-        protected after(): void;
-        protected destroy(): void;
         private disposeSceneComponent();
     }
     class OrthoController extends BABYLON.CameraComponent {
@@ -1527,7 +1513,6 @@ declare module BABYLON {
         start(): void;
         stop(): void;
         dispose(): void;
-        private readonly internalScene;
         private internalPlay(delay?, min?, max?);
         private internalCycle();
         private internalStart(min, max);

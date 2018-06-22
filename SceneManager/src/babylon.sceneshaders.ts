@@ -50,7 +50,10 @@ module BABYLON {
         private _destroy: () => void = null;
         private initializeInstance() : void {
             this._started = false;
-            var me: BABYLON.UniversalPushMaterial = this;
+            // ..
+            // TODO: Optimize life-cycle instance Handling
+            // ..
+            const me: BABYLON.UniversalPushMaterial = this;
             me._register = function () { me.registerInstance(me); };
             me._before = function () { me.updateInstance(me); };
             me._after = function () { me.afterInstance(me); };
@@ -261,14 +264,14 @@ module BABYLON {
             this._locals.resetDefines();
             this.define(this._locals);
             // Custom shader properties
-            var needUVs = false;
-            var scene = this.getScene();
+            let needUVs = false;
+            let scene = this.getScene();
             if (scene.texturesEnabled) {
-                var name: string;
-                var ready:boolean = true;
+                let name: string;
+                let ready:boolean = true;
                 // Check all texture items
                 for (name in this._textures) {
-                    var texture:BABYLON.BaseTexture = this._textures[name];
+                    let texture:BABYLON.BaseTexture = this._textures[name];
                     if (texture && texture.isReadyOrNotBlocking()) {
                         needUVs = true;
                         this._locals.defineBoolean(name + "Def");
@@ -284,9 +287,9 @@ module BABYLON {
                 // Check all texture array items
                 for (name in this._textureArrays) {
                     this._locals.defineBoolean(name + "Def");
-                    var array = this._textureArrays[name];
-                    for (var index = 0; index < array.length; index++) {
-                        var texture_x:BABYLON.Texture = array[index];
+                    let array = this._textureArrays[name];
+                    for (let index = 0; index < array.length; index++) {
+                        let texture_x:BABYLON.Texture = array[index];
                         if (texture_x && texture_x.isReadyOrNotBlocking()) {
                             needUVs = true;
                         } else {
@@ -300,19 +303,19 @@ module BABYLON {
         }
 
         public getAnimatables(): IAnimatable[] {
-            var results = super.getAnimatables();
+            let results = super.getAnimatables();
             // Custom shader properties
-            var name: string;
+            let name: string;
             for (name in this._textures) {
-                var texture:BABYLON.Texture = this._textures[name];
+                let texture:BABYLON.Texture = this._textures[name];
                 if (texture) {
                     results.push(texture);
                 }
             }
             for (name in this._textureArrays) {
-                var array = this._textureArrays[name];
-                for (var index = 0; index < array.length; index++) {
-                    var texture:BABYLON.Texture = array[index];
+                let array = this._textureArrays[name];
+                for (let index = 0; index < array.length; index++) {
+                    let texture:BABYLON.Texture = array[index];
                     if (texture) {
                         results.push(texture);
                     }
@@ -322,19 +325,19 @@ module BABYLON {
         }
 
         public getActiveTextures(): BaseTexture[] {
-            var results = super.getActiveTextures();
+            let results = super.getActiveTextures();
             // Custom shader properties
-            var name: string;
+            let name: string;
             for (name in this._textures) {
-                var texture:BABYLON.Texture = this._textures[name];
+                let texture:BABYLON.Texture = this._textures[name];
                 if (texture) {
                     results.push(texture);
                 }
             }
             for (name in this._textureArrays) {
-                var array = this._textureArrays[name];
-                for (var index = 0; index < array.length; index++) {
-                    var texture:BABYLON.Texture = array[index];
+                let array = this._textureArrays[name];
+                for (let index = 0; index < array.length; index++) {
+                    let texture:BABYLON.Texture = array[index];
                     if (texture) {
                         results.push(texture);
                     }
@@ -348,10 +351,10 @@ module BABYLON {
                 return true;
             }
             // Custom shader properties
-            var name: string;
-            var found:boolean = false;
+            let name: string;
+            let found:boolean = false;
             for (name in this._textures) {
-                var tex:BABYLON.Texture = this._textures[name];
+                let tex:BABYLON.Texture = this._textures[name];
                 if (tex && tex === texture) {
                     found = true;
                     break;
@@ -359,9 +362,9 @@ module BABYLON {
             }
             if (found === false) {
                 for (name in this._textureArrays) {
-                    var array = this._textureArrays[name];
-                    for (var index = 0; index < array.length; index++) {
-                        var tx2:BABYLON.Texture = array[index];
+                    let array = this._textureArrays[name];
+                    for (let index = 0; index < array.length; index++) {
+                        let tx2:BABYLON.Texture = array[index];
                         if (tx2 && tx2 === texture) {
                             found = true;
                             break;
@@ -376,20 +379,20 @@ module BABYLON {
         /* Shader Material Factory Class Functions */
 
         public clone(name: string): BABYLON.UniversalShaderMaterial {
-            var result = BABYLON.SerializationHelper.Clone(() => new BABYLON.UniversalShaderMaterial(name, this.getScene()), this);
+            let result = BABYLON.SerializationHelper.Clone(() => new BABYLON.UniversalShaderMaterial(name, this.getScene()), this);
             BABYLON.UniversalShaderMaterial.CloneCustomProperties(this, result);            
             return result;
         }
 
         public serialize(): any {
-            var serializationObject = BABYLON.SerializationHelper.Serialize(this);
+            let serializationObject = BABYLON.SerializationHelper.Serialize(this);
             serializationObject.customType = "BABYLON.UniversalShaderMaterial";
             BABYLON.UniversalShaderMaterial.SerializeCustomProperties(this, serializationObject);            
             return serializationObject;
         }
 
         public static Parse(source: any, scene: BABYLON.Scene, rootUrl: string): BABYLON.UniversalShaderMaterial {
-            var material =  BABYLON.SerializationHelper.Parse(() => new BABYLON.UniversalShaderMaterial(source.name, scene), source, scene, rootUrl);
+            let material =  BABYLON.SerializationHelper.Parse(() => new BABYLON.UniversalShaderMaterial(source.name, scene), source, scene, rootUrl);
             BABYLON.UniversalShaderMaterial.ParseCustomProperties(material, source, scene, rootUrl);
             return material;
         }
@@ -399,10 +402,10 @@ module BABYLON {
         public static CloneCustomProperties(material: UniversalShaderMaterial, destination:UniversalShaderMaterial): void {
             if (material != null && destination != null) {
                 // Custom shader properties
-                var name: string;
+                let name: string;
                 destination._textures = {};
                 for (name in material._textures) {
-                    var texture:BABYLON.Texture = material._textures[name];
+                    let texture:BABYLON.Texture = material._textures[name];
                     if (texture) {
                         destination.setTexture(name, texture.clone());
                     }
@@ -411,9 +414,9 @@ module BABYLON {
                 destination._textureArrays = {};
                 for (name in material._textureArrays) {
                     destination._textureArrays[name] = [];
-                    var array = material._textureArrays[name];
-                    var textureArray = new Array<Texture>();
-                    for (var index = 0; index < array.length; index++) {
+                    let array = material._textureArrays[name];
+                    let textureArray = new Array<Texture>();
+                    for (let index = 0; index < array.length; index++) {
                         textureArray.push(array[index].clone());
                     }
                     destination.setTextureArray(name, textureArray);
@@ -479,10 +482,10 @@ module BABYLON {
         public static SerializeCustomProperties(material: UniversalShaderMaterial, serializationObject:any): void {
             if (serializationObject != null && material != null) {
                 // Custom shader properties
-                var name: string;
+                let name: string;
                 serializationObject.textures = {};
                 for (name in material._textures) {
-                    var texture:BABYLON.Texture = material._textures[name];
+                    let texture:BABYLON.Texture = material._textures[name];
                     if (texture) {
                         serializationObject.textures[name] = texture.serialize();
                     }
@@ -491,8 +494,8 @@ module BABYLON {
                 serializationObject.textureArrays = {};
                 for (name in material._textureArrays) {
                     serializationObject.textureArrays[name] = [];
-                    var array = material._textureArrays[name];
-                    for (var index = 0; index < array.length; index++) {
+                    let array = material._textureArrays[name];
+                    for (let index = 0; index < array.length; index++) {
                         serializationObject.textureArrays[name].push(array[index].serialize());
                     }
                 }
@@ -556,18 +559,18 @@ module BABYLON {
         
         public static ParseCustomProperties(material: UniversalShaderMaterial, source:any, scene: BABYLON.Scene, rootUrl: string): void {
             if (source != null && material != null) {
-                var name: string;
+                let name: string;
                 for (name in source.textures) {
-                    var texture:BABYLON.Texture = source.textures[name];
+                    let texture:BABYLON.Texture = source.textures[name];
                     if (texture) {
                         material.setTexture(name, <BABYLON.Texture>Texture.Parse(texture, scene, rootUrl));
                     }
                 }
                 // Arrays
                 for (name in source.textureArrays) {
-                    var array = source.textureArrays[name];
-                    var textureArray = new Array<Texture>();
-                    for (var index = 0; index < array.length; index++) {
+                    let array = source.textureArrays[name];
+                    let textureArray = new Array<Texture>();
+                    for (let index = 0; index < array.length; index++) {
                         textureArray.push(<Texture>Texture.Parse(array[index], scene, rootUrl));
                     }
                     material.setTextureArray(name, textureArray);
@@ -652,19 +655,19 @@ module BABYLON {
                 this.program = "default";
             }
             // Attach Property Defines
-            var locals:any = this._locals.getDefines();
+            let locals:any = this._locals.getDefines();
             if (locals != null) {
-                var keys:string[] = Object.keys(locals);
+                let keys:string[] = Object.keys(locals);
                 if (keys != null && keys.length > 0) {
-                    var source:any = defines;
-                    for (var key of keys) {
+                    let source:any = defines;
+                    for (let key of keys) {
                         source[key] = locals[key];
                     }
                     defines.rebuild();
                 }
             }
             // Attach Property Uniforms
-            var index:number = 0;
+            let index:number = 0;
             if (this._uniforms != null && this._uniforms.length > 0) {
                 for (index = 0; index < this._uniforms.length; index++) {
                     uniforms.push(this._uniforms[index]);
@@ -678,7 +681,7 @@ module BABYLON {
                 }
             }
             // Attach Property Bindings
-            var fn_afterBind = this._afterBind;
+            let fn_afterBind = this._afterBind;
             this._afterBind = (mesh:BABYLON.Mesh, effect:BABYLON.Effect) => { 
                 this._attachAfterBind(mesh, effect);
                 if (fn_afterBind) try{ fn_afterBind(mesh, effect); }catch(e){};
@@ -687,12 +690,12 @@ module BABYLON {
         }
 
         public _attachAfterBind(mesh:BABYLON.Mesh, effect:BABYLON.Effect):void  {
-            var scene:BABYLON.Scene = this.getScene();
+            let scene:BABYLON.Scene = this.getScene();
             // Custom shader properties
-            var name: string;
+            let name: string;
             if (scene.texturesEnabled) {
                 for (name in this._textures) {
-                    var texture:BABYLON.Texture = this._textures[name];
+                    let texture:BABYLON.Texture = this._textures[name];
                     if (texture) {
                         effect.setTexture(name, texture);
                         effect.setFloat2(name + "Infos", texture.coordinatesIndex, texture.level);
@@ -721,7 +724,7 @@ module BABYLON {
             }
             // Color4      
             for (name in this._colors4) {
-                var color = this._colors4[name];
+                let color = this._colors4[name];
                 effect.setFloat4(name, color.r, color.g, color.b, color.a);
             }
             // Vector2        
@@ -766,7 +769,7 @@ module BABYLON {
         
         private initializeInstance() : void {
             this._started = false;
-            var me: BABYLON.UniversalShaderMaterial = this;
+            let me: BABYLON.UniversalShaderMaterial = this;
             me._register = function () { me.registerInstance(me); };
             me._before = function () { me.updateInstance(me); };
             me._after = function () { me.afterInstance(me); };
@@ -808,17 +811,17 @@ module BABYLON {
         public dispose(forceDisposeEffect?: boolean, forceDisposeTextures?: boolean): void {
             if (forceDisposeTextures) {
                 // Custom shader properties
-                var name: string;
+                let name: string;
                 for (name in this._textures) {
-                    var texture:BABYLON.Texture = this._textures[name];
+                    let texture:BABYLON.Texture = this._textures[name];
                     if (texture) {
                         texture.dispose();
                     }
                     this._textures[name] = null;
                 }
                 for (name in this._textureArrays) {
-                    var array = this._textureArrays[name];
-                    for (var index = 0; index < array.length; index++) {
+                    let array = this._textureArrays[name];
+                    for (let index = 0; index < array.length; index++) {
                         array[index].dispose();
                     }
                 }
@@ -838,8 +841,8 @@ module BABYLON {
         constructor(name: string, scene: BABYLON.Scene, tick:boolean = true) {
             super(name, scene, tick);
             this.program = "splatmap";
-            var engine = scene.getEngine();
-            var caps:BABYLON.EngineCapabilities = engine.getCaps();
+            let engine = scene.getEngine();
+            let caps:BABYLON.EngineCapabilities = engine.getCaps();
             this._totalTexturesLoaded = 0;
             this._maxTexturesImageUnits = caps.maxTexturesImageUnits;
         }
@@ -858,13 +861,13 @@ module BABYLON {
             if (this.opacityTexture) this._totalTexturesLoaded++;
             if (this.refractionTexture) this._totalTexturesLoaded++;
             if (this.cameraColorGradingTexture) this._totalTexturesLoaded++;
-            var name: string;
+            let name: string;
             for (name in this.textures) {
-                var texture:BABYLON.Texture = this.textures[name];
+                let texture:BABYLON.Texture = this.textures[name];
                 if (texture) this._totalTexturesLoaded++;
             }
             for (name in this.textureArray) {
-                var textures:BABYLON.Texture[] = this.textureArray[name];
+                let textures:BABYLON.Texture[] = this.textureArray[name];
                 if (textures) {
                     textures.forEach((texture) => {
                         if (texture) this._totalTexturesLoaded++;
@@ -887,20 +890,20 @@ module BABYLON {
         /* Shader Material Factory Class Functions */
 
         public clone(name: string): BABYLON.UniversalTerrainMaterial {
-            var result = BABYLON.SerializationHelper.Clone(() => new BABYLON.UniversalTerrainMaterial(name, this.getScene()), this);
+            let result = BABYLON.SerializationHelper.Clone(() => new BABYLON.UniversalTerrainMaterial(name, this.getScene()), this);
             BABYLON.UniversalShaderMaterial.CloneCustomProperties(this, result);            
             return result;
         }
 
         public serialize(): any {
-            var serializationObject = BABYLON.SerializationHelper.Serialize(this);
+            let serializationObject = BABYLON.SerializationHelper.Serialize(this);
             serializationObject.customType = "BABYLON.UniversalTerrainMaterial";
             BABYLON.UniversalShaderMaterial.SerializeCustomProperties(this, serializationObject);            
             return serializationObject;
         }
 
         public static Parse(source: any, scene: BABYLON.Scene, rootUrl: string): BABYLON.UniversalTerrainMaterial {
-            var material = BABYLON.SerializationHelper.Parse(() => new BABYLON.UniversalTerrainMaterial(source.name, scene), source, scene, rootUrl);
+            let material = BABYLON.SerializationHelper.Parse(() => new BABYLON.UniversalTerrainMaterial(source.name, scene), source, scene, rootUrl);
             BABYLON.UniversalShaderMaterial.ParseCustomProperties(material, source, scene, rootUrl);
             return material;
         }

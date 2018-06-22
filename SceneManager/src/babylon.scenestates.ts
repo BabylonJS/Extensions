@@ -74,14 +74,14 @@ module BABYLON {
                         this.speedRatio = this._machine.speed;
                     }
                     if (this._machine.parameters != null && this._machine.parameters.length > 0) {
-                        var plist:any[] = this._machine.parameters;
+                        let plist:any[] = this._machine.parameters;
                         plist.forEach((parameter) => {
-                            var name:string = parameter.name;
-                            var type:BABYLON.AnimatorParameterType = parameter.type;
-                            var curve:boolean = parameter.curve;
-                            var defaultFloat:number = parameter.defaultFloat;
-                            var defaultBool:boolean = parameter.defaultBool;
-                            var defaultInt:number = parameter.defaultInt;
+                            let name:string = parameter.name;
+                            let type:BABYLON.AnimatorParameterType = parameter.type;
+                            let curve:boolean = parameter.curve;
+                            let defaultFloat:number = parameter.defaultFloat;
+                            let defaultBool:boolean = parameter.defaultBool;
+                            let defaultInt:number = parameter.defaultInt;
                             this.owned.metadata.state.parameters[name] = type;
                             if (type === BABYLON.AnimatorParameterType.Bool) {
                                 this.setBool(name, defaultBool);
@@ -117,17 +117,17 @@ module BABYLON {
             // ..
             // Setup Animation State Targets
             // ..
-            var transformIndexs:number[] = null;
+            let transformIndexs:number[] = null;
             this._targets = this.manager.getAnimationTargets(this.owned);
             if (this._skeletal === true) {
-                var skeletons:BABYLON.Skeleton[] = this.getTargetSkeletons();
+                let skeletons:BABYLON.Skeleton[] = this.getTargetSkeletons();
                 if (skeletons != null && skeletons.length > 0) {
                     skeletons.forEach((skeleton:BABYLON.Skeleton) => {
-                        var target:any = skeleton;
+                        let target:any = skeleton;
                         if (target.metadata == null) target.metadata = {};
                         target.metadata.resetBlending = false;
                         if (skeleton.bones != null && skeleton.bones.length > 0) {
-                            var boneIndex:number = 0;
+                            let boneIndex:number = 0;
                             skeleton.bones.forEach((bone:BABYLON.Bone) => {
                                 if (bone.metadata == null) bone.metadata = {};
                                 bone.metadata.index = boneIndex;
@@ -182,7 +182,7 @@ module BABYLON {
         /* Animation Controller State Helper Functions */
         
         public getBool(name:string):boolean {
-            var result:boolean = false;
+            let result:boolean = false;
             if (this.owned.metadata != null && this.owned.metadata.state != null && this.owned.metadata.state.booleans != null && this.owned.metadata.state.booleans[name] != null) {
                 result = this.owned.metadata.state.booleans[name];
             }
@@ -194,7 +194,7 @@ module BABYLON {
             }
         }
         public getFloat(name:string):number {
-            var result:number = 0.0;
+            let result:number = 0.0;
             if (this.owned.metadata != null && this.owned.metadata.state != null && this.owned.metadata.state.floats != null && this.owned.metadata.state.floats[name] != null) {
                 result = this.owned.metadata.state.floats[name];
             }
@@ -206,7 +206,7 @@ module BABYLON {
             }
         }
         public getInteger(name:string):number {
-            var result:number = 0.0;
+            let result:number = 0.0;
             if (this.owned.metadata != null && this.owned.metadata.state != null && this.owned.metadata.state.floats != null && this.owned.metadata.state.floats[name] != null) {
                 result = this.owned.metadata.state.floats[name];
             }
@@ -218,7 +218,7 @@ module BABYLON {
             }
         }
         public getTrigger(name:string):boolean {
-            var result:boolean = false;
+            let result:boolean = false;
             if (this.owned.metadata != null && this.owned.metadata.state != null && this.owned.metadata.state.triggers != null && this.owned.metadata.state.triggers[name] != null) {
                 result = this.owned.metadata.state.triggers[name];
             }
@@ -245,11 +245,11 @@ module BABYLON {
             return (this._machine.layers != null && this._machine.layers.length > layer) ? this._machine.layers[layer].animationStateMachine : null;
         }
         public getTargetSkeletons():BABYLON.Skeleton[] {
-            var result:BABYLON.Skeleton[] = null;
+            let result:BABYLON.Skeleton[] = null;
             if (this._skeletal === true && this._targets != null && this._targets.length > 0) {
                 this._targets.forEach((target) => {
                     if (target instanceof BABYLON.AbstractMesh) {
-                        var mesh:BABYLON.AbstractMesh = target;
+                        let mesh:BABYLON.AbstractMesh = target;
                         if (mesh.skeleton != null) {
                             if (result == null) result = [];
                             result.push(mesh.skeleton);
@@ -276,7 +276,7 @@ module BABYLON {
         /* Animation Controller Private Worker Functions */
         
         private getMachineState(name:string):BABYLON.MachineState {
-            var result:BABYLON.MachineState = null;
+            let result:BABYLON.MachineState = null;
             if (this.owned.metadata != null && this.owned.metadata.state != null && this.owned.metadata.state.data != null && this.owned.metadata.state.data[name] != null) {
                 result = this.owned.metadata.state.data[name];
             }
@@ -288,7 +288,7 @@ module BABYLON {
             }
         }
         private getAnimationClip(name:string):BABYLON.IAnimationClip {
-            var result:BABYLON.IAnimationClip = null;
+            let result:BABYLON.IAnimationClip = null;
             if (this.owned.metadata != null && this.owned.metadata.state != null && this.owned.metadata.state.clips != null && this.owned.metadata.state.clips[name] != null) {
                 result = this.owned.metadata.state.clips[name];
             }
@@ -322,7 +322,7 @@ module BABYLON {
         }
         private blendBoneMatrix(matrix:BABYLON.Matrix, weight:number = 1.0):void {
             if (matrix != null && weight > 0 && this._boneMatrix != null) {
-                var blendWeight:number = BABYLON.Scalar.Clamp(weight, 0.0, 1.0);
+                let blendWeight:number = BABYLON.Scalar.Clamp(weight, 0.0, 1.0);
                 if (this._boneWeight === 0) {
                     this._boneMatrix.copyFrom(matrix);
                 } else {
@@ -355,7 +355,7 @@ module BABYLON {
         
         private startStateMachine():void {
             // Map Animation Clips
-            var clips:BABYLON.IAnimationClip[] = this.manager.getAnimationClips(this.owned);
+            let clips:BABYLON.IAnimationClip[] = this.manager.getAnimationClips(this.owned);
             if (clips != null && clips.length > 0) {
                 clips.forEach((clip) => {
                     if (clip != null && clip.name != null) {
@@ -392,8 +392,8 @@ module BABYLON {
                 }
             }
             // Dump State Machine Debug Information
-            console.log("*** Dump State Machine: " + this.owned.name);
-            console.log(this);
+            // console.log("*** Dump State Machine: " + this.owned.name);
+            // console.log(this);
         }
         private updateStateMachine():void {
             if (this.enabled === true) {
@@ -427,10 +427,10 @@ module BABYLON {
             if (this._skeletal === true && this._targets != null && this._targets.length > 0) {
                 this._targets.forEach((target) => {
                     if (target != null && target instanceof BABYLON.AbstractMesh) {
-                        var avatar:BABYLON.AbstractMesh = target;
+                        let avatar:BABYLON.AbstractMesh = target;
                         if (avatar != null && avatar.skeleton != null && avatar.skeleton.bones != null && avatar.skeleton.bones.length > 0) {
-                            var resetSkeleton:any = avatar.skeleton;
-                            var resetBlending:boolean = (resetSkeleton.metadata != null && resetSkeleton.metadata.resetBlending);
+                            let resetSkeleton:any = avatar.skeleton;
+                            let resetBlending:boolean = (resetSkeleton.metadata != null && resetSkeleton.metadata.resetBlending);
                             avatar.skeleton.bones.forEach((bone:BABYLON.Bone) => {
                                 this._boneAnim = null;
                                 this._boneWeight = 0;
@@ -452,7 +452,7 @@ module BABYLON {
                                         }
                                     }
                                     if (this._boneAnim != null) {
-                                        var blendingSpeed:number = avatar.skeleton.animationPropertiesOverride ? avatar.skeleton.animationPropertiesOverride.blendingSpeed : this._boneAnim.blendingSpeed;
+                                        let blendingSpeed:number = avatar.skeleton.animationPropertiesOverride ? avatar.skeleton.animationPropertiesOverride.blendingSpeed : this._boneAnim.blendingSpeed;
                                         if (this._machine.layers != null && this._machine.layers.length > 0) {
                                             this._machine.layers.forEach((layer:BABYLON.IAnimationLayer) => {
                                                 if (layer.animationStateMachine != null) {
@@ -553,15 +553,15 @@ module BABYLON {
             /*
             // Setup Animation Events
             if (metadata.animationEvents != null && metadata.animationEvents.length > 0 && metadata.components != null && metadata.components.length > 0) {
-                var track:BABYLON.Animation = BABYLON.SceneManager.LocateOwnerAnimationTrack(0, owner, false);
+                let track:BABYLON.Animation = BABYLON.SceneManager.LocateOwnerAnimationTrack(0, owner, false);
                 if (track != null) {
                     metadata.animationEvents.forEach((evt) => {
                         if (evt.functionName != null && evt.functionName !== "") {
-                            var functionName:string = evt.functionName.toLowerCase();
+                            let functionName:string = evt.functionName.toLowerCase();
                             track.addEvent(new BABYLON.AnimationEvent(evt.frame, ()=>{
-                                var ownerinstance:any = (<any>machine);
+                                let ownerinstance:any = (<any>machine);
                                 if (ownerinstance._handlers != null && ownerinstance._handlers[functionName]) {
-                                    var handler:(evt:BABYLON.IAnimationEvent)=>void = ownerinstance._handlers[functionName];
+                                    let handler:(evt:BABYLON.IAnimationEvent)=>void = ownerinstance._handlers[functionName];
                                     if (handler) handler(evt);
                                 }
                             }));
@@ -574,7 +574,7 @@ module BABYLON {
         private setCurrentAnimationState(layer:BABYLON.IAnimationLayer, name:string, blending:number):void {
             if (name == null || name === "" || name === BABYLON.AnimationState.EXIT) return;
             if (layer.animationStateMachine != null && layer.animationStateMachine.name === name) return;
-            var state:BABYLON.MachineState = this.getMachineState(name);
+            let state:BABYLON.MachineState = this.getMachineState(name);
             // ..
             // Setup Current Layer Animation State
             // ..
@@ -601,7 +601,7 @@ module BABYLON {
             }
         }
         private setupBaseAnimationState(layer:BABYLON.IAnimationLayer, blending:number = 0.0, playback:number = 1.0): BABYLON.Animatable[] {
-            var result:BABYLON.Animatable[] = null;
+            let result:BABYLON.Animatable[] = null;
             // ..
             // Setup Base Layer Animation Track Only
             // ..
@@ -619,10 +619,10 @@ module BABYLON {
                         } else {
                             // Play Standard Transform Animations
                             this.scene.stopAnimation(target);
-                            var motion:BABYLON.IAnimationClip = (layer.animationStateMachine && layer.animationStateMachine.blendtree != null && layer.animationStateMachine.blendtree.children != null && layer.animationStateMachine.blendtree.children.length > 0) ? layer.animationStateMachine.blendtree.children[0].track : null;
+                            let motion:BABYLON.IAnimationClip = (layer.animationStateMachine && layer.animationStateMachine.blendtree != null && layer.animationStateMachine.blendtree.children != null && layer.animationStateMachine.blendtree.children.length > 0) ? layer.animationStateMachine.blendtree.children[0].track : null;
                             if (motion != null) {
                                 this.manager.setAnimationProperties(target, motion.behavior, blending);
-                                var animatable:BABYLON.Animatable = this.scene.beginAnimation(target, motion.start, motion.stop, (motion.behavior < 2), playback);
+                                let animatable:BABYLON.Animatable = this.scene.beginAnimation(target, motion.start, motion.stop, (motion.behavior < 2), playback);
                                 if (animatable != null) {
                                     if (result == null) result = [];
                                     result.push(animatable);
@@ -636,7 +636,7 @@ module BABYLON {
         }
         private checkStateTransitions(layer:BABYLON.IAnimationLayer, transitions:BABYLON.ITransition[], time:number, length:number, rate:number):any {
             if (this.enableTransitions === true && transitions != null && transitions.length > 0) {
-                var i:number = 0; var ii:number = 0; var solo:number = -1;
+                let i:number = 0; let ii:number = 0; let solo:number = -1;
                 // ..
                 // Check Has Solo Transitions
                 // ..
@@ -648,23 +648,23 @@ module BABYLON {
                 }
                 // Check State Machine Transitions
                 for(i = 0; i < transitions.length; i++ ) {
-                    var transition:BABYLON.ITransition = transitions[i];
+                    let transition:BABYLON.ITransition = transitions[i];
                     if (transition.layerIndex !== layer.index) continue;
                     if (transition.mute === true) continue;
                     if (solo >= 0 && solo !== i) continue;
-                    var transitionOk:boolean = false;
+                    let transitionOk:boolean = false;
                     // Check Has Transition Exit Time
-                    var exitTimeSecs:number = BABYLON.Scalar.Denormalize(transition.exitTime, 0, length);
-                    var exitTimeExpired:boolean = ((this.manager.time - time) >= exitTimeSecs);
+                    let exitTimeSecs:number = BABYLON.Scalar.Denormalize(transition.exitTime, 0, length);
+                    let exitTimeExpired:boolean = ((this.manager.time - time) >= exitTimeSecs);
                     if (transition.hasExitTime === true && transition.intSource == BABYLON.InterruptionSource.None && exitTimeExpired === false) continue;
                     // Check All Transition Conditions
                     if (transition.conditions != null && transition.conditions.length > 0) {
-                        var passed:number = 0; var checks:number = transition.conditions.length;
+                        let passed:number = 0; let checks:number = transition.conditions.length;
                         transition.conditions.forEach((condition) => {
                             if (this.owned.metadata.state.parameters[condition.parameter] != null) {
-                                var ptype:BABYLON.AnimatorParameterType = this.owned.metadata.state.parameters[condition.parameter];
+                                let ptype:BABYLON.AnimatorParameterType = this.owned.metadata.state.parameters[condition.parameter];
                                 if (ptype == BABYLON.AnimatorParameterType.Float || ptype == BABYLON.AnimatorParameterType.Int) {
-                                    var numValue:number = parseFloat(this.getFloat(condition.parameter).toFixed(2));
+                                    let numValue:number = parseFloat(this.getFloat(condition.parameter).toFixed(2));
                                     if (condition.mode === BABYLON.ConditionMode.Greater && numValue > condition.threshold) {
                                         passed++;
                                     } else if (condition.mode === BABYLON.ConditionMode.Less && numValue < condition.threshold) {
@@ -675,14 +675,14 @@ module BABYLON {
                                         passed++;
                                     }
                                 } else if (ptype == BABYLON.AnimatorParameterType.Bool) {
-                                    var boolValue:boolean = this.getBool(condition.parameter);
+                                    let boolValue:boolean = this.getBool(condition.parameter);
                                     if (condition.mode === BABYLON.ConditionMode.If && boolValue === true) {
                                         passed++;
                                     } else if (condition.mode === BABYLON.ConditionMode.IfNot && boolValue === false) {
                                         passed++;
                                     }
                                 } else if (ptype == BABYLON.AnimatorParameterType.Trigger) {
-                                    var triggerValue:boolean = this.getTrigger(condition.parameter);
+                                    let triggerValue:boolean = this.getTrigger(condition.parameter);
                                     if (triggerValue === true) {
                                         passed++;
                                         if (this._checkers.triggered.indexOf(condition.parameter) < 0) {
@@ -708,10 +708,10 @@ module BABYLON {
                     }
                     // Validate Current Transition Destination Change
                     if (transitionOk === true) {
-                        var destState:string = (transition.isExit === false) ? transition.destination : BABYLON.AnimationState.EXIT;
-                        var offsetSecs:number = BABYLON.Scalar.Denormalize(transition.offset, 0, length);
-                        var durationSecs:number = BABYLON.Scalar.Denormalize(transition.duration, 0, length);
-                        var blendingSpeed:number = BABYLON.Utilities.ComputeBlendingSpeed(rate, durationSecs); 
+                        let destState:string = (transition.isExit === false) ? transition.destination : BABYLON.AnimationState.EXIT;
+                        let offsetSecs:number = BABYLON.Scalar.Denormalize(transition.offset, 0, length);
+                        let durationSecs:number = BABYLON.Scalar.Denormalize(transition.duration, 0, length);
+                        let blendingSpeed:number = BABYLON.Utilities.ComputeBlendingSpeed(rate, durationSecs); 
                         this._checkers.result = destState;
                         this._checkers.offest = offsetSecs;
                         this._checkers.blending = blendingSpeed;
@@ -721,10 +721,10 @@ module BABYLON {
             }
         }
         private computeSpeedRatio(layer:BABYLON.IAnimationLayer, start:BABYLON.IAnimationClip, end:BABYLON.IAnimationClip = null, delta:number = 1.0, playback:number = 1.0) :number {
-            var result:number = 1.0;
+            let result:number = 1.0;
             if (start != null && end != null) {
-                var startRatio:number = (layer.animationReference / this.getAnimationFrames(start));
-                var endRatio:number = (layer.animationReference / this.getAnimationFrames(end));
+                let startRatio:number = (layer.animationReference / this.getAnimationFrames(start));
+                let endRatio:number = (layer.animationReference / this.getAnimationFrames(end));
                 result = BABYLON.Scalar.Lerp(startRatio, endRatio, delta);
             } else if (start != null && end == null) {
                 result = (layer.animationReference / this.getAnimationFrames(start));
@@ -735,7 +735,7 @@ module BABYLON {
         }
         private blendAnimationMatrix(layer:BABYLON.IAnimationLayer, matrix:BABYLON.Matrix, weight:number = 1.0):void {
             if (matrix != null && weight > 0 && layer.animationBlendMatrix != null) {
-                var blendWeight:number = BABYLON.Scalar.Clamp(weight, 0.0, 1.0);
+                let blendWeight:number = BABYLON.Scalar.Clamp(weight, 0.0, 1.0);
                 if (layer.animationBlendWeight === 0) {
                     layer.animationBlendMatrix.copyFrom(matrix);
                 } else {
@@ -745,7 +745,7 @@ module BABYLON {
             }
         }
         private checkBoneTransformPath(layer:BABYLON.IAnimationLayer, transformPath:string):boolean {
-            var result:boolean = false;
+            let result:boolean = false;
             if (layer.avatarMask != null && layer.avatarMask.transformPaths != null && layer.avatarMask.transformPaths.length > 0) {
                 if (layer.avatarMask.transformPaths.indexOf(transformPath) >= 0) {
                     result = true;
@@ -754,7 +754,7 @@ module BABYLON {
             return result;
         }
         private filterBoneTransformIndex(layer:BABYLON.IAnimationLayer, bone:BABYLON.Bone):boolean {
-            var result:boolean = false;
+            let result:boolean = false;
             if (layer.avatarMask != null && layer.avatarMask.transformIndexs != null && layer.avatarMask.transformIndexs.length > 0) {
                 if (bone.metadata != null && bone.metadata.index != null && layer.avatarMask.transformIndexs.indexOf(bone.metadata.index) >= 0) {
                     result = true;
@@ -1033,39 +1033,39 @@ module BABYLON {
         /* Animation Controller Compute Blend Child Weights Functions */
         
         private computeSimpleDirectionalWeight(parentTree:BABYLON.IBlendTree, inputPosition:BABYLON.Vector2, childPosition:BABYLON.Vector2):number {
-            var weight:number = 0;
-            var inputDistance:number = inputPosition.subtract(childPosition).lengthSquared();
-            // var inputAngle:number = BABYLON.Vector2.Angle(inputPosition, childPosition);
+            let weight:number = 0;
+            let inputDistance:number = inputPosition.subtract(childPosition).lengthSquared();
+            // let inputAngle:number = BABYLON.Vector2.Angle(inputPosition, childPosition);
             // cosinus similarity from -1f to -1f shifted to 0 to 1f( same angle cosinus similarity=0f and max opposite direction -1f)
             // 1/d1+1/d2+1/d3...
             // ..
-            // var inputAngle:number = (BABYLON.Scalar.Clamp(BABYLON.Vector2.Dot(inputPosition.normalize(), childPosition.normalize()), -1, 1)-1) * (-0.5);
+            // let inputAngle:number = (BABYLON.Scalar.Clamp(BABYLON.Vector2.Dot(inputPosition.normalize(), childPosition.normalize()), -1, 1)-1) * (-0.5);
             // ..
             // TODO: Calculate Weight based on input distance and angle - ???            
             // ..
             return weight;
         }
         private computeFreeformDirectionalWeight(parentTree:BABYLON.IBlendTree, inputPosition:BABYLON.Vector2, childPosition:BABYLON.Vector2):number {
-            var weight:number = 0;
-            var inputDistance:number = inputPosition.subtract(childPosition).lengthSquared();
-            // var inputAngle:number = BABYLON.Vector2.Angle(inputPosition, childPosition);
+            let weight:number = 0;
+            let inputDistance:number = inputPosition.subtract(childPosition).lengthSquared();
+            // let inputAngle:number = BABYLON.Vector2.Angle(inputPosition, childPosition);
             // cosinus similarity from -1f to -1f shifted to 0 to 1f( same angle cosinus similarity=0f and max opposite direction -1f)
             // 1/d1+1/d2+1/d3...
             // ..
-            // var inputAngle:number = (BABYLON.Scalar.Clamp(BABYLON.Vector2.Dot(inputPosition.normalize(), childPosition.normalize()), -1, 1)-1) * (-0.5);
+            // let inputAngle:number = (BABYLON.Scalar.Clamp(BABYLON.Vector2.Dot(inputPosition.normalize(), childPosition.normalize()), -1, 1)-1) * (-0.5);
             // ..
             // TODO: Calculate Weight based on input distance and angle - ???            
             // ..
             return weight;
         }
         private computeFreeformCartesianWeight(parentTree:BABYLON.IBlendTree, inputPosition:BABYLON.Vector2, childPosition:BABYLON.Vector2):number {
-            var weight:number = 0;
-            var inputDistance:number = inputPosition.subtract(childPosition).lengthSquared();
-            // var inputAngle:number = BABYLON.Vector2.Angle(inputPosition, childPosition);
+            let weight:number = 0;
+            let inputDistance:number = inputPosition.subtract(childPosition).lengthSquared();
+            // let inputAngle:number = BABYLON.Vector2.Angle(inputPosition, childPosition);
             // cosinus similarity from -1f to -1f shifted to 0 to 1f( same angle cosinus similarity=0f and max opposite direction -1f)
             // 1/d1+1/d2+1/d3...
             // ..
-            // var inputAngle:number = (BABYLON.Scalar.Clamp(BABYLON.Vector2.Dot(inputPosition.normalize(), childPosition.normalize()), -1, 1)-1) * (-0.5);
+            // let inputAngle:number = (BABYLON.Scalar.Clamp(BABYLON.Vector2.Dot(inputPosition.normalize(), childPosition.normalize()), -1, 1)-1) * (-0.5);
             // ..
             // TODO: Calculate Weight based on input distance and angle - ???            
             // ..
