@@ -584,7 +584,7 @@ declare module BABYLON {
         /** Turns owner using rotations. */
         turnWithRotation(owner: BABYLON.AbstractMesh, rotation?: number): void;
         /** Adds a managed scene component to the scene. */
-        addSceneComponent(comp: BABYLON.SceneComponent, klass: string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, enableUpdate?: boolean, propertyBag?: any): void;
+        addSceneComponent(comp: BABYLON.SceneComponent, klass: string, enableUpdate?: boolean, propertyBag?: any): void;
         /** Finds a scene component in the scene with the specfied klass name. */
         findSceneComponent<T extends BABYLON.SceneComponent>(klass: string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): T;
         /** Finds all scene components in the scene with the specfied klass name. */

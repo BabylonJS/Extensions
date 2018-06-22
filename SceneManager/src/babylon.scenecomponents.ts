@@ -21,8 +21,8 @@ module BABYLON {
         private _manager: BABYLON.SceneManager = null;
         protected owned: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light = null;
         public constructor(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, scene: BABYLON.Scene, tick: boolean = true, propertyBag: any = {}) {
-            if (owner == null) throw new Error("Null owner scene obejct specified.");
-            if (scene == null) throw new Error("Null host scene obejct specified.");
+            if (owner == null) throw new Error("Null owner scene object specified.");
+            if (scene == null) throw new Error("Null host scene object specified.");
             this.tick = tick;
             this.owned = owner;
             this._manager = null;
