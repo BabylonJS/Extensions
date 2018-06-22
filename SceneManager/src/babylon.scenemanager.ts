@@ -1744,7 +1744,11 @@ module BABYLON {
                     // ..
                     // Fire Component Ready
                     // ..
-                    (<any>comp).ready();
+                    if ((<any>comp).ready != null) {
+                        (<any>comp).ready();
+                    } else {
+                        BABYLON.Tools.Error("No component ready function detected.");
+                    }
                 } else {
                     BABYLON.Tools.Error("Failed to parse metadata components");
                 }
