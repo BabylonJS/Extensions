@@ -1695,8 +1695,8 @@ module BABYLON {
         // *  Scene Component Helper Support  * //
         // ************************************ //
 
-        /** Adds a managed scene component to the scene. */
-        public addSceneComponent(comp: BABYLON.SceneComponent, klass:string, enableUpdate: boolean = true, propertyBag: any = {}):void {
+        /** Attaches a managed scene component to the scene. */
+        public attachSceneComponent(comp: BABYLON.SceneComponent, klass:string, enableUpdate: boolean = true, propertyBag: any = {}):void {
             let owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light = (<any>comp).owned;
             if (owner == null) throw new Error("Null owner scene object attached");
             if (owner.metadata == null || !owner.metadata.api) {
