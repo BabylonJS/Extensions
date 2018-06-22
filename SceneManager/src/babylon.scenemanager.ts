@@ -1695,9 +1695,10 @@ module BABYLON {
         // *  Scene Component Helper Support  * //
         // ************************************ //
 
-        /** Adds a managed scene component to the scene. */
-        public addSceneComponent(comp: BABYLON.SceneComponent, klass:string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, enableUpdate: boolean = true, propertyBag: any = {}):void {
-            if (owner == null) throw new Error("Null owner scene obejct specified.");
+        /** Attaches a managed scene component to the scene. */
+        public attachSceneComponent(comp: BABYLON.SceneComponent, klass:string, enableUpdate: boolean = true, propertyBag: any = {}):void {
+            let owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light = (<any>comp).owned;
+            if (owner == null) throw new Error("Null owner scene object attached");
             if (owner.metadata == null || !owner.metadata.api) {
                 let metadata: BABYLON.IObjectMetadata = {
                     api: true,
@@ -1744,7 +1745,11 @@ module BABYLON {
                     // ..
                     // Fire Component Ready
                     // ..
-                    (<any>comp).ready();
+                    if ((<any>comp).ready != null) {
+                        (<any>comp).ready();
+                    } else {
+                        BABYLON.Tools.Error("No component ready function detected.");
+                    }
                 } else {
                     BABYLON.Tools.Error("Failed to parse metadata components");
                 }
