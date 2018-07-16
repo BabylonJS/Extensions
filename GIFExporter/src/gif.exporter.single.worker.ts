@@ -62,13 +62,12 @@ export class GIFCreator {
 			const download: HTMLAnchorElement = document.getElementById('download') as HTMLAnchorElement;
 			document.body.appendChild(download);
 			download.target = '_blank';
-			download.setAttribute('target', '_blank');
 			download.style.display = 'none';
 			download.href = url;
 			download.download = filename;
+			document.body.appendChild(download);
 			download.click();
-			URL.revokeObjectURL(url);
-			download.parentElement.removeChild(download);
+			download.remove();
 			this._worker.terminate();
 
 			resolve();

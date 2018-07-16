@@ -14,7 +14,7 @@ export class Game {
 		});
 		this._gifExporter = new GIFCreator(this._engine, {
 			delay: 60,
-			duration: 2000,
+			duration: 5000,
 		});
 	}
 
