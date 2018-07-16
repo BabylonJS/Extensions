@@ -1,4 +1,5 @@
 ﻿/// <reference path="babylon.d.ts" />
+/// <reference path="babylon.scenecomponents.ts" />
 /// <reference path="babylon.scenemanager.ts" />
 
 module BABYLON {
@@ -34,7 +35,7 @@ module BABYLON {
         public get legacy():boolean { return this._legacy; }
         public get skeletal():boolean { return this._skeletal; }
         public get executing():boolean { return this._executed; }
-        public constructor(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, scene: BABYLON.Scene, tick: boolean = true, propertyBag: any = {}) {
+        public constructor(owner: BABYLON.Entity, scene: BABYLON.Scene, tick: boolean = true, propertyBag: any = {}) {
             super(owner, scene, tick, propertyBag);
             this._targets = null;
             this._machine = null;
@@ -56,16 +57,16 @@ module BABYLON {
             // ..
             // Setup Animation State Machine
             // ..
-            if (this.owned.metadata != null) {
-                this.owned.metadata.state = {};
-                this.owned.metadata.state.data = {};
-                this.owned.metadata.state.clips = {};
-                this.owned.metadata.state.floats = {};
-                this.owned.metadata.state.booleans = {};
-                this.owned.metadata.state.triggers = {};
-                this.owned.metadata.state.parameters = {};
-                if (this.owned.metadata.properties != null && this.owned.metadata.properties.stateMachineInfo != null) {
-                    this._machine = this.owned.metadata.properties.stateMachineInfo;
+            if (this.entity.metadata != null) {
+                this.entity.metadata.state = {};
+                this.entity.metadata.state.data = {};
+                this.entity.metadata.state.clips = {};
+                this.entity.metadata.state.floats = {};
+                this.entity.metadata.state.booleans = {};
+                this.entity.metadata.state.triggers = {};
+                this.entity.metadata.state.parameters = {};
+                if (this.entity.metadata.properties != null && this.entity.metadata.properties.stateMachineInfo != null) {
+                    this._machine = this.entity.metadata.properties.stateMachineInfo;
                     this._legacy = this._machine.legacy;
                     if (this._legacy === true) {
                         this._autoplay = this._machine.auto;
@@ -82,7 +83,7 @@ module BABYLON {
                             let defaultFloat:number = parameter.defaultFloat;
                             let defaultBool:boolean = parameter.defaultBool;
                             let defaultInt:number = parameter.defaultInt;
-                            this.owned.metadata.state.parameters[name] = type;
+                            this.entity.metadata.state.parameters[name] = type;
                             if (type === BABYLON.AnimatorParameterType.Bool) {
                                 this.setBool(name, defaultBool);
                             } else if (type === BABYLON.AnimatorParameterType.Float) {
@@ -95,7 +96,7 @@ module BABYLON {
                         });
                     }
                 } else {
-                    BABYLON.Tools.Warn("Babylon.js cannot locate owner animation state machine info metadata for: " + this.owned.name);
+                    BABYLON.Tools.Warn("Babylon.js cannot locate owner animation state machine info metadata for: " + this.entity.name);
                 }
             }
             // ..
@@ -118,7 +119,7 @@ module BABYLON {
             // Setup Animation State Targets
             // ..
             let transformIndexs:number[] = null;
-            this._targets = this.manager.getAnimationTargets(this.owned);
+            this._targets = this.manager.getAnimationTargets(this.entity);
             if (this._skeletal === true) {
                 let skeletons:BABYLON.Skeleton[] = this.getTargetSkeletons();
                 if (skeletons != null && skeletons.length > 0) {
@@ -166,8 +167,8 @@ module BABYLON {
             this._onAnimationFrameHandler = null;
             this._onAnimationEventHandlers = null;
             this._onAnimationBehaveHandlers = null;
-            if (this.owned.metadata != null && this.owned.metadata.state != null) {
-                this.owned.metadata.state = null;
+            if (this.entity.metadata != null && this.entity.metadata.state != null) {
+                this.entity.metadata.state = null;
             }
         }
         
@@ -183,62 +184,62 @@ module BABYLON {
         
         public getBool(name:string):boolean {
             let result:boolean = false;
-            if (this.owned.metadata != null && this.owned.metadata.state != null && this.owned.metadata.state.booleans != null && this.owned.metadata.state.booleans[name] != null) {
-                result = this.owned.metadata.state.booleans[name];
+            if (this.entity.metadata != null && this.entity.metadata.state != null && this.entity.metadata.state.booleans != null && this.entity.metadata.state.booleans[name] != null) {
+                result = this.entity.metadata.state.booleans[name];
             }
             return result;
         }
         public setBool(name:string, value:boolean):void {
-            if (this.owned.metadata != null && this.owned.metadata.state != null && this.owned.metadata.state.booleans != null) {
-                this.owned.metadata.state.booleans[name] = value;
+            if (this.entity.metadata != null && this.entity.metadata.state != null && this.entity.metadata.state.booleans != null) {
+                this.entity.metadata.state.booleans[name] = value;
             }
         }
         public getFloat(name:string):number {
             let result:number = 0.0;
-            if (this.owned.metadata != null && this.owned.metadata.state != null && this.owned.metadata.state.floats != null && this.owned.metadata.state.floats[name] != null) {
-                result = this.owned.metadata.state.floats[name];
+            if (this.entity.metadata != null && this.entity.metadata.state != null && this.entity.metadata.state.floats != null && this.entity.metadata.state.floats[name] != null) {
+                result = this.entity.metadata.state.floats[name];
             }
             return result;
         }
         public setFloat(name:string, value:number):void {
-            if (this.owned.metadata != null && this.owned.metadata.state != null && this.owned.metadata.state.floats != null) {
-                this.owned.metadata.state.floats[name] = value;
+            if (this.entity.metadata != null && this.entity.metadata.state != null && this.entity.metadata.state.floats != null) {
+                this.entity.metadata.state.floats[name] = value;
             }
         }
         public getInteger(name:string):number {
             let result:number = 0.0;
-            if (this.owned.metadata != null && this.owned.metadata.state != null && this.owned.metadata.state.floats != null && this.owned.metadata.state.floats[name] != null) {
-                result = this.owned.metadata.state.floats[name];
+            if (this.entity.metadata != null && this.entity.metadata.state != null && this.entity.metadata.state.floats != null && this.entity.metadata.state.floats[name] != null) {
+                result = this.entity.metadata.state.floats[name];
             }
             return result;
         }
         public setInteger(name:string, value:number):void {
-            if (this.owned.metadata != null && this.owned.metadata.state != null && this.owned.metadata.state.floats != null) {
-                this.owned.metadata.state.floats[name] = value;
+            if (this.entity.metadata != null && this.entity.metadata.state != null && this.entity.metadata.state.floats != null) {
+                this.entity.metadata.state.floats[name] = value;
             }
         }
         public getTrigger(name:string):boolean {
             let result:boolean = false;
-            if (this.owned.metadata != null && this.owned.metadata.state != null && this.owned.metadata.state.triggers != null && this.owned.metadata.state.triggers[name] != null) {
-                result = this.owned.metadata.state.triggers[name];
+            if (this.entity.metadata != null && this.entity.metadata.state != null && this.entity.metadata.state.triggers != null && this.entity.metadata.state.triggers[name] != null) {
+                result = this.entity.metadata.state.triggers[name];
             }
             return result;
         }
         public setTrigger(name:string):void {
-            if (this.owned.metadata != null && this.owned.metadata.state != null && this.owned.metadata.state.triggers != null) {
-                this.owned.metadata.state.triggers[name] = true;
+            if (this.entity.metadata != null && this.entity.metadata.state != null && this.entity.metadata.state.triggers != null) {
+                this.entity.metadata.state.triggers[name] = true;
             }
         }
         public resetTrigger(name:string):void {
-            if (this.owned.metadata != null && this.owned.metadata.state != null && this.owned.metadata.state.triggers != null) {
-                this.owned.metadata.state.triggers[name] = false;
+            if (this.entity.metadata != null && this.entity.metadata.state != null && this.entity.metadata.state.triggers != null) {
+                this.entity.metadata.state.triggers[name] = false;
             }
         }
         public tickStateMachine() :void {
             if (this.autoTicking === false) {
                 this.updateStateMachine();
             } else {
-                BABYLON.Tools.Warn("Manual tick request ignored. Auto ticking is enabled for animator: " + this.owned.name);
+                BABYLON.Tools.Warn("Manual tick request ignored. Auto ticking is enabled for animator: " + this.entity.name);
             }
         }
         public getCurrentState(layer:number):BABYLON.MachineState {
@@ -277,26 +278,26 @@ module BABYLON {
         
         private getMachineState(name:string):BABYLON.MachineState {
             let result:BABYLON.MachineState = null;
-            if (this.owned.metadata != null && this.owned.metadata.state != null && this.owned.metadata.state.data != null && this.owned.metadata.state.data[name] != null) {
-                result = this.owned.metadata.state.data[name];
+            if (this.entity.metadata != null && this.entity.metadata.state != null && this.entity.metadata.state.data != null && this.entity.metadata.state.data[name] != null) {
+                result = this.entity.metadata.state.data[name];
             }
             return result;
         }
         private setMachineState(name:string, value:BABYLON.MachineState):void {
-            if (this.owned.metadata != null && this.owned.metadata.state != null && this.owned.metadata.state.data != null) {
-                this.owned.metadata.state.data[name] = value;
+            if (this.entity.metadata != null && this.entity.metadata.state != null && this.entity.metadata.state.data != null) {
+                this.entity.metadata.state.data[name] = value;
             }
         }
         private getAnimationClip(name:string):BABYLON.IAnimationClip {
             let result:BABYLON.IAnimationClip = null;
-            if (this.owned.metadata != null && this.owned.metadata.state != null && this.owned.metadata.state.clips != null && this.owned.metadata.state.clips[name] != null) {
-                result = this.owned.metadata.state.clips[name];
+            if (this.entity.metadata != null && this.entity.metadata.state != null && this.entity.metadata.state.clips != null && this.entity.metadata.state.clips[name] != null) {
+                result = this.entity.metadata.state.clips[name];
             }
             return result;
         }
         private setAnimationClip(name:string, value:BABYLON.IAnimationClip):void {
-            if (this.owned.metadata != null && this.owned.metadata.state != null && this.owned.metadata.state.clips != null) {
-                this.owned.metadata.state.clips[name] = value;
+            if (this.entity.metadata != null && this.entity.metadata.state != null && this.entity.metadata.state.clips != null) {
+                this.entity.metadata.state.clips[name] = value;
             }
         }
         private getDenormalizedFrame(clip:BABYLON.IAnimationClip, frame:number):number {
@@ -355,7 +356,7 @@ module BABYLON {
         
         private startStateMachine():void {
             // Map Animation Clips
-            let clips:BABYLON.IAnimationClip[] = this.manager.getAnimationClips(this.owned);
+            let clips:BABYLON.IAnimationClip[] = this.manager.getAnimationClips(this.entity);
             if (clips != null && clips.length > 0) {
                 clips.forEach((clip) => {
                     if (clip != null && clip.name != null) {
@@ -377,7 +378,7 @@ module BABYLON {
                 this._executed = true;
                 if (this.enabled === true && this._autoplay === true) {
                     if (this._legacy === true) {
-                        this.manager.playAnimationClip(null, this.owned);
+                        this.manager.playAnimationClip(null, this.entity);
                     } else {
                         if (this._machine.layers != null && this._machine.layers.length > 0) {
                             if (this._skeletal == true) {
@@ -392,22 +393,23 @@ module BABYLON {
                 }
             }
             // Dump State Machine Debug Information
-            // console.log("*** Dump State Machine: " + this.owned.name);
+            // console.log("*** Dump State Machine: " + this.entity.name);
             // console.log(this);
         }
         private updateStateMachine():void {
             if (this.enabled === true) {
                 this.updateAnimationCurves();
+                let step:number = this.manager.deltaTime; // scene.getAnimationRatio() - ???;
                 if (this._machine.layers != null && this._machine.layers.length > 0) {
                     if (this._skeletal == true) {
                         this._machine.layers.forEach((layer:BABYLON.IAnimationLayer) => {
                             if (layer != null) {
-                                this.processStateMachine(layer);
+                                this.processStateMachine(layer, step);
                             }
                         });
                     } else {
                         if (this._machine.layers[0] != null) {
-                            this.processStateMachine(this._machine.layers[0]);
+                            this.processStateMachine(this._machine.layers[0], step);
                         }
                     }
                 }
@@ -501,8 +503,8 @@ module BABYLON {
         
         /* Animation Controller Machine Layers Functions */
 
-        private processStateMachine(layer:BABYLON.IAnimationLayer):void {
-            layer.animationTime += (this.manager.deltaTime * ((layer.animationRatio * this.speedRatio) * BABYLON.Constants.SpeedCompensator));
+        private processStateMachine(layer:BABYLON.IAnimationLayer, step:number):void {
+            layer.animationTime += (step * ((layer.animationRatio * this.speedRatio) * BABYLON.Constants.SpeedCompensator));
             if (layer.animationTime > layer.animationNormalize) layer.animationTime = 0;
             layer.animationFrame = BABYLON.Scalar.Normalize(layer.animationTime, 0, layer.animationNormalize);
             // .. 
@@ -661,8 +663,8 @@ module BABYLON {
                     if (transition.conditions != null && transition.conditions.length > 0) {
                         let passed:number = 0; let checks:number = transition.conditions.length;
                         transition.conditions.forEach((condition) => {
-                            if (this.owned.metadata.state.parameters[condition.parameter] != null) {
-                                let ptype:BABYLON.AnimatorParameterType = this.owned.metadata.state.parameters[condition.parameter];
+                            if (this.entity.metadata.state.parameters[condition.parameter] != null) {
+                                let ptype:BABYLON.AnimatorParameterType = this.entity.metadata.state.parameters[condition.parameter];
                                 if (ptype == BABYLON.AnimatorParameterType.Float || ptype == BABYLON.AnimatorParameterType.Int) {
                                     let numValue:number = parseFloat(this.getFloat(condition.parameter).toFixed(2));
                                     if (condition.mode === BABYLON.ConditionMode.Greater && numValue > condition.threshold) {

@@ -1,4 +1,5 @@
 ﻿/// <reference path="babylon.d.ts" />
+/// <reference path="babylon.scenecomponents.ts" />
 /// <reference path="babylon.scenemanager.ts" />
 /// <reference path="babylon.sceneshuriken.ts" />
 /// <reference path="babylon.sceneutilities.ts" />
@@ -55,7 +56,7 @@ module BABYLON {
             let emission:number = this.getProperty("emitType", 0.0);
             let duration:number = this.getProperty("duration", 10.0);
             let randomizer:number = this.getProperty("randomizer", 0);
-            if (pname == null || pname === "") pname = (this.owned.name + ".Particle." + BABYLON.Tools.RandomId()); 
+            if (pname == null || pname === "") pname = (this.entity.name + ".Particle." + BABYLON.Tools.RandomId()); 
             let bursts:BABYLON.IShurikenBusrt[] = this.getProperty<BABYLON.IShurikenBusrt[]>("emitBurst", null);
             
             // Setup particle system texture mask (CPU ONLY)
@@ -76,7 +77,7 @@ module BABYLON {
                     this._shuriken.textureMask = textureMaskCol;
                     this._shuriken.minAngularSpeed = mm_rotate_vector.x;
                     this._shuriken.maxAngularSpeed = mm_rotate_vector.y;
-                    BABYLON.Tools.Warn("Babylon.js using cpu particle system fallback for owner: " + this.owned.name);
+                    BABYLON.Tools.Warn("Babylon.js using cpu particle system fallback for owner: " + this.entity.name);
                 }
             } else {
                 this._shuriken = new BABYLON.ShurikenParticleSystem(pname, pcap, this.scene, duration, emission, speed, bursts);

@@ -1,4 +1,5 @@
 ﻿/// <reference path="babylon.d.ts" />
+/// <reference path="babylon.scenecomponents.ts" />
 /// <reference path="babylon.scenemanager.ts" />
 
 //////////////////////////////////////////////
@@ -49,19 +50,16 @@ module BABYLON {
             this._sliding = false;
             this._grounded = true;
             this.updateGroundingState();
-            if (this.movementType === BABYLON.MovementType.CheckCollision) {
-                // ..
-                // Handle Check Collisions Contacts
-                //..
-            } else {
-                this.onCollisionEvent((collider:BABYLON.AbstractMesh, tag:string) => {
-                    if (this.manager.checkCollisionContact(this.mesh, collider, BABYLON.CollisionContact.Bottom, this._threashold) === true) {
-                        this._jumping = false;
-                        this.updateGroundingState();
-                    }
-                    if (this.onPhysicsContact != null) this.onPhysicsContact(collider, tag);
-                });
-            }
+            // ..
+            // Character Collision Events
+            // ..
+            this.onCollisionEvent = (collider:BABYLON.AbstractMesh, tag:string) => {
+                if (this.manager.checkCollisionContact(this.mesh, collider, BABYLON.CollisionContact.Bottom, this._threashold) === true) {
+                    this._jumping = false;
+                    this.updateGroundingState();
+                }
+                if (this.onPhysicsContact != null) this.onPhysicsContact(collider, tag);
+            };
         }
         protected update() :void {  this.updateGroundingState(); }
         protected after() :void {  this.updateGroundingState(); }
@@ -75,7 +73,9 @@ module BABYLON {
             this._sliding = (this._grounded === true && this._velocity != null && this._velocity.y < (-this.slidingVelocity));
         }
 
-        /* Public Character Controller Movement Function */
+        ///////////////////////////////////////////////////
+        // Public Character Controller Movement Function //
+        ///////////////////////////////////////////////////
         
         public move(velocity:BABYLON.Vector3, friction:number = -1.0, jump:number = -1.0):void {
             if (this.movementType === BABYLON.MovementType.CheckCollision) {
