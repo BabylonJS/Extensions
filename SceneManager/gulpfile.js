@@ -15,11 +15,11 @@ var tsConfig = {
     isolatedModules: false,
     removeComments: false
 };
+
 var tsProject = typescript.createProject(tsConfig);
 
 var files = [
     "./libs/stats.js",
-    "./libs/terrains.js",
     "./temp/babylon.scenecomponents.js",
     "./temp/babylon.scenemanager.js",
     "./temp/babylon.scenenavagent.js",
@@ -30,7 +30,9 @@ var files = [
     "./temp/babylon.sceneshuriken.js",
     "./temp/babylon.scenestates.js",
     "./temp/babylon.sceneutilities.js",
-    "./temp/babylon.scenewindows.js"
+    "./temp/babylon.scenewindows.js",
+    "./temp/babylon.scenexactions.js",
+    "./libs/terrains.js"
 ]
 
 gulp.task("compile", function () {
@@ -41,7 +43,7 @@ gulp.task("compile", function () {
     return merge2([
         tsResult.dts
             .pipe(concat("babylon.manager.d.ts"))
-            .pipe(gulp.dest("./dist")),
+            .pipe(gulp.dest("../Assets/Babylon/Library")),
         tsResult.js
             .pipe(sourcemaps.write("./", 
                 {
@@ -56,7 +58,7 @@ gulp.task("compile", function () {
 
 gulp.task("default", ["compile"], function () {
     return merge2(gulp.src(files))
-        .pipe(concat("babylon.manager.js"))
+        .pipe(concat("babylon.manager.bjs"))
         .pipe(uglify())
-        .pipe(gulp.dest("./dist/"));
+        .pipe(gulp.dest("../Assets/Babylon/Library/"));
 });

@@ -1,4 +1,5 @@
 /// <reference path="babylon.d.ts" />
+/// <reference path="babylon.scenecomponents.ts" />
 /// <reference path="babylon.scenemanager.ts" />
 
 module BABYLON {
@@ -134,7 +135,12 @@ module BABYLON {
         public static TransformDirectionToRef(owner: BABYLON.AbstractMesh | BABYLON.Camera, direction:BABYLON.Vector3, result:BABYLON.Vector3):void {
             return BABYLON.Vector3.TransformNormalToRef(direction, owner.getWorldMatrix(), result);
         }
-
+        /** Recomputes the meshes bounding center pivot point */
+        public static RecomputePivotPoint(owner:BABYLON.AbstractMesh):void {
+            var boundingCenter = owner.getBoundingInfo().boundingSphere.center;
+            owner.setPivotMatrix(BABYLON.Matrix.Translation(-boundingCenter.x, -boundingCenter.y, -boundingCenter.z));
+        }      
+          
         // ************************************ //
         // *  Scene Direction Helper Support  * //
         // ************************************ //
@@ -379,6 +385,73 @@ module BABYLON {
         /** Computes the transition duration blending speed */
         public static ComputeBlendingSpeed(rate:number, duration:number):number {
             return 1 / (rate * duration);
+        }
+
+        // ************************************ //
+        // * Public Scene Component Register  * //
+        // ************************************ //
+
+        /** Registers A scene component on the scene */
+        public static RegisterSceneComponent(comp: BABYLON.SceneComponent, klass:string, enableUpdate: boolean = true, propertyBag: any = {}):void {
+            let owner: BABYLON.Entity = (<any>comp).entity;
+            if (owner == null) throw new Error("Null owner scene object attached");
+            if (owner.metadata == null || !owner.metadata.api) {
+                let metadata: BABYLON.IObjectMetadata = {
+                    api: true,
+                    type: "Babylon",
+                    parsed: false,
+                    prefab: false,
+                    state: {},
+                    objectName: "Scene Component",
+                    objectId: "0",
+                    tagName: "Untagged",
+                    layerIndex: 0,
+                    layerName: "Default",
+                    areaIndex: -1,
+                    navAgent: null,
+                    meshLink: null,
+                    meshObstacle: null,
+                    shadowCastingMode: 0,
+                    socketList: [],
+                    animationClips: [],
+                    animationEvents: [],
+                    collisionEvent: null,
+                    components: [],
+                    properties: {}
+                };
+                owner.metadata = metadata;
+            }
+            if (owner.metadata != null && owner.metadata.api) {
+                let metadata: BABYLON.IObjectMetadata = owner.metadata as BABYLON.IObjectMetadata;
+                if (metadata.components == null) {
+                    metadata.components = [];
+                }
+                if (metadata.components != null) {
+                    let compscript: BABYLON.IScriptComponent = {
+                        order: 1000,
+                        name: "EditorScriptComponent",
+                        klass: klass,
+                        update: enableUpdate,
+                        properties: propertyBag,
+                        instance: comp,
+                        tag: {}
+                    };
+                    metadata.components.push(compscript);
+                    comp.register();
+                    // ..
+                    // Fire Component Ready
+                    // ..
+                    if ((<any>comp).ready != null) {
+                        (<any>comp).ready();
+                    } else {
+                        BABYLON.Tools.Error("No component ready function detected.");
+                    }
+                } else {
+                    BABYLON.Tools.Error("Failed to parse metadata components");
+                }
+            } else {
+                BABYLON.Tools.Error("Null owner object metadata");
+            }
         }
 
         // ********************************** //

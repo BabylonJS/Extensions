@@ -1,4 +1,5 @@
 /// <reference path="babylon.d.ts" />
+/// <reference path="babylon.scenecomponents.ts" />
 /// <reference path="babylon.scenemanager.ts" />
 
 module BABYLON {
@@ -163,7 +164,7 @@ module BABYLON {
                         particle.direction.addInPlace(this._self._scaledGravity);
 
                         if (this._self._isAnimationSheetEnabled) {
-                            particle.updateCellIndex(this._self._scaledUpdateSpeed);
+                            particle.updateCellIndex();
                         }
                     }
                 }
