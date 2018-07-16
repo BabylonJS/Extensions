@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>GIFExporter Testing</title>
+
+    <!-- Link to the last version of BabylonJS -->
+    <script src="https://preview.babylonjs.com/babylon.js"></script>
+    <!-- Link to the last version of BabylonJS loaders to enable loading filetypes such as .gltf -->
+    <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+    <!-- Link to pep.js to ensure pointer events work consistently in all browsers -->
+    <script src="https://code.jquery.com/pep/0.4.1/pep.js"></script>
+
+    <style>
+        html,
+        body {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            display: block;
+            text-align: center;
+        }
+
+        #renderCanvas {
+            width: 50%;
+            height: 50%;
+            touch-action: none;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div id="canvas_holder">
+        <canvas id="renderCanvas"></canvas>
+    </div>
+    <div>
+        <label for="durationInput">Duration</label>
+        <input type="text" id="durationInput">
+        <div>
+            <button id="recordBtn">Record</button>
+            <button id="recStopBtn">Stop</button>
+            <button id="downloadGIFBtn">Download</button>
+        </div>
+    </div>
+    <div>
+        <a href="" id="download"></a>
+        <div href="" id="preview"></div>
+    </div>
+
+    <script src="src/game.ts"></script>
+    <script src="src/gif.exporter.single.worker.ts"></script>
+</body>
+
+</html>

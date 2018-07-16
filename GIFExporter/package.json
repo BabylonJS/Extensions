@@ -2,22 +2,27 @@
   "name": "GIFExporter",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
-  "directories": {
-    "test": "test"
+  "main": "NewIndex.js",
+  "dependencies": {
+    "npm": "^6.1.0"
   },
-  "scripts": {
-    "test": "mocha -r ts-node/register test/**.spec.ts"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "devDependencies": {
+    "@types/babylon": "^6.16.3",
+    "@types/webgl2": "0.0.4",
     "@types/chai": "^4.1.4",
     "@types/mocha": "^5.2.2",
+    "babylonjs": "^3.2.0",
+    "babylonjs-viewer": "^3.2.1",
     "chai": "^4.1.2",
     "mocha": "^5.2.0",
     "ts-node": "^6.1.1",
     "typescript": "^2.9.2"
-  }
+  },
+  "scripts": {
+    "start": "parcel index.html",
+    "test": "mocha -wr ts-node/register test/**.spec.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }
