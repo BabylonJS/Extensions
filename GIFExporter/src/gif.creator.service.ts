@@ -558,7 +558,7 @@ export class EncodedImage {
  * @author Kevin Weiner (original Java version - kweiner@fmsware.com)
  * @author Thibault Imbert (AS3 version - bytearray.org)
  * @author Kevin Kwok (JavaScript version - https://github.com/antimatter15/jsgif)
- * @author Anthony Powell (TypeScript version)
+ * @author Anthony Powell (TypeScript version 2018)
  * @version 0.1 AS3 implementation
  */
 
