@@ -65,7 +65,6 @@ export class GIFCreator {
 			download.style.display = 'none';
 			download.href = url;
 			download.download = filename;
-			document.body.appendChild(download);
 			download.click();
 			download.remove();
 			this._worker.terminate();
@@ -108,8 +107,6 @@ export class GIFCreator {
 			this.resize(this._resizeCanvas);
 			this.flip(this._resizeCanvas2D, this._holdingCanvas, this._resizeCanvas);
 			const data = this._resizeCanvas2D.getImageData(0, 0, this._resizeCanvas.width, this._resizeCanvas.height).data;
-			const previewArea = document.getElementById('preview');
-			previewArea.appendChild(this._resizeCanvas);
 
 			resolve(data.buffer);
 		});

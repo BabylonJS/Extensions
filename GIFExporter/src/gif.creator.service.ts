@@ -887,6 +887,30 @@ export class GIFGenerator {
 		this.stream.write(0); /* Pixel Aspect Ration */
 	}
 
+	private writeGlobalColorTable(): void {
+		let count = 0;
+
+		this.GCT.forEach(color => {
+			count += 3;
+			this.stream.writeColor(color);
+		});
+
+		for (let i = count; i < 3 * 256; i++) {
+			this.stream.write(0);
+		}
+	}
+
+	private writeApplicationExtension(): void {
+		this.stream.write(0x21); /* extension introducer */
+		this.stream.write(0xff); /* app extension label */
+		this.stream.write(11); /* block size */
+		this.stream.writeUTF('NETSCAPE' + '2.0'); /* app id + auth code */
+		this.stream.write(3); /* sub-block size */
+		this.stream.write(1); /* loop sub-block id */
+		this.stream.writeLittleEndian(0); /* loop count (extra iterations, 0=repeat forever) */
+		this.stream.write(0); /* Block Terminator */
+	}
+
 	private writeGraphicControlExtension(): void {
 		this.stream.write(0x21); /* Extension Introducer */
 		this.stream.write(0xf9); /* Graphic Control Label */
@@ -906,41 +930,16 @@ export class GIFGenerator {
 		this.stream.write(0x0); /* Block Terminator */
 	}
 
-	private writeApplicationExtension(): void {
-		this.stream.write(0x21); /* extension introducer */
-		this.stream.write(0xff); /* app extension label */
-		this.stream.write(11); /* block size */
-		this.stream.writeUTF('NETSCAPE' + '2.0'); /* app id + auth code */
-		this.stream.write(3); /* sub-block size */
-		this.stream.write(1); /* loop sub-block id */
-		this.stream.writeLittleEndian(0); /* loop count (extra iterations, 0=repeat forever) */
-		this.stream.write(0); /* Block Terminator */
+	private async writeImageData(): Promise<void> {
+		const encoder = new LZWEncoder(this.width, this.height, this.frameIndexedPixels, 8);
+		encoder.encode(this.stream);
+		console.log(`completed frame ${this.frameCount}`);
 	}
 
 	private writeTrailer(): void {
 		this.stream.write(0x3b); /* Trailer Marker */
 		console.log(`Generator now finished.`);
 		this.frameCount = 0; /* Reset frame count for next GIF */
-	}
-
-	private writeGlobalColorTable(): void {
-		let count = 0;
-
-		this.GCT.forEach(color => {
-			count += 3;
-			this.stream.writeColor(color);
-		});
-
-		for (let i = count; i < 3 * 256; i++) {
-			this.stream.write(0);
-		}
-	}
-
-	private async writeImageData(): Promise<void> {
-		const encoder = new LZWEncoder(this.width, this.height, this.frameIndexedPixels, 8);
-		console.log(this.stream);
-		encoder.encode(this.stream);
-		console.log(`completed frame ${this.frameCount}`);
 	}
 
 	private writeLocalColorTable(): void {}
@@ -1027,18 +1026,18 @@ function processFrames(
 function generateGIF(frames: string[][], colorLookup: { [index: string]: number }) {
 	function mapPixelsToIndex(frames: string[][], colorLookup: { [index: string]: number }): number[][] {
 		const indexedFrames: number[][] = [];
-		frames.forEach(frame => {
+		frames.forEach((frame, index) => {
 			const indexedPixels: number[] = [];
 			frame.forEach(pixel => {
-				if (colorLookup[pixel]) {
-					indexedPixels.push(colorLookup[pixel]);
-				} else {
-					indexedPixels.push(_colorTableGen.lookupRGB(pixel));
-				}
+				indexedPixels.push(lookup(pixel));
 			});
 			indexedFrames.push(indexedPixels);
 		});
 		return indexedFrames;
+	}
+
+	function lookup(pixel: string) {
+		return /* colorLookup[pixel] ? colorLookup[pixel] : */ _colorTableGen.lookupRGB(pixel);
 	}
 	const indexedFrames = mapPixelsToIndex(frames, colorLookup);
 
