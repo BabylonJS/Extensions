@@ -1,4 +1,5 @@
 /// <reference path="babylon.d.ts" />
+/// <reference path="babylon.scenecomponents.ts" />
 /// <reference path="babylon.scenemanager.ts" />
 
 module BABYLON {
@@ -73,7 +74,7 @@ module BABYLON {
             }
             // Shuriken time based updates and cycling
             if (this._duration > 0.0) {
-                var cycleLength:number = (this.delayTime + this._duration);
+                let cycleLength:number = (this.delayTime + this._duration);
                 BABYLON.SceneManager.GetInstance().delay(()=>{ this.internalCycle(); }, cycleLength * 1000);
             }
         }
@@ -110,7 +111,7 @@ module BABYLON {
         }        
         
         private internalStart(min:number, max):void {
-            var emitCount = (this.emitType === ShurikenParticleSystem.EMISSION_BURST) ? 0 : -1;
+            let emitCount = (this.emitType === ShurikenParticleSystem.EMISSION_BURST) ? 0 : -1;
             if (this.emitType === ShurikenParticleSystem.EMISSION_BURST && min >= 1.0 && max >= 1.0) {
                 emitCount = BABYLON.Scalar.RandomRange(min, max);
             }
@@ -120,7 +121,7 @@ module BABYLON {
         
         private internalStop(force:boolean = false):void {
             if (force === false) {
-                var pSystem:any = (<any>this);
+                let pSystem:any = (<any>this);
                 if(pSystem != null && pSystem._started && !pSystem._stopped) {
                     super.stop();
                 }
@@ -137,8 +138,8 @@ module BABYLON {
 
         public defaultUpdateFunctionHandler(particles: BABYLON.Particle[]): void {
             if (this._self != null) {
-                for (var index = 0; index < particles.length; index++) {
-                    var particle = particles[index];
+                for (let index = 0; index < particles.length; index++) {
+                    let particle = particles[index];
                     particle.age += this._self._scaledUpdateSpeed;
 
                     if (particle.age >= particle.lifeTime) { // Recycle by swapping with last particle
@@ -163,7 +164,7 @@ module BABYLON {
                         particle.direction.addInPlace(this._self._scaledGravity);
 
                         if (this._self._isAnimationSheetEnabled) {
-                            particle.updateCellIndex(this._self._scaledUpdateSpeed);
+                            particle.updateCellIndex();
                         }
                     }
                 }
@@ -200,7 +201,7 @@ module BABYLON {
             this.internalPlay(this.delayTime);
             // Shuriken time based cycling
             if (this._duration > 0.0) {
-                var cycleLength:number = (this.delayTime + this._duration);
+                let cycleLength:number = (this.delayTime + this._duration);
                 BABYLON.SceneManager.GetInstance().delay(()=>{ this.internalCycle(); }, cycleLength * 1000);
             }
         }
@@ -216,9 +217,9 @@ module BABYLON {
         
         /* Shuriken Particle System Internal Worker Functions */
         
-        private get internalScene(): BABYLON.Scene {
-            return (<any>this)._scene;
-        }
+        //private get internalScene(): BABYLON.Scene {
+        //    return (<any>this)._scene;
+        //}
         
         private internalPlay(delay:number = 0.0, min:number = -1, max:number = -1, ):void {
             if (delay > 0.0) {
@@ -241,7 +242,7 @@ module BABYLON {
         
         private internalStop(force:boolean = false):void {
             if (force === false) {
-                var pSystem:any = (<any>this);
+                let pSystem:any = (<any>this);
                 if(pSystem != null && pSystem._started && !pSystem._stopped) {
                     super.stop();
                 }

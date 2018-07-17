@@ -1,4 +1,5 @@
 ﻿/// <reference path="babylon.d.ts" />
+/// <reference path="babylon.scenecomponents.ts" />
 /// <reference path="babylon.scenemanager.ts" />
 
 //////////////////////////////////////////////
@@ -17,6 +18,7 @@ module BABYLON {
         public avatarRadius:number = 0.25;
         public fallingVelocity:number = 0.1;
         public slidingVelocity:number = 0.25;
+        public synchronizeVelocity:boolean = true;
         public isJumping():boolean { return this._jumping; }
         public isFalling():boolean { return this._falling; }
         public isSliding():boolean { return this._sliding; }
@@ -48,43 +50,64 @@ module BABYLON {
             this._sliding = false;
             this._grounded = true;
             this.updateGroundingState();
-            this.onCollisionEvent((collider:BABYLON.AbstractMesh, tag:string) => {
+            // ..
+            // Character Collision Events
+            // ..
+            this.onCollisionEvent = (collider:BABYLON.AbstractMesh, tag:string) => {
                 if (this.manager.checkCollisionContact(this.mesh, collider, BABYLON.CollisionContact.Bottom, this._threashold) === true) {
                     this._jumping = false;
                     this.updateGroundingState();
                 }
                 if (this.onPhysicsContact != null) this.onPhysicsContact(collider, tag);
-            });
+            };
         }
         protected update() :void {  this.updateGroundingState(); }
         protected after() :void {  this.updateGroundingState(); }
         protected updateGroundingState():void {
             this._grounded = (this._jumping === false);
-            this._velocity = this.manager.getLinearVelocity(this.mesh);
+            // ..
+            // TODO: Get Collision Current Velocity
+            // ..
+            this._velocity = (this.movementType === BABYLON.MovementType.CheckCollision) ? BABYLON.Vector3.Zero() : this.manager.getLinearVelocity(this.mesh);
             this._falling = (this._velocity != null && this._velocity.y < (-this.fallingVelocity));
             this._sliding = (this._grounded === true && this._velocity != null && this._velocity.y < (-this.slidingVelocity));
         }
 
-        /* Public Character Controller Movement Function */
+        ///////////////////////////////////////////////////
+        // Public Character Controller Movement Function //
+        ///////////////////////////////////////////////////
         
         public move(velocity:BABYLON.Vector3, friction:number = -1.0, jump:number = -1.0):void {
-            if (friction >= 0.0) this.manager.applyFriction(this.mesh, friction);
-            if (this.movementType === BABYLON.MovementType.AppliedForces) {
-                this.manager.applyForce(this.mesh, velocity, this.mesh.getAbsolutePosition());
+            if (this.movementType === BABYLON.MovementType.CheckCollision) {
+                // ..
+                // TODO: Move With Collision
+                // ..
             } else {
-                this.manager.setLinearVelocity(this.mesh, velocity);
-            }
-            if (jump > 0.0) {
-                this._jumping = true;
-                this._jumpingVelocity.copyFromFloats(0.0, jump, 0.0);
-                this.manager.applyImpulse(this.mesh, this._jumpingVelocity, this.mesh.getAbsolutePosition());
-                this.updateGroundingState();
+                if (friction >= 0.0) this.manager.applyFriction(this.mesh, friction);
+                if (this.synchronizeVelocity) velocity.y = this._velocity.y;
+                if (this.movementType === BABYLON.MovementType.AppliedForces) {
+                    this.manager.applyForce(this.mesh, velocity, this.mesh.getAbsolutePosition());
+                } else {
+                    this.manager.setLinearVelocity(this.mesh, velocity);
+                }
+                if (jump > 0.0) {
+                    this._jumping = true;
+                    this._jumpingVelocity.copyFromFloats(0.0, jump, 0.0);
+                    this.manager.applyImpulse(this.mesh, this._jumpingVelocity, this.mesh.getAbsolutePosition());
+                    this.updateGroundingState();
+                }
             }
         }
-        public rotate(speed:number, friction:number = -1.0):void {
-            if (friction >= 0.0) this.manager.applyFriction(this.mesh, friction);
-            this._angularVelocity.copyFromFloats(0.0, speed, 0.0);
-            this.manager.setAngularVelocity(this.mesh, this._angularVelocity);
+        public turn(speed:number, friction:number = -1.0):void {
+            if (this.movementType === BABYLON.MovementType.CheckCollision) {
+                // ..
+                // TODO: Turn With Collision
+                // ..
+            } else {
+                if (friction >= 0.0) this.manager.applyFriction(this.mesh, friction);
+                this._angularVelocity.copyFromFloats(0.0, speed, 0.0);
+                this.manager.setAngularVelocity(this.mesh, this._angularVelocity);
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿/// <reference path="babylon.d.ts" />
+/// <reference path="babylon.scenecomponents.ts" />
 /// <reference path="babylon.scenemanager.ts" />
 /// <reference path="babylon.sceneshuriken.ts" />
 /// <reference path="babylon.sceneutilities.ts" />
@@ -46,22 +47,23 @@ module BABYLON {
             this._auto = this.getProperty("autoStart", false);
             this._shape = this.getProperty("preset", 0);
             // Setup particle system properties
-            var pcap:number = this.getProperty("capacity", 100);
-            var pname:string = this.getProperty("particleName", null);
-            var speed:number = this.getProperty("startSpeed", 0.01);
-            var angle:number = this.getProperty("angle", 1.0);
-            var radius:number = this.getProperty("radius", 1.0);
-            var count:number = this.getProperty("activeCount", 100000);
-            var emission:number = this.getProperty("emitType", 0.0);
-            var duration:number = this.getProperty("duration", 10.0);
-            var randomizer:number = this.getProperty("randomizer", 0);
-            if (pname == null || pname === "") pname = (this.owned.name + ".Particle." + BABYLON.Tools.RandomId()); 
-            var bursts:BABYLON.IShurikenBusrt[] = this.getProperty<BABYLON.IShurikenBusrt[]>("emitBurst", null);
+            let pcap:number = this.getProperty("capacity", 100);
+            let pname:string = this.getProperty("particleName", null);
+            let speed:number = this.getProperty("startSpeed", 0.01);
+            let angle:number = this.getProperty("angle", 1.0);
+            let radius:number = this.getProperty("radius", 1.0);
+            let count:number = this.getProperty("activeCount", 100000);
+            let emission:number = this.getProperty("emitType", 0.0);
+            let duration:number = this.getProperty("duration", 10.0);
+            let randomizer:number = this.getProperty("randomizer", 0);
+            if (pname == null || pname === "") pname = (this.entity.name + ".Particle." + BABYLON.Tools.RandomId()); 
+            let bursts:BABYLON.IShurikenBusrt[] = this.getProperty<BABYLON.IShurikenBusrt[]>("emitBurst", null);
             
             // Setup particle system texture mask (CPU ONLY)
-            var textureMask:any = this.getProperty("textureMask");
-            var textureMaskCol:BABYLON.Color4 = BABYLON.Utilities.ParseColor4(textureMask, new BABYLON.Color4(1.0, 1.0, 1.0, 1.0));
-            var mm_rotate_vector:BABYLON.Vector2 = BABYLON.Utilities.ParseVector2(mm_rotate, new BABYLON.Vector2(0.0, 0.0));
+            let textureMask:any = this.getProperty("textureMask");
+            let angularSpeed:any = this.getProperty("angularSpeed");
+            let textureMaskCol:BABYLON.Color4 = BABYLON.Utilities.ParseColor4(textureMask, new BABYLON.Color4(1.0, 1.0, 1.0, 1.0));
+            let mm_rotate_vector:BABYLON.Vector2 = BABYLON.Utilities.ParseVector2(angularSpeed, new BABYLON.Vector2(0.0, 0.0));
             
             // Create shuriken particle system
             if (this._mode === 1) {
@@ -75,7 +77,7 @@ module BABYLON {
                     this._shuriken.textureMask = textureMaskCol;
                     this._shuriken.minAngularSpeed = mm_rotate_vector.x;
                     this._shuriken.maxAngularSpeed = mm_rotate_vector.y;
-                    BABYLON.Tools.Warn("Babylon.js using cpu particle system fallback for owner: " + this.owned.name);
+                    BABYLON.Tools.Warn("Babylon.js using cpu particle system fallback for owner: " + this.entity.name);
                 }
             } else {
                 this._shuriken = new BABYLON.ShurikenParticleSystem(pname, pcap, this.scene, duration, emission, speed, bursts);
@@ -92,38 +94,37 @@ module BABYLON {
             this._shuriken.delayTime = this.getProperty("delayTime", 0.0);
             
             // Parse particle system classes
-            var mm_lifetime:any = this.getProperty("lifeTime");
-            var mm_lifetime_vector:BABYLON.Vector2 = BABYLON.Utilities.ParseVector2(mm_lifetime, new BABYLON.Vector2(1.0, 1.0));
+            let mm_lifetime:any = this.getProperty("lifeTime");
+            let mm_lifetime_vector:BABYLON.Vector2 = BABYLON.Utilities.ParseVector2(mm_lifetime, new BABYLON.Vector2(1.0, 1.0));
             this._shuriken.minLifeTime = mm_lifetime_vector.x;
             this._shuriken.maxLifeTime = mm_lifetime_vector.y;
-            var mm_power:any = this.getProperty("emitPower");
-            var mm_power_vector:BABYLON.Vector2 = BABYLON.Utilities.ParseVector2(mm_power, new BABYLON.Vector2(1.0, 1.0));
+            let mm_power:any = this.getProperty("emitPower");
+            let mm_power_vector:BABYLON.Vector2 = BABYLON.Utilities.ParseVector2(mm_power, new BABYLON.Vector2(1.0, 1.0));
             this._shuriken.minEmitPower = mm_power_vector.x;
             this._shuriken.maxEmitPower = mm_power_vector.y;
-            var mm_rotate:any = this.getProperty("angularSpeed");
-            var mm_size:any = this.getProperty("particleSize");
-            var mm_size_vector:BABYLON.Vector2 = BABYLON.Utilities.ParseVector2(mm_size, new BABYLON.Vector2(1.0, 1.0));
+            let mm_size:any = this.getProperty("particleSize");
+            let mm_size_vector:BABYLON.Vector2 = BABYLON.Utilities.ParseVector2(mm_size, new BABYLON.Vector2(1.0, 1.0));
             this._shuriken.minSize = mm_size_vector.x;
             this._shuriken.maxSize = mm_size_vector.y;
-            var color1:any = this.getProperty("color1");
+            let color1:any = this.getProperty("color1");
             this._shuriken.color1 = BABYLON.Utilities.ParseColor4(color1, new BABYLON.Color4(1.0, 1.0 ,1.0, 1.0));
-            var color2:any = this.getProperty("color2");
+            let color2:any = this.getProperty("color2");
             this._shuriken.color2 = BABYLON.Utilities.ParseColor4(color2, new BABYLON.Color4(1.0, 1.0, 1.0, 1.0));
-            var colorDead:any = this.getProperty("colorDead");
+            let colorDead:any = this.getProperty("colorDead");
             this._shuriken.colorDead = BABYLON.Utilities.ParseColor4(colorDead, new BABYLON.Color4(0.0, 0.0, 0.0, 1.0));
 
             // Particle system emission shapes
-            var direction1:any = this.getProperty("direction1");
-            var directionVec1:BABYLON.Vector3 = BABYLON.Utilities.ParseVector3(direction1, new BABYLON.Vector3(0.0, 1.0, 0.0));
-            var direction2:any = this.getProperty("direction2");
-            var directionVec2:BABYLON.Vector3 = BABYLON.Utilities.ParseVector3(direction2, new BABYLON.Vector3(0.0, 1.0, 0.0));
-            var minEmitBox:any = this.getProperty("minEmitBox");
-            var minEmitBoxVec:BABYLON.Vector3 = BABYLON.Utilities.ParseVector3(minEmitBox, new BABYLON.Vector3(0.0, 0.0, 0.0));
-            var maxEmitBox:any = this.getProperty("maxEmitBox");
-            var maxEmitBoxVec:BABYLON.Vector3 = BABYLON.Utilities.ParseVector3(maxEmitBox, new BABYLON.Vector3(0.0, 0.0, 0.0));
+            let direction1:any = this.getProperty("direction1");
+            let directionVec1:BABYLON.Vector3 = BABYLON.Utilities.ParseVector3(direction1, new BABYLON.Vector3(0.0, 1.0, 0.0));
+            let direction2:any = this.getProperty("direction2");
+            let directionVec2:BABYLON.Vector3 = BABYLON.Utilities.ParseVector3(direction2, new BABYLON.Vector3(0.0, 1.0, 0.0));
+            let minEmitBox:any = this.getProperty("minEmitBox");
+            let minEmitBoxVec:BABYLON.Vector3 = BABYLON.Utilities.ParseVector3(minEmitBox, new BABYLON.Vector3(0.0, 0.0, 0.0));
+            let maxEmitBox:any = this.getProperty("maxEmitBox");
+            let maxEmitBoxVec:BABYLON.Vector3 = BABYLON.Utilities.ParseVector3(maxEmitBox, new BABYLON.Vector3(0.0, 0.0, 0.0));
             switch(this._shape) {
                 case 0: {
-                    var boxEmitter:BABYLON.BoxParticleEmitter = new BABYLON.BoxParticleEmitter();
+                    let boxEmitter:BABYLON.BoxParticleEmitter = new BABYLON.BoxParticleEmitter();
                     boxEmitter.direction1 = directionVec1;
                     boxEmitter.direction2 = directionVec2;
                     boxEmitter.minEmitBox = minEmitBoxVec;
@@ -146,16 +147,17 @@ module BABYLON {
             }
             
             // Parse particle system gravity
-            var gravity:any = this.getProperty("gravityVector");
-            var gravityMode:number = this.getProperty("gravityMode", 0);
-            var gravityMultiplier:number = this.getProperty("gravityMultiplier", 0.0);
+            let gravity:any = this.getProperty("gravityVector");
+            let gravityMode:number = this.getProperty("gravityMode", 0);
+            let gravityMultiplier:number = this.getProperty("gravityMultiplier", 0.0);
             if (gravityMode === 1) this._shuriken.gravity = this.scene.gravity.scale(gravityMultiplier);
             else this._shuriken.gravity = BABYLON.Utilities.ParseVector3(gravity, new BABYLON.Vector3(0.0, 0.0, 0.0));
             
             // Parse particle system textures
-            var texture:any = this.getProperty("textureImage", null);
+            let texture:any = this.getProperty("textureImage", null);
+            let texturePath:string = this.manager.getScenePath();
             if (texture != null && texture.name && texture.name !== "") {
-                this._shuriken.particleTexture = new BABYLON.Texture((this.manager.getScenePath() + texture.name), this.scene);
+                this._shuriken.particleTexture = new BABYLON.Texture((texturePath + texture.name), this.scene);
             }
         }
     }

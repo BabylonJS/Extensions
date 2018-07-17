@@ -41,6 +41,8 @@ declare module BABYLON {
         static TransformDirection(owner: BABYLON.AbstractMesh | BABYLON.Camera, direction: BABYLON.Vector3): BABYLON.Vector3;
         /** Transforms direction from local space to world space. */
         static TransformDirectionToRef(owner: BABYLON.AbstractMesh | BABYLON.Camera, direction: BABYLON.Vector3, result: BABYLON.Vector3): void;
+        /** Recomputes the meshes bounding center pivot point */
+        static RecomputePivotPoint(owner: BABYLON.AbstractMesh): void;
         /** Gets any direction vector of the owner in world space. */
         static GetDirectionVector(owner: BABYLON.AbstractMesh | BABYLON.Camera, vector: BABYLON.Vector3): BABYLON.Vector3;
         /** Gets any direction vector of the owner in world space. */
@@ -78,7 +80,18 @@ declare module BABYLON {
         static FastMatrixInterpolate(animation: BABYLON.Animation, currentFrame: number, loopMode: number, result: BABYLON.Matrix): void;
         /** Returns float result as the interpolated values for animation key frame sampling. */
         static FastFloatInterpolate(animation: BABYLON.Animation, currentFrame: number, repeatCount: number, loopMode: number, offsetValue?: any, highLimitValue?: any): number;
+        /** Computes the transition duration blending speed */
         static ComputeBlendingSpeed(rate: number, duration: number): number;
+        /** Registers A scene component on the scene */
+        static RegisterSceneComponent(comp: BABYLON.SceneComponent, klass: string, enableUpdate?: boolean, propertyBag?: any): void;
+        /** Registers new manager instance on the scene object */
+        static RegisterSceneManager(scene: BABYLON.Scene): BABYLON.SceneManager;
+        /** Parses the registered scene manager object metadata */
+        static ParseSceneMetadata(scene: BABYLON.Scene): void;
+        /** Parses the registered scene manager import metadata */
+        static ParseImportMetadata(meshes: BABYLON.AbstractMesh[], scene: BABYLON.Scene): void;
+        /** Fire the manager instance internal scene ready function */
+        static ExecuteSceneReady(scene: BABYLON.Scene): void;
     }
 }
 
@@ -104,10 +117,6 @@ declare module BABYLON {
 }
 
 declare module BABYLON {
-    class ToolkitPlugin {
-        static Loader: BABYLON.ISceneLoaderPlugin;
-        static Warning(message: string): void;
-    }
     class ToolkitProgress implements BABYLON.ILoadingScreen {
         loadingUIText: string;
         borderPrefix: string;
@@ -122,16 +131,6 @@ declare module BABYLON {
         displayLoadingUI(): void;
         updateLoadingUI(): void;
         hideLoadingUI(): void;
-    }
-    class JsonSceneLoader implements BABYLON.ISceneLoaderPlugin {
-        constructor();
-        name: string;
-        extensions: BABYLON.ISceneLoaderPluginExtensions;
-        canDirectLoad?: (data: string) => boolean;
-        rewriteRootURL?: (rootUrl: string, responseURL?: string) => string;
-        load(scene: BABYLON.Scene, data: any, rootUrl: string): boolean;
-        importMesh(meshesNames: any, scene: BABYLON.Scene, data: any, rootUrl: string, meshes: BABYLON.AbstractMesh[], particleSystems: BABYLON.ParticleSystem[], skeletons: BABYLON.Skeleton[]): boolean;
-        loadAssetContainer(scene: BABYLON.Scene, data: string, rootUrl: string, onError?: (message: string, exception?: any) => void): BABYLON.AssetContainer;
     }
 }
 declare class Stats {
@@ -170,12 +169,13 @@ declare module BABYLON {
         enabled: boolean;
         speedRatio: number;
         autoTicking: boolean;
+        enableTransitions: boolean;
         directBlendSpeed: number;
         readonly fps: number;
         readonly legacy: boolean;
         readonly skeletal: boolean;
         readonly executing: boolean;
-        constructor(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, scene: BABYLON.Scene, tick?: boolean, propertyBag?: any);
+        constructor(owner: BABYLON.Entity, scene: BABYLON.Scene, tick?: boolean, propertyBag?: any);
         protected start(): void;
         protected update(): void;
         protected destroy(): void;
@@ -208,7 +208,7 @@ declare module BABYLON {
         private updateStateMachine();
         private updateAnimationCurves();
         private updateAnimationTargets();
-        private processStateMachine(layer);
+        private processStateMachine(layer, step);
         private parseAnimationStateMachineEvents(layer);
         private setCurrentAnimationState(layer, name, blending);
         private setupBaseAnimationState(layer, blending?, playback?);
@@ -238,17 +238,31 @@ declare module BABYLON {
 declare module BABYLON {
     class SceneManager {
         /** Get the current scene manager version information. */
-        static readonly Version: string;
+        static GetVersion(): string;
         /** Get the current instance of the registered scene manager. */
         static GetInstance(): BABYLON.SceneManager;
-        /** Creates and registers new manager instance on the scene object */
-        static CreateInstance(scene: BABYLON.Scene, rootUrl?: any): BABYLON.SceneManager;
+        /** Get instance of the stats control. */
+        static GetStatistics(): Stats;
+        /** Create a new scene and registers a manager instance */
+        static CreateScene(engine: BABYLON.Engine): BABYLON.Scene;
+        /** Load and parse a new scene and registers a manager instance */
+        static LoadScene(rootUrl: string, sceneFilename: any, engine: Engine, onSuccess?: Nullable<(scene: Scene) => void>, onProgress?: Nullable<(event: SceneLoaderProgressEvent) => void>, onError?: Nullable<(scene: Scene, message: string, exception?: any) => void>, pluginExtension?: Nullable<string>): Nullable<ISceneLoaderPlugin | ISceneLoaderPluginAsync>;
+        /** Append and parse scene objects from a filename url */
+        static AppendScene(rootUrl: string, sceneFilename?: any, scene?: Nullable<Scene>, onSuccess?: Nullable<(scene: Scene) => void>, onProgress?: Nullable<(event: SceneLoaderProgressEvent) => void>, onError?: Nullable<(scene: Scene, message: string, exception?: any) => void>, pluginExtension?: Nullable<string>): Nullable<ISceneLoaderPlugin | ISceneLoaderPluginAsync>;
+        /** Import and parse meshes from a filename url */
+        static ImportMeshes(meshNames: any, rootUrl: string, sceneFilename?: any, scene?: Nullable<Scene>, onSuccess?: Nullable<(meshes: AbstractMesh[], particleSystems: ParticleSystem[], skeletons: Skeleton[], animationGroups: AnimationGroup[]) => void>, onProgress?: Nullable<(event: SceneLoaderProgressEvent) => void>, onError?: Nullable<(scene: Scene, message: string, exception?: any) => void>, pluginExtension?: Nullable<string>): Nullable<ISceneLoaderPlugin | ISceneLoaderPluginAsync>;
+        /** Attaches a managed entity component to the scene. */
+        static AttachComponent(comp: BABYLON.SceneComponent, klass: string, tick?: boolean, propertyBag?: any): void;
         /** Registers a function handler to be executed when window is loaded. */
         static OnWindowLoad(func: () => any): void;
         /** Registers a function handler to be executed when device is ready. */
         static OnDeviceReady(func: () => any): void;
         /** Registers a function handler to be executed when scene is ready. */
         static ExecuteWhenReady(func: (scene: BABYLON.Scene, manager: BABYLON.SceneManager) => void): void;
+        /** Is oculus browser platform agent. */
+        static IsOculusBrowser(): boolean;
+        /** Is samsung browser platform agent. */
+        static IsSamsungBrowser(): boolean;
         /** Is windows phone platform agent. */
         static IsWindowsPhone(): boolean;
         /** Is blackberry web platform agent. */
@@ -267,6 +281,8 @@ declare module BABYLON {
         static IsIPAD(): boolean;
         /** Is ipod web platform agent. */
         static IsIPOD(): boolean;
+        /** Is internet explorer 11 platform agent. */
+        static IsIE11(): boolean;
         /** Is mobile web platform agent. */
         static IsMobile(): boolean;
         /** Are cordova platform services available. */
@@ -297,16 +313,24 @@ declare module BABYLON {
         static ResolveGenericPromise(resolveObject: any): any;
         /**  Gets the names query string from page url. */
         static GetQueryStringParam(name: string, url: string): string;
+        /** Platform alert message dialog. */
+        static AlertMessage(text: string, title?: string): any;
         /** Gets the current engine WebGL version string info. */
         static GetWebGLVersionString(): string;
         /** Gets the current engine WebGL version number info. */
         static GetWebGLVersionNumber(): number;
-        /** Get instance of the stats control. */
-        static GetStatistics(): Stats;
-        /** Creates an parses scene import mesh metadata. */
-        static CreateMeshMetadata(meshes: BABYLON.AbstractMesh[], scene: BABYLON.Scene): void;
-        /** Platform alert message dialog. */
-        static AlertMessage(text: string, title?: string): any;
+        /** Get the WebVR experience helper left controller */
+        static GetWebVRLeftController(): BABYLON.WebVRController;
+        /** Get the WebVR experience helper right controller */
+        static GetWebVRRightController(): BABYLON.WebVRController;
+        /** Get the WebVR experience helper left controller prefab mesh */
+        static GetWebVRLeftControllerPrefab(): BABYLON.AbstractMesh;
+        /** Get the WebVR experience helper right controller prefab mesh */
+        static GetWebVRRightControllerPrefab(): BABYLON.AbstractMesh;
+        /** Shows the WebVR experience helper default controllers */
+        static ShowWebVRDefaultControllers(displayGaze?: Nullable<boolean>, displayLaser?: Nullable<boolean>): void;
+        /** Shows the WebVR experience helper custom controllers */
+        static ShowWebVRCustomControllers(displayGaze?: Nullable<boolean>, displayLaser?: Nullable<boolean>): void;
         static readonly StaticIndex: number;
         static readonly PrefabIndex: number;
         static GamepadManager: BABYLON.GamepadManager;
@@ -318,13 +342,13 @@ declare module BABYLON {
         private static AuxMatrix;
         private static AuxVector2;
         private static AuxVector3;
-        private _ie;
         private _url;
         private _time;
         private _timing;
         private _filename;
         private _input;
         private _scene;
+        private _vrhelper;
         private _navmesh;
         private _navigation;
         private _loadQueueIndex;
@@ -332,18 +356,18 @@ declare module BABYLON {
         private _loadQueueScenes;
         private _localReadyState;
         private _localSceneReady;
-        private _advancedTexture;
         private _sunlightDirection;
         private _sunlightIdentifier;
         private _environmentTextureName;
         private _playerOneCamera;
-        private _playerOneElement;
         private _playerTwoCamera;
-        private _playerTwoElement;
         private _playerThreeCamera;
-        private _playerThreeElement;
         private _playerFourCamera;
-        private _playerFourElement;
+        private _defaultControllers;
+        private _leftControllerStick;
+        private _rightControllerStick;
+        private _leftControllerPrefab;
+        private _rightControllerPrefab;
         private static me;
         private static min;
         private static max;
@@ -413,6 +437,7 @@ declare module BABYLON {
         private static showRenderStats;
         private static sceneRenderStats;
         private static renderStatsInstance;
+        private static showPhysicsImposter;
         private static showDebugSockets;
         private static colliderVisibility;
         private static socketColliderSize;
@@ -422,6 +447,9 @@ declare module BABYLON {
         private static preventDefault;
         private static stereoCameras;
         private static rightHanded;
+        private static pointerLocked;
+        private static enableLocking;
+        private static physicsViewer;
         private static gamepad1;
         private static gamepad1Type;
         private static gamepad1ButtonPress;
@@ -463,15 +491,15 @@ declare module BABYLON {
         private static gamepad4LeftTrigger;
         private static gamepad4RightTrigger;
         private static loader;
-        readonly ie: boolean;
-        readonly url: string;
+        webvr: BABYLON.VRExperienceHelper;
         readonly time: number;
         readonly deltaTime: number;
         getScene(): BABYLON.Scene;
         private static readies;
-        constructor(rootUrl: string, scene: BABYLON.Scene);
+        constructor(scene: BABYLON.Scene);
         private _beforeRender();
         private _afterRender();
+        private _parseSceneMetadata();
         dispose(): void;
         /** Opens a platform alert message dialog */
         alert(text: string, title?: string): any;
@@ -490,7 +518,7 @@ declare module BABYLON {
         /** Disables time managment in scene. */
         disableTime(): void;
         /** Safely destroys a scene object. */
-        safeDestroy(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, delay?: number, disable?: boolean): void;
+        safeDestroy(owner: BABYLON.Entity, delay?: number, disable?: boolean): void;
         /** Gets the main camera for a player */
         getMainCamera(player?: BABYLON.PlayerNumber): BABYLON.Camera;
         /** Get the scene formatted name. */
@@ -501,8 +529,6 @@ declare module BABYLON {
         getSunlight(): BABYLON.Light;
         /** Gets the scene sunlight direction */
         getSunlightDirection(): BABYLON.Vector3;
-        /** Gets the scene advanded texture gui. */
-        getAdvancedTexture(): BABYLON.GUI.AdvancedDynamicTexture;
         /** Gets the scene environment texture name. */
         getEnvironmentTextureName(): string;
         /** Adds a pending scene loading state. */
@@ -520,8 +546,6 @@ declare module BABYLON {
         toggleDebug(popups?: boolean, tab?: number, parent?: HTMLElement): void;
         /** Sets the multi player camera view layout */
         setMultiPlayerViewLayout(totalNumPlayers: number): boolean;
-        /** Gets the multi player view rectangle element */
-        getMultiPlayerViewElement(player?: BABYLON.PlayerNumber): BABYLON.GUI.Rectangle;
         rayCast(ray: BABYLON.Ray, predicate?: (mesh: BABYLON.Mesh) => boolean, fastCheck?: boolean): BABYLON.PickingInfo;
         multiRayCast(ray: BABYLON.Ray, predicate?: (mesh: BABYLON.Mesh) => boolean): BABYLON.PickingInfo[];
         /** Gets the instanced material from scene. If does not exists, execute a optional defaultinstance handler. */
@@ -542,11 +566,11 @@ declare module BABYLON {
         /** Tweens (animates) the target property with a float value using BABYLON.Animations. */
         tweenFloat(target: any, targetProperty: string, start: number, end: number, frames: number, fps?: number, easing?: BABYLON.EasingFunction, speedRatio?: number, callback?: () => void, loopMode?: number, enableBlending?: boolean): BABYLON.Animatable;
         /** Plays the specified animation clip by name on the owner target objects. */
-        playAnimationClip(motion: string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, blending?: number, playback?: number, decendants?: boolean, animations?: Animation[], onAnimationEnd?: () => void): BABYLON.Animatable[];
+        playAnimationClip(motion: string, owner: BABYLON.Entity, blending?: number, playback?: number, decendants?: boolean, animations?: Animation[], onAnimationEnd?: () => void): BABYLON.Animatable[];
         /** Gets all the animation clips for the owner target object. */
-        getAnimationClips(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, decendants?: boolean, directDecendantsOnly?: boolean): BABYLON.IAnimationClip[];
+        getAnimationClips(owner: BABYLON.Entity, decendants?: boolean, directDecendantsOnly?: boolean): BABYLON.IAnimationClip[];
         /** Gets all the animation targets with clips for the specified owner. */
-        getAnimationTargets(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, decendants?: boolean, directDecendantsOnly?: boolean): any[];
+        getAnimationTargets(owner: BABYLON.Entity, decendants?: boolean, directDecendantsOnly?: boolean): any[];
         /** Sets the specified animation transition properties */
         setAnimationProperties(owner: BABYLON.IAnimatable, behavior: number, blending: number): void;
         /** Applies force to owner using physics imposter. */
@@ -573,20 +597,24 @@ declare module BABYLON {
         getAngularVelocity(owner: BABYLON.AbstractMesh): BABYLON.Vector3;
         /** Sets owner angular velocity using physics imposter. */
         setAngularVelocity(owner: BABYLON.AbstractMesh, velocity: BABYLON.Vector3): void;
+        /** Shows the owner physics imposter for debugging. */
+        showDebugImposter(owner: BABYLON.AbstractMesh): void;
+        /** Hides the owner physics imposter for debugging. */
+        hideDebugImposter(owner: BABYLON.AbstractMesh): void;
         /** Checks collision contact of the owner using physics imposter. */
         checkCollisionContact(owner: BABYLON.AbstractMesh, collider: BABYLON.AbstractMesh, contact: BABYLON.CollisionContact, threashold?: number): boolean;
         /** Moves owner using collisions. */
-        moveWithCollisions(owner: BABYLON.AbstractMesh, velocity: BABYLON.Vector3, rotation?: number): void;
+        moveWithCollisions(owner: BABYLON.AbstractMesh, velocity: BABYLON.Vector3): void;
         /** Moves owner using positions. */
-        moveWithTranslation(owner: BABYLON.AbstractMesh, velocity: BABYLON.Vector3, rotation?: number): void;
-        /** Adds a managed scene component to the scene. */
-        addSceneComponent(klass: string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, enableUpdate?: boolean, propertyBag?: any): BABYLON.SceneComponent;
+        moveWithTranslation(owner: BABYLON.AbstractMesh, velocity: BABYLON.Vector3): void;
+        /** Turns owner using rotations. */
+        turnWithRotation(owner: BABYLON.AbstractMesh, rotation?: number): void;
         /** Finds a scene component in the scene with the specfied klass name. */
-        findSceneComponent<T extends BABYLON.SceneComponent>(klass: string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): T;
+        findSceneComponent<T extends BABYLON.SceneComponent>(klass: string, owner: BABYLON.Entity): T;
         /** Finds all scene components in the scene with the specfied klass name. */
-        findSceneComponents<T extends BABYLON.SceneComponent>(klass: string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): T[];
+        findSceneComponents<T extends BABYLON.SceneComponent>(klass: string, owner: BABYLON.Entity): T[];
         /** Finds the owner object metedata in the scene. */
-        findSceneMetadata(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): BABYLON.ObjectMetadata;
+        findSceneMetadata(owner: BABYLON.Entity): BABYLON.ObjectMetadata;
         /** Finds the specfied child mesh of owner in the scene. */
         findSceneChildMesh(name: string, owner: BABYLON.AbstractMesh, searchType?: BABYLON.SearchType, directDecendantsOnly?: boolean, predicate?: (node: BABYLON.Node) => boolean): BABYLON.AbstractMesh;
         /** Finds the specfied collision mesh of owner in the scene. */
@@ -598,17 +626,21 @@ declare module BABYLON {
         /** Finds all the socket meshes of owner in the scene. */
         findSceneSocketMeshes(owner: BABYLON.AbstractMesh, directDecendantsOnly?: boolean, predicate?: (node: BABYLON.Node) => boolean): BABYLON.Mesh[];
         /** Finds the specfied animation clip of owner in the scene. */
-        findSceneAnimationClip(clip: string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): BABYLON.IAnimationClip;
+        findSceneAnimationClip(clip: string, owner: BABYLON.Entity): BABYLON.IAnimationClip;
         /** Finds any animation clips of owner in the scene. */
-        findSceneAnimationClips(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): BABYLON.IAnimationClip[];
+        findSceneAnimationClips(owner: BABYLON.Entity): BABYLON.IAnimationClip[];
         /** Finds the specfied particle system of owner in the scene. */
         findSceneParticleSystem(name: string, owner: BABYLON.AbstractMesh | BABYLON.Vector3): BABYLON.IParticleSystem;
         /** Finds all the particle systems of owner in the scene. */
         findSceneParticleSystems(owner: BABYLON.AbstractMesh | BABYLON.Vector3): BABYLON.IParticleSystem[];
         /** Finds the specfied lens flare system of owner in the scene. */
-        findSceneLensFlareSystem(name: string, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): BABYLON.LensFlareSystem;
+        findSceneLensFlareSystem(name: string, owner: BABYLON.Entity): BABYLON.LensFlareSystem;
         /** Finds all the lens flare systems of owner in the scene. */
-        findSceneLensFlareSystems(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): BABYLON.LensFlareSystem[];
+        findSceneLensFlareSystems(owner: BABYLON.Entity): BABYLON.LensFlareSystem[];
+        enablePointerLock(): void;
+        disablePointerLock(): void;
+        private pointerLockHandler();
+        private attachPointerLock();
         /** Reset all user input state in the scene. */
         resetUserInput(): void;
         /** Enables user input state in the scene. */
@@ -719,6 +751,17 @@ declare module BABYLON {
         private static inputFourRightStickHandler(values);
         private static inputManagerGamepadConnected(pad, state);
         private static inputManagerGamepadDisconnected(pad, state);
+        private static inputManagerLeftControllerMainButton(controller, state);
+        private static inputManagerLeftControllerPadState(controller, state);
+        private static inputManagerLeftControllerPadValues(controller, state);
+        private static inputManagerLeftControllerAuxButton(controller, state);
+        private static inputManagerLeftControllerTriggered(controller, state);
+        private static inputManagerRightControllerMainButton(controller, state);
+        private static inputManagerRightControllerPadState(controller, state);
+        private static inputManagerRightControllerPadValues(controller, state);
+        private static inputManagerRightControllerAuxButton(controller, state);
+        private static inputManagerRightControllerTriggered(controller, state);
+        private static inputManagerControllerConnected(controller, state);
         private static updateUserInput();
         private static parseSceneCameras(cameras, scene, ticklist);
         private static parseSceneLights(lights, scene, ticklist);
@@ -732,9 +775,9 @@ declare module BABYLON {
         private static setupCameraRigOptions(camera, scene);
         static LocateOwnerSocketMesh(name: string, owner: BABYLON.AbstractMesh, searchType?: BABYLON.SearchType): BABYLON.Mesh;
         static LocateOwnerSocketMeshes(owner: BABYLON.AbstractMesh): BABYLON.Mesh[];
-        static LocateOwnerAnimationTrack(index: number, owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, directDecendantsOnly?: boolean, predicate?: (node: BABYLON.Node) => boolean): BABYLON.Animation;
-        static DestroyComponents(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, destroyMetadata?: boolean): void;
-        static DisposeOwner(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light): void;
+        static LocateOwnerAnimationTrack(index: number, owner: BABYLON.Entity, directDecendantsOnly?: boolean, predicate?: (node: BABYLON.Node) => boolean): BABYLON.Animation;
+        static DestroyComponents(owner: BABYLON.Entity, destroyMetadata?: boolean): void;
+        static DisposeOwner(owner: BABYLON.Entity): void;
         static SetAnimationLooping(owner: BABYLON.IAnimatable, loopBehavior: number): void;
         static SetSkeletonLooping(skeleton: BABYLON.Skeleton, loopBehavior: number): void;
         static SetSkeletonBlending(skeleton: BABYLON.Skeleton, blendingSpeed: number): void;
@@ -783,6 +826,7 @@ declare module BABYLON {
 }
 
 declare module BABYLON {
+    type Entity = BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light;
     abstract class SceneComponent {
         register: () => void;
         protected tick: boolean;
@@ -790,16 +834,16 @@ declare module BABYLON {
         protected update(): void;
         protected after(): void;
         protected destroy(): void;
-        private _engine;
-        private _scene;
+        /** TODO: Optimize render loop with instances */
         private _before;
         private _after;
-        private _started;
-        private _initialized;
+        private _engine;
+        private _scene;
         private _properties;
         private _manager;
-        protected owned: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light;
-        constructor(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, scene: BABYLON.Scene, tick?: boolean, propertyBag?: any);
+        private _entity;
+        readonly entity: BABYLON.Entity;
+        constructor(owner: BABYLON.Entity, scene: BABYLON.Scene, tick?: boolean, propertyBag?: any);
         readonly scene: BABYLON.Scene;
         readonly engine: BABYLON.Engine;
         readonly manager: BABYLON.SceneManager;
@@ -811,11 +855,11 @@ declare module BABYLON {
         getComponents<T extends BABYLON.SceneComponent>(klass: string): T[];
         getLensFlareSystem(flareName: string): BABYLON.LensFlareSystem;
         getLensFlareSystems(): BABYLON.LensFlareSystem[];
-        private init();
-        private registerInstance(instance);
-        private updateInstance(instance);
-        private afterInstance(instance);
-        static DestroyInstance(instance: any): void;
+        /** TODO: Optimize render loop with instances */
+        private registerInstance(me);
+        private updateInstance(me);
+        private afterInstance(me);
+        static DestroyInstance(me: any): void;
     }
     abstract class CameraComponent extends BABYLON.SceneComponent {
         private _camera;
@@ -834,13 +878,6 @@ declare module BABYLON {
         private disposeSceneComponent();
     }
     abstract class MeshComponent extends BABYLON.SceneComponent {
-        onIntersectionEnter: (mesh: BABYLON.AbstractMesh) => void;
-        onIntersectionStay: (mesh: BABYLON.AbstractMesh) => void;
-        onIntersectionExit: (mesh: BABYLON.AbstractMesh) => void;
-        intersectionPrecision: BABYLON.IntersectionPrecision;
-        private _intersections;
-        private _intersecting;
-        private _intersector;
         private _mesh;
         constructor(owner: BABYLON.AbstractMesh, scene: BABYLON.Scene, tick?: boolean, propertyBag?: any);
         readonly mesh: BABYLON.AbstractMesh;
@@ -852,74 +889,19 @@ declare module BABYLON {
         getParticleSystems(): BABYLON.IParticleSystem[];
         /***********************************/
         /***********************************/
-        onCollisionEvent(handler: (collider: BABYLON.AbstractMesh, tag: string) => void): void;
-        getCollisionEventHandler(): (collider: BABYLON.AbstractMesh, tag: string) => void;
+        onCollisionEvent: (collider: BABYLON.AbstractMesh, tag: string) => void;
         private updatePhysicsCollisionEvent(collider, collidedAgainst);
-        /***********************************/
-        /***********************************/
-        addIntersectionMesh(mesh: BABYLON.AbstractMesh): void;
-        addIntersectionMeshes(meshes: BABYLON.AbstractMesh[]): void;
-        removeIntersectionMesh(mesh: BABYLON.AbstractMesh): void;
-        getIntersectionList(): BABYLON.IIntersectionState[];
-        resetIntersectionList(): void;
-        private updateIntersectionList();
         /*************************************/
         /*************************************/
-        private disposeSceneComponent();
-    }
-    class GenericComponent extends BABYLON.SceneComponent {
-        onready: () => void;
-        onstart: () => void;
-        onupdate: () => void;
-        onafter: () => void;
-        ondestroy: () => void;
-        constructor(owner: BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light, scene: BABYLON.Scene, tick?: boolean, propertyBag?: any);
-        getOwner(): BABYLON.AbstractMesh | BABYLON.Camera | BABYLON.Light;
-        protected ready(): void;
-        protected start(): void;
-        protected update(): void;
-        protected after(): void;
-        protected destroy(): void;
         private disposeSceneComponent();
     }
     class OrthoController extends BABYLON.CameraComponent {
         protected start(): void;
     }
-    class SmoothTool {
-        constructor();
-        currentVelocity: number;
-        /** Gradually changes a value towards a desired goal over time.
-         * The value is smoothed by some spring-damper like function, which will never overshoot.
-         * The function can be used to smooth any kind of value, positions, colors, scalars.
-         * SmoothTool.currentVelocity  - The current velocity, this value is modified by the function every time you call it.
-         *
-         * current	        - The current position.
-         * target	        - The position we are trying to reach.
-         * smoothTime       - Approximately the time it will take to reach the target. A smaller value will reach the target faster.
-         * deltaTime    	- The time since the last call to this function.
-         * maxSpeed	        - Optionally allows you to clamp the maximum speed.
-         */
-        SmoothDamp(current: number, target: number, smoothTime: number, deltaTime: number, maxSpeed?: number): number;
-        /**
-         * Gradually changes an angle given in degrees towards a desired goal angle over time.
-         * The value is smoothed by some spring-damper like function.
-         * The function can be used to smooth any kind of value, positions, colors, scalars.
-         * The most common use is for smoothing a follow camera.
-         * SmoothTool.currentVelocity  - The current velocity, this value is modified by the function every time you call it.
-         *
-         * current	        - The current position.
-         * target	        - The position we are trying to reach.
-         * smoothTime       - Approximately the time it will take to reach the target. A smaller value will reach the target faster.
-         * deltaTime    	- The time since the last call to this function.
-         * maxSpeed	        - Optionally allows you to clamp the maximum speed.
-         */
-        SmoothDampAngle(current: number, target: number, smoothTime: number, deltaTime: number, maxSpeed?: number): number;
-    }
     class MeshRotator {
-        private _owned;
+        private _entity;
         slerpIdentity: BABYLON.Quaternion;
         constructor(owner: BABYLON.AbstractMesh);
-        /** Rotates the mesh using rotation quaternions */
         /** Rotates the mesh using rotation quaternions */
         rotate(x: number, y: number, z: number, order?: BABYLON.RotateOrder): BABYLON.TransformNode;
         /** Rotates the mesh so the forward vector points at a target position using rotation quaternions. (Options: Y-Yall, X-Pitch, Z-Roll) */
@@ -1155,6 +1137,7 @@ declare module BABYLON {
     enum MovementType {
         DirectVelocity = 0,
         AppliedForces = 1,
+        CheckCollision = 2,
     }
     enum CollisionContact {
         Top = 0,
@@ -1201,6 +1184,7 @@ declare module BABYLON {
     interface IObjectMetadata {
         api: boolean;
         type: string;
+        parsed: boolean;
         prefab: boolean;
         state: any;
         objectName: string;
@@ -1519,7 +1503,6 @@ declare module BABYLON {
         start(): void;
         stop(): void;
         dispose(): void;
-        private readonly internalScene;
         private internalPlay(delay?, min?, max?);
         private internalCycle();
         private internalStart(min, max);
@@ -1734,10 +1717,12 @@ declare module BABYLON {
     class UniversalCameraRig extends BABYLON.CameraComponent {
         private static AUTO_INPUT;
         private static RENDER_CANVAS;
+        autoInput: boolean;
         cameraInput: number;
         cameraSpeed: number;
         cameraMoveSpeed: number;
         cameraRotateSpeed: number;
+        private movementKeys;
         private multiPlayerView;
         private multiPlayerStart;
         preventDefaultEvents: boolean;
@@ -1748,6 +1733,17 @@ declare module BABYLON {
         constructor(owner: BABYLON.Camera, scene: BABYLON.Scene, tick?: boolean, propertyBag?: any);
         protected ready(): void;
         protected update(): void;
+        protected destroy(): void;
+    }
+}
+
+declare module BABYLON {
+    class ActionManagerComponent extends BABYLON.MeshComponent {
+        constructor(owner: BABYLON.AbstractMesh, scene: BABYLON.Scene, tick?: boolean, propertyBag?: any);
+        protected ready(): void;
+        protected start(): void;
+        protected update(): void;
+        protected after(): void;
         protected destroy(): void;
     }
 }

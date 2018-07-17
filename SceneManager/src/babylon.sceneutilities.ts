@@ -1,4 +1,5 @@
 /// <reference path="babylon.d.ts" />
+/// <reference path="babylon.scenecomponents.ts" />
 /// <reference path="babylon.scenemanager.ts" />
 
 module BABYLON {
@@ -6,6 +7,8 @@ module BABYLON {
         private static UpVector:BABYLON.Vector3 = BABYLON.Vector3.Up();
         private static ZeroVector:BABYLON.Vector3 = BABYLON.Vector3.Zero();
         private static TempMatrix:BABYLON.Matrix = BABYLON.Matrix.Zero();
+        private static TempVector2:BABYLON.Vector2 = BABYLON.Vector2.Zero();
+        private static TempVector3:BABYLON.Vector3 = BABYLON.Vector3.Zero();
         private static PrintElement: HTMLElement = null;
         /** TODO: angle */
 		public static Angle(from:BABYLON.Vector3, to:BABYLON.Vector3):number {
@@ -13,7 +16,7 @@ module BABYLON {
         }
         /** TODO: clamp angle */
         public static ClampAngle(angle:number, min:number, max:number):number {
-            var result:number = angle;
+            let result:number = angle;
             do {
                 if (result < -360) {
                     result += 360;
@@ -50,23 +53,23 @@ module BABYLON {
         }
         /** Multplies a quaternion by a vector (rotates vector) */
         public static RotateVector(vec: BABYLON.Vector3, quat: BABYLON.Quaternion): BABYLON.Vector3 {
-            var tx:number = 2 * (quat.y * vec.z - quat.z * vec.y);
-            var ty:number = 2 * (quat.z * vec.x - quat.x * vec.z);
-            var tz:number = 2 * (quat.x * vec.y - quat.y * vec.x);
+            let tx:number = 2 * (quat.y * vec.z - quat.z * vec.y);
+            let ty:number = 2 * (quat.z * vec.x - quat.x * vec.z);
+            let tz:number = 2 * (quat.x * vec.y - quat.y * vec.x);
             return new BABYLON.Vector3(vec.x + quat.w * tx + (quat.y * tz - quat.z * ty), vec.y + quat.w * ty + (quat.z * tx - quat.x * tz), vec.z + quat.w * tz + (quat.x * ty - quat.y * tx));
         }
         /** Multplies a quaternion by a vector (rotates vector) */
         public static RotateVectorToRef(vec: BABYLON.Vector3, quat: BABYLON.Quaternion, result: BABYLON.Vector3): void {
-            var tx:number = 2 * (quat.y * vec.z - quat.z * vec.y);
-            var ty:number = 2 * (quat.z * vec.x - quat.x * vec.z);
-            var tz:number = 2 * (quat.x * vec.y - quat.y * vec.x);
+            let tx:number = 2 * (quat.y * vec.z - quat.z * vec.y);
+            let ty:number = 2 * (quat.z * vec.x - quat.x * vec.z);
+            let tz:number = 2 * (quat.x * vec.y - quat.y * vec.x);
             result.x = vec.x + quat.w * tx + (quat.y * tz - quat.z * ty);
             result.y = vec.y + quat.w * ty + (quat.z * tx - quat.x * tz);
             result.z = vec.z + quat.w * tz + (quat.x * ty - quat.y * tx);
         }
         /** Returns a new Quaternion set from the passed vector position. */
         public static LookRotation(position:BABYLON.Vector3):BABYLON.Quaternion {
-            var result:BABYLON.Quaternion = BABYLON.Quaternion.Zero();
+            let result:BABYLON.Quaternion = BABYLON.Quaternion.Zero();
             BABYLON.Utilities.LookRotationToRef(position, result);
             return result;
         }
@@ -79,7 +82,7 @@ module BABYLON {
         }
         /** Resets the physics parent and positioning */
         public static ResetPhysicsPosition(position:BABYLON.Vector3, parent:BABYLON.Node):void {
-            var check:any = parent;
+            let check:any = parent;
             if (check.position) {
                 position.addInPlace(check.position);
             }
@@ -95,7 +98,7 @@ module BABYLON {
         public static PrintToScreen(text:string, color:string = "white") {
             BABYLON.Utilities.PrintElement = document.getElementById("print");
             if (BABYLON.Utilities.PrintElement == null) {
-                var printer = document.createElement("div");
+                let printer = document.createElement("div");
                 printer.id = "print";
                 printer.style.position = "absolute";
                 printer.style.left = "6px";
@@ -132,7 +135,12 @@ module BABYLON {
         public static TransformDirectionToRef(owner: BABYLON.AbstractMesh | BABYLON.Camera, direction:BABYLON.Vector3, result:BABYLON.Vector3):void {
             return BABYLON.Vector3.TransformNormalToRef(direction, owner.getWorldMatrix(), result);
         }
-
+        /** Recomputes the meshes bounding center pivot point */
+        public static RecomputePivotPoint(owner:BABYLON.AbstractMesh):void {
+            var boundingCenter = owner.getBoundingInfo().boundingSphere.center;
+            owner.setPivotMatrix(BABYLON.Matrix.Translation(-boundingCenter.x, -boundingCenter.y, -boundingCenter.z));
+        }      
+          
         // ************************************ //
         // *  Scene Direction Helper Support  * //
         // ************************************ //
@@ -175,7 +183,7 @@ module BABYLON {
         // *********************************** //
 
         public static ParseColor3(source:any, defaultValue:BABYLON.Color3 = null):BABYLON.Color3 {
-            var result:BABYLON.Color3 = null
+            let result:BABYLON.Color3 = null
             if (source != null && source.r != null && source.g != null&& source.b != null) {
                 result = new BABYLON.Color3(source.r, source.g, source.b);
             } else {
@@ -185,7 +193,7 @@ module BABYLON {
         }
 
         public static ParseColor4(source:any, defaultValue:BABYLON.Color4 = null):BABYLON.Color4 {
-            var result:BABYLON.Color4 = null
+            let result:BABYLON.Color4 = null
             if (source != null && source.r != null && source.g != null && source.b != null && source.a != null) {
                 result = new BABYLON.Color4(source.r, source.g, source.b, source.a);
             } else {
@@ -195,7 +203,7 @@ module BABYLON {
         }
         
         public static ParseVector2(source:any, defaultValue:BABYLON.Vector2 = null):BABYLON.Vector2 {
-            var result:BABYLON.Vector2 = null
+            let result:BABYLON.Vector2 = null
             if (source != null && source.x != null && source.y != null) {
                 result = new BABYLON.Vector2(source.x, source.y);
             } else {
@@ -205,7 +213,7 @@ module BABYLON {
         }
 
         public static ParseVector3(source:any, defaultValue:BABYLON.Vector3 = null):BABYLON.Vector3 {
-            var result:BABYLON.Vector3 = null
+            let result:BABYLON.Vector3 = null
             if (source != null && source.x != null && source.y != null && source.z != null) {
                 result = new BABYLON.Vector3(source.x, source.y, source.z);
             } else  {
@@ -215,7 +223,7 @@ module BABYLON {
         }
 
         public static ParseVector4(source:any, defaultValue:BABYLON.Vector4 = null):BABYLON.Vector4 {
-            var result:BABYLON.Vector4 = null
+            let result:BABYLON.Vector4 = null
             if (source != null && source.x != null && source.y != null && source.z != null && source.w != null) {
                 result = new BABYLON.Vector4(source.x, source.y, source.z, source.w);
             } else {
@@ -244,79 +252,6 @@ module BABYLON {
             return source.replace(new RegExp(word, 'g'), replace);            
         }
         
-        // *********************************** //
-        // *   Public Binary Tools Support   * //
-        // *********************************** //
-        
-        public static EncodeBinay(obj:any):Uint8Array {
-            var result:Uint8Array = null;
-            var wnd:any = <any>window;
-            if (wnd.msgpack) {
-                result = wnd.msgpack.encode(obj);
-            } else {
-                BABYLON.Tools.Warn("Failed to load msgpack library.");
-            }
-            return result;
-        }
-
-        public static DecodeBinary<T>(data:Uint8Array):T {
-            var result:any = null;
-            var wnd:any = <any>window;
-            if (wnd.msgpack) {
-                result = wnd.msgpack.decode(data);
-            } else {
-                BABYLON.Tools.Warn("Failed to load msgpack library.");
-            }
-            return (result != null) ? result as T : null;
-        }
-
-        // ************************************ //
-        // * Public Compression Tools Support * //
-        // ************************************ //
-
-        public static CompressToString(data:Uint8Array):string { 
-            var result:string = null;
-            var wnd:any = <any>window;
-            if (wnd.pako) {
-                result = wnd.pako.deflate(data, { to: 'string' });
-            } else {
-                BABYLON.Tools.Warn("Failed to load pako library.");
-            }
-            return result;
-        }
-
-        public static CompressToArray(data:Uint8Array):Uint8Array { 
-            var result:Uint8Array = null;
-            var wnd:any = <any>window;
-            if (wnd.pako) {
-                result = wnd.pako.deflate(data);
-            } else {
-                BABYLON.Tools.Warn("Failed to load pako library.");
-            }
-            return result;
-        }
-        
-        public static DecompressToString(data:Uint8Array):string { 
-            var result:string = null;
-            var wnd:any = <any>window;
-            if (wnd.pako) {
-                result = wnd.pako.inflate(data, { to: 'string' });
-            } else {
-                BABYLON.Tools.Warn("Failed to load pako library.");
-            }
-            return result;
-        }
-        public static DecompressToArray(data:Uint8Array):Uint8Array { 
-            var result:Uint8Array = null;
-            var wnd:any = <any>window;
-            if (wnd.pako) {
-                result = wnd.pako.inflate(data);
-            } else {
-                BABYLON.Tools.Warn("Failed to load pako library.");
-            }
-            return result;
-        }
-        
         // ************************************ //
         // *  Scene Animation Sampling Tools  * //
         // ************************************ //
@@ -324,7 +259,7 @@ module BABYLON {
         /** Set the passed matrix "result" as the sampled key frame value for the specfied animation track. */
         public static SampleAnimationMatrix(animation:BABYLON.Animation, frame: number, loopMode:number, result:BABYLON.Matrix): void {
             if (animation != null && animation.dataType === BABYLON.Animation.ANIMATIONTYPE_MATRIX) {
-                var keys:BABYLON.IAnimationKey[] = animation.getKeys();
+                let keys:BABYLON.IAnimationKey[] = animation.getKeys();
                 if (frame < keys[0].frame) {
                     frame = keys[0].frame;
                 } else if (frame > keys[keys.length - 1].frame) {
@@ -335,9 +270,9 @@ module BABYLON {
         }
         /** Gets the float "result" as the sampled key frame value for the specfied animation track. */
         public static SampleAnimationFloat(animation:BABYLON.Animation, frame: number, repeatCount: number, loopMode:number, offsetValue:any = null, highLimitValue: any = null): number {
-            var result:number = 0;
+            let result:number = 0;
             if (animation != null && animation.dataType === BABYLON.Animation.ANIMATIONTYPE_FLOAT) {
-                var keys:BABYLON.IAnimationKey[] = animation.getKeys();
+                let keys:BABYLON.IAnimationKey[] = animation.getKeys();
                 if (frame < keys[0].frame) {
                     frame = keys[0].frame;
                 } else if (frame > keys[keys.length - 1].frame) {
@@ -357,27 +292,27 @@ module BABYLON {
         }
         /** Set the passed matrix "result" as the interpolated values for animation key frame sampling. */
         public static FastMatrixInterpolate(animation:BABYLON.Animation, currentFrame: number, loopMode:number, result:BABYLON.Matrix):void {
-            var keys:BABYLON.IAnimationKey[] = animation.getKeys();
-            var startKeyIndex = Math.max(0, Math.min(keys.length - 1, Math.floor(keys.length * (currentFrame - keys[0].frame) / (keys[keys.length - 1].frame - keys[0].frame)) - 1));
+            let keys:BABYLON.IAnimationKey[] = animation.getKeys();
+            let startKeyIndex = Math.max(0, Math.min(keys.length - 1, Math.floor(keys.length * (currentFrame - keys[0].frame) / (keys[keys.length - 1].frame - keys[0].frame)) - 1));
             if (keys[startKeyIndex].frame >= currentFrame) {
                 while (startKeyIndex - 1 >= 0 && keys[startKeyIndex].frame >= currentFrame) {
                     startKeyIndex--;
                 }
             }
-            for (var key = startKeyIndex; key < keys.length; key++) {
-                var endKey = keys[key + 1];
+            for (let key = startKeyIndex; key < keys.length; key++) {
+                let endKey = keys[key + 1];
                 if (endKey.frame >= currentFrame) {
-                    var startKey = keys[key];
-                    var startValue = startKey.value;
+                    let startKey = keys[key];
+                    let startValue = startKey.value;
                     if (startKey.interpolation === AnimationKeyInterpolation.STEP) {
                         result.copyFrom(startValue);
                         return;
                     }
-                    var endValue = endKey.value;
-                    var useTangent = startKey.outTangent !== undefined && endKey.inTangent !== undefined;
-                    var frameDelta = endKey.frame - startKey.frame;
+                    let endValue = endKey.value;
+                    let useTangent = startKey.outTangent !== undefined && endKey.inTangent !== undefined;
+                    let frameDelta = endKey.frame - startKey.frame;
                     // Gradient : percent of currentFrame between the frame inf and the frame sup
-                    var gradient = (currentFrame - startKey.frame) / frameDelta;
+                    let gradient = (currentFrame - startKey.frame) / frameDelta;
                     // Check for easingFunction and correction of gradient
                     let easingFunction = animation.getEasingFunction();
                     if (easingFunction != null) {
@@ -403,33 +338,33 @@ module BABYLON {
             if (loopMode === Animation.ANIMATIONLOOPMODE_CONSTANT && repeatCount > 0) {
                 return highLimitValue.clone ? highLimitValue.clone() : highLimitValue;
             }
-            var keys:BABYLON.IAnimationKey[] = animation.getKeys();
-            var startKeyIndex = Math.max(0, Math.min(keys.length - 1, Math.floor(keys.length * (currentFrame - keys[0].frame) / (keys[keys.length - 1].frame - keys[0].frame)) - 1));
+            let keys:BABYLON.IAnimationKey[] = animation.getKeys();
+            let startKeyIndex = Math.max(0, Math.min(keys.length - 1, Math.floor(keys.length * (currentFrame - keys[0].frame) / (keys[keys.length - 1].frame - keys[0].frame)) - 1));
             if (keys[startKeyIndex].frame >= currentFrame) {
                 while (startKeyIndex - 1 >= 0 && keys[startKeyIndex].frame >= currentFrame) {
                     startKeyIndex--;
                 }
             }
-            for (var key = startKeyIndex; key < keys.length; key++) {
-                var endKey = keys[key + 1];
+            for (let key = startKeyIndex; key < keys.length; key++) {
+                let endKey = keys[key + 1];
                 if (endKey.frame >= currentFrame) {
-                    var startKey = keys[key];
-                    var startValue = startKey.value;
+                    let startKey = keys[key];
+                    let startValue = startKey.value;
                     if (startKey.interpolation === AnimationKeyInterpolation.STEP) {
                         return startValue;
                     }
-                    var endValue = endKey.value;
-                    var useTangent = startKey.outTangent !== undefined && endKey.inTangent !== undefined;
-                    var frameDelta = endKey.frame - startKey.frame;
+                    let endValue = endKey.value;
+                    let useTangent = startKey.outTangent !== undefined && endKey.inTangent !== undefined;
+                    let frameDelta = endKey.frame - startKey.frame;
                     // Gradient : percent of currentFrame between the frame inf and the frame sup
-                    var gradient = (currentFrame - startKey.frame) / frameDelta;
+                    let gradient = (currentFrame - startKey.frame) / frameDelta;
                     // Check for easingFunction and correction of gradient
                     let easingFunction = animation.getEasingFunction();
                     if (easingFunction != null) {
                         gradient = easingFunction.ease(gradient);
                     }
                     // Switch anmimation float type
-                    var floatValue = useTangent ? animation.floatInterpolateFunctionWithTangents(startValue, startKey.outTangent * frameDelta, endValue, endKey.inTangent * frameDelta, gradient) : animation.floatInterpolateFunction(startValue, endValue, gradient);
+                    let floatValue = useTangent ? animation.floatInterpolateFunctionWithTangents(startValue, startKey.outTangent * frameDelta, endValue, endKey.inTangent * frameDelta, gradient) : animation.floatInterpolateFunction(startValue, endValue, gradient);
                     switch (loopMode) {
                         case Animation.ANIMATIONLOOPMODE_CYCLE:
                         case Animation.ANIMATIONLOOPMODE_CONSTANT:
@@ -447,8 +382,130 @@ module BABYLON {
         // * Public Blending Speed Support  * //
         // ********************************** //
 
+        /** Computes the transition duration blending speed */
         public static ComputeBlendingSpeed(rate:number, duration:number):number {
             return 1 / (rate * duration);
+        }
+
+        // ************************************ //
+        // * Public Scene Component Register  * //
+        // ************************************ //
+
+        /** Registers A scene component on the scene */
+        public static RegisterSceneComponent(comp: BABYLON.SceneComponent, klass:string, enableUpdate: boolean = true, propertyBag: any = {}):void {
+            let owner: BABYLON.Entity = (<any>comp).entity;
+            if (owner == null) throw new Error("Null owner scene object attached");
+            if (owner.metadata == null || !owner.metadata.api) {
+                let metadata: BABYLON.IObjectMetadata = {
+                    api: true,
+                    type: "Babylon",
+                    parsed: false,
+                    prefab: false,
+                    state: {},
+                    objectName: "Scene Component",
+                    objectId: "0",
+                    tagName: "Untagged",
+                    layerIndex: 0,
+                    layerName: "Default",
+                    areaIndex: -1,
+                    navAgent: null,
+                    meshLink: null,
+                    meshObstacle: null,
+                    shadowCastingMode: 0,
+                    socketList: [],
+                    animationClips: [],
+                    animationEvents: [],
+                    collisionEvent: null,
+                    components: [],
+                    properties: {}
+                };
+                owner.metadata = metadata;
+            }
+            if (owner.metadata != null && owner.metadata.api) {
+                let metadata: BABYLON.IObjectMetadata = owner.metadata as BABYLON.IObjectMetadata;
+                if (metadata.components == null) {
+                    metadata.components = [];
+                }
+                if (metadata.components != null) {
+                    let compscript: BABYLON.IScriptComponent = {
+                        order: 1000,
+                        name: "EditorScriptComponent",
+                        klass: klass,
+                        update: enableUpdate,
+                        properties: propertyBag,
+                        instance: comp,
+                        tag: {}
+                    };
+                    metadata.components.push(compscript);
+                    comp.register();
+                    // ..
+                    // Fire Component Ready
+                    // ..
+                    if ((<any>comp).ready != null) {
+                        (<any>comp).ready();
+                    } else {
+                        BABYLON.Tools.Error("No component ready function detected.");
+                    }
+                } else {
+                    BABYLON.Tools.Error("Failed to parse metadata components");
+                }
+            } else {
+                BABYLON.Tools.Error("Null owner object metadata");
+            }
+        }
+
+        // ********************************** //
+        // * Public Scene Manager Register  * //
+        // ********************************** //
+
+        /** Registers new manager instance on the scene object */
+        public static RegisterSceneManager(scene: BABYLON.Scene) : BABYLON.SceneManager {
+            let scenex: any = <any>scene;
+            if (scenex.manager != null) {
+                scenex.manager.dispose();
+                scenex.manager = null;
+            }                
+            scenex.manager = new BABYLON.SceneManager(scene);
+            return scenex.manager;
+        }
+        /** Parses the registered scene manager object metadata */
+        public static ParseSceneMetadata(scene: BABYLON.Scene) : void {
+            let scenex: any = <any>scene;
+            if (scenex.manager != null) {
+                scenex.manager._parseSceneMetadata();
+            } else {
+                BABYLON.Tools.Warn("Babylon.js no scene manager instance detected. Failed to parse scene metadata.");
+            }
+        }
+        /** Parses the registered scene manager import metadata */
+        public static ParseImportMetadata(meshes: BABYLON.AbstractMesh[], scene: BABYLON.Scene): void {
+            let scenex: any = <any>scene;
+            if (scenex.manager != null) {
+                let manager: BABYLON.SceneManager = scenex.manager as BABYLON.SceneManager;
+                let ticklist: BABYLON.IScriptComponent[] = [];
+                (<any>BABYLON.SceneManager).parseSceneMeshes(meshes, scene, ticklist);
+                if (ticklist.length > 0) {
+                    ticklist.sort((left, right): number => {
+                        if (left.order < right.order) return -1;
+                        if (left.order > right.order) return 1;
+                        return 0;
+                    });
+                    ticklist.forEach((scriptComponent) => {
+                        scriptComponent.instance.register();
+                    });
+                }
+            } else {
+                BABYLON.Tools.Warn("Babylon.js no scene manager instance detected. Failed to parse scene metadata.");
+            }
+        }
+        /** Fire the manager instance internal scene ready function */
+        public static ExecuteSceneReady(scene: BABYLON.Scene) : void {
+            let scenex: any = <any>scene;
+            if (scenex.manager != null) {
+                scenex.manager._executeWhenReady();
+            } else {
+                BABYLON.Tools.Warn("Babylon.js no scene manager instance detected. Failed to execute scene ready.");
+            }
         }
     }
 }
