@@ -19,7 +19,8 @@
     "typescript": "^2.9.2"
   },
   "scripts": {
-    "start": "parcel index.html",
+    "start": "parcel examples/index.html",
+    "build": "parcel build src/gif.exporter.single.worker.ts",
     "test": "mocha -wr ts-node/register test/**.spec.ts"
   },
   "keywords": [],
