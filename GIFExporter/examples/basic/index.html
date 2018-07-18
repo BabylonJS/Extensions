@@ -3,11 +3,21 @@
 <head>
     <title>Repro</title>
     <script src="https://preview.babylonjs.com/viewer/babylon.viewer.js"></script>
+    <style>
+        button {
+            margin: 0 auto;
+        }
+    </style>
 
 </head>
 
 <body>
     <babylon id="babylon-viewer" extends="extended"></babylon>
+    <div style="text-align:center">
+
+        <button id="record">Record</button>
+    </div>
+    <script src="../../dist/gif.exporter.single.worker.js"></script>
     <script src="loader.js"></script>
 </body>
 
