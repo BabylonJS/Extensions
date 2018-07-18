@@ -3,9 +3,6 @@
   "version": "1.0.0",
   "description": "",
   "main": "NewIndex.js",
-  "dependencies": {
-    "npm": "^6.1.0"
-  },
   "devDependencies": {
     "@types/babylon": "^6.16.3",
     "@types/webgl2": "0.0.4",
@@ -20,7 +17,7 @@
   },
   "scripts": {
     "start": "parcel examples/index.html",
-    "build": "parcel build src/gif.exporter.single.worker.ts",
+    "build": "parcel build src/**.ts",
     "test": "mocha -wr ts-node/register test/**.spec.ts"
   },
   "keywords": [],
