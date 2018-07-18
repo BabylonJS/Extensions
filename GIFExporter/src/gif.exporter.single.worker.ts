@@ -87,7 +87,8 @@ export class GIFCreator {
 	private init() {
 		this._width = this._canvas.width;
 		this._height = this._canvas.height;
-		this._worker = new Worker('gif.creator.service.ts');
+		// const url = new URL('gif.creator.service.js', window.location.pathname.toString());
+		this._worker = new Worker('/gif.creator.service.ts');
 		this.canvasSetup();
 	}
 
