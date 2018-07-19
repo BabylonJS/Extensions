@@ -3,3 +3,4 @@ typings/
 .vs/
 .vscode/
 .cache/
+dist/
