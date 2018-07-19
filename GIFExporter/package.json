@@ -17,7 +17,7 @@
   },
   "scripts": {
     "start": "parcel examples/index.html",
-    "build": "parcel build src/**.ts",
+    "build": "parcel build src/**.ts --public-url ./",
     "test": "mocha -wr ts-node/register test/**.spec.ts"
   },
   "keywords": [],
