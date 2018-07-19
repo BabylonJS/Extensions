@@ -1,4 +1,4 @@
-export class GIFCreator {
+export class GIFExporter {
 	private _canvas: HTMLCanvasElement;
 	private _delay: number;
 	private _duration: number;
@@ -87,8 +87,8 @@ export class GIFCreator {
 	private init() {
 		this._width = this._canvas.width;
 		this._height = this._canvas.height;
-		// const url = new URL('gif.creator.service.js', window.location.pathname.toString());
-		this._worker = new Worker('/gif.creator.service.ts');
+		// const url =
+		this._worker = new Worker('./gif.creator.service.ts');
 		this.canvasSetup();
 	}
 

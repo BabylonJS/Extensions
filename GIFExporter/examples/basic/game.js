@@ -1,7 +1,6 @@
 import {
-    GIFCreator
-} from "../../dist/gif.exporter.single.worker";
-
+    GIFExporter
+} from "../../dist/gif.exporter";
 
 window.addEventListener('DOMContentLoaded', function () {
     // get the canvas DOM element
@@ -56,7 +55,7 @@ window.addEventListener('DOMContentLoaded', function () {
     const record = document.getElementById('renderCanvas');
 
     record.addEventListener('click', () => {
-        const recorder = new GIFCreator(engine, {
+        const recorder = new GIFExporter(engine, {
             delay: 50,
             duration: 5000
         });
