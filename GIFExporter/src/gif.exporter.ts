@@ -87,7 +87,7 @@ export class GIFExporter {
 	private init() {
 		this._width = this._canvas.width;
 		this._height = this._canvas.height;
-		// const url =
+		const url = URL.createObjectURL(new Blob([CollisionWorker], { type: 'application/javascript' }));
 		this._worker = new Worker('./gif.creator.service.ts');
 		this.canvasSetup();
 	}
