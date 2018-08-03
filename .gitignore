@@ -2,3 +2,4 @@ node_modules
 .tempChromeProfileForDebug
 *.map
 *.js
+!/Amp360Video/**/*.js
