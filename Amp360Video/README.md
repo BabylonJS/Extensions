@@ -1,7 +1,7 @@
 # Introduction 
-The [Azure media player](http://amp.azure.net/libs/amp/latest/docs/index.html) 360 Video is a plugin for AMP using BabylonJS in order to facilitate the integration of 360 videos in your Web App.
+The [Azure media player](http://amp.azure.net/libs/amp/latest/docs/index.html) 360 Video is a plugin for AMP aka [Azure media player](http://amp.azure.net/libs/amp/latest/docs/index.html) using BabylonJS in order to facilitate the integration of 360 videos in your Web App.
 
-The plugin supports VR headsets (Windows MR...) natively.
+The plugin supports natively VR headsets (Windows MR...).
 
 [Online Demo of the plugin](http://www.babylonjs.com/Demos/Amp360Video/)
 
