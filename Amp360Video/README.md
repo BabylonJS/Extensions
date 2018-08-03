@@ -1,9 +1,11 @@
 # Introduction 
-The AMP (Azure media player) 360 Video is a plugin for AMP using BabylonJS in order to facilitate the integration of 360 videos in your Web App.
+The [Azure media player](http://amp.azure.net/libs/amp/latest/docs/index.html) 360 Video is a plugin for AMP using BabylonJS in order to facilitate the integration of 360 videos in your Web App.
 
-The plugin supprts VR headsets (Windows MR...) natively.
+The plugin supports VR headsets (Windows MR...) natively.
 
-# How to Run
+[Online Demo of the plugin](http://www.babylonjs.com/Amp360Video/)
+
+# How to Run Locally
 Once the repository has been cloned, open the a command prompt in this folder.
 
 Type the following commands:
@@ -16,6 +18,8 @@ You can now access your [local test](http://localhost:1337/)
 The plugin located in the ```amp-360video``` folder contains a [videojs](https://docs.videojs.com/tutorial-plugins.html) plugin compatible with AMP version 2.1.7.
 
 The plugin depends on BabylonJS in order to enable 3D functionalities in AMP.
+
+For more information about AMP, you can access their [documentation](http://amp.azure.net/libs/amp/latest/docs/index.html).
 
 # How use in your web site
 After deploying both the js and css from the ```amp-360video``` folder to your WebSite you can follow the following steps:
@@ -33,7 +37,10 @@ Include the following resources in you html:
 <script src="//amp.azure.net/libs/amp/2.1.7/azuremediaplayer.min.js"></script>
 ```
 
-## Html Initialization
+## Plugin Resources
+You can either embed the plugin in your HTML or initialize it by code like specified in the [AMP documentation](http://amp.azure.net/libs/amp/latest/docs/index.html#plugins).
+
+### Html Initialization
 Add the **threeSixty plugin** to your video data-setup:
 ```
 <video playsinline crossorigin="anonymous" class="azuremediaplayer amp-default-skin amp-big-play-centered" autoplay controls width="100%" height="100%" data-setup='{ "techOrder": ["azureHtml5JS", "html5"], "plugins": { "threeSixty": { } } }'>
@@ -51,7 +58,7 @@ The only difference with your default AMP initialization is the presence of the 
 
 One example can be found in the index.html file located in this folder.
 
-## Code Initialization
+### Code Initialization
 The following code will initializes the plugin in your amp player:
 ```
 var myPlayer = amp('videoPlayer', {
