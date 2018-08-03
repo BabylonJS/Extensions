@@ -3,7 +3,7 @@ The [Azure media player](http://amp.azure.net/libs/amp/latest/docs/index.html) 3
 
 The plugin supports VR headsets (Windows MR...) natively.
 
-[Online Demo of the plugin](http://www.babylonjs.com/Amp360Video/)
+[Online Demo of the plugin](http://www.babylonjs.com/Demos/Amp360Video/)
 
 # How to Run Locally
 Once the repository has been cloned, open the a command prompt in this folder.
