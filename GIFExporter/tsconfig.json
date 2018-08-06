@@ -12,7 +12,7 @@
     /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017','ES2018' or 'ESNEXT'. */
     "module": "umd",
     /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */
-    "lib": ["webworker", "dom", "es2015.promise", "es5"],
+    "lib": ["dom", "es2015.promise", "es5"],
     /* Specify library files to be included in the compilation. */
     // "allowJs": true,
     /* Allow javascript files to be compiled. */
@@ -35,7 +35,7 @@
 
     /* Strict Type-Checking Options */
     // "strict": true,                           /* Enable all strict type-checking options. */
-    "noImplicitAny": true,
+    // "noImplicitAny": true,
     /* Raise error on expressions and declarations with an implied 'any' type. */
     // "strictNullChecks": true,              /* Enable strict null checks. */
     // "strictFunctionTypes": true,           /* Enable strict checking of function types. */
@@ -58,7 +58,6 @@
     // "typeRoots": [],                       /* List of folders to include type definitions from. */
     "types": [
       "babylonjs",
-      "babylonjs-viewer",
       "webgl2"
     ],
     /* Type declaration files to be included in compilation. */

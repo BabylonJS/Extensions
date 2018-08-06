@@ -456,7 +456,7 @@ export default function NeuQuant(pixels, samplefac) {
 export class ColorTableGenerator {
 	private _colorTable: number[] = [];
 	private _GCT: string[] = [];
-	private _neuQuant: NeuQuant;
+	private _neuQuant /* : NeuQuant */;
 	private _distribution = 51;
 	private _colorLookup: {
 		[index: string]: number;
