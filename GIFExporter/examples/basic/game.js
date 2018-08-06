@@ -5,9 +5,7 @@ var canvas = document.getElementById('renderCanvas');
 
 // load the 3D engine
 var engine = new BABYLON.Engine(canvas, true, {
-
     preserveDrawingBuffer: true,
-
 });
 
 // createScene function that creates and return the scene
