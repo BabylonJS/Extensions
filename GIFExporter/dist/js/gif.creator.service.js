@@ -874,7 +874,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     var gifGenerator = new GIFGenerator();
     var _frameCollection = [];
     function createColorTable(frame, width, height) {
-        var _a;
         _colorTableGen = new ColorTableGenerator(frame);
         var colorLookup, colorTable;
         _a = _colorTableGen.generate(), colorLookup = _a[0], colorTable = _a[1];
@@ -884,6 +883,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             gifGenerator.init(width, height, globalColorTable);
             return;
         }
+        var _a;
     }
     function processFrames(frames, width, height) {
         function process() {

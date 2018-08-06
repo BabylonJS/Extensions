@@ -60,7 +60,7 @@ export default class GIFExporter {
 					type: 'image/gif',
 				})
 			);
-			const download: HTMLAnchorElement = document.getElementById('download') as HTMLAnchorElement;
+			const download: HTMLAnchorElement = document.createElement('a') as HTMLAnchorElement;
 			document.body.appendChild(download);
 			download.target = '_blank';
 			download.style.display = 'none';
