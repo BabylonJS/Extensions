@@ -969,6 +969,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                 break;
             case 'collectFrames':
                 var frame = params.frame;
+                console.log('frame', frame);
                 collectFrames(frame);
                 break;
         }

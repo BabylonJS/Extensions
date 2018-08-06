@@ -68,6 +68,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                                     return [4 /*yield*/, this.flipAndRotate(new Uint8Array(frame))];
                                 case 2:
                                     newFrame = _a.sent();
+                                    console.log('newFrame', newFrame);
                                     message = {
                                         job: 'collectFrames',
                                         params: {
@@ -201,5 +202,5 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         };
         return GIFExporter;
     }());
-    exports.GIFExporter = GIFExporter;
+    exports.default = GIFExporter;
 });

@@ -1080,6 +1080,7 @@ onmessage = ({ data: { job, params } }) => {
 			break;
 		case 'collectFrames':
 			const { frame }: { frame: ArrayBuffer } = params;
+			console.log('frame', frame);
 			collectFrames(frame);
 			break;
 	}

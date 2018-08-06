@@ -1,4 +1,4 @@
-export class GIFExporter {
+export default class GIFExporter {
 	private _canvas: HTMLCanvasElement;
 	private _delay: number;
 	private _duration: number;
@@ -23,6 +23,7 @@ export class GIFExporter {
 			let intervalRef = setInterval(async () => {
 				const frame = await this.getFrame();
 				const newFrame = await this.flipAndRotate(new Uint8Array(frame));
+				console.log('newFrame', newFrame);
 
 				const message = {
 					job: 'collectFrames',
