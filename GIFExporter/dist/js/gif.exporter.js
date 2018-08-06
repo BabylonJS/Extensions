@@ -68,7 +68,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                                     return [4 /*yield*/, this.flipAndRotate(new Uint8Array(frame))];
                                 case 2:
                                     newFrame = _a.sent();
-                                    console.log('newFrame', newFrame);
                                     message = {
                                         job: 'collectFrames',
                                         params: {
@@ -129,16 +128,13 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         };
         GIFExporter.prototype.getFrame = function () {
             var _this = this;
-            return new Promise(function (resolve, reject) { return __awaiter(_this, void 0, void 0, function () {
-                var gl, pixels;
-                return __generator(this, function (_a) {
-                    gl = this._canvas.getContext('webgl2') || this._canvas.getContext('webgl');
-                    pixels = new Uint8Array(this._width * this._height * 4);
-                    gl.readPixels(0, 0, this._width, this._height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-                    resolve(pixels.buffer);
-                    return [2 /*return*/];
-                });
-            }); });
+            return new Promise(function (resolve, reject) {
+                var gl = _this._canvas.getContext('webgl2') || _this._canvas.getContext('webgl');
+                var pixels = new Uint8Array(gl.drawingBufferWidth * gl.drawingBufferHeight * 4);
+                gl.readPixels(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+                console.log('pixels', pixels);
+                resolve(pixels.buffer);
+            });
         };
         GIFExporter.prototype.init = function () {
             this._width = this._canvas.width;
@@ -157,12 +153,14 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         GIFExporter.prototype.flipAndRotate = function (frame) {
             var _this = this;
             return new Promise(function (resolve, reject) {
+                console.log('flip frame', frame);
                 var imageData = _this._holdingCanvas2D.createImageData(_this._width, _this._height);
                 imageData.data.set(frame);
                 _this._holdingCanvas2D.putImageData(imageData, 0, 0);
                 _this.resize(_this._resizeCanvas);
                 _this.flip(_this._resizeCanvas2D, _this._holdingCanvas, _this._resizeCanvas);
                 var data = _this._resizeCanvas2D.getImageData(0, 0, _this._resizeCanvas.width, _this._resizeCanvas.height).data;
+                console.log(data);
                 resolve(data.buffer);
             });
         };

@@ -4,7 +4,11 @@ import GIFExporter from "../../dist/js/gif.exporter.js";
 var canvas = document.getElementById('renderCanvas');
 
 // load the 3D engine
-var engine = new BABYLON.Engine(canvas, true);
+var engine = new BABYLON.Engine(canvas, true, {
+
+    preserveDrawingBuffer: true,
+
+});
 
 // createScene function that creates and return the scene
 var createScene = function () {

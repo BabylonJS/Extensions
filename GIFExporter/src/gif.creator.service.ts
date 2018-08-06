@@ -965,6 +965,7 @@ const gifGenerator: GIFGenerator = new GIFGenerator();
 const _frameCollection: Uint8Array[] = [];
 
 function createColorTable(frame: Uint8Array, width: number, height: number): { [index: string]: number } {
+	console.log('frame', frame);
 	_colorTableGen = new ColorTableGenerator(frame);
 	let colorLookup: { [index: string]: number }, colorTable: string[];
 	[colorLookup, colorTable] = _colorTableGen.generate();
@@ -1071,6 +1072,7 @@ function getColorSamplingFrames(frames: Uint8Array[]) {
 onmessage = ({ data: { job, params } }) => {
 	switch (job) {
 		case 'createGIF':
+			console.log('frame collection', _frameCollection[0]);
 			const { width, height } = params;
 			const { numericalRGBFrames, stringRGBFrames } = processFrames(_frameCollection, width, height);
 			const samplingFrame = getColorSamplingFrames(numericalRGBFrames);
@@ -1080,8 +1082,8 @@ onmessage = ({ data: { job, params } }) => {
 			break;
 		case 'collectFrames':
 			const { frame }: { frame: ArrayBuffer } = params;
-			console.log('frame', frame);
 			collectFrames(frame);
+
 			break;
 	}
 };

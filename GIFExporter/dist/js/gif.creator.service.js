@@ -874,6 +874,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     var gifGenerator = new GIFGenerator();
     var _frameCollection = [];
     function createColorTable(frame, width, height) {
+        console.log('frame', frame);
         _colorTableGen = new ColorTableGenerator(frame);
         var colorLookup, colorTable;
         _a = _colorTableGen.generate(), colorLookup = _a[0], colorTable = _a[1];
@@ -960,6 +961,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         var _b = _a.data, job = _b.job, params = _b.params;
         switch (job) {
             case 'createGIF':
+                console.log('frame collection', _frameCollection[0]);
                 var width = params.width, height = params.height;
                 var _c = processFrames(_frameCollection, width, height), numericalRGBFrames = _c.numericalRGBFrames, stringRGBFrames = _c.stringRGBFrames;
                 var samplingFrame = getColorSamplingFrames(numericalRGBFrames);
@@ -969,7 +971,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                 break;
             case 'collectFrames':
                 var frame = params.frame;
-                console.log('frame', frame);
                 collectFrames(frame);
                 break;
         }

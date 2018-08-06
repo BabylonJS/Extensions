@@ -23,7 +23,6 @@ export default class GIFExporter {
 			let intervalRef = setInterval(async () => {
 				const frame = await this.getFrame();
 				const newFrame = await this.flipAndRotate(new Uint8Array(frame));
-				console.log('newFrame', newFrame);
 
 				const message = {
 					job: 'collectFrames',
@@ -75,10 +74,11 @@ export default class GIFExporter {
 	}
 
 	private getFrame(): Promise<ArrayBuffer> {
-		return new Promise(async (resolve, reject) => {
+		return new Promise((resolve, reject) => {
 			const gl = this._canvas.getContext('webgl2') || this._canvas.getContext('webgl');
-			let pixels = new Uint8Array(this._width * this._height * 4);
-			gl.readPixels(0, 0, this._width, this._height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+			let pixels = new Uint8Array(gl.drawingBufferWidth * gl.drawingBufferHeight * 4);
+			gl.readPixels(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+			console.log('pixels', pixels);
 
 			resolve(pixels.buffer);
 		});
@@ -102,12 +102,14 @@ export default class GIFExporter {
 
 	private flipAndRotate(frame: Uint8Array): Promise<ArrayBuffer> {
 		return new Promise((resolve, reject) => {
+			console.log('flip frame', frame);
 			const imageData = this._holdingCanvas2D.createImageData(this._width, this._height);
 			imageData.data.set(frame);
 			this._holdingCanvas2D.putImageData(imageData, 0, 0);
 			this.resize(this._resizeCanvas);
 			this.flip(this._resizeCanvas2D, this._holdingCanvas, this._resizeCanvas);
 			const data = this._resizeCanvas2D.getImageData(0, 0, this._resizeCanvas.width, this._resizeCanvas.height).data;
+			console.log(data);
 
 			resolve(data.buffer);
 		});
