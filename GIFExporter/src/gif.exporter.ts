@@ -9,7 +9,6 @@ export class GIFExporter {
 	private _holdingCanvas2D: CanvasRenderingContext2D;
 	private _resizeCanvas: HTMLCanvasElement;
 	private _resizeCanvas2D: CanvasRenderingContext2D;
-	private worker = 'gif.creator.service.ts';
 
 	constructor(engine: BABYLON.Engine, options?: { delay?: number; duration?: number }) {
 		this._canvas = engine.getRenderingCanvas();
@@ -87,8 +86,7 @@ export class GIFExporter {
 	private init() {
 		this._width = this._canvas.width;
 		this._height = this._canvas.height;
-		const url = URL.createObjectURL(new Blob([CollisionWorker], { type: 'application/javascript' }));
-		this._worker = new Worker('./gif.creator.service.ts');
+		this._worker = new Worker('gif.creator.service.js');
 		this.canvasSetup();
 	}
 
