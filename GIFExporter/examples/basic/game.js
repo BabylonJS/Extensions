@@ -34,6 +34,17 @@ var createScene = function () {
     // create a built-in "ground" shape;
     var ground = BABYLON.Mesh.CreateGround('ground1', 6, 6, 2, scene);
 
+    // GUI
+    // var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+
+    // var button = BABYLON.GUI.Button.CreateSimpleButton("but", "Click Me");
+    // button.width = 0.2;
+    // button.height = "40px";
+    // button.color = "white";
+    // button.background = "green";
+    // advancedTexture.addControl(button);
+
+
     // return the created scene
     return scene;
 }
