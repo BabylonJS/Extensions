@@ -1,5 +1,5 @@
 {
-  "name": "@babylon/gifexporter",
+  "name": "babylonjs-gifexporter",
   "version": "1.0.0",
   "description": "Create animated GIF from BabylonJS Engine.",
   "main": "gif.exporter.js",
