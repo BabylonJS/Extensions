@@ -3,5 +3,5 @@ typings/
 .vs/
 .vscode/
 .cache/
-dist/
 *.map
+typings.json

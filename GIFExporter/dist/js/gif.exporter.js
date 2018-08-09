@@ -13,8 +13,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
         while (_) try {
-            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [op[0] & 2, t.value];
+            if (f = 1, y && (t = y[op[0] & 2 ? "return" : op[0] ? "throw" : "next"]) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [0, t.value];
             switch (op[0]) {
                 case 0: case 1: t = op; break;
                 case 4: _.label++; return { value: op[1], done: false };
@@ -53,8 +53,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         GIFExporter.prototype.start = function () {
             var _this = this;
             return new Promise(function (resolve, reject) { return __awaiter(_this, void 0, void 0, function () {
-                var intervalRef;
                 var _this = this;
+                var intervalRef;
                 return __generator(this, function (_a) {
                     this.init();
                     console.log('record canvas');
@@ -132,7 +132,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                 var gl = _this._canvas.getContext('webgl2') || _this._canvas.getContext('webgl');
                 var pixels = new Uint8Array(gl.drawingBufferWidth * gl.drawingBufferHeight * 4);
                 gl.readPixels(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-                console.log('pixels', pixels);
                 resolve(pixels.buffer);
             });
         };
@@ -153,14 +152,12 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         GIFExporter.prototype.flipAndRotate = function (frame) {
             var _this = this;
             return new Promise(function (resolve, reject) {
-                console.log('flip frame', frame);
                 var imageData = _this._holdingCanvas2D.createImageData(_this._width, _this._height);
                 imageData.data.set(frame);
                 _this._holdingCanvas2D.putImageData(imageData, 0, 0);
                 _this.resize(_this._resizeCanvas);
                 _this.flip(_this._resizeCanvas2D, _this._holdingCanvas, _this._resizeCanvas);
                 var data = _this._resizeCanvas2D.getImageData(0, 0, _this._resizeCanvas.width, _this._resizeCanvas.height).data;
-                console.log(data);
                 resolve(data.buffer);
             });
         };

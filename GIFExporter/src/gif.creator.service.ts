@@ -974,7 +974,7 @@ function collectFrames(frame: ArrayBuffer) {
 
 function getColorSamplingFrames(frames: Uint8Array[]) {
 	/* every 5 frames placed in sampling frames array */
-	const samplingFrames = frames.filter((frame, index) => (index + 1) % 5 === 0);
+	const samplingFrames = frames.filter((frame, index) => (index + 1) % 4 === 0);
 	/* Combine arrays in samplingFrames into one Uint8Array */
 	return samplingFrames.reduce((accFrame: Uint8Array, frame) => {
 		const sampling = new Uint8Array(accFrame.length + frame.length);
