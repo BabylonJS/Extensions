@@ -228,63 +228,65 @@ export class NeuQuant {
 		for (j = previouscol + 1; j < 256; j++) this.netindex[j] = this.maxnetpos; // really 256
 	}
 
-	public lookupRGB(b: number, g: number, r: number) {
-		let a, p, dist;
+	public lookupRGB(b: number, g: number, r: number): Promise<number> {
+		return new Promise((resolve, reject) => {
+			let a, p, dist;
 
-		let bestd = 1000; // biggest possible dist is 256*3
-		let best = -1;
+			let bestd = 1000; // biggest possible dist is 256*3
+			let best = -1;
 
-		let i = this.netindex[g]; // index on g
-		let j = i - 1; // start at netindex[g] and work outwards
+			let i = this.netindex[g]; // index on g
+			let j = i - 1; // start at netindex[g] and work outwards
 
-		while (i < this.netsize || j >= 0) {
-			if (i < this.netsize) {
-				p = this.network[i];
-				dist = p[1] - g; // inx key
-				if (dist >= bestd) i = this.netsize;
-				// stop iter
-				else {
-					i++;
-					if (dist < 0) dist = -dist;
-					a = p[0] - b;
-					if (a < 0) a = -a;
-					dist += a;
-					if (dist < bestd) {
-						a = p[2] - r;
+			while (i < this.netsize || j >= 0) {
+				if (i < this.netsize) {
+					p = this.network[i];
+					dist = p[1] - g; // inx key
+					if (dist >= bestd) i = this.netsize;
+					// stop iter
+					else {
+						i++;
+						if (dist < 0) dist = -dist;
+						a = p[0] - b;
 						if (a < 0) a = -a;
 						dist += a;
 						if (dist < bestd) {
-							bestd = dist;
-							best = p[3];
+							a = p[2] - r;
+							if (a < 0) a = -a;
+							dist += a;
+							if (dist < bestd) {
+								bestd = dist;
+								best = p[3];
+							}
+						}
+					}
+				}
+				if (j >= 0) {
+					p = this.network[j];
+					dist = g - p[1]; // inx key - reverse dif
+					if (dist >= bestd) j = -1;
+					// stop iter
+					else {
+						j--;
+						if (dist < 0) dist = -dist;
+						a = p[0] - b;
+						if (a < 0) a = -a;
+						dist += a;
+						if (dist < bestd) {
+							a = p[2] - r;
+							if (a < 0) a = -a;
+							dist += a;
+							if (dist < bestd) {
+								bestd = dist;
+								best = p[3];
+							}
 						}
 					}
 				}
 			}
-			if (j >= 0) {
-				p = this.network[j];
-				dist = g - p[1]; // inx key - reverse dif
-				if (dist >= bestd) j = -1;
-				// stop iter
-				else {
-					j--;
-					if (dist < 0) dist = -dist;
-					a = p[0] - b;
-					if (a < 0) a = -a;
-					dist += a;
-					if (dist < bestd) {
-						a = p[2] - r;
-						if (a < 0) a = -a;
-						dist += a;
-						if (dist < bestd) {
-							bestd = dist;
-							best = p[3];
-						}
-					}
-				}
-			}
-		}
 
-		return best;
+			resolve(best);
+		});
 	}
 
 	private learn() {
@@ -405,13 +407,14 @@ export class ColorTableGenerator {
 		return [this._colorLookup, this._GCT];
 	}
 
-	public lookupRGB(pixel: string): number {
-		const R = parseInt(pixel.substr(0, 2), 16);
-		const G = parseInt(pixel.substr(2, 2), 16);
-		const B = parseInt(pixel.substr(4, 2), 16);
-		const pixelIndex = this._neuQuant.lookupRGB(R, G, B);
-
-		return pixelIndex as number;
+	public lookupRGB(pixel: string): Promise<number> {
+		return new Promise(async (resolve, reject) => {
+			const R = parseInt(pixel.substr(0, 2), 16);
+			const G = parseInt(pixel.substr(2, 2), 16);
+			const B = parseInt(pixel.substr(4, 2), 16);
+			const pixelIndex = await this._neuQuant.lookupRGB(R, G, B);
+			resolve(pixelIndex as number);
+		});
 	}
 
 	private pad(color: number): string {
@@ -944,23 +947,29 @@ function processFrames(
 	return process();
 }
 
-function generateGIF(frames: string[][], colorLookup: { [index: string]: number }) {
-	function mapPixelsToIndex(frames: string[][], colorLookup: { [index: string]: number }): number[][] {
-		const indexedFrames: number[][] = [];
-		frames.forEach((frame, index) => {
-			const indexedPixels: number[] = [];
-			frame.forEach(pixel => {
-				indexedPixels.push(lookup(pixel));
+async function generateGIF(frames: string[][], colorLookup: { [index: string]: number }) {
+	function mapPixelsToIndex(frames: string[][], colorLookup: { [index: string]: number }): Promise<number[][]> {
+		return new Promise((resolve, rejcet) => {
+			const indexedFrames: number[][] = [];
+			frames.forEach((frame, index) => {
+				// console.log('is frame complete', frame);
+				const indexedPixels: number[] = [];
+				frame.forEach(async pixel => {
+					indexedPixels.push(await lookup(pixel));
+					// console.log(`what index returns for pixel ${pixel}`, lookup(pixel));
+				});
+				indexedFrames.push(indexedPixels);
 			});
-			indexedFrames.push(indexedPixels);
+			resolve(indexedFrames);
 		});
-		return indexedFrames;
 	}
 
-	function lookup(pixel: string) {
-		return /* colorLookup[pixel] ? colorLookup[pixel] : */ _colorTableGen.lookupRGB(pixel);
+	function lookup(pixel: string): Promise<number> {
+		return new Promise(async (resolve, reject) => {
+			resolve(await _colorTableGen.lookupRGB(pixel));
+		});
 	}
-	const indexedFrames = mapPixelsToIndex(frames, colorLookup);
+	const indexedFrames = await mapPixelsToIndex(frames, colorLookup);
 
 	indexedFrames.forEach(frame => {
 		gifGenerator.generateFrame(frame);
