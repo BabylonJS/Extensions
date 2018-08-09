@@ -75,8 +75,13 @@ export class NeuQuant {
 	private samplefac: number;
 
 	/**
-	 * Constructor: init
-	 * sets up arrays
+	 * Constructor: NeuQuant
+	 * Arguments:
+	 * pixels - array of pixels in RGB format
+	 * samplefac - sampling factor 1 to 30 where lower is better quality
+	 * >
+	 * > pixels = [r, g, b, r, g, b, r, g, b, ..]
+	 * >
 	 */
 	constructor(pixels: Uint8Array, samplefac: number) {
 		let v: number;
@@ -228,65 +233,63 @@ export class NeuQuant {
 		for (j = previouscol + 1; j < 256; j++) this.netindex[j] = this.maxnetpos; // really 256
 	}
 
-	public lookupRGB(b: number, g: number, r: number): Promise<number> {
-		return new Promise((resolve, reject) => {
-			let a, p, dist;
+	public lookupRGB(b: number, g: number, r: number): number {
+		let a, p, dist;
 
-			let bestd = 1000; // biggest possible dist is 256*3
-			let best = -1;
+		let bestd = 1000; // biggest possible dist is 256*3
+		let best = -1;
 
-			let i = this.netindex[g]; // index on g
-			let j = i - 1; // start at netindex[g] and work outwards
+		let i = this.netindex[g]; // index on g
+		let j = i - 1; // start at netindex[g] and work outwards
 
-			while (i < this.netsize || j >= 0) {
-				if (i < this.netsize) {
-					p = this.network[i];
-					dist = p[1] - g; // inx key
-					if (dist >= bestd) i = this.netsize;
-					// stop iter
-					else {
-						i++;
-						if (dist < 0) dist = -dist;
-						a = p[0] - b;
+		while (i < this.netsize || j >= 0) {
+			if (i < this.netsize) {
+				p = this.network[i];
+				dist = p[1] - g; // inx key
+				if (dist >= bestd) i = this.netsize;
+				// stop iter
+				else {
+					i++;
+					if (dist < 0) dist = -dist;
+					a = p[0] - b;
+					if (a < 0) a = -a;
+					dist += a;
+					if (dist < bestd) {
+						a = p[2] - r;
 						if (a < 0) a = -a;
 						dist += a;
 						if (dist < bestd) {
-							a = p[2] - r;
-							if (a < 0) a = -a;
-							dist += a;
-							if (dist < bestd) {
-								bestd = dist;
-								best = p[3];
-							}
-						}
-					}
-				}
-				if (j >= 0) {
-					p = this.network[j];
-					dist = g - p[1]; // inx key - reverse dif
-					if (dist >= bestd) j = -1;
-					// stop iter
-					else {
-						j--;
-						if (dist < 0) dist = -dist;
-						a = p[0] - b;
-						if (a < 0) a = -a;
-						dist += a;
-						if (dist < bestd) {
-							a = p[2] - r;
-							if (a < 0) a = -a;
-							dist += a;
-							if (dist < bestd) {
-								bestd = dist;
-								best = p[3];
-							}
+							bestd = dist;
+							best = p[3];
 						}
 					}
 				}
 			}
+			if (j >= 0) {
+				p = this.network[j];
+				dist = g - p[1]; // inx key - reverse dif
+				if (dist >= bestd) j = -1;
+				// stop iter
+				else {
+					j--;
+					if (dist < 0) dist = -dist;
+					a = p[0] - b;
+					if (a < 0) a = -a;
+					dist += a;
+					if (dist < bestd) {
+						a = p[2] - r;
+						if (a < 0) a = -a;
+						dist += a;
+						if (dist < bestd) {
+							bestd = dist;
+							best = p[3];
+						}
+					}
+				}
+			}
+		}
 
-			resolve(best);
-		});
+		return best;
 	}
 
 	private learn() {
@@ -368,6 +371,7 @@ export class NeuQuant {
 			map[k++] = this.network[j][1];
 			map[k++] = this.network[j][2];
 		}
+		console.log('map', map);
 		return map;
 	}
 }
@@ -407,14 +411,12 @@ export class ColorTableGenerator {
 		return [this._colorLookup, this._GCT];
 	}
 
-	public lookupRGB(pixel: string): Promise<number> {
-		return new Promise(async (resolve, reject) => {
-			const R = parseInt(pixel.substr(0, 2), 16);
-			const G = parseInt(pixel.substr(2, 2), 16);
-			const B = parseInt(pixel.substr(4, 2), 16);
-			const pixelIndex = await this._neuQuant.lookupRGB(R, G, B);
-			resolve(pixelIndex as number);
-		});
+	public lookupRGB(pixel: string): number {
+		const R = parseInt(pixel.substr(0, 2), 16);
+		const G = parseInt(pixel.substr(2, 2), 16);
+		const B = parseInt(pixel.substr(4, 2), 16);
+		const pixelIndex = this._neuQuant.lookupRGB(R, G, B);
+		return pixelIndex as number;
 	}
 
 	private pad(color: number): string {
@@ -854,7 +856,7 @@ export class GIFGenerator {
 		this.stream.write(0x0); /* Block Terminator */
 	}
 
-	private async writeImageData(): Promise<void> {
+	private writeImageData(): void {
 		const encoder = new LZWEncoder(this.width, this.height, this.frameIndexedPixels, 8);
 		encoder.encode(this.stream);
 		console.log(`completed frame ${this.frameCount}`);
@@ -947,29 +949,25 @@ function processFrames(
 	return process();
 }
 
-async function generateGIF(frames: string[][], colorLookup: { [index: string]: number }) {
-	function mapPixelsToIndex(frames: string[][], colorLookup: { [index: string]: number }): Promise<number[][]> {
-		return new Promise((resolve, rejcet) => {
-			const indexedFrames: number[][] = [];
-			frames.forEach((frame, index) => {
-				// console.log('is frame complete', frame);
-				const indexedPixels: number[] = [];
-				frame.forEach(async pixel => {
-					indexedPixels.push(await lookup(pixel));
-					// console.log(`what index returns for pixel ${pixel}`, lookup(pixel));
-				});
-				indexedFrames.push(indexedPixels);
+function generateGIF(frames: string[][], colorLookup: { [index: string]: number }) {
+	function mapPixelsToIndex(frames: string[][], colorLookup: { [index: string]: number }): number[][] {
+		const indexedFrames: number[][] = [];
+		frames.forEach(async (frame, index) => {
+			const indexedPixels: number[] = [];
+
+			frame.forEach(pixel => {
+				indexedPixels.push(lookup(pixel));
 			});
-			resolve(indexedFrames);
+			await gifGenerator.generateFrame(indexedPixels);
+			indexedFrames.push(indexedPixels);
 		});
+		return indexedFrames;
 	}
 
-	function lookup(pixel: string): Promise<number> {
-		return new Promise(async (resolve, reject) => {
-			resolve(await _colorTableGen.lookupRGB(pixel));
-		});
+	function lookup(pixel: string): number {
+		return _colorTableGen.lookupRGB(pixel);
 	}
-	const indexedFrames = await mapPixelsToIndex(frames, colorLookup);
+	const indexedFrames = mapPixelsToIndex(frames, colorLookup);
 
 	indexedFrames.forEach(frame => {
 		gifGenerator.generateFrame(frame);
@@ -981,9 +979,13 @@ function collectFrames(frame: ArrayBuffer) {
 	_frameCollection.push(new Uint8Array(frame));
 }
 
+// TODO: Find better color sampling technique that works with neuquant
 function getColorSamplingFrames(frames: Uint8Array[]) {
 	/* every 5 frames placed in sampling frames array */
-	const samplingFrames = frames.filter((frame, index) => (index + 1) % 4 === 0);
+	// const samplingFrames = frames.filter((frame, index) => (index + 1) % 4 === 0);
+	const samplingFrames = frames.filter((frame, index) => index === 2 && index === frame.length - 1);
+	console.log(samplingFrames);
+
 	/* Combine arrays in samplingFrames into one Uint8Array */
 	return samplingFrames.reduce((accFrame: Uint8Array, frame) => {
 		const sampling = new Uint8Array(accFrame.length + frame.length);
@@ -1001,9 +1003,11 @@ function getColorSamplingFrames(frames: Uint8Array[]) {
 onmessage = ({ data: { job, params } }) => {
 	switch (job) {
 		case 'createGIF':
+			console.log('Frames recieved generating GIF');
 			const { width, height } = params;
 			const { numericalRGBFrames, stringRGBFrames } = processFrames(_frameCollection, width, height);
 			const samplingFrame = getColorSamplingFrames(numericalRGBFrames);
+			// const samplingFrame = numericalRGBFrames[3];
 			const colorLookup: { [index: string]: number } = createColorTable(samplingFrame, width, height);
 			const gifData = generateGIF(stringRGBFrames, colorLookup);
 			ctx.postMessage(gifData);

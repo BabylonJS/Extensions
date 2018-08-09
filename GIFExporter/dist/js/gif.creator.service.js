@@ -70,8 +70,13 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     Object.defineProperty(exports, "__esModule", { value: true });
     var NeuQuant = /** @class */ (function () {
         /**
-         * Constructor: init
-         * sets up arrays
+         * Constructor: NeuQuant
+         * Arguments:
+         * pixels - array of pixels in RGB format
+         * samplefac - sampling factor 1 to 30 where lower is better quality
+         * >
+         * > pixels = [r, g, b, r, g, b, r, g, b, ..]
+         * >
          */
         function NeuQuant(pixels, samplefac) {
             this.ncycles = 100; // number of learning cycles
@@ -239,69 +244,66 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                 this.netindex[j] = this.maxnetpos; // really 256
         };
         NeuQuant.prototype.lookupRGB = function (b, g, r) {
-            var _this = this;
-            return new Promise(function (resolve, reject) {
-                var a, p, dist;
-                var bestd = 1000; // biggest possible dist is 256*3
-                var best = -1;
-                var i = _this.netindex[g]; // index on g
-                var j = i - 1; // start at netindex[g] and work outwards
-                while (i < _this.netsize || j >= 0) {
-                    if (i < _this.netsize) {
-                        p = _this.network[i];
-                        dist = p[1] - g; // inx key
-                        if (dist >= bestd)
-                            i = _this.netsize;
-                        // stop iter
-                        else {
-                            i++;
-                            if (dist < 0)
-                                dist = -dist;
-                            a = p[0] - b;
+            var a, p, dist;
+            var bestd = 1000; // biggest possible dist is 256*3
+            var best = -1;
+            var i = this.netindex[g]; // index on g
+            var j = i - 1; // start at netindex[g] and work outwards
+            while (i < this.netsize || j >= 0) {
+                if (i < this.netsize) {
+                    p = this.network[i];
+                    dist = p[1] - g; // inx key
+                    if (dist >= bestd)
+                        i = this.netsize;
+                    // stop iter
+                    else {
+                        i++;
+                        if (dist < 0)
+                            dist = -dist;
+                        a = p[0] - b;
+                        if (a < 0)
+                            a = -a;
+                        dist += a;
+                        if (dist < bestd) {
+                            a = p[2] - r;
                             if (a < 0)
                                 a = -a;
                             dist += a;
                             if (dist < bestd) {
-                                a = p[2] - r;
-                                if (a < 0)
-                                    a = -a;
-                                dist += a;
-                                if (dist < bestd) {
-                                    bestd = dist;
-                                    best = p[3];
-                                }
-                            }
-                        }
-                    }
-                    if (j >= 0) {
-                        p = _this.network[j];
-                        dist = g - p[1]; // inx key - reverse dif
-                        if (dist >= bestd)
-                            j = -1;
-                        // stop iter
-                        else {
-                            j--;
-                            if (dist < 0)
-                                dist = -dist;
-                            a = p[0] - b;
-                            if (a < 0)
-                                a = -a;
-                            dist += a;
-                            if (dist < bestd) {
-                                a = p[2] - r;
-                                if (a < 0)
-                                    a = -a;
-                                dist += a;
-                                if (dist < bestd) {
-                                    bestd = dist;
-                                    best = p[3];
-                                }
+                                bestd = dist;
+                                best = p[3];
                             }
                         }
                     }
                 }
-                resolve(best);
-            });
+                if (j >= 0) {
+                    p = this.network[j];
+                    dist = g - p[1]; // inx key - reverse dif
+                    if (dist >= bestd)
+                        j = -1;
+                    // stop iter
+                    else {
+                        j--;
+                        if (dist < 0)
+                            dist = -dist;
+                        a = p[0] - b;
+                        if (a < 0)
+                            a = -a;
+                        dist += a;
+                        if (dist < bestd) {
+                            a = p[2] - r;
+                            if (a < 0)
+                                a = -a;
+                            dist += a;
+                            if (dist < bestd) {
+                                bestd = dist;
+                                best = p[3];
+                            }
+                        }
+                    }
+                }
+            }
+            return best;
         };
         NeuQuant.prototype.learn = function () {
             var i;
@@ -378,6 +380,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                 map[k++] = this.network[j][1];
                 map[k++] = this.network[j][2];
             }
+            console.log('map', map);
             return map;
         };
         return NeuQuant;
@@ -413,23 +416,11 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             return [this._colorLookup, this._GCT];
         };
         ColorTableGenerator.prototype.lookupRGB = function (pixel) {
-            var _this = this;
-            return new Promise(function (resolve, reject) { return __awaiter(_this, void 0, void 0, function () {
-                var R, G, B, pixelIndex;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            R = parseInt(pixel.substr(0, 2), 16);
-                            G = parseInt(pixel.substr(2, 2), 16);
-                            B = parseInt(pixel.substr(4, 2), 16);
-                            return [4 /*yield*/, this._neuQuant.lookupRGB(R, G, B)];
-                        case 1:
-                            pixelIndex = _a.sent();
-                            resolve(pixelIndex);
-                            return [2 /*return*/];
-                    }
-                });
-            }); });
+            var R = parseInt(pixel.substr(0, 2), 16);
+            var G = parseInt(pixel.substr(2, 2), 16);
+            var B = parseInt(pixel.substr(4, 2), 16);
+            var pixelIndex = this._neuQuant.lookupRGB(R, G, B);
+            return pixelIndex;
         };
         ColorTableGenerator.prototype.pad = function (color) {
             if (color < 16) {
@@ -778,15 +769,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             this.stream.write(0x0); /* Block Terminator */
         };
         GIFGenerator.prototype.writeImageData = function () {
-            return __awaiter(this, void 0, void 0, function () {
-                var encoder;
-                return __generator(this, function (_a) {
-                    encoder = new LZWEncoder(this.width, this.height, this.frameIndexedPixels, 8);
-                    encoder.encode(this.stream);
-                    console.log("completed frame " + this.frameCount);
-                    return [2 /*return*/];
-                });
-            });
+            var encoder = new LZWEncoder(this.width, this.height, this.frameIndexedPixels, 8);
+            encoder.encode(this.stream);
+            console.log("completed frame " + this.frameCount);
         };
         GIFGenerator.prototype.writeTrailer = function () {
             this.stream.write(0x3b); /* Trailer Marker */
@@ -810,7 +795,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     var gifGenerator = new GIFGenerator();
     var _frameCollection = [];
     function createColorTable(frame, width, height) {
-        var _a;
         _colorTableGen = new ColorTableGenerator(frame);
         var colorLookup, colorTable;
         _a = _colorTableGen.generate(), colorLookup = _a[0], colorTable = _a[1];
@@ -820,6 +804,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             gifGenerator.init(width, height, globalColorTable);
             return;
         }
+        var _a;
     }
     function processFrames(frames, width, height) {
         function process() {
@@ -856,68 +841,46 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         return process();
     }
     function generateGIF(frames, colorLookup) {
-        return __awaiter(this, void 0, void 0, function () {
-            function mapPixelsToIndex(frames, colorLookup) {
-                var _this = this;
-                return new Promise(function (resolve, rejcet) {
-                    var indexedFrames = [];
-                    frames.forEach(function (frame, index) {
-                        // console.log('is frame complete', frame);
-                        var indexedPixels = [];
-                        frame.forEach(function (pixel) { return __awaiter(_this, void 0, void 0, function () {
-                            var _a, _b;
-                            return __generator(this, function (_c) {
-                                switch (_c.label) {
-                                    case 0:
-                                        _b = (_a = indexedPixels).push;
-                                        return [4 /*yield*/, lookup(pixel)];
-                                    case 1:
-                                        _b.apply(_a, [_c.sent()]);
-                                        return [2 /*return*/];
-                                }
+        function mapPixelsToIndex(frames, colorLookup) {
+            var _this = this;
+            var indexedFrames = [];
+            frames.forEach(function (frame, index) { return __awaiter(_this, void 0, void 0, function () {
+                var indexedPixels;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            indexedPixels = [];
+                            frame.forEach(function (pixel) {
+                                indexedPixels.push(lookup(pixel));
                             });
-                        }); });
-                        indexedFrames.push(indexedPixels);
-                    });
-                    resolve(indexedFrames);
+                            return [4 /*yield*/, gifGenerator.generateFrame(indexedPixels)];
+                        case 1:
+                            _a.sent();
+                            indexedFrames.push(indexedPixels);
+                            return [2 /*return*/];
+                    }
                 });
-            }
-            function lookup(pixel) {
-                var _this = this;
-                return new Promise(function (resolve, reject) { return __awaiter(_this, void 0, void 0, function () {
-                    var _a;
-                    return __generator(this, function (_b) {
-                        switch (_b.label) {
-                            case 0:
-                                _a = resolve;
-                                return [4 /*yield*/, _colorTableGen.lookupRGB(pixel)];
-                            case 1:
-                                _a.apply(void 0, [_b.sent()]);
-                                return [2 /*return*/];
-                        }
-                    });
-                }); });
-            }
-            var indexedFrames;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, mapPixelsToIndex(frames, colorLookup)];
-                    case 1:
-                        indexedFrames = _a.sent();
-                        indexedFrames.forEach(function (frame) {
-                            gifGenerator.generateFrame(frame);
-                        });
-                        return [2 /*return*/, gifGenerator.getStream()];
-                }
-            });
+            }); });
+            return indexedFrames;
+        }
+        function lookup(pixel) {
+            return _colorTableGen.lookupRGB(pixel);
+        }
+        var indexedFrames = mapPixelsToIndex(frames, colorLookup);
+        indexedFrames.forEach(function (frame) {
+            gifGenerator.generateFrame(frame);
         });
+        return gifGenerator.getStream();
     }
     function collectFrames(frame) {
         _frameCollection.push(new Uint8Array(frame));
     }
+    // TODO: Find better color sampling technique that works with neuquant
     function getColorSamplingFrames(frames) {
         /* every 5 frames placed in sampling frames array */
-        var samplingFrames = frames.filter(function (frame, index) { return (index + 1) % 4 === 0; });
+        // const samplingFrames = frames.filter((frame, index) => (index + 1) % 4 === 0);
+        var samplingFrames = frames.filter(function (frame, index) { return index === 2 && index === frame.length - 1; });
+        console.log(samplingFrames);
         /* Combine arrays in samplingFrames into one Uint8Array */
         return samplingFrames.reduce(function (accFrame, frame) {
             var sampling = new Uint8Array(accFrame.length + frame.length);
@@ -932,9 +895,11 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         var _b = _a.data, job = _b.job, params = _b.params;
         switch (job) {
             case 'createGIF':
+                console.log('Frames recieved generating GIF');
                 var width = params.width, height = params.height;
                 var _c = processFrames(_frameCollection, width, height), numericalRGBFrames = _c.numericalRGBFrames, stringRGBFrames = _c.stringRGBFrames;
                 var samplingFrame = getColorSamplingFrames(numericalRGBFrames);
+                // const samplingFrame = numericalRGBFrames[3];
                 var colorLookup = createColorTable(samplingFrame, width, height);
                 var gifData = generateGIF(stringRGBFrames, colorLookup);
                 ctx.postMessage(gifData);

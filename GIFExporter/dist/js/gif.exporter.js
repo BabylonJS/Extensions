@@ -53,8 +53,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         GIFExporter.prototype.start = function () {
             var _this = this;
             return new Promise(function (resolve, reject) { return __awaiter(_this, void 0, void 0, function () {
-                var intervalRef;
                 var _this = this;
+                var intervalRef;
                 return __generator(this, function (_a) {
                     this.init();
                     console.log('record canvas');
