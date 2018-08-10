@@ -420,6 +420,12 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             var G = parseInt(pixel.substr(2, 2), 16);
             var B = parseInt(pixel.substr(4, 2), 16);
             var pixelIndex = this._neuQuant.lookupRGB(R, G, B);
+            // if(R === 6 && G === 6 && B === 6 ){
+            // 	console.log('666 found on  lookup is', this._neuQuant.lookupRGB(R, G, B))
+            // }
+            // if(this._neuQuant.lookupRGB(R, G, B) === 1){
+            // 	console.log(`output was index 1 for ${R},${G},${B}`);
+            // }
             return pixelIndex;
         };
         ColorTableGenerator.prototype.pad = function (color) {
@@ -620,6 +626,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             // Put out the final code.
             this.output(ent, outs);
             this.output(this._EOFCode, outs);
+            console.log(outs);
         };
         // ----------------------------------------------------------------------------
         LZWEncoder.prototype.encode = function (os) {
@@ -714,6 +721,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             console.log("generating frame " + this.frameCount);
             this.writeGraphicControlExtension();
             this.writeImageDescriptor();
+            this.writeLocalColorTable();
             this.writeImageData();
         };
         GIFGenerator.prototype.getStream = function () {
@@ -847,18 +855,12 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             frames.forEach(function (frame, index) { return __awaiter(_this, void 0, void 0, function () {
                 var indexedPixels;
                 return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            indexedPixels = [];
-                            frame.forEach(function (pixel) {
-                                indexedPixels.push(lookup(pixel));
-                            });
-                            return [4 /*yield*/, gifGenerator.generateFrame(indexedPixels)];
-                        case 1:
-                            _a.sent();
-                            indexedFrames.push(indexedPixels);
-                            return [2 /*return*/];
-                    }
+                    indexedPixels = [];
+                    frame.forEach(function (pixel) {
+                        indexedPixels.push(lookup(pixel));
+                    });
+                    indexedFrames.push(indexedPixels);
+                    return [2 /*return*/];
                 });
             }); });
             return indexedFrames;
@@ -879,8 +881,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function getColorSamplingFrames(frames) {
         /* every 5 frames placed in sampling frames array */
         // const samplingFrames = frames.filter((frame, index) => (index + 1) % 4 === 0);
-        var samplingFrames = frames.filter(function (frame, index) { return index === 2 && index === frame.length - 1; });
-        console.log(samplingFrames);
+        var samplingFrames = frames.filter(function (frame, index) { return index === 2 && index === (frame.length - 1) / 2 && index === frame.length - 1; });
+        // console.log(samplingFrames);
         /* Combine arrays in samplingFrames into one Uint8Array */
         return samplingFrames.reduce(function (accFrame, frame) {
             var sampling = new Uint8Array(accFrame.length + frame.length);
@@ -898,8 +900,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                 console.log('Frames recieved generating GIF');
                 var width = params.width, height = params.height;
                 var _c = processFrames(_frameCollection, width, height), numericalRGBFrames = _c.numericalRGBFrames, stringRGBFrames = _c.stringRGBFrames;
-                var samplingFrame = getColorSamplingFrames(numericalRGBFrames);
-                // const samplingFrame = numericalRGBFrames[3];
+                // const samplingFrame = getColorSamplingFrames(numericalRGBFrames);
+                var samplingFrame = numericalRGBFrames[3];
                 var colorLookup = createColorTable(samplingFrame, width, height);
                 var gifData = generateGIF(stringRGBFrames, colorLookup);
                 ctx.postMessage(gifData);

@@ -416,6 +416,12 @@ export class ColorTableGenerator {
 		const G = parseInt(pixel.substr(2, 2), 16);
 		const B = parseInt(pixel.substr(4, 2), 16);
 		const pixelIndex = this._neuQuant.lookupRGB(R, G, B);
+		// if(R === 6 && G === 6 && B === 6 ){
+		// 	console.log('666 found on  lookup is', this._neuQuant.lookupRGB(R, G, B))
+		// }
+		// if(this._neuQuant.lookupRGB(R, G, B) === 1){
+		// 	console.log(`output was index 1 for ${R},${G},${B}`);
+		// }
 		return pixelIndex as number;
 	}
 
@@ -684,6 +690,7 @@ export class LZWEncoder {
 		// Put out the final code.
 		this.output(ent, outs);
 		this.output(this._EOFCode, outs);
+		console.log(outs)
 	}
 
 	// ----------------------------------------------------------------------------
@@ -793,6 +800,7 @@ export class GIFGenerator {
 		console.log(`generating frame ${this.frameCount}`);
 		this.writeGraphicControlExtension();
 		this.writeImageDescriptor();
+		this.writeLocalColorTable()
 		this.writeImageData();
 	}
 
@@ -936,6 +944,7 @@ function processFrames(
 				pixel = '';
 			}
 		});
+	
 		return { numericalRGBData, stringRGBData };
 	}
 
@@ -958,7 +967,7 @@ function generateGIF(frames: string[][], colorLookup: { [index: string]: number 
 			frame.forEach(pixel => {
 				indexedPixels.push(lookup(pixel));
 			});
-			await gifGenerator.generateFrame(indexedPixels);
+			
 			indexedFrames.push(indexedPixels);
 		});
 		return indexedFrames;
@@ -983,8 +992,8 @@ function collectFrames(frame: ArrayBuffer) {
 function getColorSamplingFrames(frames: Uint8Array[]) {
 	/* every 5 frames placed in sampling frames array */
 	// const samplingFrames = frames.filter((frame, index) => (index + 1) % 4 === 0);
-	const samplingFrames = frames.filter((frame, index) => index === 2 && index === frame.length - 1);
-	console.log(samplingFrames);
+	const samplingFrames = frames.filter((frame, index) => index === 2 && index === (frame.length - 1)/2 && index === frame.length - 1);
+	// console.log(samplingFrames);
 
 	/* Combine arrays in samplingFrames into one Uint8Array */
 	return samplingFrames.reduce((accFrame: Uint8Array, frame) => {
@@ -1006,8 +1015,9 @@ onmessage = ({ data: { job, params } }) => {
 			console.log('Frames recieved generating GIF');
 			const { width, height } = params;
 			const { numericalRGBFrames, stringRGBFrames } = processFrames(_frameCollection, width, height);
-			const samplingFrame = getColorSamplingFrames(numericalRGBFrames);
-			// const samplingFrame = numericalRGBFrames[3];
+			
+			// const samplingFrame = getColorSamplingFrames(numericalRGBFrames);
+			const samplingFrame = numericalRGBFrames[3];
 			const colorLookup: { [index: string]: number } = createColorTable(samplingFrame, width, height);
 			const gifData = generateGIF(stringRGBFrames, colorLookup);
 			ctx.postMessage(gifData);
