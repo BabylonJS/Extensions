@@ -626,7 +626,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             // Put out the final code.
             this.output(ent, outs);
             this.output(this._EOFCode, outs);
-            console.log(outs);
         };
         // ----------------------------------------------------------------------------
         LZWEncoder.prototype.encode = function (os) {
@@ -718,7 +717,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         GIFGenerator.prototype.generateFrame = function (indexedPixels) {
             this.frameIndexedPixels = indexedPixels;
             this.frameCount += 1;
-            console.log("generating frame " + this.frameCount);
             this.writeGraphicControlExtension();
             this.writeImageDescriptor();
             this.writeLocalColorTable();
@@ -803,6 +801,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     var gifGenerator = new GIFGenerator();
     var _frameCollection = [];
     function createColorTable(frame, width, height) {
+        var _a;
         _colorTableGen = new ColorTableGenerator(frame);
         var colorLookup, colorTable;
         _a = _colorTableGen.generate(), colorLookup = _a[0], colorTable = _a[1];
@@ -812,7 +811,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             gifGenerator.init(width, height, globalColorTable);
             return;
         }
-        var _a;
     }
     function processFrames(frames, width, height) {
         function process() {

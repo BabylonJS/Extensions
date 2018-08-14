@@ -690,7 +690,6 @@ export class LZWEncoder {
 		// Put out the final code.
 		this.output(ent, outs);
 		this.output(this._EOFCode, outs);
-		console.log(outs)
 	}
 
 	// ----------------------------------------------------------------------------
@@ -797,10 +796,9 @@ export class GIFGenerator {
 	public generateFrame(indexedPixels: number[]): void {
 		this.frameIndexedPixels = indexedPixels;
 		this.frameCount += 1;
-		console.log(`generating frame ${this.frameCount}`);
 		this.writeGraphicControlExtension();
 		this.writeImageDescriptor();
-		this.writeLocalColorTable()
+		this.writeLocalColorTable();
 		this.writeImageData();
 	}
 
@@ -944,7 +942,7 @@ function processFrames(
 				pixel = '';
 			}
 		});
-	
+
 		return { numericalRGBData, stringRGBData };
 	}
 
@@ -967,7 +965,7 @@ function generateGIF(frames: string[][], colorLookup: { [index: string]: number 
 			frame.forEach(pixel => {
 				indexedPixels.push(lookup(pixel));
 			});
-			
+
 			indexedFrames.push(indexedPixels);
 		});
 		return indexedFrames;
@@ -992,7 +990,7 @@ function collectFrames(frame: ArrayBuffer) {
 function getColorSamplingFrames(frames: Uint8Array[]) {
 	/* every 5 frames placed in sampling frames array */
 	// const samplingFrames = frames.filter((frame, index) => (index + 1) % 4 === 0);
-	const samplingFrames = frames.filter((frame, index) => index === 2 && index === (frame.length - 1)/2 && index === frame.length - 1);
+	const samplingFrames = frames.filter((frame, index) => index === 2 && index === (frame.length - 1) / 2 && index === frame.length - 1);
 	// console.log(samplingFrames);
 
 	/* Combine arrays in samplingFrames into one Uint8Array */
@@ -1015,7 +1013,7 @@ onmessage = ({ data: { job, params } }) => {
 			console.log('Frames recieved generating GIF');
 			const { width, height } = params;
 			const { numericalRGBFrames, stringRGBFrames } = processFrames(_frameCollection, width, height);
-			
+
 			// const samplingFrame = getColorSamplingFrames(numericalRGBFrames);
 			const samplingFrame = numericalRGBFrames[3];
 			const colorLookup: { [index: string]: number } = createColorTable(samplingFrame, width, height);

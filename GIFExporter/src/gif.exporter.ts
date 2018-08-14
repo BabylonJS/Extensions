@@ -10,7 +10,7 @@ export default class GIFExporter {
 	private _resizeCanvas: HTMLCanvasElement;
 	private _resizeCanvas2D: CanvasRenderingContext2D;
 
-	constructor(engine: BABYLON.Engine, options?: { delay?: number; duration?: number }) {
+	constructor(engine: BABYLON.Engine, options?: { delay?: 40; duration?: 2500 }) {
 		this._canvas = engine.getRenderingCanvas();
 		this._delay = options.delay;
 		this._duration = options.duration;

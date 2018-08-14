@@ -2,7 +2,7 @@
   "name": "babylonjs-gifexporter",
   "version": "1.0.0",
   "description": "Create animated GIF from BabylonJS Engine.",
-  "main": "dist/js/gif.exporter.js",
+  "main": "lib/js/gif.exporter.js",
   "devDependencies": {
     "@types/webgl2": "0.0.4",
     "babylonjs": "^3.2.0",
@@ -20,6 +20,7 @@
   "keywords": [
     "BabylonJS",
     "Babylon",
+    "GIF Exporter",
     "GIF"
   ],
   "author": "Powell, Anthony",
