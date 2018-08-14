@@ -1,6 +1,6 @@
 {
   "name": "babylonjs-gifexporter",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Create animated GIF from BabylonJS Engine.",
   "main": "lib/js/gif.exporter.js",
   "devDependencies": {
