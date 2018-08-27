@@ -3,3 +3,7 @@ typings/
 .vs/
 .vscode/
 .cache/
+*.map
+typings.json
+coverage/
+.nyc_output

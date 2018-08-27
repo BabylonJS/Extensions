@@ -1,4 +1,4 @@
-export class GIFCreator {
+export default class GIFExporter {
 	private _canvas: HTMLCanvasElement;
 	private _delay: number;
 	private _duration: number;
@@ -9,9 +9,8 @@ export class GIFCreator {
 	private _holdingCanvas2D: CanvasRenderingContext2D;
 	private _resizeCanvas: HTMLCanvasElement;
 	private _resizeCanvas2D: CanvasRenderingContext2D;
-	private worker = 'gif.creator.service.ts';
 
-	constructor(engine: BABYLON.Engine, options?: { delay?: number; duration?: number }) {
+	constructor(engine: BABYLON.Engine, options?: { delay?: 40; duration?: 2500 }) {
 		this._canvas = engine.getRenderingCanvas();
 		this._delay = options.delay;
 		this._duration = options.duration;
@@ -60,7 +59,7 @@ export class GIFCreator {
 					type: 'image/gif',
 				})
 			);
-			const download: HTMLAnchorElement = document.getElementById('download') as HTMLAnchorElement;
+			const download: HTMLAnchorElement = document.createElement('a') as HTMLAnchorElement;
 			document.body.appendChild(download);
 			download.target = '_blank';
 			download.style.display = 'none';
@@ -75,10 +74,10 @@ export class GIFCreator {
 	}
 
 	private getFrame(): Promise<ArrayBuffer> {
-		return new Promise(async (resolve, reject) => {
+		return new Promise((resolve, reject) => {
 			const gl = this._canvas.getContext('webgl2') || this._canvas.getContext('webgl');
-			let pixels = new Uint8Array(this._width * this._height * 4);
-			gl.readPixels(0, 0, this._width, this._height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+			let pixels = new Uint8Array(gl.drawingBufferWidth * gl.drawingBufferHeight * 4);
+			gl.readPixels(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
 
 			resolve(pixels.buffer);
 		});
@@ -87,7 +86,7 @@ export class GIFCreator {
 	private init() {
 		this._width = this._canvas.width;
 		this._height = this._canvas.height;
-		this._worker = new Worker('gif.creator.service.ts');
+		this._worker = new Worker('gif.creator.service.js');
 		this.canvasSetup();
 	}
 

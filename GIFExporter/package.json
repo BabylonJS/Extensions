@@ -1,26 +1,28 @@
 {
-  "name": "GIFExporter",
-  "version": "1.0.0",
-  "description": "",
-  "main": "NewIndex.js",
+  "name": "babylonjs-gifexporter",
+  "version": "1.0.2",
+  "description": "Create animated GIF from BabylonJS Engine.",
+  "main": "lib/js/gif.exporter.js",
   "devDependencies": {
-    "@types/babylon": "^6.16.3",
     "@types/webgl2": "0.0.4",
-    "@types/chai": "^4.1.4",
-    "@types/mocha": "^5.2.2",
     "babylonjs": "^3.2.0",
     "babylonjs-viewer": "^3.2.1",
-    "chai": "^4.1.2",
-    "mocha": "^5.2.0",
+    "gulp": "^3.9.1",
+    "gulp-typescript": "^5.0.0-alpha.3",
+    "gulp-uglify": "^3.0.0",
+    "parcel-bundler": "^1.9.7",
     "ts-node": "^6.1.1",
     "typescript": "^2.9.2"
   },
   "scripts": {
-    "start": "parcel examples/index.html",
-    "build": "parcel build src/**.ts",
-    "test": "mocha -wr ts-node/register test/**.spec.ts"
+    "build": "tsc"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "keywords": [
+    "BabylonJS",
+    "Babylon",
+    "GIF Exporter",
+    "GIF"
+  ],
+  "author": "Powell, Anthony",
+  "license": "MIT"
 }
