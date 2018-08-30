@@ -22,7 +22,7 @@ To capture and create an animated GIF from your Babylon Engine:
     const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true });
     ```
 
-4.  Creat an instance of the GIF Exporter using the `engine` and an `options` object:
+4.  Create an instance of the GIF Exporter using the `engine` and an `options` object:
 
     - `options` is an object that consist of `delay: number` and `duration: number`
       ```javascript
