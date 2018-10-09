@@ -16,32 +16,21 @@ declare module BABYLON {
         private _initialLOD;
         private _LODValue;
         private _cameraLODCorrection;
-        private _oldCorrection;
         private _terrainCamera;
         private _indices;
         private _positions;
         private _normals;
         private _colors;
         private _uvs;
-        private _deltaX;
-        private _deltaZ;
-        private _signX;
-        private _signZ;
         private _deltaSubX;
         private _deltaSubZ;
-        private _mapShiftX;
-        private _mapShiftZ;
-        private _mapFlgtNb;
-        private _needsUpdate;
-        private _updateLOD;
-        private _updateForced;
         private _refreshEveryFrame;
         private _useCustomVertexFunction;
         private _computeNormals;
         private _datamap;
         private _uvmap;
         private _colormap;
-        private _vertex;
+        private static _vertex;
         private _averageSubSizeX;
         private _averageSubSizeZ;
         private _terrainSizeX;
@@ -62,8 +51,8 @@ declare module BABYLON {
         private static _vAvB;
         private static _vAvC;
         private static _norm;
-        private _bbMin;
-        private _bbMax;
+        private static _bbMin;
+        private static _bbMax;
         /**
          * constructor
          * @param name
@@ -96,8 +85,8 @@ declare module BABYLON {
          * Returns the terrain.
          */
         update(force: boolean): DynamicTerrain;
-        private _updateTerrain();
-        private _mod(a, b);
+        private _updateTerrain;
+        private _mod;
         /**
          * Updates the mesh terrain size according to the LOD limits and the camera position.
          * Returns the terrain.
@@ -125,7 +114,7 @@ declare module BABYLON {
         static GetHeightFromMap(x: number, z: number, mapData: number[] | Float32Array, mapSubX: number, mapSubZ: number, options?: {
             normal: Vector3;
         }): number;
-        private static _GetHeightFromMap(x, z, mapData, mapSubX, mapSubZ, mapSizeX, mapSizeZ, options?);
+        private static _GetHeightFromMap;
         /**
          * Static : Computes all the normals from the terrain data map  and stores them in the passed Float32Array reference.
          * This passed array must have the same size than the mapData array.
