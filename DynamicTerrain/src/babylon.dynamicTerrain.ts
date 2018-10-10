@@ -233,8 +233,8 @@ module BABYLON {
             const shiftFromCamera = this.shiftFromCamera;
             let terrainHalfSizeX = this._terrainHalfSizeX;
             let terrainHalfSizeZ = this._terrainHalfSizeZ;
-            const deltaX = terrainHalfSizeX + terrainPosition.x - cameraPosition.x + shiftFromCamera.x;
-            const deltaZ = terrainHalfSizeZ + terrainPosition.z - cameraPosition.z + shiftFromCamera.z;
+            const deltaX = terrainHalfSizeX + terrainPosition.x - cameraPosition.x - shiftFromCamera.x;
+            const deltaZ = terrainHalfSizeZ + terrainPosition.z - cameraPosition.z - shiftFromCamera.z;
             const subToleranceX = this._subToleranceX;
             const subToleranceZ = this._subToleranceZ;
             const mod = this._mod;
