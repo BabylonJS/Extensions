@@ -17,6 +17,10 @@ declare module BABYLON {
         private _LODValue;
         private _cameraLODCorrection;
         private _terrainCamera;
+        shiftFromCamera: {
+            x: number;
+            z: number;
+        };
         private _indices;
         private _positions;
         private _normals;
