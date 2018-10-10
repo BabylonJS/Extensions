@@ -12,39 +12,39 @@ module BABYLON {
         private _mapColors: number[] | Float32Array;    // Color data of the map
         private _mapNormals: number[] | Float32Array;   // Normal data of the map
         private _scene: Scene;                          // current scene
-        private _subToleranceX: number = 1;             // how many cells flought over thy the camera on the terrain x axis before update
-        private _subToleranceZ: number = 1;             // how many cells flought over thy the camera on the terrain z axis before update
+        private _subToleranceX: number = 1|0;           // how many cells flought over thy the camera on the terrain x axis before update
+        private _subToleranceZ: number = 1|0;           // how many cells flought over thy the camera on the terrain z axis before update
         private _LODLimits: number[] = [];              // array of LOD limits
-        private _initialLOD: number = 1;                // initial LOD value (integer > 0)
-        private _LODValue: number = 1;                  // current LOD value : initial + camera correction
-        private _cameraLODCorrection: number = 0;       // LOD correction (integer) according to the camera altitude
+        private _initialLOD: number = 1|0;              // initial LOD value (integer > 0)
+        private _LODValue: number = 1|0;                // current LOD value : initial + camera correction
+        private _cameraLODCorrection: number = 0|0;     // LOD correction (integer) according to the camera altitude
         private _terrainCamera: Camera;                 // camera linked to the terrain
         private _indices: IndicesArray;
         private _positions: Float32Array | number[];
         private _normals: Float32Array | number[];
         private _colors: Float32Array | number[];
         private _uvs: Float32Array | number[];
-        private _deltaSubX: number = 0;                 // map x subdivision delta 
-        private _deltaSubZ: number = 0;                 // map z subdivision delta 
-        private _refreshEveryFrame: boolean = false;    // boolean : to force the terrain computation every frame
-        private _useCustomVertexFunction: boolean = false; // boolean : to allow the call to updateVertex()
-        private _computeNormals: boolean = false;       // boolean : to skip or not the normal computation
-        private _datamap: boolean = false;              // boolean : true if an data map is passed as parameter
-        private _uvmap: boolean = false;                // boolean : true if an UV map is passed as parameter
-        private _colormap: boolean = false;             // boolean : true if an color map is passed as parameter
-        private static _vertex: any = {                        // current vertex object passed to the user custom function
-            position: Vector3.Zero(),                       // vertex position in the terrain space (Vector3)
-            uvs: Vector2.Zero(),                            // vertex uv
-            color: new Color4(1.0, 1.0, 1.0, 1.0),          // vertex color (Color4)
-            lodX: 1,                                        // vertex LOD value on X axis
-            lodZ: 1,                                        // vertex LOD value on Z axis
-            worldPosition: Vector3.Zero(),                  // vertex World position
-            mapIndex: 0                                     // current map index
+        private _deltaSubX: number = 0|0;                   // map x subdivision delta : variation in number of map subdivisions
+        private _deltaSubZ: number = 0|0;                   // map z subdivision delta 
+        private _refreshEveryFrame: boolean = false;        // boolean : to force the terrain computation every frame
+        private _useCustomVertexFunction: boolean = false;  // boolean : to allow the call to updateVertex()
+        private _computeNormals: boolean = false;           // boolean : to skip or not the normal computation
+        private _datamap: boolean = false;                  // boolean : true if an data map is passed as parameter
+        private _uvmap: boolean = false;                    // boolean : true if an UV map is passed as parameter
+        private _colormap: boolean = false;                 // boolean : true if an color map is passed as parameter
+        private static _vertex: any = {                     // current vertex object passed to the user custom function
+            position: Vector3.Zero(),                           // vertex position in the terrain space (Vector3)
+            uvs: Vector2.Zero(),                                // vertex uv
+            color: new Color4(1.0, 1.0, 1.0, 1.0),              // vertex color (Color4)
+            lodX: 1|0,                                          // vertex LOD value on X axis
+            lodZ: 1|0,                                          // vertex LOD value on Z axis
+            worldPosition: Vector3.Zero(),                      // vertex World position
+            mapIndex: 0|0                                       // current map index
         };
-        private _averageSubSizeX: number = 0.0;                            // map cell average x size
-        private _averageSubSizeZ: number = 0.0;                            // map cell average z size
-        private _terrainSizeX: number = 0.0;                               // terrain x size
-        private _terrainSizeZ: number = 0.0;                               // terrain y size
+        private _averageSubSizeX: number = 0.0;                             // map cell average x size
+        private _averageSubSizeZ: number = 0.0;                             // map cell average z size
+        private _terrainSizeX: number = 0.0;                                // terrain x size
+        private _terrainSizeZ: number = 0.0;                                // terrain y size
         private _terrainHalfSizeX: number = 0.0;
         private _terrainHalfSizeZ: number = 0.0;
         private _centerWorld: Vector3 = BABYLON.Vector3.Zero();             // terrain world center position
@@ -228,37 +228,43 @@ module BABYLON {
             let terrainHalfSizeZ = this._terrainHalfSizeZ;
             const deltaX = terrainHalfSizeX + terrainPosition.x - cameraPosition.x;
             const deltaZ = terrainHalfSizeZ + terrainPosition.z - cameraPosition.z;
+            const subToleranceX = this._subToleranceX;
+            const subToleranceZ = this._subToleranceZ;
+            const mod = this._mod;
+            
+            // current LOD
             let oldCorrection = this._cameraLODCorrection;
             this._cameraLODCorrection = (this.updateCameraLOD(this._terrainCamera))|0;
             updateLOD = (oldCorrection != this._cameraLODCorrection);
-
             let LODValue = this._initialLOD + this._cameraLODCorrection;
             LODValue = (LODValue > 0) ? this._LODValue : 1;
             this._LODValue = LODValue;
-            let mapShiftX = this._averageSubSizeX * this._subToleranceX * LODValue;
-            let mapShiftZ = this._averageSubSizeZ * this._subToleranceZ * LODValue;
             
-            let mapFlgtNb = 0|0;                            // number of map cells flought over by the camera in the delta shift
+            // threshold sizes on each axis to trigger the terrain update
+            let mapShiftX = this._averageSubSizeX * subToleranceX * LODValue;
+            let mapShiftZ = this._averageSubSizeZ * subToleranceZ * LODValue;
+            
+            let mapFlgtNb = 0|0;                       // number of map cells flought over by the camera in the delta shift
             let deltaSubX = this._deltaSubX;
             let deltaSubZ = this._deltaSubZ;
             if (Math.abs(deltaX) > mapShiftX) {
                 const signX = (deltaX > 0.0) ? -1 : 1;
                 mapFlgtNb = Math.abs(deltaX / mapShiftX)|0;
                 terrainPosition.x += mapShiftX * signX * mapFlgtNb;
-                deltaSubX += (this._subToleranceX * signX * LODValue * mapFlgtNb);
+                deltaSubX += (subToleranceX * signX * LODValue * mapFlgtNb);
                 needsUpdate = true;
             }
             if (Math.abs(deltaZ) > mapShiftZ) {
                 const signZ = (deltaZ > 0.0) ? -1 : 1;
                 mapFlgtNb = Math.abs(deltaZ / mapShiftZ)|0;
                 terrainPosition.z += mapShiftZ * signZ * mapFlgtNb;
-                deltaSubZ += (this._subToleranceZ * signZ * LODValue * mapFlgtNb);
+                deltaSubZ += (subToleranceZ * signZ * LODValue * mapFlgtNb);
                 needsUpdate = true;
             }
             const updateSize = updateLOD || updateForced;       // must the terrain size be updated
             if (needsUpdate || updateSize) {
-                this._deltaSubX = this._mod(deltaSubX, this._mapSubX);
-                this._deltaSubZ = this._mod(deltaSubZ, this._mapSubZ); 
+                this._deltaSubX = mod(deltaSubX, this._mapSubX);
+                this._deltaSubZ = mod(deltaSubZ, this._mapSubZ); 
                 this._updateTerrain(updateSize);
             }
 
@@ -489,23 +495,26 @@ module BABYLON {
          * Returns the terrain.
          */
         public updateTerrainSize(): DynamicTerrain { 
-            var remainder = this._terrainSub;                   // the remaining cells at the general current LOD value
-            var nb = 0|0;                                       // nb of cells in the current LOD limit interval
-            var next = 0|0;                                     // next cell index, if it exists
-            var lod = this._LODValue + 1;                       // lod value in the current LOD limit interval
-            var tsx = 0.0;                                      // current sum of cell sizes on x
-            var tsz = 0.0;                                      // current sum of cell sizes on z
+            let remainder = this._terrainSub;                   // the remaining cells at the general current LOD value
+            let nb = 0|0;                                       // nb of cells in the current LOD limit interval
+            let next = 0|0;                                     // next cell index, if it exists
+            let LODValue = this._LODValue;
+            let lod = LODValue + 1;                             // lod value in the current LOD limit interval
+            let tsx = 0.0;                                      // current sum of cell sizes on x
+            let tsz = 0.0;                                      // current sum of cell sizes on z
             const LODLimits = this._LODLimits;
-            for (var l = 0|0; l < LODLimits.length; l++) {
-                lod = this._LODValue + l + 1; 
+            const averageSubSizeX = this._averageSubSizeX;
+            const averageSubSizeZ = this._averageSubSizeZ;
+            for (let l = 0|0; l < LODLimits.length; l++) {
+                lod = LODValue + l + 1; 
                 next = (l >= LODLimits.length - 1) ? 0 : LODLimits[l + 1];
                 nb = 2 * (LODLimits[l] - next);
-                tsx += this._averageSubSizeX * lod * nb;
-                tsz += this._averageSubSizeZ * lod * nb;
+                tsx += averageSubSizeX * lod * nb;
+                tsz += averageSubSizeZ * lod * nb;
                 remainder -= nb;
             }
-            tsx += remainder * this._averageSubSizeX * this._LODValue;
-            tsz += remainder * this._averageSubSizeZ * this._LODValue;
+            tsx += remainder * averageSubSizeX * LODValue;
+            tsz += remainder * averageSubSizeZ * LODValue;
             this._terrainSizeX = tsx;
             this._terrainSizeZ = tsz;
             this._terrainHalfSizeX = tsx * 0.5;
@@ -534,69 +543,76 @@ module BABYLON {
          * If the optional object {normal: Vector3} is passed, then its property "normal" is updated with the normal vector value at the coordinates (x, z).  
          */
         public static GetHeightFromMap(x: number, z: number, mapData: number[]| Float32Array, mapSubX: number, mapSubZ: number, options? : {normal: Vector3}) : number {
-            var mapSizeX = Math.abs(mapData[(mapSubX - 1) * 3] - mapData[0]);
-            var mapSizeZ = Math.abs(mapData[(mapSubZ - 1) * mapSubX * 3 + 2] - mapData[2]);
+            let mapSizeX = Math.abs(mapData[(mapSubX - 1) * 3] - mapData[0]);
+            let mapSizeZ = Math.abs(mapData[(mapSubZ - 1) * mapSubX * 3 + 2] - mapData[2]);
             return DynamicTerrain._GetHeightFromMap(x, z, mapData, mapSubX, mapSubZ, mapSizeX, mapSizeZ, options);
         }
 
         // Computes the height and optionnally the normal at the coordinates (x ,z) from the passed map
         private static _GetHeightFromMap(x: number, z: number, mapData: number[]| Float32Array, mapSubX: number, mapSubZ: number, mapSizeX: number, mapSizeZ: number, options? : {normal: Vector3}) : number {
 
-            var x0 = mapData[0];
-            var z0 = mapData[2];
+            let x0 = mapData[0];
+            let z0 = mapData[2];
 
             // reset x and z in the map space so they are between 0 and the axis map size
             x = x - Math.floor((x - x0) / mapSizeX) * mapSizeX;
             z = z - Math.floor((z - z0) / mapSizeZ) * mapSizeZ;
 
-            var col1 = Math.floor((x - x0) * mapSubX / mapSizeX);
-            var row1 = Math.floor((z - z0) * mapSubZ / mapSizeZ);
-            var col2 = (col1 + 1) % mapSubX;
-            var row2 = (row1 + 1) % mapSubZ;
+            let col1 = Math.floor((x - x0) * mapSubX / mapSizeX);
+            let row1 = Math.floor((z - z0) * mapSubZ / mapSizeZ);
+            let col2 = (col1 + 1) % mapSubX;
+            let row2 = (row1 + 1) % mapSubZ;
             // starting indexes of the positions of 4 vertices defining a quad on the map
-            var idx1 = 3 * (row1 * mapSubX + col1);
-            var idx2 = 3 * (row1 * mapSubX + col2);
-            var idx3 = 3 * ((row2) * mapSubX + col1);
-            var idx4 = 3 * ((row2) * mapSubX + col2);
+            let idx1 = 3 * (row1 * mapSubX + col1);
+            let idx2 = 3 * (row1 * mapSubX + col2);
+            let idx3 = 3 * ((row2) * mapSubX + col1);
+            let idx4 = 3 * ((row2) * mapSubX + col2);
 
-            DynamicTerrain._v1.copyFromFloats(mapData[idx1], mapData[idx1 + 1], mapData[idx1 + 2]);
-            DynamicTerrain._v2.copyFromFloats(mapData[idx2], mapData[idx2 + 1], mapData[idx2 + 2]);
-            DynamicTerrain._v3.copyFromFloats(mapData[idx3], mapData[idx3 + 1], mapData[idx3 + 2]);
-            DynamicTerrain._v4.copyFromFloats(mapData[idx4], mapData[idx4 + 1], mapData[idx4 + 2]);
+            const v1 = DynamicTerrain._v1;
+            const v2 = DynamicTerrain._v2;
+            const v3 = DynamicTerrain._v3;
+            const v4 = DynamicTerrain._v4;
+            v1.copyFromFloats(mapData[idx1], mapData[idx1 + 1], mapData[idx1 + 2]);
+            v2.copyFromFloats(mapData[idx2], mapData[idx2 + 1], mapData[idx2 + 2]);
+            v3.copyFromFloats(mapData[idx3], mapData[idx3 + 1], mapData[idx3 + 2]);
+            v4.copyFromFloats(mapData[idx4], mapData[idx4 + 1], mapData[idx4 + 2]);
 
-            var vA = DynamicTerrain._v1;
-            var vB;
-            var vC;
-            var v;
+            const vAvB = DynamicTerrain._vAvB;
+            const vAvC = DynamicTerrain._vAvC;
+            const norm = DynamicTerrain._norm;
+            const vA = v1;
+            let vB;
+            let vC;
+            let v;
 
-            var xv4v1 = DynamicTerrain._v4.x - DynamicTerrain._v1.x;
-            var zv4v1 = DynamicTerrain._v4.z - DynamicTerrain._v1.z;
+            let xv4v1 = v4.x - v1.x;
+            let zv4v1 = v4.z - v1.z;
             if (xv4v1 == 0 || zv4v1 == 0) {
-                return DynamicTerrain._v1.y;
+                return v1.y;
             }
-            var cd = zv4v1 / xv4v1;
-            var h = DynamicTerrain._v1.z - cd * DynamicTerrain._v1.x;
+            let cd = zv4v1 / xv4v1;
+            let h = v1.z - cd * v1.x;
             if (z < cd * x + h) {
-                vB = DynamicTerrain._v4;
-                vC = DynamicTerrain._v2;
+                vB = v4;
+                vC = v2;
                 v = vA;
             } 
             else {
-                vB = DynamicTerrain._v3;
-                vC = DynamicTerrain._v4;
+                vB = v3;
+                vC = v4;
                 v = vB;
             }
-            vB.subtractToRef(vA, DynamicTerrain._vAvB);
-            vC.subtractToRef(vA, DynamicTerrain._vAvC);
-            Vector3.CrossToRef(DynamicTerrain._vAvB, DynamicTerrain._vAvC, DynamicTerrain._norm);
-            DynamicTerrain._norm.normalize();
+            vB.subtractToRef(vA, vAvB);
+            vC.subtractToRef(vA, vAvC);
+            Vector3.CrossToRef(vAvB, vAvC, norm);
+            norm.normalize();
             if (options && options.normal) {
-                options.normal.copyFrom(DynamicTerrain._norm);
+                options.normal.copyFrom(norm);
             }
-            var d = -(DynamicTerrain._norm.x * v.x + DynamicTerrain._norm.y * v.y + DynamicTerrain._norm.z * v.z);
-            var y = v.y;
-            if (DynamicTerrain._norm.y != 0.0) {
-                y = -(DynamicTerrain._norm.x * x + DynamicTerrain._norm.z * z + d) / DynamicTerrain._norm.y;
+            let d = -(norm.x * v.x + norm.y * v.y + norm.z * v.z);
+            let y = v.y;
+            if (norm.y != 0.0) {
+                y = -(norm.x * x + norm.z * z + d) / norm.y;
             }
 
             return y;
@@ -619,16 +635,17 @@ module BABYLON {
                 mapIndices.push(i + mapSubX, i + 1, i + mapSubX + 1);
             }
             VertexData.ComputeNormals(mapData, mapIndices, normals);
-            // seam process
             
+            // seam process
             let lastIdx = (mapSubX - 1) * 3;
             let colStart = 0;
             let colEnd = 0;
+            const getHeightFromMap = DynamicTerrain.GetHeightFromMap;
             for (i = 0; i < mapSubZ; i++) {
                 colStart = i * mapSubX * 3;
                 colEnd = colStart + lastIdx;
-                DynamicTerrain.GetHeightFromMap(mapData[colStart], mapData[colStart + 2], mapData, mapSubX, mapSubZ, tmp1);
-                DynamicTerrain.GetHeightFromMap(mapData[colEnd], mapData[colEnd + 2], mapData, mapSubX, mapSubZ, tmp2);
+                getHeightFromMap(mapData[colStart], mapData[colStart + 2], mapData, mapSubX, mapSubZ, tmp1);
+                getHeightFromMap(mapData[colEnd], mapData[colEnd + 2], mapData, mapSubX, mapSubZ, tmp2);
                 normal1.addInPlace(normal2).scaleInPlace(0.5);
                 normals[colStart] = normal1.x;
                 normals[colStart + 1] = normal1.y;
@@ -636,8 +653,7 @@ module BABYLON {
                 normals[colEnd] = normal1.x;
                 normals[colEnd + 1] = normal1.y;
                 normals[colEnd + 2] = normal1.z;
-            }
-            
+            }  
          }
 
          /**
@@ -655,10 +671,13 @@ module BABYLON {
          * @param z 
          */
         public contains(x: number, z: number): boolean {
-            if (x < this._positions[0] + this.mesh.position.x || x > this._positions[3 * this._terrainIdx] + this.mesh.position.x) {
+            const positions = this._positions;
+            const meshPosition = this.mesh.position;
+            const terrainIdx = this._terrainIdx;
+            if (x < positions[0] + meshPosition.x || x > positions[3 * terrainIdx] + meshPosition.x) {
                 return false;
             }
-            if (z < this._positions[2] + this.mesh.position.z || z > this._positions[3 * this._terrainIdx * this._terrainIdx + 2] + this.mesh.position.z) {
+            if (z < positions[2] + meshPosition.z || z > positions[3 * terrainIdx * terrainIdx + 2] + meshPosition.z) {
                 return false;
             }
             return true;
@@ -676,9 +695,9 @@ module BABYLON {
          * `scene` is the Scene object whose database will store the downloaded image.  
          */
         public static CreateMapFromHeightMap(heightmapURL: string, options: {width: number, height: number, subX: number, subZ: number, minHeight: number, maxHeight: number, offsetX: number, offsetZ: number, onReady?: (map: number[]|Float32Array, subX: number, subZ: number) => void, colorFilter?: Color3 }, scene: Scene): Float32Array {
-            var subX = options.subX || 100;
-            var subZ = options.subZ || 100;
-            var data = new Float32Array(subX * subZ * 3);
+            const subX = options.subX || 100;
+            const subZ = options.subZ || 100;
+            const data = new Float32Array(subX * subZ * 3);
             DynamicTerrain.CreateMapFromHeightMapToRef(heightmapURL, options, data, scene);
             return data;
         }
@@ -696,41 +715,41 @@ module BABYLON {
          * The passed Float32Array must be the right size : 3 x subX x subZ.  
          */
         public static CreateMapFromHeightMapToRef(heightmapURL: string, options: {width: number, height: number, subX: number, subZ: number, minHeight: number, maxHeight: number, offsetX: number, offsetZ: number, onReady?: (map: number[]|Float32Array, subX: number, subZ: number) => void, colorFilter?: Color3}, data: number[] | Float32Array, scene: Scene): void {
-            var width = options.width || 300;
-            var height = options.height || 300;
-            var subX = options.subX || 100;
-            var subZ = options.subZ || 100;
-            var minHeight = options.minHeight || 0.0;
-            var maxHeight = options.maxHeight || 10.0;
-            var offsetX = options.offsetX || 0.0;
-            var offsetZ = options.offsetZ || 0.0;
-            var filter = options.colorFilter || new Color3(0.3, 0.59, 0.11);
-            var onReady = options.onReady;
+            const width = options.width || 300;
+            const height = options.height || 300;
+            const subX = options.subX || 100;
+            const subZ = options.subZ || 100;
+            const minHeight = options.minHeight || 0.0;
+            const maxHeight = options.maxHeight || 10.0;
+            const offsetX = options.offsetX || 0.0;
+            const offsetZ = options.offsetZ || 0.0;
+            const filter = options.colorFilter || new Color3(0.3, 0.59, 0.11);
+            const onReady = options.onReady;
 
-            var onload = img => {
+            const onload = img => {
                 // Getting height map data
-                var canvas = document.createElement("canvas");
-                var context = canvas.getContext("2d");
-                var bufferWidth = img.width;
-                var bufferHeight = img.height;
+                const canvas = document.createElement("canvas");
+                const context = canvas.getContext("2d");
+                const bufferWidth = img.width;
+                const bufferHeight = img.height;
                 canvas.width = bufferWidth;
                 canvas.height = bufferHeight;
                 context.drawImage(img, 0, 0);                
                 // Cast is due to wrong definition in lib.d.ts from ts 1.3 - https://github.com/Microsoft/TypeScript/issues/949
-                var buffer = <Uint8Array>(<any>context.getImageData(0, 0, bufferWidth, bufferHeight).data);                
-                var x = 0.0;
-                var y = 0.0;
-                var z = 0.0;
-                for (var row = 0; row < subZ; row++) {
-                    for (var col = 0; col < subX; col++) {
+                const buffer = <Uint8Array>(<any>context.getImageData(0, 0, bufferWidth, bufferHeight).data);                
+                let x = 0.0;
+                let y = 0.0;
+                let z = 0.0;
+                for (let row = 0; row < subZ; row++) {
+                    for (let col = 0; col < subX; col++) {
                         x = col * width / subX - width * 0.5;
                         z = row * height / subZ - height * 0.5;
-                        var heightmapX = ((x + width * 0.5) / width * (bufferWidth - 1)) | 0;
-                        var heightmapY = (bufferHeight - 1) - ((z + height * 0.5) / height * (bufferHeight - 1)) | 0;
-                        var pos = (heightmapX + heightmapY * bufferWidth) * 4;
-                        var gradient = (buffer[pos] * filter.r + buffer[pos + 1] * filter.g + buffer[pos + 2] * filter.b) / 255.0;
+                        let heightmapX = ((x + width * 0.5) / width * (bufferWidth - 1)) | 0;
+                        let heightmapY = (bufferHeight - 1) - ((z + height * 0.5) / height * (bufferHeight - 1)) | 0;
+                        let pos = (heightmapX + heightmapY * bufferWidth) * 4;
+                        let gradient = (buffer[pos] * filter.r + buffer[pos + 1] * filter.g + buffer[pos + 2] * filter.b) / 255.0;
                         y = minHeight + (maxHeight - minHeight) * gradient;
-                        var idx = (row * subX + col) * 3;
+                        let idx = (row * subX + col) * 3;
                         data[idx] = x + offsetX;
                         data[idx + 1] = y;
                         data[idx + 2] = z + offsetZ;
@@ -751,8 +770,8 @@ module BABYLON {
          * The passed array must be the right size : subX x subZ x 2.  
          */
         public static CreateUVMapToRef(subX: number, subZ: number, mapUVs: number[]| Float32Array): void {
-            for (var h = 0; h < subZ; h++) {
-                for (var w = 0; w < subX; w++) {
+            for (let h = 0; h < subZ; h++) {
+                for (let w = 0; w < subX; w++) {
                     mapUVs[(h * subX + w) * 2] = w / subX;
                     mapUVs[(h * subX + w) * 2 + 1] = h / subZ;
                 }
@@ -762,7 +781,7 @@ module BABYLON {
          * Static : Returns a new UV array with values to fit the whole map with subX points along its width and subZ points along its height.  
          */
         public static CreateUVMap(subX: number, subZ: number): Float32Array {
-            var mapUVs = new Float32Array(subX * subZ * 2);
+            const mapUVs = new Float32Array(subX * subZ * 2);
             DynamicTerrain.CreateUVMapToRef(subX, subZ, mapUVs);
             return mapUVs;
         }
@@ -931,10 +950,12 @@ module BABYLON {
         public set mapData(val: Float32Array|number[]) {
             this._mapData = val;
             this._datamap = true;
-            this._mapSizeX = Math.abs(this._mapData[(this._mapSubX - 1) * 3] - this._mapData[0]);
-            this._mapSizeZ = Math.abs(this._mapData[(this._mapSubZ - 1) * this._mapSubX * 3 + 2] - this._mapData[2]);
-            this._averageSubSizeX = this._mapSizeX / this._mapSubX;
-            this._averageSubSizeZ = this._mapSizeZ / this._mapSubZ;
+            const mapSubX = this._mapSubX;
+            const mapSubZ = this._mapSubZ;
+            this._mapSizeX = Math.abs(val[(mapSubX - 1) * 3] - val[0]);
+            this._mapSizeZ = Math.abs(val[(mapSubZ - 1) * mapSubX * 3 + 2] - val[2]);
+            this._averageSubSizeX = this._mapSizeX / mapSubX;
+            this._averageSubSizeZ = this._mapSizeZ / mapSubZ;
             if (this._precomputeNormalsFromMap) {
                 this.computeNormalsFromMap();
             }
