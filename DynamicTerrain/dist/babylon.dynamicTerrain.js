@@ -1,6 +1,6 @@
 var BABYLON;
 (function (BABYLON) {
-    var DynamicTerrain = (function () {
+    var DynamicTerrain = /** @class */ (function () {
         /**
          * constructor
          * @param name
@@ -18,40 +18,20 @@ var BABYLON;
          */
         function DynamicTerrain(name, options, scene) {
             var _this = this;
-            this._subToleranceX = 1; // how many cells flought over thy the camera on the terrain x axis before update
-            this._subToleranceZ = 1; // how many cells flought over thy the camera on the terrain z axis before update
+            this._subToleranceX = 1 | 0; // how many cells flought over thy the camera on the terrain x axis before update
+            this._subToleranceZ = 1 | 0; // how many cells flought over thy the camera on the terrain z axis before update
             this._LODLimits = []; // array of LOD limits
-            this._initialLOD = 1; // initial LOD value (integer > 0)
-            this._LODValue = 1; // current LOD value : initial + camera correction
-            this._cameraLODCorrection = 0; // LOD correction (integer) according to the camera altitude
-            this._oldCorrection = 0; // former correction
-            this._deltaX = 0.0; // camera / terrain x position delta
-            this._deltaZ = 0.0; // camera-/ terrain z position delta
-            this._signX = 0; // x delta sign
-            this._signZ = 0; // z delta sign
-            this._deltaSubX = 0; // map x subdivision delta 
-            this._deltaSubZ = 0; // map z subdivision delta 
-            this._mapShiftX = 0.0; // x shift in world space
-            this._mapShiftZ = 0.0; // z shift in world space
-            this._mapFlgtNb = 0; // tmp number of map cells flought over by the camera in the delta shift
-            this._needsUpdate = false; // boolean : the ribbon needs to be recomputed
-            this._updateLOD = false; // boolean : ribbon recomputation + LOD change
-            this._updateForced = false; // boolean : forced ribbon recomputation
+            this._initialLOD = 1 | 0; // initial LOD value (integer > 0)
+            this._LODValue = 1 | 0; // current LOD value : initial + camera correction
+            this._cameraLODCorrection = 0 | 0; // LOD correction (integer) according to the camera altitude
+            this._deltaSubX = 0 | 0; // map x subdivision delta : variation in number of map subdivisions
+            this._deltaSubZ = 0 | 0; // map z subdivision delta 
             this._refreshEveryFrame = false; // boolean : to force the terrain computation every frame
             this._useCustomVertexFunction = false; // boolean : to allow the call to updateVertex()
             this._computeNormals = false; // boolean : to skip or not the normal computation
             this._datamap = false; // boolean : true if an data map is passed as parameter
             this._uvmap = false; // boolean : true if an UV map is passed as parameter
             this._colormap = false; // boolean : true if an color map is passed as parameter
-            this._vertex = {
-                position: BABYLON.Vector3.Zero(),
-                uvs: BABYLON.Vector2.Zero(),
-                color: new BABYLON.Color4(1.0, 1.0, 1.0, 1.0),
-                lodX: 1,
-                lodZ: 1,
-                worldPosition: BABYLON.Vector3.Zero(),
-                mapIndex: 0 // current map index
-            };
             this._averageSubSizeX = 0.0; // map cell average x size
             this._averageSubSizeZ = 0.0; // map cell average z size
             this._terrainSizeX = 0.0; // terrain x size
@@ -64,8 +44,6 @@ var BABYLON;
             this._mapSizeZ = 0.0; // map z size
             this._isAlwaysVisible = false; // is the terrain mesh always selected for rendering
             this._precomputeNormalsFromMap = false; // if the normals must be precomputed from the map data when assigning a new map to the existing terrain
-            this._bbMin = BABYLON.Vector3.Zero();
-            this._bbMax = BABYLON.Vector3.Zero();
             this.name = name;
             this._terrainSub = options.terrainSub || 60;
             this._mapData = options.mapData;
@@ -104,6 +82,7 @@ var BABYLON;
             var terrainData = [];
             var terrainColor = [];
             var terrainUV = [];
+            var mapData = this._mapData;
             for (var j = 0; j <= this._terrainSub; j++) {
                 terrainPath = [];
                 for (var i = 0; i <= this._terrainSub; i++) {
@@ -114,13 +93,13 @@ var BABYLON;
                     terIndex = j * this._terrainIdx + i;
                     // geometry
                     if (this._datamap) {
-                        y = this._mapData[posIndex + 1];
+                        y = mapData[posIndex + 1];
                     }
                     else {
                         y = 0.0;
-                        this._mapData[3 * terIndex] = i;
-                        this._mapData[3 * terIndex + 1] = y;
-                        this._mapData[3 * terIndex + 2] = j;
+                        mapData[3 * terIndex] = i;
+                        mapData[3 * terIndex + 1] = y;
+                        mapData[3 * terIndex + 2] = j;
                     }
                     terrainPath.push(new BABYLON.Vector3(i, y, j));
                     // color
@@ -173,10 +152,11 @@ var BABYLON;
             var deltaNbSubZ = (this._terrain.position.z - this._mapData[2]) / this._averageSubSizeZ;
             this._deltaSubX = (deltaNbSubX > 0) ? Math.floor(deltaNbSubX) : Math.ceil(deltaNbSubX);
             this._deltaSubZ = (deltaNbSubZ > 0) ? Math.floor(deltaNbSubZ) : Math.ceil(deltaNbSubZ);
-            this._scene.registerBeforeRender(function () {
-                _this.beforeUpdate(_this._refreshEveryFrame);
-                _this.update(_this._refreshEveryFrame);
-                _this.afterUpdate(_this._refreshEveryFrame);
+            this._scene.onBeforeRenderObservable.add(function () {
+                var refreshEveryFrame = _this._refreshEveryFrame;
+                _this.beforeUpdate(refreshEveryFrame);
+                _this.update(refreshEveryFrame);
+                _this.afterUpdate(refreshEveryFrame);
             });
             this.update(true); // recompute everything once the initial deltas are calculated       
         }
@@ -186,56 +166,92 @@ var BABYLON;
          * Returns the terrain.
          */
         DynamicTerrain.prototype.update = function (force) {
-            this._needsUpdate = false;
-            this._updateLOD = false;
-            this._updateForced = (force) ? true : false;
-            this._deltaX = this._terrainHalfSizeX + this._terrain.position.x - this._terrainCamera.globalPosition.x;
-            this._deltaZ = this._terrainHalfSizeZ + this._terrain.position.z - this._terrainCamera.globalPosition.z;
-            this._oldCorrection = this._cameraLODCorrection;
+            var needsUpdate = false;
+            var updateLOD = false;
+            var updateForced = (force) ? true : false;
+            var terrainPosition = this._terrain.position;
+            var cameraPosition = this._terrainCamera.globalPosition;
+            var terrainHalfSizeX = this._terrainHalfSizeX;
+            var terrainHalfSizeZ = this._terrainHalfSizeZ;
+            var deltaX = terrainHalfSizeX + terrainPosition.x - cameraPosition.x;
+            var deltaZ = terrainHalfSizeZ + terrainPosition.z - cameraPosition.z;
+            var subToleranceX = this._subToleranceX;
+            var subToleranceZ = this._subToleranceZ;
+            var mod = this._mod;
+            // current LOD
+            var oldCorrection = this._cameraLODCorrection;
             this._cameraLODCorrection = (this.updateCameraLOD(this._terrainCamera)) | 0;
-            this._updateLOD = (this._oldCorrection != this._cameraLODCorrection);
-            this._LODValue = this._initialLOD + this._cameraLODCorrection;
-            this._LODValue = (this._LODValue > 0) ? this._LODValue : 1;
-            this._mapShiftX = this._averageSubSizeX * this._subToleranceX * this._LODValue;
-            this._mapShiftZ = this._averageSubSizeZ * this._subToleranceZ * this._LODValue;
-            if (Math.abs(this._deltaX) > this._mapShiftX) {
-                this._signX = (this._deltaX > 0.0) ? -1 : 1;
-                this._mapFlgtNb = Math.abs(this._deltaX / this._mapShiftX) | 0;
-                this._terrain.position.x += this._mapShiftX * this._signX * this._mapFlgtNb;
-                this._deltaSubX += (this._subToleranceX * this._signX * this._LODValue * this._mapFlgtNb);
-                this._needsUpdate = true;
+            updateLOD = (oldCorrection != this._cameraLODCorrection);
+            var LODValue = this._initialLOD + this._cameraLODCorrection;
+            LODValue = (LODValue > 0) ? this._LODValue : 1;
+            this._LODValue = LODValue;
+            // threshold sizes on each axis to trigger the terrain update
+            var mapShiftX = this._averageSubSizeX * subToleranceX * LODValue;
+            var mapShiftZ = this._averageSubSizeZ * subToleranceZ * LODValue;
+            var mapFlgtNb = 0 | 0; // number of map cells flought over by the camera in the delta shift
+            var deltaSubX = this._deltaSubX;
+            var deltaSubZ = this._deltaSubZ;
+            if (Math.abs(deltaX) > mapShiftX) {
+                var signX = (deltaX > 0.0) ? -1 : 1;
+                mapFlgtNb = Math.abs(deltaX / mapShiftX) | 0;
+                terrainPosition.x += mapShiftX * signX * mapFlgtNb;
+                deltaSubX += (subToleranceX * signX * LODValue * mapFlgtNb);
+                needsUpdate = true;
             }
-            if (Math.abs(this._deltaZ) > this._mapShiftZ) {
-                this._signZ = (this._deltaZ > 0.0) ? -1 : 1;
-                this._mapFlgtNb = Math.abs(this._deltaZ / this._mapShiftZ) | 0;
-                this._terrain.position.z += this._mapShiftZ * this._signZ * this._mapFlgtNb;
-                this._deltaSubZ += (this._subToleranceZ * this._signZ * this._LODValue * this._mapFlgtNb);
-                this._needsUpdate = true;
+            if (Math.abs(deltaZ) > mapShiftZ) {
+                var signZ = (deltaZ > 0.0) ? -1 : 1;
+                mapFlgtNb = Math.abs(deltaZ / mapShiftZ) | 0;
+                terrainPosition.z += mapShiftZ * signZ * mapFlgtNb;
+                deltaSubZ += (subToleranceZ * signZ * LODValue * mapFlgtNb);
+                needsUpdate = true;
             }
-            if (this._needsUpdate || this._updateLOD || this._updateForced) {
-                this._deltaSubX = this._mod(this._deltaSubX, this._mapSubX);
-                this._deltaSubZ = this._mod(this._deltaSubZ, this._mapSubZ);
-                this._updateTerrain();
+            var updateSize = updateLOD || updateForced; // must the terrain size be updated
+            if (needsUpdate || updateSize) {
+                this._deltaSubX = mod(deltaSubX, this._mapSubX);
+                this._deltaSubZ = mod(deltaSubZ, this._mapSubZ);
+                this._updateTerrain(updateSize);
             }
-            this._updateForced = false;
-            this._updateLOD = false;
-            this._centerLocal.x = this._terrainHalfSizeX;
-            this._centerLocal.y = this._terrain.position.y;
-            this._centerLocal.z = this._terrainHalfSizeZ;
-            this._centerWorld.x = this._terrain.position.x + this._terrainHalfSizeX;
-            this._centerWorld.y = this._terrain.position.y;
-            this._centerWorld.z = this._terrain.position.z + this._terrainHalfSizeZ;
+            terrainHalfSizeX = this._terrainHalfSizeX;
+            terrainHalfSizeZ = this._terrainHalfSizeZ;
+            this.centerLocal.copyFromFloats(terrainHalfSizeX, terrainPosition.y, terrainHalfSizeZ);
+            this._centerWorld.copyFromFloats(terrainPosition.x + terrainHalfSizeX, terrainPosition.y, terrainPosition.z + terrainHalfSizeZ);
             return this;
         };
         // private : updates the underlying ribbon
-        DynamicTerrain.prototype._updateTerrain = function () {
+        DynamicTerrain.prototype._updateTerrain = function (updateSize) {
             var stepJ = 0 | 0;
             var stepI = 0 | 0;
             var LODLimitDown = 0 | 0;
             var LODLimitUp = 0 | 0;
-            var LODValue = this._LODValue;
-            var lodI = LODValue;
-            var lodJ = LODValue;
+            var LODValue = this._LODValue; // terrain LOD value
+            var axisLODValue = LODValue; // current axis computed LOD value
+            var lodI = LODValue; // LOD X
+            var lodJ = LODValue; // LOD Z
+            var bbMin = DynamicTerrain._bbMin;
+            var bbMax = DynamicTerrain._bbMax;
+            var terrain = this._terrain;
+            var positions = this._positions;
+            var normals = this._normals;
+            var colors = this._colors;
+            var uvs = this._uvs;
+            var mapColors = this._mapColors;
+            var mapNormals = this._mapNormals;
+            var mapData = this._mapData;
+            var mapUVs = this._mapUVs;
+            var LODLimits = this._LODLimits;
+            var terrainSub = this._terrainSub;
+            var mod = this._mod;
+            var terrainIdx = this._terrainIdx;
+            var mapSubX = this._mapSubX;
+            var mapSubZ = this._mapSubZ;
+            var deltaSubX = this._deltaSubX;
+            var deltaSubZ = this._deltaSubZ;
+            var datamap = this._datamap;
+            var uvmap = this._uvmap;
+            var colormap = this._colormap;
+            var useCustomVertexFunction = this._useCustomVertexFunction;
+            var updateVertex = this.updateVertex;
+            var dontComputeNormals = !this._computeNormals;
             var l = 0 | 0;
             var index = 0 | 0; // current vertex index in the map data array
             var posIndex = 0 | 0; // current position index in the map data array
@@ -246,56 +262,60 @@ var BABYLON;
             var ribbonPosInd = 0 | 0; // current ribbon position index (same than normal index)
             var ribbonUVInd = 0 | 0; // current ribbon UV index
             var ribbonColInd = 0 | 0; // current ribbon color index
+            var ribbonColInd1 = 0 | 0;
+            var ribbonColInd2 = 0 | 0;
+            var ribbonColInd3 = 0 | 0;
+            var ribbonColInd4 = 0 | 0;
             var ribbonPosInd1 = 0 | 0;
             var ribbonPosInd2 = 0 | 0;
             var ribbonPosInd3 = 0 | 0;
             // note : all the indexes are explicitly set as integers for the js optimizer (store them all in the stack)
-            if (this._updateLOD || this._updateForced) {
+            if (updateSize) {
                 this.updateTerrainSize();
             }
-            BABYLON.Vector3.FromFloatsToRef(Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE, this._bbMin);
-            BABYLON.Vector3.FromFloatsToRef(-Number.MAX_VALUE, -Number.MAX_VALUE, -Number.MAX_VALUE, this._bbMax);
-            for (var j = 0 | 0; j <= this._terrainSub; j++) {
+            BABYLON.Vector3.FromFloatsToRef(Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE, bbMin);
+            BABYLON.Vector3.FromFloatsToRef(-Number.MAX_VALUE, -Number.MAX_VALUE, -Number.MAX_VALUE, bbMax);
+            for (var j = 0 | 0; j <= terrainSub; j++) {
                 // LOD Z
-                LODValue = this._LODValue;
-                for (l = 0; l < this._LODLimits.length; l++) {
-                    LODLimitDown = this._LODLimits[l];
-                    LODLimitUp = this._terrainSub - LODLimitDown - 1;
+                axisLODValue = LODValue;
+                for (l = 0; l < LODLimits.length; l++) {
+                    LODLimitDown = LODLimits[l];
+                    LODLimitUp = terrainSub - LODLimitDown - 1;
                     if (j < LODLimitDown || j > LODLimitUp) {
-                        LODValue = l + 1 + this._LODValue;
+                        axisLODValue = l + 1 + LODValue;
                     }
-                    lodJ = LODValue;
+                    lodJ = axisLODValue;
                 }
-                for (var i = 0 | 0; i <= this._terrainSub; i++) {
+                for (var i = 0 | 0; i <= terrainSub; i++) {
                     // LOD X
-                    LODValue = this._LODValue;
-                    for (l = 0; l < this._LODLimits.length; l++) {
-                        LODLimitDown = this._LODLimits[l];
-                        LODLimitUp = this._terrainSub - LODLimitDown - 1;
+                    axisLODValue = LODValue;
+                    for (l = 0; l < LODLimits.length; l++) {
+                        LODLimitDown = LODLimits[l];
+                        LODLimitUp = terrainSub - LODLimitDown - 1;
                         if (i < LODLimitDown || i > LODLimitUp) {
-                            LODValue = l + 1 + this._LODValue;
+                            axisLODValue = l + 1 + LODValue;
                         }
-                        lodI = LODValue;
+                        lodI = axisLODValue;
                     }
                     // map current index
-                    index = this._mod(this._deltaSubZ + stepJ, this._mapSubZ) * this._mapSubX + this._mod(this._deltaSubX + stepI, this._mapSubX);
-                    terIndex = this._mod(this._deltaSubZ + stepJ, this._terrainIdx) * this._terrainIdx + this._mod(this._deltaSubX + stepI, this._terrainIdx);
+                    index = mod(deltaSubZ + stepJ, mapSubZ) * mapSubX + mod(deltaSubX + stepI, mapSubX);
+                    terIndex = mod(deltaSubZ + stepJ, terrainIdx) * terrainIdx + mod(deltaSubX + stepI, terrainIdx);
                     // related index in the array of positions (data map)
-                    if (this._datamap) {
+                    if (datamap) {
                         posIndex = 3 * index;
                     }
                     else {
                         posIndex = 3 * terIndex;
                     }
                     // related index in the UV map
-                    if (this._uvmap) {
+                    if (uvmap) {
                         uvIndex = 2 * index;
                     }
                     else {
                         uvIndex = 2 * terIndex;
                     }
                     // related index in the color map
-                    if (this._colormap) {
+                    if (colormap) {
                         colIndex = 3 * index;
                     }
                     else {
@@ -308,70 +328,73 @@ var BABYLON;
                     ribbonPosInd1 = ribbonPosInd;
                     ribbonPosInd2 = ribbonPosInd + 1;
                     ribbonPosInd3 = ribbonPosInd + 2;
+                    ribbonColInd1 = ribbonColInd;
+                    ribbonColInd2 = ribbonColInd + 1;
+                    ribbonColInd3 = ribbonColInd + 2;
+                    ribbonColInd4 = ribbonColInd + 3;
                     ribbonInd += 1;
                     // geometry                  
-                    this._positions[ribbonPosInd1] = this._averageSubSizeX * stepI;
-                    this._positions[ribbonPosInd2] = this._mapData[posIndex + 1];
-                    this._positions[ribbonPosInd3] = this._averageSubSizeZ * stepJ;
-                    if (!this._computeNormals) {
-                        this._normals[ribbonPosInd1] = this._mapNormals[posIndex];
-                        this._normals[ribbonPosInd2] = this._mapNormals[posIndex + 1];
-                        this._normals[ribbonPosInd3] = this._mapNormals[posIndex + 2];
+                    positions[ribbonPosInd1] = this._averageSubSizeX * stepI;
+                    positions[ribbonPosInd2] = mapData[posIndex + 1];
+                    positions[ribbonPosInd3] = this._averageSubSizeZ * stepJ;
+                    if (dontComputeNormals) {
+                        normals[ribbonPosInd1] = mapNormals[posIndex];
+                        normals[ribbonPosInd2] = mapNormals[posIndex + 1];
+                        normals[ribbonPosInd3] = mapNormals[posIndex + 2];
                     }
                     // bbox internal update
-                    if (this._positions[ribbonPosInd1] < this._bbMin.x) {
-                        this._bbMin.x = this._positions[ribbonPosInd1];
+                    if (positions[ribbonPosInd1] < bbMin.x) {
+                        bbMin.x = positions[ribbonPosInd1];
                     }
-                    if (this._positions[ribbonPosInd1] > this._bbMax.x) {
-                        this._bbMax.x = this._positions[ribbonPosInd1];
+                    if (positions[ribbonPosInd1] > bbMax.x) {
+                        bbMax.x = positions[ribbonPosInd1];
                     }
-                    if (this._positions[ribbonPosInd2] < this._bbMin.y) {
-                        this._bbMin.y = this._positions[ribbonPosInd2];
+                    if (positions[ribbonPosInd2] < bbMin.y) {
+                        bbMin.y = positions[ribbonPosInd2];
                     }
-                    if (this._positions[ribbonPosInd2] > this._bbMax.y) {
-                        this._bbMax.y = this._positions[ribbonPosInd2];
+                    if (positions[ribbonPosInd2] > bbMax.y) {
+                        bbMax.y = positions[ribbonPosInd2];
                     }
-                    if (this._positions[ribbonPosInd3] < this._bbMin.z) {
-                        this._bbMin.z = this._positions[ribbonPosInd3];
+                    if (positions[ribbonPosInd3] < bbMin.z) {
+                        bbMin.z = positions[ribbonPosInd3];
                     }
-                    if (this._positions[ribbonPosInd3] > this._bbMax.z) {
-                        this._bbMax.z = this._positions[ribbonPosInd3];
+                    if (positions[ribbonPosInd3] > bbMax.z) {
+                        bbMax.z = positions[ribbonPosInd3];
                     }
                     // color
-                    var terrainIndex = j * this._terrainIdx + i;
-                    if (this._colormap) {
-                        this._colors[ribbonColInd] = this._mapColors[colIndex];
-                        this._colors[ribbonColInd + 1] = this._mapColors[colIndex + 1];
-                        this._colors[ribbonColInd + 2] = this._mapColors[colIndex + 2];
+                    var terrainIndex = j * terrainIdx + i;
+                    if (colormap) {
+                        colors[ribbonColInd1] = mapColors[colIndex];
+                        colors[ribbonColInd2] = mapColors[colIndex + 1];
+                        colors[ribbonColInd3] = mapColors[colIndex + 2];
                     }
                     // uv : the array _mapUVs is always populated
-                    this._uvs[ribbonUVInd] = this._mapUVs[uvIndex];
-                    this._uvs[ribbonUVInd + 1] = this._mapUVs[uvIndex + 1];
+                    uvs[ribbonUVInd] = mapUVs[uvIndex];
+                    uvs[ribbonUVInd + 1] = mapUVs[uvIndex + 1];
                     // call to user custom function with the current updated vertex object
-                    if (this._useCustomVertexFunction) {
-                        this._vertex.position.copyFromFloats(this._positions[ribbonPosInd1], this._positions[ribbonPosInd2], this._positions[ribbonPosInd3]);
-                        this._vertex.worldPosition.x = this._mapData[posIndex];
-                        this._vertex.worldPosition.y = this._vertex.position.y;
-                        this._vertex.worldPosition.z = this._mapData[posIndex + 2];
-                        this._vertex.lodX = lodI;
-                        this._vertex.lodZ = lodJ;
-                        this._vertex.color.r = this._colors[ribbonColInd];
-                        this._vertex.color.g = this._colors[ribbonColInd + 1];
-                        this._vertex.color.b = this._colors[ribbonColInd + 2];
-                        this._vertex.color.a = this._colors[ribbonColInd + 3];
-                        this._vertex.uvs.x = this._uvs[ribbonUVInd];
-                        this._vertex.uvs.y = this._uvs[ribbonUVInd + 1];
-                        this._vertex.mapIndex = index;
-                        this.updateVertex(this._vertex, i, j); // the user can modify the array values here
-                        this._colors[ribbonColInd] = this._vertex.color.r;
-                        this._colors[ribbonColInd + 1] = this._vertex.color.g;
-                        this._colors[ribbonColInd + 2] = this._vertex.color.b;
-                        this._colors[ribbonColInd + 3] = this._vertex.color.a;
-                        this._uvs[ribbonUVInd] = this._vertex.uvs.x;
-                        this._uvs[ribbonUVInd + 1] = this._vertex.uvs.y;
-                        this._positions[ribbonPosInd1] = this._vertex.position.x;
-                        this._positions[ribbonPosInd2] = this._vertex.position.y;
-                        this._positions[ribbonPosInd3] = this._vertex.position.z;
+                    if (useCustomVertexFunction) {
+                        var vertex = DynamicTerrain._vertex;
+                        var vertexPosition = vertex.position;
+                        var vertexWorldPosition = vertex.worldPosition;
+                        var vertexColor = vertex.color;
+                        var vertexUvs = vertex.uvs;
+                        vertexPosition.copyFromFloats(positions[ribbonPosInd1], positions[ribbonPosInd2], positions[ribbonPosInd3]);
+                        vertexWorldPosition.copyFromFloats(mapData[posIndex], vertexPosition.y, mapData[posIndex + 2]);
+                        vertex.lodX = lodI;
+                        vertex.lodZ = lodJ;
+                        vertexColor.copyFromFloats(colors[ribbonColInd1], colors[ribbonColInd2], colors[ribbonColInd3], colors[ribbonColInd4]);
+                        vertexUvs.copyFromFloats(uvs[ribbonUVInd], uvs[ribbonUVInd + 1]);
+                        vertex.mapIndex = index;
+                        updateVertex(vertex, i, j); // the user can modify the array values here
+                        colors[ribbonColInd1] = vertexColor.r;
+                        colors[ribbonColInd2] = vertexColor.g;
+                        colors[ribbonColInd3] = vertexColor.b;
+                        colors[ribbonColInd4] = vertexColor.a;
+                        uvs[ribbonUVInd] = vertexUvs.x;
+                        uvs[ribbonUVInd + 1] = vertexUvs.y;
+                        positions[ribbonPosInd1] = vertexPosition.x;
+                        positions[ribbonPosInd2] = vertexPosition.y;
+                        positions[ribbonPosInd3] = vertexPosition.z;
                     }
                     stepI += lodI;
                 }
@@ -379,15 +402,14 @@ var BABYLON;
                 stepJ += lodJ;
             }
             // ribbon update    
-            this._terrain.updateVerticesData(BABYLON.VertexBuffer.PositionKind, this._positions, false, false);
+            terrain.updateVerticesData(BABYLON.VertexBuffer.PositionKind, positions, false, false);
             if (this._computeNormals) {
-                BABYLON.VertexData.ComputeNormals(this._positions, this._indices, this._normals);
+                BABYLON.VertexData.ComputeNormals(positions, this._indices, normals);
             }
-            this._terrain.updateVerticesData(BABYLON.VertexBuffer.NormalKind, this._normals, false, false);
-            this._terrain.updateVerticesData(BABYLON.VertexBuffer.UVKind, this._uvs, false, false);
-            this._terrain.updateVerticesData(BABYLON.VertexBuffer.ColorKind, this._colors, false, false);
-            this._terrain._boundingInfo = new BABYLON.BoundingInfo(this._bbMin, this._bbMax);
-            this._terrain._boundingInfo.update(this._terrain._worldMatrix);
+            terrain.updateVerticesData(BABYLON.VertexBuffer.NormalKind, normals, false, false);
+            terrain.updateVerticesData(BABYLON.VertexBuffer.UVKind, uvs, false, false);
+            terrain.updateVerticesData(BABYLON.VertexBuffer.ColorKind, colors, false, false);
+            terrain._boundingInfo.reConstruct(bbMin, bbMax, terrain._worldMatrix);
         };
         ;
         // private modulo, for dealing with negative indexes
@@ -402,19 +424,23 @@ var BABYLON;
             var remainder = this._terrainSub; // the remaining cells at the general current LOD value
             var nb = 0 | 0; // nb of cells in the current LOD limit interval
             var next = 0 | 0; // next cell index, if it exists
-            var lod = this._LODValue + 1; // lod value in the current LOD limit interval
+            var LODValue = this._LODValue;
+            var lod = LODValue + 1; // lod value in the current LOD limit interval
             var tsx = 0.0; // current sum of cell sizes on x
             var tsz = 0.0; // current sum of cell sizes on z
-            for (var l = 0 | 0; l < this._LODLimits.length; l++) {
-                lod = this._LODValue + l + 1;
-                next = (l >= this._LODLimits.length - 1) ? 0 : this._LODLimits[l + 1];
-                nb = 2 * (this._LODLimits[l] - next);
-                tsx += this._averageSubSizeX * lod * nb;
-                tsz += this._averageSubSizeZ * lod * nb;
+            var LODLimits = this._LODLimits;
+            var averageSubSizeX = this._averageSubSizeX;
+            var averageSubSizeZ = this._averageSubSizeZ;
+            for (var l = 0 | 0; l < LODLimits.length; l++) {
+                lod = LODValue + l + 1;
+                next = (l >= LODLimits.length - 1) ? 0 : LODLimits[l + 1];
+                nb = 2 * (LODLimits[l] - next);
+                tsx += averageSubSizeX * lod * nb;
+                tsz += averageSubSizeZ * lod * nb;
                 remainder -= nb;
             }
-            tsx += remainder * this._averageSubSizeX * this._LODValue;
-            tsz += remainder * this._averageSubSizeZ * this._LODValue;
+            tsx += remainder * averageSubSizeX * LODValue;
+            tsz += remainder * averageSubSizeZ * LODValue;
             this._terrainSizeX = tsx;
             this._terrainSizeZ = tsz;
             this._terrainHalfSizeX = tsx * 0.5;
@@ -461,42 +487,49 @@ var BABYLON;
             var idx2 = 3 * (row1 * mapSubX + col2);
             var idx3 = 3 * ((row2) * mapSubX + col1);
             var idx4 = 3 * ((row2) * mapSubX + col2);
-            DynamicTerrain._v1.copyFromFloats(mapData[idx1], mapData[idx1 + 1], mapData[idx1 + 2]);
-            DynamicTerrain._v2.copyFromFloats(mapData[idx2], mapData[idx2 + 1], mapData[idx2 + 2]);
-            DynamicTerrain._v3.copyFromFloats(mapData[idx3], mapData[idx3 + 1], mapData[idx3 + 2]);
-            DynamicTerrain._v4.copyFromFloats(mapData[idx4], mapData[idx4 + 1], mapData[idx4 + 2]);
-            var vA = DynamicTerrain._v1;
+            var v1 = DynamicTerrain._v1;
+            var v2 = DynamicTerrain._v2;
+            var v3 = DynamicTerrain._v3;
+            var v4 = DynamicTerrain._v4;
+            v1.copyFromFloats(mapData[idx1], mapData[idx1 + 1], mapData[idx1 + 2]);
+            v2.copyFromFloats(mapData[idx2], mapData[idx2 + 1], mapData[idx2 + 2]);
+            v3.copyFromFloats(mapData[idx3], mapData[idx3 + 1], mapData[idx3 + 2]);
+            v4.copyFromFloats(mapData[idx4], mapData[idx4 + 1], mapData[idx4 + 2]);
+            var vAvB = DynamicTerrain._vAvB;
+            var vAvC = DynamicTerrain._vAvC;
+            var norm = DynamicTerrain._norm;
+            var vA = v1;
             var vB;
             var vC;
             var v;
-            var xv4v1 = DynamicTerrain._v4.x - DynamicTerrain._v1.x;
-            var zv4v1 = DynamicTerrain._v4.z - DynamicTerrain._v1.z;
+            var xv4v1 = v4.x - v1.x;
+            var zv4v1 = v4.z - v1.z;
             if (xv4v1 == 0 || zv4v1 == 0) {
-                return DynamicTerrain._v1.y;
+                return v1.y;
             }
             var cd = zv4v1 / xv4v1;
-            var h = DynamicTerrain._v1.z - cd * DynamicTerrain._v1.x;
+            var h = v1.z - cd * v1.x;
             if (z < cd * x + h) {
-                vB = DynamicTerrain._v4;
-                vC = DynamicTerrain._v2;
+                vB = v4;
+                vC = v2;
                 v = vA;
             }
             else {
-                vB = DynamicTerrain._v3;
-                vC = DynamicTerrain._v4;
+                vB = v3;
+                vC = v4;
                 v = vB;
             }
-            vB.subtractToRef(vA, DynamicTerrain._vAvB);
-            vC.subtractToRef(vA, DynamicTerrain._vAvC);
-            BABYLON.Vector3.CrossToRef(DynamicTerrain._vAvB, DynamicTerrain._vAvC, DynamicTerrain._norm);
-            DynamicTerrain._norm.normalize();
+            vB.subtractToRef(vA, vAvB);
+            vC.subtractToRef(vA, vAvC);
+            BABYLON.Vector3.CrossToRef(vAvB, vAvC, norm);
+            norm.normalize();
             if (options && options.normal) {
-                options.normal.copyFrom(DynamicTerrain._norm);
+                options.normal.copyFrom(norm);
             }
-            var d = -(DynamicTerrain._norm.x * v.x + DynamicTerrain._norm.y * v.y + DynamicTerrain._norm.z * v.z);
+            var d = -(norm.x * v.x + norm.y * v.y + norm.z * v.z);
             var y = v.y;
-            if (DynamicTerrain._norm.y != 0.0) {
-                y = -(DynamicTerrain._norm.x * x + DynamicTerrain._norm.z * z + d) / DynamicTerrain._norm.y;
+            if (norm.y != 0.0) {
+                y = -(norm.x * x + norm.z * z + d) / norm.y;
             }
             return y;
         };
@@ -508,6 +541,8 @@ var BABYLON;
             var mapIndices = [];
             var tmp1 = { normal: BABYLON.Vector3.Zero() };
             var tmp2 = { normal: BABYLON.Vector3.Zero() };
+            var normal1 = tmp1.normal;
+            var normal2 = tmp2.normal;
             var l = mapSubX * (mapSubZ - 1);
             var i = 0;
             for (i = 0; i < l; i++) {
@@ -519,18 +554,19 @@ var BABYLON;
             var lastIdx = (mapSubX - 1) * 3;
             var colStart = 0;
             var colEnd = 0;
+            var getHeightFromMap = DynamicTerrain.GetHeightFromMap;
             for (i = 0; i < mapSubZ; i++) {
                 colStart = i * mapSubX * 3;
                 colEnd = colStart + lastIdx;
-                DynamicTerrain.GetHeightFromMap(mapData[colStart], mapData[colStart + 2], mapData, mapSubX, mapSubZ, tmp1);
-                DynamicTerrain.GetHeightFromMap(mapData[colEnd], mapData[colEnd + 2], mapData, mapSubX, mapSubZ, tmp2);
-                tmp1.normal.addInPlace(tmp2.normal).scaleInPlace(0.5);
-                normals[colStart] = tmp1.normal.x;
-                normals[colStart + 1] = tmp1.normal.y;
-                normals[colStart + 2] = tmp1.normal.z;
-                normals[colEnd] = tmp1.normal.x;
-                normals[colEnd + 1] = tmp1.normal.y;
-                normals[colEnd + 2] = tmp1.normal.z;
+                getHeightFromMap(mapData[colStart], mapData[colStart + 2], mapData, mapSubX, mapSubZ, tmp1);
+                getHeightFromMap(mapData[colEnd], mapData[colEnd + 2], mapData, mapSubX, mapSubZ, tmp2);
+                normal1.addInPlace(normal2).scaleInPlace(0.5);
+                normals[colStart] = normal1.x;
+                normals[colStart + 1] = normal1.y;
+                normals[colStart + 2] = normal1.z;
+                normals[colEnd] = normal1.x;
+                normals[colEnd + 1] = normal1.y;
+                normals[colEnd + 2] = normal1.z;
             }
         };
         /**
@@ -547,10 +583,13 @@ var BABYLON;
          * @param z
          */
         DynamicTerrain.prototype.contains = function (x, z) {
-            if (x < this._positions[0] + this.mesh.position.x || x > this._positions[3 * this._terrainIdx] + this.mesh.position.x) {
+            var positions = this._positions;
+            var meshPosition = this.mesh.position;
+            var terrainIdx = this._terrainIdx;
+            if (x < positions[0] + meshPosition.x || x > positions[3 * terrainIdx] + meshPosition.x) {
                 return false;
             }
-            if (z < this._positions[2] + this.mesh.position.z || z > this._positions[3 * this._terrainIdx * this._terrainIdx + 2] + this.mesh.position.z) {
+            if (z < positions[2] + meshPosition.z || z > positions[3 * terrainIdx * terrainIdx + 2] + meshPosition.z) {
                 return false;
             }
             return true;
@@ -630,7 +669,7 @@ var BABYLON;
                     onReady(data, subX, subZ);
                 }
             };
-            BABYLON.Tools.LoadImage(heightmapURL, onload, function () { }, scene.database);
+            BABYLON.Tools.LoadImage(heightmapURL, onload, function () { }, scene.offlineProvider);
         };
         /**
          * Static : Updates the passed arrays with UVs values to fit the whole map with subX points along its width and subZ points along its height.
@@ -883,10 +922,12 @@ var BABYLON;
             set: function (val) {
                 this._mapData = val;
                 this._datamap = true;
-                this._mapSizeX = Math.abs(this._mapData[(this._mapSubX - 1) * 3] - this._mapData[0]);
-                this._mapSizeZ = Math.abs(this._mapData[(this._mapSubZ - 1) * this._mapSubX * 3 + 2] - this._mapData[2]);
-                this._averageSubSizeX = this._mapSizeX / this._mapSubX;
-                this._averageSubSizeZ = this._mapSizeZ / this._mapSubZ;
+                var mapSubX = this._mapSubX;
+                var mapSubZ = this._mapSubZ;
+                this._mapSizeX = Math.abs(val[(mapSubX - 1) * 3] - val[0]);
+                this._mapSizeZ = Math.abs(val[(mapSubZ - 1) * mapSubX * 3 + 2] - val[2]);
+                this._averageSubSizeX = this._mapSizeX / mapSubX;
+                this._averageSubSizeZ = this._mapSizeZ / mapSubZ;
                 if (this._precomputeNormalsFromMap) {
                     this.computeNormalsFromMap();
                 }
@@ -1064,16 +1105,27 @@ var BABYLON;
         DynamicTerrain.prototype.afterUpdate = function (refreshEveryFrame) {
             return;
         };
+        DynamicTerrain._vertex = {
+            position: BABYLON.Vector3.Zero(),
+            uvs: BABYLON.Vector2.Zero(),
+            color: new BABYLON.Color4(1.0, 1.0, 1.0, 1.0),
+            lodX: 1 | 0,
+            lodZ: 1 | 0,
+            worldPosition: BABYLON.Vector3.Zero(),
+            mapIndex: 0 | 0 // current map index
+        };
+        // tmp vectors
+        DynamicTerrain._v1 = BABYLON.Vector3.Zero();
+        DynamicTerrain._v2 = BABYLON.Vector3.Zero();
+        DynamicTerrain._v3 = BABYLON.Vector3.Zero();
+        DynamicTerrain._v4 = BABYLON.Vector3.Zero();
+        DynamicTerrain._vAvB = BABYLON.Vector3.Zero();
+        DynamicTerrain._vAvC = BABYLON.Vector3.Zero();
+        DynamicTerrain._norm = BABYLON.Vector3.Zero();
+        DynamicTerrain._bbMin = BABYLON.Vector3.Zero();
+        DynamicTerrain._bbMax = BABYLON.Vector3.Zero();
         return DynamicTerrain;
     }());
-    // tmp vectors
-    DynamicTerrain._v1 = BABYLON.Vector3.Zero();
-    DynamicTerrain._v2 = BABYLON.Vector3.Zero();
-    DynamicTerrain._v3 = BABYLON.Vector3.Zero();
-    DynamicTerrain._v4 = BABYLON.Vector3.Zero();
-    DynamicTerrain._vAvB = BABYLON.Vector3.Zero();
-    DynamicTerrain._vAvC = BABYLON.Vector3.Zero();
-    DynamicTerrain._norm = BABYLON.Vector3.Zero();
     BABYLON.DynamicTerrain = DynamicTerrain;
 })(BABYLON || (BABYLON = {}));
 //# sourceMappingURL=babylon.dynamicTerrain.js.map
