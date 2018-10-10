@@ -19,6 +19,10 @@ module BABYLON {
         private _LODValue: number = 1|0;                // current LOD value : initial + camera correction
         private _cameraLODCorrection: number = 0|0;     // LOD correction (integer) according to the camera altitude
         private _terrainCamera: Camera;                 // camera linked to the terrain
+        public shiftFromCamera: {x: number; z: number} = {  // terrain center shift from camera position
+            x: 0.0,
+            z: 0.0
+        };       
         private _indices: IndicesArray;
         private _positions: Float32Array | number[];
         private _normals: Float32Array | number[];
@@ -132,6 +136,8 @@ module BABYLON {
             const terrainColor = [];
             const terrainUV = [];
             const mapData = this._mapData;
+            const mapColors = this._mapColors;
+            const mapUVs = this._mapUVs;
             for (let j = 0; j <= this._terrainSub; j++) {
                 terrainPath = [];
                 for (let i = 0; i <= this._terrainSub; i++) {
@@ -153,7 +159,7 @@ module BABYLON {
                     terrainPath.push(new Vector3(i, y, j));
                     // color
                     if (this._colormap) {
-                        color = new Color4(this._mapColors[colIndex], this._mapColors[colIndex + 1], this._mapColors[colIndex + 2], 1.0);
+                        color = new Color4(mapColors[colIndex], mapColors[colIndex + 1], mapColors[colIndex + 2], 1.0);
                     }
                     else {
                         color = new Color4(1.0, 1.0, 1.0, 1.0);
@@ -161,13 +167,13 @@ module BABYLON {
                     terrainColor.push(color);
                     // uvs
                     if (this._uvmap) {
-                        uv = new Vector2(this._mapUVs[uvIndex], this._mapUVs[uvIndex + 1]);
+                        uv = new Vector2(mapUVs[uvIndex], mapUVs[uvIndex + 1]);
                     }          
                     else {
                         u = 1.0 - Math.abs(1.0 - 2.0 * i / lg);
                         v = 1.0 - Math.abs(1.0 - 2.0 * j / lg);
-                        this._mapUVs[2 * terIndex] = u;
-                        this._mapUVs[2 * terIndex + 1] = v;
+                        mapUVs[2 * terIndex] = u;
+                        mapUVs[2 * terIndex + 1] = v;
                         uv = new Vector2(u, v);
                     }
                     terrainUV.push(uv);
@@ -175,8 +181,8 @@ module BABYLON {
                 terrainData.push(terrainPath);
             }
  
-            this._mapSizeX = Math.abs(this._mapData[(this._mapSubX - 1) * 3] - this._mapData[0]);
-            this._mapSizeZ = Math.abs(this._mapData[(this._mapSubZ - 1) * this._mapSubX * 3 + 2] - this._mapData[2]);
+            this._mapSizeX = Math.abs(mapData[(this._mapSubX - 1) * 3] - mapData[0]);
+            this._mapSizeZ = Math.abs(mapData[(this._mapSubZ - 1) * this._mapSubX * 3 + 2] - mapData[2]);
             this._averageSubSizeX = this._mapSizeX / this._mapSubX;
             this._averageSubSizeZ = this._mapSizeZ / this._mapSubZ;
             const ribbonOptions = {
@@ -196,8 +202,8 @@ module BABYLON {
 
             // update it immediatly and register the update callback function in the render loop
             this.update(true);
-            this._terrain.position.x = this._terrainCamera.globalPosition.x - this._terrainHalfSizeX;
-            this._terrain.position.z = this._terrainCamera.globalPosition.z - this._terrainHalfSizeZ;
+            this._terrain.position.x = this._terrainCamera.globalPosition.x - this._terrainHalfSizeX + this.shiftFromCamera.x;
+            this._terrain.position.z = this._terrainCamera.globalPosition.z - this._terrainHalfSizeZ + this.shiftFromCamera.z;
                 // initialize deltaSub to make
             let deltaNbSubX = (this._terrain.position.x - this._mapData[0]) / this._averageSubSizeX;
             let deltaNbSubZ = (this._terrain.position.z - this._mapData[2]) / this._averageSubSizeZ
@@ -224,10 +230,11 @@ module BABYLON {
             const updateForced = (force) ? true : false;
             const terrainPosition = this._terrain.position;
             const cameraPosition = this._terrainCamera.globalPosition;
+            const shiftFromCamera = this.shiftFromCamera;
             let terrainHalfSizeX = this._terrainHalfSizeX;
             let terrainHalfSizeZ = this._terrainHalfSizeZ;
-            const deltaX = terrainHalfSizeX + terrainPosition.x - cameraPosition.x;
-            const deltaZ = terrainHalfSizeZ + terrainPosition.z - cameraPosition.z;
+            const deltaX = terrainHalfSizeX + terrainPosition.x - cameraPosition.x + shiftFromCamera.x;
+            const deltaZ = terrainHalfSizeZ + terrainPosition.z - cameraPosition.z + shiftFromCamera.z;
             const subToleranceX = this._subToleranceX;
             const subToleranceZ = this._subToleranceZ;
             const mod = this._mod;
@@ -261,7 +268,7 @@ module BABYLON {
                 deltaSubZ += (subToleranceZ * signZ * LODValue * mapFlgtNb);
                 needsUpdate = true;
             }
-            const updateSize = updateLOD || updateForced;       // must the terrain size be updated
+            const updateSize = updateLOD || updateForced;       // must the terrain size be updated ?
             if (needsUpdate || updateSize) {
                 this._deltaSubX = mod(deltaSubX, this._mapSubX);
                 this._deltaSubZ = mod(deltaSubZ, this._mapSubZ); 
@@ -270,7 +277,7 @@ module BABYLON {
 
             terrainHalfSizeX = this._terrainHalfSizeX;
             terrainHalfSizeZ = this._terrainHalfSizeZ;
-            this.centerLocal.copyFromFloats(terrainHalfSizeX, terrainPosition.y, terrainHalfSizeZ);
+            this.centerLocal.copyFromFloats(terrainHalfSizeX, 0.0, terrainHalfSizeZ);
             this._centerWorld.copyFromFloats(terrainPosition.x + terrainHalfSizeX, terrainPosition.y, terrainPosition.z + terrainHalfSizeZ);
 
             return this;

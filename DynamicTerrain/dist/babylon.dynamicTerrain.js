@@ -24,6 +24,10 @@ var BABYLON;
             this._initialLOD = 1 | 0; // initial LOD value (integer > 0)
             this._LODValue = 1 | 0; // current LOD value : initial + camera correction
             this._cameraLODCorrection = 0 | 0; // LOD correction (integer) according to the camera altitude
+            this.shiftFromCamera = {
+                x: 0.0,
+                z: 0.0
+            };
             this._deltaSubX = 0 | 0; // map x subdivision delta : variation in number of map subdivisions
             this._deltaSubZ = 0 | 0; // map z subdivision delta 
             this._refreshEveryFrame = false; // boolean : to force the terrain computation every frame
@@ -83,6 +87,8 @@ var BABYLON;
             var terrainColor = [];
             var terrainUV = [];
             var mapData = this._mapData;
+            var mapColors = this._mapColors;
+            var mapUVs = this._mapUVs;
             for (var j = 0; j <= this._terrainSub; j++) {
                 terrainPath = [];
                 for (var i = 0; i <= this._terrainSub; i++) {
@@ -104,7 +110,7 @@ var BABYLON;
                     terrainPath.push(new BABYLON.Vector3(i, y, j));
                     // color
                     if (this._colormap) {
-                        color = new BABYLON.Color4(this._mapColors[colIndex], this._mapColors[colIndex + 1], this._mapColors[colIndex + 2], 1.0);
+                        color = new BABYLON.Color4(mapColors[colIndex], mapColors[colIndex + 1], mapColors[colIndex + 2], 1.0);
                     }
                     else {
                         color = new BABYLON.Color4(1.0, 1.0, 1.0, 1.0);
@@ -112,21 +118,21 @@ var BABYLON;
                     terrainColor.push(color);
                     // uvs
                     if (this._uvmap) {
-                        uv = new BABYLON.Vector2(this._mapUVs[uvIndex], this._mapUVs[uvIndex + 1]);
+                        uv = new BABYLON.Vector2(mapUVs[uvIndex], mapUVs[uvIndex + 1]);
                     }
                     else {
                         u = 1.0 - Math.abs(1.0 - 2.0 * i / lg);
                         v = 1.0 - Math.abs(1.0 - 2.0 * j / lg);
-                        this._mapUVs[2 * terIndex] = u;
-                        this._mapUVs[2 * terIndex + 1] = v;
+                        mapUVs[2 * terIndex] = u;
+                        mapUVs[2 * terIndex + 1] = v;
                         uv = new BABYLON.Vector2(u, v);
                     }
                     terrainUV.push(uv);
                 }
                 terrainData.push(terrainPath);
             }
-            this._mapSizeX = Math.abs(this._mapData[(this._mapSubX - 1) * 3] - this._mapData[0]);
-            this._mapSizeZ = Math.abs(this._mapData[(this._mapSubZ - 1) * this._mapSubX * 3 + 2] - this._mapData[2]);
+            this._mapSizeX = Math.abs(mapData[(this._mapSubX - 1) * 3] - mapData[0]);
+            this._mapSizeZ = Math.abs(mapData[(this._mapSubZ - 1) * this._mapSubX * 3 + 2] - mapData[2]);
             this._averageSubSizeX = this._mapSizeX / this._mapSubX;
             this._averageSubSizeZ = this._mapSizeZ / this._mapSubZ;
             var ribbonOptions = {
@@ -145,8 +151,8 @@ var BABYLON;
             this.computeNormalsFromMap();
             // update it immediatly and register the update callback function in the render loop
             this.update(true);
-            this._terrain.position.x = this._terrainCamera.globalPosition.x - this._terrainHalfSizeX;
-            this._terrain.position.z = this._terrainCamera.globalPosition.z - this._terrainHalfSizeZ;
+            this._terrain.position.x = this._terrainCamera.globalPosition.x - this._terrainHalfSizeX + this.shiftFromCamera.x;
+            this._terrain.position.z = this._terrainCamera.globalPosition.z - this._terrainHalfSizeZ + this.shiftFromCamera.z;
             // initialize deltaSub to make
             var deltaNbSubX = (this._terrain.position.x - this._mapData[0]) / this._averageSubSizeX;
             var deltaNbSubZ = (this._terrain.position.z - this._mapData[2]) / this._averageSubSizeZ;
@@ -171,10 +177,11 @@ var BABYLON;
             var updateForced = (force) ? true : false;
             var terrainPosition = this._terrain.position;
             var cameraPosition = this._terrainCamera.globalPosition;
+            var shiftFromCamera = this.shiftFromCamera;
             var terrainHalfSizeX = this._terrainHalfSizeX;
             var terrainHalfSizeZ = this._terrainHalfSizeZ;
-            var deltaX = terrainHalfSizeX + terrainPosition.x - cameraPosition.x;
-            var deltaZ = terrainHalfSizeZ + terrainPosition.z - cameraPosition.z;
+            var deltaX = terrainHalfSizeX + terrainPosition.x - cameraPosition.x + shiftFromCamera.x;
+            var deltaZ = terrainHalfSizeZ + terrainPosition.z - cameraPosition.z + shiftFromCamera.z;
             var subToleranceX = this._subToleranceX;
             var subToleranceZ = this._subToleranceZ;
             var mod = this._mod;
@@ -205,7 +212,7 @@ var BABYLON;
                 deltaSubZ += (subToleranceZ * signZ * LODValue * mapFlgtNb);
                 needsUpdate = true;
             }
-            var updateSize = updateLOD || updateForced; // must the terrain size be updated
+            var updateSize = updateLOD || updateForced; // must the terrain size be updated ?
             if (needsUpdate || updateSize) {
                 this._deltaSubX = mod(deltaSubX, this._mapSubX);
                 this._deltaSubZ = mod(deltaSubZ, this._mapSubZ);
@@ -213,7 +220,7 @@ var BABYLON;
             }
             terrainHalfSizeX = this._terrainHalfSizeX;
             terrainHalfSizeZ = this._terrainHalfSizeZ;
-            this.centerLocal.copyFromFloats(terrainHalfSizeX, terrainPosition.y, terrainHalfSizeZ);
+            this.centerLocal.copyFromFloats(terrainHalfSizeX, 0.0, terrainHalfSizeZ);
             this._centerWorld.copyFromFloats(terrainPosition.x + terrainHalfSizeX, terrainPosition.y, terrainPosition.z + terrainHalfSizeZ);
             return this;
         };
