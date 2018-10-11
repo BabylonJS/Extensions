@@ -24,6 +24,8 @@ var BABYLON;
             this._initialLOD = 1 | 0; // initial LOD value (integer > 0)
             this._LODValue = 1 | 0; // current LOD value : initial + camera correction
             this._cameraLODCorrection = 0 | 0; // LOD correction (integer) according to the camera altitude
+            this._LODOnlyPositiveX = false; // Does LOD apply only to the terrain right edge ?
+            this._LODOnlyPositiveZ = false; // Does LOD apply only to the terrain upper edge ?
             this.shiftFromCamera = {
                 x: 0.0,
                 z: 0.0
@@ -188,9 +190,9 @@ var BABYLON;
             // current LOD
             var oldCorrection = this._cameraLODCorrection;
             this._cameraLODCorrection = (this.updateCameraLOD(this._terrainCamera)) | 0;
-            updateLOD = (oldCorrection != this._cameraLODCorrection);
+            updateLOD = (oldCorrection == this._cameraLODCorrection) ? false : true;
             var LODValue = this._initialLOD + this._cameraLODCorrection;
-            LODValue = (LODValue > 0) ? this._LODValue : 1;
+            LODValue = (LODValue > 0) ? LODValue : 1;
             this._LODValue = LODValue;
             // threshold sizes on each axis to trigger the terrain update
             var mapShiftX = this._averageSubSizeX * subToleranceX * LODValue;
@@ -259,6 +261,8 @@ var BABYLON;
             var useCustomVertexFunction = this._useCustomVertexFunction;
             var updateVertex = this.updateVertex;
             var dontComputeNormals = !this._computeNormals;
+            var LODAllX = !this._LODOnlyPositiveX;
+            var LODAllZ = !this._LODOnlyPositiveZ;
             var l = 0 | 0;
             var index = 0 | 0; // current vertex index in the map data array
             var posIndex = 0 | 0; // current position index in the map data array
@@ -288,7 +292,7 @@ var BABYLON;
                 for (l = 0; l < LODLimits.length; l++) {
                     LODLimitDown = LODLimits[l];
                     LODLimitUp = terrainSub - LODLimitDown - 1;
-                    if (j < LODLimitDown || j > LODLimitUp) {
+                    if ((LODAllZ && j < LODLimitDown) || j > LODLimitUp) {
                         axisLODValue = l + 1 + LODValue;
                     }
                     lodJ = axisLODValue;
@@ -299,7 +303,7 @@ var BABYLON;
                     for (l = 0; l < LODLimits.length; l++) {
                         LODLimitDown = LODLimits[l];
                         LODLimitUp = terrainSub - LODLimitDown - 1;
-                        if (i < LODLimitDown || i > LODLimitUp) {
+                        if ((LODAllX && i < LODLimitDown) || i > LODLimitUp) {
                             axisLODValue = l + 1 + LODValue;
                         }
                         lodI = axisLODValue;
@@ -807,6 +811,32 @@ var BABYLON;
             },
             set: function (val) {
                 this._cameraLODCorrection = (val >= 0) ? val : 0;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(DynamicTerrain.prototype, "LODOnlyPositiveX", {
+            /**
+             * Boolean : Does the LOD apply only to the terrain right edge ?
+             */
+            get: function () {
+                return this._LODOnlyPositiveX;
+            },
+            set: function (val) {
+                this._LODOnlyPositiveX = val;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(DynamicTerrain.prototype, "LODOnlyPositiveZ", {
+            /**
+             * Boolean : Does the LOD apply only to the terrain upper edge ?
+             */
+            get: function () {
+                return this._LODOnlyPositiveZ;
+            },
+            set: function (val) {
+                this._LODOnlyPositiveZ = val;
             },
             enumerable: true,
             configurable: true

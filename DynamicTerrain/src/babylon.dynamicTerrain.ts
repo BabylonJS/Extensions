@@ -18,6 +18,8 @@ module BABYLON {
         private _initialLOD: number = 1|0;              // initial LOD value (integer > 0)
         private _LODValue: number = 1|0;                // current LOD value : initial + camera correction
         private _cameraLODCorrection: number = 0|0;     // LOD correction (integer) according to the camera altitude
+        private _LODOnlyPositiveX: boolean = false;     // Does LOD apply only to the terrain right edge ?
+        private _LODOnlyPositiveZ: boolean = false;     // Does LOD apply only to the terrain upper edge ?
         private _terrainCamera: Camera;                 // camera linked to the terrain
         public shiftFromCamera: {x: number; z: number} = {  // terrain center shift from camera position
             x: 0.0,
@@ -242,9 +244,9 @@ module BABYLON {
             // current LOD
             let oldCorrection = this._cameraLODCorrection;
             this._cameraLODCorrection = (this.updateCameraLOD(this._terrainCamera))|0;
-            updateLOD = (oldCorrection != this._cameraLODCorrection);
+            updateLOD = (oldCorrection == this._cameraLODCorrection) ? false : true;
             let LODValue = this._initialLOD + this._cameraLODCorrection;
-            LODValue = (LODValue > 0) ? this._LODValue : 1;
+            LODValue = (LODValue > 0) ? LODValue : 1;
             this._LODValue = LODValue;
             
             // threshold sizes on each axis to trigger the terrain update
@@ -319,6 +321,8 @@ module BABYLON {
             const useCustomVertexFunction = this._useCustomVertexFunction;
             const updateVertex = this.updateVertex;
             const dontComputeNormals = !this._computeNormals;
+            const LODAllX = !this._LODOnlyPositiveX;
+            const LODAllZ = !this._LODOnlyPositiveZ;
 
             let l = 0|0;
             let index = 0|0;          // current vertex index in the map data array
@@ -351,7 +355,7 @@ module BABYLON {
                 for (l = 0; l < LODLimits.length; l++) {
                     LODLimitDown = LODLimits[l];
                     LODLimitUp = terrainSub - LODLimitDown - 1; 
-                    if (j < LODLimitDown || j > LODLimitUp) {
+                    if ((LODAllZ && j < LODLimitDown)  || j > LODLimitUp) {
                         axisLODValue = l + 1 + LODValue;
                     }
                     lodJ = axisLODValue; 
@@ -363,7 +367,7 @@ module BABYLON {
                     for (l = 0; l < LODLimits.length; l++) {
                         LODLimitDown = LODLimits[l];
                         LODLimitUp = terrainSub - LODLimitDown - 1; 
-                        if (i < LODLimitDown || i > LODLimitUp) {
+                        if ((LODAllX && i < LODLimitDown) || i > LODLimitUp) {
                             axisLODValue = l + 1 + LODValue;
                         } 
                         lodI = axisLODValue;
@@ -875,6 +879,24 @@ module BABYLON {
         }
         public set cameraLODCorrection(val: number) {
             this._cameraLODCorrection = (val >= 0) ? val : 0;
+        }
+        /**
+         * Boolean : Does the LOD apply only to the terrain right edge ?
+         */
+        public get LODOnlyPositiveX(): boolean {
+            return this._LODOnlyPositiveX;
+        }
+        public set LODOnlyPositiveX(val: boolean) {
+            this._LODOnlyPositiveX = val;
+        }
+        /**
+         * Boolean : Does the LOD apply only to the terrain upper edge ?
+         */
+        public get LODOnlyPositiveZ(): boolean {
+            return this._LODOnlyPositiveZ;
+        }
+        public set LODOnlyPositiveZ(val: boolean) {
+            this._LODOnlyPositiveZ = val;
         }
         /**
          * Average map and terrain subdivision size on X axis.  

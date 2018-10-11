@@ -16,6 +16,8 @@ declare module BABYLON {
         private _initialLOD;
         private _LODValue;
         private _cameraLODCorrection;
+        private _LODOnlyPositiveX;
+        private _LODOnlyPositiveZ;
         private _terrainCamera;
         shiftFromCamera: {
             x: number;
@@ -234,6 +236,14 @@ declare module BABYLON {
          * Positive integer (default 0)
          */
         cameraLODCorrection: number;
+        /**
+         * Boolean : Does the LOD apply only to the terrain right edge ?
+         */
+        LODOnlyPositiveX: boolean;
+        /**
+         * Boolean : Does the LOD apply only to the terrain upper edge ?
+         */
+        LODOnlyPositiveZ: boolean;
         /**
          * Average map and terrain subdivision size on X axis.
          * Returns a float.
