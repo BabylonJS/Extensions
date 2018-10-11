@@ -18,8 +18,10 @@ module BABYLON {
         private _initialLOD: number = 1|0;              // initial LOD value (integer > 0)
         private _LODValue: number = 1|0;                // current LOD value : initial + camera correction
         private _cameraLODCorrection: number = 0|0;     // LOD correction (integer) according to the camera altitude
-        private _LODOnlyPositiveX: boolean = false;     // Does LOD apply only to the terrain right edge ?
-        private _LODOnlyPositiveZ: boolean = false;     // Does LOD apply only to the terrain upper edge ?
+        private _LODPositiveX: boolean = true;         // Does LOD apply to the terrain right edge ?
+        private _LODNegativeX: boolean = true;         // Does LOD apply to the terrain left edge ?
+        private _LODPositiveZ: boolean = true;         // Does LOD apply to the terrain upper edge ?
+        private _LODNegativeZ: boolean = true;         // Does LOD apply to the terrain lower edge ?
         private _terrainCamera: Camera;                 // camera linked to the terrain
         public shiftFromCamera: {x: number; z: number} = {  // terrain center shift from camera position
             x: 0.0,
@@ -321,8 +323,10 @@ module BABYLON {
             const useCustomVertexFunction = this._useCustomVertexFunction;
             const updateVertex = this.updateVertex;
             const dontComputeNormals = !this._computeNormals;
-            const LODAllX = !this._LODOnlyPositiveX;
-            const LODAllZ = !this._LODOnlyPositiveZ;
+            const LODpstvX = this._LODPositiveX;
+            const LODngtvX = this._LODNegativeX;
+            const LODpstvZ = this._LODPositiveZ;
+            const LODngtvZ = this._LODNegativeZ;
 
             let l = 0|0;
             let index = 0|0;          // current vertex index in the map data array
@@ -355,7 +359,7 @@ module BABYLON {
                 for (l = 0; l < LODLimits.length; l++) {
                     LODLimitDown = LODLimits[l];
                     LODLimitUp = terrainSub - LODLimitDown - 1; 
-                    if ((LODAllZ && j < LODLimitDown)  || j > LODLimitUp) {
+                    if ((LODngtvZ && j < LODLimitDown)  || (LODpstvZ && j > LODLimitUp)) {
                         axisLODValue = l + 1 + LODValue;
                     }
                     lodJ = axisLODValue; 
@@ -367,7 +371,7 @@ module BABYLON {
                     for (l = 0; l < LODLimits.length; l++) {
                         LODLimitDown = LODLimits[l];
                         LODLimitUp = terrainSub - LODLimitDown - 1; 
-                        if ((LODAllX && i < LODLimitDown) || i > LODLimitUp) {
+                        if ((LODngtvX && i < LODLimitDown) || (LODpstvX && i > LODLimitUp)) {
                             axisLODValue = l + 1 + LODValue;
                         } 
                         lodI = axisLODValue;
@@ -882,21 +886,43 @@ module BABYLON {
         }
         /**
          * Boolean : Does the LOD apply only to the terrain right edge ?
+         * Default : true
          */
-        public get LODOnlyPositiveX(): boolean {
-            return this._LODOnlyPositiveX;
+        public get LODPositiveX(): boolean {
+            return this._LODPositiveX;
         }
-        public set LODOnlyPositiveX(val: boolean) {
-            this._LODOnlyPositiveX = val;
+        public set LODPositiveX(val: boolean) {
+            this._LODPositiveX = val;
+        }
+        /**
+         * Boolean : Does the LOD apply only to the terrain left edge ?
+         * Default : true
+         */
+        public get LODNegativeX(): boolean {
+            return this._LODNegativeX;
+        }
+        public set LODNegativeX(val: boolean) {
+            this._LODNegativeX = val;
         }
         /**
          * Boolean : Does the LOD apply only to the terrain upper edge ?
+         * Default : true
          */
-        public get LODOnlyPositiveZ(): boolean {
-            return this._LODOnlyPositiveZ;
+        public get LODPositiveZ(): boolean {
+            return this._LODPositiveZ;
         }
-        public set LODOnlyPositiveZ(val: boolean) {
-            this._LODOnlyPositiveZ = val;
+        public set LODPositiveZ(val: boolean) {
+            this._LODPositiveZ = val;
+        }
+        /**
+         * Boolean : Does the LOD apply only to the terrain lower edge ?
+         * Default : true
+         */
+        public get LODNegativeZ(): boolean {
+            return this._LODNegativeZ;
+        }
+        public set LODNegativeZ(val: boolean) {
+            this._LODNegativeZ = val;
         }
         /**
          * Average map and terrain subdivision size on X axis.  

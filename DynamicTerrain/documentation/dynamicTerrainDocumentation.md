@@ -234,6 +234,12 @@ https://www.babylonjs-playground.com/#FJNR5#175
 
 Of course, the perimetric LOD and the camera LOD correction can work together :  https://www.babylonjs-playground.com/#FJNR5#176  
 
+#### Perimetric LOD restriction
+
+By default, when defined, the perimetric LOD is applied to the four sides of the terrain.  
+For some reasons, usually related to the camera position in the terrain, we can choose to apply it only on some sides.  
+
+
 ### LOD Summary
 
 * the initial LOD is the factor of the central terrain quad to apply to the map quad (default 1),
@@ -245,21 +251,32 @@ Of course, the perimetric LOD and the camera LOD correction can work together : 
 ## Camera position  
 
 Actually we can set the camera at any wanted position. The terrain is hooked to the camera and will follow it as the camera moves.  
-By default, the camera is linked to the terrain center what can be useful when the camera spins around so the terrain keeps visible in any direction. This is also useful in the case where the camera gets some altitude and looks at the terrain below.  
-However we could want sometimes to hook the camera to a different location on the terrain : let's imagine that our camera will, for instance, move mainly along the Z World axis always looking straight ahead. In this case, the quads _behind_ the terrain center would be computed but never visible. Just CPU waste. So setting the camera near the terrain lower edge would allow to see all the computed quads and even to expand the visible area far away.  
+By default, the camera is linked to the terrain center what can be useful when the camera spins around, so the terrain keeps visible in any direction. This is also useful in the case where the camera gets some altitude and looks at the terrain below.  
+
+However sometimes we could want  to hook the camera to a different location in the terrain :  
+let's imagine that our camera will, for instance, move mainly along the Z World axis always looking straight ahead.  
+In this case, the quads _behind_ the terrain center would be computed but never visible. Just a waste of CPU.  
+So setting the camera near the terrain lower edge would allow to see all the computed quads and even then to expand the visible area far away.  
 This is possible by using the property `.shiftFromCamera` that is a Vector2-like object, set by default to `{x:0, z:0}`.  
 Note : it's not a real Vector2 because its member are `x` and `z` (not `y`).  
 This can be set and changed at any time.  
+The shift values are expressed relatively to the camera position in the Word space.  
 ```javascript
 terrain.shiftFromCamera.z = 100.0;  // shifts the terrain +100 in front of the camera
-terrain.shiftFromCamera.x = 100.0;  // shifts the terrain +100 right to the camera
+terrain.shiftFromCamera.x = -5.0;   // shifts the terrain ++5 left to the camera
 ```
-If some perimetric LOD was defined, we probably don't want to see bigger quads in the first plan. So we can also force the computation the LOD only for terrain upper (positiveZ) or right (positiveX) edges only.  
-The boolean properties `.LODOnlyPositiveX` and `.LODOnlyPositiveZ` will allow/prevent to compute the perimetric LOD on right and upper edges. They can be set at any time (default `false`).
+If some perimetric LOD was defined, we probably don't want to see bigger quads in the first plan. We can then also restrict the computation the LOD only for terrain upper (positiveZ) edges only, not for the right and left sides, neither for the (lower) closest side from the camera.  
+The boolean properties `.LODPositiveX`, `.LODNegativeX`, `.LODPositiveZ` and `.LODNegativeZ` will allow/prevent to compute the perimetric LOD on right/left and upper/lower edges.  
+They can be set at any time (default `true`).  
 ```javascript
-terrain.LODOnlyPositiveX = true; // stops the perimetric LOD computation on the terrain right edge
-terrain.LODOnlyPositiveZ = true; // stops the perimetric LOD computation on the terrain upper edge
+terrain.LODPositiveX = false; // stops the perimetric LOD computation on the terrain right edge
+terrain.LODNegativeX = false; // stops the perimetric LOD computation on the terrain left edge
+terrain.LODNegativeZ = false; // stops the perimetric LOD computation on the terrain upper edge
+// now the perimetric is computed only for the upper edge, so only far away straight ahead
 ```
+Why are they called positive- or negative-something ?   
+The terrain moves in the World space only along the X and Z World axis.  
+These LOD properties defines if the LOD must be applied from the terrain center perspective :all what's on the right or in front of the center in the World space is said "positive", all what's on the left or behind the terrain center in the World space is said "negative".  
 
 ## Terrain update
 ### According to the camera movement

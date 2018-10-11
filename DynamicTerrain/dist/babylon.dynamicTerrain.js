@@ -24,8 +24,10 @@ var BABYLON;
             this._initialLOD = 1 | 0; // initial LOD value (integer > 0)
             this._LODValue = 1 | 0; // current LOD value : initial + camera correction
             this._cameraLODCorrection = 0 | 0; // LOD correction (integer) according to the camera altitude
-            this._LODOnlyPositiveX = false; // Does LOD apply only to the terrain right edge ?
-            this._LODOnlyPositiveZ = false; // Does LOD apply only to the terrain upper edge ?
+            this._LODPositiveX = true; // Does LOD apply to the terrain right edge ?
+            this._LODNegativeX = true; // Does LOD apply to the terrain left edge ?
+            this._LODPositiveZ = true; // Does LOD apply to the terrain upper edge ?
+            this._LODNegativeZ = true; // Does LOD apply to the terrain lower edge ?
             this.shiftFromCamera = {
                 x: 0.0,
                 z: 0.0
@@ -261,8 +263,10 @@ var BABYLON;
             var useCustomVertexFunction = this._useCustomVertexFunction;
             var updateVertex = this.updateVertex;
             var dontComputeNormals = !this._computeNormals;
-            var LODAllX = !this._LODOnlyPositiveX;
-            var LODAllZ = !this._LODOnlyPositiveZ;
+            var LODpstvX = this._LODPositiveX;
+            var LODngtvX = this._LODNegativeX;
+            var LODpstvZ = this._LODPositiveZ;
+            var LODngtvZ = this._LODNegativeZ;
             var l = 0 | 0;
             var index = 0 | 0; // current vertex index in the map data array
             var posIndex = 0 | 0; // current position index in the map data array
@@ -292,7 +296,7 @@ var BABYLON;
                 for (l = 0; l < LODLimits.length; l++) {
                     LODLimitDown = LODLimits[l];
                     LODLimitUp = terrainSub - LODLimitDown - 1;
-                    if ((LODAllZ && j < LODLimitDown) || j > LODLimitUp) {
+                    if ((LODngtvZ && j < LODLimitDown) || (LODpstvZ && j > LODLimitUp)) {
                         axisLODValue = l + 1 + LODValue;
                     }
                     lodJ = axisLODValue;
@@ -303,7 +307,7 @@ var BABYLON;
                     for (l = 0; l < LODLimits.length; l++) {
                         LODLimitDown = LODLimits[l];
                         LODLimitUp = terrainSub - LODLimitDown - 1;
-                        if ((LODAllX && i < LODLimitDown) || i > LODLimitUp) {
+                        if ((LODngtvX && i < LODLimitDown) || (LODpstvX && i > LODLimitUp)) {
                             axisLODValue = l + 1 + LODValue;
                         }
                         lodI = axisLODValue;
@@ -815,28 +819,58 @@ var BABYLON;
             enumerable: true,
             configurable: true
         });
-        Object.defineProperty(DynamicTerrain.prototype, "LODOnlyPositiveX", {
+        Object.defineProperty(DynamicTerrain.prototype, "LODPositiveX", {
             /**
              * Boolean : Does the LOD apply only to the terrain right edge ?
+             * Default : true
              */
             get: function () {
-                return this._LODOnlyPositiveX;
+                return this._LODPositiveX;
             },
             set: function (val) {
-                this._LODOnlyPositiveX = val;
+                this._LODPositiveX = val;
             },
             enumerable: true,
             configurable: true
         });
-        Object.defineProperty(DynamicTerrain.prototype, "LODOnlyPositiveZ", {
+        Object.defineProperty(DynamicTerrain.prototype, "LODNegativeX", {
             /**
-             * Boolean : Does the LOD apply only to the terrain upper edge ?
+             * Boolean : Does the LOD apply only to the terrain left edge ?
+             * Default : true
              */
             get: function () {
-                return this._LODOnlyPositiveZ;
+                return this._LODNegativeX;
             },
             set: function (val) {
-                this._LODOnlyPositiveZ = val;
+                this._LODNegativeX = val;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(DynamicTerrain.prototype, "LODPositiveZ", {
+            /**
+             * Boolean : Does the LOD apply only to the terrain upper edge ?
+             * Default : true
+             */
+            get: function () {
+                return this._LODPositiveZ;
+            },
+            set: function (val) {
+                this._LODPositiveZ = val;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(DynamicTerrain.prototype, "LODNegativeZ", {
+            /**
+             * Boolean : Does the LOD apply only to the terrain lower edge ?
+             * Default : true
+             */
+            get: function () {
+                return this._LODNegativeZ;
+            },
+            set: function (val) {
+                this._LODNegativeZ = val;
             },
             enumerable: true,
             configurable: true
