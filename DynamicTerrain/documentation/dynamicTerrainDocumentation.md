@@ -238,6 +238,12 @@ Of course, the perimetric LOD and the camera LOD correction can work together : 
 
 By default, when defined, the perimetric LOD is applied to the four sides of the terrain.  
 For some reasons, usually related to the camera position in the terrain, we can choose to apply it only on some sides.  
+For this, we must use the following boolean properties (default `true`) : `.LODPositiveX`, `.LODNegativeX`, `.LODPositiveZ` and `.LODNegativeZ`.  
+```javascript
+terrain.LODPositiveX = false; // stops the perimetric LOD computation on the terrain right edge
+terrain.LODNegativeX = false; // stops the perimetric LOD computation on the terrain left edge
+```
+Please read how to use them with the camera in the section "Camera position" below.     
 
 
 ### LOD Summary
