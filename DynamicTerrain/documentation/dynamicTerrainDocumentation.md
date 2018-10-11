@@ -147,7 +147,7 @@ Example : https://www.babylonjs-playground.com/#FJNR5#168
 In this example, the LOD value is incremented by 1 each time the altitude is +16 higher.  
 If we get the camera higher by zooming out when looking at the ground, we can see that the terrain size increases since there are less details.  
 
-This function is passed the object camera linked to the terrain and must return a positive integer or zero. By default, zero is return.  
+This function is passed the object camera linked to the terrain and must return a positive integer or zero. By default, zero is returned.  
 
 This function is called on each terrain update.  
 Nevertheless, we can set this value at any time with the property `.cameraLODCorrection`.  
@@ -220,7 +220,7 @@ Notes :
 
 * We can change the value of the property `.LODLimits` at any time, it's taken in account on the next terrain update. So it's not a fixed value. We could imagine to have different LOD behavior depending on the camera position, speed or on the landscape itself.
 * The array is always stored internally being sorted in the descending order (ex `[4, 2]`). So let's remember this when we have to read this property value.  
-* Some of the terrain quads aren't squared, but rectangular. Actually each terrain vertex is given current `lodX` and `lodZ` values what we can read from a custom user function if needed (to be seen further).  
+* Some of the terrain quads aren't squared, but rectangular. Actually each terrain vertex is given current `lodX` and `lodZ` values that we can read from a custom user function if needed (to be seen further).  
 
 A simple way to remember how this works :  
 ```javascript
@@ -242,6 +242,24 @@ Of course, the perimetric LOD and the camera LOD correction can work together : 
 * these three properties can be set at any time ! It's called _dynamic_ terrain, isn't it ?
 * the global LOD value is the current LOD factor value of the central quads.  
 
+## Camera position  
+
+Actually we can set the camera at any wanted position. The terrain is hooked to the camera and will follow it as the camera moves.  
+By default, the camera is linked to the terrain center what can be useful when the camera spins around so the terrain keeps visible in any direction. This is also useful in the case where the camera gets some altitude and looks at the terrain below.  
+However we could want sometimes to hook the camera to a different location on the terrain : let's imagine that our camera will, for instance, move mainly along the Z World axis always looking straight ahead. In this case, the quads _behind_ the terrain center would be computed but never visible. Just CPU waste. So setting the camera near the terrain lower edge would allow to see all the computed quads and even to expand the visible area far away.  
+This is possible by using the property `.shiftFromCamera` that is a Vector2-like object, set by default to `{x:0, z:0}`.  
+Note : it's not a real Vector2 because its member are `x` and `z` (not `y`).  
+This can be set and changed at any time.  
+```javascript
+terrain.shiftFromCamera.z = 100.0;  // shifts the terrain +100 in front of the camera
+terrain.shiftFromCamera.x = 100.0;  // shifts the terrain +100 right to the camera
+```
+If some perimetric LOD was defined, we probably don't want to see bigger quads in the first plan. So we can also force the computation the LOD only for terrain upper (positiveZ) or right (positiveX) edges only.  
+The boolean properties `.LODOnlyPositiveX` and `.LODOnlyPositiveZ` will allow/prevent to compute the perimetric LOD on right and upper edges. They can be set at any time (default `false`).
+```javascript
+terrain.LODOnlyPositiveX = true; // stops the perimetric LOD computation on the terrain right edge
+terrain.LODOnlyPositiveZ = true; // stops the perimetric LOD computation on the terrain upper edge
+```
 
 ## Terrain update
 ### According to the camera movement
@@ -310,7 +328,7 @@ Let's also remember that this custom user function is called only on terrain upd
 ### After or Before Terrain Update
 The Dynamic Terrain is updated automatically according to the camera position and all the LOD or tolerance parameters we've set so far.  
 Sometimes it's necessery to do something just before or just after the terrain update although we can't predict in the main logic when this update is triggered.  
-Therefore, the Dynamic Terrain provides two functions that we can over-write and what are called just before and just after the terrain update : `beforeUpdate()` and `afterUpdate()`
+Therefore, the Dynamic Terrain provides two functions that we can over-write and that are called just before and just after the terrain update : `beforeUpdate()` and `afterUpdate()`
 
 ```javascript
     // compute the squared maximum distance in the terrain
@@ -335,7 +353,7 @@ This can be changed at any time at will.
 
 
 ## Useful Functions
-If we need to know if a set of 2D map coordinates _(x, z)_ is currently inside the terrain, we can use the method `contains(x, z)` what returns a boolean. 
+If we need to know if a set of 2D map coordinates _(x, z)_ is currently inside the terrain, we can use the method `contains(x, z)` that returns a boolean. 
 ```javascript
 if (terrain.contains(x, z)) {
     // do stuff
@@ -477,7 +495,7 @@ A FreeCamera was set instead of an ArcRotate one to move easily on the map. The 
 As we can notice now, the texture is no longer bound to the terrain itself but to the map : the image is stretched in this example along the whole map.  
 
 In this former example, we stretched the image along the whole map.  
-For this very specific need, we can also the method `.createUVMap()` what does the same (computation and assignement to the terrain) in a single call.   
+For this very specific need, we can also the method `.createUVMap()` that does the same (computation and assignement to the terrain) in a single call.   
 ```javascript
         var params = {
             mapData: mapData,               // data map declaration : what data to use ?
@@ -590,7 +608,7 @@ BABYLON.DynamicTerrain.CreateMapFromHeightMapToRef(hmURL, hmOptions, mapData, sc
 * `width` and `height` are optional floats (default 300), the dimensions the map in the World,  
 * `subX` and `subZ` are optional integers (default 100), the number of points on each map dimension,
 * `minHeight` and `maxHeight` are the optional minimal and maximal heights (floats, default 0 and 10),  
-* `offsetX` and `offsetZ` are optional floats (default 0) to shift the map, what is centered around the World origin by default, along the X or Z World axes,  
+* `offsetX` and `offsetZ` are optional floats (default 0) to shift the map, that is centered around the World origin by default, along the X or Z World axes,  
 * `onReady` is an optional callback function to be called when the data are generated. It's passed the data array and the number of points per map dimension,  
 * `mapData` is a float array, sized subX x subZ x 3,  
 * `scene` is the scene that will store the downloaded image in its internal database.  
@@ -636,7 +654,7 @@ if (camera.position.z > someLimit) {
 ```
 Let's note that when we assign a new data map to a terrain, the normal map of this map is not automatically recomputed.  
 Thus we have two options :  
-* either we request for this automatic normal recomputation what can take some time with the property `terrain.precomputeNormalsFromMap = true`. In this case, every new data map assignement to the terrain will trigger the map normal computation on the fly, 
+* either we request for this automatic normal recomputation that can take some time with the property `terrain.precomputeNormalsFromMap = true`. In this case, every new data map assignement to the terrain will trigger the map normal computation on the fly, 
 ```javascript
 terrain.precomputeNormalsFromMap = true;  // default = false
 terrain.mapData = map2;                   // the normal map is automatically computed on the hood
