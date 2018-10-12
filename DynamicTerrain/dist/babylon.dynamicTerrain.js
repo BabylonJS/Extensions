@@ -28,6 +28,7 @@ var BABYLON;
             this._LODNegativeX = true; // Does LOD apply to the terrain left edge ?
             this._LODPositiveZ = true; // Does LOD apply to the terrain upper edge ?
             this._LODNegativeZ = true; // Does LOD apply to the terrain lower edge ?
+            this._inverted = false; // is the terrain mesh inverted upside down ?
             this.shiftFromCamera = {
                 x: 0.0,
                 z: 0.0
@@ -62,6 +63,7 @@ var BABYLON;
             this._mapColors = options.mapColors;
             this._scene = scene;
             this._terrainCamera = options.camera || scene.activeCamera;
+            this._inverted = options.invertSide;
             // initialize the map arrays if not passed as parameters
             this._datamap = (this._mapData) ? true : false;
             this._uvmap = (this._mapUVs) ? true : false;
@@ -470,7 +472,7 @@ var BABYLON;
          * If the optional object {normal: Vector3} is passed, then its property "normal" is updated with the normal vector value at the coordinates (x, z).
          */
         DynamicTerrain.prototype.getHeightFromMap = function (x, z, options) {
-            return DynamicTerrain._GetHeightFromMap(x, z, this._mapData, this._mapSubX, this._mapSubZ, this._mapSizeX, this._mapSizeZ, options);
+            return DynamicTerrain._GetHeightFromMap(x, z, this._mapData, this._mapSubX, this._mapSubZ, this._mapSizeX, this._mapSizeZ, options, this._inverted);
         };
         /**
          * Static : Returns the altitude (float) at the coordinates (x, z) of the passed map.
@@ -479,15 +481,16 @@ var BABYLON;
          * @param mapSubX the number of points along the map width
          * @param mapSubX the number of points along the map height
          * @param {normal: Vector3} (optional)
+         * @param inverted (optional boolean) is the terrain inverted
          * If the optional object {normal: Vector3} is passed, then its property "normal" is updated with the normal vector value at the coordinates (x, z).
          */
-        DynamicTerrain.GetHeightFromMap = function (x, z, mapData, mapSubX, mapSubZ, options) {
+        DynamicTerrain.GetHeightFromMap = function (x, z, mapData, mapSubX, mapSubZ, options, inverted) {
             var mapSizeX = Math.abs(mapData[(mapSubX - 1) * 3] - mapData[0]);
             var mapSizeZ = Math.abs(mapData[(mapSubZ - 1) * mapSubX * 3 + 2] - mapData[2]);
-            return DynamicTerrain._GetHeightFromMap(x, z, mapData, mapSubX, mapSubZ, mapSizeX, mapSizeZ, options);
+            return DynamicTerrain._GetHeightFromMap(x, z, mapData, mapSubX, mapSubZ, mapSizeX, mapSizeZ, options, inverted);
         };
         // Computes the height and optionnally the normal at the coordinates (x ,z) from the passed map
-        DynamicTerrain._GetHeightFromMap = function (x, z, mapData, mapSubX, mapSubZ, mapSizeX, mapSizeZ, options) {
+        DynamicTerrain._GetHeightFromMap = function (x, z, mapData, mapSubX, mapSubZ, mapSizeX, mapSizeZ, options, inverted) {
             var x0 = mapData[0];
             var z0 = mapData[2];
             // reset x and z in the map space so they are between 0 and the axis map size
@@ -538,6 +541,9 @@ var BABYLON;
             vC.subtractToRef(vA, vAvC);
             BABYLON.Vector3.CrossToRef(vAvB, vAvC, norm);
             norm.normalize();
+            if (inverted) {
+                norm.scaleInPlace(-1.0);
+            }
             if (options && options.normal) {
                 options.normal.copyFrom(norm);
             }
@@ -552,7 +558,7 @@ var BABYLON;
          * Static : Computes all the normals from the terrain data map  and stores them in the passed Float32Array reference.
          * This passed array must have the same size than the mapData array.
          */
-        DynamicTerrain.ComputeNormalsFromMapToRef = function (mapData, mapSubX, mapSubZ, normals) {
+        DynamicTerrain.ComputeNormalsFromMapToRef = function (mapData, mapSubX, mapSubZ, normals, inverted) {
             var mapIndices = [];
             var tmp1 = { normal: BABYLON.Vector3.Zero() };
             var tmp2 = { normal: BABYLON.Vector3.Zero() };
@@ -583,13 +589,19 @@ var BABYLON;
                 normals[colEnd + 1] = normal1.y;
                 normals[colEnd + 2] = normal1.z;
             }
+            // inverted terrain
+            if (inverted) {
+                for (i = 0; i < normals.length; i++) {
+                    normals[i] = -normals[i];
+                }
+            }
         };
         /**
          * Computes all the map normals from the current terrain data map and sets them to the terrain.
          * Returns the terrain.
          */
         DynamicTerrain.prototype.computeNormalsFromMap = function () {
-            DynamicTerrain.ComputeNormalsFromMapToRef(this._mapData, this._mapSubX, this._mapSubZ, this._mapNormals);
+            DynamicTerrain.ComputeNormalsFromMapToRef(this._mapData, this._mapSubX, this._mapSubZ, this._mapNormals, this._inverted);
             return this;
         };
         /**

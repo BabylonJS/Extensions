@@ -23,6 +23,7 @@ module BABYLON {
         private _LODPositiveZ: boolean = true;         // Does LOD apply to the terrain upper edge ?
         private _LODNegativeZ: boolean = true;         // Does LOD apply to the terrain lower edge ?
         private _terrainCamera: Camera;                 // camera linked to the terrain
+        private _inverted: boolean = false;             // is the terrain mesh inverted upside down ?
         public shiftFromCamera: {x: number; z: number} = {  // terrain center shift from camera position
             x: 0.0,
             z: 0.0
@@ -109,6 +110,7 @@ module BABYLON {
             this._mapColors = options.mapColors;
             this._scene = scene;
             this._terrainCamera = options.camera || scene.activeCamera;
+            this._inverted = options.invertSide;
             
             // initialize the map arrays if not passed as parameters
             this._datamap = (this._mapData) ? true : false;
@@ -545,7 +547,7 @@ module BABYLON {
          * If the optional object {normal: Vector3} is passed, then its property "normal" is updated with the normal vector value at the coordinates (x, z).  
          */
         public getHeightFromMap(x: number, z: number, options?: {normal: Vector3} ): number {
-            return DynamicTerrain._GetHeightFromMap(x, z, this._mapData, this._mapSubX, this._mapSubZ, this._mapSizeX, this._mapSizeZ, options);
+            return DynamicTerrain._GetHeightFromMap(x, z, this._mapData, this._mapSubX, this._mapSubZ, this._mapSizeX, this._mapSizeZ, options, this._inverted);
         }
 
         /**
@@ -555,16 +557,17 @@ module BABYLON {
          * @param mapSubX the number of points along the map width
          * @param mapSubX the number of points along the map height
          * @param {normal: Vector3} (optional)
+         * @param inverted (optional boolean) is the terrain inverted
          * If the optional object {normal: Vector3} is passed, then its property "normal" is updated with the normal vector value at the coordinates (x, z).  
          */
-        public static GetHeightFromMap(x: number, z: number, mapData: number[]| Float32Array, mapSubX: number, mapSubZ: number, options? : {normal: Vector3}) : number {
+        public static GetHeightFromMap(x: number, z: number, mapData: number[]| Float32Array, mapSubX: number, mapSubZ: number, options? : {normal: Vector3}, inverted?: boolean) : number {
             let mapSizeX = Math.abs(mapData[(mapSubX - 1) * 3] - mapData[0]);
             let mapSizeZ = Math.abs(mapData[(mapSubZ - 1) * mapSubX * 3 + 2] - mapData[2]);
-            return DynamicTerrain._GetHeightFromMap(x, z, mapData, mapSubX, mapSubZ, mapSizeX, mapSizeZ, options);
+            return DynamicTerrain._GetHeightFromMap(x, z, mapData, mapSubX, mapSubZ, mapSizeX, mapSizeZ, options, inverted);
         }
 
         // Computes the height and optionnally the normal at the coordinates (x ,z) from the passed map
-        private static _GetHeightFromMap(x: number, z: number, mapData: number[]| Float32Array, mapSubX: number, mapSubZ: number, mapSizeX: number, mapSizeZ: number, options? : {normal: Vector3}) : number {
+        private static _GetHeightFromMap(x: number, z: number, mapData: number[]| Float32Array, mapSubX: number, mapSubZ: number, mapSizeX: number, mapSizeZ: number, options? : {normal: Vector3}, inverted?: boolean) : number {
 
             let x0 = mapData[0];
             let z0 = mapData[2];
@@ -621,6 +624,9 @@ module BABYLON {
             vC.subtractToRef(vA, vAvC);
             Vector3.CrossToRef(vAvB, vAvC, norm);
             norm.normalize();
+            if (inverted) {
+                norm.scaleInPlace(-1.0);
+            }
             if (options && options.normal) {
                 options.normal.copyFrom(norm);
             }
@@ -637,7 +643,7 @@ module BABYLON {
          * Static : Computes all the normals from the terrain data map  and stores them in the passed Float32Array reference.  
          * This passed array must have the same size than the mapData array.
          */
-         public static ComputeNormalsFromMapToRef(mapData: number[]| Float32Array, mapSubX: number, mapSubZ, normals: number[] | Float32Array): void {
+         public static ComputeNormalsFromMapToRef(mapData: number[]| Float32Array, mapSubX: number, mapSubZ, normals: number[] | Float32Array, inverted: boolean): void {
             const mapIndices = [];
             const tmp1 = {normal: Vector3.Zero()};
             const tmp2 = {normal: Vector3.Zero()};
@@ -669,6 +675,12 @@ module BABYLON {
                 normals[colEnd + 1] = normal1.y;
                 normals[colEnd + 2] = normal1.z;
             }  
+            // inverted terrain
+            if (inverted) {
+                for (i = 0; i < normals.length; i++) {
+                    normals[i] = -normals[i];
+                }
+            }
          }
 
          /**
@@ -676,7 +688,7 @@ module BABYLON {
           * Returns the terrain.  
           */
           public computeNormalsFromMap(): DynamicTerrain {
-              DynamicTerrain.ComputeNormalsFromMapToRef(this._mapData, this._mapSubX, this._mapSubZ, this._mapNormals);
+              DynamicTerrain.ComputeNormalsFromMapToRef(this._mapData, this._mapSubX, this._mapSubZ, this._mapNormals, this._inverted);
               return this;
           }
 
