@@ -271,6 +271,9 @@ The shift values are expressed relatively to the camera position in the Word spa
 terrain.shiftFromCamera.z = 100.0;  // shifts the terrain +100 in front of the camera
 terrain.shiftFromCamera.x = -5.0;   // shifts the terrain ++5 left to the camera
 ```
+Example : https://www.babylonjs-playground.com/#FJNR5#250  
+Here's the terrain is shifted for halfTerrainSize in front of the camera position.  
+
 If some perimetric LOD was defined, we probably don't want to see bigger quads in the first plan. We can then also restrict the computation the LOD only for terrain upper (positiveZ) edges only, not for the right and left sides, neither for the (lower) closest side from the camera.  
 The boolean properties `.LODPositiveX`, `.LODNegativeX`, `.LODPositiveZ` and `.LODNegativeZ` will allow/prevent to compute the perimetric LOD on right/left and upper/lower edges.  
 They can be set at any time (default `true`).  
@@ -280,6 +283,8 @@ terrain.LODNegativeX = false; // stops the perimetric LOD computation on the ter
 terrain.LODNegativeZ = false; // stops the perimetric LOD computation on the terrain upper edge
 // now the perimetric is computed only for the upper edge, so only far away straight ahead
 ```
+Example : the terrain is shifted in front of the camera and the perimetric is disabled on all the terrain sides except the upper one (positiveZ) https://www.babylonjs-playground.com/#FJNR5#252  
+
 Why are they called positive- or negative-something ?   
 The terrain moves in the World space only along the X and Z World axis.  
 These LOD properties defines if the LOD must be applied from the terrain center perspective :all what's on the right or in front of the center in the World space is said "positive", all what's on the left or behind the terrain center in the World space is said "negative".  
