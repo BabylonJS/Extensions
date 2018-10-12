@@ -398,6 +398,7 @@ This method can also return the value of the terrain normal vector at the coordi
 var normal = BABYLON.Vector.Zero();
 y = terrain.getHeightFromMap(x, z, normal); // update also normal with the terrain normal at (x, z)
 ```
+Note : When the terrain is inverted, the returned height is negative.  
 
 ## Other Properties
 
@@ -425,6 +426,19 @@ var camera = terrain.camera;        // the camera the terrain is linked to. By d
 ```
 
 ## Advanced Terrain
+### Inverted terrain
+We can invert the terrain by setting the property `invertSide` to `true` at construction time.  
+```javascript
+    const terrainOptions = {
+        terrainSub: terrainSub, 
+        mapData: mapData, mapSubX: mapSubX, mapSubZ: mapSubZ, 
+        mapColors: mapColors, 
+        invertSide: true
+    };
+    const terrain = new BABYLON.DynamicTerrain("dt", terrainOptions, scene);
+```
+The terrain is then build inverted upside down and can used as a ceiling for example.  
+
 ### Color map
 A color map can be passed to the terrain at construction time.  
 This color map is a flat array of successive floats between 0 and 1 of each map point _(r, g, b)_ values.  

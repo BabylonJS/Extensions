@@ -21,6 +21,7 @@ declare module BABYLON {
         private _LODPositiveZ;
         private _LODNegativeZ;
         private _terrainCamera;
+        private _inverted;
         shiftFromCamera: {
             x: number;
             z: number;
@@ -117,17 +118,18 @@ declare module BABYLON {
          * @param mapSubX the number of points along the map width
          * @param mapSubX the number of points along the map height
          * @param {normal: Vector3} (optional)
+         * @param inverted (optional boolean) is the terrain inverted
          * If the optional object {normal: Vector3} is passed, then its property "normal" is updated with the normal vector value at the coordinates (x, z).
          */
         static GetHeightFromMap(x: number, z: number, mapData: number[] | Float32Array, mapSubX: number, mapSubZ: number, options?: {
             normal: Vector3;
-        }): number;
+        }, inverted?: boolean): number;
         private static _GetHeightFromMap;
         /**
          * Static : Computes all the normals from the terrain data map  and stores them in the passed Float32Array reference.
          * This passed array must have the same size than the mapData array.
          */
-        static ComputeNormalsFromMapToRef(mapData: number[] | Float32Array, mapSubX: number, mapSubZ: any, normals: number[] | Float32Array): void;
+        static ComputeNormalsFromMapToRef(mapData: number[] | Float32Array, mapSubX: number, mapSubZ: any, normals: number[] | Float32Array, inverted: boolean): void;
         /**
          * Computes all the map normals from the current terrain data map and sets them to the terrain.
          * Returns the terrain.
