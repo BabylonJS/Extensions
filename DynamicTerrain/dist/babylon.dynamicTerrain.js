@@ -269,9 +269,13 @@ var BABYLON;
             var LODngtvX = this._LODNegativeX;
             var LODpstvZ = this._LODPositiveZ;
             var LODngtvZ = this._LODNegativeZ;
+            var averageSubSizeX = this._averageSubSizeX;
+            var averageSubSizeZ = this._averageSubSizeZ;
             var l = 0 | 0;
             var index = 0 | 0; // current vertex index in the map data array
-            var posIndex = 0 | 0; // current position index in the map data array
+            var posIndex1 = 0 | 0; // current position index in the map data array
+            var posIndex2 = 0 | 0;
+            var posIndex3 = 0 | 0;
             var colIndex = 0 | 0; // current index in the map color array
             var uvIndex = 0 | 0; // current index in the map uv array
             var terIndex = 0 | 0; // current vertex index in the terrain map array when used as a data map
@@ -319,10 +323,10 @@ var BABYLON;
                     terIndex = mod(deltaSubZ + stepJ, terrainIdx) * terrainIdx + mod(deltaSubX + stepI, terrainIdx);
                     // related index in the array of positions (data map)
                     if (datamap) {
-                        posIndex = 3 * index;
+                        posIndex1 = 3 * index;
                     }
                     else {
-                        posIndex = 3 * terIndex;
+                        posIndex1 = 3 * terIndex;
                     }
                     // related index in the UV map
                     if (uvmap) {
@@ -338,6 +342,9 @@ var BABYLON;
                     else {
                         colIndex = 3 * terIndex;
                     }
+                    //map indexes
+                    posIndex2 = posIndex1 + 1;
+                    posIndex3 = posIndex1 + 2;
                     // ribbon indexes
                     ribbonPosInd = 3 * ribbonInd;
                     ribbonColInd = 4 * ribbonInd;
@@ -351,13 +358,13 @@ var BABYLON;
                     ribbonColInd4 = ribbonColInd + 3;
                     ribbonInd += 1;
                     // geometry                  
-                    positions[ribbonPosInd1] = this._averageSubSizeX * stepI;
-                    positions[ribbonPosInd2] = mapData[posIndex + 1];
-                    positions[ribbonPosInd3] = this._averageSubSizeZ * stepJ;
+                    positions[ribbonPosInd1] = averageSubSizeX * stepI;
+                    positions[ribbonPosInd2] = mapData[posIndex2];
+                    positions[ribbonPosInd3] = averageSubSizeZ * stepJ;
                     if (dontComputeNormals) {
-                        normals[ribbonPosInd1] = mapNormals[posIndex];
-                        normals[ribbonPosInd2] = mapNormals[posIndex + 1];
-                        normals[ribbonPosInd3] = mapNormals[posIndex + 2];
+                        normals[ribbonPosInd1] = mapNormals[posIndex1];
+                        normals[ribbonPosInd2] = mapNormals[posIndex2];
+                        normals[ribbonPosInd3] = mapNormals[posIndex3];
                     }
                     // bbox internal update
                     if (positions[ribbonPosInd1] < bbMin.x) {
@@ -396,7 +403,7 @@ var BABYLON;
                         var vertexColor = vertex.color;
                         var vertexUvs = vertex.uvs;
                         vertexPosition.copyFromFloats(positions[ribbonPosInd1], positions[ribbonPosInd2], positions[ribbonPosInd3]);
-                        vertexWorldPosition.copyFromFloats(mapData[posIndex], vertexPosition.y, mapData[posIndex + 2]);
+                        vertexWorldPosition.copyFromFloats(mapData[posIndex1], vertexPosition.y, mapData[posIndex3]);
                         vertex.lodX = lodI;
                         vertex.lodZ = lodJ;
                         vertexColor.copyFromFloats(colors[ribbonColInd1], colors[ribbonColInd2], colors[ribbonColInd3], colors[ribbonColInd4]);
