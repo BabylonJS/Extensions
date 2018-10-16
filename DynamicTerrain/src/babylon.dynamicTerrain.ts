@@ -11,6 +11,11 @@ module BABYLON {
         private _mapUVs: number[] | Float32Array;       // UV data of the map
         private _mapColors: number[] | Float32Array;    // Color data of the map
         private _mapNormals: number[] | Float32Array;   // Normal data of the map
+        private _SPmapData: number[][] | Float32Array[];// Solid particle data (position, rotation, scaling) of the particle map : array of arrays, one per particle type
+        private _sps: SolidParticleSystem;              // SPS used to manage the particles
+        private _particleTypes: number[];               // types of particles (shapeId)
+        private _nbPerType: number[];                   // nb of particles per type
+        private _particleDataStride: number = 9;        // stride : position, rotation, scaling
         private _scene: Scene;                          // current scene
         private _subToleranceX: number = 1|0;           // how many cells flought over thy the camera on the terrain x axis before update
         private _subToleranceZ: number = 1|0;           // how many cells flought over thy the camera on the terrain z axis before update
@@ -41,6 +46,8 @@ module BABYLON {
         private _datamap: boolean = false;                  // boolean : true if an data map is passed as parameter
         private _uvmap: boolean = false;                    // boolean : true if an UV map is passed as parameter
         private _colormap: boolean = false;                 // boolean : true if an color map is passed as parameter
+        private _mapSPData: boolean = false;                // boolean : true if a SPmapData is passed as parameter
+        private _mapQuads: number[][][];                    // map quads of types of particle index in the SPmapData array mapQuads[mapIndex][partType] = [pIndex1, pIndex2, ...] (particle indexes in SPmapData)
         private static _vertex: any = {                     // current vertex object passed to the user custom function
             position: Vector3.Zero(),                           // vertex position in the terrain space (Vector3)
             uvs: Vector2.Zero(),                                // vertex uv
@@ -88,6 +95,8 @@ module BABYLON {
          * @param {*} mapNormals the array of the map normal data (optional) : r,g,b successive values, each between 0 and 1.
          * @param {*} invertSide boolean, to invert the terrain mesh upside down. Default false.
          * @param {*} camera the camera to link the terrain to. Optional, by default the scene active camera
+         * @param {*} SPmapData an array of arrays or Float32Arrays (one per particle type) of particle data (position, rotation, scaling) on the map. Optional.
+         * @param {*} sps the Solid Particle System used to manage the particles. Required when used with SPmapData.
          */
         constructor(name: string, options: {
             terrainSub?: number, 
@@ -97,7 +106,9 @@ module BABYLON {
             mapColors?: number[] | Float32Array,
             mapNormals?: number[] | Float32Array,
             invertSide?: boolean,
-            camera?: Camera   
+            camera?: Camera,
+            SPmapData?: number[][] | Float32Array[];
+            sps?: SolidParticleSystem
         }, scene: Scene) {
             
             this.name = name;
@@ -111,11 +122,14 @@ module BABYLON {
             this._scene = scene;
             this._terrainCamera = options.camera || scene.activeCamera;
             this._inverted = options.invertSide;
+            this._SPmapData = options.SPmapData;
+            this._sps = options.sps;
             
             // initialize the map arrays if not passed as parameters
             this._datamap = (this._mapData) ? true : false;
             this._uvmap = (this._mapUVs) ? true : false;
             this._colormap = (this._mapColors) ? true : false;
+            this._mapSPData = (this._SPmapData) ? true : false;
             this._mapData = (this._datamap) ? this._mapData : new Float32Array(this._terrainIdx * this._terrainIdx * 3);
             this._mapUVs = (this._uvmap) ? this._mapUVs : new Float32Array(this._terrainIdx * this._terrainIdx * 2);
             if (this._datamap) {
@@ -210,19 +224,82 @@ module BABYLON {
             this.update(true);
             this._terrain.position.x = this._terrainCamera.globalPosition.x - this._terrainHalfSizeX + this.shiftFromCamera.x;
             this._terrain.position.z = this._terrainCamera.globalPosition.z - this._terrainHalfSizeZ + this.shiftFromCamera.z;
-                // initialize deltaSub to make
-            let deltaNbSubX = (this._terrain.position.x - this._mapData[0]) / this._averageSubSizeX;
-            let deltaNbSubZ = (this._terrain.position.z - this._mapData[2]) / this._averageSubSizeZ
+                // initialize deltaSub to make on the map
+            let deltaNbSubX = (this._terrain.position.x - mapData[0]) / this._averageSubSizeX;
+            let deltaNbSubZ = (this._terrain.position.z - mapData[2]) / this._averageSubSizeZ
             this._deltaSubX = (deltaNbSubX > 0) ? Math.floor(deltaNbSubX) : Math.ceil(deltaNbSubX);
             this._deltaSubZ = (deltaNbSubZ > 0) ? Math.floor(deltaNbSubZ) : Math.ceil(deltaNbSubZ);
             this._scene.onBeforeRenderObservable.add(() => {
                 const refreshEveryFrame = this._refreshEveryFrame;
+                const sps = this._sps;
                 this.beforeUpdate(refreshEveryFrame);
                 this.update(refreshEveryFrame);
                 this.afterUpdate(refreshEveryFrame);
+                if (sps) {
+                    sps.setParticles();
+                }
             });  
-            this.update(true); // recompute everything once the initial deltas are calculated       
+            this.update(true); // recompute everything once the initial deltas are calculated    
+            
+            // if SP data, populate the map quads
+            // mapQuads[mapIndex][partType] = [partIdx1 , partIdx2 ...] partIdx are particle indexes in SPmapData
+            const SPmapData = this._SPmapData;
+            const dataStride = this._particleDataStride;
+            if (this._mapSPData) {
+                const quadNb = this._mapSubX * this._mapSubZ;
+                const quads = new Array(quadNb);
+                this._mapQuads = quads;
+                for (let q = 0; q < quadNb; q++) {
+                    let qs = q + this.mapSubX;
+                    let x1 = mapData[q * 3];
+                    let z1 = mapData[q * 3 + 2]
+                    let x4 = mapData[(qs + 1) * 3];
+                    let z4 = mapData[(qs + 1) * 3 + 2];
+                    let quad = quads[q];
+
+                    for (let t = 0; t < SPmapData.length; t++) {
+                        quad[t] = [];
+                        let data = SPmapData[t];
+                        let nb = (data.length / dataStride)|0;
+                        for (let pIdx = 0;  pIdx < nb; pIdx++) {
+                            // particle position x, z in the map
+                            let x = data[pIdx];
+                            let z = data[pIdx + 2];
+                            // is the current particle in the quad ?
+                            if (x >= x1 && x < x4 && z >= z1 && z < z4) {
+                                // then push the particle index from the SPmapData array into the quads array
+                                quad[t].push(pIdx);
+                            }
+                        }
+                    }
+                }
+
+                // store particle types
+                const types = [];
+                this._particleTypes = types;
+                const nbPerType = [];
+                this._nbPerType = nbPerType;
+                const sps = this._sps;
+                const nbParticles = sps.nbParticles;
+                const particles = sps.particles;
+                let type = particles[0].shapeId;
+                types.push(type);
+                let count = 1;
+                for (var p = 1; p < nbParticles; p++) {
+                    if (type != particles[p].shapeId) {
+                        type = particles[p].shapeId;
+                        types.push(type);
+                        nbPerType.push(count);
+                        count = 0;
+                    }
+                    count++;
+                }
+
+                // hook the sps to the terrain for ever
+                this._sps.mesh.position = this._terrain.position;
+            }
         }
+
 
         /**
          * Updates the terrain position and shape according to the camera position.
@@ -311,6 +388,12 @@ module BABYLON {
             const mapNormals = this._mapNormals;
             const mapData = this._mapData;
             const mapUVs = this._mapUVs;
+            const mapSPData = this._mapSPData;
+            const quads = this._mapQuads;
+            const types = this._particleTypes;
+            const nbPerType = this._nbPerType;
+            const SPmapData = this._SPmapData;
+            const dataStride = this._particleDataStride;
             const LODLimits = this._LODLimits;
             const terrainSub = this._terrainSub;
             const mod = this._mod;
@@ -493,8 +576,56 @@ module BABYLON {
                         positions[ribbonPosInd3] = vertexPosition.z;
                     }
 
-                    stepI += lodI;
-                    
+                    // SPS management
+                    if (mapSPData) {
+                        // reset all the particles to invisible
+                        const sps = this._sps;
+                        const nbParticles = sps.nbParticles;
+                        const particles = sps.particles;
+                        for (let p = 0; p < nbParticles; p++) {
+                            particles[p].isVisible = false;
+                        }
+
+                        let quad = quads[index];
+                        if (quad) {         // if a quad contains some particles in the map
+                              let typeStartIndex = 0;  // particle start index for a given type
+                            for (let t = 0; t < types.length; t++) {
+                                let type = types[t];
+                                let data = SPmapData[type];
+                                let partIndexes = quad[type];
+                                let countPerType = 0;
+                                const nbQuadParticles = partIndexes.length;
+                                let nbInSPS = nbPerType[t]; 
+                                let min = (nbInSPS < nbQuadParticles) ? nbInSPS : nbQuadParticles;  // don't iterate beyond possible
+                                for (let pIdx = 0; pIdx < min; pIdx++) {
+                                    let idx = pIdx * dataStride;
+
+                                    // set successive particles of this type       
+                                    let particle = particles[typeStartIndex + countPerType];
+                                    let pos = particle.position;
+                                    let rot = particle.rotation;
+                                    let scl = particle.scaling;
+                                    pos.x = data[idx];
+                                    pos.y = data[idx + 1];
+                                    pos.z = data[idx + 2];
+                                    rot.x = data[idx + 3];
+                                    rot.y = data[idx + 4];
+                                    rot.z = data[idx + 5];
+                                    scl.x = data[idx + 6];
+                                    scl.y = data[idx + 7];
+                                    scl.z = data[idx + 8];
+                                    particle.isVisible = true;
+
+                                    countPerType++;
+                                }
+                                countPerType = 0;
+                                typeStartIndex += nbInSPS;
+                            }
+                        }
+
+                    }
+
+                    stepI += lodI;                    
                 }
                 stepI = 0;
                 stepJ += lodJ;
