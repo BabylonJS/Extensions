@@ -15,9 +15,12 @@ var BABYLON;
          * @param {*} mapNormals the array of the map normal data (optional) : r,g,b successive values, each between 0 and 1.
          * @param {*} invertSide boolean, to invert the terrain mesh upside down. Default false.
          * @param {*} camera the camera to link the terrain to. Optional, by default the scene active camera
+         * @param {*} SPmapData an array of arrays or Float32Arrays (one per particle type) of particle data (position, rotation, scaling) on the map. Optional.
+         * @param {*} sps the Solid Particle System used to manage the particles. Required when used with SPmapData.
          */
         function DynamicTerrain(name, options, scene) {
             var _this = this;
+            this._particleDataStride = 9; // stride : position, rotation, scaling
             this._subToleranceX = 1 | 0; // how many cells flought over thy the camera on the terrain x axis before update
             this._subToleranceZ = 1 | 0; // how many cells flought over thy the camera on the terrain z axis before update
             this._LODLimits = []; // array of LOD limits
@@ -41,6 +44,7 @@ var BABYLON;
             this._datamap = false; // boolean : true if an data map is passed as parameter
             this._uvmap = false; // boolean : true if an UV map is passed as parameter
             this._colormap = false; // boolean : true if an color map is passed as parameter
+            this._mapSPData = false; // boolean : true if a SPmapData is passed as parameter
             this._averageSubSizeX = 0.0; // map cell average x size
             this._averageSubSizeZ = 0.0; // map cell average z size
             this._terrainSizeX = 0.0; // terrain x size
@@ -64,10 +68,13 @@ var BABYLON;
             this._scene = scene;
             this._terrainCamera = options.camera || scene.activeCamera;
             this._inverted = options.invertSide;
+            this._SPmapData = options.SPmapData;
+            this._sps = options.sps;
             // initialize the map arrays if not passed as parameters
             this._datamap = (this._mapData) ? true : false;
             this._uvmap = (this._mapUVs) ? true : false;
             this._colormap = (this._mapColors) ? true : false;
+            this._mapSPData = (this._SPmapData) ? true : false;
             this._mapData = (this._datamap) ? this._mapData : new Float32Array(this._terrainIdx * this._terrainIdx * 3);
             this._mapUVs = (this._uvmap) ? this._mapUVs : new Float32Array(this._terrainIdx * this._terrainIdx * 2);
             if (this._datamap) {
@@ -159,18 +166,82 @@ var BABYLON;
             this.update(true);
             this._terrain.position.x = this._terrainCamera.globalPosition.x - this._terrainHalfSizeX + this.shiftFromCamera.x;
             this._terrain.position.z = this._terrainCamera.globalPosition.z - this._terrainHalfSizeZ + this.shiftFromCamera.z;
-            // initialize deltaSub to make
-            var deltaNbSubX = (this._terrain.position.x - this._mapData[0]) / this._averageSubSizeX;
-            var deltaNbSubZ = (this._terrain.position.z - this._mapData[2]) / this._averageSubSizeZ;
+            // initialize deltaSub to make on the map
+            var deltaNbSubX = (this._terrain.position.x - mapData[0]) / this._averageSubSizeX;
+            var deltaNbSubZ = (this._terrain.position.z - mapData[2]) / this._averageSubSizeZ;
             this._deltaSubX = (deltaNbSubX > 0) ? Math.floor(deltaNbSubX) : Math.ceil(deltaNbSubX);
             this._deltaSubZ = (deltaNbSubZ > 0) ? Math.floor(deltaNbSubZ) : Math.ceil(deltaNbSubZ);
             this._scene.onBeforeRenderObservable.add(function () {
                 var refreshEveryFrame = _this._refreshEveryFrame;
+                var sps = _this._sps;
                 _this.beforeUpdate(refreshEveryFrame);
                 _this.update(refreshEveryFrame);
                 _this.afterUpdate(refreshEveryFrame);
+                if (sps) {
+                    sps.setParticles();
+                }
             });
-            this.update(true); // recompute everything once the initial deltas are calculated       
+            this.update(true); // recompute everything once the initial deltas are calculated    
+            // if SP data, populate the map quads
+            // mapQuads[mapIndex][partType] = [partIdx1 , partIdx2 ...] partIdx are particle indexes in SPmapData
+            var SPmapData = this._SPmapData;
+            var dataStride = this._particleDataStride;
+            if (this._mapSPData) {
+                var mapSizeX = this._mapSizeX;
+                var mapSizeZ = this._mapSizeZ;
+                var mapSubX = this._mapSubX;
+                var mapSubZ = this._mapSubZ;
+                var quadNb = this._mapSubX * this._mapSubZ;
+                var quads = new Array(quadNb);
+                this._mapQuads = quads;
+                var x0 = mapData[0];
+                var z0 = mapData[2];
+                for (var t = 0; t < SPmapData.length; t++) {
+                    var data = SPmapData[t];
+                    var nb = (data.length / dataStride) | 0;
+                    for (var pIdx = 0; pIdx < nb; pIdx++) {
+                        // particle position x, z in the map
+                        var dIdx = pIdx * dataStride;
+                        var x = data[dIdx];
+                        var z = data[dIdx + 2];
+                        x = x - Math.floor((x - x0) / mapSizeX) * mapSizeX;
+                        z = z - Math.floor((z - z0) / mapSizeZ) * mapSizeZ;
+                        var col = Math.floor((x - x0) * mapSubX / mapSizeX);
+                        var row = Math.floor((z - z0) * mapSubZ / mapSizeZ);
+                        var quadIdx = row * mapSubX + col;
+                        if (quads[quadIdx] === undefined) {
+                            quads[quadIdx] = [];
+                        }
+                        if (quads[quadIdx][t] === undefined) {
+                            quads[quadIdx][t] = [];
+                        }
+                        var quad = quads[quadIdx][t];
+                        // push the particle index from the SPmapData array into the quads array
+                        quad.push(pIdx);
+                    }
+                }
+                // store particle types
+                var types = [];
+                this._particleTypes = types;
+                var nbPerType = [];
+                this._nbPerType = nbPerType;
+                var sps = this._sps;
+                var nbParticles = sps.nbParticles;
+                var particles = sps.particles;
+                var type = particles[0].shapeId;
+                types.push(type);
+                var count = 1;
+                for (var p = 1; p < nbParticles; p++) {
+                    if (type != particles[p].shapeId) {
+                        type = particles[p].shapeId;
+                        types.push(type);
+                        nbPerType.push(count);
+                        count = 0;
+                    }
+                    count++;
+                }
+                nbPerType.push(count);
+            }
         }
         /**
          * Updates the terrain position and shape according to the camera position.
@@ -251,6 +322,12 @@ var BABYLON;
             var mapNormals = this._mapNormals;
             var mapData = this._mapData;
             var mapUVs = this._mapUVs;
+            var mapSPData = this._mapSPData;
+            var quads = this._mapQuads;
+            var types = this._particleTypes;
+            var nbPerType = this._nbPerType;
+            var SPmapData = this._SPmapData;
+            var dataStride = this._particleDataStride;
             var LODLimits = this._LODLimits;
             var terrainSub = this._terrainSub;
             var mod = this._mod;
@@ -271,6 +348,8 @@ var BABYLON;
             var LODngtvZ = this._LODNegativeZ;
             var averageSubSizeX = this._averageSubSizeX;
             var averageSubSizeZ = this._averageSubSizeZ;
+            var mapSizeX = this._mapSizeX;
+            var mapSizeZ = this._mapSizeZ;
             var l = 0 | 0;
             var index = 0 | 0; // current vertex index in the map data array
             var posIndex1 = 0 | 0; // current position index in the map data array
@@ -296,6 +375,15 @@ var BABYLON;
             }
             BABYLON.Vector3.FromFloatsToRef(Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE, bbMin);
             BABYLON.Vector3.FromFloatsToRef(-Number.MAX_VALUE, -Number.MAX_VALUE, -Number.MAX_VALUE, bbMax);
+            if (mapSPData) {
+                var sps = this._sps;
+                // reset all the particles to invisible
+                var nbParticles = sps.nbParticles;
+                var particles = sps.particles;
+                for (var p = 0; p < nbParticles; p++) {
+                    //particles[p].isVisible = false;
+                }
+            }
             for (var j = 0 | 0; j <= terrainSub; j++) {
                 // LOD Z
                 axisLODValue = LODValue;
@@ -420,6 +508,51 @@ var BABYLON;
                         positions[ribbonPosInd2] = vertexPosition.y;
                         positions[ribbonPosInd3] = vertexPosition.z;
                     }
+                    // SPS management
+                    if (mapSPData && quads) {
+                        var sps = this._sps;
+                        var particles = sps.particles;
+                        var quad = quads[index];
+                        if (quad) { // if a quad contains some particles in the map
+                            var typeStartIndex = 0; // particle start index for a given type
+                            for (var t = 0; t < quad.length; t++) {
+                                //let type = types[t];
+                                var data = SPmapData[t];
+                                var partIndexes = quad[t];
+                                if (partIndexes) {
+                                    var countPerType = 0;
+                                    var nbQuadParticles = partIndexes.length;
+                                    var nbInSPS = nbPerType[t];
+                                    var min = (nbInSPS < nbQuadParticles) ? nbInSPS : nbQuadParticles; // don't iterate beyond possible
+                                    for (var pIdx = 0; pIdx < min; pIdx++) {
+                                        var idx = pIdx * dataStride;
+                                        // set successive particles of this type       
+                                        var particle = particles[typeStartIndex + countPerType];
+                                        var pos = particle.position;
+                                        var rot = particle.rotation;
+                                        var scl = particle.scaling;
+                                        var x0 = mapData[0];
+                                        var z0 = mapData[2];
+                                        var x = data[idx];
+                                        var z = data[idx + 2];
+                                        pos.x = x;
+                                        pos.y = data[idx + 1];
+                                        pos.z = z;
+                                        rot.x = data[idx + 3];
+                                        rot.y = data[idx + 4];
+                                        rot.z = data[idx + 5];
+                                        scl.x = data[idx + 6];
+                                        scl.y = data[idx + 7];
+                                        scl.z = data[idx + 8];
+                                        particle.isVisible = true;
+                                        countPerType++;
+                                    }
+                                    countPerType = 0;
+                                    typeStartIndex += nbInSPS;
+                                }
+                            }
+                        }
+                    }
                     stepI += lodI;
                 }
                 stepI = 0;
@@ -500,7 +633,7 @@ var BABYLON;
         DynamicTerrain._GetHeightFromMap = function (x, z, mapData, mapSubX, mapSubZ, mapSizeX, mapSizeZ, options, inverted) {
             var x0 = mapData[0];
             var z0 = mapData[2];
-            // reset x and z in the map space so they are between 0 and the axis map size
+            // reset x and z in the map space so they are between 0 and the map size
             x = x - Math.floor((x - x0) / mapSizeX) * mapSizeX;
             z = z - Math.floor((z - z0) / mapSizeZ) * mapSizeZ;
             var col1 = Math.floor((x - x0) * mapSubX / mapSizeX);

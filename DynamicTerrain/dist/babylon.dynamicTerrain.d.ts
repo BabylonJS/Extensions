@@ -9,6 +9,11 @@ declare module BABYLON {
         private _mapUVs;
         private _mapColors;
         private _mapNormals;
+        private _SPmapData;
+        private _sps;
+        private _particleTypes;
+        private _nbPerType;
+        private _particleDataStride;
         private _scene;
         private _subToleranceX;
         private _subToleranceZ;
@@ -39,6 +44,8 @@ declare module BABYLON {
         private _datamap;
         private _uvmap;
         private _colormap;
+        private _mapSPData;
+        private _mapQuads;
         private static _vertex;
         private _averageSubSizeX;
         private _averageSubSizeZ;
@@ -76,6 +83,8 @@ declare module BABYLON {
          * @param {*} mapNormals the array of the map normal data (optional) : r,g,b successive values, each between 0 and 1.
          * @param {*} invertSide boolean, to invert the terrain mesh upside down. Default false.
          * @param {*} camera the camera to link the terrain to. Optional, by default the scene active camera
+         * @param {*} SPmapData an array of arrays or Float32Arrays (one per particle type) of particle data (position, rotation, scaling) on the map. Optional.
+         * @param {*} sps the Solid Particle System used to manage the particles. Required when used with SPmapData.
          */
         constructor(name: string, options: {
             terrainSub?: number;
@@ -87,6 +96,8 @@ declare module BABYLON {
             mapNormals?: number[] | Float32Array;
             invertSide?: boolean;
             camera?: Camera;
+            SPmapData?: number[][] | Float32Array[];
+            sps?: SolidParticleSystem;
         }, scene: Scene);
         /**
          * Updates the terrain position and shape according to the camera position.
