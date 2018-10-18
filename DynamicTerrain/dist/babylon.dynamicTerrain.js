@@ -181,7 +181,6 @@ var BABYLON;
                     sps.setParticles();
                 }
             });
-            this.update(true); // recompute everything once the initial deltas are calculated    
             // if SP data, populate the map quads
             // mapQuads[mapIndex][partType] = [partIdx1 , partIdx2 ...] partIdx are particle indexes in SPmapData
             var SPmapData = this._SPmapData;
@@ -220,28 +219,31 @@ var BABYLON;
                         quad.push(pIdx);
                     }
                 }
-                // store particle types
-                var types = [];
-                this._particleTypes = types;
-                var nbPerType = [];
-                this._nbPerType = nbPerType;
+                // update the sps
                 var sps = this._sps;
+                sps.computeBoundingBox = true;
+                // store particle types
+                var spsTypeStartIndexes = [];
+                this._spsTypeStartIndexes = spsTypeStartIndexes;
+                var spsNbPerType = [];
+                this._spsNbPerType = spsNbPerType;
                 var nbParticles = sps.nbParticles;
                 var particles = sps.particles;
-                var type = particles[0].shapeId;
-                types.push(type);
+                var type = 0;
+                spsTypeStartIndexes.push(type);
                 var count = 1;
                 for (var p = 1; p < nbParticles; p++) {
                     if (type != particles[p].shapeId) {
-                        type = particles[p].shapeId;
-                        types.push(type);
-                        nbPerType.push(count);
+                        type++;
+                        spsTypeStartIndexes.push(p);
+                        spsNbPerType.push(count);
                         count = 0;
                     }
                     count++;
                 }
-                nbPerType.push(count);
+                spsNbPerType.push(count);
             }
+            this.update(true); // recompute everything once the initial deltas are calculated 
         }
         /**
          * Updates the terrain position and shape according to the camera position.
@@ -325,7 +327,7 @@ var BABYLON;
             var mapSPData = this._mapSPData;
             var quads = this._mapQuads;
             var types = this._particleTypes;
-            var nbPerType = this._nbPerType;
+            var nbPerType = this._spsNbPerType;
             var SPmapData = this._SPmapData;
             var dataStride = this._particleDataStride;
             var LODLimits = this._LODLimits;
@@ -381,7 +383,7 @@ var BABYLON;
                 var nbParticles = sps.nbParticles;
                 var particles = sps.particles;
                 for (var p = 0; p < nbParticles; p++) {
-                    //particles[p].isVisible = false;
+                    particles[p].isVisible = false;
                 }
             }
             for (var j = 0 | 0; j <= terrainSub; j++) {
@@ -512,27 +514,26 @@ var BABYLON;
                     if (mapSPData && quads) {
                         var sps = this._sps;
                         var particles = sps.particles;
+                        var spsTypeStartIndexes = this._spsTypeStartIndexes;
                         var quad = quads[index];
                         if (quad) { // if a quad contains some particles in the map
-                            var typeStartIndex = 0; // particle start index for a given type
                             for (var t = 0; t < quad.length; t++) {
-                                //let type = types[t];
                                 var data = SPmapData[t];
                                 var partIndexes = quad[t];
                                 if (partIndexes) {
-                                    var countPerType = 0;
+                                    var typeStartIndex = spsTypeStartIndexes[t]; // particle start index for a given type in the SPS
+                                    var x0 = mapData[0];
+                                    var z0 = mapData[2];
                                     var nbQuadParticles = partIndexes.length;
                                     var nbInSPS = nbPerType[t];
                                     var min = (nbInSPS < nbQuadParticles) ? nbInSPS : nbQuadParticles; // don't iterate beyond possible
                                     for (var pIdx = 0; pIdx < min; pIdx++) {
                                         var idx = pIdx * dataStride;
-                                        // set successive particles of this type       
-                                        var particle = particles[typeStartIndex + countPerType];
+                                        // set successive available particles of this type       
+                                        var particle = particles[typeStartIndex + pIdx];
                                         var pos = particle.position;
                                         var rot = particle.rotation;
                                         var scl = particle.scaling;
-                                        var x0 = mapData[0];
-                                        var z0 = mapData[2];
                                         var x = data[idx];
                                         var z = data[idx + 2];
                                         pos.x = x;
@@ -545,10 +546,7 @@ var BABYLON;
                                         scl.y = data[idx + 7];
                                         scl.z = data[idx + 8];
                                         particle.isVisible = true;
-                                        countPerType++;
                                     }
-                                    countPerType = 0;
-                                    typeStartIndex += nbInSPS;
                                 }
                             }
                         }

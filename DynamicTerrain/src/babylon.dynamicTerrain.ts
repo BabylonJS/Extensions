@@ -14,7 +14,8 @@ module BABYLON {
         private _SPmapData: number[][] | Float32Array[];// Solid particle data (position, rotation, scaling) of the particle map : array of arrays, one per particle type
         private _sps: SolidParticleSystem;              // SPS used to manage the particles
         private _particleTypes: number[];               // types of particles (shapeId)
-        private _nbPerType: number[];                   // nb of particles per type
+        private _spsTypeStartIndexes: number[];         // type start indexes in the SPS
+        private _spsNbPerType: number[];                // number of particles available per type in the SPS
         private _particleDataStride: number = 9;        // stride : position, rotation, scaling
         private _scene: Scene;                          // current scene
         private _subToleranceX: number = 1|0;           // how many cells flought over thy the camera on the terrain x axis before update
@@ -239,7 +240,7 @@ module BABYLON {
                     sps.setParticles();
                 }
             });  
-            this.update(true); // recompute everything once the initial deltas are calculated    
+               
             
             // if SP data, populate the map quads
             // mapQuads[mapIndex][partType] = [partIdx1 , partIdx2 ...] partIdx are particle indexes in SPmapData
@@ -282,28 +283,32 @@ module BABYLON {
                     } 
                 }
 
-                // store particle types
-                const types = [];
-                this._particleTypes = types;
-                const nbPerType = [];
-                this._nbPerType = nbPerType;
+                // update the sps
                 const sps = this._sps;
+                sps.computeBoundingBox = true;
+
+                // store particle types
+                const spsTypeStartIndexes = [];
+                this._spsTypeStartIndexes = spsTypeStartIndexes;
+                const spsNbPerType = [];
+                this._spsNbPerType = spsNbPerType;
                 const nbParticles = sps.nbParticles;
                 const particles = sps.particles;
-                let type = particles[0].shapeId;
-                types.push(type);
+                let type = 0;
+                spsTypeStartIndexes.push(type);
                 let count = 1;
                 for (var p = 1; p < nbParticles; p++) {
                     if (type != particles[p].shapeId) {
-                        type = particles[p].shapeId;
-                        types.push(type);
-                        nbPerType.push(count);
+                        type++;
+                        spsTypeStartIndexes.push(p);
+                        spsNbPerType.push(count);
                         count = 0;
                     }
                     count++;
                 }
-                nbPerType.push(count);
+                spsNbPerType.push(count);
             }
+            this.update(true); // recompute everything once the initial deltas are calculated 
         }
 
 
@@ -397,7 +402,7 @@ module BABYLON {
             const mapSPData = this._mapSPData;
             const quads = this._mapQuads;
             const types = this._particleTypes;
-            const nbPerType = this._nbPerType;
+            const nbPerType = this._spsNbPerType;
             const SPmapData = this._SPmapData;
             const dataStride = this._particleDataStride;
             const LODLimits = this._LODLimits;
@@ -456,7 +461,7 @@ module BABYLON {
                 const nbParticles = sps.nbParticles;
                 const particles = sps.particles;
                 for (let p = 0; p < nbParticles; p++) {
-                    //particles[p].isVisible = false;
+                    particles[p].isVisible = false;
                 }
             }
             
@@ -598,28 +603,26 @@ module BABYLON {
                     if (mapSPData && quads) {
                         const sps = this._sps;
                         const particles = sps.particles;
+                        const spsTypeStartIndexes = this._spsTypeStartIndexes;
                         let quad = quads[index];
                         if (quad) {         // if a quad contains some particles in the map
-                            let typeStartIndex = 0;  // particle start index for a given type
                             for (let t = 0; t < quad.length; t++) {
-                                //let type = types[t];
                                 let data = SPmapData[t];
                                 let partIndexes = quad[t];
                                 if (partIndexes) {
-                                    let countPerType = 0;
+                                    let typeStartIndex = spsTypeStartIndexes[t];  // particle start index for a given type in the SPS
+                                    let x0 = mapData[0];
+                                    let z0 = mapData[2];
                                     const nbQuadParticles = partIndexes.length;
                                     let nbInSPS = nbPerType[t]; 
                                     let min = (nbInSPS < nbQuadParticles) ? nbInSPS : nbQuadParticles;  // don't iterate beyond possible
                                     for (let pIdx = 0; pIdx < min; pIdx++) {
                                         let idx = pIdx * dataStride;
-
-                                        // set successive particles of this type       
-                                        let particle = particles[typeStartIndex + countPerType];
+                                        // set successive available particles of this type       
+                                        let particle = particles[typeStartIndex + pIdx];
                                         let pos = particle.position;
                                         let rot = particle.rotation;
                                         let scl = particle.scaling;
-                                        let x0 = mapData[0];
-                                        let z0 = mapData[2];
                                         let x = data[idx];
                                         let z = data[idx + 2];
                                         pos.x = x;
@@ -632,11 +635,7 @@ module BABYLON {
                                         scl.y = data[idx + 7];
                                         scl.z = data[idx + 8];
                                         particle.isVisible = true;
-
-                                        countPerType++;
                                     }
-                                    countPerType = 0;
-                                    typeStartIndex += nbInSPS;
                                 }
                             }
                         }

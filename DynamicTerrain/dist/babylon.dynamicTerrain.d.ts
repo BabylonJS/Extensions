@@ -12,7 +12,8 @@ declare module BABYLON {
         private _SPmapData;
         private _sps;
         private _particleTypes;
-        private _nbPerType;
+        private _spsTypeStartIndexes;
+        private _spsNbPerType;
         private _particleDataStride;
         private _scene;
         private _subToleranceX;
