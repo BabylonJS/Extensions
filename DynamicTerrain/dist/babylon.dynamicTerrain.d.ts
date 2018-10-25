@@ -13,6 +13,7 @@ declare module BABYLON {
         private _sps;
         private _particleTypes;
         private _spsTypeStartIndexes;
+        private _nbAvailablePerType;
         private _spsNbPerType;
         private _particleDataStride;
         private _scene;

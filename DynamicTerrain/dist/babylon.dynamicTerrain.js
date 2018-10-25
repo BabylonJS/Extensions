@@ -191,7 +191,7 @@ var BABYLON;
                 var mapSubX = this._mapSubX;
                 var mapSubZ = this._mapSubZ;
                 var quadNb = this._mapSubX * this._mapSubZ;
-                var quads = new Array(quadNb);
+                var quads = [];
                 this._mapQuads = quads;
                 var x0 = mapData[0];
                 var z0 = mapData[2];
@@ -227,16 +227,21 @@ var BABYLON;
                 this._spsTypeStartIndexes = spsTypeStartIndexes;
                 var spsNbPerType = [];
                 this._spsNbPerType = spsNbPerType;
+                var nbAvailablePerType = [];
+                this._nbAvailablePerType = nbAvailablePerType;
                 var nbParticles = sps.nbParticles;
                 var particles = sps.particles;
                 var type = 0;
                 spsTypeStartIndexes.push(type);
+                nbAvailablePerType.push(0);
                 var count = 1;
                 for (var p = 1; p < nbParticles; p++) {
+                    particles[p].isVisible = false;
                     if (type != particles[p].shapeId) {
                         type++;
                         spsTypeStartIndexes.push(p);
                         spsNbPerType.push(count);
+                        nbAvailablePerType.push(count);
                         count = 0;
                     }
                     count++;
@@ -350,8 +355,6 @@ var BABYLON;
             var LODngtvZ = this._LODNegativeZ;
             var averageSubSizeX = this._averageSubSizeX;
             var averageSubSizeZ = this._averageSubSizeZ;
-            var mapSizeX = this._mapSizeX;
-            var mapSizeZ = this._mapSizeZ;
             var l = 0 | 0;
             var index = 0 | 0; // current vertex index in the map data array
             var posIndex1 = 0 | 0; // current position index in the map data array
@@ -379,9 +382,11 @@ var BABYLON;
             BABYLON.Vector3.FromFloatsToRef(-Number.MAX_VALUE, -Number.MAX_VALUE, -Number.MAX_VALUE, bbMax);
             if (mapSPData) {
                 var sps = this._sps;
+                var particles = sps.particles;
+                var spsTypeStartIndexes = this._spsTypeStartIndexes;
+                var nbAvailablePerType = this._nbAvailablePerType;
                 // reset all the particles to invisible
                 var nbParticles = sps.nbParticles;
-                var particles = sps.particles;
                 for (var p = 0; p < nbParticles; p++) {
                     particles[p].isVisible = false;
                 }
@@ -512,9 +517,6 @@ var BABYLON;
                     }
                     // SPS management
                     if (mapSPData && quads) {
-                        var sps = this._sps;
-                        var particles = sps.particles;
-                        var spsTypeStartIndexes = this._spsTypeStartIndexes;
                         var quad = quads[index];
                         if (quad) { // if a quad contains some particles in the map
                             for (var t = 0; t < quad.length; t++) {
@@ -526,29 +528,40 @@ var BABYLON;
                                     var z0 = mapData[2];
                                     var nbQuadParticles = partIndexes.length;
                                     var nbInSPS = nbPerType[t];
-                                    var min = (nbInSPS < nbQuadParticles) ? nbInSPS : nbQuadParticles; // don't iterate beyond possible
+                                    var available = nbAvailablePerType[t];
+                                    var rem = nbInSPS - available;
+                                    var used = (rem > 0) ? rem : 0;
+                                    var min = (available < nbQuadParticles) ? available : nbQuadParticles; // don't iterate beyond possible
                                     for (var pIdx = 0; pIdx < min; pIdx++) {
-                                        var idx = pIdx * dataStride;
+                                        var idm = partIndexes[pIdx] * dataStride;
                                         // set successive available particles of this type       
-                                        var particle = particles[typeStartIndex + pIdx];
+                                        var particle = particles[typeStartIndex + pIdx + used];
                                         var pos = particle.position;
                                         var rot = particle.rotation;
                                         var scl = particle.scaling;
-                                        var x = data[idx];
-                                        var z = data[idx + 2];
+                                        var x = data[idm];
                                         pos.x = x;
-                                        pos.y = data[idx + 1];
+                                        pos.y = data[idm + 1];
+                                        var z = data[idm + 2];
                                         pos.z = z;
-                                        rot.x = data[idx + 3];
-                                        rot.y = data[idx + 4];
-                                        rot.z = data[idx + 5];
-                                        scl.x = data[idx + 6];
-                                        scl.y = data[idx + 7];
-                                        scl.z = data[idx + 8];
+                                        rot.x = data[idm + 3];
+                                        rot.y = data[idm + 4];
+                                        rot.z = data[idm + 5];
+                                        scl.x = data[idm + 6];
+                                        scl.y = data[idm + 7];
+                                        scl.z = data[idm + 8];
                                         particle.isVisible = true;
+                                        available = available - 1;
+                                        used = used + 1;
+                                        min = (available < nbQuadParticles) ? available : nbQuadParticles;
                                     }
+                                    available = (available > 0) ? available : 0;
+                                    nbAvailablePerType[t] = available;
                                 }
                             }
+                        }
+                        for (var c = 0; c < nbAvailablePerType.length; c++) {
+                            nbAvailablePerType[c] = nbPerType[c];
                         }
                     }
                     stepI += lodI;

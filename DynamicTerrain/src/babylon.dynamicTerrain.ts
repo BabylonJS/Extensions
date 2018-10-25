@@ -15,6 +15,7 @@ module BABYLON {
         private _sps: SolidParticleSystem;              // SPS used to manage the particles
         private _particleTypes: number[];               // types of particles (shapeId)
         private _spsTypeStartIndexes: number[];         // type start indexes in the SPS
+        private _nbAvailablePerType: number[];             // per type of used particle counter
         private _spsNbPerType: number[];                // number of particles available per type in the SPS
         private _particleDataStride: number = 9;        // stride : position, rotation, scaling
         private _scene: Scene;                          // current scene
@@ -252,7 +253,7 @@ module BABYLON {
                 const mapSubX = this._mapSubX;
                 const mapSubZ = this._mapSubZ;
                 const quadNb = this._mapSubX * this._mapSubZ;
-                const quads = new Array(quadNb);
+                const quads = [];
                 this._mapQuads = quads;
                 let x0 = mapData[0];
                 let z0 = mapData[2];
@@ -292,16 +293,21 @@ module BABYLON {
                 this._spsTypeStartIndexes = spsTypeStartIndexes;
                 const spsNbPerType = [];
                 this._spsNbPerType = spsNbPerType;
+                const nbAvailablePerType = [];
+                this._nbAvailablePerType = nbAvailablePerType;
                 const nbParticles = sps.nbParticles;
                 const particles = sps.particles;
                 let type = 0;
                 spsTypeStartIndexes.push(type);
+                nbAvailablePerType.push(0);
                 let count = 1;
                 for (var p = 1; p < nbParticles; p++) {
+                    particles[p].isVisible = false;
                     if (type != particles[p].shapeId) {
                         type++;
                         spsTypeStartIndexes.push(p);
                         spsNbPerType.push(count);
+                        nbAvailablePerType.push(count);
                         count = 0;
                     }
                     count++;
@@ -425,8 +431,6 @@ module BABYLON {
             const LODngtvZ = this._LODNegativeZ;
             const averageSubSizeX = this._averageSubSizeX;
             const averageSubSizeZ = this._averageSubSizeZ;
-            const mapSizeX = this._mapSizeX;
-            const mapSizeZ = this._mapSizeZ;
 
             let l = 0|0;
             let index = 0|0;          // current vertex index in the map data array
@@ -456,10 +460,12 @@ module BABYLON {
             Vector3.FromFloatsToRef(-Number.MAX_VALUE, -Number.MAX_VALUE, -Number.MAX_VALUE, bbMax);
 
             if (mapSPData) {
-                const sps = this._sps;
+                var sps = this._sps;
+                var particles = sps.particles;
+                var spsTypeStartIndexes = this._spsTypeStartIndexes;
+                var nbAvailablePerType = this._nbAvailablePerType;
                 // reset all the particles to invisible
                 const nbParticles = sps.nbParticles;
-                const particles = sps.particles;
                 for (let p = 0; p < nbParticles; p++) {
                     particles[p].isVisible = false;
                 }
@@ -601,9 +607,6 @@ module BABYLON {
 
                     // SPS management
                     if (mapSPData && quads) {
-                        const sps = this._sps;
-                        const particles = sps.particles;
-                        const spsTypeStartIndexes = this._spsTypeStartIndexes;
                         let quad = quads[index];
                         if (quad) {         // if a quad contains some particles in the map
                             for (let t = 0; t < quad.length; t++) {
@@ -615,29 +618,41 @@ module BABYLON {
                                     let z0 = mapData[2];
                                     const nbQuadParticles = partIndexes.length;
                                     let nbInSPS = nbPerType[t]; 
-                                    let min = (nbInSPS < nbQuadParticles) ? nbInSPS : nbQuadParticles;  // don't iterate beyond possible
+                                    let available = nbAvailablePerType[t];
+                                    const rem = nbInSPS - available;
+                                    var used = (rem > 0) ? rem : 0;
+                                    let min = (available < nbQuadParticles) ? available : nbQuadParticles;  // don't iterate beyond possible
                                     for (let pIdx = 0; pIdx < min; pIdx++) {
-                                        let idx = pIdx * dataStride;
+                                        let idm = partIndexes[pIdx] * dataStride;
                                         // set successive available particles of this type       
-                                        let particle = particles[typeStartIndex + pIdx];
+                                        let particle = particles[typeStartIndex + pIdx + used];
                                         let pos = particle.position;
                                         let rot = particle.rotation;
                                         let scl = particle.scaling;
-                                        let x = data[idx];
-                                        let z = data[idx + 2];
+                                        let x = data[idm];
                                         pos.x = x;
-                                        pos.y = data[idx + 1];
+                                        pos.y = data[idm + 1];
+                                        let z = data[idm + 2];
                                         pos.z = z;
-                                        rot.x = data[idx + 3];
-                                        rot.y = data[idx + 4];
-                                        rot.z = data[idx + 5];
-                                        scl.x = data[idx + 6];
-                                        scl.y = data[idx + 7];
-                                        scl.z = data[idx + 8];
+                                        rot.x = data[idm + 3];
+                                        rot.y = data[idm + 4];
+                                        rot.z = data[idm + 5];
+                                        scl.x = data[idm + 6];
+                                        scl.y = data[idm + 7];
+                                        scl.z = data[idm + 8];
                                         particle.isVisible = true;
+                                        available = available - 1;
+                                        used = used + 1;
+                                        min = (available < nbQuadParticles) ? available : nbQuadParticles;
                                     }
+                                    available = (available > 0) ? available : 0;
+                                    nbAvailablePerType[t] = available;
                                 }
                             }
+
+                        }
+                        for (let c = 0; c < nbAvailablePerType.length; c++) {
+                            nbAvailablePerType[c] = nbPerType[c];
                         }
                     }
 
