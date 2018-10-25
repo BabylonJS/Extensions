@@ -560,14 +560,16 @@ var BABYLON;
                                 }
                             }
                         }
-                        for (var c = 0; c < nbAvailablePerType.length; c++) {
-                            nbAvailablePerType[c] = nbPerType[c];
-                        }
                     }
                     stepI += lodI;
                 }
                 stepI = 0;
                 stepJ += lodJ;
+            }
+            if (mapSPData && quads) {
+                for (var c = 0; c < nbAvailablePerType.length; c++) {
+                    nbAvailablePerType[c] = nbPerType[c];
+                }
             }
             // ribbon update    
             terrain.updateVerticesData(BABYLON.VertexBuffer.PositionKind, positions, false, false);

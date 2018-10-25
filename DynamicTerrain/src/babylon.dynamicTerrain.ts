@@ -651,15 +651,18 @@ module BABYLON {
                             }
 
                         }
-                        for (let c = 0; c < nbAvailablePerType.length; c++) {
-                            nbAvailablePerType[c] = nbPerType[c];
-                        }
-                    }
 
+                    }
                     stepI += lodI;                    
                 }
                 stepI = 0;
                 stepJ += lodJ;
+            }
+
+            if (mapSPData && quads) {
+                for (let c = 0; c < nbAvailablePerType.length; c++) {
+                    nbAvailablePerType[c] = nbPerType[c];
+                }
             }
 
             // ribbon update    
