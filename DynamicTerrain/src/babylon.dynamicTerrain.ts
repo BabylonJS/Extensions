@@ -466,15 +466,9 @@ module BABYLON {
                 var particles = sps.particles;
                 var spsTypeStartIndexes = this._spsTypeStartIndexes;
                 var nbAvailablePerType = this._nbAvailablePerType;
-                var mapXfactor = 0;
-                var mapZfactor = 0;
-                const terrainSizeX = this._terrainSizeX;
-                const terrainSizeZ = this._terrainSizeZ;
-                const x0 = mapData[0];
-                const z0 = mapData[2];
-                const xlimit = x0 + mapSizeX;
-                const zlimit = z0 + mapSizeZ;
-                const terrainPos = terrain.position;
+                var x0 = mapData[0];
+                var z0 = mapData[2];
+                var terrainPos = terrain.position;
 
                 // reset all the particles to invisible
                 const nbParticles = sps.nbParticles;
@@ -640,10 +634,10 @@ module BABYLON {
                                         let rot = particle.rotation;
                                         let scl = particle.scaling;
                                         let x = data[idm];
-                                        pos.x = x;
+                                        pos.x = x + Math.floor((terrainPos.x - x - x0) / mapSizeX) * mapSizeX;
                                         pos.y = data[idm + 1];
                                         let z = data[idm + 2];
-                                        pos.z = z;
+                                        pos.z = z + Math.floor((terrainPos.z - z - z0) / mapSizeZ) * mapSizeZ;
                                         rot.x = data[idm + 3];
                                         rot.y = data[idm + 4];
                                         rot.z = data[idm + 5];
