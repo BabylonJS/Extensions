@@ -407,7 +407,6 @@ module BABYLON {
             const mapUVs = this._mapUVs;
             const mapSPData = this._mapSPData;
             const quads = this._mapQuads;
-            const types = this._particleTypes;
             const nbPerType = this._spsNbPerType;
             const SPmapData = this._SPmapData;
             const dataStride = this._particleDataStride;
@@ -429,8 +428,11 @@ module BABYLON {
             const LODngtvX = this._LODNegativeX;
             const LODpstvZ = this._LODPositiveZ;
             const LODngtvZ = this._LODNegativeZ;
+            const mapSizeX = this._mapSizeX;
+            const mapSizeZ = this._mapSizeZ;
             const averageSubSizeX = this._averageSubSizeX;
             const averageSubSizeZ = this._averageSubSizeZ;
+            const particleMap = (mapSPData && quads);
 
             let l = 0|0;
             let index = 0|0;          // current vertex index in the map data array
@@ -459,11 +461,21 @@ module BABYLON {
             Vector3.FromFloatsToRef(Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE, bbMin); 
             Vector3.FromFloatsToRef(-Number.MAX_VALUE, -Number.MAX_VALUE, -Number.MAX_VALUE, bbMax);
 
-            if (mapSPData) {
+            if (particleMap) {
                 var sps = this._sps;
                 var particles = sps.particles;
                 var spsTypeStartIndexes = this._spsTypeStartIndexes;
                 var nbAvailablePerType = this._nbAvailablePerType;
+                var mapXfactor = 0;
+                var mapZfactor = 0;
+                const terrainSizeX = this._terrainSizeX;
+                const terrainSizeZ = this._terrainSizeZ;
+                const x0 = mapData[0];
+                const z0 = mapData[2];
+                const xlimit = x0 + mapSizeX;
+                const zlimit = z0 + mapSizeZ;
+                const terrainPos = terrain.position;
+
                 // reset all the particles to invisible
                 const nbParticles = sps.nbParticles;
                 for (let p = 0; p < nbParticles; p++) {
@@ -606,7 +618,7 @@ module BABYLON {
                     }
 
                     // SPS management
-                    if (mapSPData && quads) {
+                    if (particleMap) {
                         let quad = quads[index];
                         if (quad) {         // if a quad contains some particles in the map
                             for (let t = 0; t < quad.length; t++) {
@@ -614,8 +626,6 @@ module BABYLON {
                                 let partIndexes = quad[t];
                                 if (partIndexes) {
                                     let typeStartIndex = spsTypeStartIndexes[t];  // particle start index for a given type in the SPS
-                                    let x0 = mapData[0];
-                                    let z0 = mapData[2];
                                     const nbQuadParticles = partIndexes.length;
                                     let nbInSPS = nbPerType[t]; 
                                     let available = nbAvailablePerType[t];
@@ -659,7 +669,7 @@ module BABYLON {
                 stepJ += lodJ;
             }
 
-            if (mapSPData && quads) {
+            if (particleMap) {
                 for (let c = 0; c < nbAvailablePerType.length; c++) {
                     nbAvailablePerType[c] = nbPerType[c];
                 }

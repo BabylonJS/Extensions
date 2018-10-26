@@ -331,7 +331,6 @@ var BABYLON;
             var mapUVs = this._mapUVs;
             var mapSPData = this._mapSPData;
             var quads = this._mapQuads;
-            var types = this._particleTypes;
             var nbPerType = this._spsNbPerType;
             var SPmapData = this._SPmapData;
             var dataStride = this._particleDataStride;
@@ -353,8 +352,11 @@ var BABYLON;
             var LODngtvX = this._LODNegativeX;
             var LODpstvZ = this._LODPositiveZ;
             var LODngtvZ = this._LODNegativeZ;
+            var mapSizeX = this._mapSizeX;
+            var mapSizeZ = this._mapSizeZ;
             var averageSubSizeX = this._averageSubSizeX;
             var averageSubSizeZ = this._averageSubSizeZ;
+            var particleMap = (mapSPData && quads);
             var l = 0 | 0;
             var index = 0 | 0; // current vertex index in the map data array
             var posIndex1 = 0 | 0; // current position index in the map data array
@@ -380,11 +382,20 @@ var BABYLON;
             }
             BABYLON.Vector3.FromFloatsToRef(Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE, bbMin);
             BABYLON.Vector3.FromFloatsToRef(-Number.MAX_VALUE, -Number.MAX_VALUE, -Number.MAX_VALUE, bbMax);
-            if (mapSPData) {
+            if (particleMap) {
                 var sps = this._sps;
                 var particles = sps.particles;
                 var spsTypeStartIndexes = this._spsTypeStartIndexes;
                 var nbAvailablePerType = this._nbAvailablePerType;
+                var mapXfactor = 0;
+                var mapZfactor = 0;
+                var terrainSizeX = this._terrainSizeX;
+                var terrainSizeZ = this._terrainSizeZ;
+                var x0 = mapData[0];
+                var z0 = mapData[2];
+                var xlimit = x0 + mapSizeX;
+                var zlimit = z0 + mapSizeZ;
+                var terrainPos = terrain.position;
                 // reset all the particles to invisible
                 var nbParticles = sps.nbParticles;
                 for (var p = 0; p < nbParticles; p++) {
@@ -516,7 +527,7 @@ var BABYLON;
                         positions[ribbonPosInd3] = vertexPosition.z;
                     }
                     // SPS management
-                    if (mapSPData && quads) {
+                    if (particleMap) {
                         var quad = quads[index];
                         if (quad) { // if a quad contains some particles in the map
                             for (var t = 0; t < quad.length; t++) {
@@ -524,8 +535,6 @@ var BABYLON;
                                 var partIndexes = quad[t];
                                 if (partIndexes) {
                                     var typeStartIndex = spsTypeStartIndexes[t]; // particle start index for a given type in the SPS
-                                    var x0 = mapData[0];
-                                    var z0 = mapData[2];
                                     var nbQuadParticles = partIndexes.length;
                                     var nbInSPS = nbPerType[t];
                                     var available = nbAvailablePerType[t];
@@ -566,7 +575,7 @@ var BABYLON;
                 stepI = 0;
                 stepJ += lodJ;
             }
-            if (mapSPData && quads) {
+            if (particleMap) {
                 for (var c = 0; c < nbAvailablePerType.length; c++) {
                     nbAvailablePerType[c] = nbPerType[c];
                 }
