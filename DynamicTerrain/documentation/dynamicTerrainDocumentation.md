@@ -799,7 +799,7 @@ There can be as many objects in each type array as we need too and their number 
 So when passing a SPMap, there's at least one type and one object in this type.  
 
 The data defining each object is a set of nine successive floats : the object position (x, y, z), the object rotation (x, y, z) and the object scaling (x, y, z).  
-This means that type array contains simply a long series of successive floats :  
+This means that the type array contains simply a long series of successive floats :  
 ```javascript
 SPMap[0] = [
     house1Posx, house1Posy, house1Posz, house1Rotx, house1Roty, house1Rotz, house1Sclx, house1Scly, house1Sclz,
@@ -811,26 +811,33 @@ Then the same thing for every other object type.
 So at least a SPMap is an array containing an array of 9 floats.  
 
 The single rule to fullfill is to set every object within the map range.  
-Assuming that the (Xmin, Zmin) and (Xmax, Zmax) are respectively the minimum and maximum x and z coordinates of the map, then every object must be set at its (x, z) coordinates this way :
-                      `Xmin <= x <= Xmax and Zmin <= z <= Zmax`
+Assuming that _(Xmin, Zmin)_ and _(Xmax, Zmax)_ are respectively the minimum and maximum x and z coordinates of the map, then every object must be set at its (x, z) coordinates this way :  
+                      `Xmin <= x <= Xmax and Zmin <= z <= Zmax`   
 
 Note : the object coordinates can be different from the map vertex coordinates : the objects don't need to be on map vertex locations. They even don't need to be on the ground, they can be in the air (clouds) or inside or through the ground surface (tunnels).  
 
 ### The SPS
 
-The SPS passed to the Dynamic Terrain will animate and recycle its solid particle on the terrain according to the SPMap data.  
-The SPS doesn't need to hold as many particles as the object numbers in the map. There can dozens thousands objects in the SPMap and only hundreds or few thousands particles in the SPS because it re-uses the invisible objects in order to render only the visible ones.  
+The SPS passed to the Dynamic Terrain will animate and recycle its solid particles on the terrain according to the SPMap data.  
+The SPS doesn't need to hold as many particles as the object number in the map. There can be dozens thousands objects in the SPMap and only hundreds or few thousands particles in the SPS because it re-uses the invisible objects in order to render only the visible ones.  
 The needed particle number then only depends on the object number in the SPMap and on their density on the terrain.  
-If the SPS has not enough particles to render some objects, it won't crash, but won't just render them (note : objects are rendered from the minimum to the maximum x,z coordinates, or from the western South to the eastern North, not from the distance to the camera for performance reasons).  
+If the SPS has not enough particles to render some objects, it won't crash, but won't just render them (note : objects are rendered from the minimum to the maximum _x,z_ coordinates, or from the western South to the eastern North, not from the distance to the camera for performance reasons).  
 
-When building the SPS, each particle type (shapeId) will match an object type.  
-Let's imagine that we want to depict houses from the map by boxes and trees by cones. We could obviously choose any 3D (or 2D) shape to assign to every object type from the map. This a voluntary loose coupling design : the map knows only about object locations in the landscape and nothing about they will be rendered in the terrain, the SPS knows only about the way to render particles and nothing about how many objects and where they are in the map until the terrain tells it.  
+When building the SPS, each particle type (_shapeId_) will match an object type.  
+Let's imagine that we want to depict houses from the map by boxes and trees by cones.  
+We could obviously choose any 3D (or 2D) shape to assign to every object type from the map. This a voluntary loose coupling design : the map knows only about object locations in the landscape and nothing about how they will be rendered in the terrain, the SPS knows only about the way to render particles and nothing about how many objects and where they are in the map until the terrain tells it.  
 So from the same map, we can easily provide different ways to render the objects and we can adjust to the logic needs or the performance constraints.  
+
+Back to our boxes and cones :  
 
 ```javascript
 var modelBox = BABYLON.MeshBuilder.CreateBox("mb", {}, scene);
 var modelCone = BABYLON.MeshBuilder.CreateCylinder("mc", {diameterTop: 0}, scene);
 var sps = new BABYLON.SolidParticleSystem("sps", scene);
+
+// The declaration order matters from here
+// first shape = first object type
+// second shape = second object type, etc
 sps.addShape(modelBox, 200);    // 200 houses maximum visible in the terrain
 sps.addShape(modelCone, 300);   // 300 trees maximum visible in the terrain
 sps.buildMesh();
