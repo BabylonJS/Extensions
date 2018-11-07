@@ -252,7 +252,6 @@ module BABYLON {
                 const mapSizeZ = this._mapSizeZ;
                 const mapSubX = this._mapSubX;
                 const mapSubZ = this._mapSubZ;
-                const quadNb = this._mapSubX * this._mapSubZ;
                 const quads = [];
                 this._mapQuads = quads;
                 let x0 = mapData[0];
@@ -287,6 +286,7 @@ module BABYLON {
                 // update the sps
                 const sps = this._sps;
                 sps.computeBoundingBox = true;
+                sps.isAlwaysVisible = true;
 
                 // store particle types
                 const spsTypeStartIndexes = [];

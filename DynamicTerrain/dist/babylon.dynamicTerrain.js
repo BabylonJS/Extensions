@@ -190,7 +190,6 @@ var BABYLON;
                 var mapSizeZ = this._mapSizeZ;
                 var mapSubX = this._mapSubX;
                 var mapSubZ = this._mapSubZ;
-                var quadNb = this._mapSubX * this._mapSubZ;
                 var quads = [];
                 this._mapQuads = quads;
                 var x0 = mapData[0];
@@ -222,6 +221,7 @@ var BABYLON;
                 // update the sps
                 var sps = this._sps;
                 sps.computeBoundingBox = true;
+                sps.isAlwaysVisible = true;
                 // store particle types
                 var spsTypeStartIndexes = [];
                 this._spsTypeStartIndexes = spsTypeStartIndexes;
