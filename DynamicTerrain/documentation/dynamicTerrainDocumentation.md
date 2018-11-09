@@ -866,6 +866,8 @@ We use the parameter `SPmapData` and `sps` :
 ```
 
 Now, each time that the terrain is updated and that it covers a part of map containing objects, the SPS is updated and the objects are rendered by solid particles.  
+***Important note :*** 
+The SPMap feature seems to not work correctly with the LOD in some cases.   
 
 _PG example to come_
 
