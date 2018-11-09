@@ -74,7 +74,7 @@ Once we've got the data map, we can create the dynamic terrain.
         }
         var terrain = new BABYLON.DynamicTerrain("t", params, scene);
 ```
-PG example : https://www.babylonjs-playground.com/#FJNR5#5  
+PG example : https://www.babylonjs-playground.com/#FJNR5#258    
 The dynamic terrain is the green mesh flying on the data map.  
 We can notice that the green terrain is linked to the scene active camera on its center and moves with it when we zoom in or out.    
 Actually, the terrain adjusts itself automatically to the exact next points of the map as the camera moves over it.   
