@@ -869,9 +869,9 @@ Now, each time that the terrain is updated and that it covers a part of map cont
 ***Important note :*** 
 The SPMap feature seems to not work correctly with the LOD in some cases.   
 
-_PG example to come_
-https://www.babylonjs-playground.com/#FJNR5#263  
-to be fixed ...
+Example : 3000 particles only SPS used to render dozens thousands objects from the map. A free camera is used.   
+https://www.babylonjs-playground.com/#FJNR5#264  
+
 
 
 
