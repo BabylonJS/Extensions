@@ -173,13 +173,9 @@ var BABYLON;
             this._deltaSubZ = (deltaNbSubZ > 0) ? Math.floor(deltaNbSubZ) : Math.ceil(deltaNbSubZ);
             this._scene.onBeforeRenderObservable.add(function () {
                 var refreshEveryFrame = _this._refreshEveryFrame;
-                var sps = _this._sps;
                 _this.beforeUpdate(refreshEveryFrame);
                 _this.update(refreshEveryFrame);
                 _this.afterUpdate(refreshEveryFrame);
-                if (sps) {
-                    sps.setParticles();
-                }
             });
             // if SP data, populate the map quads
             // mapQuads[mapIndex][partType] = [partIdx1 , partIdx2 ...] partIdx are particle indexes in SPmapData
@@ -570,6 +566,7 @@ var BABYLON;
                 stepJ += lodJ;
             }
             if (particleMap) {
+                sps.setParticles();
                 for (var c = 0; c < nbAvailablePerType.length; c++) {
                     nbAvailablePerType[c] = nbPerType[c];
                 }
