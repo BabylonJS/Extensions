@@ -233,13 +233,9 @@ module BABYLON {
             this._deltaSubZ = (deltaNbSubZ > 0) ? Math.floor(deltaNbSubZ) : Math.ceil(deltaNbSubZ);
             this._scene.onBeforeRenderObservable.add(() => {
                 const refreshEveryFrame = this._refreshEveryFrame;
-                const sps = this._sps;
                 this.beforeUpdate(refreshEveryFrame);
                 this.update(refreshEveryFrame);
                 this.afterUpdate(refreshEveryFrame);
-                if (sps) {
-                    sps.setParticles();
-                }
             });  
                
             
@@ -664,6 +660,7 @@ module BABYLON {
             }
 
             if (particleMap) {
+                sps.setParticles();
                 for (let c = 0; c < nbAvailablePerType.length; c++) {
                     nbAvailablePerType[c] = nbPerType[c];
                 }
