@@ -15,22 +15,26 @@ var BABYLON;
          * @param {*} mapNormals the array of the map normal data (optional) : r,g,b successive values, each between 0 and 1.
          * @param {*} invertSide boolean, to invert the terrain mesh upside down. Default false.
          * @param {*} camera the camera to link the terrain to. Optional, by default the scene active camera
-         * @param {*} SPmapData an array of arrays or Float32Arrays (one per particle type) of particle data (position, rotation, scaling) on the map. Optional.
+         * @param {*} SPmapData an array of arrays or Float32Arrays (one per particle type) of object data (position, rotation, scaling) on the map. Optional.
          * @param {*} sps the Solid Particle System used to manage the particles. Required when used with SPmapData.
+         * @param {*} SPcolorData an array of arrays or Float32Arrays (one per particle type) of object colors on the map. One series of r, g, b, a floats per object. Optional, requires a SPmapData and a sps to be passed.
+         * @param {*} SPuvData an array of arrays or Float32Arrays (one per particle type) of object uvs on the map. One series of x, y, z, w floats per object. Optional, requires a SPmapData and a sps to be passed.
          */
         function DynamicTerrain(name, options, scene) {
             var _this = this;
-            this._particleDataStride = 9; // stride : position, rotation, scaling
-            this._subToleranceX = 1 | 0; // how many cells flought over thy the camera on the terrain x axis before update
-            this._subToleranceZ = 1 | 0; // how many cells flought over thy the camera on the terrain z axis before update
-            this._LODLimits = []; // array of LOD limits
-            this._initialLOD = 1 | 0; // initial LOD value (integer > 0)
-            this._LODValue = 1 | 0; // current LOD value : initial + camera correction
-            this._cameraLODCorrection = 0 | 0; // LOD correction (integer) according to the camera altitude
-            this._LODPositiveX = true; // Does LOD apply to the terrain right edge ?
-            this._LODNegativeX = true; // Does LOD apply to the terrain left edge ?
-            this._LODPositiveZ = true; // Does LOD apply to the terrain upper edge ?
-            this._LODNegativeZ = true; // Does LOD apply to the terrain lower edge ?
+            this._particleDataStride = 9; // data stride : position, rotation, scaling : 9 floats
+            this._particleColorStride = 4; // color stride : color4 : r, g, b, a : 4 floats
+            this._particleUVStride = 4; // uv stride : vector4 : x, y, z, w : 4 floats
+            this._subToleranceX = 1 | 0; // hoSPcw many cells flought over thy the camera on the terrain x axis before update
+            this._subToleranceZ = 1 | 0; // hoSPcw many cells flought over thy the camera on the terrain z axis before update
+            this._LODLimits = []; // arSPcray of LOD limits
+            this._initialLOD = 1 | 0; // inSPcitial LOD value (integer > 0)
+            this._LODValue = 1 | 0; // cuSPcrrent LOD value : initial + camera correction
+            this._cameraLODCorrection = 0 | 0; // LOSPcD correction (integer) according to the camera altitude
+            this._LODPositiveX = true; // DoeSPcs LOD apply to the terrain right edge ?
+            this._LODNegativeX = true; // DoeSPcs LOD apply to the terrain left edge ?
+            this._LODPositiveZ = true; // DoeSPcs LOD apply to the terrain upper edge ?
+            this._LODNegativeZ = true; // DoeSPcs LOD apply to the terrain lower edge ?
             this._inverted = false; // is the terrain mesh inverted upside down ?
             this.shiftFromCamera = {
                 x: 0.0,
@@ -44,7 +48,9 @@ var BABYLON;
             this._datamap = false; // boolean : true if an data map is passed as parameter
             this._uvmap = false; // boolean : true if an UV map is passed as parameter
             this._colormap = false; // boolean : true if an color map is passed as parameter
-            this._mapSPData = false; // boolean : true if a SPmapData is passed as parameter
+            this._mapSPData = false; // boolean : true if a SPmapData array is passed as parameter
+            this._colorSPData = false; // boolean : true if a SPcolorData array is passed as parameter
+            this._uvSPData = false; // boolean : true if a SPuvData array is passed as parameter
             this._averageSubSizeX = 0.0; // map cell average x size
             this._averageSubSizeZ = 0.0; // map cell average z size
             this._terrainSizeX = 0.0; // terrain x size
@@ -75,6 +81,8 @@ var BABYLON;
             this._uvmap = (this._mapUVs) ? true : false;
             this._colormap = (this._mapColors) ? true : false;
             this._mapSPData = (this._SPmapData) ? true : false;
+            this._colorSPData = (this._mapSPData && this._SPcolorData) ? true : false;
+            this._uvSPData = (this._mapSPData && this._SPuvData) ? true : false;
             this._mapData = (this._datamap) ? this._mapData : new Float32Array(this._terrainIdx * this._terrainIdx * 3);
             this._mapUVs = (this._uvmap) ? this._mapUVs : new Float32Array(this._terrainIdx * this._terrainIdx * 2);
             if (this._datamap) {
@@ -329,7 +337,11 @@ var BABYLON;
             var quads = this._mapQuads;
             var nbPerType = this._spsNbPerType;
             var SPmapData = this._SPmapData;
+            var SPcolorData = this._SPcolorData;
+            var SPuvData = this._SPuvData;
             var dataStride = this._particleDataStride;
+            var colorStride = this._particleColorStride;
+            var uvStride = this._particleUVStride;
             var LODLimits = this._LODLimits;
             var terrainSub = this._terrainSub;
             var mod = this._mod;
@@ -353,6 +365,8 @@ var BABYLON;
             var averageSubSizeX = this._averageSubSizeX;
             var averageSubSizeZ = this._averageSubSizeZ;
             var particleMap = (mapSPData && quads);
+            var particleColorMap = (particleMap && this._colorSPData);
+            var particleUVMap = (particleMap && this._uvSPData);
             var l = 0 | 0;
             var index = 0 | 0; // current vertex index in the map data array
             var posIndex1 = 0 | 0; // current position index in the map data array
@@ -482,7 +496,6 @@ var BABYLON;
                         bbMax.z = positions[ribbonPosInd3];
                     }
                     // color
-                    var terrainIndex = j * terrainIdx + i;
                     if (colormap) {
                         colors[ribbonColInd1] = mapColors[colIndex];
                         colors[ribbonColInd2] = mapColors[colIndex + 1];
@@ -523,6 +536,12 @@ var BABYLON;
                             for (var t = 0; t < quad.length; t++) {
                                 var data = SPmapData[t];
                                 var partIndexes = quad[t];
+                                if (particleColorMap) {
+                                    var sp_colorData = SPcolorData[t];
+                                }
+                                if (particleUVMap) {
+                                    var sp_uvData = SPuvData[t];
+                                }
                                 if (partIndexes) {
                                     var typeStartIndex = spsTypeStartIndexes[t]; // particle start index for a given type in the SPS
                                     var nbQuadParticles = partIndexes.length;
@@ -532,7 +551,8 @@ var BABYLON;
                                     var used = (rem > 0) ? rem : 0;
                                     var min = (available < nbQuadParticles) ? available : nbQuadParticles; // don't iterate beyond possible
                                     for (var pIdx = 0; pIdx < min; pIdx++) {
-                                        var idm = partIndexes[pIdx] * dataStride;
+                                        var px = partIndexes[pIdx];
+                                        var idm = px * dataStride;
                                         // set successive available particles of this type       
                                         var particle = particles[typeStartIndex + pIdx + used];
                                         var pos = particle.position;
@@ -549,6 +569,22 @@ var BABYLON;
                                         scl.x = data[idm + 6];
                                         scl.y = data[idm + 7];
                                         scl.z = data[idm + 8];
+                                        if (particleColorMap) {
+                                            var idc = px * colorStride;
+                                            var col = particle.color;
+                                            col.r = sp_colorData[idc];
+                                            col.g = sp_colorData[idc + 1];
+                                            col.b = sp_colorData[idc + 2];
+                                            col.a = sp_colorData[idc + 3];
+                                        }
+                                        if (particleUVMap) {
+                                            var iduv = px * uvStride;
+                                            var uvs_1 = particle.uvs;
+                                            uvs_1.x = sp_uvData[iduv];
+                                            uvs_1.y = sp_uvData[iduv + 1];
+                                            uvs_1.z = sp_uvData[iduv + 2];
+                                            uvs_1.w = sp_uvData[iduv + 3];
+                                        }
                                         particle.isVisible = true;
                                         available = available - 1;
                                         used = used + 1;
