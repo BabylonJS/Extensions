@@ -105,10 +105,10 @@ declare module BABYLON {
             mapNormals?: number[] | Float32Array;
             invertSide?: boolean;
             camera?: Camera;
-            SPmapData?: number[][] | Float32Array[][];
+            SPmapData?: number[][] | Float32Array[];
             sps?: SolidParticleSystem;
-            SPcolorData?: number[][] | Float32Array[][];
-            SPuvData?: number[][] | Float32Array[][];
+            SPcolorData?: number[][] | Float32Array[];
+            SPuvData?: number[][] | Float32Array[];
         }, scene: Scene);
         /**
          * Updates the terrain position and shape according to the camera position.

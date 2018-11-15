@@ -11,9 +11,9 @@ module BABYLON {
         private _mapUVs: number[] | Float32Array;       // UV data of SPmapDatahe map
         private _mapColors: number[] | Float32Array;    // Color data of the map
         private _mapNormals: number[] | Float32Array;   // Normal data of the map
-        private _SPmapData: number[][] | Float32Array[][];      // Solid particle data (position, rotation, scaling) of the object map : array of arrays, one per particle type
-        private _SPcolorData: number[][] | Float32Array[][];    // Solid particle color data : array of arrays, one per particle type
-        private _SPuvData: number[][] | Float32Array[][];       // Solid particle uv data : array of arrays, one per particle type
+        private _SPmapData: number[][] | Float32Array[];      // Solid particle data (position, rotation, scaling) of the object map : array of arrays, one per particle type
+        private _SPcolorData: number[][] | Float32Array[];    // Solid particle color data : array of arrays, one per particle type
+        private _SPuvData: number[][] | Float32Array[];       // Solid particle uv data : array of arrays, one per particle type
         private _sps: SolidParticleSystem;              // SPS used to manage the particles
         private _spsTypeStartIndexes: number[];         // type start indexes in the SPS
         private _nbAvailablePerType: number[];          // per type of used particle counter
@@ -116,10 +116,10 @@ module BABYLON {
             mapNormals?: number[] | Float32Array,
             invertSide?: boolean,
             camera?: Camera,
-            SPmapData?: number[][] | Float32Array[][];
+            SPmapData?: number[][] | Float32Array[];
             sps?: SolidParticleSystem,
-            SPcolorData?: number[][] | Float32Array[][];
-            SPuvData?: number[][] | Float32Array[][];
+            SPcolorData?: number[][] | Float32Array[];
+            SPuvData?: number[][] | Float32Array[];
         }, scene: Scene) {
             
             this.name = name;
@@ -271,8 +271,8 @@ module BABYLON {
                     for (let pIdx = 0;  pIdx < nb; pIdx++) {
                         // particle position x, z in the map
                         let dIdx = pIdx * dataStride;
-                        let x = <number>data[dIdx];
-                        let z = <number>data[dIdx + 2];
+                        let x = data[dIdx];
+                        let z = data[dIdx + 2];
                         x = x - Math.floor((x - x0) / mapSizeX) * mapSizeX;
                         z = z - Math.floor((z - z0) / mapSizeZ) * mapSizeZ;
                         let col = Math.floor((x - x0) * mapSubX / mapSizeX);
@@ -652,32 +652,32 @@ module BABYLON {
                                         let pos = particle.position;
                                         let rot = particle.rotation;
                                         let scl = particle.scaling;
-                                        let x = <number>data[idm];
+                                        let x = data[idm];
                                         pos.x = x + Math.floor((terrainPos.x - x - x0) / mapSizeX) * mapSizeX;
-                                        pos.y = <number>data[idm + 1];
-                                        let z = <number>data[idm + 2];
+                                        pos.y = data[idm + 1];
+                                        let z = data[idm + 2];
                                         pos.z = z + Math.floor((terrainPos.z - z - z0) / mapSizeZ) * mapSizeZ;
-                                        rot.x = <number>data[idm + 3];
-                                        rot.y = <number>data[idm + 4];
-                                        rot.z = <number>data[idm + 5];
-                                        scl.x = <number>data[idm + 6];
-                                        scl.y = <number>data[idm + 7];
-                                        scl.z = <number>data[idm + 8];
+                                        rot.x = data[idm + 3];
+                                        rot.y = data[idm + 4];
+                                        rot.z = data[idm + 5];
+                                        scl.x = data[idm + 6];
+                                        scl.y = data[idm + 7];
+                                        scl.z = data[idm + 8];
                                         if (particleColorMap) {
                                             let idc = px * colorStride;
                                             let col = particle.color;
-                                            col.r = <number>sp_colorData[idc];
-                                            col.g = <number>sp_colorData[idc + 1];
-                                            col.b = <number>sp_colorData[idc + 2];
-                                            col.a = <number>sp_colorData[idc + 3];
+                                            col.r = sp_colorData[idc];
+                                            col.g = sp_colorData[idc + 1];
+                                            col.b = sp_colorData[idc + 2];
+                                            col.a = sp_colorData[idc + 3];
                                         }
                                         if (particleUVMap) {
                                             let iduv = px * uvStride;
                                             let uvs = particle.uvs;
-                                            uvs.x = <number>sp_uvData[iduv];
-                                            uvs.y = <number>sp_uvData[iduv + 1];
-                                            uvs.z = <number>sp_uvData[iduv + 2];
-                                            uvs.w = <number>sp_uvData[iduv + 3];
+                                            uvs.x = sp_uvData[iduv];
+                                            uvs.y = sp_uvData[iduv + 1];
+                                            uvs.z = sp_uvData[iduv + 2];
+                                            uvs.w = sp_uvData[iduv + 3];
                                         }
                                         particle.isVisible = true;
                                         available = available - 1;
