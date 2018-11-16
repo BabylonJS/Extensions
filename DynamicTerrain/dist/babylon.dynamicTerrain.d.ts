@@ -10,12 +10,15 @@ declare module BABYLON {
         private _mapColors;
         private _mapNormals;
         private _SPmapData;
+        private _SPcolorData;
+        private _SPuvData;
         private _sps;
-        private _particleTypes;
         private _spsTypeStartIndexes;
         private _nbAvailablePerType;
         private _spsNbPerType;
         private _particleDataStride;
+        private _particleColorStride;
+        private _particleUVStride;
         private _scene;
         private _subToleranceX;
         private _subToleranceZ;
@@ -47,6 +50,8 @@ declare module BABYLON {
         private _uvmap;
         private _colormap;
         private _mapSPData;
+        private _colorSPData;
+        private _uvSPData;
         private _mapQuads;
         private static _vertex;
         private _averageSubSizeX;
@@ -85,8 +90,10 @@ declare module BABYLON {
          * @param {*} mapNormals the array of the map normal data (optional) : r,g,b successive values, each between 0 and 1.
          * @param {*} invertSide boolean, to invert the terrain mesh upside down. Default false.
          * @param {*} camera the camera to link the terrain to. Optional, by default the scene active camera
-         * @param {*} SPmapData an array of arrays or Float32Arrays (one per particle type) of particle data (position, rotation, scaling) on the map. Optional.
+         * @param {*} SPmapData an array of arrays or Float32Arrays (one per particle type) of object data (position, rotation, scaling) on the map. Optional.
          * @param {*} sps the Solid Particle System used to manage the particles. Required when used with SPmapData.
+         * @param {*} SPcolorData an array of arrays or Float32Arrays (one per particle type) of object colors on the map. One series of r, g, b, a floats per object. Optional, requires a SPmapData and a sps to be passed.
+         * @param {*} SPuvData an array of arrays or Float32Arrays (one per particle type) of object uvs on the map. One series of x, y, z, w floats per object. Optional, requires a SPmapData and a sps to be passed.
          */
         constructor(name: string, options: {
             terrainSub?: number;
@@ -100,6 +107,8 @@ declare module BABYLON {
             camera?: Camera;
             SPmapData?: number[][] | Float32Array[];
             sps?: SolidParticleSystem;
+            SPcolorData?: number[][] | Float32Array[];
+            SPuvData?: number[][] | Float32Array[];
         }, scene: Scene);
         /**
          * Updates the terrain position and shape according to the camera position.

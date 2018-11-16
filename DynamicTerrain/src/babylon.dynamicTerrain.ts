@@ -8,28 +8,31 @@ module BABYLON {
         private _terrainIdx: number;                    // actual terrain vertex number per axis
         private _mapSubX: number;                       // map number of subdivisions on X axis
         private _mapSubZ: number;                       // map number of subdivisions on Z axis
-        private _mapUVs: number[] | Float32Array;       // UV data of the map
+        private _mapUVs: number[] | Float32Array;       // UV data of SPmapDatahe map
         private _mapColors: number[] | Float32Array;    // Color data of the map
         private _mapNormals: number[] | Float32Array;   // Normal data of the map
-        private _SPmapData: number[][] | Float32Array[];// Solid particle data (position, rotation, scaling) of the particle map : array of arrays, one per particle type
+        private _SPmapData: number[][] | Float32Array[];      // Solid particle data (position, rotation, scaling) of the object map : array of arrays, one per particle type
+        private _SPcolorData: number[][] | Float32Array[];    // Solid particle color data : array of arrays, one per particle type
+        private _SPuvData: number[][] | Float32Array[];       // Solid particle uv data : array of arrays, one per particle type
         private _sps: SolidParticleSystem;              // SPS used to manage the particles
-        private _particleTypes: number[];               // types of particles (shapeId)
         private _spsTypeStartIndexes: number[];         // type start indexes in the SPS
-        private _nbAvailablePerType: number[];             // per type of used particle counter
+        private _nbAvailablePerType: number[];          // per type of used particle counter
         private _spsNbPerType: number[];                // number of particles available per type in the SPS
-        private _particleDataStride: number = 9;        // stride : position, rotation, scaling
+        private _particleDataStride: number = 9;        // data stride : position, rotation, scaling : 9 floats
+        private _particleColorStride: number = 4;       // color stride : color4 : r, g, b, a : 4 floats
+        private _particleUVStride: number = 4;          // uv stride : vector4 : x, y, z, w : 4 floats
         private _scene: Scene;                          // current scene
-        private _subToleranceX: number = 1|0;           // how many cells flought over thy the camera on the terrain x axis before update
-        private _subToleranceZ: number = 1|0;           // how many cells flought over thy the camera on the terrain z axis before update
-        private _LODLimits: number[] = [];              // array of LOD limits
-        private _initialLOD: number = 1|0;              // initial LOD value (integer > 0)
-        private _LODValue: number = 1|0;                // current LOD value : initial + camera correction
-        private _cameraLODCorrection: number = 0|0;     // LOD correction (integer) according to the camera altitude
-        private _LODPositiveX: boolean = true;         // Does LOD apply to the terrain right edge ?
-        private _LODNegativeX: boolean = true;         // Does LOD apply to the terrain left edge ?
-        private _LODPositiveZ: boolean = true;         // Does LOD apply to the terrain upper edge ?
-        private _LODNegativeZ: boolean = true;         // Does LOD apply to the terrain lower edge ?
-        private _terrainCamera: Camera;                 // camera linked to the terrain
+        private _subToleranceX: number = 1|0;           // hoSPcw many cells flought over thy the camera on the terrain x axis before update
+        private _subToleranceZ: number = 1|0;           // hoSPcw many cells flought over thy the camera on the terrain z axis before update
+        private _LODLimits: number[] = [];              // arSPcray of LOD limits
+        private _initialLOD: number = 1|0;              // inSPcitial LOD value (integer > 0)
+        private _LODValue: number = 1|0;                // cuSPcrrent LOD value : initial + camera correction
+        private _cameraLODCorrection: number = 0|0;     // LOSPcD correction (integer) according to the camera altitude
+        private _LODPositiveX: boolean = true;          // DoeSPcs LOD apply to the terrain right edge ?
+        private _LODNegativeX: boolean = true;          // DoeSPcs LOD apply to the terrain left edge ?
+        private _LODPositiveZ: boolean = true;          // DoeSPcs LOD apply to the terrain upper edge ?
+        private _LODNegativeZ: boolean = true;          // DoeSPcs LOD apply to the terrain lower edge ?
+        private _terrainCamera: Camera;                 // caSPcmera linked to the terrain
         private _inverted: boolean = false;             // is the terrain mesh inverted upside down ?
         public shiftFromCamera: {x: number; z: number} = {  // terrain center shift from camera position
             x: 0.0,
@@ -48,7 +51,9 @@ module BABYLON {
         private _datamap: boolean = false;                  // boolean : true if an data map is passed as parameter
         private _uvmap: boolean = false;                    // boolean : true if an UV map is passed as parameter
         private _colormap: boolean = false;                 // boolean : true if an color map is passed as parameter
-        private _mapSPData: boolean = false;                // boolean : true if a SPmapData is passed as parameter
+        private _mapSPData: boolean = false;                // boolean : true if a SPmapData array is passed as parameter
+        private _colorSPData: boolean = false;              // boolean : true if a SPcolorData array is passed as parameter
+        private _uvSPData: boolean = false;                 // boolean : true if a SPuvData array is passed as parameter
         private _mapQuads: number[][][];                    // map quads of types of particle index in the SPmapData array mapQuads[mapIndex][partType] = [pIndex1, pIndex2, ...] (particle indexes in SPmapData)
         private static _vertex: any = {                     // current vertex object passed to the user custom function
             position: Vector3.Zero(),                           // vertex position in the terrain space (Vector3)
@@ -97,8 +102,10 @@ module BABYLON {
          * @param {*} mapNormals the array of the map normal data (optional) : r,g,b successive values, each between 0 and 1.
          * @param {*} invertSide boolean, to invert the terrain mesh upside down. Default false.
          * @param {*} camera the camera to link the terrain to. Optional, by default the scene active camera
-         * @param {*} SPmapData an array of arrays or Float32Arrays (one per particle type) of particle data (position, rotation, scaling) on the map. Optional.
-         * @param {*} sps the Solid Particle System used to manage the particles. Required when used with SPmapData.
+         * @param {*} SPmapData an array of arrays or Float32Arrays (one per particle type) of object data (position, rotation, scaling) on the map. Optional.
+         * @param {*} sps the Solid Particle System used to manage the particles. Required when used with SPmapData.  
+         * @param {*} SPcolorData an array of arrays or Float32Arrays (one per particle type) of object colors on the map. One series of r, g, b, a floats per object. Optional, requires a SPmapData and a sps to be passed.    
+         * @param {*} SPuvData an array of arrays or Float32Arrays (one per particle type) of object uvs on the map. One series of x, y, z, w floats per object. Optional, requires a SPmapData and a sps to be passed.      
          */
         constructor(name: string, options: {
             terrainSub?: number, 
@@ -110,7 +117,9 @@ module BABYLON {
             invertSide?: boolean,
             camera?: Camera,
             SPmapData?: number[][] | Float32Array[];
-            sps?: SolidParticleSystem
+            sps?: SolidParticleSystem,
+            SPcolorData?: number[][] | Float32Array[];
+            SPuvData?: number[][] | Float32Array[];
         }, scene: Scene) {
             
             this.name = name;
@@ -125,6 +134,8 @@ module BABYLON {
             this._terrainCamera = options.camera || scene.activeCamera;
             this._inverted = options.invertSide;
             this._SPmapData = options.SPmapData;
+            this._SPcolorData = options.SPcolorData;
+            this._SPuvData = options.SPuvData;
             this._sps = options.sps;
             
             // initialize the map arrays if not passed as parameters
@@ -132,6 +143,8 @@ module BABYLON {
             this._uvmap = (this._mapUVs) ? true : false;
             this._colormap = (this._mapColors) ? true : false;
             this._mapSPData = (this._SPmapData) ? true : false;
+            this._colorSPData = (this._mapSPData && this._SPcolorData) ? true : false;
+            this._uvSPData = (this._mapSPData && this._SPuvData) ? true : false;
             this._mapData = (this._datamap) ? this._mapData : new Float32Array(this._terrainIdx * this._terrainIdx * 3);
             this._mapUVs = (this._uvmap) ? this._mapUVs : new Float32Array(this._terrainIdx * this._terrainIdx * 2);
             if (this._datamap) {
@@ -283,7 +296,12 @@ module BABYLON {
                 const sps = this._sps;
                 sps.computeBoundingBox = true;
                 sps.isAlwaysVisible = true;
-
+                if (this._colorSPData) {
+                    sps.computeParticleColor = true;
+                }
+                if (this._uvSPData) {
+                    sps.computeParticleTexture = true;
+                }
                 // store particle types
                 const spsTypeStartIndexes = [];
                 this._spsTypeStartIndexes = spsTypeStartIndexes;
@@ -405,7 +423,11 @@ module BABYLON {
             const quads = this._mapQuads;
             const nbPerType = this._spsNbPerType;
             const SPmapData = this._SPmapData;
+            const SPcolorData = this._SPcolorData;
+            const SPuvData = this._SPuvData;
             const dataStride = this._particleDataStride;
+            const colorStride = this._particleColorStride;
+            const uvStride = this._particleUVStride;
             const LODLimits = this._LODLimits;
             const terrainSub = this._terrainSub;
             const mod = this._mod;
@@ -429,6 +451,8 @@ module BABYLON {
             const averageSubSizeX = this._averageSubSizeX;
             const averageSubSizeZ = this._averageSubSizeZ;
             const particleMap = (mapSPData && quads);
+            const particleColorMap = (particleMap && this._colorSPData);
+            const particleUVMap = (particleMap && this._uvSPData);
 
             let l = 0|0;
             let index = 0|0;          // current vertex index in the map data array
@@ -571,7 +595,6 @@ module BABYLON {
                         bbMax.z = positions[ribbonPosInd3];
                     }
                     // color
-                    let terrainIndex = j * terrainIdx + i;
                     if (colormap) {
                         colors[ribbonColInd1] = mapColors[colIndex];
                         colors[ribbonColInd2] = mapColors[colIndex + 1];
@@ -614,6 +637,12 @@ module BABYLON {
                             for (let t = 0; t < quad.length; t++) {
                                 let data = SPmapData[t];
                                 let partIndexes = quad[t];
+                                if (particleColorMap) {
+                                    var sp_colorData = SPcolorData[t];
+                                }
+                                if (particleUVMap) {
+                                    var sp_uvData = SPuvData[t];
+                                }
                                 if (partIndexes) {
                                     let typeStartIndex = spsTypeStartIndexes[t];  // particle start index for a given type in the SPS
                                     const nbQuadParticles = partIndexes.length;
@@ -623,7 +652,8 @@ module BABYLON {
                                     var used = (rem > 0) ? rem : 0;
                                     let min = (available < nbQuadParticles) ? available : nbQuadParticles;  // don't iterate beyond possible
                                     for (let pIdx = 0; pIdx < min; pIdx++) {
-                                        let idm = partIndexes[pIdx] * dataStride;
+                                        let px = partIndexes[pIdx]
+                                        let idm = px * dataStride;
                                         // set successive available particles of this type       
                                         let particle = particles[typeStartIndex + pIdx + used];
                                         let pos = particle.position;
@@ -640,6 +670,22 @@ module BABYLON {
                                         scl.x = data[idm + 6];
                                         scl.y = data[idm + 7];
                                         scl.z = data[idm + 8];
+                                        if (particleColorMap) {
+                                            let idc = px * colorStride;
+                                            let col = particle.color;
+                                            col.r = sp_colorData[idc];
+                                            col.g = sp_colorData[idc + 1];
+                                            col.b = sp_colorData[idc + 2];
+                                            col.a = sp_colorData[idc + 3];
+                                        }
+                                        if (particleUVMap) {
+                                            let iduv = px * uvStride;
+                                            let uvs = particle.uvs;
+                                            uvs.x = sp_uvData[iduv];
+                                            uvs.y = sp_uvData[iduv + 1];
+                                            uvs.z = sp_uvData[iduv + 2];
+                                            uvs.w = sp_uvData[iduv + 3];
+                                        }
                                         particle.isVisible = true;
                                         available = available - 1;
                                         used = used + 1;
