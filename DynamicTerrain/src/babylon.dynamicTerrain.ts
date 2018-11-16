@@ -134,6 +134,8 @@ module BABYLON {
             this._terrainCamera = options.camera || scene.activeCamera;
             this._inverted = options.invertSide;
             this._SPmapData = options.SPmapData;
+            this._SPcolorData = options.SPcolorData;
+            this._SPuvData = options.SPuvData;
             this._sps = options.sps;
             
             // initialize the map arrays if not passed as parameters
@@ -294,7 +296,12 @@ module BABYLON {
                 const sps = this._sps;
                 sps.computeBoundingBox = true;
                 sps.isAlwaysVisible = true;
-
+                if (this._colorSPData) {
+                    sps.computeParticleColor = true;
+                }
+                if (this._uvSPData) {
+                    sps.computeParticleTexture = true;
+                }
                 // store particle types
                 const spsTypeStartIndexes = [];
                 this._spsTypeStartIndexes = spsTypeStartIndexes;
