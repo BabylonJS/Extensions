@@ -935,7 +935,11 @@ We use the parameter `SPcolorData` and `SPuvData`.
     sps.mesh.material = objectMaterial;         // object material !
 
 ```
-PG example :  
+PG Color example : https://www.babylonjs-playground.com/#FJNR5#267  
+The objects get more green or more red according to the map areas (north, south, east, west) and more blue when in altitude.  
+
+PG UV example : https://www.babylonjs-playground.com/#FJNR5#268  
+Each object is given a part of the image file.  
 
 
 **Note :**
