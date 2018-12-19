@@ -8,7 +8,7 @@
 define(
   ['./fonts/hirukopro-book','./fonts/helveticaneue-medium','./fonts/comicsans-normal','./fonts/jura-medium','./fonts/webgl-dings'],
 
-  // *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-*
+  // *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-*
   // This function loads the specific type-faces and returns the superconstructor
   // If BABYLON is loaded, it assigns the superconstructor to BABYLON.MeshWriter
   // Otherwise it assigns it to global variable 'BABYLONTYPE'
@@ -16,7 +16,7 @@ define(
   function(HPB,HNM,CSN,JUR,WGD){
 
     var scene,FONTS,defaultColor,defaultOpac,naturalLetterHeight,curveSampleSize,Γ=Math.floor,hpb,hnm,csn,jur,wgd,debug;
-    var b128back=new Uint8Array(256),b128digits=new Array(128);
+    var b128back,b128digits;
     prepArray();
     hpb                          = HPB(codeList);
     hnm                          = HNM(codeList);
@@ -41,7 +41,7 @@ define(
     curveSampleSize              = 6;
     naturalLetterHeight          = 1000;
 
-    // *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-*
+    // *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-*
     //  SUPERCONSTRUCTOR  SUPERCONSTRUCTOR  SUPERCONSTRUCTOR 
     // Parameters:
     //   ~ scene
@@ -54,12 +54,12 @@ define(
       scene                      = arguments[0];
       preferences                = makePreferences(arguments);
 
-      defaultFont                = NNO(FONTS[preferences.defaultFont]) ? preferences.defaultFont : "HelveticaNeue-Medium";
+      defaultFont                = isObject(FONTS[preferences.defaultFont]) ? preferences.defaultFont : "HelveticaNeue-Medium";
       meshOrigin                 = preferences.meshOrigin==="fontOrigin" ? preferences.meshOrigin : "letterCenter";
-      scale                      = tyN(preferences.scale)?preferences.scale:1;
-      debug                      = tyB(preferences.debug)?preferences.debug:false;
+      scale                      = isNumber(preferences.scale)?preferences.scale:1;
+      debug                      = isBoolean(preferences.debug)?preferences.debug:false;
 
-      // *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-*
+      // *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-*
       //  CONSTRUCTOR  CONSTRUCTOR  CONSTRUCTOR  CONSTRUCTOR
       // Called with 'new'
       // Parameters:
@@ -67,35 +67,43 @@ define(
       //   ~ options
 
       function MeshWriter(lttrs,opt){
-        var options              = NNO(opt) ? opt : { } ,
-            position             = setOption("position", NNO, {}),
-            colors               = setOption("colors", NNO, {}),
-            fontFamily           = setOption("font-family", supportedFont, defaultFont),
-            anchor               = setOption("anchor", supportedAnchor, "left"),
-            rawheight            = setOption("letter-height", PN, 100),
-            rawThickness         = setOption("letter-thickness", PN, 1),
-            basicColor           = setOption("color", NES, defaultColor),
-            opac                 = setOption("alpha", Amp, defaultOpac),
-            y                    = setPositn("y", tyN, 0),
-            x                    = setPositn("x", tyN, 0),
-            z                    = setPositn("z", tyN, 0),
-            diffuse              = setColor("diffuse", NES, "#F0F0F0"),
-            specular             = setColor("specular", NES, "#000000"),
-            ambient              = setColor("ambient", NES, "#F0F0F0"),
-            emissive             = setColor("emissive", NES, basicColor),
+
+        var options              = isObject(opt) ? opt : { } ;
+
+        //  ~  -  =  ~  -  =  ~  -  =  ~  -  =  ~  -  =  ~  -  =  
+        // Here we set all the parameters with incoming value or a default
+        // See documentation on setOption below
+        var position             = setOption ( options,  "position", isObject, {} ) ,
+            colors               = setOption ( options,  "colors",   isObject, {} ) ,
+            fontFamily           = setOption ( options,  "font-family", supportedFont, defaultFont ) ,
+            anchor               = setOption ( options,  "anchor",   supportedAnchor, "left" ) ,
+            rawheight            = setOption ( options,  "letter-height", isPositiveNumber, 100 ) ,
+            rawThickness         = setOption ( options,  "letter-thickness", isPositiveNumber, 1 ) ,
+            basicColor           = setOption ( options,  "color",    isString, defaultColor ) ,
+            opac                 = setOption ( options,  "alpha",    isAmplitude, defaultOpac ) ,
+            y                    = setPositn ( position, "y", isNumber, 0),
+            x                    = setPositn ( position, "x", isNumber, 0),
+            z                    = setPositn ( position, "z", isNumber, 0),
+            diffuse              = setColor  ( colors,   "diffuse",  isString, "#F0F0F0"),
+            specular             = setColor  ( colors,   "specular", isString, "#000000"),
+            ambient              = setColor  ( colors,   "ambient",  isString, "#F0F0F0"),
+            emissive             = setColor  ( colors,   "emissive", isString, basicColor),
             fontSpec             = FONTS[fontFamily],
             letterScale          = round(scale*rawheight/naturalLetterHeight),
             thickness            = round(scale*rawThickness),
-            letters              = NES(lttrs) ? lttrs : "" ,
-            material             = makeMaterial(scene, letters, emissive, ambient, specular, diffuse, opac),
-            meshesAndBoxes       = constructLetterPolygons(letters, fontSpec, 0, 0, 0, letterScale, thickness, material, meshOrigin),
-            offsetX              = anchor==="right" ? (0-meshesAndBoxes.xWidth) : ( anchor==="center" ? (0-meshesAndBoxes.xWidth/2) : 0 ),
-            meshes               = meshesAndBoxes[0],
-            lettersBoxes         = meshesAndBoxes[1],
-            lettersOrigins       = meshesAndBoxes[2],
-            combo                = makeSPS(scene, meshesAndBoxes, material),
-            sps                  = combo[0],
-            mesh                 = combo[1];
+            letters              = isString(lttrs) ? lttrs : "" ;
+
+        var material,meshesAndBoxes,offsetX,meshes,lettersBoxes,lettersOrigins,combo,sps,mesh;
+
+        material                 = makeMaterial(scene, letters, emissive, ambient, specular, diffuse, opac);
+        meshesAndBoxes           = constructLetterPolygons(letters, fontSpec, 0, 0, 0, letterScale, thickness, material, meshOrigin);
+        offsetX                  = anchor==="right" ? (0-meshesAndBoxes.xWidth) : ( anchor==="center" ? (0-meshesAndBoxes.xWidth/2) : 0 );
+        meshes                   = meshesAndBoxes[0];
+        lettersBoxes             = meshesAndBoxes[1];
+        lettersOrigins           = meshesAndBoxes[2];
+        combo                    = makeSPS(scene, meshesAndBoxes, material);
+        sps                      = combo[0];
+        mesh                     = combo[1];
 
         mesh.position.x          = scale*x+offsetX;
         mesh.position.y          = scale*y;
@@ -107,32 +115,28 @@ define(
         this.getOffsetX          = function()  {return offsetX};
         this.getLettersBoxes     = function()  {return lettersBoxes};
         this.getLettersOrigins   = function()  {return lettersOrigins};
-        this.color               = function(c) {return NES(c)?color=c:color};
-        this.alpha               = function(o) {return Amp(o)?opac=o:opac};
+        this.color               = function(c) {return isString(c)?color=c:color};
+        this.alpha               = function(o) {return isAmplitude(o)?opac=o:opac};
         this.clearall            = function()  {sps=null;mesh=null;material=null};
-
-        function setOption(field, tst, defalt) { return tst(options[field]) ? options[field] : defalt };
-        function setColor(field, tst, defalt)  { return tst(colors[field]) ? colors[field] : defalt };
-        function setPositn(field, tst, defalt) { return tst(position[field]) ? position[field] : defalt }
       };
 
       proto                      = MeshWriter.prototype;
 
       proto.setColor             = function(color){
         var material             = this.getMaterial();
-        if(NES(color)){
+        if(isString(color)){
           material.emissiveColor = rgb2Bcolor3(this.color(color));
         }
       };
       proto.setAlpha             = function(alpha){
         var material             = this.getMaterial();
-        if(Amp(alpha)){
+        if(isAmplitude(alpha)){
           material.alpha         = this.alpha(alpha)
         }
       };
       proto.overrideAlpha        = function(alpha){
         var material             = this.getMaterial();
-        if(Amp(alpha)){
+        if(isAmplitude(alpha)){
           material.alpha         = alpha
         }
       };
@@ -162,7 +166,9 @@ define(
     };
     return Wrapper;
 
-
+    //  ~  -  =  ~  -  =  ~  -  =  ~  -  =  ~  -  =  ~  -  =  ~  -  =
+    // MakeSPS turns the output of constructLetterPolygons into an SPS
+    // with the whole string, with appropriate offsets
     function makeSPS(scene,meshesAndBoxes,material){
       var meshes                 = meshesAndBoxes[0],
           lettersOrigins         = meshesAndBoxes[2],sps,spsMesh;
@@ -186,6 +192,12 @@ define(
       }
     };
 
+    //  ~  -  =  ~  -  =  ~  -  =  ~  -  =  ~  -  =  ~  -  =  ~  -  =
+    // Takes specifications and returns an array with three elements, each of which
+    // is an array (length of all arrays to match the number of incoming characters)
+    //   ~ the meshes (not offset by position)
+    //   ~ the boxes (to help with positions features) 
+    //   ~ the letter origins (providing offset for each letter)
     function constructLetterPolygons(letters, fontSpec, xOffset, yOffset, zOffset, letterScale, thickness, material, meshOrigin){
       var letterOffsetX          = 0,
           lettersOrigins         = new Array(letters.length),
@@ -196,7 +208,7 @@ define(
       for(i=0;i<letters.length;i++){
         letter                   = letters[i];
         letterSpec               = makeLetterSpec(fontSpec,letter);
-        if(NNO(letterSpec)){
+        if(isObject(letterSpec)){
           lists                  = buildLetterMeshes(letter, i, letterSpec, fontSpec.reverseShapes, fontSpec.reverseHoles);
           shapesList             = lists[0];
           holesList              = lists[1];
@@ -204,7 +216,7 @@ define(
           for(j=0;j<shapesList.length;j++){
             shape                = shapesList[j];
             holes                = holesList[j];
-            if(NEA(holes)){
+            if(isArray(holes)&&holes.length){
               letterMesh         = punchHolesInShape(shape, holes, letter, i)
             }else{
               letterMesh         = shape
@@ -240,16 +252,16 @@ define(
         var balanced             = meshOrigin === "letterCenter",
             centerX              = (spec.xMin+spec.xMax)/2,
             centerZ              = (spec.yMin+spec.yMax)/2,
-            xFactor              = tyN(spec.xFactor)?spec.xFactor:1,
-            zFactor              = tyN(spec.yFactor)?spec.yFactor:1,
-            xShift               = tyN(spec.xShift)?spec.xShift:0,
-            zShift               = tyN(spec.yShift)?spec.yShift:0,
-            reverseShape         = tyB(spec.reverseShape)?spec.reverseShape:reverseShapes,
-            reverseHole          = tyB(spec.reverseHole)?spec.reverseHole:reverseHoles,
+            xFactor              = isNumber(spec.xFactor)?spec.xFactor:1,
+            zFactor              = isNumber(spec.yFactor)?spec.yFactor:1,
+            xShift               = isNumber(spec.xShift)?spec.xShift:0,
+            zShift               = isNumber(spec.yShift)?spec.yShift:0,
+            reverseShape         = isBoolean(spec.reverseShape)?spec.reverseShape:reverseShapes,
+            reverseHole          = isBoolean(spec.reverseHole)?spec.reverseHole:reverseHoles,
             offX                 = xOffset-(balanced?centerX:0),
             offZ                 = zOffset-(balanced?centerZ:0),
-            shapeCmdsLists       = tyA(spec.shapeCmds) ? spec.shapeCmds : [],
-            holeCmdsListsArray   = tyA(spec.holeCmds) ? spec.holeCmds : [], thisX, lastX, thisZ, lastZ, minX=NaN, maxX=NaN, minZ=NaN, maxZ=NaN, minXadj=NaN, maxXadj=NaN, minZadj=NaN, maxZadj=NaN, combo,
+            shapeCmdsLists       = isArray(spec.shapeCmds) ? spec.shapeCmds : [],
+            holeCmdsListsArray   = isArray(spec.holeCmds) ? spec.holeCmds : [], thisX, lastX, thisZ, lastZ, minX=NaN, maxX=NaN, minZ=NaN, maxZ=NaN, minXadj=NaN, maxXadj=NaN, minZadj=NaN, maxZadj=NaN, combo,
             //  ~  ~  ~  ~  ~  ~  ~  
             // To accomodate letter-by-letter scaling and shifts, we have several adjust functions
             adjX                 = makeAdjust(letterScale,xFactor,offX,0,false,true),                     // no shift
@@ -355,7 +367,7 @@ define(
     };
 
     function makeMaterial(scene,letters,emissive,ambient,specular,diffuse,opac){
-      var cm0                    = new BABYLON.StandardMaterial("meshwriter-material-"+letters+"-"+weeid(),scene);
+      var cm0                    = new BABYLON.StandardMaterial("mw-matl-"+letters+"-"+weeid(),scene);
       cm0.diffuseColor           = rgb2Bcolor3(diffuse);
       cm0.specularColor          = rgb2Bcolor3(specular);
       cm0.ambientColor           = rgb2Bcolor3(ambient);
@@ -396,52 +408,36 @@ define(
       }
     }
 
-    // *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-*
-    // Conversion functions
-    function rgb2Bcolor3(rgb){
-      rgb                        = rgb.replace("#","");
-      return new BABYLON.Color3(convert(rgb.substring(0,2)),convert(rgb.substring(2,4)),convert(rgb.substring(4,6)));
-      function convert(x){return Γ(1000*Math.max(0,Math.min((tyN(parseInt(x,16))?parseInt(x,16):0)/255,1)))/1000}
-    };
-    function point2Vector(point){
-      return new BABYLON.Vector2(round(point.x),round(point.y))
-    };
-    function merge(arrayOfMeshes){
-      return arrayOfMeshes.length===1 ? arrayOfMeshes[0] : BABYLON.Mesh.MergeMeshes(arrayOfMeshes, true)
-    };
-    function makePreferences(args){
-      var prefs = {},p;
-      if(NNO(p=args[1])){
-        if(p["default-font"]){prefs.defaultFont=p["default-font"]}else{if(p.defaultFont){prefs.defaultFont=p.defaultFont}}
-        if(p["mesh-origin"]){prefs.meshOrigin=p["mesh-origin"]}else{if(p.meshOrigin){prefs.meshOrigin=p.meshOrigin}}
-        if(p.scale){prefs.scale=p.scale}
-        if(tyB(p.debug)){prefs.debug=p.debug}
-        return prefs
-      }else{
-        return { defaultFont: args[2] , scale: args[1] , debug: false }
-      }
-    };
+    // *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-*
+    //    FONT COMPRESSING AND DECOMPRESSING    FONT COMPRESSING AND DECOMPRESSING 
+    //
+    // One can reduce file size by 50% with a content-specific compression of font strings
+    // Each letter object potentially has two long values, "shapeCmds" and "holeCmds"
+    // These may be optionally compressed during construction of the file
+    // The compressed versions are placed in "sC" and "hC"
+    // The *first* time a letter is used, if it was compressed, it is decompressed
+    // 
     function makeLetterSpec(fontSpec,letter){
       var letterSpec             = fontSpec[letter];
-      if(NNO(letterSpec)){
-        if(!tyA(letterSpec.shapeCmds)&&tyA(letterSpec.sC)){
+      if(isObject(letterSpec)){
+        if(!isArray(letterSpec.shapeCmds)&&isArray(letterSpec.sC)){
           letterSpec.shapeCmds   = letterSpec.sC.map(function(cmds){return decodeList(cmds)})
           letterSpec.sC          = null;
         }
-        if(!tyA(letterSpec.holeCmds)&&tyA(letterSpec.hC)){
-          letterSpec.holeCmds    = letterSpec.hC.map(function(cmdslists){if(tyA(cmdslists)){return cmdslists.map(function(cmds){return decodeList(cmds)})}else{return cmdslists}});
+        if(!isArray(letterSpec.holeCmds)&&isArray(letterSpec.hC)){
+          letterSpec.holeCmds    = letterSpec.hC.map(function(cmdslists){if(isArray(cmdslists)){return cmdslists.map(function(cmds){return decodeList(cmds)})}else{return cmdslists}});
           letterSpec.hC          = null;
         }
       }
       return letterSpec;
 
       function decodeList(str){
-        var split = str.split(" "),
-            list  = [];
+        var split  = str.split(" "),
+            list   = [];
         split.forEach(function(cmds){
           if(cmds.length===12){list.push(decode6(cmds))}
-          if(cmds.length===8){list.push(decode4(cmds))}
-          if(cmds.length===4){list.push(decode2(cmds))}
+          if(cmds.length===8) {list.push(decode4(cmds))}
+          if(cmds.length===4) {list.push(decode2(cmds))}
         });
         return list
       };
@@ -450,16 +446,18 @@ define(
       function decode2(s){return [decode1(s.substring(0,2)),decode1(s.substring(2,4))]};
       function decode1(s){return (frB128(s)-4000)/2};
     };
-    function codeList(list,_str,_xtra){
-      _str = _xtra = "";
-      if(tyA(list)){
+    function codeList(list){
+      var str   = "",
+          xtra  = "";
+      if(isArray(list)){
         list.forEach(function(cmds){
-          if(cmds.length===6){_str+=_xtra+code6(cmds);_xtra=" "}
-          if(cmds.length===4){_str+=_xtra+code4(cmds);_xtra=" "}
-          if(cmds.length===2){_str+=_xtra+code2(cmds);_xtra=" "}
+          if(cmds.length===6){str+=xtra+code6(cmds);xtra=" "}
+          if(cmds.length===4){str+=xtra+code4(cmds);xtra=" "}
+          if(cmds.length===2){str+=xtra+code2(cmds);xtra=" "}
         });
       }
-      return _str;
+      return str;
+
       function code6(a){return code1(a[0])+code1(a[1])+code1(a[2])+code1(a[3])+code1(a[4])+code1(a[5])};
       function code4(a){return code1(a[0])+code1(a[1])+code1(a[2])+code1(a[3])};
       function code2(a){return code1(a[0])+code1(a[1])};
@@ -482,6 +480,8 @@ define(
     };
     function prepArray(){
       var pntr                   = -1,n;
+      b128back                   = new Uint8Array(256);
+      b128digits                 = new Array(128);
       while(160>pntr++){
         if(pntr<128){
           n                      = fr128to256(pntr);
@@ -497,20 +497,63 @@ define(
       };
       function fr128to256(n){if(n<92){return n<58?n<6?n+33:n+34:n+35}else{return n+69}}
     };
+    //    FONT COMPRESSING AND DECOMPRESSING    FONT COMPRESSING AND DECOMPRESSING 
+    // *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-*
 
-    // *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-*
+    // *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-*
+    // Screening and defaulting functions for incoming parameters
+
+    function makePreferences(args){
+      var prefs = {},p;
+      if(isObject(p=args[1])){
+        if(p["default-font"]){prefs.defaultFont=p["default-font"]}else{if(p.defaultFont){prefs.defaultFont=p.defaultFont}}
+        if(p["mesh-origin"]){prefs.meshOrigin=p["mesh-origin"]}else{if(p.meshOrigin){prefs.meshOrigin=p.meshOrigin}}
+        if(p.scale){prefs.scale=p.scale}
+        if(isBoolean(p.debug)){prefs.debug=p.debug}
+        return prefs
+      }else{
+        return { defaultFont: args[2] , scale: args[1] , debug: false }
+      }
+    };
+
+    //  ~  -  =  ~  -  =  ~  -  =  ~  -  =  ~  -  =  
+    // These functions apply a test to possible incoming parameters
+    // It the test passes, the parameters are used
+    // Otherwise the default is used
+    function setOption(opts, field, tst, defalt) { return tst(opts[field]) ? opts[field] : defalt };
+    function setColor(clrs,  field, tst, defalt) { return tst(clrs[field]) ? clrs[field] : defalt };
+    function setPositn(pos,  field, tst, defalt) { return tst(pos[field]) ? pos[field] : defalt };
+
+    // The next two tests just return a boolean
+    function supportedFont(ff)             { return isObject(FONTS[ff]) } ;
+    function supportedAnchor(a)            { return a==="left"||a==="right"||a==="center" } ;
+    // Screening and defaulting functions for incoming parameters
+    // *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-*
+
+    // *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-*
+    // Conversion functions
+    function rgb2Bcolor3(rgb){
+      rgb                        = rgb.replace("#","");
+      return new BABYLON.Color3(convert(rgb.substring(0,2)),convert(rgb.substring(2,4)),convert(rgb.substring(4,6)));
+      function convert(x){return Γ(1000*Math.max(0,Math.min((isNumber(parseInt(x,16))?parseInt(x,16):0)/255,1)))/1000}
+    };
+    function point2Vector(point){
+      return new BABYLON.Vector2(round(point.x),round(point.y))
+    };
+    function merge(arrayOfMeshes){
+      return arrayOfMeshes.length===1 ? arrayOfMeshes[0] : BABYLON.Mesh.MergeMeshes(arrayOfMeshes, true)
+    };
+
+    // *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-*
     // Boolean test functions
-    function PN(mn)   { return typeof mn === "number" && !isNaN(mn) ? 0 < mn : false } ;
-    function tyN(mn)  { return typeof mn === "number" } ;
-    function tyB(mn)  { return typeof mn === "boolean" } ;
-    function Amp(ma)  { return typeof ma === "number" && !isNaN(ma) ? 0 <= ma && ma <= 1 : false } ;
-    function NNO(mo)  { return mo != null && typeof mo === "object" || typeof mo === "function" } ;
-    function tyA(ma)  { return ma != null && typeof ma === "object" && ma.constructor === Array } ; 
-    function NEA(ma)  { return ma != null && typeof ma === "object" && ma.constructor === Array && 0 < ma.length } ; 
-    function NES(ms)  {if(typeof(ms)=="string"){return(ms.length>0)}else{return(false)}} ;
-    function supportedFont(ff){ return NNO(FONTS[ff]) } ;
-    function supportedAnchor(a){ return a==="left"||a==="right"||a==="center" } ;
-    function weeid()  { return Math.floor(Math.random()*1000000) } ;
-    function round(n) { return Γ(0.3+n*1000000)/1000000 }
+    function isPositiveNumber(mn) { return typeof mn === "number" && !isNaN(mn) ? 0 < mn : false } ;
+    function isNumber(mn)         { return typeof mn === "number" } ;
+    function isBoolean(mn)        { return typeof mn === "boolean" } ;
+    function isAmplitude(ma)      { return typeof ma === "number" && !isNaN(ma) ? 0 <= ma && ma <= 1 : false } ;
+    function isObject(mo)         { return mo != null && typeof mo === "object" || typeof mo === "function" } ;
+    function isArray(ma)          { return ma != null && typeof ma === "object" && ma.constructor === Array } ; 
+    function isString(ms)         { return typeof ms === "string" ? ms.length>0 : false }  ;
+    function weeid()              { return Math.floor(Math.random()*1000000) } ;
+    function round(n)             { return Γ(0.3+n*1000000)/1000000 }
   }
 );
