@@ -1504,6 +1504,11 @@ function makeD(path){
 */
       return hnm;
 
+      //  ~  -  =  ~  -  =  ~  -  =  ~  -  =  ~  -  =  
+      // To support non-english letters, we need a variety of new symbols: acute, dieresis, etc.
+      // It turns out that these symbols can be re-used, with some placement changes
+      // To save space and code, that's what we do
+      // These functions return the special symbols in compressed or raw forms
       function acuteRaw(dx,dy){
         return [[128+dx,588+dy],[45+dx,588+dy],[135+dx,731+dy],[270+dx,731+dy]]
       };
@@ -1646,8 +1651,8 @@ define(
         width                      : 648
       };
       csn["T"]                     = {
-        fullPath                   : "M 681 631.5 Q 644 631.5 567 637.5 Q 492 643 453 642.5 L 417.5 642.5 Q 419 573.5 431 418.5 Q 442 274 442 194 Q 442 176.5 445.5 141 Q 449 105.5 449 87.5 Q 449 53.5 438 29 Q 424 -4 394.5 -4 Q 374.5 -4 358.5 10 Q 342.5 24 342.5 46 Q 342.5 53.5 345 68.5 Q 347.5 83.5 347.5 91 Q 347.5 115.5 344 164.5 Q 341 213.5 341 238.5 Q 341 310 329.5 439.5 Q 317.5 579.5 316 640.5 L 270.5 640 Q 161 640 98.5 656 Q 58 666.5 58 705.5 Q 58 726 71 741.5 Q 86 759 109.5 757.5 Q 127 756.5 189.5 748.5 Q 239.5 742.5 270.5 742.5 Q 300.5 742.5 361.5 743.5 Q 422.5 745 452.5 745 Q 491 745 566.5 739.5 Q 642.5 734 681 734 Q 702.5 734 717 719 Q 731.5 704.5 731.5 682.5 Q 731.5 661 717 646 Q 702.5 631.5 681 631.5 Z",
-        shapeCmds                  : [[[681,631.5],[644,631.5,567,637.5],[492,643,453,642.5],[417.5,642.5],[419,573.5,431,418.5],[442,274,442,194],[442,176.5,445.5,141],[449,105.5,449,87.5],[449,53.5,438,29],[424,-4,394.5,-4],[374.5,-4,358.5,10],[342.5,24,342.5,46],[342.5,53.5,345,68.5],[347.5,83.5,347.5,91],[347.5,115.5,344,164.5],[341,213.5,341,238.5],[341,310,329.5,439.5],[317.5,579.5,316,640.5],[270.5,640],[161,640,98.5,656],[58,666.5,58,705.5],[58,726,71,741.5],[86,759,109.5,757.5],[127,756.5,189.5,748.5],[239.5,742.5,270.5,742.5],[300.5,742.5,361.5,743.5],[422.5,745,452.5,745],[491,745,566.5,739.5],[642.5,734,681,734],[702.5,734,717,719],[731.5,704.5,731.5,682.5],[731.5,661,717,646],[702.5,631.5,681,631.5]]],
+        sC                         : ['K·K1 KJK1J0K= H½KHHLKG G¨KG G«J=GÃGª H6EgH6DF H6D"H=C] HDB¸HDBr HDB-H.A} GµA:GWA: G/A:F²AV FpAsFpAÁ FpB-FuBK FzBjFzBy FzC)FsC® FmDnFmDÂ FmF.FUH1 F=JIF:KC E`KB C§KBBªKc B6KxB6LE B6LoBPL° BoM0BÀM- C@M+D=L¾ DÄL²E`L² E¾L²F¸L´ G²L·HKL· H»L·J/L¬ KGL¡K·L¡ L?L¡L]La LzLCLzKº LzKmL]KN L?K1K·K1'],
+        // shapeCmds                  : [[[681,631.5],[644,631.5,567,637.5],[492,643,453,642.5],[417.5,642.5],[419,573.5,431,418.5],[442,274,442,194],[442,176.5,445.5,141],[449,105.5,449,87.5],[449,53.5,438,29],[424,-4,394.5,-4],[374.5,-4,358.5,10],[342.5,24,342.5,46],[342.5,53.5,345,68.5],[347.5,83.5,347.5,91],[347.5,115.5,344,164.5],[341,213.5,341,238.5],[341,310,329.5,439.5],[317.5,579.5,316,640.5],[270.5,640],[161,640,98.5,656],[58,666.5,58,705.5],[58,726,71,741.5],[86,759,109.5,757.5],[127,756.5,189.5,748.5],[239.5,742.5,270.5,742.5],[300.5,742.5,361.5,743.5],[422.5,745,452.5,745],[491,745,566.5,739.5],[642.5,734,681,734],[702.5,734,717,719],[731.5,704.5,731.5,682.5],[731.5,661,717,646],[702.5,631.5,681,631.5]]],
         xMin                       : 58,
         xMax                       : 731,
         yMin                       : -4,
@@ -1655,7 +1660,8 @@ define(
         width                      : 696
       };
       csn["Z"]                     = {
-        shapeCmds                  : [[[633,625.5],[565.5,579.5],[474.5,509,359.5,354],[184,98.5],[171.5,79.5,159.5,63.5],[354,71],[481.5,77,549,77],[615,77,646.5,71],[687,63,688.5,30],[689.5,5.5,672.5,-9],[657.5,-21.5,635,-21.5],[620.5,-21.5,591.5,-20],[562.5,-18,548,-18],[472,-18,319.5,-22],[167.5,-25.5,91.5,-25.5],[34,-25.5,34,25],[34,58,65,108],[118.5,182.5],[299,433.5],[410.5,581,506.5,662.5],[331.5,652.5],[129.5,652.5],[124,652.5,113,651.5],[102.5,651,97.5,651],[44.5,651,44.5,702.5],[44.5,736.5,71.5,747.5],[88,754.5,126,754.5],[160.5,754.5,228.5,747],[297,740,331.5,740],[370,740,446.5,745],[523.5,750,562.5,750],[691,750,691,701.5],[691,668.5,633,625.5]]],
+        // shapeCmds                  : [[[633,625.5],[565.5,579.5],[474.5,509,359.5,354],[184,98.5],[171.5,79.5,159.5,63.5],[354,71],[481.5,77,549,77],[615,77,646.5,71],[687,63,688.5,30],[689.5,5.5,672.5,-9],[657.5,-21.5,635,-21.5],[620.5,-21.5,591.5,-20],[562.5,-18,548,-18],[472,-18,319.5,-22],[167.5,-25.5,91.5,-25.5],[34,-25.5,34,25],[34,58,65,108],[118.5,182.5],[299,433.5],[410.5,581,506.5,662.5],[331.5,652.5],[129.5,652.5],[124,652.5,113,651.5],[102.5,651,97.5,651],[44.5,651,44.5,702.5],[44.5,736.5,71.5,747.5],[88,754.5,126,754.5],[160.5,754.5,228.5,747],[297,740,331.5,740],[370,740,446.5,745],[523.5,750,562.5,750],[691,750,691,701.5],[691,668.5,633,625.5]]],
+        sC                         : ['K4K$ J-JI HxI<F´F© D2Bª C¼BbC¤BA F©BP H¨B]I¯B] J³B]KOBP KÃB@L"A¡ L$AMK¦A0 Kf@ºK8@º J¾@ºJb@½ J&@ÁI­@Á Hs@ÁFA@¹ C´@²Bz@² A©@²A©Au A©B6BDB½ C/D/ E»H$ GxJLI7Kp FYK[ CEK[ C:K[C#KY B²KXB¨KX A¾KXA¾L? A¾L¦BQL¼ BsM&C>M& C¦M&D®L» E·L­FYL­ G%L­H?L· IYLÁJ&LÁ L(LÁL(L= L(K|K4K$'],
         xMin                       : 34,
         xMax                       : 691,
         yMin                       : -25,
@@ -1673,8 +1679,10 @@ define(
       };
       csn["b"]                     = {
         fullPath                   : "M 303 -21 Q 226.5 -21 164 9 Q 148 -15 125 -15 Q 106 -15 92.5 -2 Q 79.5 11.5 79.5 31.5 Q 79.5 44.5 80.5 70 Q 82 95.5 82 108.5 Q 82 161.5 79 267 Q 76.5 373 76.5 426 Q 76.5 462.5 77 564 Q 77.5 666 77.5 703 Q 77.5 733 90 757 Q 106.5 787.5 135.5 787.5 Q 173 787.5 173 744 Q 173 737 170.5 723.5 Q 168 710 168 703 L 166.5 593.5 L 165.5 466 Q 209 495.5 248 510 Q 287.5 525 322 525 Q 429.5 525 496.5 442.5 Q 559.5 365 559.5 252 L 559.5 252 Q 559.5 138 486 58.5 Q 412.5 -21 303 -21 Z M 322 430.5 Q 281 430.5 238 407.5 Q 217 396 166 358 L 165 271.5 L 165.5 193.5 L 166 111.5 Q 190 100.5 233.5 83.5 Q 264.5 74 303 74 Q 375.5 74 422 125 Q 468.5 176 468.5 252 Q 468.5 326.5 431 376.5 Q 390.5 430.5 322 430.5 Z",
-        shapeCmds                  : [[[303,-21],[226.5,-21,164,9],[148,-15,125,-15],[106,-15,92.5,-2],[79.5,11.5,79.5,31.5],[79.5,44.5,80.5,70],[82,95.5,82,108.5],[82,161.5,79,267],[76.5,373,76.5,426],[76.5,462.5,77,564],[77.5,666,77.5,703],[77.5,733,90,757],[106.5,787.5,135.5,787.5],[173,787.5,173,744],[173,737,170.5,723.5],[168,710,168,703],[166.5,593.5],[165.5,466],[209,495.5,248,510],[287.5,525,322,525],[429.5,525,496.5,442.5],[559.5,365,559.5,252],[559.5,252],[559.5,138,486,58.5],[412.5,-21,303,-21]]],
-        holeCmds                   : [[[[322,430.5],[281,430.5,238,407.5],[217,396,166,358],[165,271.5],[165.5,193.5],[166,111.5],[190,100.5,233.5,83.5],[264.5,74,303,74],[375.5,74,422,125],[468.5,176,468.5,252],[468.5,326.5,431,376.5],[390.5,430.5,322,430.5]]]],
+        // shapeCmds                  : [[[303,-21],[226.5,-21,164,9],[148,-15,125,-15],[106,-15,92.5,-2],[79.5,11.5,79.5,31.5],[79.5,44.5,80.5,70],[82,95.5,82,108.5],[82,161.5,79,267],[76.5,373,76.5,426],[76.5,462.5,77,564],[77.5,666,77.5,703],[77.5,733,90,757],[106.5,787.5,135.5,787.5],[173,787.5,173,744],[173,737,170.5,723.5],[168,710,168,703],[166.5,593.5],[165.5,466],[209,495.5,248,510],[287.5,525,322,525],[429.5,525,496.5,442.5],[559.5,365,559.5,252],[559.5,252],[559.5,138,486,58.5],[412.5,-21,303,-21]]],
+        sC                         : ['EÃ@» Dª@»C­AT CkA#C<A# B¹A#B|A> BbAYBbA¤ BbA¾BdBN BgB¤BgB¾ BgC¨BaEX B[G,B[G¹ B[H`B]J* B^KwB^L@ B^L}BwM, BºMjCQMj C¿MjC¿Lµ C¿L§CºLj CµLNCµL@ C²Jf C°Hg DeHÄE2I> E¤I]FFI] GÀI]I"H7 IÄF¿IÄE: IÄE: IÄCVH±B7 G|@»EÃ@»'],
+        // holeCmds                   : [[[[322,430.5],[281,430.5,238,407.5],[217,396,166,358],[165,271.5],[165.5,193.5],[166,111.5],[190,100.5,233.5,83.5],[264.5,74,303,74],[375.5,74,422,125],[468.5,176,468.5,252],[468.5,326.5,431,376.5],[390.5,430.5,322,430.5]]]],
+        hC                         : [['FFGÂ EuGÂDÁGr DuGZC±F± C¯Eb C°DE C±BÄ D>B®D¸Bj ESBVEÃBV G1BVG±C< HlD!HlE: HlFOGÃG3 GOGÂFFGÂ']],
         xMin                       : 76,
         xMax                       : 560,
         yMin                       : -21,
@@ -1690,9 +1698,10 @@ define(
         width                      : 526
       };
       csn["d"]                     = {
-        fullPath                   : "M 530 441.5 Q 524 368 524 294.5 Q 524 128 539.5 43 Q 540.5 36 540.5 31.5 Q 540.5 11.5 526.5 -1.5 Q 512.5 -14.5 494 -14.5 Q 463 -14.5 448.5 30.5 Q 412.5 4 373.5 -9.5 Q 335 -23 293 -23 Q 189.5 -23 121.5 46 Q 51.5 116.5 51.5 227 Q 51.5 360.5 122 441 Q 193 521.5 306 521.5 Q 364 521.5 395.5 503.5 L 442.5 469 Q 449.5 679.5 459 752.5 Q 465.5 797 504.5 797 Q 550 797 550 748.5 Q 550 679 530 441.5 Z M 308 428.5 Q 224 428.5 182 378.5 Q 140 329 140 229 Q 140 164.5 185.5 118 Q 231.5 71.5 293 71.5 Q 335 71.5 364 87 Q 381 96 419.5 128.5 Q 427 135 434 144 L 432.5 230.5 L 433 288.5 L 434 347.5 Q 415 388 383.5 408 Q 352 428.5 308 428.5 Z",
-        shapeCmds                  : [[[530,441.5],[524,368,524,294.5],[524,128,539.5,43],[540.5,36,540.5,31.5],[540.5,11.5,526.5,-1.5],[512.5,-14.5,494,-14.5],[463,-14.5,448.5,30.5],[412.5,4,373.5,-9.5],[335,-23,293,-23],[189.5,-23,121.5,46],[51.5,116.5,51.5,227],[51.5,360.5,122,441],[193,521.5,306,521.5],[364,521.5,395.5,503.5],[442.5,469],[449.5,679.5,459,752.5],[465.5,797,504.5,797],[550,797,550,748.5],[550,679,530,441.5]]],
-        holeCmds                   : [[[[308,428.5],[224,428.5,182,378.5],[140,329,140,229],[140,164.5,185.5,118],[231.5,71.5,293,71.5],[335,71.5,364,87],[381,96,419.5,128.5],[427,135,434,144],[432.5,230.5],[433,288.5],[434,347.5],[415,388,383.5,408],[352,428.5,308,428.5]]]],
+        // shapeCmds                  : [[[530,441.5],[524,368,524,294.5],[524,128,539.5,43],[540.5,36,540.5,31.5],[540.5,11.5,526.5,-1.5],[512.5,-14.5,494,-14.5],[463,-14.5,448.5,30.5],[412.5,4,373.5,-9.5],[335,-23,293,-23],[189.5,-23,121.5,46],[51.5,116.5,51.5,227],[51.5,360.5,122,441],[193,521.5,306,521.5],[364,521.5,395.5,503.5],[442.5,469],[449.5,679.5,459,752.5],[465.5,797,504.5,797],[550,797,550,748.5],[550,679,530,441.5]]],
+        sC                         : ['IgH5 IZG!IZE² IZCBIzA» I|A­I|A¤ I|AYI`A? ICA$HÁA$ HaA$HCA¢ G|AJG-A/ Fa@·E¯@· D=@·C5AÁ B)C+B)D« B)F¶C6H4 DDIUF%IU F½IUGYI1 H7Hm HEK´HXM" HfM}I3M} I±M}I±L¾ I±K³IgH5'],
+        // holeCmds                   : [[[[308,428.5],[224,428.5,182,378.5],[140,329,140,229],[140,164.5,185.5,118],[231.5,71.5,293,71.5],[335,71.5,364,87],[381,96,419.5,128.5],[427,135,434,144],[432.5,230.5],[433,288.5],[434,347.5],[415,388,383.5,408],[352,428.5,308,428.5]]]],
+        hC                         : [['F*G¾ D¥G¾D.G7 CZFTCZD¯ CZC®D5C. D´BQE¯BQ FaBQF½Bq G<B¥G¬CC G»CPH%Cc H"D² H#E¦ H%Fz G£GJGAGs F¥G¾F*G¾']],
         xMin                       : 51,
         xMax                       : 550,
         yMin                       : -23,
@@ -1710,7 +1719,8 @@ define(
       };
       csn["f"]                     = {
         fullPath                   : "M 405.5 703 Q 284.5 703 270 535 L 268.5 504 Q 353.5 510 378.5 510 Q 458 510 458 460 Q 458 423.5 419 416.5 Q 402 413.5 379 414 Q 356.5 415 264 407.5 L 260 293.5 Q 260 262.5 262 200.5 Q 264 138.5 264 108 Q 264 13 253 -40 Q 244.5 -80 206.5 -80 Q 186 -80 171.5 -67 Q 157 -53.5 157 -33.5 Q 157 -29.5 158 -23.5 Q 168.5 41.5 168.5 118 L 167 254.5 L 167 399.5 Q 104.5 394.5 88 394.5 Q 37.5 394.5 37.5 443 Q 37.5 492.5 125 495 L 173 496.5 Q 174.5 524.5 180.5 572.5 Q 193.5 683.5 236.5 736 Q 288.5 799.5 399 799.5 Q 470.5 799.5 470.5 751 Q 470.5 703 405.5 703 Z",
-        shapeCmds                  : [[[405.5,703],[284.5,703,270,535],[268.5,504],[353.5,510,378.5,510],[458,510,458,460],[458,423.5,419,416.5],[402,413.5,379,414],[356.5,415,264,407.5],[260,293.5],[260,262.5,262,200.5],[264,138.5,264,108],[264,13,253,-40],[244.5,-80,206.5,-80],[186,-80,171.5,-67],[157,-53.5,157,-33.5],[157,-29.5,158,-23.5],[168.5,41.5,168.5,118],[167,254.5],[167,399.5],[104.5,394.5,88,394.5],[37.5,394.5,37.5,443],[37.5,492.5,125,495],[173,496.5],[174.5,524.5,180.5,572.5],[193.5,683.5,236.5,736],[288.5,799.5,399,799.5],[470.5,799.5,470.5,751],[470.5,703,405.5,703]]],
+        // shapeCmds                  : [[[405.5,703],[284.5,703,270,535],[268.5,504],[353.5,510,378.5,510],[458,510,458,460],[458,423.5,419,416.5],[402,413.5,379,414],[356.5,415,264,407.5],[260,293.5],[260,262.5,262,200.5],[264,138.5,264,108],[264,13,253,-40],[244.5,-80,206.5,-80],[186,-80,171.5,-67],[157,-53.5,157,-33.5],[157,-29.5,158,-23.5],[168.5,41.5,168.5,118],[167,254.5],[167,399.5],[104.5,394.5,88,394.5],[37.5,394.5,37.5,443],[37.5,492.5,125,495],[173,496.5],[174.5,524.5,180.5,572.5],[193.5,683.5,236.5,736],[288.5,799.5,399,799.5],[470.5,799.5,470.5,751],[470.5,703,405.5,703]]],
+        sC                         : ['GnL@ E|L@E_Iq E[I2 F¨I>G7I> HVI>HVHZ HVG´G«G¦ GgG~G8G¡ F®G£ERGr EJE° EJEOENDS ERCWERB½ ERA]E<@s E+@!D`@! D6@!C¼@< C}@WC}@¢ C}@ªC¡@¶ C¶A¸C¶C. C³E? C³Gb B¶GWBsGW A°GWA°H8 A°H¾C<HÃ C¿I" CÂI[D+J; DEK¼D¾L¥ E¦M¤GaM¤ HpM¤HpLÃ HpL@GnL@'],
         xMin                       : 38,
         xMax                       : 470,
         yMin                       : -80,
@@ -1718,9 +1728,10 @@ define(
         width                      : 520
       };
       csn["g"]                     = { 
-        fullPath                   : "M 481 215.5 L 469.5 47.5 Q 466.5 -52.5 449 -116 Q 426.5 -197 377 -235.5 Q 317 -282 203.5 -282 Q 137 -282 92 -273 Q 29 -260.5 29 -221 Q 29 -176.5 72.5 -176.5 Q 90.5 -176.5 132.5 -185.5 Q 174.5 -194 225.5 -193 Q 321.5 -191.5 358 -100 Q 382 -39 383.5 87.5 Q 356.5 37.5 319 12.5 Q 282 -12.5 234 -12.5 Q 143.5 -12.5 86.5 49 Q 30 111 30 209.5 Q 30 344.5 107.5 427 Q 187.5 512 325.5 512 Q 372 512 403.5 500 Q 435 488 451.5 464 Q 505 462.5 505 404.5 Q 505 369 494.5 309.5 Q 483 240.5 481 215.5 Z M 320.5 432 Q 225.5 432 173.5 366.5 Q 127 307.5 127 216.5 Q 127 144 154.5 107.5 Q 182 71 237 71 Q 287.5 71 335 128 Q 378 180.5 384 232 Q 394.5 286 406.5 401.5 Q 386.5 417 365 424.5 Q 343.5 432 320.5 432 Z",
-        shapeCmds                  : [[[481,215.5],[469.5,47.5],[466.5,-52.5,449,-116],[426.5,-197,377,-235.5],[317,-282,203.5,-282],[137,-282,92,-273],[29,-260.5,29,-221],[29,-176.5,72.5,-176.5],[90.5,-176.5,132.5,-185.5],[174.5,-194,225.5,-193],[321.5,-191.5,358,-100],[382,-39,383.5,87.5],[356.5,37.5,319,12.5],[282,-12.5,234,-12.5],[143.5,-12.5,86.5,49],[30,111,30,209.5],[30,344.5,107.5,427],[187.5,512,325.5,512],[372,512,403.5,500],[435,488,451.5,464],[505,462.5,505,404.5],[505,369,494.5,309.5],[483,240.5,481,215.5]]],
-        holeCmds                   : [[[[320.5,432],[225.5,432,173.5,366.5],[127,307.5,127,216.5],[127,144,154.5,107.5],[182,71,237,71],[287.5,71,335,128],[378,180.5,384,232],[394.5,286,406.5,401.5],[386.5,417,365,424.5],[343.5,432,320.5,432]]]],
+        // shapeCmds                  : [[[481,215.5],[469.5,47.5],[466.5,-52.5,449,-116],[426.5,-197,377,-235.5],[317,-282,203.5,-282],[137,-282,92,-273],[29,-260.5,29,-221],[29,-176.5,72.5,-176.5],[90.5,-176.5,132.5,-185.5],[174.5,-194,225.5,-193],[321.5,-191.5,358,-100],[382,-39,383.5,87.5],[356.5,37.5,319,12.5],[282,-12.5,234,-12.5],[143.5,-12.5,86.5,49],[30,111,30,209.5],[30,344.5,107.5,427],[187.5,512,325.5,512],[372,512,403.5,500],[435,488,451.5,464],[505,462.5,505,404.5],[505,369,494.5,309.5],[483,240.5,481,215.5]]],
+        sC                         : ['H§Dr HnAÄ Hh@YHD?Z Gº>8G4=l F<<±DY<± CT<±B{<Ã A}=9A}=« A}>bBS>b Bx>bCK>O CÂ>>D¨>@ FE>CF±?{ G>@uGABr F®A°F@A[ EwA)D¹A) CbA)BpB# A¡BÃA¡Df A¡FtB¼G» D9IBFMIB G*IBGjI* H(HµHIHc I4H`I4Gl I4G#HÂF- H«E"H§Dr'],
+        // holeCmds                   : [[[[320.5,432],[225.5,432,173.5,366.5],[127,307.5,127,216.5],[127,144,154.5,107.5],[182,71,237,71],[287.5,71,335,128],[378,180.5,384,232],[394.5,286,406.5,401.5],[386.5,417,365,424.5],[343.5,432,320.5,432]]]],
+        hC                         : [['FCH! D¨H!CÀFÂ C@F)C@Dt C@CcCxB¼ D.BPD¿BP E¤BPFaCB G6D+GBDµ GWE¡GpGf GGG§F¿G¶ FrH!FCH!']],
         xMin                       : 29,
         xMax                       : 505,
         yMin                       : -282,
@@ -1728,8 +1739,8 @@ define(
         width                      : 544
       };
       csn["h"]                     = {
-        fullPath                   : "M 488 -31 Q 452.5 -31 441.5 7 Q 430 48 420.5 123.5 Q 411.5 196 411.5 242.5 Q 411.5 255.5 412.5 282 Q 414 308.5 414 321.5 Q 414 415.5 367 415.5 Q 303.5 415.5 253.5 358 Q 228 328.5 183.5 245.5 Q 183.5 55 167.5 20 Q 153.5 -11 124 -11 Q 103.5 -11 88 3 Q 72.5 17 72.5 37 Q 72.5 44 77 59 Q 81 71.5 82.5 132 L 84 206 L 85.5 573.5 Q 89 635.5 89 657 Q 89 682.5 84 705 Q 79.5 728 79.5 752.5 Q 79.5 773.5 94 787 Q 108.5 801 129.5 801 Q 170.5 801 177.5 757 Q 185.5 708.5 185.5 669.5 Q 185.5 617 182 560 Q 179 505.5 179.5 450.5 L 180 406.5 Q 221 461.5 267.5 488.5 Q 314.5 516 367 516 Q 450 516 481 462 Q 503 424 506 334 L 510 238.5 L 520 134.5 Q 527 76 537 31.5 Q 539 23 539 17 Q 539 -3.5 524 -17.5 Q 509 -31 488 -31 Z",
-        shapeCmds                  : [[[488,-31],[452.5,-31,441.5,7],[430,48,420.5,123.5],[411.5,196,411.5,242.5],[411.5,255.5,412.5,282],[414,308.5,414,321.5],[414,415.5,367,415.5],[303.5,415.5,253.5,358],[228,328.5,183.5,245.5],[183.5,55,167.5,20],[153.5,-11,124,-11],[103.5,-11,88,3],[72.5,17,72.5,37],[72.5,44,77,59],[81,71.5,82.5,132],[84,206],[85.5,573.5],[89,635.5,89,657],[89,682.5,84,705],[79.5,728,79.5,752.5],[79.5,773.5,94,787],[108.5,801,129.5,801],[170.5,801,177.5,757],[185.5,708.5,185.5,669.5],[185.5,617,182,560],[179,505.5,179.5,450.5],[180,406.5],[221,461.5,267.5,488.5],[314.5,516,367,516],[450,516,481,462],[503,424,506,334],[510,238.5],[520,134.5],[527,76,537,31.5],[539,23,539,17],[539,-3.5,524,-17.5],[509,-31,488,-31]]],
+        // shapeCmds                  : [[[488,-31],[452.5,-31,441.5,7],[430,48,420.5,123.5],[411.5,196,411.5,242.5],[411.5,255.5,412.5,282],[414,308.5,414,321.5],[414,415.5,367,415.5],[303.5,415.5,253.5,358],[228,328.5,183.5,245.5],[183.5,55,167.5,20],[153.5,-11,124,-11],[103.5,-11,88,3],[72.5,17,72.5,37],[72.5,44,77,59],[81,71.5,82.5,132],[84,206],[85.5,573.5],[89,635.5,89,657],[89,682.5,84,705],[79.5,728,79.5,752.5],[79.5,773.5,94,787],[108.5,801,129.5,801],[170.5,801,177.5,757],[185.5,708.5,185.5,669.5],[185.5,617,182,560],[179,505.5,179.5,450.5],[180,406.5],[221,461.5,267.5,488.5],[314.5,516,367,516],[450,516,481,462],[503,424,506,334],[510,238.5],[520,134.5],[527,76,537,31.5],[539,23,539,17],[539,-3.5,524,-17.5],[509,-31,488,-31]]],
+        sC                         : ['Hµ@§ HK@§H5AP GÁB!G®C9 GzDJGzE& GzEAG|Ew G¡F+G¡FE G¡G¤FÃG¤ EÄG¤E=F± D­FSD1E- D1B0C´Ak CvA,C:A, B´A,BsAH BSAeBSA¯ BSA½B]B8 BeBQBhCJ BkD_ BnJ= BuK9BuKe BuKºBkLD BbLsBbM" BbMMB¡Mi B¾M§CEM§ CºM§D$M, D5LKD5K~ D5J·D.J! D(I5D)HG D*Gp D}H^EYH¶ F7IJFÃIJ HFIJH§H_ I0GµI6F_ I>DÂ IRCO IaBZIuA¤ IyAqIyAe IyA;IZ@Â I<@§Hµ@§'],
         xMin                       : 60,
         xMax                       : 514,
         yMin                       : 0,
@@ -2991,7 +3002,7 @@ define(
 define(
   'index',['./fonts/hirukopro-book','./fonts/helveticaneue-medium','./fonts/comicsans-normal','./fonts/jura-medium','./fonts/webgl-dings'],
 
-  // *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-*
+  // *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-*
   // This function loads the specific type-faces and returns the superconstructor
   // If BABYLON is loaded, it assigns the superconstructor to BABYLON.MeshWriter
   // Otherwise it assigns it to global variable 'BABYLONTYPE'
@@ -2999,7 +3010,7 @@ define(
   function(HPB,HNM,CSN,JUR,WGD){
 
     var scene,FONTS,defaultColor,defaultOpac,naturalLetterHeight,curveSampleSize,Γ=Math.floor,hpb,hnm,csn,jur,wgd,debug;
-    var b128back=new Uint8Array(256),b128digits=new Array(128);
+    var b128back,b128digits;
     prepArray();
     hpb                          = HPB(codeList);
     hnm                          = HNM(codeList);
@@ -3024,7 +3035,7 @@ define(
     curveSampleSize              = 6;
     naturalLetterHeight          = 1000;
 
-    // *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-*
+    // *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-*
     //  SUPERCONSTRUCTOR  SUPERCONSTRUCTOR  SUPERCONSTRUCTOR 
     // Parameters:
     //   ~ scene
@@ -3037,12 +3048,12 @@ define(
       scene                      = arguments[0];
       preferences                = makePreferences(arguments);
 
-      defaultFont                = NNO(FONTS[preferences.defaultFont]) ? preferences.defaultFont : "HelveticaNeue-Medium";
+      defaultFont                = isObject(FONTS[preferences.defaultFont]) ? preferences.defaultFont : "HelveticaNeue-Medium";
       meshOrigin                 = preferences.meshOrigin==="fontOrigin" ? preferences.meshOrigin : "letterCenter";
-      scale                      = tyN(preferences.scale)?preferences.scale:1;
-      debug                      = tyB(preferences.debug)?preferences.debug:false;
+      scale                      = isNumber(preferences.scale)?preferences.scale:1;
+      debug                      = isBoolean(preferences.debug)?preferences.debug:false;
 
-      // *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-*
+      // *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-*
       //  CONSTRUCTOR  CONSTRUCTOR  CONSTRUCTOR  CONSTRUCTOR
       // Called with 'new'
       // Parameters:
@@ -3050,35 +3061,43 @@ define(
       //   ~ options
 
       function MeshWriter(lttrs,opt){
-        var options              = NNO(opt) ? opt : { } ,
-            position             = setOption("position", NNO, {}),
-            colors               = setOption("colors", NNO, {}),
-            fontFamily           = setOption("font-family", supportedFont, defaultFont),
-            anchor               = setOption("anchor", supportedAnchor, "left"),
-            rawheight            = setOption("letter-height", PN, 100),
-            rawThickness         = setOption("letter-thickness", PN, 1),
-            basicColor           = setOption("color", NES, defaultColor),
-            opac                 = setOption("alpha", Amp, defaultOpac),
-            y                    = setPositn("y", tyN, 0),
-            x                    = setPositn("x", tyN, 0),
-            z                    = setPositn("z", tyN, 0),
-            diffuse              = setColor("diffuse", NES, "#F0F0F0"),
-            specular             = setColor("specular", NES, "#000000"),
-            ambient              = setColor("ambient", NES, "#F0F0F0"),
-            emissive             = setColor("emissive", NES, basicColor),
+
+        var options              = isObject(opt) ? opt : { } ;
+
+        //  ~  -  =  ~  -  =  ~  -  =  ~  -  =  ~  -  =  ~  -  =  
+        // Here we set all the parameters with incoming value or a default
+        // See documentation on setOption below
+        var position             = setOption ( options,  "position", isObject, {} ) ,
+            colors               = setOption ( options,  "colors",   isObject, {} ) ,
+            fontFamily           = setOption ( options,  "font-family", supportedFont, defaultFont ) ,
+            anchor               = setOption ( options,  "anchor",   supportedAnchor, "left" ) ,
+            rawheight            = setOption ( options,  "letter-height", isPositiveNumber, 100 ) ,
+            rawThickness         = setOption ( options,  "letter-thickness", isPositiveNumber, 1 ) ,
+            basicColor           = setOption ( options,  "color",    isString, defaultColor ) ,
+            opac                 = setOption ( options,  "alpha",    isAmplitude, defaultOpac ) ,
+            y                    = setPositn ( position, "y", isNumber, 0),
+            x                    = setPositn ( position, "x", isNumber, 0),
+            z                    = setPositn ( position, "z", isNumber, 0),
+            diffuse              = setColor  ( colors,   "diffuse",  isString, "#F0F0F0"),
+            specular             = setColor  ( colors,   "specular", isString, "#000000"),
+            ambient              = setColor  ( colors,   "ambient",  isString, "#F0F0F0"),
+            emissive             = setColor  ( colors,   "emissive", isString, basicColor),
             fontSpec             = FONTS[fontFamily],
             letterScale          = round(scale*rawheight/naturalLetterHeight),
             thickness            = round(scale*rawThickness),
-            letters              = NES(lttrs) ? lttrs : "" ,
-            material             = makeMaterial(scene, letters, emissive, ambient, specular, diffuse, opac),
-            meshesAndBoxes       = constructLetterPolygons(letters, fontSpec, 0, 0, 0, letterScale, thickness, material, meshOrigin),
-            offsetX              = anchor==="right" ? (0-meshesAndBoxes.xWidth) : ( anchor==="center" ? (0-meshesAndBoxes.xWidth/2) : 0 ),
-            meshes               = meshesAndBoxes[0],
-            lettersBoxes         = meshesAndBoxes[1],
-            lettersOrigins       = meshesAndBoxes[2],
-            combo                = makeSPS(scene, meshesAndBoxes, material),
-            sps                  = combo[0],
-            mesh                 = combo[1];
+            letters              = isString(lttrs) ? lttrs : "" ;
+
+        var material,meshesAndBoxes,offsetX,meshes,lettersBoxes,lettersOrigins,combo,sps,mesh;
+
+        material                 = makeMaterial(scene, letters, emissive, ambient, specular, diffuse, opac);
+        meshesAndBoxes           = constructLetterPolygons(letters, fontSpec, 0, 0, 0, letterScale, thickness, material, meshOrigin);
+        offsetX                  = anchor==="right" ? (0-meshesAndBoxes.xWidth) : ( anchor==="center" ? (0-meshesAndBoxes.xWidth/2) : 0 );
+        meshes                   = meshesAndBoxes[0];
+        lettersBoxes             = meshesAndBoxes[1];
+        lettersOrigins           = meshesAndBoxes[2];
+        combo                    = makeSPS(scene, meshesAndBoxes, material);
+        sps                      = combo[0];
+        mesh                     = combo[1];
 
         mesh.position.x          = scale*x+offsetX;
         mesh.position.y          = scale*y;
@@ -3090,32 +3109,28 @@ define(
         this.getOffsetX          = function()  {return offsetX};
         this.getLettersBoxes     = function()  {return lettersBoxes};
         this.getLettersOrigins   = function()  {return lettersOrigins};
-        this.color               = function(c) {return NES(c)?color=c:color};
-        this.alpha               = function(o) {return Amp(o)?opac=o:opac};
+        this.color               = function(c) {return isString(c)?color=c:color};
+        this.alpha               = function(o) {return isAmplitude(o)?opac=o:opac};
         this.clearall            = function()  {sps=null;mesh=null;material=null};
-
-        function setOption(field, tst, defalt) { return tst(options[field]) ? options[field] : defalt };
-        function setColor(field, tst, defalt)  { return tst(colors[field]) ? colors[field] : defalt };
-        function setPositn(field, tst, defalt) { return tst(position[field]) ? position[field] : defalt }
       };
 
       proto                      = MeshWriter.prototype;
 
       proto.setColor             = function(color){
         var material             = this.getMaterial();
-        if(NES(color)){
+        if(isString(color)){
           material.emissiveColor = rgb2Bcolor3(this.color(color));
         }
       };
       proto.setAlpha             = function(alpha){
         var material             = this.getMaterial();
-        if(Amp(alpha)){
+        if(isAmplitude(alpha)){
           material.alpha         = this.alpha(alpha)
         }
       };
       proto.overrideAlpha        = function(alpha){
         var material             = this.getMaterial();
-        if(Amp(alpha)){
+        if(isAmplitude(alpha)){
           material.alpha         = alpha
         }
       };
@@ -3145,7 +3160,9 @@ define(
     };
     return Wrapper;
 
-
+    //  ~  -  =  ~  -  =  ~  -  =  ~  -  =  ~  -  =  ~  -  =  ~  -  =
+    // MakeSPS turns the output of constructLetterPolygons into an SPS
+    // with the whole string, with appropriate offsets
     function makeSPS(scene,meshesAndBoxes,material){
       var meshes                 = meshesAndBoxes[0],
           lettersOrigins         = meshesAndBoxes[2],sps,spsMesh;
@@ -3169,6 +3186,12 @@ define(
       }
     };
 
+    //  ~  -  =  ~  -  =  ~  -  =  ~  -  =  ~  -  =  ~  -  =  ~  -  =
+    // Takes specifications and returns an array with three elements, each of which
+    // is an array (length of all arrays to match the number of incoming characters)
+    //   ~ the meshes (not offset by position)
+    //   ~ the boxes (to help with positions features) 
+    //   ~ the letter origins (providing offset for each letter)
     function constructLetterPolygons(letters, fontSpec, xOffset, yOffset, zOffset, letterScale, thickness, material, meshOrigin){
       var letterOffsetX          = 0,
           lettersOrigins         = new Array(letters.length),
@@ -3179,7 +3202,7 @@ define(
       for(i=0;i<letters.length;i++){
         letter                   = letters[i];
         letterSpec               = makeLetterSpec(fontSpec,letter);
-        if(NNO(letterSpec)){
+        if(isObject(letterSpec)){
           lists                  = buildLetterMeshes(letter, i, letterSpec, fontSpec.reverseShapes, fontSpec.reverseHoles);
           shapesList             = lists[0];
           holesList              = lists[1];
@@ -3187,7 +3210,7 @@ define(
           for(j=0;j<shapesList.length;j++){
             shape                = shapesList[j];
             holes                = holesList[j];
-            if(NEA(holes)){
+            if(isArray(holes)&&holes.length){
               letterMesh         = punchHolesInShape(shape, holes, letter, i)
             }else{
               letterMesh         = shape
@@ -3223,16 +3246,16 @@ define(
         var balanced             = meshOrigin === "letterCenter",
             centerX              = (spec.xMin+spec.xMax)/2,
             centerZ              = (spec.yMin+spec.yMax)/2,
-            xFactor              = tyN(spec.xFactor)?spec.xFactor:1,
-            zFactor              = tyN(spec.yFactor)?spec.yFactor:1,
-            xShift               = tyN(spec.xShift)?spec.xShift:0,
-            zShift               = tyN(spec.yShift)?spec.yShift:0,
-            reverseShape         = tyB(spec.reverseShape)?spec.reverseShape:reverseShapes,
-            reverseHole          = tyB(spec.reverseHole)?spec.reverseHole:reverseHoles,
+            xFactor              = isNumber(spec.xFactor)?spec.xFactor:1,
+            zFactor              = isNumber(spec.yFactor)?spec.yFactor:1,
+            xShift               = isNumber(spec.xShift)?spec.xShift:0,
+            zShift               = isNumber(spec.yShift)?spec.yShift:0,
+            reverseShape         = isBoolean(spec.reverseShape)?spec.reverseShape:reverseShapes,
+            reverseHole          = isBoolean(spec.reverseHole)?spec.reverseHole:reverseHoles,
             offX                 = xOffset-(balanced?centerX:0),
             offZ                 = zOffset-(balanced?centerZ:0),
-            shapeCmdsLists       = tyA(spec.shapeCmds) ? spec.shapeCmds : [],
-            holeCmdsListsArray   = tyA(spec.holeCmds) ? spec.holeCmds : [], thisX, lastX, thisZ, lastZ, minX=NaN, maxX=NaN, minZ=NaN, maxZ=NaN, minXadj=NaN, maxXadj=NaN, minZadj=NaN, maxZadj=NaN, combo,
+            shapeCmdsLists       = isArray(spec.shapeCmds) ? spec.shapeCmds : [],
+            holeCmdsListsArray   = isArray(spec.holeCmds) ? spec.holeCmds : [], thisX, lastX, thisZ, lastZ, minX=NaN, maxX=NaN, minZ=NaN, maxZ=NaN, minXadj=NaN, maxXadj=NaN, minZadj=NaN, maxZadj=NaN, combo,
             //  ~  ~  ~  ~  ~  ~  ~  
             // To accomodate letter-by-letter scaling and shifts, we have several adjust functions
             adjX                 = makeAdjust(letterScale,xFactor,offX,0,false,true),                     // no shift
@@ -3338,7 +3361,7 @@ define(
     };
 
     function makeMaterial(scene,letters,emissive,ambient,specular,diffuse,opac){
-      var cm0                    = new BABYLON.StandardMaterial("meshwriter-material-"+letters+"-"+weeid(),scene);
+      var cm0                    = new BABYLON.StandardMaterial("mw-matl-"+letters+"-"+weeid(),scene);
       cm0.diffuseColor           = rgb2Bcolor3(diffuse);
       cm0.specularColor          = rgb2Bcolor3(specular);
       cm0.ambientColor           = rgb2Bcolor3(ambient);
@@ -3379,52 +3402,36 @@ define(
       }
     }
 
-    // *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-*
-    // Conversion functions
-    function rgb2Bcolor3(rgb){
-      rgb                        = rgb.replace("#","");
-      return new BABYLON.Color3(convert(rgb.substring(0,2)),convert(rgb.substring(2,4)),convert(rgb.substring(4,6)));
-      function convert(x){return Γ(1000*Math.max(0,Math.min((tyN(parseInt(x,16))?parseInt(x,16):0)/255,1)))/1000}
-    };
-    function point2Vector(point){
-      return new BABYLON.Vector2(round(point.x),round(point.y))
-    };
-    function merge(arrayOfMeshes){
-      return arrayOfMeshes.length===1 ? arrayOfMeshes[0] : BABYLON.Mesh.MergeMeshes(arrayOfMeshes, true)
-    };
-    function makePreferences(args){
-      var prefs = {},p;
-      if(NNO(p=args[1])){
-        if(p["default-font"]){prefs.defaultFont=p["default-font"]}else{if(p.defaultFont){prefs.defaultFont=p.defaultFont}}
-        if(p["mesh-origin"]){prefs.meshOrigin=p["mesh-origin"]}else{if(p.meshOrigin){prefs.meshOrigin=p.meshOrigin}}
-        if(p.scale){prefs.scale=p.scale}
-        if(tyB(p.debug)){prefs.debug=p.debug}
-        return prefs
-      }else{
-        return { defaultFont: args[2] , scale: args[1] , debug: false }
-      }
-    };
+    // *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-*
+    //    FONT COMPRESSING AND DECOMPRESSING    FONT COMPRESSING AND DECOMPRESSING 
+    //
+    // One can reduce file size by 50% with a content-specific compression of font strings
+    // Each letter object potentially has two long values, "shapeCmds" and "holeCmds"
+    // These may be optionally compressed during construction of the file
+    // The compressed versions are placed in "sC" and "hC"
+    // The *first* time a letter is used, if it was compressed, it is decompressed
+    // 
     function makeLetterSpec(fontSpec,letter){
       var letterSpec             = fontSpec[letter];
-      if(NNO(letterSpec)){
-        if(!tyA(letterSpec.shapeCmds)&&tyA(letterSpec.sC)){
+      if(isObject(letterSpec)){
+        if(!isArray(letterSpec.shapeCmds)&&isArray(letterSpec.sC)){
           letterSpec.shapeCmds   = letterSpec.sC.map(function(cmds){return decodeList(cmds)})
           letterSpec.sC          = null;
         }
-        if(!tyA(letterSpec.holeCmds)&&tyA(letterSpec.hC)){
-          letterSpec.holeCmds    = letterSpec.hC.map(function(cmdslists){if(tyA(cmdslists)){return cmdslists.map(function(cmds){return decodeList(cmds)})}else{return cmdslists}});
+        if(!isArray(letterSpec.holeCmds)&&isArray(letterSpec.hC)){
+          letterSpec.holeCmds    = letterSpec.hC.map(function(cmdslists){if(isArray(cmdslists)){return cmdslists.map(function(cmds){return decodeList(cmds)})}else{return cmdslists}});
           letterSpec.hC          = null;
         }
       }
       return letterSpec;
 
       function decodeList(str){
-        var split = str.split(" "),
-            list  = [];
+        var split  = str.split(" "),
+            list   = [];
         split.forEach(function(cmds){
           if(cmds.length===12){list.push(decode6(cmds))}
-          if(cmds.length===8){list.push(decode4(cmds))}
-          if(cmds.length===4){list.push(decode2(cmds))}
+          if(cmds.length===8) {list.push(decode4(cmds))}
+          if(cmds.length===4) {list.push(decode2(cmds))}
         });
         return list
       };
@@ -3433,16 +3440,18 @@ define(
       function decode2(s){return [decode1(s.substring(0,2)),decode1(s.substring(2,4))]};
       function decode1(s){return (frB128(s)-4000)/2};
     };
-    function codeList(list,_str,_xtra){
-      _str = _xtra = "";
-      if(tyA(list)){
+    function codeList(list){
+      var str   = "",
+          xtra  = "";
+      if(isArray(list)){
         list.forEach(function(cmds){
-          if(cmds.length===6){_str+=_xtra+code6(cmds);_xtra=" "}
-          if(cmds.length===4){_str+=_xtra+code4(cmds);_xtra=" "}
-          if(cmds.length===2){_str+=_xtra+code2(cmds);_xtra=" "}
+          if(cmds.length===6){str+=xtra+code6(cmds);xtra=" "}
+          if(cmds.length===4){str+=xtra+code4(cmds);xtra=" "}
+          if(cmds.length===2){str+=xtra+code2(cmds);xtra=" "}
         });
       }
-      return _str;
+      return str;
+
       function code6(a){return code1(a[0])+code1(a[1])+code1(a[2])+code1(a[3])+code1(a[4])+code1(a[5])};
       function code4(a){return code1(a[0])+code1(a[1])+code1(a[2])+code1(a[3])};
       function code2(a){return code1(a[0])+code1(a[1])};
@@ -3465,6 +3474,8 @@ define(
     };
     function prepArray(){
       var pntr                   = -1,n;
+      b128back                   = new Uint8Array(256);
+      b128digits                 = new Array(128);
       while(160>pntr++){
         if(pntr<128){
           n                      = fr128to256(pntr);
@@ -3480,20 +3491,63 @@ define(
       };
       function fr128to256(n){if(n<92){return n<58?n<6?n+33:n+34:n+35}else{return n+69}}
     };
+    //    FONT COMPRESSING AND DECOMPRESSING    FONT COMPRESSING AND DECOMPRESSING 
+    // *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-*
 
-    // *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-*
+    // *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-*
+    // Screening and defaulting functions for incoming parameters
+
+    function makePreferences(args){
+      var prefs = {},p;
+      if(isObject(p=args[1])){
+        if(p["default-font"]){prefs.defaultFont=p["default-font"]}else{if(p.defaultFont){prefs.defaultFont=p.defaultFont}}
+        if(p["mesh-origin"]){prefs.meshOrigin=p["mesh-origin"]}else{if(p.meshOrigin){prefs.meshOrigin=p.meshOrigin}}
+        if(p.scale){prefs.scale=p.scale}
+        if(isBoolean(p.debug)){prefs.debug=p.debug}
+        return prefs
+      }else{
+        return { defaultFont: args[2] , scale: args[1] , debug: false }
+      }
+    };
+
+    //  ~  -  =  ~  -  =  ~  -  =  ~  -  =  ~  -  =  
+    // These functions apply a test to possible incoming parameters
+    // It the test passes, the parameters are used
+    // Otherwise the default is used
+    function setOption(opts, field, tst, defalt) { return tst(opts[field]) ? opts[field] : defalt };
+    function setColor(clrs,  field, tst, defalt) { return tst(clrs[field]) ? clrs[field] : defalt };
+    function setPositn(pos,  field, tst, defalt) { return tst(pos[field]) ? pos[field] : defalt };
+
+    // The next two tests just return a boolean
+    function supportedFont(ff)             { return isObject(FONTS[ff]) } ;
+    function supportedAnchor(a)            { return a==="left"||a==="right"||a==="center" } ;
+    // Screening and defaulting functions for incoming parameters
+    // *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-*
+
+    // *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-*
+    // Conversion functions
+    function rgb2Bcolor3(rgb){
+      rgb                        = rgb.replace("#","");
+      return new BABYLON.Color3(convert(rgb.substring(0,2)),convert(rgb.substring(2,4)),convert(rgb.substring(4,6)));
+      function convert(x){return Γ(1000*Math.max(0,Math.min((isNumber(parseInt(x,16))?parseInt(x,16):0)/255,1)))/1000}
+    };
+    function point2Vector(point){
+      return new BABYLON.Vector2(round(point.x),round(point.y))
+    };
+    function merge(arrayOfMeshes){
+      return arrayOfMeshes.length===1 ? arrayOfMeshes[0] : BABYLON.Mesh.MergeMeshes(arrayOfMeshes, true)
+    };
+
+    // *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-*
     // Boolean test functions
-    function PN(mn)   { return typeof mn === "number" && !isNaN(mn) ? 0 < mn : false } ;
-    function tyN(mn)  { return typeof mn === "number" } ;
-    function tyB(mn)  { return typeof mn === "boolean" } ;
-    function Amp(ma)  { return typeof ma === "number" && !isNaN(ma) ? 0 <= ma && ma <= 1 : false } ;
-    function NNO(mo)  { return mo != null && typeof mo === "object" || typeof mo === "function" } ;
-    function tyA(ma)  { return ma != null && typeof ma === "object" && ma.constructor === Array } ; 
-    function NEA(ma)  { return ma != null && typeof ma === "object" && ma.constructor === Array && 0 < ma.length } ; 
-    function NES(ms)  {if(typeof(ms)=="string"){return(ms.length>0)}else{return(false)}} ;
-    function supportedFont(ff){ return NNO(FONTS[ff]) } ;
-    function supportedAnchor(a){ return a==="left"||a==="right"||a==="center" } ;
-    function weeid()  { return Math.floor(Math.random()*1000000) } ;
-    function round(n) { return Γ(0.3+n*1000000)/1000000 }
+    function isPositiveNumber(mn) { return typeof mn === "number" && !isNaN(mn) ? 0 < mn : false } ;
+    function isNumber(mn)         { return typeof mn === "number" } ;
+    function isBoolean(mn)        { return typeof mn === "boolean" } ;
+    function isAmplitude(ma)      { return typeof ma === "number" && !isNaN(ma) ? 0 <= ma && ma <= 1 : false } ;
+    function isObject(mo)         { return mo != null && typeof mo === "object" || typeof mo === "function" } ;
+    function isArray(ma)          { return ma != null && typeof ma === "object" && ma.constructor === Array } ; 
+    function isString(ms)         { return typeof ms === "string" ? ms.length>0 : false }  ;
+    function weeid()              { return Math.floor(Math.random()*1000000) } ;
+    function round(n)             { return Γ(0.3+n*1000000)/1000000 }
   }
 );

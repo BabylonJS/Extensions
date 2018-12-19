@@ -806,6 +806,11 @@ function makeD(path){
 */
       return hnm;
 
+      //  ~  -  =  ~  -  =  ~  -  =  ~  -  =  ~  -  =  
+      // To support non-english letters, we need a variety of new symbols: acute, dieresis, etc.
+      // It turns out that these symbols can be re-used, with some placement changes
+      // To save space and code, that's what we do
+      // These functions return the special symbols in compressed or raw forms
       function acuteRaw(dx,dy){
         return [[128+dx,588+dy],[45+dx,588+dy],[135+dx,731+dy],[270+dx,731+dy]]
       };
