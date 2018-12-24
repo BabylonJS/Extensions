@@ -1,0 +1,684 @@
+﻿<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    <title>BabylonJs Archive </title>
+
+    <!-- Babylon.js -->
+    <link href="Contents/Css/min_style_ver_1.0.0.0.css" rel="stylesheet" />
+    <script src="Contents/Script/script_ver_1.0.0.1.js"></script>
+
+    <link href="https://fonts.googleapis.com/css?family=Hind+Vadodara:300,400,500,600,700" rel="stylesheet">
+    <style>
+        body, *, html {
+            font-family: 'Hind Vadodara', sans-serif !important;
+            margin: 0px;
+            padding: 0px;
+            border: 0px;
+        }
+
+        di {
+            margin-right: 5px;
+            width: 30px;
+            height: 30px;
+            font-size: 9pt !important;
+        }
+
+        yld {
+            background-color: #00f7ff !important;
+            padding: 3px !important;
+            border-radius: 200px !important;
+            color: #990000 !important;
+            font-weight: 400 !important;
+        }
+
+        .mages * {
+            color: #000;
+            font-weight: 300;
+        }
+
+        a {
+            padding: 2px;
+            padding-bottom: 0px !important;
+            text-decoration: none;
+            color: #0c3cc2 !important;
+            font-weight: 500 !important;
+            border-bottom: 2px solid rgba(12, 60, 194, 0.46) !important;
+        }
+
+        .mages div {
+            padding: 3px;
+        }
+
+        input {
+            border-radius: 3px;
+            padding: 2px;
+            border: 1px solid #0c3cc2 !important;
+        }
+
+        .top.act {
+            background-color: #fff !important;
+            color: #000 !important;
+            font-weight: 700 !important;
+            position: relative;
+            top: 5px;
+            border-radius: 4px;
+            padding-bottom: 5px;
+        }
+
+        .bb {
+            font-weight: 700 !important;
+        }
+    </style>
+
+</head>
+<body>
+    <div class="fx t-00 l-00 h-015 w-full cblack c-twhite f-center z10">
+        <div class="f-center fs-05 f-r">
+            Babylon.Js <span class="op3 fs-03 pl-005 pr-03">&nbsp;Old Forum Archive</span>
+            <div  id="firsttab" onclick="firstHash={};act(this)" class="acc fs-03 h-0125 c-htrwhite2 f-center pl-005 pr-005 top">Quesions & Answers</div>
+            <div onclick="firstHash={}; act(this)" class="ctn fs-03 h-0125 c-htrwhite2 f-center pl-005 pr-005 top">Content Creation</div>
+            <div onclick="firstHash={};act(this)" class="ann fs-03 h-0125 c-htrwhite2 f-center pl-005 pr-005 top">Announcements</div>
+            <div onclick="firstHash={};act(this)" class="bug fs-03 h-0125 c-htrwhite2 f-center pl-005 pr-005 top">Bugs</div>
+            <div onclick="firstHash={};act(this)" class="dem fs-03 h-0125 c-htrwhite2 f-center pl-005 pr-005 top">Demos and Projects</div>
+            <div onclick="firstHash={};act(this)" class="srv fs-03 h-0125 c-htrwhite2 f-center pl-005 pr-005 top">Service offers and requests</div>
+        </div>
+    </div>
+    <div class="tempPost hdn-i">
+
+        <div class="w-full mb-01 p-005 rad-02 f f-r f-nw f-at f-ct f-jb">
+            <div class="bl-i-02 p-0025 m-00125 w-05 f f-c f-ac f-cc f-js  h-mn-05 c-b-iwgray">
+                <div class="mt-01 rt c-tblack bb rad-50 owf w-02 h-02 cgray fs-06 f-center">
+                    #[O]
+                    <img class="ab z-05 t-00 w-full h-full l-00 op0" src="userImages/#[Os].jpg"
+                         onload="this.classList.remove('op0')" />
+                </div>
+                <div class="bb fs-04">#[Owner]</div>
+            </div>
+            <div class="p-005 f w-full f-c f-as f-cs f-fs bb-i-01 c-b-iwgray2">
+                <div class="fs-04 w-full c-tnavy p-0025">#[Date]</div>
+                <div class="fs-05 c-tgray w-full owf-x">#[Content]</div>
+            </div>
+        </div>
+    </div>
+    <div class="temptopic hdn-i">
+        <div style="order:#[Iden1]" class="w-full mb-01 p-005 rad-02 c-hwgray">
+            <div class="bb-i-01 c-b-iwgray f f-r f-ac f-cc f-js">
+                <div id="itm_#[Iden]" class="c-tblack bb fs-05" onclick="load(#[Id],this)" title="#[Iden]">#[Title]</div>
+                <div class="c-tblack ml-005 fs-03 p-0005 rad-02 bb" onclick="pinging(#[Id]);this.classList.add('cred');">flag this</div>
+            </div>
+            <div class="f w-full f-r f-as f-cs f-fs">
+                <div class="w-01">by</div>  <div class="bb fs-04 w-full c-tnavy">#[Creator]</div>
+                <div class="fs-04 c-tgray w-07">#[View] viewed</div>
+                <div class="fs-04 c-tgray w-06 fl f-se f f-ae f-je f-r f-nw">#[Reply] reply</div>
+            </div>
+            <div class="post #[PostCss]" class="f f-c f-as f-cc f-js w-full owf-x">
+                <div class="bb ml-015 h-01">#[PostTitle]</div>
+                <div class="m-00125 ml-015 p-0025 rad-05 ctrco15 owf">
+                    #[Post]
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="tempUserTag hdn-i">
+        <div tabindex="10" onclick="indtp=0;addItem( '#[User]')" class="m-0005 cwgray2 bb  c-hwgray  c-tblack rad-05 p-0005 pl-00125 pr-0025">
+            ○ &nbsp;#[User]
+        </div>
+    </div>
+
+    <div class="mt-02 h-mn-full  z-05">
+
+        <div class="ctnn p-p05 f f-r f-as f-cs f-jb">
+
+            <div class="w-full w-mx-p70 f f-c f-ac f-cc f-js">
+                <div class="w-full p-0025">
+                    <input placeholder="Search" id="search" type="text" tabindex="10" class="w-full op2 p-0025"
+                           onkeyup="indtp=0;addItem(first('#search').value);" />
+                </div>
+                <div class="w-full" id="TopicList">
+                </div>
+                <div class="p-005 bb fs-06 c-t-hblack c-tgray " onclick="addItem(first('#search').value)">
+                    see More ...
+                </div>
+                <div class="p-005 bb fs-06 c-t-hblack  z-09  rad-05 c-tgray f-center f-c " onclick="startStateInnerSearch = !startStateInnerSearch;if(cuurentInner<0)cuurentInner = 0;else cuurentInner++; ItemFind = 0; cuurentStart =cuurentInner+100; searchInnerContent();">
+                    Search from Contents
+                    <div class="rt cwgray2 rad-05 f-center m-005 p-0025 fs-03 bb">
+                        <div class="searchInnerResult"></div>
+                        <div class="searchInnerPps ab t-00 z-10 h-full rad-05 l-00 ctrgreen  " style="width:0%;">&nbsp;</div>
+                    </div>
+                </div>
+                <div class="w-full" id="TopicListInner">
+                </div>
+            </div>
+            <div class="w-full w-mx-p25">
+                <div class="bl-i-02 mb-005  p-005 c-b-igray bb hdn-i">Recents Visited Topics</div>
+                <div class="bl-i-02 mb-005  p-005 c-b-igray bb">
+                    Flaged Topics<br />
+                    <div id="pingss" class="p-0025 mt-005 f f-r f-w f-as f-cs f-js">
+
+                    </div>
+                </div>
+                <div class="bl-i-02 mb-005  p-005 c-b-iblue c-tnavy bb">
+                    Categoried by Users
+                    <br />
+                    <input type="text" tabindex="10" onkeyup="addUser(this.value);" />
+                    <div id="Users" class="p-0025 mt-005 f f-r f-w f-as f-cs f-js">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="dtllist hdn-i rt t-02">
+            <div class="fx z-09 z09 bb-i-01 c-b-iwgray t-00 l-00 r-00 cwhite">
+                <h1 class="bb mt-025 ml-025">
+                    <span class="bb" id="titles">Title</span>
+                    <br />
+                    <div id="pages" class="f f-r f-w f-ac f-cc f-js">
+                    </div>
+                </h1>
+            </div>
+            <div onclick="this.parentNode.classList.add('hdn-i');first('.ctnn').classList.remove('hdn-i');"
+                 class="fx c-hwgray bb   mt-02 z-10 p-00125 l-01 rad-50 pl-005 pr-005 cwhite ba-i-02 c-b-iblack">× Back To List</div>
+            <div class="w-mx-p90 m-p05 p-02 " id="dtlLi2">
+            </div>
+        </div>
+    </div>
+    <script>
+        var tabs = "";
+        function act(m) {
+            tpcList.innerHTML  = "";
+            all('.top', function (at) {
+                at.classList.remove('act');
+            }, function () { m.classList.add('act'); });
+
+            topics = [];
+            users = [];
+            indtp = 0;
+            switch(m.innerText){
+                case 'Quesions & Answers':
+                    tabs = "acc";
+                    loadPart(['1-100.topics.js','101-200.topics.js','201-300.topics.js','301-400.topics.js' ]);
+                    break;
+
+                case 'Announcements' :
+                    tabs = "ann";
+                    loadPart(['a1-9.topics.js'  ]);
+
+                    break;
+                case 'Bugs' :
+                    tabs = "bug";
+                    loadPart(['b1-31.topics.js'  ]);
+
+                    break;
+                case 'Demos and Projects' :
+                    tabs = "dem";
+                    loadPart(['d1-13.topics.js'  ]);
+
+                    break;
+                case 'Content Creation' :
+                    tabs = "ctn";
+                    loadPart(['c1-2.topics.js'  ]);
+
+                    break;
+                default : 
+                    tabs = "srv";
+                    loadPart(['srv.topics.js'  ]);
+
+                    break;
+            }
+            location.hash = "#tab|"+tabs;
+        }
+
+        var topics = [];
+        var users = [];
+        var indtp = 0;
+        var pings = ''; 
+
+        function pinging(id){
+            window.eval('localStorage.'+tabs+' = localStorage.'+tabs+'.toString().replaceAll(",'+id+',","")+",'+id+',";');
+            refreshPin();
+        }
+
+        function removePing(id){
+            window.eval('localStorage.'+tabs+' = localStorage.'+tabs+'.toString().replaceAll(",'+id+',","") ;');
+            refreshPin();
+
+        }
+
+
+        var tmpTop = first('.temptopic');
+        var tpcList = first('#TopicList');
+        var tpcListIn = first('#TopicListInner');
+
+        var userTagList= first('#Users');
+        var tmpUserTag = first('.tempUserTag');
+        var tempPost = first('.tempPost');
+
+
+
+
+        function loadPart(arr){
+            tpcList.innerHTML  = "";
+            topics = new Array();
+            topics2 = new Array();
+            var fd = "";
+            var i = 0;
+            for(var ar in arr)
+            {
+                dy.xhr.download({
+                    url: arr[ar],
+                    success: function (d) {
+
+                        var tss = JSON.parse(d);
+
+                        for(var is in tss){
+                            topics.push(tss[is]);
+                        }
+
+                        i++;
+                        if(i == arr.length)
+                            init();
+                    }
+                });
+            }
+
+
+            refreshPin();
+
+
+        }
+
+        var refreshPin = function(){
+
+            setTimeout(function(){
+                first('#pingss').innerHTML = "";
+                window.eval('try{if(!localStorage.'+tabs+')localStorage.'+tabs+' = "";pings = localStorage.'+tabs+'.toString().split(",")  ;}catch(e){}');
+
+                if(pings && pings.length > 0){
+
+                    for(var iin in pings){
+                        var ind = 0;
+                        var tit = '';
+                        for(var i =0;i<topics.length;i++){
+                            if(pings[iin] == topics[i].Id){
+                                tit = topics[i].Title;
+                                ind = i;
+                            }
+                        }
+
+                        if(tit.length > 5){
+                            first('#pingss').innerHTML += "<div class='w-full m-0005 p-0005 rad-02 c-hnavy c-tblack bb'  ><span class='bb c-tred ' onclick='removePing("+pings[iin]+");'>×</span>&nbsp;<span class='bb c-tblack c-t-hgray' onclick='load("+pings[iin]+", null,1)'>"+tit+"</span></div>";
+                        }
+                    }
+                }
+
+            },100);
+        }
+
+        function init(){
+
+            indtp = 0;
+           
+
+
+            for(var is in topics){
+                topics2.push(topics[is]);
+            }
+
+            for(var tp in topics){
+                if(users.indexOf(topics[tp].Creator.toLowerCase())==-1)
+                {
+                    users.push(topics[tp].Creator.toLowerCase());
+                }
+            }
+            addItem();
+
+             
+            if(firstHash.topic)
+            {   
+                load(firstHash.topic.split('-')[0]*1,null,firstHash.topic.split('-')[1]*1);
+            }else if(firstHash.search)
+            {  
+                first('#search').value =  firstHash.search;
+                first('#search').onkeyup();
+            }
+
+            else if(firstHash.findall)
+            {  
+                first('#search').value =  firstHash.findall;
+                first('#search').onkeyup();
+                
+                startStateInnerSearch = !startStateInnerSearch;
+                if(cuurentInner<0)cuurentInner = 0;
+                else cuurentInner++;
+                ItemFind = 0; 
+                cuurentStart =cuurentInner+100;
+
+                if(confirm('this link wanna search from all Contents .that take while so are you sure about that ?')){
+
+                    searchInnerContent();
+                }
+
+            }
+            else{
+                first('#search').value =  ""; 
+                first('#search').setAttribute("value",""); 
+                first('#search').onkeyup();
+            }
+        }
+
+
+        var posts = [];
+        var selectedItem;
+
+        function load(id,th,page){
+
+            location.hash = "tab|"+tabs+"#topic|"+id+"-"+(page?page:1);
+            page = def(page,1.);
+            var item = null;
+
+            for(var i =0;i<topics.length;i++){
+                if(id == topics[i].Id){
+                    item = topics[i] ;
+                }
+            }
+
+            selectedItem = th;
+            var stmp = "<di onclick='load("+id+",selectedItem,#[pg0])' class='f-center rad-05 #[css] c-hblue'>#[pg]</di> ";
+
+            var pg = Math.floor(item.ReplyCount/25)+(item.ReplyCount%25 == 0?0:1);
+            var asas = "";
+            for(var i = 0;i<pg;i++){
+                asas += stmp
+                    .replaceAll('#[pg]',i+1)
+                     .replaceAll('#[css]',i+1 == page?"cnavy bb c-twhite":"")
+                    .replaceAll('#[pg0]',i+1)
+                ;
+            }
+            first('#dtlLi2').innerHTML = "";
+
+            first('#pages').innerHTML = asas;
+            first('#titles').innerHTML = item.Title;
+            if(item){
+
+                dy.xhr.download({
+                    url: tabs+"/post_"+id+"_page_"+page+".js",
+                    success: function (d) {
+                        posts = JSON.parse(d);
+
+                        for(var tp =  0 ;tp<posts.length;tp++){
+                            if(posts.length > tp){ var s = tempPost.innerHTML
+                              .replaceAll("#[hash]",tp )
+                               .replace('#[Owner]',posts[tp].Owner)
+                               .replace('#[O]',posts[tp].Owner[0].toString().toUpperCase())
+                               .replace('#[Os]',posts[tp].Owner )
+                               .replace('#[Date]',posts[tp].Date.replace('T',' ').replace('Z',' '))
+                               .replace('#[Content]',posts[tp].Content
+                               .replaceAll("_lt_","<" )
+                               .replaceAll("_gt_",">" )
+                               .replaceAll("_qt_","\"" )
+                               .replaceAll("_t_" ,"'" )
+                               .replaceAll("_co_","," )
+                               .replaceAll("_sm_",";" )
+                               .replaceAll("_eq_","=" )
+                               .replaceAll("_dd_",":" )
+                               );
+
+                                first('#dtlLi2').innerHTML += s;
+                            }
+                        }
+
+                    }});
+                document.body.scrollTop = 0;
+                first('.dtllist').classList.remove('hdn-i');first('.ctnn').classList.add('hdn-i');
+            }
+        } 
+
+        var topics2 = [];
+        var srtOpic = "";
+        var useOpic = "";
+
+        function addItem(src ){
+            first('.dtllist').classList.add('hdn-i');first('.ctnn').classList.remove('hdn-i');
+            if(indtp==0){
+                tpcList.innerHTML="";
+            }
+
+            location.hash  = "#tab|"+tabs+(src? "#search|"+src:"");
+
+            if(src && srtOpic!= src){
+                srtOpic = src;
+                topics2 = [];
+                if(users.indexOf(src.toLowerCase())!= -1){
+                    for(var is in topics){
+                        if(topics[is].Creator.toLowerCase() == ( src.toLowerCase())  )
+                            topics2.push(topics[is]);
+                    }
+                }
+                for(var is in topics){
+                    if(topics[is].Id.toString().toLowerCase() == ( src.toLowerCase())  )
+                        topics2.push(topics[is]);
+                }
+                for(var is in topics){
+                    if(topics[is].Title.toLowerCase().indexOf( src.toLowerCase()) == 0)
+                        topics2.push(topics[is]);
+                }
+                for(var is in topics){
+                    if(topics[is].Title.toLowerCase().indexOf( src.toLowerCase()) != 0 &&
+                        topics[is].Title.toLowerCase().indexOf(" "+ src.toLowerCase()) != -1
+                        )
+                        topics2.push(topics[is]);
+                }
+                for(var is in topics){
+                    if(topics[is].Title.toLowerCase().indexOf( src.toLowerCase()) != 0 &&
+                        topics[is].Title.toLowerCase().indexOf(" "+ src.toLowerCase()) == -1 &&
+                         topics[is].Title.toLowerCase().indexOf(  src.toLowerCase()) != -1
+                        )
+                        topics2.push(topics[is]);
+                }
+            }
+
+
+            var isLast = false;
+            for(var tp = indtp ;tp<indtp+10;tp++){
+                if(topics2.length > tp){ var s = tmpTop.innerHTML
+                   .replace('#[Title]',"<span class='fs-04 mr-005 op2' title='"+ (topics2[tp].Id) +"'></span>"+
+                             topics2[tp].Title)
+                    .replaceAll('#[Iden1]',tp)
+                     .replaceAll('#[Iden]',tp)
+                    .replaceAll('#[PostCss]','hdn-i')
+                   .replaceAll('#[Id]',topics2[tp].Id)
+                   .replaceAll('#[View]',topics2[tp].ViewCount)
+                   .replaceAll('#[Reply]',topics2[tp].ReplyCount)
+                   .replaceAll('#[Creator]',topics2[tp].Creator)
+                    ;   
+                    tpcList.innerHTML += s;
+                }
+                else{
+                    isLast = true;
+                }
+            }
+
+
+            cuurentInner = -1;
+
+
+            indtp +=10;
+
+        }
+
+        var cuurentInner = 0;
+        var innerResult = [];
+        var ItemFind = 0;
+        var cuurentStart = 0;
+        var startStateInnerSearch = false;
+        var isearchInnerItem = 0;
+
+        function searchInnerContent(end){
+            location.hash =location.hash.replace("search","findall");
+            isearchInnerItem++;
+
+            if(end==5 ||  isearchInnerItem%300 == 0)
+            {
+                var iis  = "<div> ";
+                var oldId = "";
+                for(var it = innerResult.length-1;it>=0;it-- ){
+                    if(innerResult[innerResult.length-it] && oldId != innerResult[innerResult.length-it].id  ){
+                        oldId = innerResult[innerResult.length-it].id;
+
+                        try{ iis += "</div><div class='f f-r f-ac f-w f-cc f-js w-full c-hwgray'><a target='_blank' href='index.html#tab|"+tab+"#topic|"+innerResult[innerResult.length-it].id+"-"+innerResult[innerResult.length-it].pg+"' class='bb c-tnavy c-t-hblack c-hgray rad-02 p-00125 m-0005 bb' title='id:"+innerResult[innerResult.length-it].id+" page:"+innerResult[innerResult.length-it].pg+' post :'+(innerResult[innerResult.length-it].ps+1)+"' >  "+   innerResult[innerResult.length-it].ttl+" </a>";
+                          
+                        }catch(ee){}
+                    } else {
+
+                        try{ iis += "<a class='bb c-hgray rad-02  c-tnavy c-t-hblack p-00125 m-0005 bb' target='_blank' href='index.html#tab|"+tab+"#topic|"+innerResult[innerResult.length-it].id+"-"+innerResult[innerResult.length-it].pg+"'  title='id:"+innerResult[innerResult.length-it].id+" page:"+innerResult[innerResult.length-it].pg+' post :'+(innerResult[innerResult.length-it].ps+1)+"' >  "+  innerResult[innerResult.length-it].pg+' | '+(innerResult[innerResult.length-it].ps+1)+" </a>";
+                            ;
+                        }catch(ee){}
+                    } 
+                }
+                
+                TopicListInner.innerHTML  = iis; 
+            }
+            
+            if(end==5) return;
+            
+            if(cuurentInner!= -1 && topics[cuurentInner] ){
+
+                var itm = topics[cuurentInner] ;
+                 
+                var id = itm.Id;
+                var pg = Math.floor(itm.ReplyCount/25)+(itm.ReplyCount%25 == 0?0:1);
+                if(itm.ReplyCount == 0 ) pg = 1;
+                var stmp = "<di onclick='load("+id+",selectedItem,#[pg0])' class='f-center rad-05 #[css] c-hblue'>#[pg]</di> ";
+
+                var itemResult = "";
+                var len = 0;
+                for(var i = 0;i<pg;i++){
+                    dy.xhr.download({
+                        url: tabs+"/post_"+id+"_page_"+(i+1)+".js",
+                        success: function (d) {
+                            posts = JSON.parse(d);
+                            len++;
+                            for(var tp =  0 ;tp<posts.length;tp++){
+                                if(posts.length > tp){ var s = tempPost.innerHTML
+                                   .replace('#[Owner]',posts[tp].Owner)
+                                   .replace('#[O]',posts[tp].Owner[0].toString().toUpperCase())
+                                   .replace('#[Os]',posts[tp].Owner )
+                                   .replace('#[Date]',posts[tp].Date.replace('T',' ').replace('Z',' '))
+                                   .replace('#[Content]',posts[tp].Content
+                                   .replaceAll("_lt_","<" )
+                                   .replaceAll("_gt_",">" )
+                                   .replaceAll("_qt_","\"" )
+                                   .replaceAll("_t_" ,"'" )
+                                   .replaceAll("_co_","," )
+                                   .replaceAll("_sm_",";" )
+                                   .replaceAll("_eq_","=" )
+                                   .replaceAll("_dd_",":" )
+                                   ) ;
+                                    var ind = s.toLowerCase().indexOf(  first('#search').value.toLowerCase());
+
+                                    if( ind != -1){
+                                        itemResult = s.substr(0,ind)+
+                                            '<yld>&nbsp;&nbsp;»&nbsp;&nbsp;</yld>' +
+                                            s.substr( ind,s.length-ind);
+                                    }
+
+                                    if(itemResult != ""){
+
+                                        var s = tmpTop.innerHTML
+                                           .replace('#[Title]',"<span class='fs-03 mr-005 op2' title='"+ (itm.Id) +"'></span>"+
+                                                    itm.Title)
+                                            .replaceAll('#[Iden1]',id)
+                                            .replaceAll('#[Iden]',id)
+                                            .replaceAll('#[Id]',itm.Id)
+                                              .replaceAll('#[PostCss]',' ')
+                                              .replaceAll('#[PostTitle]',' ')
+                                            .replaceAll('#[Post]',itemResult)
+                                           .replaceAll('#[View]',itm.ViewCount)
+                                           .replaceAll('#[Reply]',itm.ReplyCount)
+                                           .replaceAll('#[Creator]',itm.Creator)
+                                        ;
+
+                                        innerResult.push({id:id,ttl:itm?itm.Title:"",pg:len,ps:tp,ctn: s});
+                                        
+                                      
+                                    }
+
+                                }
+                            }
+
+                           
+                            first('.searchInnerResult').innerHTML = "search from content : find "+innerResult.length+" from "+cuurentInner+' in '+topics.length;
+                            first('.searchInnerPps').style.width = floor(cuurentInner*100./topics.length) +'%';
+                            if(len == pg){
+                                cuurentInner++;
+                                if( cuurentInner < topics.length ){
+                                    setTimeout(function(){  requestAnimationFrame(searchInnerContent)},1);
+                                }
+                            }else{
+
+                            }
+                        },
+                        error:function(){
+
+                            first('.searchInnerResult').innerHTML = " e search from content : "+cuurentInner+' in '+topics.length;
+
+                            first('.searchInnerPps').style.width = floor(cuurentInner*100./topics.length)+'%';
+
+                            cuurentInner++;
+                            if( cuurentInner < topics.length-1 ){
+                                setTimeout(function(){  requestAnimationFrame(searchInnerContent)},1);
+                            }else{ 
+                                searchInnerContent(5);
+                            }
+                        }}); 
+                } 
+            } 
+        }
+
+        function addUser(use){
+
+            userTagList.innerHTML = "";
+            var users2 = [];
+            for(var is in users){
+                if(users[is].toLowerCase().indexOf(use.toLowerCase()) == 0)
+                    users2.push(users[is]);
+            }
+
+            for(var i = 0;i<45;i++){
+                if(users2.length > 0){
+                    try{   userTagList.innerHTML +=
+                                tmpUserTag.innerHTML.replaceAll('#[User]',users2.pop());}catch(e){}
+                }
+            }
+
+        }
+
+
+        function secLoop(){
+
+            if(users.length > 0){
+
+            }
+
+            setTimeout(function(){
+                requestAnimationFrame(secLoop);
+            },1000);
+        }
+        secLoop();
+
+        //setTimeout(function(){first('#firsttab').click()})
+
+        var firstHash = JSON.parse('{"v":"0.0'+ location.hash
+                    .replaceAll('#','","')
+                    .replaceAll('|','":"')
+                   +'"}');
+        if(location.hash){
+            if(location.hash.indexOf('#tab')!=-1){
+                var tab =firstHash.tab;
+                act(first('.'+tab));
+            }
+        } else setTimeout(function(){first('#firsttab').click()})
+    </script>
+</body>
+</html>
