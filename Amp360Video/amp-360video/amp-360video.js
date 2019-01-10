@@ -15,7 +15,8 @@
         return obj;
     },
     defaults = {
-        enableVR: true
+        enableVR: true,
+        fov: 1.2
     },
     plugin = function(pluginOptions) {
         var player = this;
@@ -79,7 +80,7 @@
             
             // Creates the default camera
             var camera = new BABYLON.ArcRotateCamera("Camera", -Math.PI / 2,  Math.PI / 2, 5, BABYLON.Vector3.Zero(), scene);
-            camera.fov = 1.2;
+            camera.fov = settings.fov;
             camera.attachControl(renderedCanvas, true);
             camera.inputs.attached.mousewheel.detachControl(renderedCanvas);
 
@@ -91,7 +92,7 @@
                 useCustomVRButton: true,
                 controllerMeshes: false
             });
-            scene.activeCamera.fov = 1.2;
+            scene.activeCamera.fov = settings.fov;
 
             // VR Switch function.
             toggleWebVR = function() {

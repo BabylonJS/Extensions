@@ -111,5 +111,26 @@ plugins: {
 }
 ```
 
+## Change the camera FOV
+By default the plugin is delivered with a camera of a 1.2 radians fov.
+
+In order to change it if needed, you can specify a different value in your options:
+
+### By HTML configuration
+In the data-setup plugin section:
+```
+"plugins": { "threeSixty": { "fov": 1 } }
+```
+
+### By code configuration
+This works exactly the same as the previous point. In the options of your plugin:
+```
+plugins: { 
+    "threeSixty": {
+        fov: 1
+    }
+}
+```
+
 ## That is all
 Your are good to go.
