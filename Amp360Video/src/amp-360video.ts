@@ -4,10 +4,6 @@ import { Color4 } from "@babylonjs/core/Maths/math";
 import { VideoDome } from "@babylonjs/core/Helpers/videoDome";
 import { VRExperienceHelper } from "@babylonjs/core/Cameras/VR/vrExperienceHelper";
 
-// Will be in default VRExperienceHelper in release 21 of Babylon.js es6.
-import "@babylonjs/core/Gamepads/gamepadSceneComponent";
-import "@babylonjs/core/Animations/animatable";
-
 import "./amp-360video.css";
 
 /**

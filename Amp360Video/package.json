@@ -29,7 +29,7 @@
     "start": "webpack-dev-server -d --open"
   },
   "devDependencies": {
-    "@babylonjs/core": "^4.0.0-alpha.20",
+    "@babylonjs/core": "^4.0.0-alpha.21",
     "css-loader": "^2.1.0",
     "http-server": "^0.10.0",
     "style-loader": "^0.23.1",
