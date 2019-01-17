@@ -1,0 +1,1 @@
+[{"Owner":"jellix","Date":"2016-08-31T08:59:16Z","Content":"_lt_div class_eq__qt_mages_qt__gt_\n\t\t\t\n_lt_p_gt_\n\tHi_co_\n_lt_/p_gt_\n\n_lt_p_gt_\n\tdoes anybody know if it_t_s possible to get the position and rotation-data of the vive-controllers?\n_lt_/p_gt_\n\n\n\t\t\t\n\t\t_lt_/div_gt_\n\n\t\t_lt_div class_eq__qt_ipsI_qt__gt__lt_/div_gt__lt_/div_gt_"}]
