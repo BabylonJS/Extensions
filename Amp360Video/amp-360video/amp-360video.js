@@ -16,7 +16,9 @@
     },
     defaults = {
         enableVR: true,
-        fov: 1.2
+        fov: 1.18,
+        defaultCameraOrientationX: 0,
+        defaultCameraOrientationY: -Math.PI / 2
     },
     plugin = function(pluginOptions) {
         var player = this;
@@ -66,6 +68,7 @@
             // Creates the default babylonjs scene
             var engine = new BABYLON.Engine(renderedCanvas);
             var scene = new BABYLON.Scene(engine);
+
             // Helps reducing the needed number of draw calls.
             scene.renderTargetsEnabled = false;
             scene.clearColor = new BABYLON.Color4(0, 0, 0, 1);
@@ -78,28 +81,28 @@
             scene.autoClearDepthAndStencil = false;
             engine.setDepthBuffer(false);
             
-            // Creates the default camera
-            var camera = new BABYLON.ArcRotateCamera("Camera", -Math.PI / 2,  Math.PI / 2, 5, BABYLON.Vector3.Zero(), scene);
-            camera.fov = settings.fov;
-            camera.attachControl(renderedCanvas, true);
-            camera.inputs.attached.mousewheel.detachControl(renderedCanvas);
-
             // Creates the 360 video.
-            new BABYLON.VideoDome("testdome", videoEl, { autoPlay: false, size: 2000 }, scene);
+            var dome = new BABYLON.VideoDome("testdome", videoEl, { autoPlay: false, size: 2000 }, scene);
+            dome.rotation.x = -settings.defaultCameraOrientationX;
+            dome.rotation.y = -settings.defaultCameraOrientationY;
 
             // Create the custom vr helper if requested.
             var vrHelper = scene.createDefaultVRExperience({
                 useCustomVRButton: true,
                 controllerMeshes: false
             });
+
+            // Adapt the camera to the requested settings.
             scene.activeCamera.fov = settings.fov;
 
             // VR Switch function.
             toggleWebVR = function() {
                 if (!vrHelper.isInVRMode) {
                     vrHelper.enterVR();
+                    setTimeout(() => { engine.resize(); }, 100);
                 } else {
                     vrHelper.exitVR();
+                    setTimeout(() => { engine.resize(); }, 100);
                 }
             }
 
