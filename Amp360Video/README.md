@@ -111,7 +111,7 @@ plugins: {
 }
 ```
 
-## Changing the camera FOV
+## Update the camera FOV
 By default the plugin is delivered with a camera of a 1.18 radians fov.
 
 In order to change it if needed, you can specify a different value in your options:
@@ -132,7 +132,7 @@ plugins: {
 }
 ```
 
-## Changing the default camera orientation
+## Update the default camera orientation
 In case the camera is not looking at what you expect when the video starts, you can use both options defaultCameraOrientationX and defaultCameraOrientationY to adapt the starting point of the camera to your use case. Those properties are angles respectively around the x and y axis defined in radians.
 
 In order to change them, you can specify a different value in your options:
