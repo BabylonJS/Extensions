@@ -1,7 +1,19 @@
-/*
+import { Engine } from "@babylonjs/core/Engines/engine";
+import { Scene } from "@babylonjs/core/scene";
+import { Color4 } from "@babylonjs/core/Maths/math";
+import { VideoDome } from "@babylonjs/core/Helpers/videoDome";
+import { VRExperienceHelper } from "@babylonjs/core/Cameras/VR/vrExperienceHelper";
+
+// Will be in default VRExperienceHelper in release 21 of Babylon.js es6.
+import "@babylonjs/core/Gamepads/gamepadSceneComponent";
+import "@babylonjs/core/Animations/animatable";
+
+import "./amp-360video.css";
+
+/**
  * BabylonJS 360/VR
  */
-(function(vjs) {
+(function(vjs: any) {
     var extend = function(obj /*, arg1, arg2, ... */) {
         var arg, i, k;
         for (i = 1; i < arguments.length; i++) {
@@ -22,7 +34,7 @@
     },
     plugin = function(pluginOptions) {
         var player = this;
-        var settings = extend({}, defaults, pluginOptions || {});
+        var settings = (extend as any)({}, defaults, pluginOptions || {});
         var videoEl = this.el().getElementsByTagName('video')[0];
         var toggleWebVR = null;
 
@@ -66,12 +78,12 @@
             videoEl.style.display = "none";
 
             // Creates the default babylonjs scene
-            var engine = new BABYLON.Engine(renderedCanvas);
-            var scene = new BABYLON.Scene(engine);
+            var engine = new Engine(renderedCanvas);
+            var scene = new Scene(engine);
 
             // Helps reducing the needed number of draw calls.
             scene.renderTargetsEnabled = false;
-            scene.clearColor = new BABYLON.Color4(0, 0, 0, 1);
+            scene.clearColor = new Color4(0, 0, 0, 1);
             scene.onPointerObservable.add(function() {
                 player.userActive(true);
             });
@@ -82,12 +94,12 @@
             engine.setDepthBuffer(false);
             
             // Creates the 360 video.
-            var dome = new BABYLON.VideoDome("testdome", videoEl, { autoPlay: false, size: 2000 }, scene);
+            var dome = new VideoDome("testdome", videoEl, { autoPlay: false, size: 2000 }, scene);
             dome.rotation.x = -settings.defaultCameraOrientationX;
             dome.rotation.y = -settings.defaultCameraOrientationY;
 
             // Create the custom vr helper if requested.
-            var vrHelper = scene.createDefaultVRExperience({
+            var vrHelper = new VRExperienceHelper(scene, {
                 useCustomVRButton: true,
                 controllerMeshes: false
             });

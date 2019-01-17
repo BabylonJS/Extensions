@@ -8,27 +8,25 @@ The plugin supports natively VR headsets (Windows MR...).
 # How to Run Locally
 Once the repository has been cloned, open the a command prompt in this folder.
 
-Type the following commands:
-```npm install```
-```npm start```
+Type the following commands: `npm install` followed by `npm start`.
 
-You can now access your [local test](http://localhost:1337/)
+The hosting web page will automatically open (using webpack-dev-server).
 
 # How it works
-The plugin located in the ```amp-360video``` folder contains a [videojs](https://docs.videojs.com/tutorial-plugins.html) plugin compatible with AMP version 2.1.7.
+The plugin is a [videojs](https://docs.videojs.com/tutorial-plugins.html) plugin compatible with AMP version 2.1.7.
 
 The plugin depends on BabylonJS in order to enable 3D functionalities in AMP.
 
 For more information about AMP, you can access their [documentation](http://amp.azure.net/libs/amp/latest/docs/index.html).
 
 # How use in your web site
-After deploying both the js and css from the ```amp-360video``` folder to your WebSite you can follow the following steps:
+After deploying the bundled javascript file ```dist/amp-360video.js``` to your WebSite you can follow the steps below.
+
+> Note: if you were using the plugin before, you might have needed to reference Babylon.js in your site. We have now released a bundle ensuring the smallest delivery of Babylon.
 
 ## External Resources
 Include the following resources in you html:
 ```
-<!-- Link to the last version of BabylonJS -->
-<script src="https://preview.babylonjs.com/babylon.js"></script>
 <!-- Link to pep.js to ensure pointer events work consistently in all browsers -->
 <script src="https://code.jquery.com/pep/0.4.1/pep.js"></script>
 
@@ -37,7 +35,7 @@ Include the following resources in you html:
 <script src="//amp.azure.net/libs/amp/2.1.7/azuremediaplayer.min.js"></script>
 ```
 
-## Plugin Resources
+## Plugin Setup
 You can either embed the plugin in your HTML or initialize it by code like specified in the [AMP documentation](http://amp.azure.net/libs/amp/latest/docs/index.html#plugins).
 
 ### Html Initialization

@@ -1,6 +1,6 @@
 {
   "name": "amp-360video",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "BabylonJS 360 Stream Video Viewer.",
   "keywords": [
     "webgl",
@@ -11,10 +11,9 @@
     "vr"
   ],
   "readme": "README.md",
-  "main": "dist/spector.bundle.js",
+  "main": "dist/amp-360video.js",
   "files": [
-    "amp-360video/amp-360video.js",
-    "amp-360video/amp-360video.css",
+    "dist/amp-360video.js",
     "README.md"
   ],
   "author": "@BabylonJS",
@@ -25,9 +24,19 @@
   "homepage": "https://microsoft.visualstudio.com/Apps/_git/edm.coretech.webviewer?path=%2FPrototype%2Stream360Video%2FREADME.md&version=GBmaster&createIfNew=true&_a=preview",
   "license": "TBD",
   "scripts": {
-    "start": "node ./tools/devServer.js"
+    "prod": "webpack -p --env=prod",
+    "dev": "webpack -d --env=dev",
+    "start": "webpack-dev-server -d --open"
   },
   "devDependencies": {
-    "http-server": "^0.10.0"
+    "@babylonjs/core": "^4.0.0-alpha.20",
+    "css-loader": "^2.1.0",
+    "http-server": "^0.10.0",
+    "style-loader": "^0.23.1",
+    "ts-loader": "^5.3.3",
+    "typescript": "^3.2.2",
+    "webpack": "^4.28.4",
+    "webpack-cli": "^3.2.1",
+    "webpack-dev-server": "^3.1.14"
   }
 }
