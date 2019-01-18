@@ -161,3 +161,22 @@ plugins: {
     }
 }
 ```
+
+### Enable WebGL2
+The default setup disables Webgl2 to enhance the compatibility with all platforms. Would you wish to enable it in your app for better performances, you can rely on the setup below:
+
+#### By HTML configuration
+In the data-setup plugin section:
+```
+"plugins": { "threeSixty": { "disableWebGL2Support": false } }
+```
+
+#### By code configuration
+This works exactly the same as the previous point. In the options of your plugin:
+```
+plugins: { 
+    "threeSixty": {
+        disableWebGL2Support: false
+    }
+}
+```

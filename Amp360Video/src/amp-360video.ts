@@ -26,7 +26,8 @@ import "./amp-360video.css";
         enableVR: true,
         fov: 1.18,
         defaultCameraOrientationX: 0,
-        defaultCameraOrientationY: -Math.PI / 2
+        defaultCameraOrientationY: -Math.PI / 2,
+        disableWebGL2Support: true
     },
     plugin = function(pluginOptions) {
         var player = this;
@@ -75,7 +76,7 @@ import "./amp-360video.css";
 
             // Creates the default babylonjs scene
             var engine = new Engine(renderedCanvas, true, {
-                disableWebGL2Support: true
+                disableWebGL2Support: settings.disableWebGL2Support
             });
             var scene = new Scene(engine);
 
