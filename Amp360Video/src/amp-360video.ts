@@ -107,12 +107,15 @@ import "./amp-360video.css";
             toggleWebVR = function() {
                 if (!vrHelper.isInVRMode) {
                     vrHelper.enterVR();
-                    setTimeout(() => { engine.resize(); }, 100);
                 } else {
                     vrHelper.exitVR();
-                    setTimeout(() => { engine.resize(); }, 100);
                 }
             }
+
+            // Resize
+            window.addEventListener("resize", function() {
+                engine.resize();
+            });
 
             // And finally starts the render loop
             engine.runRenderLoop(function() {
