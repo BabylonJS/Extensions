@@ -74,7 +74,9 @@ import "./amp-360video.css";
             videoEl.style.display = "none";
 
             // Creates the default babylonjs scene
-            var engine = new Engine(renderedCanvas);
+            var engine = new Engine(renderedCanvas, true, {
+                disableWebGL2Support: true
+            });
             var scene = new Scene(engine);
 
             // Helps reducing the needed number of draw calls.
