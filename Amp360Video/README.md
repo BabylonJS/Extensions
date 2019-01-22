@@ -162,13 +162,13 @@ plugins: {
 }
 ```
 
-### Enable WebGL2
-The default setup disables Webgl2 to enhance the compatibility with all platforms. Would you wish to enable it in your app for better performances, you can rely on the setup below:
+### Disable WebGL2
+The default setup enables Webgl2 to enhance the performances of the application. In case of compatibility issues with all platforms, would you wish to disable it, you can rely on the setup below:
 
 #### By HTML configuration
 In the data-setup plugin section:
 ```
-"plugins": { "threeSixty": { "disableWebGL2Support": false } }
+"plugins": { "threeSixty": { "disableWebGL2Support": true } }
 ```
 
 #### By code configuration
@@ -176,7 +176,28 @@ This works exactly the same as the previous point. In the options of your plugin
 ```
 plugins: { 
     "threeSixty": {
-        disableWebGL2Support: false
+        disableWebGL2Support: true
+    }
+}
+```
+
+### Adapt to native resolution
+To provide the best performances, by default the plugin does not account for you [devicePixelRatio](https://developer.mozilla.org/en-US/docs/Web/API/Window/devicePixelRatio) setup. It renders 1 to 1 with CSS pixels. In case of HiDPI or Retina display the ratio might be pretty high meaning if you want to get the most of your pixels (using physical pixels), the plugin should for instance render 4 times more pixels than the actual CSS number of pixels.
+
+You can use the hardwareScalingLevel settings of the plugin to chose how many times the Physical Pixels of your device are multiplied to define the number of CSS pixels. For instance a value of 0.5 means there would be twice as much pixels on width and height than the number of CSS pixels enhancing a lot the resolution.
+
+#### By HTML configuration
+In the data-setup plugin section:
+```
+"plugins": { "threeSixty": { "hardwareScalingLevel": 0.5 } }
+```
+
+#### By code configuration
+This works exactly the same as the previous point. In the options of your plugin:
+```
+plugins: { 
+    "threeSixty": {
+        hardwareScalingLevel: 0.5
     }
 }
 ```

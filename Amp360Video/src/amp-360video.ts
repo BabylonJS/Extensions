@@ -27,7 +27,8 @@ import "./amp-360video.css";
         fov: 1.18,
         defaultCameraOrientationX: 0,
         defaultCameraOrientationY: -Math.PI / 2,
-        disableWebGL2Support: true
+        disableWebGL2Support: false,
+        hardwareScalingLevel: 1
     },
     plugin = function(pluginOptions) {
         var player = this;
@@ -80,7 +81,11 @@ import "./amp-360video.css";
             });
             var scene = new Scene(engine);
 
-            // Helps reducing the needed number of draw calls.
+            // Set the hardware scaling level
+            const scaling = Math.max(settings.hardwareScalingLevel, 1 / (window.devicePixelRatio || 4));
+            engine.setHardwareScalingLevel(scaling);
+
+            // Helps reducing the needed number of draw calls
             scene.renderTargetsEnabled = false;
             scene.clearColor = new Color4(0, 0, 0, 1);
             scene.onPointerObservable.add(function() {
