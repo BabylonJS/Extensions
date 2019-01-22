@@ -24,7 +24,7 @@ npm start
 The hosting web page will automatically open (using webpack-dev-server).
 
 ## How it works
-The 360 video is a [videojs](https://docs.videojs.com/tutorial-plugins.html) plugin compatible with AMP version 2.1.7.
+The 360 video is a [videojs](https://docs.videojs.com/tutorial-plugins.html) plugin compatible with from AMP version 2.1.7 to the latest (2.2.3 at time of writing).
 
 The plugin depends on Babylon.js in order to enable 3D functionalities in AMP.
 
@@ -42,8 +42,8 @@ Include the following resources in you html:
 <script src="https://code.jquery.com/pep/0.4.1/pep.js"></script>
 
 <!-- Link to the AMP resources -->
-<link href="https://amp.azure.net/libs/amp/2.1.7/skins/amp-default/azuremediaplayer.min.css" rel="stylesheet">
-<script src="https://amp.azure.net/libs/amp/2.1.7/azuremediaplayer.min.js"></script>
+<link href="https://amp.azure.net/libs/amp/2.2.3/skins/amp-default/azuremediaplayer.min.css" rel="stylesheet">
+<script src="https://amp.azure.net/libs/amp/2.2.3/azuremediaplayer.min.js"></script>
 ```
 
 ### Plugin Setup

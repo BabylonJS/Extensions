@@ -35,6 +35,7 @@ import "./amp-360video.css";
         var settings = (extend as any)({}, defaults, pluginOptions || {});
         var videoEl = this.el().getElementsByTagName('video')[0];
         var toggleWebVR = null;
+        var isInVRMode = false;
 
         var addBeforeFullScreen = function(controlBar, element, name) {
             if (controlBar.fullscreenToggle) {
@@ -97,15 +98,27 @@ import "./amp-360video.css";
             scene.autoClearDepthAndStencil = false;
             engine.setDepthBuffer(false);
             
-            // Creates the 360 video.
+            // Creates the 360 video
             var dome = new VideoDome("testdome", videoEl, { autoPlay: false, size: 2000 }, scene);
             dome.rotation.x = -settings.defaultCameraOrientationX;
             dome.rotation.y = -settings.defaultCameraOrientationY;
 
-            // Create the custom vr helper if requested.
+            // Create the custom vr helper if requested
             var vrHelper = new VRExperienceHelper(scene, {
                 useCustomVRButton: true,
                 controllerMeshes: false
+            });
+
+            // Prevent pointer lock to let the menu accessible
+            vrHelper.requestPointerLockOnFullScreen = false;
+
+            // Records VR state
+            vrHelper.onEnteringVRObservable.add(() => {
+                isInVRMode = true;
+            });
+            vrHelper.onExitingVRObservable.add(() => {
+                isInVRMode = false;
+                player.controls(true);
             });
 
             // Adapt the camera to the requested settings.
@@ -113,7 +126,8 @@ import "./amp-360video.css";
 
             // VR Switch function.
             toggleWebVR = function() {
-                if (!vrHelper.isInVRMode) {
+                if (!isInVRMode) {
+                    player.controls(false);
                     vrHelper.enterVR();
                 } else {
                     vrHelper.exitVR();
