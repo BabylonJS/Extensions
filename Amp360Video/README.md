@@ -31,9 +31,9 @@ The plugin depends on Babylon.js in order to enable 3D functionalities in AMP.
 For more information about AMP, you can access their [documentation](http://amp.azure.net/libs/amp/latest/docs/index.html).
 
 ## How use in your web site
-After deploying the bundled javascript file [`dist/amp-360video.js`](https://github.com/BabylonJS/Extensions/blob/master/Amp360Video/dist/amp-360video.js) from the dist directory to your WebSite you can follow the steps below.
+After deploying the bundled javascript file [`dist/amp-360video.js`](https://raw.githubusercontent.com/BabylonJS/Extensions/master/Amp360Video/dist/amp-360video.js) from the dist directory to your WebSite you can follow the steps below.
 
-> Note: if you were using the plugin before, you might have needed to reference Babylon.js in your site. We have now released a bundle ensuring the smallest delivery possible.
+> Note: if you were using the plugin before, you might have needed to reference Babylon.js in your site. We have now released a bundle ensuring the smallest delivery possible so the reference to Babylon.js is not required anymore.
 
 ### External Resources
 Include the following resources in you html:
@@ -44,6 +44,13 @@ Include the following resources in you html:
 <!-- Link to the AMP resources -->
 <link href="https://amp.azure.net/libs/amp/2.2.3/skins/amp-default/azuremediaplayer.min.css" rel="stylesheet">
 <script src="https://amp.azure.net/libs/amp/2.2.3/azuremediaplayer.min.js"></script>
+```
+
+### Plugin Script
+Include the link to your previously downloaded plugin script in your HTML:
+```
+<!-- Link to the plugin file -->
+<script src="amp-360video.js"></script>
 ```
 
 ### Plugin Setup
