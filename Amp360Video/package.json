@@ -19,10 +19,10 @@
   "author": "@BabylonJS",
   "repository": {
     "type": "git",
-    "url": "https://microsoft.visualstudio.com/DefaultCollection/Apps/_git/edm.coretech.webviewer"
+    "url": "https://github.com/BabylonJS/Extensions.git"
   },
-  "homepage": "https://microsoft.visualstudio.com/Apps/_git/edm.coretech.webviewer?path=%2FPrototype%2Stream360Video%2FREADME.md&version=GBmaster&createIfNew=true&_a=preview",
-  "license": "TBD",
+  "homepage": "https://doc.babylonjs.com/extensions/amp360video",
+  "license": "Apache2",
   "scripts": {
     "prod": "webpack -p --env=prod",
     "dev": "webpack -d --env=dev",
