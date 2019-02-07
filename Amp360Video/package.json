@@ -1,6 +1,6 @@
 {
   "name": "amp-360video",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "BabylonJS 360 Stream Video Viewer.",
   "keywords": [
     "webgl",
@@ -29,7 +29,7 @@
     "start": "webpack-dev-server -d --open"
   },
   "devDependencies": {
-    "@babylonjs/core": "^4.0.0-alpha.22",
+    "@babylonjs/core": "^4.0.0-alpha.26",
     "css-loader": "^2.1.0",
     "http-server": "^0.10.0",
     "style-loader": "^0.23.1",

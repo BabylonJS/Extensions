@@ -28,7 +28,8 @@ import "./amp-360video.css";
         defaultCameraOrientationX: 0,
         defaultCameraOrientationY: -Math.PI / 2,
         disableWebGL2Support: false,
-        hardwareScalingLevel: 1
+        hardwareScalingLevel: 1,
+        videoType: "monoscopicPanoramic"
     },
     plugin = function(pluginOptions) {
         var player = this;
@@ -123,6 +124,18 @@ import "./amp-360video.css";
 
             // Adapt the camera to the requested settings.
             scene.activeCamera.fov = settings.fov;
+
+            // Adapt the video type to the requested one.
+            if (settings.videoType === "stereoscopicSideBySide") {
+                dome.videoMode = VideoDome.MODE_SIDEBYSIDE;
+            }
+            else if (settings.videoType === "stereoscopicTopBottom") {
+                dome.videoMode = VideoDome.MODE_TOPBOTTOM;
+            }
+            else {
+                // Default to monoscopicPanoramic
+                dome.videoMode = VideoDome.MODE_MONOSCOPIC;
+            }
 
             // VR Switch function.
             toggleWebVR = function() {

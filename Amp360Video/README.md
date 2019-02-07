@@ -106,6 +106,35 @@ myPlayer.src([{
 
 One example can be found in the indexCode.html file located in the [repo](https://github.com/BabylonJS/Extensions/blob/master/Amp360Video/indexCode.html).
 
+### Define the video 360 format (Monoscopic, Side By Side, Top Bottom)
+Several types of 360 video exist today. The most common being Monoscopic Panoramic, Stereoscopic Side by Side panoramic and Top bottom panoramic.
+
+The first one represents a panoramic view which is dedicated to one eye. The second one contains two panoramic views dedicated to each eyes whereas the last one contains both panoramic views respectively on the top and bottom of the video.
+
+The plugin defaults to Monoscopic panoramic mode.
+
+In order to specify the type of your source (this can unfortunately not be automated in the plugin), you can specify a different value in your options:
+
+#### By HTML configuration
+In the data-setup plugin section:
+```
+"plugins": { "threeSixty": { "videoType": "stereoscopicTopBottom" } }
+```
+
+The available types are: "monoscopicPanoramic", "stereoscopicSideBySide", "stereoscopicTopBottom".
+
+#### By code configuration
+This works exactly the same as the previous point. In the options of your plugin:
+```
+plugins: { 
+    "threeSixty": {
+        videoType: "stereoscopicTopBottom"
+    }
+}
+```
+
+The available types are: "monoscopicPanoramic", "stereoscopicSideBySide", "stereoscopicTopBottom".
+
 ### Enable/Disable the VR Button
 By default, the plugin is delivered with a VR mode available through a button shaped like a head-mounted display.
 
