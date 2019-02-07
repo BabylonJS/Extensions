@@ -1,6 +1,6 @@
 {
   "name": "amp-360video",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "BabylonJS 360 Stream Video Viewer.",
   "keywords": [
     "webgl",
