@@ -421,7 +421,7 @@ class CVTOOLS_unity_metadata implements BABYLON.GLTF2.IGLTFLoaderExtension {
 
         return Promise.all(promises).then(() => { });
     }
-
+    
     /** @hidden */
     private _loadStandardMaterialPropertiesAsync(context: string, material: BABYLON.GLTF2.Loader.IMaterial, babylonMaterial: BABYLON.StandardMaterial): BABYLON.Nullable<Promise<void>> {
         // console.warn("CVTOOLS: LoadStandardMaterialPropertiesAsync: " + material.name);
@@ -440,7 +440,8 @@ class CVTOOLS_unity_metadata implements BABYLON.GLTF2.IGLTFLoaderExtension {
             const properties = material.pbrMetallicRoughness;
             if (properties) {
                 if (properties.baseColorFactor) {
-                    babylonMaterial.diffuseColor = BABYLON.Color3.FromArray(properties.baseColorFactor);
+                    const linearBaseColor:BABYLON.Color3 = BABYLON.Color3.FromArray(properties.baseColorFactor);
+                    babylonMaterial.diffuseColor = new BABYLON.Color3(Math.pow(linearBaseColor.r, 1 / 2.2), Math.pow(linearBaseColor.g, 1 / 2.2), Math.pow(linearBaseColor.b, 1 / 2.2));
                     baseColorAlpha = properties.baseColorFactor[3];
                 }
                 else {
@@ -455,7 +456,8 @@ class CVTOOLS_unity_metadata implements BABYLON.GLTF2.IGLTFLoaderExtension {
             }
         }
 
-        babylonMaterial.emissiveColor = material.emissiveFactor ? BABYLON.Color3.FromArray(material.emissiveFactor) : new BABYLON.Color3(0, 0, 0);
+        const linearEmmisveColor:BABYLON.Color3 = material.emissiveFactor ? BABYLON.Color3.FromArray(material.emissiveFactor) : new BABYLON.Color3(0, 0, 0);
+        babylonMaterial.emissiveColor = new BABYLON.Color3(Math.pow(linearEmmisveColor.r, 1 / 2.2), Math.pow(linearEmmisveColor.g, 1 / 2.2), Math.pow(linearEmmisveColor.b, 1 / 2.2));
         if (material.doubleSided) {
             babylonMaterial.backFaceCulling = false;
             babylonMaterial.twoSidedLighting = true;
