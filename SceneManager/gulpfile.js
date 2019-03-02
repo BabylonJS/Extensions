@@ -9,44 +9,32 @@ var tsConfig = {
     noExternalResolve: true,
     target: 'ES5',
     module: 'system',
+    lib: ["es5", "es2015", "dom"],
     declarationFiles: true,
     typescript: require('typescript'),
     experimentalDecorators: true,
     isolatedModules: false,
     removeComments: false
 };
-
 var tsProject = typescript.createProject(tsConfig);
 
 var files = [
-    "./libs/stats.js",
-    "./temp/babylon.scenecomponents.js",
-    "./temp/babylon.scenemanager.js",
-    "./temp/babylon.scenenavagent.js",
-    "./temp/babylon.sceneparticles.js",
-    "./temp/babylon.sceneplayers.js",
-    "./temp/babylon.sceneplugins.js",
-    "./temp/babylon.sceneshaders.js",
-    "./temp/babylon.sceneshuriken.js",
-    "./temp/babylon.scenestates.js",
-    "./temp/babylon.sceneutilities.js",
-    "./temp/babylon.scenewindows.js",
-    "./temp/babylon.scenexactions.js",
-    "./libs/terrains.js"
+    "./temp/babylon-master.js",
+    "./temp/babylon-system.js",
+    "./temp/babylon-toolkit.js"
 ]
 
 gulp.task("compile", function () {
-    var tsResult = gulp.src("./src/**/*.ts")      
+    var tsResult = gulp.src(["./types/**/*.ts", "./src/**/*.ts"])      
             .pipe(sourcemaps.init())
             .pipe(typescript(tsProject));
 
     return merge2([
         tsResult.dts
             .pipe(concat("babylon.manager.d.ts"))
-            .pipe(gulp.dest("../Assets/Babylon/Library")),
+            .pipe(gulp.dest("../Assets/Babylon/Template/Typings")),
         tsResult.js
-            .pipe(sourcemaps.write("./", 
-                {
+            .pipe(sourcemaps.write("./", {
                     includeContent:false, 
                     sourceRoot: (filePath) => {
                         return ''; 
@@ -58,7 +46,7 @@ gulp.task("compile", function () {
 
 gulp.task("default", ["compile"], function () {
     return merge2(gulp.src(files))
-        .pipe(concat("babylon.manager.bjs"))
+        .pipe(concat("babylon.manager.jscript"))
         .pipe(uglify())
-        .pipe(gulp.dest("../Assets/Babylon/Library/"));
+        .pipe(gulp.dest("../Assets/Babylon/Template/Library/"));
 });
