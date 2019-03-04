@@ -81,6 +81,9 @@ import "./amp-360video.css";
             var engine = new Engine(renderedCanvas, true, {
                 disableWebGL2Support: settings.disableWebGL2Support
             });
+
+            // Workaround http://localhost:8080/indexCode.html
+            engine.getCaps().vertexArrayObject = false;
             var scene = new Scene(engine);
 
             // Set the hardware scaling level
