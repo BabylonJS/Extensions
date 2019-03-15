@@ -1,10 +1,5 @@
-
-module BABYLONX {
-
-    export interface ShaderStruct {
-        Pixel: string,
-        Vertex: string
-    }
+// tslint:disable no-namespace no-internal-module max-classes-per-file member-access variable-name no-eval curly prefer-for-of
+export module BABYLONX {
 
     export interface IColor {
         r?: any;
@@ -20,141 +15,138 @@ module BABYLONX {
     }
 
     export interface ILight {
-        direction: string;
-        rotation: IVector3;
-        color: IColor;
-        darkColorMode: boolean;
+        direction?: string;
+        rotation?: IVector3;
+        color?: IColor;
+        darkColorMode?: boolean;
 
-        specular: any,
-        specularPower: number,
-        specularLevel: number,
+        specular?: any;
+        specularPower?: number;
+        specularLevel?: number;
 
-        phonge: any,
-        phongePower: number,
-        phongeLevel: number,
+        phonge?: any;
+        phongePower?: number;
+        phongeLevel?: number;
 
-        normal: string,
+        normal?: string;
 
-        reducer: string,
+        reducer?: string;
 
-        supplement: boolean,
+        supplement?: boolean;
 
-        parallel: boolean
+        parallel?: boolean;
     }
 
     export interface ITexture {
-        key: string,
-        inVertex: boolean,
-        inFragment: boolean,
-        indexedDB: number
+        key?: string;
+        inVertex?: boolean;
+        inFragment?: boolean;
+        indexedDB?: number;
     }
 
     export interface IEffect {
-        px: any,
-        py: any,
-        pz: any,
-        pr: any,
+        px?: any;
+        py?: any;
+        pz?: any;
+        pr?: any;
     }
 
     export interface IMap {
-        path: string,
-        x: any,
-        y: any,
-        scaleX: any,
-        scaleY: any,
-        rotation: IVector3;
-        useInVertex: boolean;
-        uv: string,
-        normal: string,
-        normalLevel: string,
-        bias: string,
-        alpha: boolean,
-        rowIndex: number,
-        columnIndex: number,
-        indexCount: number,
-        tiled: boolean,
-        animation: boolean,
-        animationSpeed: number,
-        animationFrameEnd: number,
-        animationFrameStart: number,
-        index: any,
+        path: string;
+        x?: any;
+        y?: any;
+        scaleX?: any;
+        scaleY?: any;
+        rotation?: IVector3;
+        useInVertex?: boolean;
+        uv?: string;
+        normal?: string;
+        normalLevel?: string;
+        bias?: string;
+        alpha?: boolean;
+        rowIndex?: number;
+        columnIndex?: number;
+        indexCount?: number;
+        tiled?: boolean;
+        animation?: boolean;
+        animationSpeed?: number;
+        animationFrameEnd?: number;
+        animationFrameStart?: number;
+        index?: any;
     }
 
     export interface IReflectMap {
-        path: string,
-        x: any,
-        y: any,
-        scaleX: any,
-        scaleY: any,
-        equirectangular: boolean,
-        rotation: IVector3;
-        useInVertex: boolean;
-        uv: string,
-        normal: string,
-        normalLevel: string,
-        bias: string,
-        alpha: boolean,
-        revers: boolean,
-        reflectMap: string,
-        refract: boolean,
-        refractMap: string,
+        path: string;
+        x?: any;
+        y?: any;
+        scaleX?: any;
+        scaleY?: any;
+        equirectangular?: boolean;
+        rotation?: IVector3;
+        useInVertex?: boolean;
+        uv?: string;
+        normal?: string;
+        normalLevel?: string;
+        bias?: string;
+        alpha?: boolean;
+        revers?: boolean;
+        reflectMap?: string;
+        refract?: boolean;
+        refractMap?: string;
     }
 
     export interface IReplaceColor {
-        colorIndex: number,
-        colorStep: number,
-        indexToEnd: boolean,
-        rangeStep: any,
-        rangePower: any
+        colorIndex?: number;
+        colorStep?: number;
+        indexToEnd?: boolean;
+        rangeStep?: any;
+        rangePower?: any;
     }
 
     export interface IRange {
-        start: any;
-        end: any;
-        direction: any;
+        start?: any;
+        end?: any;
+        direction?: any;
     }
 
     export interface IPostProcess {
-        samplingMode: number
-        engine: any,
-        reusable: boolean
-        defines: string,
-        onApply: any
+        samplingMode?: number;
+        engine?: any;
+        reusable?: boolean;
+        defines?: string;
+        onApply?: any;
     }
 
     export interface INutBone {
-        bet: any,
-        center: string,
-        rotation: IVector3
+        bet: any;
+        center: string;
+        rotation: IVector3;
     }
     export interface INut {
-        bones: INutBone[],
-        frame: string,
-        array: any[]
+        bones: INutBone[];
+        frame?: string;
+        array: any[];
     }
 
-
     export class ShaderMaterialHelperStatics {
-
         static Dark = false;
         static Light = true;
 
-        static PrecisionHighMode = 'highp';
-        static PrecisionMediumMode = 'mediump';
-
+        static PrecisionHighMode = "highp";
+        static PrecisionMediumMode = "mediump";
 
         static face_back = "!gl_FrontFacing";
         static face_front = "gl_FrontFacing";
 
-        static AttrPosition = 'position';
-        static AttrNormal = 'normal';
-        static AttrUv = 'uv';
-        static AttrUv2 = 'uv2';
+        static AttrPosition = "position";
+        static AttrNormal = "normal";
+        static AttrUv = "uv";
+        static AttrUv2 = "uv2";
 
-        static AttrTypeForPosition = 'vec3';
-        static AttrTypeForNormal = 'vec3';
-        static AttrTypeForUv = 'vec2';
-        static AttrTypeForUv2 = 'vec2';
+        static AttrTypeForPosition = "vec3";
+        static AttrTypeForNormal = "vec3";
+        static AttrTypeForUv = "vec2";
+        static AttrTypeForUv2 = "vec2";
 
         static uniformView = "view";
         static uniformWorld = "world";
@@ -179,91 +171,89 @@ module BABYLONX {
         static WorldNormal = "wnrm";
         static Uv = "vuv";
         static Uv2 = "vuv2";
-        static Center = 'center';
+        static Center = "center";
 
         static ReflectMatrix = "refMat";
 
         static Texture2D = "txtRef_";
         static TextureCube = "cubeRef_";
-
-        static IdentityHelper: number;
-
-        constructor() {
-
-        }
-
     }
 
     export class Normals {
         static Default = ShaderMaterialHelperStatics.Normal;
-        static Inverse = '-1.*' + ShaderMaterialHelperStatics.Normal;
-        static Pointed = 'normalize(' + ShaderMaterialHelperStatics.Position + '-' + ShaderMaterialHelperStatics.Center + ')';
-        static Flat = 'normalize(cross(dFdx(' + ShaderMaterialHelperStatics.Position + ' * -1.), dFdy(' + ShaderMaterialHelperStatics.Position + ')))';
-        static Map = 'normalMap()';
+        static Inverse = "-1.*" + ShaderMaterialHelperStatics.Normal;
+        static Pointed = "normalize(" + ShaderMaterialHelperStatics.Position + "-" + ShaderMaterialHelperStatics.Center + ")";
+        static Flat = "normalize(cross(dFdx(" + ShaderMaterialHelperStatics.Position + " * -1.), dFdy(" + ShaderMaterialHelperStatics.Position + ")))";
+        static Map = "normalMap()";
     }
 
     export class Speculars {
-        static Map = 'specularMap()';
+        static Map = "specularMap()";
     }
 
-    interface ShaderHelper {
-        uniforms: string[],
-        attributes: string[]
+    export interface IShaderStruct {
+        Pixel: string;
+        Vertex: string;
     }
 
-    export class ShaderMaterialHelper<Scene>{
-        ShaderMaterial(name: string, scene: Scene, shader: ShaderStruct, helpers: ShaderHelper) {
+    export interface IShaderHelper {
+        uniforms: string[];
+        attributes: string[];
+    }
+
+    export class ShaderMaterialHelper {
+        ShaderMaterial(name: string, scene: BABYLON.Scene, shader: IShaderStruct, helpers: IShaderHelper): BABYLON.ShaderMaterial {
             return this.MakeShaderMaterialForEngine(name, scene, shader, helpers);
         }
-        MakeShaderMaterialForEngine(name: string, scene: Scene, shader: ShaderStruct, helpers: ShaderHelper) { return {}; }
-        DefineTexture(txt: ITexture, scene: Scene) {
-
-            return null;
+        MakeShaderMaterialForEngine(name: string, scene: BABYLON.Scene, shader: IShaderStruct, helpers: IShaderHelper): BABYLON.ShaderMaterial {
+            return null as any;
         }
-        DefineCubeTexture(txt: ITexture, scene: Scene) {
-            return null;
+        DefineTexture(txt: ITexture, scene: BABYLON.Scene): BABYLON.Texture {
+            return null as any;
+        }
+        DefineCubeTexture(txt: ITexture, scene: BABYLON.Scene): BABYLON.CubeTexture {
+            return null as any;
         }
         SetUniforms(meshes: any, cameraPos: any, cameraTarget: any, mouse: any, screen: any, time: any) {
-
+            //
         }
-        PostProcessTextures(pps: any, name: string, txt: any) { }
-        DefineRenderTarget(name: string, scale: number, scene: Scene) {
-            return {};
+        PostProcessTextures(pps: any, name: string, txt: any) {
+            //
         }
-        ShaderPostProcess(name: string, samplers: any, camera: any, scale: number, shader: ShaderStruct, helpers: ShaderHelper, option: IPostProcess) {
-            return {};
+        DefineRenderTarget(name: string, scale: number, scene: BABYLON.Scene): any {
+            return null as any;
+        }
+        ShaderPostProcess(name: string, samplers: any, camera: any, scale: number, shader: IShaderStruct, helpers: IShaderHelper, option: IPostProcess): BABYLON.PostProcess {
+            return null as any;
         }
     }
 
     export class Shader {
-
-
-        static _null = 'set null anyway';
+        static _null = "set null anyway";
         static Indexer: number;
         static ShaderIdentity: number;
         static Me: ShaderBuilder;
         static Replace(s: string, t: string, d: string) {
-            var ignore = null;
-            return s.replace(new RegExp(t.replace(/([\/\,\!\\\^\$\{\}\[\]\(\)\.\*\+\?\|\<\>\-\&])/g, "\\$&"), (ignore ? "gi" : "g")), (typeof (d) == "string") ? d.replace(/\$/g, "$$$$") : d);
-
+            const ignore = null;
+            return s.replace(new RegExp(t.replace(/([\/\,\!\\\^\$\{\}\[\]\(\)\.\*\+\?\|\<\>\-\&])/g, "\\$&"), (ignore ? "gi" : "g")), (typeof (d) === "string") ? d.replace(/\$/g, "$$$$") : d);
         }
         static Def(a: any, d: any) {
-            if (a != undefined && a != null) return (d != undefined && d != null ? a : true);
-            else
-                if (d != Shader._null)
-                    return (d != undefined && d != null ? d : false);
+            if (a !== undefined && a !== null) {
+                return (d !== undefined && d !== null ? a : true);
+            } else if (d !== Shader._null) {
+                return (d !== undefined && d !== null ? d : false);
+            }
             return null;
         }
         static Join(s: string[]) {
             return s.join("\n\
                        ");
         }
-
         static Print(n: any) {
-            if (n == undefined) return "0.";
-            var sn = Shader.Replace(n.toString(), '-', '0');
-            var reg = new RegExp('^\\d+$');
-            if (reg.test(sn) && n.toString().indexOf('.') == -1) return n + ".";
+            if (n == null /*or undefined*/) return "0.";
+            const sn = Shader.Replace(n.toString(), "-", "0");
+            const reg = new RegExp("^\\d+$");
+            if (reg.test(sn) && n.toString().indexOf(".") === -1) return n + ".";
             return n.toString();
         }
         static Custom() {
@@ -277,112 +267,97 @@ module BABYLONX {
         }
         static toRGB(a: any, b: any) {
             b = Shader.Def(b, 255);
-            var x = a - Math.floor(a / b) * b;
+            let x = a - Math.floor(a / b) * b;
             a = Math.floor(a / b);
-            var y = a - Math.floor(a / b) * b;
+            let y = a - Math.floor(a / b) * b;
             a = Math.floor(a / b);
-            var z = a - Math.floor(a / b) * b;
-
+            let z = a - Math.floor(a / b) * b;
             if (x > 126) x++;
             if (y > 126) y++;
             if (z > 126) z++;
-
             return { r: x, g: y, b: z };
-
         }
-
         static torgb(a: any, b: any) {
             b = Shader.Def(b, 255);
-            var i = Shader.toRGB(a, b);
-
-            return { r: i.r / 256, g: i.g / 256, b: i.b / 256 }
-
+            const i = Shader.toRGB(a, b);
+            return { r: i.r / 256, g: i.g / 256, b: i.b / 256 };
         }
-
         static toID(a: any, b: any) {
             b = Shader.Def(b, 255);
-            var c = 255 / b;
-
-            var x = Math.floor(a.r / c);
-            var y = Math.floor(a.g / c);
-            var z = Math.floor(a.b / c);
-
+            const c = 255 / b;
+            const x = Math.floor(a.r / c);
+            const y = Math.floor(a.g / c);
+            const z = Math.floor(a.b / c);
             return z * b * b + y * b + x;
         }
-
     }
 
-    export class Helper {
-        static Red = 0;
-        static Yellow = 1;
-        static White = 2;
-        static Cyan = 4;
-        static Blue = 5;
-        static Pink = 6;
-        static Black = 7;
-        static Green = 8;
-        constructor() {
-            var setting = Shader.Me.Setting;
-            var instance = new ShaderBuilder();
-            instance.Parent = Shader.Me;
-            instance.Setting = setting;
+    export function Helper(): ShaderBuilder {
+        const setting = Shader.Me.Setting;
+        const instance = new ShaderBuilder();
+        instance.Parent = Shader.Me;
+        instance.Setting = setting;
+        return instance;
+    }
 
-            return instance;
+    export namespace Helper {
+        export function Depth(far: any): string {
+            return "max(0.,min(1.,(" + Shader.Print(far) + "-abs(length(camera-pos)))/" + Shader.Print(far) + " ))";
         }
 
-        static Depth(far: any) {
-            return 'max(0.,min(1.,(' + Shader.Print(far) + '-abs(length(camera-pos)))/' + Shader.Print(far) + ' ))';
-        }
-
+        export const Red = 0;
+        export const Yellow = 1;
+        export const White = 2;
+        export const Cyan = 4;
+        export const Blue = 5;
+        export const Pink = 6;
+        export const Black = 7;
+        export const Green = 8;
     }
 
     export class ShaderSetting {
-
-        Texture2Ds: any[];
-        TextureCubes: any[];
-        CameraShot: boolean;
+        Texture2Ds?: any[];
+        TextureCubes?: any[];
+        CameraShot?: boolean;
         PrecisionMode: string;
 
-        Transparency: boolean;
-        DisableAlphaTesting: boolean;
-        Back: boolean;
-        Front: boolean;
-        Wire: boolean;
-        Uv: boolean;
-        Uv2: boolean;
-        Center: boolean;
-        Flags: boolean;
-        
-        DefinitionFragment : string,
-        DefinitionVertex : string,
+        Transparency?: boolean;
+        DisableAlphaTesting?: boolean;
+        Back?: boolean;
+        Front?: boolean;
+        Wire?: boolean;
+        Uv?: boolean;
+        Uv2?: boolean;
+        Center?: boolean;
+        Flags?: boolean;
 
-        FragmentView: boolean;
-        FragmentWorld: boolean;
-        FragmentWorldView: boolean;
-        FragmentViewProjection: boolean;
+        FragmentView?: boolean;
+        FragmentWorld?: boolean;
+        FragmentWorldView?: boolean;
+        FragmentViewProjection?: boolean;
 
-        SpecularMap: string;
-        NormalMap: string;
-        Normal: string;
-        NormalOpacity: string;
+        SpecularMap?: string;
+        NormalMap?: string;
+        Normal?: string;
+        NormalOpacity?: string;
 
-        WorldPosition: boolean;
-        Vertex: boolean;
+        WorldPosition?: boolean;
+        Vertex?: boolean;
 
-        VertexView: boolean;
-        VertexWorld: boolean;
-        VertexWorldView: boolean;
-        VertexViewProjection: boolean;
+        VertexView?: boolean;
+        VertexWorld?: boolean;
+        VertexWorldView?: boolean;
+        VertexViewProjection?: boolean;
 
-        Mouse: boolean;
-        Screen: boolean;
-        Camera: boolean;
-        Look: boolean;
-        Time: boolean;
-        GlobalTime: boolean;
-        ReflectMatrix: boolean;
+        Mouse?: boolean;
+        Screen?: boolean;
+        Camera?: boolean;
+        Look?: boolean;
+        Time?: boolean;
+        GlobalTime?: boolean;
+        ReflectMatrix?: boolean;
 
-        Helpers: Boolean;
+        Helpers?: boolean;
 
         constructor() {
             this.PrecisionMode = ShaderMaterialHelperStatics.PrecisionHighMode;
@@ -390,49 +365,68 @@ module BABYLONX {
     }
 
     export class ShaderBuilder {
-
-        Parent: ShaderBuilder;
         Setting: ShaderSetting;
-        CustomIndexer: number;
+        Extentions: string[];
+        Attributes: string[];
         Fragment: string[];
+        Helpers: string[];
+        Uniforms: string[];
+        Varings: string[];
         Vertex: string[];
+        CustomIndexer: number;
+
+        Parent?: ShaderBuilder;
+
+        FragmentBeforeMain!: string;
+        VertexBeforeMain?: string;
+        FragmentUniforms?: string;
+        VertexUniforms?: string;
+        References?: string;
+        Body!: string;
+        VertexBody!: string;
+        AfterVertex?: string;
+        RenderTargetForColorId?: string;
+        PPSSamplers?: string[];
+        RenderTargetForDepth?: string;
+
+        PostEffect1Effects?: string[];
+        PostEffect2Effects?: string[];
+
+        constructor() {
+            this.Setting = new ShaderSetting();
+            this.Extentions = [];
+            this.Attributes = [];
+            this.Fragment = [];
+            this.Helpers = [];
+            this.Uniforms = [];
+            this.Varings = [];
+            this.Vertex = [];
+
+            this.Setting.Uv = true;
+            this.Setting.Time = true;
+            this.Setting.Camera = true;
+            this.Setting.Helpers = true;
+            this.Setting.NormalMap = "result = vec4(0.5);";
+            this.Setting.SpecularMap = "float_result = 1.0;";
+            this.Setting.NormalOpacity = "0.5";
+            this.Setting.Normal = ShaderMaterialHelperStatics.Normal;
+
+            if (Shader.Indexer == null /*or undefined*/) Shader.Indexer = 1;
+            this.CustomIndexer = 1;
+            Shader.Me = this;
+        }
         static InitializeEngine() {
-            eval(Shader.Replace(Shader.Replace("BABYLONX.ShaderMaterialHelper.prototype.MakeShaderMaterialForEngine=function(name,scene,shader,helpers){BABYLON.Effect.ShadersStore[name+#[QT]VertexShader#[QT]]=shader.Vertex;BABYLON.Effect.ShadersStore[name+#[QT]PixelShader#[QT]]=shader.Pixel;return new BABYLON.ShaderMaterial(name,scene,{vertex:name,fragment:name},helpers);}", "#[QT]", '"'), '#[T]', "'"));
-            eval(Shader.Replace(Shader.Replace("BABYLONX.ShaderMaterialHelper.prototype.DefineTexture = function (option, sc) { var tx = new BABYLON.Texture(option, sc); return tx; } ", "#[QT]", '"'), '#[T]', "'"));
-
-            eval(Shader.Replace(Shader.Replace("BABYLONX.ShaderMaterialHelper.prototype.DefineCubeTexture = function (option, sc) { var tx = new BABYLON.CubeTexture(option, sc); tx.coordinatesMode = BABYLON.Texture.PLANAR_MODE; return tx; }  ", "#[QT]", '"'), '#[T]', "'"));
-            eval(Shader.Replace(Shader.Replace("BABYLONX.ShaderMaterialHelper.prototype.SetUniforms = function (meshes, cameraPos, cameraTarget, mouse, screen, time) { for (var ms in meshes) { ms = meshes[ms]; if (ms.material && (ms.material.ShaderSetting != null || ms.material.ShaderSetting != undefined)) { if (ms.material.ShaderSetting.Camera)                ms.material.setVector3(BABYLONX.ShaderMaterialHelperStatics.Camera, cameraPos); if (ms.material.ShaderSetting.Center)                ms.material.setVector3(BABYLONX.ShaderMaterialHelperStatics.Center, { x: 0., y: 0., z: 0. }); if (ms.material.ShaderSetting.Mouse)                ms.material.setVector2(BABYLONX.ShaderMaterialHelperStatics.Mouse, mouse); if (ms.material.ShaderSetting.Screen)                ms.material.setVector2(BABYLONX.ShaderMaterialHelperStatics.Screen, screen); if (ms.material.ShaderSetting.GlobalTime)                ms.material.setVector4(BABYLONX.ShaderMaterialHelperStatics.GlobalTime, { x: 0., y: 0., z: 0., w: 0. }); if (ms.material.ShaderSetting.Look)                ms.material.setVector3(BABYLONX.ShaderMaterialHelperStatics.Look, cameraTarget); if (ms.material.ShaderSetting.Time)                ms.material.setFloat(BABYLONX.ShaderMaterialHelperStatics.Time, time);        }        }    }", "#[QT]", '"'), '#[T]', "'"));
-
-            eval(Shader.Replace(Shader.Replace("BABYLONX.ShaderMaterialHelper.prototype.ShaderPostProcess = function (name, samplers, camera, scale, shader, helpers, option) {if (!option) option = {};if (!option.samplingMode) option.samplingMode = BABYLON.Texture.BILINEAR_SAMPLINGMODE;BABYLON.Effect.ShadersStore[name + #[QT]PixelShader#[QT]] = shader.Pixel;var pps = new BABYLON.PostProcess(name, name, helpers.uniforms, samplers, scale, camera, option.samplingMode);pps.onApply = function (effect) {effect.setFloat(#[T]time#[T], time);effect.setVector2(#[QT]screen#[QT], { x: pps.width, y: pps.height });effect.setVector3(#[QT]camera#[QT], camera.position);if (option && option.onApply)option.onApply(effect);};return pps;} ", "#[QT]", '"'), '#[T]', "'"));
-            eval(Shader.Replace(Shader.Replace("BABYLONX.ShaderMaterialHelper.prototype.PostProcessTextures = function (pps, name, txt) {pps._effect.setTexture(name, txt);}", "#[QT]", '"'), '#[T]', "'"));
-
+            eval(Shader.Replace(Shader.Replace("BABYLONX.ShaderMaterialHelper.prototype.MakeShaderMaterialForEngine=function(name,scene,shader,helpers){BABYLON.Effect.ShadersStore[name+#[QT]VertexShader#[QT]]=shader.Vertex;BABYLON.Effect.ShadersStore[name+#[QT]PixelShader#[QT]]=shader.Pixel;return new BABYLON.ShaderMaterial(name,scene,{vertex:name,fragment:name},helpers);}", "#[QT]", '"'), "#[T]", "'"));
+            eval(Shader.Replace(Shader.Replace("BABYLONX.ShaderMaterialHelper.prototype.DefineTexture = function (option, sc) { var tx = new BABYLON.Texture(option, sc); return tx; } ", "#[QT]", '"'), "#[T]", "'"));
+            eval(Shader.Replace(Shader.Replace("BABYLONX.ShaderMaterialHelper.prototype.DefineCubeTexture = function (option, sc) { var tx = new BABYLON.CubeTexture(option, sc); tx.coordinatesMode = BABYLON.Texture.PLANAR_MODE; return tx; }  ", "#[QT]", '"'), "#[T]", "'"));
+            eval(Shader.Replace(Shader.Replace("BABYLONX.ShaderMaterialHelper.prototype.SetUniforms = function (meshes, cameraPos, cameraTarget, mouse, screen, time) { for (var ms in meshes) { ms = meshes[ms]; if (ms.material && (ms.material.ShaderSetting != null || ms.material.ShaderSetting != undefined)) { if (ms.material.ShaderSetting.Camera)                ms.material.setVector3(BABYLONX.ShaderMaterialHelperStatics.Camera, cameraPos); if (ms.material.ShaderSetting.Center)                ms.material.setVector3(BABYLONX.ShaderMaterialHelperStatics.Center, { x: 0., y: 0., z: 0. }); if (ms.material.ShaderSetting.Mouse)                ms.material.setVector2(BABYLONX.ShaderMaterialHelperStatics.Mouse, mouse); if (ms.material.ShaderSetting.Screen)                ms.material.setVector2(BABYLONX.ShaderMaterialHelperStatics.Screen, screen); if (ms.material.ShaderSetting.GlobalTime)                ms.material.setVector4(BABYLONX.ShaderMaterialHelperStatics.GlobalTime, { x: 0., y: 0., z: 0., w: 0. }); if (ms.material.ShaderSetting.Look)                ms.material.setVector3(BABYLONX.ShaderMaterialHelperStatics.Look, cameraTarget); if (ms.material.ShaderSetting.Time)                ms.material.setFloat(BABYLONX.ShaderMaterialHelperStatics.Time, time);        }        }    }", "#[QT]", '"'), "#[T]", "'"));
+            eval(Shader.Replace(Shader.Replace("BABYLONX.ShaderMaterialHelper.prototype.ShaderPostProcess = function (name, samplers, camera, scale, shader, helpers, option) {if (!option) option = {};if (!option.samplingMode) option.samplingMode = BABYLON.Texture.BILINEAR_SAMPLINGMODE;BABYLON.Effect.ShadersStore[name + #[QT]PixelShader#[QT]] = shader.Pixel;var pps = new BABYLON.PostProcess(name, name, helpers.uniforms, samplers, scale, camera, option.samplingMode);pps.onApply = function (effect) {effect.setFloat(#[T]time#[T], time);effect.setVector2(#[QT]screen#[QT], { x: pps.width, y: pps.height });effect.setVector3(#[QT]camera#[QT], camera.position);if (option && option.onApply)option.onApply(effect);};return pps;} ", "#[QT]", '"'), "#[T]", "'"));
+            eval(Shader.Replace(Shader.Replace("BABYLONX.ShaderMaterialHelper.prototype.PostProcessTextures = function (pps, name, txt) {pps._effect.setTexture(name, txt);}", "#[QT]", '"'), "#[T]", "'"));
         }
         static ColorIdRenderTarget: any;
-
         static InitializePostEffects(scene: any, scale: number) {
             ShaderBuilder.ColorIdRenderTarget = new ShaderMaterialHelper().DefineRenderTarget("ColorId", scale, scene);
         }
-
-        FragmentBeforeMain: string;
-        VertexBeforeMain: string;
-        Varings: string[];
-        Attributes: string[];
-        Uniforms: string[];
-        FragmentUniforms: string;
-        VertexUniforms: string;
-        Extentions: string[];
-        References: string;
-        Helpers: string[];
-        Body: string;
-        VertexBody: string;
-        AfterVertex: string;
-        RenderTargetForColorId: string;
-        PPSSamplers: string[];
-        RenderTargetForDepth: string;
-
-        PostEffect1Effects: string[];
-        PostEffect2Effects: string[];
-
 
         PrepareBeforeMaterialBuild() {
             this.Setting = Shader.Me.Setting;
@@ -452,9 +446,7 @@ module BABYLONX {
                 ShaderMaterialHelperStatics.uniformViewProjection,
                 ShaderMaterialHelperStatics.uniformWorldViewProjection);
 
-            // start Build Vertex Frame 
-
-
+            // start Build Vertex Frame
             this.Vertex.push("precision " + this.Setting.PrecisionMode + " float;");
             this.Vertex.push("attribute " + ShaderMaterialHelperStatics.AttrTypeForPosition + " " + ShaderMaterialHelperStatics.AttrPosition + ";");
             this.Vertex.push("attribute " + ShaderMaterialHelperStatics.AttrTypeForNormal + " " + ShaderMaterialHelperStatics.AttrNormal + ";");
@@ -465,42 +457,32 @@ module BABYLONX {
             }
             if (this.Setting.Uv2) {
                 this.Vertex.push("attribute " + ShaderMaterialHelperStatics.AttrTypeForUv2 + " " + ShaderMaterialHelperStatics.AttrUv2 + ";");
-
                 this.Vertex.push("varying vec2 " + ShaderMaterialHelperStatics.Uv2 + ";");
             }
-
 
             this.Vertex.push("varying vec3 " + ShaderMaterialHelperStatics.Position + ";");
             this.Vertex.push("varying vec3 " + ShaderMaterialHelperStatics.Normal + ";");
 
-
-            this.Vertex.push("uniform   " + ShaderMaterialHelperStatics.uniformStandardType + ' ' + ShaderMaterialHelperStatics.uniformWorldViewProjection + ";");
+            this.Vertex.push("uniform   " + ShaderMaterialHelperStatics.uniformStandardType + " " + ShaderMaterialHelperStatics.uniformWorldViewProjection + ";");
             if (this.Setting.VertexView) {
-                this.Vertex.push("uniform   " + ShaderMaterialHelperStatics.uniformStandardType + ' ' + ShaderMaterialHelperStatics.uniformView + ";");
+                this.Vertex.push("uniform   " + ShaderMaterialHelperStatics.uniformStandardType + " " + ShaderMaterialHelperStatics.uniformView + ";");
             }
-
             if (this.Setting.VertexWorld) {
-                this.Vertex.push("uniform   " + ShaderMaterialHelperStatics.uniformStandardType + ' ' + ShaderMaterialHelperStatics.uniformWorld + ";");
+                this.Vertex.push("uniform   " + ShaderMaterialHelperStatics.uniformStandardType + " " + ShaderMaterialHelperStatics.uniformWorld + ";");
             }
-
             if (this.Setting.VertexViewProjection) {
-                this.Vertex.push("uniform   " + ShaderMaterialHelperStatics.uniformStandardType + ' ' + ShaderMaterialHelperStatics.uniformViewProjection + ";");
+                this.Vertex.push("uniform   " + ShaderMaterialHelperStatics.uniformStandardType + " " + ShaderMaterialHelperStatics.uniformViewProjection + ";");
             }
-
             if (this.Setting.Flags) {
                 this.Uniforms.push(ShaderMaterialHelperStatics.uniformFlags);
-
                 this.Vertex.push("uniform  float " + ShaderMaterialHelperStatics.uniformFlags + ";");
             }
-
             if (this.Setting.VertexWorldView) {
-                this.Vertex.push("uniform   " + ShaderMaterialHelperStatics.uniformStandardType + ' ' + ShaderMaterialHelperStatics.uniformWorldView + ";");
+                this.Vertex.push("uniform   " + ShaderMaterialHelperStatics.uniformStandardType + " " + ShaderMaterialHelperStatics.uniformWorldView + ";");
             }
-
             if (this.VertexUniforms) {
                 this.Vertex.push(this.VertexUniforms);
             }
-
 
             /*#extension GL_OES_standard_derivatives : enable*/
             this.Fragment.push("precision " + this.Setting.PrecisionMode + " float;\n\
@@ -511,40 +493,30 @@ module BABYLONX {
 
             if (this.Setting.Uv) {
                 this.Fragment.push("varying vec2 " + ShaderMaterialHelperStatics.Uv + ";");
-
             }
             if (this.Setting.Uv2) {
                 this.Fragment.push("varying vec2 " + ShaderMaterialHelperStatics.Uv2 + ";");
             }
-
             if (this.Setting.FragmentView) {
-                this.Fragment.push("uniform   " + ShaderMaterialHelperStatics.uniformStandardType + ' ' + ShaderMaterialHelperStatics.uniformView + ";");
+                this.Fragment.push("uniform   " + ShaderMaterialHelperStatics.uniformStandardType + " " + ShaderMaterialHelperStatics.uniformView + ";");
             }
-
             if (this.Setting.FragmentWorld) {
-                this.Fragment.push("uniform   " + ShaderMaterialHelperStatics.uniformStandardType + ' ' + ShaderMaterialHelperStatics.uniformWorld + ";");
+                this.Fragment.push("uniform   " + ShaderMaterialHelperStatics.uniformStandardType + " " + ShaderMaterialHelperStatics.uniformWorld + ";");
             }
-
             if (this.Setting.FragmentViewProjection) {
-                this.Fragment.push("uniform   " + ShaderMaterialHelperStatics.uniformStandardType + ' ' + ShaderMaterialHelperStatics.uniformViewProjection + ";");
+                this.Fragment.push("uniform   " + ShaderMaterialHelperStatics.uniformStandardType + " " + ShaderMaterialHelperStatics.uniformViewProjection + ";");
             }
-
             if (this.Setting.FragmentWorldView) {
-                this.Fragment.push("uniform   " + ShaderMaterialHelperStatics.uniformStandardType + ' ' + ShaderMaterialHelperStatics.uniformWorldView + ";");
+                this.Fragment.push("uniform   " + ShaderMaterialHelperStatics.uniformStandardType + " " + ShaderMaterialHelperStatics.uniformWorldView + ";");
             }
-
             if (this.Setting.Flags) {
-
                 this.Fragment.push("uniform  float " + ShaderMaterialHelperStatics.uniformFlags + ";");
             }
-
-
             if (this.FragmentUniforms) {
                 this.Fragment.push(this.FragmentUniforms);
             }
             this.Fragment.push("varying vec3 " + ShaderMaterialHelperStatics.Position + ";");
             this.Fragment.push("varying vec3 " + ShaderMaterialHelperStatics.Normal + ";");
-
 
             if (this.Setting.WorldPosition) {
                 this.Vertex.push("varying vec3 " + ShaderMaterialHelperStatics.WorldPosition + ";");
@@ -552,42 +524,37 @@ module BABYLONX {
 
                 this.Fragment.push("varying vec3 " + ShaderMaterialHelperStatics.WorldPosition + ";");
                 this.Fragment.push("varying vec3 " + ShaderMaterialHelperStatics.WorldNormal + ";");
-
             }
 
-            if (this.Setting.Texture2Ds != null) {
-                for (var s in this.Setting.Texture2Ds) {
-
-                    if (this.Setting.Texture2Ds[s].inVertex) {
-                        this.Vertex.push("uniform  sampler2D " + ShaderMaterialHelperStatics.Texture2D + s + ";");
-                    }
-                    if (this.Setting.Texture2Ds[s].inFragment) {
-                        this.Fragment.push("uniform  sampler2D  " + ShaderMaterialHelperStatics.Texture2D + s + ";");
+            if (this.Setting.Texture2Ds) {
+                for (const s in this.Setting.Texture2Ds) {
+                    if (this.Setting.Texture2Ds.hasOwnProperty(s)) {
+                        if (this.Setting.Texture2Ds[s].inVertex) {
+                            this.Vertex.push("uniform  sampler2D " + ShaderMaterialHelperStatics.Texture2D + s + ";");
+                        }
+                        if (this.Setting.Texture2Ds[s].inFragment) {
+                            this.Fragment.push("uniform  sampler2D  " + ShaderMaterialHelperStatics.Texture2D + s + ";");
+                        }
                     }
                 }
             }
-
 
             if (this.Setting.CameraShot) {
-
                 this.Fragment.push("uniform  sampler2D  textureSampler;");
-
             }
 
-            if (this.Setting.TextureCubes != null) {
-                for (var s in this.Setting.TextureCubes) {
-
-
-                    if (this.Setting.TextureCubes[s].inVertex) {
-                        this.Vertex.push("uniform  samplerCube  " + ShaderMaterialHelperStatics.TextureCube + s + ";");
-                    }
-                    if (this.Setting.TextureCubes[s].inFragment) {
-                        this.Fragment.push("uniform  samplerCube   " + ShaderMaterialHelperStatics.TextureCube + s + ";");
+            if (this.Setting.TextureCubes) {
+                for (const s in this.Setting.TextureCubes) {
+                    if (this.Setting.TextureCubes.hasOwnProperty(s)) {
+                        if (this.Setting.TextureCubes[s].inVertex) {
+                            this.Vertex.push("uniform  samplerCube  " + ShaderMaterialHelperStatics.TextureCube + s + ";");
+                        }
+                        if (this.Setting.TextureCubes[s].inFragment) {
+                            this.Fragment.push("uniform  samplerCube   " + ShaderMaterialHelperStatics.TextureCube + s + ";");
+                        }
                     }
                 }
             }
-
-
 
             if (this.Setting.Center) {
                 this.Vertex.push("uniform  vec3 " + ShaderMaterialHelperStatics.Center + ";");
@@ -597,7 +564,6 @@ module BABYLONX {
             if (this.Setting.Mouse) {
                 this.Vertex.push("uniform  vec2 " + ShaderMaterialHelperStatics.Mouse + ";");
                 this.Fragment.push("uniform  vec2 " + ShaderMaterialHelperStatics.Mouse + ";");
-
             }
             if (this.Setting.Screen) {
                 this.Vertex.push("uniform  vec2 " + ShaderMaterialHelperStatics.Screen + ";");
@@ -614,36 +580,31 @@ module BABYLONX {
             if (this.Setting.Time) {
                 this.Vertex.push("uniform  float " + ShaderMaterialHelperStatics.Time + ";");
                 this.Fragment.push("uniform  float " + ShaderMaterialHelperStatics.Time + ";");
-
             }
             if (this.Setting.GlobalTime) {
                 this.Vertex.push("uniform  vec4 " + ShaderMaterialHelperStatics.GlobalTime + ";");
                 this.Fragment.push("uniform  vec4 " + ShaderMaterialHelperStatics.GlobalTime + ";");
             }
-
             if (this.Setting.ReflectMatrix) {
                 this.Vertex.push("uniform  mat4 " + ShaderMaterialHelperStatics.ReflectMatrix + ";");
                 this.Fragment.push("uniform  mat4 " + ShaderMaterialHelperStatics.ReflectMatrix + ";");
-
             }
             if (this.Setting.Helpers) {
-                var sresult = Shader.Join([ 
+                const sresult = Shader.Join([
                     "vec3 random3(vec3 c) {   float j = 4096.0*sin(dot(c,vec3(17.0, 59.4, 15.0)));   vec3 r;   r.z = fract(512.0*j); j *= .125;  r.x = fract(512.0*j); j *= .125; r.y = fract(512.0*j);  return r-0.5;  } ",
                     "float rand(vec2 co){   return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453); } ",
                     "const float F3 =  0.3333333;const float G3 =  0.1666667;",
                     "float simplex3d(vec3 p) {   vec3 s = floor(p + dot(p, vec3(F3)));   vec3 x = p - s + dot(s, vec3(G3));  vec3 e = step(vec3(0.0), x - x.yzx);  vec3 i1 = e*(1.0 - e.zxy);  vec3 i2 = 1.0 - e.zxy*(1.0 - e);   vec3 x1 = x - i1 + G3;   vec3 x2 = x - i2 + 2.0*G3;   vec3 x3 = x - 1.0 + 3.0*G3;   vec4 w, d;    w.x = dot(x, x);   w.y = dot(x1, x1);  w.z = dot(x2, x2);  w.w = dot(x3, x3);   w = max(0.6 - w, 0.0);   d.x = dot(random3(s), x);   d.y = dot(random3(s + i1), x1);   d.z = dot(random3(s + i2), x2);  d.w = dot(random3(s + 1.0), x3);  w *= w;   w *= w;  d *= w;   return dot(d, vec4(52.0));     }  ",
                     "float noise(vec3 m) {  return   0.5333333*simplex3d(m)   +0.2666667*simplex3d(2.0*m) +0.1333333*simplex3d(4.0*m) +0.0666667*simplex3d(8.0*m);   } ",
                     "float dim(vec3 p1 , vec3 p2){   return sqrt((p2.x-p1.x)*(p2.x-p1.x)+(p2.y-p1.y)*(p2.y-p1.y)+(p2.z-p1.z)*(p2.z-p1.z)); }",
-                    "vec2  rotate_xy(vec2 pr1,vec2  pr2,float alpha) {vec2 pp2 = vec2( pr2.x - pr1.x,   pr2.y - pr1.y );return  vec2( pr1.x + pp2.x * cos(alpha*3.14159265/180.) - pp2.y * sin(alpha*3.14159265/180.),pr1.y + pp2.x * sin(alpha*3.14159265/180.) + pp2.y * cos(alpha*3.14159265/180.));} \n vec3  r_y(vec3 n, float a,vec3 c) {vec3 c1 = vec3( c.x,  c.y,   c.z );c1.x = c1.x;c1.y = c1.z;vec2 p = rotate_xy(vec2(c1.x,c1.y), vec2( n.x,  n.z ), a);n.x = p.x;n.z = p.y;return n; } \n vec3  r_x(vec3 n, float a,vec3 c) {vec3 c1 = vec3( c.x,  c.y,   c.z );c1.x = c1.y;c1.y = c1.z;vec2 p = rotate_xy(vec2(c1.x,c1.y), vec2( n.y,  n.z ), a);n.y = p.x;n.z = p.y;return n; } \n vec3  r_z(vec3 n, float a,vec3 c) {  vec3 c1 = vec3( c.x,  c.y,   c.z );vec2 p = rotate_xy(vec2(c1.x,c1.y), vec2( n.x,  n.y ), a);n.x = p.x;n.y = p.y;return n; }",
-                    //"vec3 sundir(float da,float db,vec3 ps){ float h = floor(floor(" + ShaderMaterialHelperStatics.GlobalTime + ".y/100.)/100.);float m =     floor(" + ShaderMaterialHelperStatics.GlobalTime + ".y/100.) - h*100.;float s =      " + ShaderMaterialHelperStatics.GlobalTime + ".y  - h*10000. -m*100.;float si = s *100./60.;float mi = m*100./60.;float hi = h+mi/100.+si/10000.;float dm = 180./(db-da); vec3  gp = vec3(ps.x,ps.y,ps.z);gp = r_z(gp,  dm* hi -da*dm -90. ,vec3(0.));gp = r_x(gp,40. ,vec3(0.)); gp.x = gp.x*-1.; gp.z = gp.z*-1.; return gp; }",
-                ])
+                    "vec2  rotate_xy(vec2 pr1,vec2  pr2,float alpha) {vec2 pp2 = vec2( pr2.x - pr1.x,   pr2.y - pr1.y );return  vec2( pr1.x + pp2.x * cos(alpha*3.14159265/180.) - pp2.y * sin(alpha*3.14159265/180.),pr1.y + pp2.x * sin(alpha*3.14159265/180.) + pp2.y * cos(alpha*3.14159265/180.));} \n vec3  r_y(vec3 n, float a,vec3 c) {vec3 c1 = vec3( c.x,  c.y,   c.z );c1.x = c1.x;c1.y = c1.z;vec2 p = rotate_xy(vec2(c1.x,c1.y), vec2( n.x,  n.z ), a);n.x = p.x;n.z = p.y;return n; } \n vec3  r_x(vec3 n, float a,vec3 c) {vec3 c1 = vec3( c.x,  c.y,   c.z );c1.x = c1.y;c1.y = c1.z;vec2 p = rotate_xy(vec2(c1.x,c1.y), vec2( n.y,  n.z ), a);n.y = p.x;n.z = p.y;return n; } \n vec3  r_z(vec3 n, float a,vec3 c) {  vec3 c1 = vec3( c.x,  c.y,   c.z );vec2 p = rotate_xy(vec2(c1.x,c1.y), vec2( n.x,  n.y ), a);n.x = p.x;n.y = p.y;return n; }"
+                ]);
                 this.Vertex.push(sresult);
                 this.Fragment.push(sresult);
-
             }
 
-            this.Vertex.push(Shader.Def(this.Setting.DefinitionVertex,"") + "\n\ void main(void) { \n\
-    "+ ShaderMaterialHelperStatics.Position + " = " + ShaderMaterialHelperStatics.AttrPosition + "; \n\
+            this.Vertex.push("void main(void) { \n\
+    " + ShaderMaterialHelperStatics.Position + " = " + ShaderMaterialHelperStatics.AttrPosition + "; \n\
     " + ShaderMaterialHelperStatics.Normal + " = " + ShaderMaterialHelperStatics.AttrNormal + "; \n\
     vec4 result = vec4(" + ShaderMaterialHelperStatics.Position + ",1.);  \n\
       vuv = uv;\n\
@@ -652,42 +613,29 @@ module BABYLONX {
     #[AfterFinishVertex] \n\
  }");
 
-            // start Build Fragment Frame 
-
-            if (this.Setting.NormalMap != null) {
-
-
+            // start Build Fragment Frame
+            if (this.Setting.NormalMap) {
                 this.Fragment.push("vec3 normalMap() { vec4 result = vec4(0.); " + this.Setting.NormalMap + "; \n\
-                  result = vec4( normalize( "+ this.Setting.Normal + " -(normalize(result.xyz)*2.0-vec3(1.))*(max(-0.5,min(0.5," + Shader.Print(this.Setting.NormalOpacity) + ")) )),1.0); return result.xyz;}");
+                  result = vec4( normalize( " + this.Setting.Normal + " -(normalize(result.xyz)*2.0-vec3(1.))*(max(-0.5,min(0.5," + Shader.Print(this.Setting.NormalOpacity) + ")) )),1.0); return result.xyz;}");
             }
-
-            if (this.Setting.SpecularMap != null) {
+            if (this.Setting.SpecularMap) {
                 this.Fragment.push("float specularMap() { vec4 result = vec4(0.);float float_result = 0.; " + this.Setting.SpecularMap + "; return float_result ;}");
             }
-
-
-
             this.Fragment.push(this.FragmentBeforeMain);
-
-            this.Fragment.push((Shader.Def(this.Setting.DefinitionFragment,"") + " \n\
+            this.Fragment.push(" \n\
 void main(void) { \n\
      int discardState = 0;\n\
      vec4 result = vec4(0.);\n\
      #[Source] \n\
      if(discardState == 0)gl_FragColor = result; \n\
 }");
-
         }
 
         PrepareBeforePostProcessBuild() {
             this.Setting = Shader.Me.Setting;
-
             this.Attributes.push(ShaderMaterialHelperStatics.AttrPosition);
 
-
-            // start Build Vertex Frame 
-
-
+            // start Build Vertex Frame
             /*#extension GL_OES_standard_derivatives : enable*/
             this.Fragment.push("precision " + this.Setting.PrecisionMode + " float;\n\
 \n\
@@ -695,39 +643,31 @@ void main(void) { \n\
 
             if (this.Setting.Uv) {
                 this.Fragment.push("varying vec2 vUV;");
-
             }
-
-
             if (this.Setting.Flags) {
-
                 this.Fragment.push("uniform  float " + ShaderMaterialHelperStatics.uniformFlags + ";");
             }
-
-            if (this.Setting.Texture2Ds != null) {
-                for (var s in this.Setting.Texture2Ds) {
-
-                    if (this.Setting.Texture2Ds[s].inFragment) {
-                        this.Fragment.push("uniform  sampler2D  " + ShaderMaterialHelperStatics.Texture2D + s + ";");
+            if (this.Setting.Texture2Ds) {
+                for (const s in this.Setting.Texture2Ds) {
+                    if (this.Setting.Texture2Ds.hasOwnProperty(s)) {
+                        if (this.Setting.Texture2Ds[s].inFragment) {
+                            this.Fragment.push("uniform  sampler2D  " + ShaderMaterialHelperStatics.Texture2D + s + ";");
+                        }
                     }
                 }
             }
-
-            if (this.PPSSamplers != null) {
-                for (var s in this.PPSSamplers) {
-
-                    if (this.PPSSamplers[s]) {
-                        this.Fragment.push("uniform  sampler2D  " + this.PPSSamplers[s] + ";");
+            if (this.PPSSamplers) {
+                for (const s in this.PPSSamplers) {
+                    if (this.PPSSamplers.hasOwnProperty(s)) {
+                        if (this.PPSSamplers[s]) {
+                            this.Fragment.push("uniform  sampler2D  " + this.PPSSamplers[s] + ";");
+                        }
                     }
                 }
             }
-
             if (this.Setting.CameraShot) {
                 this.Fragment.push("uniform  sampler2D  textureSampler;");
             }
-
-
-
             if (this.Setting.Mouse) {
                 this.Fragment.push("uniform  vec2 " + ShaderMaterialHelperStatics.Mouse + ";");
             }
@@ -746,9 +686,8 @@ void main(void) { \n\
             if (this.Setting.GlobalTime) {
                 this.Fragment.push("uniform  vec4 " + ShaderMaterialHelperStatics.GlobalTime + ";");
             }
-
             if (this.Setting.Helpers) {
-                var sresult = Shader.Join([
+                const sresult = Shader.Join([
                     "vec3 random3(vec3 c) {   float j = 4096.0*sin(dot(c,vec3(17.0, 59.4, 15.0)));   vec3 r;   r.z = fract(512.0*j); j *= .125;  r.x = fract(512.0*j); j *= .125; r.y = fract(512.0*j);  return r-0.5;  } ",
                     "float rand(vec2 co){   return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453); } ",
                     "const float F3 =  0.3333333;const float G3 =  0.1666667;",
@@ -756,21 +695,16 @@ void main(void) { \n\
                     "float noise(vec3 m) {  return   0.5333333*simplex3d(m)   +0.2666667*simplex3d(2.0*m) +0.1333333*simplex3d(4.0*m) +0.0666667*simplex3d(8.0*m);   } ",
                     "vec2  rotate_xy(vec2 pr1,vec2  pr2,float alpha) {vec2 pp2 = vec2( pr2.x - pr1.x,   pr2.y - pr1.y );return  vec2( pr1.x + pp2.x * cos(alpha*3.14159265/180.) - pp2.y * sin(alpha*3.14159265/180.),pr1.y + pp2.x * sin(alpha*3.14159265/180.) + pp2.y * cos(alpha*3.14159265/180.));} \n vec3  r_y(vec3 n, float a,vec3 c) {vec3 c1 = vec3( c.x,  c.y,   c.z );c1.x = c1.x;c1.y = c1.z;vec2 p = rotate_xy(vec2(c1.x,c1.y), vec2( n.x,  n.z ), a);n.x = p.x;n.z = p.y;return n; } \n vec3  r_x(vec3 n, float a,vec3 c) {vec3 c1 = vec3( c.x,  c.y,   c.z );c1.x = c1.y;c1.y = c1.z;vec2 p = rotate_xy(vec2(c1.x,c1.y), vec2( n.y,  n.z ), a);n.y = p.x;n.z = p.y;return n; } \n vec3  r_z(vec3 n, float a,vec3 c) {  vec3 c1 = vec3( c.x,  c.y,   c.z );vec2 p = rotate_xy(vec2(c1.x,c1.y), vec2( n.x,  n.y ), a);n.x = p.x;n.y = p.y;return n; }",
                     "float getIdColor(vec4 a){    float b = 255.;float c = 255. / b;float x = floor(a.x*256. / c);float y = floor(a.y *256./ c);float z = floor(a.z*256. / c);return z * b * b + y * b + x;}"
-                    //"vec3 sundir(float da,float db,vec3 ps){ float h = floor(floor(" + ShaderMaterialHelperStatics.GlobalTime + ".y/100.)/100.);float m =     floor(" + ShaderMaterialHelperStatics.GlobalTime + ".y/100.) - h*100.;float s =      " + ShaderMaterialHelperStatics.GlobalTime + ".y  - h*10000. -m*100.;float si = s *100./60.;float mi = m*100./60.;float hi = h+mi/100.+si/10000.;float dm = 180./(db-da); vec3  gp = vec3(ps.x,ps.y,ps.z);gp = r_z(gp,  dm* hi -da*dm -90. ,vec3(0.));gp = r_x(gp,40. ,vec3(0.)); gp.x = gp.x*-1.; gp.z = gp.z*-1.; return gp; }",
-                ])
-
+                ]);
                 this.Fragment.push(sresult);
             }
-
-            if (this.Setting.NormalMap != null) {
+            if (this.Setting.NormalMap) {
                 this.Fragment.push("vec3 normalMap() { vec4 result = vec4(0.);   return result.xyz;} ");
             }
 
-            // start Build Fragment Frame  
-
+            // start Build Fragment Frame
             this.Fragment.push(this.FragmentBeforeMain);
-
-            this.Fragment.push(Shader.Def(this.Setting.DefinitionFragment,"") + "\n\
+            this.Fragment.push(" \n\
 void main(void) { \n\
      int discardState = 0;\n\
      vec2 vuv = vUV;\n\
@@ -779,151 +713,135 @@ void main(void) { \n\
      #[Source] \n\
      if(discardState == 0)gl_FragColor = result; \n\
 }");
-
         }
 
-
-        PrepareMaterial(material: any, scene: any) {
-
-            material.ShaderSetting =
-            this.Setting;
-
+        PrepareMaterial(material: any, scene: any): BABYLON.Material {
+            material.ShaderSetting = this.Setting;
 
             if (!this.Setting.Transparency) {
-                material.needAlphaBlending = function () { return false; };
+                material.needAlphaBlending = (() => false);
+            } else {
+                material.needAlphaBlending = (() => true);
             }
-            else {
-                material.needAlphaBlending = function () { return true; };
+
+            if (!this.Setting.Back) {
+                this.Setting.Back = false;
             }
-            
-            if (!this.Setting.Back) this.Setting.Back = false;
 
             if (this.Setting.DisableAlphaTesting) {
-                material.needAlphaTesting = function () { return false; };
-            }
-            else {
-                material.needAlphaTesting = function () { return true; };
+                material.needAlphaTesting = (() => false);
+            } else {
+                material.needAlphaTesting = (() => true);
             }
 
-         
             material.setVector3("camera", { x: 18., y: 18., z: 18. });
-
             material.backFaceCulling = !this.Setting.Back;
             material.wireframe = this.Setting.Wire;
 
-            material.setFlags = function (flags: string) {
+            material.setFlags = function(flags: string) {
                 if (this.ShaderSetting.Flags) {
-                    var s = 0.;
-                    for (var i = 0; i < 20; i++) {
-                        if (flags.length > i && flags[i] == '1')
+                    let s = 0.;
+                    for (let i = 0; i < 20; i++) {
+                        if (flags.length > i && flags[i] === "1") {
                             s += Math.pow(2., i);
+                        }
                     }
                     this.flagNumber = s;
                     this.setFloat(ShaderMaterialHelperStatics.uniformFlags, s);
                 }
-            }
+            };
             material.flagNumber = 0.;
-            material.flagUp = function (flag: number) {
+            material.flagUp = function(flag: number) {
                 if (this.ShaderSetting.Flags) {
-
-                    if (Math.floor((this.flagNumber / Math.pow(2., flag) % 2.)) != 1.)
+                    if (Math.floor((this.flagNumber / Math.pow(2., flag) % 2.)) !== 1.) {
                         this.flagNumber += Math.pow(2., flag);
+                    }
 
                     this.setFloat(ShaderMaterialHelperStatics.uniformFlags, this.flagNumber);
                 }
-            }
-
-            material.flagDown = function (flag: number) {
+            };
+            material.flagDown = function(flag: number) {
                 if (this.ShaderSetting.Flags) {
-
-                    if (Math.floor((this.flagNumber / Math.pow(2., flag) % 2.)) == 1.)
+                    if (Math.floor((this.flagNumber / Math.pow(2., flag) % 2.)) === 1.) {
                         this.flagNumber -= Math.pow(2., flag);
-
+                    }
                     this.setFloat(ShaderMaterialHelperStatics.uniformFlags, this.flagNumber);
                 }
-            }
-            material.onCompiled = function () {
-            }
+            };
+            material.onCompiled = () => {
+                //
+            };
 
-
-            if (this.Setting.Texture2Ds != null) {
-                for (var s in this.Setting.Texture2Ds) {
-
-                    // setTexture2D
-                    var texture = new ShaderMaterialHelper().DefineTexture(this.Setting.Texture2Ds[s].key, scene);
-
-                    material.setTexture(ShaderMaterialHelperStatics.Texture2D + s, texture);
-
+            if (this.Setting.Texture2Ds) {
+                for (const s in this.Setting.Texture2Ds) {
+                    if (this.Setting.Texture2Ds.hasOwnProperty(s)) {
+                        // setTexture2D
+                        const texture = new ShaderMaterialHelper().DefineTexture(this.Setting.Texture2Ds[s].key, scene);
+                        material.setTexture(ShaderMaterialHelperStatics.Texture2D + s, texture);
+                    }
                 }
             }
 
-
-            if (this.Setting.TextureCubes != null) {
-
-
-                for (var s in this.Setting.TextureCubes) {
-
-                    // setTexture2D
-                    var texture = new ShaderMaterialHelper().DefineCubeTexture(this.Setting.TextureCubes[s].key, scene);
-
-                    material.setTexture(ShaderMaterialHelperStatics.TextureCube + s, texture);
-                    material.setMatrix(ShaderMaterialHelperStatics.ReflectMatrix, texture.getReflectionTextureMatrix());
-
+            if (this.Setting.TextureCubes) {
+                for (const s in this.Setting.TextureCubes) {
+                    if (this.Setting.TextureCubes.hasOwnProperty(s)) {
+                        // setTexture2D
+                        const texture = new ShaderMaterialHelper().DefineCubeTexture(this.Setting.TextureCubes[s].key, scene);
+                        material.setTexture(ShaderMaterialHelperStatics.TextureCube + s, texture);
+                        material.setMatrix(ShaderMaterialHelperStatics.ReflectMatrix, texture.getReflectionTextureMatrix());
+                    }
                 }
             }
-            Shader.Me = null;
+
+            delete Shader.Me;
             return material;
         }
 
-        Build() {
-
-            Shader.Me.Parent.Setting = Shader.Me.Setting;
-            Shader.Me = Shader.Me.Parent;
-
+        Build(): string {
+            Shader.Me.Parent!.Setting = Shader.Me.Setting;
+            Shader.Me = Shader.Me.Parent!;
             return this.Body;
         }
 
-        BuildVertex() {
-
-            Shader.Me.Parent.Setting = Shader.Me.Setting;
-            Shader.Me = Shader.Me.Parent;
-
+        BuildVertex(): string {
+            Shader.Me.Parent!.Setting = Shader.Me.Setting;
+            Shader.Me = Shader.Me.Parent!;
             return this.VertexBody;
         }
 
-        SetUniform(name: string, type: string) {
-
+        SetUniform(name: string, type: string): ShaderBuilder {
             if (!Shader.Me.VertexUniforms) Shader.Me.VertexUniforms = "";
             if (!Shader.Me.FragmentUniforms) Shader.Me.FragmentUniforms = "";
-
-            this.VertexUniforms += 'uniform ' + type + ' ' + name + ';\n\
-            ';
-            this.FragmentUniforms += 'uniform ' + type + ' ' + name + ';\n\
-            ';
-
+            this.VertexUniforms += "uniform " + type + " " + name + ";\n\
+            ";
+            this.FragmentUniforms += "uniform " + type + " " + name + ";\n\
+            ";
             return this;
         }
 
-        BuildMaterial(scene) {
+        BuildMaterial(scene: BABYLON.Scene): BABYLON.Material {
             this.PrepareBeforeMaterialBuild();
 
-            if (Shader.ShaderIdentity == null) Shader.ShaderIdentity = 0;
+            if (Shader.ShaderIdentity == null/*or undefined*/) Shader.ShaderIdentity = 0;
             Shader.ShaderIdentity++;
-            var shaderMaterial = new ShaderMaterialHelper().ShaderMaterial("ShaderBuilder_" + Shader.ShaderIdentity, scene, {
-                Pixel: Shader.Join(this.Fragment)
-                    .replace("#[Source]", this.Body),
-                Vertex: Shader.Join(this.Vertex)
-                    .replace("#[Source]", Shader.Def(this.VertexBody, ""))
-                    .replace("#[AfterFinishVertex]", Shader.Def(this.AfterVertex, ""))
-            }, {
+
+            const shaderMaterial = new ShaderMaterialHelper().ShaderMaterial("ShaderBuilder_" + Shader.ShaderIdentity, scene,
+                {
+                    Pixel: Shader.Join(this.Fragment)
+                        .replace("#[Source]", this.Body),
+                    Vertex: Shader.Join(this.Vertex)
+                        .replace("#[Source]", Shader.Def(this.VertexBody, ""))
+                        .replace("#[AfterFinishVertex]", Shader.Def(this.AfterVertex, ""))
+                }, {
                     uniforms: this.Uniforms,
                     attributes: this.Attributes
                 });
             Shader.Indexer = 1;
+
             return this.PrepareMaterial(shaderMaterial, scene);
         }
 
-        BuildPostProcess(camera: any, scene: any, scale: number, option: IPostProcess) {
+        BuildPostProcess(camera: any, scene: any, scale: number, option: IPostProcess): BABYLON.PostProcess {
             this.Setting.Screen = true;
             this.Setting.Mouse = true;
             this.Setting.Time = true;
@@ -931,26 +849,28 @@ void main(void) { \n\
 
             this.PrepareBeforePostProcessBuild();
 
-            if (Shader.ShaderIdentity == null) Shader.ShaderIdentity = 0;
+            if (Shader.ShaderIdentity == null /*or undefined*/) Shader.ShaderIdentity = 0;
             Shader.ShaderIdentity++;
-            var samplers = [];
-            for (var s in this.Setting.Texture2Ds) {
-                samplers.push(ShaderMaterialHelperStatics.Texture2D + s);
+
+            const samplers = [];
+            if (this.Setting.Texture2Ds) {
+                for (const s in this.Setting.Texture2Ds) {
+                    if (this.Setting.Texture2Ds.hasOwnProperty(s)) {
+                        samplers.push(ShaderMaterialHelperStatics.Texture2D + s);
+                    }
+                }
             }
-
-
-            if (this.PPSSamplers != null) {
-                for (var s in this.PPSSamplers) {
-
-                    if (this.PPSSamplers[s]) {
-                        samplers.push(this.PPSSamplers[s]);
+            if (this.PPSSamplers) {
+                for (const s in this.PPSSamplers) {
+                    if (this.PPSSamplers.hasOwnProperty(s)) {
+                        if (this.PPSSamplers[s]) {
+                            samplers.push(this.PPSSamplers[s]);
+                        }
                     }
                 }
             }
 
-            var shaderPps = new ShaderMaterialHelper().ShaderPostProcess(
-                "ShaderBuilder_" + Shader.ShaderIdentity
-                , samplers, camera, scale,
+            const shaderPps = new ShaderMaterialHelper().ShaderPostProcess("ShaderBuilder_" + Shader.ShaderIdentity , samplers, camera, scale,
                 {
                     Pixel: Shader.Join(this.Fragment)
                         .replace("#[Source]", this.Body),
@@ -963,130 +883,112 @@ void main(void) { \n\
                 }, option);
 
             if (this.Setting.Texture2Ds != null) {
-                for (var s in this.Setting.Texture2Ds) {
-
-                    // setTexture2D
-                    var texture = new ShaderMaterialHelper().DefineTexture(this.Setting.Texture2Ds[s].key, scene);
-
-                    new ShaderMaterialHelper().PostProcessTextures(shaderPps, ShaderMaterialHelperStatics.Texture2D + s, texture);
-
+                for (const s in this.Setting.Texture2Ds) {
+                    if (this.Setting.Texture2Ds.hasOwnProperty(s)) {
+                        // setTexture2D
+                        const texture = new ShaderMaterialHelper().DefineTexture(this.Setting.Texture2Ds[s].key, scene);
+                        new ShaderMaterialHelper().PostProcessTextures(shaderPps, ShaderMaterialHelperStatics.Texture2D + s, texture);
+                    }
                 }
             }
+
             return shaderPps;
         }
 
-        Event(index: number, mat: string) {
-
+        Event(index: number, mat: string): ShaderBuilder {
             Shader.Me.Setting.Flags = true;
-
             Shader.Indexer++;
-
             this.Body = Shader.Def(this.Body, "");
             this.Body += "  if ( floor(mod( " + ShaderMaterialHelperStatics.uniformFlags + "/pow(2.," + Shader.Print(index) + "),2.)) == 1.) { " + mat + " } ";
-
             return this;
         }
 
-        EventVertex(index: number, mat: string) {
-
+        EventVertex(index: number, mat: string): ShaderBuilder {
             Shader.Me.Setting.Flags = true;
             Shader.Me.Setting.Vertex = true;
             Shader.Indexer++;
-
             this.VertexBody = Shader.Def(this.VertexBody, "");
             this.VertexBody += " if( floor(mod( " + ShaderMaterialHelperStatics.uniformFlags + "/pow(2.," + Shader.Print(index) + "),2.)) == 1. ){ " + mat + "}";
-
             return this;
         }
 
-        Transparency() {
+        Transparency(): ShaderBuilder {
             Shader.Me.Setting.Transparency = true;
             return this;
         }
-        
-        DisableAlphaTesting() {
+
+        DisableAlphaTesting(): ShaderBuilder {
             Shader.Me.Setting.DisableAlphaTesting = true;
             return this;
         }
-         
-        PostEffect1(id: number, effect: string) {
-            if (Shader.Me.PostEffect1Effects == null)
-                Shader.Me.PostEffect1Effects = [];
-            Shader.Me.PostEffect1[id] = effect;
+
+        PostEffect1(id: number, effect: string): ShaderBuilder {
+            if (!Shader.Me.PostEffect1Effects) Shader.Me.PostEffect1Effects = [];
+            Shader.Me.PostEffect1Effects[id] = effect;
             return this;
         }
 
-        PostEffect2(id: number, effect: string) {
-            if (Shader.Me.PostEffect2Effects == null)
-                Shader.Me.PostEffect2Effects = [];
-            Shader.Me.PostEffect2[id] = effect;
+        PostEffect2(id: number, effect: string): ShaderBuilder {
+            if (!Shader.Me.PostEffect2Effects) Shader.Me.PostEffect2Effects = [];
+            Shader.Me.PostEffect2Effects[id] = effect;
             return this;
         }
 
-        ImportSamplers(txts: string[]) {
-            if (Shader.Me.PPSSamplers == null)
-                Shader.Me.PPSSamplers = [];
-            for (var s in txts) {
-                Shader.Me.PPSSamplers.push(txts[s]);
+        ImportSamplers(txts: string[]): ShaderBuilder {
+            if (!Shader.Me.PPSSamplers) Shader.Me.PPSSamplers = [];
+            for (const s in txts) {
+                if (txts.hasOwnProperty(s)) {
+                    Shader.Me.PPSSamplers.push(txts[s]);
+                }
             }
             return this;
         }
 
-        Wired() {
+        Wired(): ShaderBuilder {
             Shader.Me.Setting.Wire = true;
             return this;
         }
 
-        VertexShader(mat) {
-
+        VertexShader(mat: any): ShaderBuilder {
             this.VertexBody = Shader.Def(this.VertexBody, "");
-
             this.VertexBody += mat;
-
             return this;
         }
 
-        Solid(color: IColor) {
+        Solid(color: IColor): ShaderBuilder {
             color = Shader.Def(color, { r: 0., g: 0., b: 0., a: 1. });
             color.a = Shader.Def(color.a, 1.);
             color.r = Shader.Def(color.r, 0.);
             color.g = Shader.Def(color.g, 0.);
             color.b = Shader.Def(color.b, 0.);
-
             this.Body = Shader.Def(this.Body, "");
             this.Body += " result = vec4(" + Shader.Print(color.r) + "," + Shader.Print(color.g) + "," + Shader.Print(color.b) + "," + Shader.Print(color.a) + ");";
-
             return this;
         }
 
         GetMapIndex(key: string): any {
-
-            if (Shader.Me.Setting.Texture2Ds != null) {
-                for (var it in Shader.Me.Setting.Texture2Ds) {
-                    if (this.Setting.Texture2Ds[it].key == key) {
+            if (Shader.Me.Setting.Texture2Ds) {
+                for (const it in Shader.Me.Setting.Texture2Ds) {
+                    if (Shader.Me.Setting.Texture2Ds[it].key === key) {
                         return it;
                     }
                 }
-            }
-            else
+            } else {
                 Shader.Me.Setting.Texture2Ds = [];
-
-
+            }
             return -1;
         }
 
         GetCubeMapIndex(key: string): any {
-
-            if (Shader.Me.Setting.TextureCubes != null) {
-                for (var it in Shader.Me.Setting.TextureCubes) {
-                    if (this.Setting.TextureCubes[it].key == key) {
+            if (Shader.Me.Setting.TextureCubes) {
+                for (const it in Shader.Me.Setting.TextureCubes) {
+                    if (Shader.Me.Setting.TextureCubes[it].key === key) {
                         return it;
                     }
                 }
-            }
-            else
+            } else {
                 Shader.Me.Setting.TextureCubes = [];
-
+            }
             return -1;
         }
 
@@ -1094,99 +996,95 @@ void main(void) { \n\
             return fun(Shader.Me);
         }
 
-        Nut(value: string, option: INut) {
+        Nut(value: string, option: INut): ShaderBuilder {
             Shader.Indexer++;
             option = Shader.Def(option, {});
-            option.frame = Shader.Def(option.frame, 'sin(time*0.4)');
+            option.frame = Shader.Def(option.frame, "sin(time*0.4)");
 
-
-            var sresult = Shader.Join([
+            let sresult = Shader.Join([
                 "float nut#[Ind]= " + Shader.Print(value) + ";",
                 "float nut_ts#[Ind] = " + Shader.Print(option.frame) + ";",
-                this.Func(function (me) {
-                    var f = [];
-                    for (var i = 0; i < option.bones.length; i++) {
-                        f.push('vec3 nut_p#[Ind]_' + i + ' = ' + option.bones[i].center + ';');
+                this.Func((me: any) => {
+                    const f = [];
+                    for (let i = 0; i < option.bones.length; i++) {
+                        f.push("vec3 nut_p#[Ind]_" + i + " = " + option.bones[i].center + ";");
                     }
                     return Shader.Join(f);
                 }),
-                this.Func(function (me) {
-                    var f = [];
-                    for (var i = 0; i < option.bones.length; i++) {
-                        f.push('if(nut#[Ind] ' + option.bones[i].bet + '){ ');
+                this.Func((me: any) => {
+                    const f = [];
+                    for (let i = 0; i < option.bones.length; i++) {
+                        f.push("if(nut#[Ind] " + option.bones[i].bet + "){ ");
 
-                        for (var j = 0; j < option.array.length; j++) {
-                            if (option.bones[i].rotation.x != null && option.bones[i].rotation.x != undefined) {
-                                f.push(option.array[j] + ' = r_x(' + option.array[j] +
-                                    ',nut_ts#[Ind]*' + Shader.Print(option.bones[i].rotation.x)
-                                    + ',nut_p#[Ind]_' + i + ');');
-                                for (var v = i + 1; v < option.bones.length; v++) {
-                                    f.push('nut_p#[Ind]_' + v + ' = r_x(nut_p#[Ind]_' + v +
-                                        ',nut_ts#[Ind]*' + Shader.Print(option.bones[i].rotation.x)
-                                        + ',nut_p#[Ind]_' + i + ');');
+                        for (let j = 0; j < option.array.length; j++) {
+                            if (option.bones[i].rotation.x !== null && option.bones[i].rotation.x !== undefined) {
+                                f.push(option.array[j] + " = r_x(" + option.array[j] +
+                                    ",nut_ts#[Ind]*" + Shader.Print(option.bones[i].rotation.x)
+                                    + ",nut_p#[Ind]_" + i + ");");
+                                for (let v = i + 1; v < option.bones.length; v++) {
+                                    f.push("nut_p#[Ind]_" + v + " = r_x(nut_p#[Ind]_" + v +
+                                        ",nut_ts#[Ind]*" + Shader.Print(option.bones[i].rotation.x)
+                                        + ",nut_p#[Ind]_" + i + ");");
                                 }
                             }
 
-                            if (option.bones[i].rotation.y != null && option.bones[i].rotation.y != undefined) {
-                                f.push(option.array[j] + ' = r_y(' + option.array[j] + ',nut_ts#[Ind]*' + Shader.Print(option.bones[i].rotation.y)
-                                    + ',nut_p#[Ind]_' + i + ');');
-                                for (var v = i + 1; v < option.bones.length; v++) {
-                                    f.push('nut_p#[Ind]_' + v + ' = r_y(nut_p#[Ind]_' + v + ',nut_ts#[Ind]*' + Shader.Print(option.bones[i].rotation.y)
-                                        + ',nut_p#[Ind]_' + i + ');');
+                            if (option.bones[i].rotation.y !== null && option.bones[i].rotation.y !== undefined) {
+                                f.push(option.array[j] + " = r_y(" + option.array[j] + ",nut_ts#[Ind]*" + Shader.Print(option.bones[i].rotation.y)
+                                    + ",nut_p#[Ind]_" + i + ");");
+                                for (let v = i + 1; v < option.bones.length; v++) {
+                                    f.push("nut_p#[Ind]_" + v + " = r_y(nut_p#[Ind]_" + v + ",nut_ts#[Ind]*" + Shader.Print(option.bones[i].rotation.y)
+                                        + ",nut_p#[Ind]_" + i + ");");
                                 }
                             }
 
-                            if (option.bones[i].rotation.z != null && option.bones[i].rotation.z != undefined) {
-                                f.push(option.array[j] + ' = r_z(' + option.array[j] + ',nut_ts#[Ind]*' + Shader.Print(option.bones[i].rotation.z)
-                                    + ',nut_p#[Ind]_' + i + ');');
-                                for (var v = i + 1; v < option.bones.length; v++) {
-                                    f.push('nut_p#[Ind]_' + v + ' = r_z(nut_p#[Ind]_' + v + ',nut_ts#[Ind]*' + Shader.Print(option.bones[i].rotation.z)
-                                        + ',nut_p#[Ind]_' + i + ');');
+                            if (option.bones[i].rotation.z !== null && option.bones[i].rotation.z !== undefined) {
+                                f.push(option.array[j] + " = r_z(" + option.array[j] + ",nut_ts#[Ind]*" + Shader.Print(option.bones[i].rotation.z)
+                                    + ",nut_p#[Ind]_" + i + ");");
+                                for (let v = i + 1; v < option.bones.length; v++) {
+                                    f.push("nut_p#[Ind]_" + v + " = r_z(nut_p#[Ind]_" + v + ",nut_ts#[Ind]*" + Shader.Print(option.bones[i].rotation.z)
+                                        + ",nut_p#[Ind]_" + i + ");");
                                 }
                             }
                         }
-                        f.push('}');
+                        f.push("}");
                     }
                     return Shader.Join(f);
                 })
             ]);
 
+            sresult = Shader.Replace(sresult, "#[Ind]", Shader.Indexer.toString()) + " result = vec4(pos,1.);";
+
             this.VertexBody = Shader.Def(this.VertexBody, "");
-            sresult = Shader.Replace(sresult, '#[Ind]', Shader.Indexer.toString()) + " result = vec4(pos,1.);";
             this.VertexBody += sresult;
 
             return this;
         }
 
-        Map(option: IMap) {
-
+        Map(option: IMap): ShaderBuilder {
             Shader.Indexer++;
+            option = Shader.Def(option, { path: "/images/color.png" });
 
-            option = Shader.Def(option, { path: '/images/color.png' });
-            var s = 0.;
-            var refInd = '';
-            if (option.index == null || option.index == undefined) {
+            let s = 0.;
+            let refInd = "";
+            if (option.index === null || option.index === undefined) {
                 s = Shader.Me.GetMapIndex(option.path);
-
-                if (s == -1) {
-                    Shader.Me.Setting.Texture2Ds.push({ key: option.path, inVertex: option.useInVertex, inFragment: true });
+                if (s === -1) {
+                    Shader.Me.Setting.Texture2Ds!.push({ key: option.path, inVertex: option.useInVertex, inFragment: true });
                 } else {
-                    Shader.Me.Setting.Texture2Ds[s].inVertex = option.useInVertex;
+                    Shader.Me.Setting.Texture2Ds![s].inVertex = option.useInVertex;
                 }
-
                 s = Shader.Me.GetMapIndex(option.path);
                 refInd = ShaderMaterialHelperStatics.Texture2D + s;
-            }
-            else if (option.index == "current") { // path denied
-                refInd = "textureSampler"; // used Only for postProcess
-            }
-            else {
 
-                var sn = Shader.Replace(option.index.toString(), '-', '0');
-                var reg = new RegExp('^\\d+$');
-                if (reg.test(sn) && option.index.toString().indexOf('.') == -1)
+            } else if (option.index === "current") { // path denied
+                refInd = "textureSampler"; // used Only for postProcess
+
+            } else {
+                const sn = Shader.Replace(option.index.toString(), "-", "0");
+                const reg = new RegExp("^\\d+$");
+                if (reg.test(sn) && option.index.toString().indexOf(".") === -1) {
                     refInd = ShaderMaterialHelperStatics.Texture2D + option.index;
-                else {
+                } else {
                     refInd = option.index;
                 }
             }
@@ -1216,42 +1114,38 @@ void main(void) { \n\
             option.animationFrameStart = Shader.Def(option.animationFrameStart, 0) + option.indexCount;
             option.indexCount = Shader.Def(option.indexCount, 1);
 
-            var frameLength = Math.min(option.animationFrameEnd - option.animationFrameStart, option.indexCount * option.indexCount);
+            const frameLength = Math.min(option.animationFrameEnd! - option.animationFrameStart!, option.indexCount! * option.indexCount!);
 
-            var uv = Shader.Def(option.uv, ShaderMaterialHelperStatics.Uv);
-
-            if (option.uv == "planar") {
+            let uv = Shader.Def(option.uv, ShaderMaterialHelperStatics.Uv);
+            if (option.uv === "planar") {
                 uv = ShaderMaterialHelperStatics.Position;
-            }
-            else {
-
-                uv = 'vec3(' + option.uv + '.x,' + option.uv + '.y,0.)';
+            } else {
+                uv = "vec3(" + option.uv + ".x," + option.uv + ".y,0.)";
             }
 
-            option.scaleX /= option.indexCount;
-            option.scaleY /= option.indexCount;
+            option.scaleX /= option.indexCount!;
+            option.scaleY /= option.indexCount!;
 
-
-            var rotate = ["vec3 centeri#[Ind] = " + ShaderMaterialHelperStatics.Center + ";",
-                "vec3 ppo#[Ind] = r_z( " + uv + "," + Shader.Print(option.rotation.x) + ",centeri#[Ind]);  ",
-                " ppo#[Ind] = r_y( ppo#[Ind]," + Shader.Print(option.rotation.y) + ",centeri#[Ind]);  ",
-                " ppo#[Ind] = r_x( ppo#[Ind]," + Shader.Print(option.rotation.x) + ",centeri#[Ind]); ",
-                "vec3 nrm#[Ind] = r_z( " + option.normal + "," + Shader.Print(option.rotation.x) + ",centeri#[Ind]);  ",
-                " nrm#[Ind] = r_y( nrm#[Ind]," + Shader.Print(option.rotation.y) + ",centeri#[Ind]);  ",
-                " nrm#[Ind] = r_x( nrm#[Ind]," + Shader.Print(option.rotation.z) + ",centeri#[Ind]);  "].join("\n\
+            const rotate = ["vec3 centeri#[Ind] = " + ShaderMaterialHelperStatics.Center + ";",
+                "vec3 ppo#[Ind] = r_z( " + uv + "," + Shader.Print(option.rotation!.x) + ",centeri#[Ind]);  ",
+                " ppo#[Ind] = r_y( ppo#[Ind]," + Shader.Print(option.rotation!.y) + ",centeri#[Ind]);  ",
+                " ppo#[Ind] = r_x( ppo#[Ind]," + Shader.Print(option.rotation!.x) + ",centeri#[Ind]); ",
+                "vec3 nrm#[Ind] = r_z( " + option.normal + "," + Shader.Print(option.rotation!.x) + ",centeri#[Ind]);  ",
+                " nrm#[Ind] = r_y( nrm#[Ind]," + Shader.Print(option.rotation!.y) + ",centeri#[Ind]);  ",
+                " nrm#[Ind] = r_x( nrm#[Ind]," + Shader.Print(option.rotation!.z) + ",centeri#[Ind]);  "].join("\n\
 ");
 
-            var sresult = Shader.Join([rotate,
+            let sresult = Shader.Join([rotate,
                 " vec4 color#[Ind] = texture2D(" +
                 refInd + " ,ppo#[Ind].xy*vec2(" +
                 Shader.Print(option.scaleX) + "," + Shader.Print(option.scaleY) + ")+vec2(" +
-                Shader.Print(option.x) + "," + Shader.Print(option.y) + ")" + (option.bias == null || Shader.Print(option.bias) == '0.' ? "" : "," + Shader.Print(option.bias)) + ");",
+                Shader.Print(option.x) + "," + Shader.Print(option.y) + ")" + (option.bias == null /*or undefined*/ || Shader.Print(option.bias) === "0." ? "" : "," + Shader.Print(option.bias)) + ");",
                 " if(nrm#[Ind].z < " + Shader.Print(option.normalLevel) + "){ ",
                 (option.alpha ? " result =  color#[Ind];" : "result = vec4(color#[Ind].rgb , 1.); "),
                 "}"]);
 
-            if (option.indexCount > 1 || option.tiled) {
-                option.columnIndex = option.indexCount - option.columnIndex + 1.0;
+            if (option.indexCount! > 1 || option.tiled) {
+                option.columnIndex = option.indexCount! - option.columnIndex! + 1.0;
                 sresult = [
                     " vec3 uvt#[Ind] = vec3(" + uv + ".x*" + Shader.Print(option.scaleX) + "+" + Shader.Print(option.x) + "," + uv + ".y*" + Shader.Print(option.scaleY) + "+" + Shader.Print(option.y) + ",0.0);     ",
                     "             ",
@@ -1260,7 +1154,7 @@ void main(void) { \n\
                     " float xs#[Ind] = 1./" + Shader.Print(option.indexCount) + ";                                                     ",
                     " float ys#[Ind] = 1./" + Shader.Print(option.indexCount) + ";                                                     ",
                     " float yid#[Ind] = " + Shader.Print(option.columnIndex - 1.0) + " ;                                                      ",
-                    " float xid#[Ind] =  " + Shader.Print(option.rowIndex - 1.0) + ";                                                      ",
+                    " float xid#[Ind] =  " + Shader.Print(option.rowIndex! - 1.0) + ";                                                      ",
                     option.animation ? " float ind_a#[Ind] = floor(mod(time*0.001*" + Shader.Print(option.animationSpeed) + ",   " + Shader.Print(frameLength) + " )+" + Shader.Print(option.animationFrameStart) + ");" +
                         " yid#[Ind] = " + Shader.Print(option.indexCount) + "- floor(ind_a#[Ind] /  " + Shader.Print(option.indexCount) + ");" +
                         " xid#[Ind] =  floor(mod(ind_a#[Ind] ,  " + Shader.Print(option.indexCount) + ")); "
@@ -1310,11 +1204,11 @@ void main(void) { \n\
                         (option.alpha ? "    result =  result *(1.0-ir2#[Ind]) +f4#[Ind]* ir2#[Ind]   ;" : "    result = vec4(result.xyz*(1.0-ir2#[Ind]) +f4#[Ind].xyz* ir2#[Ind]   ,1.0); "),
                         "}",
                         "     }  "
-                    ].join("\n") : "")].join("\n");
-
+                    ].join("\n") : "")
+                ].join("\n");
             }
 
-            sresult = Shader.Replace(sresult, '#[Ind]', "_" + Shader.Indexer + "_");
+            sresult = Shader.Replace(sresult, "#[Ind]", "_" + Shader.Indexer + "_");
 
             this.Body = Shader.Def(this.Body, "");
             this.Body += sresult;
@@ -1322,13 +1216,15 @@ void main(void) { \n\
             return this;
         }
 
-        Multi(mats: any[], combine: boolean) {
+        Multi(mats: any[], combine: boolean): ShaderBuilder {
             combine = Shader.Def(combine, true);
             Shader.Indexer++;
-            var pre = "", ps = ["", "", "", ""], psh = "0.0";
-            for (var i = 0; i < mats.length; i++) {
 
-                if (mats[i].result == undefined || mats[i].result == null) mats[i] = { result: mats[i], opacity: 1.0 };
+            let pre = "";
+            const ps = ["", "", "", ""];
+            let psh = "0.0";
+            for (let i = 0; i < mats.length; i++) {
+                if (mats[i].result === undefined || mats[i].result === null) mats[i] = { result: mats[i], opacity: 1.0 };
 
                 pre += " vec4 result#[Ind]" + i + ";result#[Ind]" + i + " = vec4(0.,0.,0.,0.); float rp#[Ind]" + i + " = " + Shader.Print(mats[i].opacity) + "; \n\
 ";
@@ -1337,11 +1233,10 @@ void main(void) { \n\
                 pre += " result#[Ind]" + i + " = result; \n\
 ";
 
-                ps[0] += (i == 0 ? "" : " + ") + "result#[Ind]" + i + ".x*rp#[Ind]" + i;
-                ps[1] += (i == 0 ? "" : " + ") + "result#[Ind]" + i + ".y*rp#[Ind]" + i;
-                ps[2] += (i == 0 ? "" : " + ") + "result#[Ind]" + i + ".z*rp#[Ind]" + i;
-                ps[3] += (i == 0 ? "" : " + ") + "result#[Ind]" + i + ".w*rp#[Ind]" + i;
-
+                ps[0] += (i === 0 ? "" : " + ") + "result#[Ind]" + i + ".x*rp#[Ind]" + i;
+                ps[1] += (i === 0 ? "" : " + ") + "result#[Ind]" + i + ".y*rp#[Ind]" + i;
+                ps[2] += (i === 0 ? "" : " + ") + "result#[Ind]" + i + ".z*rp#[Ind]" + i;
+                ps[3] += (i === 0 ? "" : " + ") + "result#[Ind]" + i + ".w*rp#[Ind]" + i;
 
                 psh += "+" + Shader.Print(mats[i].opacity);
             }
@@ -1361,41 +1256,37 @@ void main(void) { \n\
             return this;
         }
 
-        Back(mat: string) {
+        Back(mat: string): ShaderBuilder {
             Shader.Me.Setting.Back = true;
-            mat = Shader.Def(mat, '');
+            mat = Shader.Def(mat, "");
             this.Body = Shader.Def(this.Body, "");
-            this.Body += 'if(' + ShaderMaterialHelperStatics.face_back + '){' + mat + ';}';
-
+            this.Body += "if(" + ShaderMaterialHelperStatics.face_back + "){" + mat + ";}";
             return this;
         }
 
-        InLine(mat: string) {
-            mat = Shader.Def(mat, '');
+        InLine(mat: string): ShaderBuilder {
+            mat = Shader.Def(mat, "");
             this.Body = Shader.Def(this.Body, "");
             this.Body += mat;
             return this;
         }
 
-        Front(mat: string) {
-
-            mat = Shader.Def(mat, '');
+        Front(mat: string): ShaderBuilder {
+            mat = Shader.Def(mat, "");
             this.Body = Shader.Def(this.Body, "");
-            this.Body += 'if(' + ShaderMaterialHelperStatics.face_front + '){' + mat + ';}';
-
+            this.Body += "if(" + ShaderMaterialHelperStatics.face_front + "){" + mat + ";}";
             return this;
         }
 
-        Range(mat1: string, mat2: string, option: IRange) {
-
+        Range(mat1: string, mat2: string, option: IRange): ShaderBuilder {
             Shader.Indexer++;
-            var k = Shader.Indexer;
+            const k = Shader.Indexer;
 
             option.start = Shader.Def(option.start, 0.);
             option.end = Shader.Def(option.end, 1.);
-            option.direction = Shader.Def(option.direction, ShaderMaterialHelperStatics.Position + '.y');
+            option.direction = Shader.Def(option.direction, ShaderMaterialHelperStatics.Position + ".y");
 
-            var sresult = [
+            let sresult = [
                 "float s_r_dim#[Ind] = " + option.direction + ";",
                 "if(s_r_dim#[Ind] > " + Shader.Print(option.end) + "){",
                 mat2,
@@ -1412,68 +1303,68 @@ void main(void) { \n\
                 "   }",
                 "   else { result = mat1#[Ind]; }",
                 "}"
-            ].join('\n\
-');
-            sresult = Shader.Replace(sresult, '#[Ind]', "_" + Shader.Indexer + "_");
+            ].join("\n\
+");
+
+            sresult = Shader.Replace(sresult, "#[Ind]", "_" + Shader.Indexer + "_");
 
             this.Body = Shader.Def(this.Body, "");
             this.Body += sresult;
+
             return this;
         }
 
-        Reference(index: number, mat: any) {
-            if (Shader.Me.References == null) Shader.Me.References = "";
+        Reference(index: number, mat?: any): ShaderBuilder {
+            if (Shader.Me.References == null /*or undefined*/) Shader.Me.References = "";
 
-            var sresult = "vec4 resHelp#[Ind] = result;";
+            let sresult = "vec4 resHelp#[Ind] = result;";
 
-            if (Shader.Me.References.indexOf("," + index + ",") == -1) {
-                Shader.Me.References += "," + index + ",";
+            if (Shader.Me.References!.indexOf("," + index + ",") === -1) {
+                Shader.Me.References! += "," + index + ",";
                 sresult += " vec4 result_" + index + " = vec4(0.);\n\
                 ";
             }
-            if (mat == null) {
+            if (mat == null /*or undefined*/) {
                 sresult += "  result_" + index + " = result;";
-            }
-            else {
+            } else {
                 sresult += mat + "\n\
                  result_" + index + " = result;";
             }
 
             sresult += "result = resHelp#[Ind] ;";
-            sresult = Shader.Replace(sresult, '#[Ind]', "_" + Shader.Indexer + "_");
+            sresult = Shader.Replace(sresult, "#[Ind]", "_" + Shader.Indexer + "_");
 
             this.Body = Shader.Def(this.Body, "");
             this.Body += sresult;
-            return this;
 
+            return this;
         }
 
-        ReplaceColor(index: number, color: number, mat: string, option: IReplaceColor) {
-
+        ReplaceColor(index: number, color: number, mat: string, option: IReplaceColor): ShaderBuilder {
             Shader.Indexer++;
             option = Shader.Def(option, {});
-            var d = Shader.Def(option.rangeStep, -0.280);
-            var d2 = Shader.Def(option.rangePower, 0.0);
-            var d3 = Shader.Def(option.colorIndex, 0.0);
-            var d4 = Shader.Def(option.colorStep, 1.0);
-            var ilg = Shader.Def(option.indexToEnd, false);
 
+            const d = Shader.Def(option.rangeStep, -0.280);
+            const d2 = Shader.Def(option.rangePower, 0.0);
+            const d3 = Shader.Def(option.colorIndex, 0.0);
+            const d4 = Shader.Def(option.colorStep, 1.0);
+            const ilg = Shader.Def(option.indexToEnd, false);
 
-            var lg = " > 0.5 + " + Shader.Print(d) + " ";
-            var lw = " < 0.5 - " + Shader.Print(d) + " ";
-            var rr = "((result_" + index + ".x*" + Shader.Print(d4) + "-" + Shader.Print(d3) + ")>1.0 ? 0. : max(0.,(result_" + index + ".x*" + Shader.Print(d4) + "-" + Shader.Print(d3) + ")))";
-            var rg = "((result_" + index + ".y*" + Shader.Print(d4) + "-" + Shader.Print(d3) + ")>1.0 ? 0. : max(0.,(result_" + index + ".y*" + Shader.Print(d4) + "-" + Shader.Print(d3) + ")))";
-            var rb = "((result_" + index + ".z*" + Shader.Print(d4) + "-" + Shader.Print(d3) + ")>1.0 ? 0. : max(0.,(result_" + index + ".z*" + Shader.Print(d4) + "-" + Shader.Print(d3) + ")))";
+            const lg = " > 0.5 + " + Shader.Print(d) + " ";
+            const lw = " < 0.5 - " + Shader.Print(d) + " ";
+            let rr = "((result_" + index + ".x*" + Shader.Print(d4) + "-" + Shader.Print(d3) + ")>1.0 ? 0. : max(0.,(result_" + index + ".x*" + Shader.Print(d4) + "-" + Shader.Print(d3) + ")))";
+            let rg = "((result_" + index + ".y*" + Shader.Print(d4) + "-" + Shader.Print(d3) + ")>1.0 ? 0. : max(0.,(result_" + index + ".y*" + Shader.Print(d4) + "-" + Shader.Print(d3) + ")))";
+            let rb = "((result_" + index + ".z*" + Shader.Print(d4) + "-" + Shader.Print(d3) + ")>1.0 ? 0. : max(0.,(result_" + index + ".z*" + Shader.Print(d4) + "-" + Shader.Print(d3) + ")))";
             if (ilg) {
                 rr = "min(1.0, max(0.,(result_" + index + ".x*" + Shader.Print(d4) + "-" + Shader.Print(d3) + ")))";
                 rg = "min(1.0, max(0.,(result_" + index + ".y*" + Shader.Print(d4) + "-" + Shader.Print(d3) + ")))";
                 rb = "min(1.0, max(0.,(result_" + index + ".z*" + Shader.Print(d4) + "-" + Shader.Print(d3) + ")))";
             }
-            var a = " && ";
-            var p = " + ";
+            const a = " && ";
+            const p = " + ";
 
-            var r = "";
-            var cond = "";
+            let r = "";
+            let cond = "";
 
             switch (color) {
                 case Helper.White: cond = rr + lg + a + rg + lg + a + rb + lg; r = "(" + rr + p + rg + p + rb + ")/3.0"; break;
@@ -1486,52 +1377,50 @@ void main(void) { \n\
                 case Helper.Black: cond = rr + lw + a + rg + lw + a + rb + lw; r = "1.0-(" + rr + p + rg + p + rb + ")/3.0"; break;
             }
 
-            var sresult = " if( " + cond + " ) { vec4 oldrs#[Ind] = vec4(result);float al#[Ind] = max(0.0,min(1.0," + r + "+(" + Shader.Print(d2) + "))); float  l#[Ind] =  1.0-al#[Ind];  " + mat + " result = result*al#[Ind] +  oldrs#[Ind] * l#[Ind];    }";
-
-            sresult = Shader.Replace(sresult, '#[Ind]', "_" + Shader.Indexer + "_");
+            let sresult = " if( " + cond + " ) { vec4 oldrs#[Ind] = vec4(result);float al#[Ind] = max(0.0,min(1.0," + r + "+(" + Shader.Print(d2) + "))); float  l#[Ind] =  1.0-al#[Ind];  " + mat + " result = result*al#[Ind] +  oldrs#[Ind] * l#[Ind];    }";
+            sresult = Shader.Replace(sresult, "#[Ind]", "_" + Shader.Indexer + "_");
 
             this.Body = Shader.Def(this.Body, "");
             this.Body += sresult;
+
             return this;
         }
 
-        Blue(index: number, mat: string, option: IReplaceColor) {
+        Blue(index: number, mat: string, option: IReplaceColor): ShaderBuilder {
             return this.ReplaceColor(index, Helper.Blue, mat, option);
         }
-        Cyan(index: number, mat: string, option: IReplaceColor) {
+        Cyan(index: number, mat: string, option: IReplaceColor): ShaderBuilder {
             return this.ReplaceColor(index, Helper.Cyan, mat, option);
         }
-        Red(index: number, mat: string, option: IReplaceColor) {
+        Red(index: number, mat: string, option: IReplaceColor): ShaderBuilder {
             return this.ReplaceColor(index, Helper.Red, mat, option);
         }
-        Yellow(index: number, mat: string, option: IReplaceColor) {
+        Yellow(index: number, mat: string, option: IReplaceColor): ShaderBuilder {
             return this.ReplaceColor(index, Helper.Yellow, mat, option);
         }
-        Green(index: number, mat: string, option: IReplaceColor) {
+        Green(index: number, mat: string, option: IReplaceColor): ShaderBuilder {
             return this.ReplaceColor(index, Helper.Green, mat, option);
         }
-        Pink(index: number, mat: string, option: IReplaceColor) {
+        Pink(index: number, mat: string, option: IReplaceColor): ShaderBuilder {
             return this.ReplaceColor(index, Helper.Pink, mat, option);
         }
-        White(index: number, mat: string, option: IReplaceColor) {
+        White(index: number, mat: string, option: IReplaceColor): ShaderBuilder {
             return this.ReplaceColor(index, Helper.White, mat, option);
         }
-        Black(index: number, mat: string, option: IReplaceColor) {
+        Black(index: number, mat: string, option: IReplaceColor): ShaderBuilder {
             return this.ReplaceColor(index, Helper.Black, mat, option);
         }
 
-        ReflectCube(option: IReflectMap) {
-
+        ReflectCube(option: IReflectMap): ShaderBuilder {
             Shader.Indexer++;
-            option = Shader.Def(option, { path: '/images/cube/a' });
-            var s = Shader.Me.GetCubeMapIndex(option.path);
+            option = Shader.Def(option, { path: "/images/cube/a" });
 
-            if (s == -1) {
-                Shader.Me.Setting.TextureCubes.push({ key: option.path, inVertex: option.useInVertex, inFragment: true });
+            let s = Shader.Me.GetCubeMapIndex(option.path);
+            if (s === -1) {
+                Shader.Me.Setting.TextureCubes!.push({ key: option.path, inVertex: option.useInVertex, inFragment: true });
             } else {
-                Shader.Me.Setting.TextureCubes[s].inVertex = true;
+                Shader.Me.Setting.TextureCubes![s].inVertex = true;
             }
-
             s = Shader.Me.GetCubeMapIndex(option.path);
 
             option.normal = Shader.Def(option.normal, Normals.Map);
@@ -1546,93 +1435,88 @@ void main(void) { \n\
             option.y = Shader.Def(option.y, 0.0);
             option.uv = Shader.Def(option.uv, ShaderMaterialHelperStatics.Uv);
             option.reflectMap = Shader.Def(option.reflectMap, "1.");
+
             Shader.Me.Setting.Center = true;
             Shader.Me.Setting.Camera = true;
             Shader.Me.Setting.ReflectMatrix = true;
 
-            var sresult = "";
-
-
+            let sresult = "";
 
             if (option.equirectangular) {
+                option.path = Shader.Def(option.path, "/images/cube/roofl1.jpg");
 
-                option.path = Shader.Def(option.path, '/images/cube/roofl1.jpg');
-                var s = Shader.Me.GetMapIndex(option.path);
-
-                if (s == -1) {
-                    Shader.Me.Setting.Texture2Ds.push({ key: option.path, inVertex: option.useInVertex, inFragment: true });
+                s = Shader.Me.GetMapIndex(option.path);
+                if (s === -1) {
+                    Shader.Me.Setting.Texture2Ds!.push({ key: option.path, inVertex: option.useInVertex, inFragment: true });
                 } else {
-                    Shader.Me.Setting.Texture2Ds[s].inVertex = true;
+                    Shader.Me.Setting.Texture2Ds![s].inVertex = true;
                 }
-
                 s = Shader.Me.GetMapIndex(option.path);
                 Shader.Me.Setting.VertexWorld = true;
                 Shader.Me.Setting.FragmentWorld = true;
 
-                sresult = ' vec3 nWorld#[Ind] = normalize( mat3( world[0].xyz, world[1].xyz, world[2].xyz ) *  ' + option.normal + '); ' +
-                ' vec3 vReflect#[Ind] = normalize( reflect( normalize(  ' + ShaderMaterialHelperStatics.Camera + '- vec3(world * vec4(' + ShaderMaterialHelperStatics.Position + ', 1.0))),  nWorld#[Ind] ) ); ' +
-                'float yaw#[Ind] = .5 - atan( vReflect#[Ind].z, -1.* vReflect#[Ind].x ) / ( 2.0 * 3.14159265358979323846264);  ' +
-                ' float pitch#[Ind] = .5 - atan( vReflect#[Ind].y, length( vReflect#[Ind].xz ) ) / ( 3.14159265358979323846264);  ' +
-                ' vec3 color#[Ind] = texture2D( ' + ShaderMaterialHelperStatics.Texture2D + s + ', vec2( yaw#[Ind], pitch#[Ind])' + (option.bias == null || Shader.Print(option.bias) == '0.' ? "" : "," + Shader.Print(option.bias)) + ' ).rgb; result = vec4(color#[Ind] ,1.);';
-            }
-            else {
+                sresult = " vec3 nWorld#[Ind] = normalize( mat3( world[0].xyz, world[1].xyz, world[2].xyz ) *  " + option.normal + "); " +
+                " vec3 vReflect#[Ind] = normalize( reflect( normalize(  " + ShaderMaterialHelperStatics.Camera + "- vec3(world * vec4(" + ShaderMaterialHelperStatics.Position + ", 1.0))),  nWorld#[Ind] ) ); " +
+                "float yaw#[Ind] = .5 - atan( vReflect#[Ind].z, -1.* vReflect#[Ind].x ) / ( 2.0 * 3.14159265358979323846264);  " +
+                " float pitch#[Ind] = .5 - atan( vReflect#[Ind].y, length( vReflect#[Ind].xz ) ) / ( 3.14159265358979323846264);  " +
+                " vec3 color#[Ind] = texture2D( " + ShaderMaterialHelperStatics.Texture2D + s + ", vec2( yaw#[Ind], pitch#[Ind])" + (option.bias == null /*or undefined*/ || Shader.Print(option.bias) === "0." ? "" : "," + Shader.Print(option.bias)) + " ).rgb; result = vec4(color#[Ind] ,1.);";
+
+            } else {
                 option.path = Shader.Def(option.path, "/images/cube/a");
 
                 sresult = [
                     "vec3 viewDir#[Ind] =  " + ShaderMaterialHelperStatics.Position + " - " + ShaderMaterialHelperStatics.Camera + " ;",
-                    "  viewDir#[Ind] =r_x(viewDir#[Ind] ," + Shader.Print(option.rotation.x) + ",  " + ShaderMaterialHelperStatics.Center + ");",
-                    "  viewDir#[Ind] =r_y(viewDir#[Ind] ," + Shader.Print(option.rotation.y) + "," + ShaderMaterialHelperStatics.Center + ");",
-                    "  viewDir#[Ind] =r_z(viewDir#[Ind] ," + Shader.Print(option.rotation.z) + "," + ShaderMaterialHelperStatics.Center + ");",
+                    "  viewDir#[Ind] =r_x(viewDir#[Ind] ," + Shader.Print(option.rotation!.x) + ",  " + ShaderMaterialHelperStatics.Center + ");",
+                    "  viewDir#[Ind] =r_y(viewDir#[Ind] ," + Shader.Print(option.rotation!.y) + "," + ShaderMaterialHelperStatics.Center + ");",
+                    "  viewDir#[Ind] =r_z(viewDir#[Ind] ," + Shader.Print(option.rotation!.z) + "," + ShaderMaterialHelperStatics.Center + ");",
 
                     "vec3 coords#[Ind] = " + (option.refract ? "refract" : "reflect") + "(viewDir#[Ind]" + (option.revers ? "*vec3(1.0)" : "*vec3(-1.0)") + ", " + option.normal + " " + (option.refract ? ",(" + Shader.Print(option.refractMap) + ")" : "") + " )+" + ShaderMaterialHelperStatics.Position + "; ",
                     "vec3 vReflectionUVW#[Ind] = vec3( " + ShaderMaterialHelperStatics.ReflectMatrix + " *  vec4(coords#[Ind], 0)); ",
                     "vec3 rc#[Ind]= textureCube(" +
-                    ShaderMaterialHelperStatics.TextureCube + s + ", vReflectionUVW#[Ind] " + (option.bias == null || Shader.Print(option.bias) == '0.' ? "" : "," + Shader.Print(option.bias)) + ").rgb;",
+                    ShaderMaterialHelperStatics.TextureCube + s + ", vReflectionUVW#[Ind] " + (option.bias == null /*or undefined*/ || Shader.Print(option.bias) === "0." ? "" : "," + Shader.Print(option.bias)) + ").rgb;",
 
                     "result =result  + vec4(rc#[Ind].x ,rc#[Ind].y,rc#[Ind].z, " + (!option.alpha ? "1." : "(rc#[Ind].x+rc#[Ind].y+rc#[Ind].z)/3.0 ") + ")*(min(1.,max(0.," + Shader.Print(option.reflectMap) + ")));  "
-                ].join('\n\
-            ');
+                ].join("\n\
+            ");
             }
 
-            sresult = Shader.Replace(sresult, '#[Ind]', "_" + Shader.Indexer + "_");
+            sresult = Shader.Replace(sresult, "#[Ind]", "_" + Shader.Indexer + "_");
 
             this.Body = Shader.Def(this.Body, "");
             this.Body += sresult;
+
             return this;
         }
 
-        NormalMap(val: string, mat: string) {
+        NormalMap(val: string, mat: string): ShaderBuilder {
             Shader.Me.Setting.NormalOpacity = val;
             Shader.Me.Setting.NormalMap = mat;
             return this;
         }
 
-        SpecularMap(mat: string) {
+        SpecularMap(mat: string): ShaderBuilder {
             Shader.Me.Setting.SpecularMap = mat;
             return this;
         }
 
-        Instance() {
-            var setting = Shader.Me.Setting;
-            var instance = new ShaderBuilder();
+        Instance(): ShaderBuilder {
+            const setting = Shader.Me.Setting;
+            const instance = new ShaderBuilder();
             instance.Parent = Shader.Me;
             instance.Setting = setting;
-
             return instance;
         }
 
-        Reflect(option: IReflectMap, opacity: number) {
+        Reflect(option: IReflectMap, opacity: number): ShaderBuilder {
             opacity = Shader.Def(opacity, 1.);
-
-            return this.Multi(["result = result;", { result: this.Instance().ReflectCube(option).Build(), opacity: opacity }], true);
+            return this.Multi(["result = result;", { result: this.Instance().ReflectCube(option).Build(), opacity }], true);
         }
 
-        Light(option: ILight) {
+        Light(option: ILight): ShaderBuilder {
             option = Shader.Def(option, {});
             option.color = Shader.Def(option.color, { r: 1., g: 1., b: 1., a: 1. });
             option.darkColorMode = Shader.Def(option.darkColorMode, false);
             option.direction = Shader.Def(option.direction, "vec3(sin(time*0.02)*28.,sin(time*0.02)*8.+10.,cos(time*0.02)*28.)");
-
             option.normal = Shader.Def(option.normal, Normals.Map);
             option.rotation = Shader.Def(option.rotation, { x: 0., y: 0., z: 0. });
             option.specular = Shader.Def(option.specular, Speculars.Map);
@@ -1641,15 +1525,12 @@ void main(void) { \n\
             option.phonge = Shader.Def(option.phonge, 0.);
             option.phongePower = Shader.Def(option.phongePower, 1.);
             option.phongeLevel = Shader.Def(option.phongeLevel, 1.);
-
             option.supplement = Shader.Def(option.supplement, false);
+            option.reducer = Shader.Def(option.reducer, "1.");
 
-            option.reducer = Shader.Def(option.reducer, '1.');
-
-            var c_c = option.color;
+            const c_c = option.color!;
             if (option.darkColorMode) {
                 c_c.a = 1.0 - c_c.a;
-
                 c_c.r = 1.0 - c_c.r;
                 c_c.g = 1.0 - c_c.g;
                 c_c.b = 1.0 - c_c.b;
@@ -1664,116 +1545,81 @@ void main(void) { \n\
             Shader.Me.Setting.Helpers = true;
             Shader.Me.Setting.Center = true;
 
-            var sresult = Shader.Join([
+            let sresult = Shader.Join([
                 "  vec3 dir#[Ind] = normalize(  vec3(world * vec4(" + ShaderMaterialHelperStatics.Position + ",1.)) - " + ShaderMaterialHelperStatics.Camera + ");",
 
-                "  dir#[Ind] =r_x(dir#[Ind] ," + Shader.Print(option.rotation.x) + ",vec3(" + ShaderMaterialHelperStatics.Center + "));",
-                "  dir#[Ind] =r_y(dir#[Ind] ," + Shader.Print(option.rotation.y) + ",vec3(" + ShaderMaterialHelperStatics.Center + "));",
-                "  dir#[Ind] =r_z(dir#[Ind] ," + Shader.Print(option.rotation.z) + ",vec3(" + ShaderMaterialHelperStatics.Center + "));",
+                "  dir#[Ind] =r_x(dir#[Ind] ," + Shader.Print(option.rotation!.x) + ",vec3(" + ShaderMaterialHelperStatics.Center + "));",
+                "  dir#[Ind] =r_y(dir#[Ind] ," + Shader.Print(option.rotation!.y) + ",vec3(" + ShaderMaterialHelperStatics.Center + "));",
+                "  dir#[Ind] =r_z(dir#[Ind] ," + Shader.Print(option.rotation!.z) + ",vec3(" + ShaderMaterialHelperStatics.Center + "));",
 
                 "  vec4 p1#[Ind] = vec4(" + option.direction + ",.0);                                ",
                 "  vec4 c1#[Ind] = vec4(" + Shader.Print(c_c.r) + "," + Shader.Print(c_c.g) + "," + Shader.Print(c_c.b) + ",0.0); ",
 
                 "  vec3 vnrm#[Ind] = normalize(vec3(world * vec4(" + option.normal + ", 0.0)));          ",
                 "  vec3 l#[Ind]= normalize(p1#[Ind].xyz " +
-                (!option.parallel ? "- vec3(world * vec4(" + ShaderMaterialHelperStatics.Position + ",1.))  " : "")
-                + ");   ",
+                    (!option.parallel ? "- vec3(world * vec4(" + ShaderMaterialHelperStatics.Position + ",1.))  " : "")
+                    + ");   ",
                 "  vec3 vw#[Ind]= normalize(camera -  vec3(world * vec4(" + ShaderMaterialHelperStatics.Position + ",1.)));  ",
                 "  vec3 aw#[Ind]= normalize(vw#[Ind]+ l#[Ind]);  ",
                 "  float sc#[Ind]= max(0.,min(1., dot(vnrm#[Ind], aw#[Ind])));   ",
-                "  sc#[Ind]= pow(sc#[Ind]*min(1.,max(0.," + Shader.Print(option.specular) + ")), (" + Shader.Print(option.specularPower * 1000.) + "))/" + Shader.Print(option.specularLevel) + " ;  ",
+                "  sc#[Ind]= pow(sc#[Ind]*min(1.,max(0.," + Shader.Print(option.specular) + ")), (" + Shader.Print(option.specularPower! * 1000.) + "))/" + Shader.Print(option.specularLevel) + " ;  ",
 
                 " float  ph#[Ind]= pow(" + Shader.Print(option.phonge) + "*2., (" + Shader.Print(option.phongePower) + "*0.3333))/(" + Shader.Print(option.phongeLevel) + "*3.) ;  ",
                 "  float ndl#[Ind] = max(0., dot(vnrm#[Ind], l#[Ind]));                            ",
                 "  float ls#[Ind] = " + (option.supplement ? "1.0 -" : "") + "max(0.,min(1.,ndl#[Ind]*ph#[Ind]*(" + Shader.Print(option.reducer) + "))) ;         ",
                 "  result  += vec4( c1#[Ind].xyz*( ls#[Ind])*" + Shader.Print(c_c.a) + " ,  ls#[Ind]); ",
                 "  float ls2#[Ind] = " + (option.supplement ? "0.*" : "1.*") + "max(0.,min(1., sc#[Ind]*(" + Shader.Print(option.reducer) + "))) ;         ",
-                "  result  += vec4( c1#[Ind].xyz*( ls2#[Ind])*" + Shader.Print(c_c.a) + " ,  ls2#[Ind]); ",
-
-
+                "  result  += vec4( c1#[Ind].xyz*( ls2#[Ind])*" + Shader.Print(c_c.a) + " ,  ls2#[Ind]); "
             ]);
 
-            sresult = Shader.Replace(sresult, '#[Ind]', "_" + Shader.Indexer + "_");
+            sresult = Shader.Replace(sresult, "#[Ind]", "_" + Shader.Indexer + "_");
 
             this.Body = Shader.Def(this.Body, "");
             this.Body += sresult;
+
             return this;
         }
 
-        Effect(option: IEffect) {
-            var op = Shader.Def(option, {});
+        Effect(option: IEffect): ShaderBuilder {
+            const op = Shader.Def(option, {});
             Shader.Indexer++;
-            var sresult = [
-                'vec4 res#[Ind] = vec4(0.);',
 
-                'res#[Ind].x = ' + (op.px ? Shader.Replace(Shader.Replace(Shader.Replace(Shader.Replace(op.px, 'px', 'result.x'), 'py', 'result.y'), 'pz', 'result.z'), 'pw', 'result.w') + ';' : ' result.x;'),
-                'res#[Ind].y = ' + (op.py ? Shader.Replace(Shader.Replace(Shader.Replace(Shader.Replace(op.py, 'px', 'result.x'), 'py', 'result.y'), 'pz', 'result.z'), 'pw', 'result.w') + ';' : ' result.y;'),
-                'res#[Ind].z = ' + (op.pz ? Shader.Replace(Shader.Replace(Shader.Replace(Shader.Replace(op.pz, 'px', 'result.x'), 'py', 'result.y'), 'pz', 'result.z'), 'pw', 'result.w') + ';' : ' result.z;'),
-                'res#[Ind].w = ' + (op.pw ? Shader.Replace(Shader.Replace(Shader.Replace(Shader.Replace(op.pw, 'px', 'result.x'), 'py', 'result.y'), 'pz', 'result.z'), 'pw', 'result.w') + ';' : ' result.w;'),
-                'res#[Ind]  = ' + (op.pr ? ' vec4(' + Shader.Replace(Shader.Replace(Shader.Replace(Shader.Replace(Shader.Replace(op.pr, 'pr', 'res#[Ind].x'), 'px', 'result.x'), 'py', 'result.y'), 'pz', 'result.z'), 'pw', 'result.w') + ','
+            let sresult = [
+                "vec4 res#[Ind] = vec4(0.);",
 
-                    + Shader.Replace(Shader.Replace(Shader.Replace(Shader.Replace(Shader.Replace(op.pr, 'pr', 'res#[Ind].y'), 'px', 'result.x'), 'py', 'result.y'), 'pz', 'result.z'), 'pw', 'result.w') + ',' +
-                    Shader.Replace(Shader.Replace(Shader.Replace(Shader.Replace(Shader.Replace(op.pr, 'pr', 'res#[Ind].z'), 'px', 'result.x'), 'py', 'result.y'), 'pz', 'result.z'), 'pw', 'result.w')
-                    + ',' +
-                    Shader.Replace(Shader.Replace(Shader.Replace(Shader.Replace(Shader.Replace(op.pr, 'pr', 'res#[Ind].w'), 'px', 'result.x'), 'py', 'result.y'), 'pz', 'result.z'), 'pw', 'result.w')
-                    + ');' : ' res#[Ind]*1.0;'),
-
-                'result = res#[Ind] ;'
-            ].join('\n\
-');
-            sresult = Shader.Replace(sresult, '#[Ind]', "_" + Shader.Indexer + "_");
+                "res#[Ind].x = " + (op.px ? Shader.Replace(Shader.Replace(Shader.Replace(Shader.Replace(op.px, "px", "result.x"), "py", "result.y"), "pz", "result.z"), "pw", "result.w") + ";" : " result.x;"),
+                "res#[Ind].y = " + (op.py ? Shader.Replace(Shader.Replace(Shader.Replace(Shader.Replace(op.py, "px", "result.x"), "py", "result.y"), "pz", "result.z"), "pw", "result.w") + ";" : " result.y;"),
+                "res#[Ind].z = " + (op.pz ? Shader.Replace(Shader.Replace(Shader.Replace(Shader.Replace(op.pz, "px", "result.x"), "py", "result.y"), "pz", "result.z"), "pw", "result.w") + ";" : " result.z;"),
+                "res#[Ind].w = " + (op.pw ? Shader.Replace(Shader.Replace(Shader.Replace(Shader.Replace(op.pw, "px", "result.x"), "py", "result.y"), "pz", "result.z"), "pw", "result.w") + ";" : " result.w;"),
+                "res#[Ind]  = " + (op.pr ? " vec4(" + Shader.Replace(Shader.Replace(Shader.Replace(Shader.Replace(Shader.Replace(op.pr, "pr", "res#[Ind].x"), "px", "result.x"), "py", "result.y"), "pz", "result.z"), "pw", "result.w") + ","
+                    + Shader.Replace(Shader.Replace(Shader.Replace(Shader.Replace(Shader.Replace(op.pr, "pr", "res#[Ind].y"), "px", "result.x"), "py", "result.y"), "pz", "result.z"), "pw", "result.w") + "," +
+                    Shader.Replace(Shader.Replace(Shader.Replace(Shader.Replace(Shader.Replace(op.pr, "pr", "res#[Ind].z"), "px", "result.x"), "py", "result.y"), "pz", "result.z"), "pw", "result.w")
+                    + "," +
+                    Shader.Replace(Shader.Replace(Shader.Replace(Shader.Replace(Shader.Replace(op.pr, "pr", "res#[Ind].w"), "px", "result.x"), "py", "result.y"), "pz", "result.z"), "pw", "result.w")
+                    + ");" : " res#[Ind]*1.0;"),
+                "result = res#[Ind] ;"
+            ].join("\n\
+");
+            sresult = Shader.Replace(sresult, "#[Ind]", "_" + Shader.Indexer + "_");
 
             this.Body = Shader.Def(this.Body, "");
             this.Body += sresult;
-            return this;
 
+            return this;
         }
 
-        IdColor(id: number, w: number) {
-            var kg = { r: 0.0, g: 0.0, b: .0 };
+        IdColor(id: number, w: number): ShaderBuilder {
+            let kg = { r: 0.0, g: 0.0, b: .0 };
             kg = Shader.torgb(id.valueOf() * 1.0, 255);
-
             this.Body = Shader.Def(this.Body, "");
-            this.Body += 'result = vec4(' + Shader.Print(kg.r) + ',' + Shader.Print(kg.g) + ',' + Shader.Print(Math.max(kg.b, 0.0)) + ',' + Shader.Print(w) + ');';
+            this.Body += "result = vec4(" + Shader.Print(kg.r) + "," + Shader.Print(kg.g) + "," + Shader.Print(Math.max(kg.b, 0.0)) + "," + Shader.Print(w) + ");";
             return this;
         }
 
-        Discard() {
-
+        Discard(): ShaderBuilder {
             this.Body = Shader.Def(this.Body, "");
-            this.Body += 'discard;';
+            this.Body += "discard;";
             return this;
         }
-
-        constructor() {
-            this.Setting = new ShaderSetting();
-            this.Extentions = [];
-            this.Attributes = [];
-            this.Fragment = [];
-            this.Helpers = [];
-            this.Uniforms = [];
-            this.Varings = [];
-            this.Vertex = [];
-
-            this.Setting.DefinitionVertex = "";
-            this.Setting.DefinitionFragment = "";
-            
-           
-            this.Setting.Uv = true;
-            this.Setting.Time = true;
-            this.Setting.Camera = true;
-            this.Setting.Helpers = true;
-
-            this.Setting.NormalMap = "result = vec4(0.5);";
-            this.Setting.SpecularMap = "float_result = 1.0;";
-            this.Setting.NormalOpacity = "0.5";
-            this.Setting.Normal = ShaderMaterialHelperStatics.Normal;
-
-            if (Shader.Indexer == null) Shader.Indexer = 1;
-            this.CustomIndexer = 1;
-            Shader.Me = this;
-        }
-
     }
 }
-
