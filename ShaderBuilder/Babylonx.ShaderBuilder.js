@@ -680,7 +680,7 @@ void main(void) { \n\
         ShaderBuilder.prototype.GetMapIndex = function (key) {
             if (Shader.Me.Setting.Texture2Ds != null) {
                 for (var it in Shader.Me.Setting.Texture2Ds) {
-                    if (this.Setting.Texture2Ds[it].key == key) {
+                    if (Shader.Me.Setting.Texture2Ds[it].key == key) {
                         return it;
                     }
                 }
@@ -692,7 +692,7 @@ void main(void) { \n\
         ShaderBuilder.prototype.GetCubeMapIndex = function (key) {
             if (Shader.Me.Setting.TextureCubes != null) {
                 for (var it in Shader.Me.Setting.TextureCubes) {
-                    if (this.Setting.TextureCubes[it].key == key) {
+                    if (Shader.Me.Setting.TextureCubes[it].key == key) {
                         return it;
                     }
                 }
