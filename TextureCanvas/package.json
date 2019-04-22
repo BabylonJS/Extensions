@@ -1,0 +1,28 @@
+{
+  "name": "babylontexturecanvas",
+  "version": "1.0.0",
+  "description": "A Babylon.js texture on which other textures can be drawn",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Poolminer/BabylonTextureCanvas.git"
+  },
+  "keywords": [
+    "texturecanvas",
+    "texture",
+    "canvas"
+  ],
+  "author": "Gijs",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/Poolminer/BabylonTextureCanvas/issues"
+  },
+  "homepage": "https://github.com/Poolminer/BabylonTextureCanvas#readme",
+  "devDependencies": {
+    "@babylonjs/core": "^4.0.0-alpha.18"
+  },
+  "dependencies": {}
+}

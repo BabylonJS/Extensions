@@ -1,0 +1,18 @@
+// Place your settings in this file to overwrite default and user settings.
+{
+    "files.exclude": {
+        "**/.git": true,
+        "**/.DS_Store": true,
+        "**/*.js.map": true,
+        "**/*.js": {
+            "when": "$(basename).ts"
+        },
+        "node_modules": true
+    },
+    "workbench.editor.showIcons": true,
+    "editor.formatOnSave": true,
+    "editor.minimap.enabled": false,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": true
+    }
+}
