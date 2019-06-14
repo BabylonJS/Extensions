@@ -1,0 +1,15 @@
+{
+  "name": "recast.js",
+  "version": "0.0.1",
+  "description": "Direct port of the Recast/Detour engine to JavaScript using Emscripten",
+  "main": "builds/recast.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BabylonJS/Extensions/recastjs"
+  },
+  "author": "Cedric Guillemet <cedric.guillemet@microsoft.com>",
+  "bugs": {
+    "url": "https://github.com/BabylonJS"
+  },
+  "homepage": "https://github.com/BabylonJS"
+}

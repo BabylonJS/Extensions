@@ -1,0 +1,3 @@
+[submodule "recastjs/recastnavigation"]
+	path = recastjs/recastnavigation
+	url = D:/ceguille/BabylonJS/recastnavigation
