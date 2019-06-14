@@ -92,11 +92,11 @@ class Crowd
 public:	
 	Crowd(const int maxAgents, const float maxAgentRadius, dtNavMesh* nav);
 	void destroy();
-	//const dtCrowdAgent* getAgent(const int idx);
 	int addAgent(const Vec3& pos, const dtCrowdAgentParams* params);
 	void removeAgent(const int idx);
 	void update(const float dt);
 	Vec3 getAgentPosition(int idx);
+    Vec3 getAgentVelocity(int idx);
 	void agentGoto(int idx, const Vec3& destination);
 protected:
 	dtCrowd *m_crowd;

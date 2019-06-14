@@ -56,65 +56,24 @@ void NavMesh::build(const float* positions, const int positionCount, const int* 
 
     bool m_keepInterResults = false;
 
-	// Init build configuration from GUI
-    rcConfig m_cfg = config;
 
-	float m_cellSize;
-	float m_cellHeight;
-	float m_agentHeight;
-	float m_agentRadius;
-	float m_agentMaxClimb;
-	float m_agentMaxSlope;
-	float m_regionMinSize;
-	float m_regionMergeSize;
-	bool m_monotonePartitioning;
-	float m_edgeMaxLen;
-	float m_edgeMaxError;
-	float m_vertsPerPoly;
-	float m_detailSampleDist;
-	float m_detailSampleMaxError;
-
-	m_agentHeight = 0.5f;
-	m_agentRadius = 0.5f;
-	m_agentMaxClimb = 0.3f;
-
-
-	m_cellSize = 0.1f;
-	m_cellHeight = 0.1f;
-	m_agentHeight = 0.5f;
-	m_agentRadius = m_agentRadius;
-	m_agentMaxClimb = 0.3f;
-	m_agentMaxSlope = 90.0f;
-	m_regionMinSize = 8;
-	m_regionMergeSize = 20;
-	m_monotonePartitioning = false;
-	m_edgeMaxLen = 12.0f;
-	m_edgeMaxError = 1.3f;
-	m_vertsPerPoly = 6.0f;
-	m_detailSampleDist = 6.0f;
-	m_detailSampleMaxError = 1.0f;
-
-
-	memset(&m_cfg, 0, sizeof(m_cfg));
-	m_cfg.cs = m_cellSize;
-	m_cfg.ch = m_cellHeight;
-	m_cfg.walkableSlopeAngle = m_agentMaxSlope;
-	m_cfg.walkableHeight = (int)ceilf(m_agentHeight / m_cfg.ch);
-	m_cfg.walkableClimb = (int)floorf(m_agentMaxClimb / m_cfg.ch);
-	m_cfg.walkableRadius = (int)ceilf(m_agentRadius / m_cfg.cs);
-	m_cfg.maxEdgeLen = (int)(m_edgeMaxLen / m_cellSize);
-	m_cfg.maxSimplificationError = m_edgeMaxError;
-	m_cfg.minRegionArea = (int)rcSqr(m_regionMinSize);		// Note: area = size*size
-	m_cfg.mergeRegionArea = (int)rcSqr(m_regionMergeSize);	// Note: area = size*size
-	m_cfg.maxVertsPerPoly = (int)m_vertsPerPoly;
-	m_cfg.detailSampleDist = m_detailSampleDist < 0.9f ? 0 : m_cellSize * m_detailSampleDist;
-	m_cfg.detailSampleMaxError = m_cellHeight * m_detailSampleMaxError;
-	
 	// Set the area where the navigation will be build.
 	// Here the bounds of the input mesh are used, but the
 	// area could be specified by an user defined box, etc.
 	//float bmin[3] = {-20.f, 0.f, -20.f};
 	//float bmax[3] = { 20.f, 1.f,  20.f};
+	rcConfig m_cfg = config;
+	m_cfg.walkableHeight = (int)ceilf(config.walkableHeight / m_cfg.ch);
+	m_cfg.walkableClimb = (int)floorf(config.walkableClimb / m_cfg.ch);
+	m_cfg.walkableRadius = (int)ceilf(config.walkableRadius / m_cfg.cs);
+	m_cfg.maxEdgeLen = (int)(config.maxEdgeLen / config.cs);
+	m_cfg.maxSimplificationError = config.maxSimplificationError;
+	m_cfg.minRegionArea = (int)rcSqr(config.minRegionArea);		// Note: area = size*size
+	m_cfg.mergeRegionArea = (int)rcSqr(config.mergeRegionArea);	// Note: area = size*size
+	m_cfg.maxVertsPerPoly = (int)config.maxVertsPerPoly;
+	m_cfg.detailSampleDist = config.detailSampleDist < 0.9f ? 0 : config.cs * config.detailSampleDist;
+	m_cfg.detailSampleMaxError = config.ch * config.detailSampleMaxError;
+
 	rcVcopy(m_cfg.bmin, &bbMin.x);
 	rcVcopy(m_cfg.bmax, &bbMax.x);
     
@@ -124,16 +83,6 @@ void NavMesh::build(const float* positions, const int positionCount, const int* 
 	rcContext ctx;
 	rcContext* m_ctx = &ctx;
 
-	// Reset build times gathering.
-	//m_ctx->resetTimers();
-
-	// Start the build process.	
-	//m_ctx->startTimer(RC_TIMER_TOTAL);
-	
-	//m_ctx->log(RC_LOG_PROGRESS, "Building navigation:");
-	//m_ctx->log(RC_LOG_PROGRESS, " - %d x %d cells", m_cfg.width, m_cfg.height);
-	//m_ctx->log(RC_LOG_PROGRESS, " - %.1fK verts, %.1fK tris", nverts/1000.0f, ntris/1000.0f);
-	
 	//
 	// Step 2. Rasterize input polygon soup.
 	//
@@ -286,8 +235,7 @@ void NavMesh::build(const float* positions, const int positionCount, const int* 
 	//
 	// Step 6. Build polygons mesh from contours.
 	//
-	
-	// Build polygon navmesh from the contours.
+
 	rcPolyMesh* m_pmesh;
 	m_pmesh = rcAllocPolyMesh();
 	if (!m_pmesh)
@@ -314,7 +262,7 @@ void NavMesh::build(const float* positions, const int positionCount, const int* 
 
 	if (!rcBuildPolyMeshDetail(m_ctx, *m_pmesh, *m_chf, m_cfg.detailSampleDist, m_cfg.detailSampleMaxError, *m_dmesh))
 	{
-		//m_ctx->log(RC_LOG_ERROR, "buildNavigation: Could not build detail mesh.");
+		Log("buildNavigation: Could not build detail mesh.");
 		return ;
 	}
 
@@ -331,7 +279,6 @@ void NavMesh::build(const float* positions, const int positionCount, const int* 
 	// (Optional) Step 8. Create Detour data from Recast poly mesh.
 	//
 	
-	// The GUI may allow more max points per polygon than Detour can handle.
 	// Only build the detour navmesh if we do not exceed the limit.
 	if (m_cfg.maxVertsPerPoly <= DT_VERTS_PER_POLYGON)
 	{
@@ -385,9 +332,9 @@ void NavMesh::build(const float* positions, const int positionCount, const int* 
 		params.offMeshConFlags = 0;//m_geom->getOffMeshConnectionFlags();
 		params.offMeshConUserID = 0;//m_geom->getOffMeshConnectionId();
 		params.offMeshConCount = 0;//m_geom->getOffMeshConnectionCount();
-		params.walkableHeight = m_agentHeight;
-		params.walkableRadius = m_agentRadius;
-		params.walkableClimb = m_agentMaxClimb;
+		params.walkableHeight = config.walkableHeight;
+		params.walkableRadius = config.walkableRadius;
+		params.walkableClimb = config.walkableClimb;
 		rcVcopy(params.bmin, m_pmesh->bmin);
 		rcVcopy(params.bmax, m_pmesh->bmax);
 		params.cs = m_cfg.cs;
@@ -602,6 +549,12 @@ Vec3 Crowd::getAgentPosition(int idx)
 {
 	const dtCrowdAgent* agent = m_crowd->getAgent(idx);
 	return Vec3(agent->npos[2], agent->npos[1], agent->npos[0]);
+}
+
+Vec3 Crowd::getAgentVelocity(int idx)
+{
+	const dtCrowdAgent* agent = m_crowd->getAgent(idx);
+	return Vec3(agent->vel[2], agent->vel[1], agent->vel[0]);
 }
 
 void Crowd::agentGoto(int idx, const Vec3& destination)
