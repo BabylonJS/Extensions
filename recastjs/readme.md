@@ -1,9 +1,9 @@
-## What is recastjs
+## What is recastjs ?
 
 recastjs is a port of recastnavigation and a thin abstraction layer using emscripten. https://github.com/emscripten-core/emscripten
 This port allows the use of recastnavigation in your browser using JavaScript or WebAssembly.
 
-## What is recast ?
+## What is recastnavigation ?
 
 Recast is a navigation mesh construction toolset for games. 
 Recast is accompanied by Detour, a spatial reasoning toolkit. 
@@ -12,7 +12,7 @@ The crowd management module provides you with features for agents handling and b
 
 Some documentation is available here : http://masagroup.github.io/recastdetour/index.html
 
-## How to build recastjs?
+## How to build recastjs ?
 
 First, update the Git Submodule using `git submodule update --init` in the recastjs folder.
 You'll need emscripten with an active environment and mingw32-make for Windows (make for Linux). 
@@ -28,7 +28,7 @@ to generate WASM:
 
 The build output will be in the build directory.
 
-## How to extend recastjs
+## How to extend recastjs ?
 
 Recast/Detour can be difficult to use directly. A simplification layer is done thru src/recastjs.h/.cpp. All the functionnalities have to be exposed to JS by the IDL file. 
 Basically, that file lists all the structures, classes, methods visible to JS. The glue generation and build is handled ny make.py script. Any new functionnality should be written in recastjs.cpp file and exposed by the IDL
