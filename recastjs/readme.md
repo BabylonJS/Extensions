@@ -14,6 +14,7 @@ Some documentation is available here : http://masagroup.github.io/recastdetour/i
 
 ## How to build recastjs?
 
+First, update the Git Submodule using `git submodule update --init` in the recastjs folder.
 You'll need emscripten with an active environment and mingw32-make for Windows (make for Linux). 
 
 The build script can generate JS or WASM.
