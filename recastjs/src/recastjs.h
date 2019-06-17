@@ -11,7 +11,7 @@ struct rcConfig;
 
 struct Vec3 
 {
-	Vec3() {}
+    Vec3() {}
     Vec3(float v) : x(v), y(v), z(v) {}
     Vec3(float x, float y, float z) : x(x), y(y), z(z) {}
     void isMinOf(const Vec3& v)
@@ -34,8 +34,8 @@ struct Vec3
 
 struct Triangle 
 {
-	Triangle(){}
-	const Vec3& getPoint(long n)
+    Triangle(){}
+    const Vec3& getPoint(long n)
     {
         if (n < 2)
         {
@@ -48,8 +48,8 @@ struct Triangle
 
 struct DebugNavMesh 
 {
-	int getTriangleCount() { return int(mTriangles.size()); }
-	const Triangle& getTriangle(int n)
+    int getTriangleCount() { return int(mTriangles.size()); }
+    const Triangle& getTriangle(int n)
     {
         if (n < int(mTriangles.size()))
         {
@@ -63,25 +63,25 @@ struct DebugNavMesh
 class NavMesh
 {
 public:
-	NavMesh() : m_navQuery(0)
-			  , m_navMesh(0)
-	{
-	}
-	void destroy();
-	void build(const float* positions, const int positionCount, const int* indices, const int indexCount, const rcConfig& config);
+    NavMesh() : m_navQuery(0)
+              , m_navMesh(0)
+    {
+    }
+    void destroy();
+    void build(const float* positions, const int positionCount, const int* indices, const int indexCount, const rcConfig& config);
 
     DebugNavMesh getDebugNavMesh();
-	Vec3 getClosestPoint(const Vec3& position);
+    Vec3 getClosestPoint(const Vec3& position);
     Vec3 getRandomPointAround(const Vec3& position, float maxRadius);
-	dtNavMesh* getNavMesh() 
-	{ 
-		return m_navMesh; 
-	}
+    dtNavMesh* getNavMesh() 
+    { 
+        return m_navMesh; 
+    }
 
 protected:
 
-	dtNavMeshQuery* m_navQuery;
-	dtNavMesh* m_navMesh;
+    dtNavMeshQuery* m_navQuery;
+    dtNavMesh* m_navMesh;
 
     void navMeshPoly(DebugNavMesh& debugNavMesh, const dtNavMesh& mesh, dtPolyRef ref);
     void navMeshPolysWithFlags(DebugNavMesh& debugNavMesh, const dtNavMesh& mesh, const unsigned short polyFlags);
@@ -89,15 +89,15 @@ protected:
 
 class Crowd
 {
-public:	
-	Crowd(const int maxAgents, const float maxAgentRadius, dtNavMesh* nav);
-	void destroy();
-	int addAgent(const Vec3& pos, const dtCrowdAgentParams* params);
-	void removeAgent(const int idx);
-	void update(const float dt);
-	Vec3 getAgentPosition(int idx);
+public:    
+    Crowd(const int maxAgents, const float maxAgentRadius, dtNavMesh* nav);
+    void destroy();
+    int addAgent(const Vec3& pos, const dtCrowdAgentParams* params);
+    void removeAgent(const int idx);
+    void update(const float dt);
+    Vec3 getAgentPosition(int idx);
     Vec3 getAgentVelocity(int idx);
-	void agentGoto(int idx, const Vec3& destination);
+    void agentGoto(int idx, const Vec3& destination);
 protected:
-	dtCrowd *m_crowd;
+    dtCrowd *m_crowd;
 };
