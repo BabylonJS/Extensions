@@ -1,0 +1,30 @@
+{
+  "name": "meshwriter",
+  "version": "1.0.0",
+  "description": "Generate text in BABYLON meshes",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/briantbutton/meshwriter.git"
+  },
+  "keywords": [
+    "babylonjs",
+    "babylon",
+    "meshwriter"
+  ],
+  "author": "Brian T Button",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "webpack": "^4.32.2",
+    "webpack-cli": "^3.3.2"
+  },
+  "bugs": {
+    "url": "https://github.com/briantbutton/meshwriter/issues"
+  },
+  "homepage": "https://github.com/briantbutton/meshwriter#readme"
+}

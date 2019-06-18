@@ -1,30 +1,32 @@
-# Mesh Writer
+# MeshWriter
 
 Generate letters in BABYLON meshes.
 
 ## Javascript Calls And Parameters
 
-### Basic Usage
+### Usage Summary
 
-	Writer = BABYLON.MeshWriter(scene, {scale:scale});
-	text1  = new Writer( 
-	                "ABC",
-	                {
-	                    "anchor": "center",
-	                    "letter-height": 50,
-	                    "color": "#1C3870",
-	                    "position": {
-	                        "z": 20
+	Writer    = BABYLON.MeshWriter(scene, {scale:scale});       // Returns re-usable constructor
+	text1     = new Writer(                                     // Inserts text into scene, per options
+	                   "ABC",
+	                   {
+	                       "anchor": "center",
+	                       "letter-height": 50,
+	                       "color": "#1C3870",
+	                       "position": {
+	                           "z": 20
+  	                     }
 	                    }
-	                }
-	            );
+	             );
+	textMesh  = text1.getMesh()                                 // Returns a regular BABYLON mesh, which can
+	                                                            // be manipulated using standard methods
 
 &#9679; See playground example:
 https://www.babylonjs-playground.com/#PL752W#22
 
 ### Superconstructor - BABYLON.MeshWriter()
 
-After this module is loaded, BABYLON.MeshWriter is defined.  It is called with one or two parameters.
+After MeshWriter is loaded (see below), BABYLON.MeshWriter is defined.  It is called with one or two parameters.
 - **scene** &nbsp; required
 - **preferences** &nbsp; optional &nbsp; The preferences object may specify up to three values
 
@@ -106,3 +108,24 @@ If BABYLON is already loaded, then MeshWriter will attach itself to BABYLON, all
 
 Otherwise MeshWriter will attach to window.
 
+### Earcut
+
+Earcut is a simple, stable and small utility that is needed by PolygonMeshBuilder, which MeshWriter calls.&nbsp;
+If you haven't otherwise loaded Earcut, do so; it is _not_ included in meshwriter.min.js.&nbsp;
+The repo is here: https://github.com/mapbox/earcut.&nbsp;
+And there is a recent version in this repo.
+
+
+## Custom font packages
+
+MeshWriter comes with only a few fonts.&nbsp;
+Industrious folk with specific requirements can create a MeshWriter package with their own fonts.&nbsp;
+Think of this as two steps.
+
+1) Converting standard font files (.ttf or .otf) to MeshWriter font files, and
+2) Creating your own minified build of MeshWriter with your chosen fonts.
+
+MeshWriter-Font (https://github.com/briantbutton/meshwriter-font) addresses the first step.&nbsp;
+It will convert most common font files into MeshWriter compatible font files.&nbsp;
+
+To create a custom build (a new meshwriter.min.js) with your custom fonts, refer to the README in this repo in the 'fonts' directory.

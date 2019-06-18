@@ -1,10 +1,54 @@
 # So you want to build a 3-D font, eh?
 
-A committed individual can transform an SVG-style path into something that MeshWriter will use.&nbsp;
-An extremely committed individual can make a whole alphabet.&nbsp;
-Here is the basic road map.
+3-D font conversion is now an automatic process.&nbsp;
+The documentation further below is no longer needed (although you are welcome to read it).&nbsp;
+Instead, go to https://github.com/briantbutton/meshwriter-font for a package that will convert full font files.&nbsp;
+When you have done that, come back here for further instructions.
 
-## How shapes are specified
+
+## Building MeshWriter with a customized font set
+
+MeshWriter can build with an arbitrary selection of font files.&nbsp;
+All font files should be converted into MeshWriter form and placed in this directory.&nbsp;
+Linking the font files into your build is done with a require statement.&nbsp;
+Easy.&nbsp;
+Open /meshwriter/index.js and take a look at the steps described in the first fifty lines of that file.&nbsp;
+Three steps for each font file.&nbsp;
+
+### Step 1 - reference the font files into variable names
+
+### Step 2 - call each font with 'codelist'
+
+This just passes along the encoding function.&nbsp;
+Sorry if it seems awkward.
+
+### Step 3 - Assign a text name (or two) to each font
+
+This is used to invoke it.
+
+
+## Build a package
+
+On your dev machine (set up as described in meshwriter-font) do to the /meshwriter repo.&nbsp;
+Type:
+
+	npm run build
+
+This has placed an unminified version of meshwriter, with all your fonts, in /meshwriter/dist.&nbsp;
+Almost there!&nbsp;
+It only remains to minify it.&nbsp;
+Use any tool you want.  However, save "MeshWriter" as a reserved word.  Here is the command I use:
+
+	terser meshwriter.js -m reserved=['MeshWriter']
+
+We are now *finished*.&nbsp;
+Back to our regularly scheduled programming, describing in detail how shapes are specified.&nbsp;
+
+You may turn off your television sets now.&nbsp;
+
+Stop reading.&nbsp;
+
+## Background information:  How shapes are specified
 
 ### Basic shapes
 
