@@ -60,6 +60,20 @@ struct DebugNavMesh
     std::vector<Triangle> mTriangles;
 };
 
+struct NavPath
+{
+    int getPointCount() { return int(mPoints.size()); }
+    const Vec3& getPoint(int n)
+    {
+        if (n < int(mPoints.size()))
+        {
+            return mPoints[n];
+        }
+        return mPoints.back();
+    }
+    std::vector<Vec3> mPoints;
+};
+
 class NavMesh
 {
 public:
@@ -77,6 +91,7 @@ public:
     { 
         return m_navMesh; 
     }
+    NavPath computePath(const Vec3& start, const Vec3& end) const;
 
 protected:
 

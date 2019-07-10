@@ -89,6 +89,12 @@ interface dtNavMesh {
 
 };
 
+interface NavPath
+{
+    long getPointCount();
+    [Const, Ref] Vec3 getPoint(long n);
+};
+
 interface dtCrowdAgentParams {
     void dtCrowdAgentParams();
     attribute float radius;                        ///< Agent radius. [Limit: >= 0]
@@ -126,6 +132,7 @@ interface NavMesh {
     [Value] Vec3 getClosestPoint([Const, Ref] Vec3 position);
     [Value] Vec3 getRandomPointAround([Const, Ref] Vec3 position, float maxRadius);
     dtNavMesh getNavMesh();
+    [Value] NavPath computePath([Const, Ref] Vec3 start, [Const, Ref] Vec3 end);
 };
 
 interface Crowd {
