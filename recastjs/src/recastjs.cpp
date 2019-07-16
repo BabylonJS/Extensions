@@ -102,10 +102,10 @@ void NavMesh::build(const float* positions, const int positionCount, const int* 
     //float bmin[3] = {-20.f, 0.f, -20.f};
     //float bmax[3] = { 20.f, 1.f,  20.f};
     rcConfig cfg = config;
-    cfg.walkableHeight = (int)ceilf(config.walkableHeight / cfg.ch);
-    cfg.walkableClimb = (int)floorf(config.walkableClimb / cfg.ch);
-    cfg.walkableRadius = (int)ceilf(config.walkableRadius / cfg.cs);
-    cfg.maxEdgeLen = (int)(config.maxEdgeLen / config.cs);
+    cfg.walkableHeight = config.walkableHeight;
+    cfg.walkableClimb = config.walkableClimb;
+    cfg.walkableRadius = config.walkableRadius;
+    cfg.maxEdgeLen = config.maxEdgeLen;
     cfg.maxSimplificationError = config.maxSimplificationError;
     cfg.minRegionArea = (int)rcSqr(config.minRegionArea);        // Note: area = size*size
     cfg.mergeRegionArea = (int)rcSqr(config.mergeRegionArea);    // Note: area = size*size
