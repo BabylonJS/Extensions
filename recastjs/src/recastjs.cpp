@@ -105,7 +105,7 @@ void NavMesh::build(const float* positions, const int positionCount, const int* 
     cfg.walkableHeight = config.walkableHeight;
     cfg.walkableClimb = config.walkableClimb;
     cfg.walkableRadius = config.walkableRadius;
-    cfg.maxEdgeLen = (int)(config.maxEdgeLen / config.cs);
+    cfg.maxEdgeLen = config.maxEdgeLen;
     cfg.maxSimplificationError = config.maxSimplificationError;
     cfg.minRegionArea = (int)rcSqr(config.minRegionArea);        // Note: area = size*size
     cfg.mergeRegionArea = (int)rcSqr(config.mergeRegionArea);    // Note: area = size*size
