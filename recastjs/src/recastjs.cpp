@@ -35,18 +35,6 @@ struct NavMeshintermediates
 {
     ~NavMeshintermediates()
     {
-        if (m_pmesh)
-        {
-            rcFreePolyMesh(m_pmesh);
-        }
-        if (m_dmesh)
-        {
-            rcFreePolyMeshDetail(m_dmesh);
-        }
-        if (m_navData)
-        {
-            dtFree(m_navData);
-        }
         if (m_solid)
         {
             rcFreeHeightField(m_solid);
@@ -61,9 +49,6 @@ struct NavMeshintermediates
         }
     }
 
-    rcPolyMesh* m_pmesh = nullptr;
-    rcPolyMeshDetail* m_dmesh = nullptr;
-    unsigned char* m_navData = nullptr;
     rcHeightfield* m_solid = nullptr;
     rcCompactHeightfield* m_chf = nullptr;
     rcContourSet* m_cset = nullptr;
@@ -71,13 +56,38 @@ struct NavMeshintermediates
 
 void NavMesh::destroy()
 {
+    if (m_pmesh)
+    {
+        rcFreePolyMesh(m_pmesh);
+    }
+    if (m_dmesh)
+    {
+        rcFreePolyMeshDetail(m_dmesh);
+    }
+    if (m_navData)
+    {
+        dtFree(m_navData);
+    }
     dtFreeNavMesh(m_navMesh);
     dtFreeNavMeshQuery(m_navQuery);
 }
 
 void NavMesh::build(const float* positions, const int positionCount, const int* indices, const int indexCount, const rcConfig& config)
 {
-    NavMeshintermediates intermediates;;
+    if (m_pmesh)
+    {
+        rcFreePolyMesh(m_pmesh);
+    }
+    if (m_dmesh)
+    {
+        rcFreePolyMeshDetail(m_dmesh);
+    }
+    if (m_navData)
+    {
+        dtFree(m_navData);
+    }
+
+    NavMeshintermediates intermediates;
     std::vector<Vec3> triangleIndices;
     const float* pv = &positions[0];
     const int* t = &indices[0];
@@ -252,13 +262,13 @@ void NavMesh::build(const float* positions, const int positionCount, const int* 
     // Step 6. Build polygons mesh from contours.
     //
 
-    intermediates.m_pmesh = rcAllocPolyMesh();
-    if (!intermediates.m_pmesh)
+    m_pmesh = rcAllocPolyMesh();
+    if (!m_pmesh)
     {
         Log("buildNavigation: Out of memory 'pmesh'.");
         return ;
     }
-    if (!rcBuildPolyMesh(&ctx, *intermediates.m_cset, cfg.maxVertsPerPoly, *intermediates.m_pmesh))
+    if (!rcBuildPolyMesh(&ctx, *intermediates.m_cset, cfg.maxVertsPerPoly, *m_pmesh))
     {
         Log("buildNavigation: Could not triangulate contours.");
         return ;
@@ -267,14 +277,14 @@ void NavMesh::build(const float* positions, const int positionCount, const int* 
     //
     // Step 7. Create detail mesh which allows to access approximate height on each polygon.
     //
-    intermediates.m_dmesh = rcAllocPolyMeshDetail();
-    if (!intermediates.m_dmesh)
+    m_dmesh = rcAllocPolyMeshDetail();
+    if (!m_dmesh)
     {
         Log("buildNavigation: Out of memory 'pmdtl'.");
         return ;
     }
 
-    if (!rcBuildPolyMeshDetail(&ctx, *intermediates.m_pmesh, *intermediates.m_chf, cfg.detailSampleDist, cfg.detailSampleMaxError, *intermediates.m_dmesh))
+    if (!rcBuildPolyMeshDetail(&ctx, *m_pmesh, *intermediates.m_chf, cfg.detailSampleDist, cfg.detailSampleMaxError, *m_dmesh))
     {
         Log("buildNavigation: Could not build detail mesh.");
         return ;
@@ -295,8 +305,8 @@ void NavMesh::build(const float* positions, const int positionCount, const int* 
     // Only build the detour navmesh if we do not exceed the limit.
     if (cfg.maxVertsPerPoly <= DT_VERTS_PER_POLYGON)
     {
-        rcPolyMesh* pmesh = intermediates.m_pmesh;
-        rcPolyMeshDetail* dmesh = intermediates.m_dmesh;
+        rcPolyMesh* pmesh = m_pmesh;
+        rcPolyMeshDetail* dmesh = m_dmesh;
 
         int navDataSize = 0;
 
@@ -344,7 +354,7 @@ void NavMesh::build(const float* positions, const int positionCount, const int* 
         params.ch = cfg.ch;
         params.buildBvTree = true;
         
-        if (!dtCreateNavMeshData(&params, &intermediates.m_navData, &navDataSize))
+        if (!dtCreateNavMeshData(&params, &m_navData, &navDataSize))
         {
             Log("Could not build Detour navmesh.");
             return ;
@@ -359,7 +369,7 @@ void NavMesh::build(const float* positions, const int positionCount, const int* 
         
         dtStatus status;
         
-        status = m_navMesh->init(intermediates.m_navData, navDataSize, DT_TILE_FREE_DATA);
+        status = m_navMesh->init(m_navData, navDataSize, DT_TILE_FREE_DATA);
         if (dtStatusFailed(status))
         {
             Log("Could not init Detour navmesh");

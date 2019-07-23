@@ -6,6 +6,8 @@ class dtNavMeshQuery;
 class dtNavMesh;
 class MeshLoader;
 class NavMesh;
+class rcPolyMesh;
+class rcPolyMeshDetail;
 struct rcConfig;
 
 
@@ -78,8 +80,12 @@ class NavMesh
 {
 public:
     NavMesh() : m_navQuery(0)
-              , m_navMesh(0)
+        , m_navMesh(0)
+        , m_pmesh(0)
+        , m_dmesh(0)
+        , m_navData(0)
     {
+
     }
     void destroy();
     void build(const float* positions, const int positionCount, const int* indices, const int indexCount, const rcConfig& config);
@@ -97,6 +103,9 @@ protected:
 
     dtNavMeshQuery* m_navQuery;
     dtNavMesh* m_navMesh;
+    rcPolyMesh* m_pmesh;
+    rcPolyMeshDetail* m_dmesh;
+    unsigned char* m_navData;
 
     void navMeshPoly(DebugNavMesh& debugNavMesh, const dtNavMesh& mesh, dtPolyRef ref);
     void navMeshPolysWithFlags(DebugNavMesh& debugNavMesh, const dtNavMesh& mesh, const unsigned short polyFlags);
