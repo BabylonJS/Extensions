@@ -16,7 +16,7 @@
 
 define(
   // >>>>>  STEP 1 <<<<<
-  ['./fonts/hirukopro-book','./fonts/helveticaneue-medium','./fonts/comicsans-normal','./fonts/jura-medium','./fonts/webgl-dings'],
+  ['./fonts/hirukopro-book','./fonts/helveticaneue-medium','./fonts/comicsans-normal','./fonts/jura-demibold','./fonts/webgl-dings'],
   function(HPB,HNM,CSN,JUR,WGD){
   // >>>>>  STEP 1 <<<<<
 
@@ -186,7 +186,8 @@ define(
 
     };
     if ( typeof window !== "undefined" ) {
-      window.TYPE                = Wrapper
+      window.TYPE                = Wrapper;
+      window.MeshWriter          = Wrapper
     }
     if ( typeof global !== "undefined" ) {
       global.MeshWriter          = Wrapper
@@ -195,6 +196,9 @@ define(
       BABYLON.MeshWriter         = Wrapper;
       supplementCurveFunctions();
     };
+    if ( typeof module === 'object' && module.exports ) {
+      module.exports             = Wrapper;
+    }
     return Wrapper;
 
     //  ~  -  =  ~  -  =  ~  -  =  ~  -  =  ~  -  =  ~  -  =  ~  -  =
@@ -320,7 +324,7 @@ define(
         // ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~
         // Scope warning:  letterOffsetX belongs to an outer closure
         // and persists through multiple characters
-        letterOffsetX            = letterOffsetX+spec.width*letterScale;
+        letterOffsetX            = letterOffsetX+spec.wdth*letterScale;
 
         if(debug&&spec.show){
           console.log([minX,maxX,minZ,maxZ]);

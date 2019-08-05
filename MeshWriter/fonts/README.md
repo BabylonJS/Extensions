@@ -39,7 +39,7 @@ Almost there!&nbsp;
 It only remains to minify it.&nbsp;
 Use any tool you want.  However, save "MeshWriter" as a reserved word.  Here is the command I use:
 
-	terser meshwriter.js -m reserved=['MeshWriter']
+	terser meshwriter.js -m reserved=['MeshWriter'] --mangle-props regex=/^[xyw][Md][tia][nxh]/
 
 We are now *finished*.&nbsp;
 Back to our regularly scheduled programming, describing in detail how shapes are specified.&nbsp;
