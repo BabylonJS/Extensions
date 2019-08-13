@@ -131,6 +131,7 @@ interface NavMesh {
     [Value] DebugNavMesh getDebugNavMesh();
     [Value] Vec3 getClosestPoint([Const, Ref] Vec3 position);
     [Value] Vec3 getRandomPointAround([Const, Ref] Vec3 position, float maxRadius);
+    [Value] Vec3 moveAlong([Const, Ref] Vec3 position, [Const, Ref] Vec3 destination);
     dtNavMesh getNavMesh();
     [Value] NavPath computePath([Const, Ref] Vec3 start, [Const, Ref] Vec3 end);
 };
