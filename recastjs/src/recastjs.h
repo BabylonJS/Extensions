@@ -93,6 +93,7 @@ public:
     DebugNavMesh getDebugNavMesh();
     Vec3 getClosestPoint(const Vec3& position);
     Vec3 getRandomPointAround(const Vec3& position, float maxRadius);
+    Vec3 moveAlong(const Vec3& position, const Vec3& destination);
     dtNavMesh* getNavMesh() 
     { 
         return m_navMesh; 

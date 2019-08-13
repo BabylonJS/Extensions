@@ -540,6 +540,37 @@ Vec3 NavMesh::getRandomPointAround(const Vec3& position, float maxRadius)
     return Vec3(resDetour.z, resDetour.y, resDetour.x);
 }
 
+Vec3 NavMesh::moveAlong(const Vec3& position, const Vec3& destination)
+{
+    dtQueryFilter filter;
+    filter.setIncludeFlags(0xffff);
+    filter.setExcludeFlags(0);
+
+    dtPolyRef polyRef;
+
+    float polyPickExt[3];
+    polyPickExt[0] = 2;
+    polyPickExt[1] = 4;
+    polyPickExt[2] = 2;
+
+    Vec3 pos(position.z, position.y, position.x);
+    Vec3 dest(destination.z, destination.y, destination.x);
+
+    m_navQuery->findNearestPoly(&pos.x, polyPickExt, &filter, &polyRef, 0);
+
+    Vec3 resDetour;
+	dtPolyRef visitedPoly[128];
+	int visitedPolyCount;
+	dtStatus status = m_navQuery->moveAlongSurface(polyRef, &pos.x, &dest.x,
+		&filter,
+		&resDetour.x, visitedPoly, &visitedPolyCount, sizeof(visitedPoly)/sizeof(dtPolyRef));
+	if (dtStatusFailed(status))
+	{
+		return Vec3(0.f, 0.f, 0.f);
+	}
+    return Vec3(resDetour.z, resDetour.y, resDetour.x);
+}
+
 NavPath NavMesh::computePath(const Vec3& start, const Vec3& end) const
 {
     NavPath navpath;
