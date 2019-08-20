@@ -98,7 +98,7 @@ void NavMesh::build(const float* positions, const int positionCount, const int* 
     for (unsigned int i = 0; i<indexCount; i++)
     {
         int ind = (*t++) * 3;
-        Vec3 v( pv[ind+2], pv[ind+1], pv[ind] );
+        Vec3 v( pv[ind], pv[ind+1], pv[ind+2] );
         bbMin.isMinOf( v );
         bbMax.isMaxOf( v );
         triangleIndices[i] = v;
@@ -445,7 +445,7 @@ void NavMesh::navMeshPoly(DebugNavMesh& debugNavMesh, const dtNavMesh& mesh, dtP
                     pf = &tile->detailVerts[(pd->vertBase+t[j]-poly->vertCount)*3];
                 }
 
-                triangle.mPoint[j] = Vec3(pf[2], pf[1], pf[0]);
+                triangle.mPoint[2-j] = Vec3(pf[0], pf[1], pf[2]);
             }
             debugNavMesh.mTriangles.push_back(triangle);
         }
@@ -495,7 +495,7 @@ Vec3 NavMesh::getClosestPoint(const Vec3& position)
     polyPickExt[1] = 4;
     polyPickExt[2] = 2;
 
-    Vec3 pos(position.z, position.y, position.x);
+    Vec3 pos(position.x, position.y, position.z);
     m_navQuery->findNearestPoly(&pos.x, polyPickExt, &filter, &polyRef, 0);
 
 
@@ -507,7 +507,7 @@ Vec3 NavMesh::getClosestPoint(const Vec3& position)
     {
         return Vec3(0.f, 0.f, 0.f);
     }
-    return Vec3(resDetour.z, resDetour.y, resDetour.x);
+    return Vec3(resDetour.x, resDetour.y, resDetour.z);
 }
 
 Vec3 NavMesh::getRandomPointAround(const Vec3& position, float maxRadius)
@@ -523,7 +523,7 @@ Vec3 NavMesh::getRandomPointAround(const Vec3& position, float maxRadius)
     polyPickExt[1] = 4;
     polyPickExt[2] = 2;
 
-    Vec3 pos(position.z, position.y, position.x);
+    Vec3 pos(position.x, position.y, position.z);
 
     m_navQuery->findNearestPoly(&pos.x, polyPickExt, &filter, &polyRef, 0);
 
@@ -537,7 +537,7 @@ Vec3 NavMesh::getRandomPointAround(const Vec3& position, float maxRadius)
         return Vec3(0.f, 0.f, 0.f);
     }
 
-    return Vec3(resDetour.z, resDetour.y, resDetour.x);
+    return Vec3(resDetour.x, resDetour.y, resDetour.z);
 }
 
 Vec3 NavMesh::moveAlong(const Vec3& position, const Vec3& destination)
@@ -589,8 +589,8 @@ NavPath NavMesh::computePath(const Vec3& start, const Vec3& end) const
 	filter.setIncludeFlags(0xffff);
 	filter.setExcludeFlags(0);
 
-    Vec3 posStart(start.z, start.y, start.x);
-    Vec3 posEnd(end.z, end.y, end.x);
+    Vec3 posStart(start.x, start.y, start.z);
+    Vec3 posEnd(end.x, end.y, end.z);
 
     m_navQuery->findNearestPoly(&posStart.x, polyPickExt, &filter, &startRef, 0);
     m_navQuery->findNearestPoly(&posEnd.x, polyPickExt, &filter, &endRef, 0);
@@ -620,7 +620,7 @@ NavPath NavMesh::computePath(const Vec3& start, const Vec3& end) const
 		navpath.mPoints.resize(mNstraightPath);
 		for (int i = 0;i<mNstraightPath;i++)
 		{
-			navpath.mPoints[i] = Vec3(straightPath[i*3+2], straightPath[i*3+1], straightPath[i*3]);
+			navpath.mPoints[i] = Vec3(straightPath[i*3], straightPath[i*3+1], straightPath[i*3+2]);
 		}
     }
     return navpath;
@@ -659,13 +659,13 @@ void Crowd::update(const float dt)
 Vec3 Crowd::getAgentPosition(int idx)
 {
     const dtCrowdAgent* agent = m_crowd->getAgent(idx);
-    return Vec3(agent->npos[2], agent->npos[1], agent->npos[0]);
+    return Vec3(agent->npos[0], agent->npos[1], agent->npos[2]);
 }
 
 Vec3 Crowd::getAgentVelocity(int idx)
 {
     const dtCrowdAgent* agent = m_crowd->getAgent(idx);
-    return Vec3(agent->vel[2], agent->vel[1], agent->vel[0]);
+    return Vec3(agent->vel[0], agent->vel[1], agent->vel[2]);
 }
 
 void Crowd::agentGoto(int idx, const Vec3& destination)
@@ -681,7 +681,7 @@ void Crowd::agentGoto(int idx, const Vec3& destination)
     polyPickExt[1] = 4;
     polyPickExt[2] = 2;
 
-    Vec3 pos(destination.z, destination.y, destination.x);
+    Vec3 pos(destination.x, destination.y, destination.z);
     m_crowd->getNavMeshQuery()->findNearestPoly(&pos.x, polyPickExt, &filter, &polyRef, 0);
 
     m_crowd->requestMoveTarget(idx, polyRef, &pos.x);
