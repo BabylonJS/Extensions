@@ -490,13 +490,8 @@ Vec3 NavMesh::getClosestPoint(const Vec3& position)
 
     dtPolyRef polyRef;
 
-    float polyPickExt[3];
-    polyPickExt[0] = 2;
-    polyPickExt[1] = 4;
-    polyPickExt[2] = 2;
-
     Vec3 pos(position.x, position.y, position.z);
-    m_navQuery->findNearestPoly(&pos.x, polyPickExt, &filter, &polyRef, 0);
+    m_navQuery->findNearestPoly(&pos.x, &m_defaultQueryExtent.x, &filter, &polyRef, 0);
 
 
     bool posOverlay;
@@ -518,14 +513,9 @@ Vec3 NavMesh::getRandomPointAround(const Vec3& position, float maxRadius)
 
     dtPolyRef polyRef;
 
-    float polyPickExt[3];
-    polyPickExt[0] = 2;
-    polyPickExt[1] = 4;
-    polyPickExt[2] = 2;
-
     Vec3 pos(position.x, position.y, position.z);
 
-    m_navQuery->findNearestPoly(&pos.x, polyPickExt, &filter, &polyRef, 0);
+    m_navQuery->findNearestPoly(&pos.x, &m_defaultQueryExtent.x, &filter, &polyRef, 0);
 
     dtPolyRef randomRef;
     Vec3 resDetour;
@@ -548,64 +538,54 @@ Vec3 NavMesh::moveAlong(const Vec3& position, const Vec3& destination)
 
     dtPolyRef polyRef;
 
-    float polyPickExt[3];
-    polyPickExt[0] = 2;
-    polyPickExt[1] = 4;
-    polyPickExt[2] = 2;
+    Vec3 pos(position.x, position.y, position.z);
+    Vec3 dest(destination.x, destination.y, destination.z);
 
-    Vec3 pos(position.z, position.y, position.x);
-    Vec3 dest(destination.z, destination.y, destination.x);
-
-    m_navQuery->findNearestPoly(&pos.x, polyPickExt, &filter, &polyRef, 0);
+    m_navQuery->findNearestPoly(&pos.x, &m_defaultQueryExtent.x, &filter, &polyRef, 0);
 
     Vec3 resDetour;
-	dtPolyRef visitedPoly[128];
-	int visitedPolyCount;
-	dtStatus status = m_navQuery->moveAlongSurface(polyRef, &pos.x, &dest.x,
-		&filter,
-		&resDetour.x, visitedPoly, &visitedPolyCount, sizeof(visitedPoly)/sizeof(dtPolyRef));
-	if (dtStatusFailed(status))
-	{
-		return Vec3(0.f, 0.f, 0.f);
-	}
-    return Vec3(resDetour.z, resDetour.y, resDetour.x);
+    dtPolyRef visitedPoly[128];
+    int visitedPolyCount;
+    dtStatus status = m_navQuery->moveAlongSurface(polyRef, &pos.x, &dest.x,
+        &filter,
+        &resDetour.x, visitedPoly, &visitedPolyCount, sizeof(visitedPoly)/sizeof(dtPolyRef));
+    if (dtStatusFailed(status))
+    {
+        return Vec3(0.f, 0.f, 0.f);
+    }
+    return Vec3(resDetour.x, resDetour.y, resDetour.z);
 }
 
 NavPath NavMesh::computePath(const Vec3& start, const Vec3& end) const
 {
     NavPath navpath;
     static const int MAX_POLYS = 256;
-	float straightPath[MAX_POLYS*3];
+    float straightPath[MAX_POLYS*3];
 
-	dtPolyRef startRef;
+    dtPolyRef startRef;
     dtPolyRef endRef;
 
-    float polyPickExt[3];
-    polyPickExt[0] = 2;
-    polyPickExt[1] = 4;
-    polyPickExt[2] = 2;
-
-	dtQueryFilter filter;
-	filter.setIncludeFlags(0xffff);
-	filter.setExcludeFlags(0);
+    dtQueryFilter filter;
+    filter.setIncludeFlags(0xffff);
+    filter.setExcludeFlags(0);
 
     Vec3 posStart(start.x, start.y, start.z);
     Vec3 posEnd(end.x, end.y, end.z);
 
-    m_navQuery->findNearestPoly(&posStart.x, polyPickExt, &filter, &startRef, 0);
-    m_navQuery->findNearestPoly(&posEnd.x, polyPickExt, &filter, &endRef, 0);
+    m_navQuery->findNearestPoly(&posStart.x, &m_defaultQueryExtent.x, &filter, &startRef, 0);
+    m_navQuery->findNearestPoly(&posEnd.x, &m_defaultQueryExtent.x, &filter, &endRef, 0);
 
     dtPolyRef polys[MAX_POLYS];
     int npolys;
 
     m_navQuery->findPath(startRef, endRef, &posStart.x, &posEnd.x, &filter, polys, &npolys, MAX_POLYS);
-	int mNstraightPath = 0;
-	if (npolys)
+    int mNstraightPath = 0;
+    if (npolys)
     {
-		unsigned char straightPathFlags[MAX_POLYS];
-		dtPolyRef straightPathPolys[MAX_POLYS];
-		int straightPathOptions;
-		bool posOverPoly;
+        unsigned char straightPathFlags[MAX_POLYS];
+        dtPolyRef straightPathPolys[MAX_POLYS];
+        int straightPathOptions;
+        bool posOverPoly;
         Vec3 closestEnd = posEnd;
 
         if (polys[npolys-1] != endRef)
@@ -617,16 +597,16 @@ NavPath NavMesh::computePath(const Vec3& start, const Vec3& end) const
             straightPath, straightPathFlags,
             straightPathPolys, &mNstraightPath, MAX_POLYS, straightPathOptions);
 
-		navpath.mPoints.resize(mNstraightPath);
-		for (int i = 0;i<mNstraightPath;i++)
-		{
-			navpath.mPoints[i] = Vec3(straightPath[i*3], straightPath[i*3+1], straightPath[i*3+2]);
-		}
+        navpath.mPoints.resize(mNstraightPath);
+        for (int i = 0;i<mNstraightPath;i++)
+        {
+            navpath.mPoints[i] = Vec3(straightPath[i*3], straightPath[i*3+1], straightPath[i*3+2]);
+        }
     }
     return navpath;
 }
 
-Crowd::Crowd(const int maxAgents, const float maxAgentRadius, dtNavMesh* nav)
+Crowd::Crowd(const int maxAgents, const float maxAgentRadius, dtNavMesh* nav) : m_defaultQueryExtent(1.f)
 {
     m_crowd = dtAllocCrowd();
     m_crowd->init(maxAgents, maxAgentRadius, nav);
@@ -676,13 +656,8 @@ void Crowd::agentGoto(int idx, const Vec3& destination)
 
     dtPolyRef polyRef;
 
-    float polyPickExt[3];
-    polyPickExt[0] = 2;
-    polyPickExt[1] = 4;
-    polyPickExt[2] = 2;
-
     Vec3 pos(destination.x, destination.y, destination.z);
-    m_crowd->getNavMeshQuery()->findNearestPoly(&pos.x, polyPickExt, &filter, &polyRef, 0);
+    m_crowd->getNavMeshQuery()->findNearestPoly(&pos.x, &m_defaultQueryExtent.x, &filter, &polyRef, 0);
 
     m_crowd->requestMoveTarget(idx, polyRef, &pos.x);
 }

@@ -84,6 +84,7 @@ public:
         , m_pmesh(0)
         , m_dmesh(0)
         , m_navData(0)
+        , m_defaultQueryExtent(1.f)
     {
 
     }
@@ -99,7 +100,14 @@ public:
         return m_navMesh; 
     }
     NavPath computePath(const Vec3& start, const Vec3& end) const;
-
+    void setDefaultQueryExtent(const Vec3& extent)
+    {
+        m_defaultQueryExtent = extent;
+    }
+    Vec3 getDefaultQueryExtent() const
+    {
+        return m_defaultQueryExtent;
+    }
 protected:
 
     dtNavMeshQuery* m_navQuery;
@@ -107,6 +115,7 @@ protected:
     rcPolyMesh* m_pmesh;
     rcPolyMeshDetail* m_dmesh;
     unsigned char* m_navData;
+    Vec3 m_defaultQueryExtent;
 
     void navMeshPoly(DebugNavMesh& debugNavMesh, const dtNavMesh& mesh, dtPolyRef ref);
     void navMeshPolysWithFlags(DebugNavMesh& debugNavMesh, const dtNavMesh& mesh, const unsigned short polyFlags);
@@ -123,6 +132,15 @@ public:
     Vec3 getAgentPosition(int idx);
     Vec3 getAgentVelocity(int idx);
     void agentGoto(int idx, const Vec3& destination);
+        void setDefaultQueryExtent(const Vec3& extent)
+    {
+        m_defaultQueryExtent = extent;
+    }
+    Vec3 getDefaultQueryExtent() const
+    {
+        return m_defaultQueryExtent;
+    }
 protected:
     dtCrowd *m_crowd;
+    Vec3 m_defaultQueryExtent;
 };
