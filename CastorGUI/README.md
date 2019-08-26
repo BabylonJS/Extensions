@@ -3,7 +3,7 @@
 Library to display a GUI game as a layer on top of the canvas HTML/CSS.
 
 * [Demo online of this extension](http://www.babylon.actifgames.com/demoCastorGUI/)
-* [Documentation](https://bitbucket.org/JSbabylon/castorgui/src/3f588b5473f34f58fe1b8d3a095d0ba78a278d99/doc/?at=master)
+* [Documentation](https://doc.babylonjs.com/extensions/)
 
 ## Features:
 
