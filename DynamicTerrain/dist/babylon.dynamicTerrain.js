@@ -25,16 +25,16 @@ var BABYLON;
             this._particleDataStride = 9; // data stride : position, rotation, scaling : 9 floats
             this._particleColorStride = 4; // color stride : color4 : r, g, b, a : 4 floats
             this._particleUVStride = 4; // uv stride : vector4 : x, y, z, w : 4 floats
-            this._subToleranceX = 1 | 0; // hoSPcw many cells flought over thy the camera on the terrain x axis before update
-            this._subToleranceZ = 1 | 0; // hoSPcw many cells flought over thy the camera on the terrain z axis before update
-            this._LODLimits = []; // arSPcray of LOD limits
-            this._initialLOD = 1 | 0; // inSPcitial LOD value (integer > 0)
-            this._LODValue = 1 | 0; // cuSPcrrent LOD value : initial + camera correction
-            this._cameraLODCorrection = 0 | 0; // LOSPcD correction (integer) according to the camera altitude
-            this._LODPositiveX = true; // DoeSPcs LOD apply to the terrain right edge ?
-            this._LODNegativeX = true; // DoeSPcs LOD apply to the terrain left edge ?
-            this._LODPositiveZ = true; // DoeSPcs LOD apply to the terrain upper edge ?
-            this._LODNegativeZ = true; // DoeSPcs LOD apply to the terrain lower edge ?
+            this._subToleranceX = 1 | 0; // how many cells flought over thy the camera on the terrain x axis before update
+            this._subToleranceZ = 1 | 0; // how many cells flought over thy the camera on the terrain z axis before update
+            this._LODLimits = []; // array of LOD limits
+            this._initialLOD = 1 | 0; // initial LOD value (integer > 0)
+            this._LODValue = 1 | 0; // current LOD value : initial + camera correction
+            this._cameraLODCorrection = 0 | 0; // LOD correction (integer) according to the camera altitude
+            this._LODPositiveX = true; // Does LOD apply to the terrain right edge ?
+            this._LODNegativeX = true; // Does LOD apply to the terrain left edge ?
+            this._LODPositiveZ = true; // Does LOD apply to the terrain upper edge ?
+            this._LODNegativeZ = true; // Does LOD apply to the terrain lower edge ?
             this._inverted = false; // is the terrain mesh inverted upside down ?
             this.shiftFromCamera = {
                 x: 0.0,
@@ -414,6 +414,67 @@ var BABYLON;
                     particles[p].isVisible = false;
                 }
             }
+            // Test map seam within the terrain
+            var seamX = false;
+            var seamZ = false;
+            var seamXIndex = 0 | 0;
+            var seamZIndex = 0 | 0;
+            var prevXIndex = mod(deltaSubX, mapSubX);
+            var prevZIndex = mod(deltaSubZ, mapSubZ);
+            var axisZLODValue = 0 | 0;
+            var axisXLODValue = 0 | 0;
+            var curXIndex = 0 | 0;
+            var curZIndex = 0 | 0;
+            var positionsLength = positions.length;
+            var uvsLength = uvs.length;
+            for (var j = 1 | 0; j <= terrainSub; j++) {
+                axisZLODValue = LODValue;
+                axisXLODValue = LODValue;
+                for (l = 0; l < LODLimits.length; l++) {
+                    LODLimitDown = LODLimits[l];
+                    LODLimitUp = terrainSub - LODLimitDown - 1;
+                    if ((LODngtvZ && j < LODLimitDown) || (LODpstvZ && j > LODLimitUp)) {
+                        axisZLODValue = l + 1 + LODValue;
+                    }
+                    if ((LODngtvX && j < LODLimitDown) || (LODpstvX && j > LODLimitUp)) {
+                        axisXLODValue = l + 1 + LODValue;
+                    }
+                    lodJ = axisZLODValue;
+                    lodI = axisXLODValue;
+                }
+                stepJ += lodJ;
+                stepI += lodI;
+                // seam test
+                if (!seamX) {
+                    curXIndex = mod(deltaSubX + stepI, mapSubX);
+                    if (Math.abs(curXIndex - prevXIndex) > lodI) {
+                        seamX = true;
+                        seamXIndex = stepI;
+                    }
+                    else {
+                        prevXIndex = curXIndex;
+                    }
+                }
+                if (!seamZ) {
+                    curZIndex = mod(deltaSubZ + stepJ, mapSubZ);
+                    if (Math.abs(curZIndex - prevZIndex) > lodJ) {
+                        seamZ = true;
+                        seamZIndex = stepJ;
+                    }
+                    else {
+                        prevZIndex = curZIndex;
+                    }
+                }
+                if (seamZ && seamX) {
+                    break;
+                }
+            }
+            stepI = 0 | 0;
+            stepJ = 0 | 0;
+            lodI = LODValue;
+            lodJ = LODValue;
+            var zIndex = 0 | 0;
+            var xIndex = 0 | 0;
             for (var j = 0 | 0; j <= terrainSub; j++) {
                 // LOD Z
                 axisLODValue = LODValue;
@@ -425,6 +486,7 @@ var BABYLON;
                     }
                     lodJ = axisLODValue;
                 }
+                zIndex = mod(deltaSubZ + stepJ, mapSubZ);
                 for (var i = 0 | 0; i <= terrainSub; i++) {
                     // LOD X
                     axisLODValue = LODValue;
@@ -437,7 +499,8 @@ var BABYLON;
                         lodI = axisLODValue;
                     }
                     // map current index
-                    index = mod(deltaSubZ + stepJ, mapSubZ) * mapSubX + mod(deltaSubX + stepI, mapSubX);
+                    xIndex = mod(deltaSubX + stepI, mapSubX);
+                    index = zIndex * mapSubX + xIndex;
                     terIndex = mod(deltaSubZ + stepJ, terrainIdx) * terrainIdx + mod(deltaSubX + stepI, terrainIdx);
                     // related index in the array of positions (data map)
                     if (datamap) {
@@ -484,6 +547,67 @@ var BABYLON;
                         normals[ribbonPosInd2] = mapNormals[posIndex2];
                         normals[ribbonPosInd3] = mapNormals[posIndex3];
                     }
+                    // uv : the array _mapUVs is always populated
+                    uvs[ribbonUVInd] = mapUVs[uvIndex];
+                    uvs[ribbonUVInd + 1] = mapUVs[uvIndex + 1];
+                    // color
+                    if (colormap) {
+                        colors[ribbonColInd1] = mapColors[colIndex];
+                        colors[ribbonColInd2] = mapColors[colIndex + 1];
+                        colors[ribbonColInd3] = mapColors[colIndex + 2];
+                    }
+                    // seam test on Z
+                    if (seamZ && (seamZIndex == stepJ || stepJ == seamZIndex + 1)) {
+                        var back3 = 3 * terrainSub + 3;
+                        var ind1 = mod(ribbonPosInd1 - back3, positionsLength);
+                        var ind2 = ind1 + 1;
+                        var ind3 = ind1 + 2;
+                        positions[ribbonPosInd1] = positions[ind1];
+                        positions[ribbonPosInd2] = positions[ind2];
+                        positions[ribbonPosInd3] = positions[ind3];
+                        if (dontComputeNormals) {
+                            normals[ribbonPosInd1] = normals[ind1];
+                            normals[ribbonPosInd2] = normals[ind2];
+                            normals[ribbonPosInd3] = normals[ind3];
+                        }
+                        var back2 = 2 * terrainSub + 2;
+                        if (stepJ == seamZIndex + 1) {
+                            var induv = mod(ribbonUVInd - back2, uvsLength);
+                            uvs[ribbonUVInd] = uvs[induv];
+                            uvs[ribbonUVInd + 1] = uvs[induv + 1];
+                            if (colormap) {
+                                colors[ribbonColInd1] = colors[ind1];
+                                colors[ribbonColInd2] = colors[ind2];
+                                colors[ribbonColInd3] = colors[ind3];
+                            }
+                        }
+                    }
+                    // seam test on X
+                    if (seamX && (seamXIndex == stepI || stepI == seamXIndex + 1)) {
+                        var back3 = 3;
+                        var ind1 = mod(ribbonPosInd1 - back3, positionsLength);
+                        var ind2 = ind1 + 1;
+                        var ind3 = ind1 + 2;
+                        positions[ribbonPosInd1] = positions[ind1];
+                        positions[ribbonPosInd2] = positions[ind2];
+                        positions[ribbonPosInd3] = positions[ind3];
+                        if (dontComputeNormals) {
+                            normals[ribbonPosInd1] = normals[ind1];
+                            normals[ribbonPosInd2] = normals[ind2];
+                            normals[ribbonPosInd3] = normals[ind3];
+                        }
+                        var back2 = 2;
+                        if (stepI == seamXIndex + 1) {
+                            var induv = mod(ribbonUVInd - back2, uvsLength);
+                            uvs[ribbonUVInd] = uvs[induv];
+                            uvs[ribbonUVInd + 1] = uvs[induv + 1];
+                            if (colormap) {
+                                colors[ribbonColInd1] = colors[ind1];
+                                colors[ribbonColInd2] = colors[ind2];
+                                colors[ribbonColInd3] = colors[ind3];
+                            }
+                        }
+                    }
                     // bbox internal update
                     if (positions[ribbonPosInd1] < bbMin.x) {
                         bbMin.x = positions[ribbonPosInd1];
@@ -503,15 +627,6 @@ var BABYLON;
                     if (positions[ribbonPosInd3] > bbMax.z) {
                         bbMax.z = positions[ribbonPosInd3];
                     }
-                    // color
-                    if (colormap) {
-                        colors[ribbonColInd1] = mapColors[colIndex];
-                        colors[ribbonColInd2] = mapColors[colIndex + 1];
-                        colors[ribbonColInd3] = mapColors[colIndex + 2];
-                    }
-                    // uv : the array _mapUVs is always populated
-                    uvs[ribbonUVInd] = mapUVs[uvIndex];
-                    uvs[ribbonUVInd + 1] = mapUVs[uvIndex + 1];
                     // call to user custom function with the current updated vertex object
                     if (useCustomVertexFunction) {
                         var vertex = DynamicTerrain._vertex;
@@ -606,8 +721,14 @@ var BABYLON;
                     }
                     stepI += lodI;
                 }
-                stepI = 0;
+                if (seamX && seamXIndex + 1 == stepI) {
+                    seamX = false;
+                }
+                if (seamZ && seamZIndex + 1 == stepJ) {
+                    seamZ = false;
+                }
                 stepJ += lodJ;
+                stepI = 0;
             }
             if (particleMap) {
                 sps.setParticles();
@@ -902,8 +1023,8 @@ var BABYLON;
         DynamicTerrain.CreateUVMapToRef = function (subX, subZ, mapUVs) {
             for (var h = 0; h < subZ; h++) {
                 for (var w = 0; w < subX; w++) {
-                    mapUVs[(h * subX + w) * 2] = w / subX;
-                    mapUVs[(h * subX + w) * 2 + 1] = h / subZ;
+                    mapUVs[(h * subX + w) * 2] = w / (subX - 1);
+                    mapUVs[(h * subX + w) * 2 + 1] = h / (subZ - 1);
                 }
             }
         };
