@@ -168,15 +168,14 @@ HTML tag
 
 ### In NodeJS
 
-	require("meshwriter");
-	# use global.MeshWriter
+	Wrapper   = require("meshwriter");
+	Writer    = Wrapper.MeshWriter(scene, {scale:scale});
 
-### Remember Earcut
+### Earcut
 
-Earcut is a simple, stable and small utility that is needed by PolygonMeshBuilder, which MeshWriter calls.&nbsp;
-If you haven't otherwise loaded Earcut, do so; it is _not_ included in meshwriter.min.js.&nbsp;
-The repo is here: https://github.com/mapbox/earcut.&nbsp;
-And there is a recent version in this repo.
+Earcut is a simple, stable and small utility that is needed by BABYLON.PolygonMeshBuilder, which MeshWriter calls.&nbsp;
+As of version **1.2.0** (December 2019) Earcut is included in meshwriter.min.js.&nbsp;
+There is no need to load Earcut for MeshWriter.
 
 ## Custom font packages
 
@@ -190,4 +189,5 @@ Think of this as two steps.
 MeshWriter-Font (https://github.com/briantbutton/meshwriter-font) addresses the first step.&nbsp;
 It will convert most common font files into MeshWriter compatible font files.&nbsp;
 
-To create a custom build (a new meshwriter.min.js) with your custom fonts, refer to the README in this repo in the 'fonts' directory.
+For the second step, refer to the README in this repo in the 'fonts' directory.&nbsp;
+It will help you create a build with your custom fonts (i.e. a new meshwriter.min.js).
