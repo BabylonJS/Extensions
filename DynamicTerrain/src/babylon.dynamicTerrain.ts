@@ -98,8 +98,8 @@ module BABYLON {
          * @param {*} mapSubZ the data map number of z subdivisions : integer
          * @param {*} terrainSub the wanted terrain number of subdivisions : integer, multiple of 2.
          * @param {*} mapUVs the array of the map UV data (optional) : u,v successive values, each between 0 and 1.
-         * @param {*} mapColors the array of the map Color data (optional) : x, y, z successive float values.
-         * @param {*} mapNormals the array of the map normal data (optional) : r,g,b successive values, each between 0 and 1.
+         * @param {*} mapColors the array of the map Color data (optional) : r,g,b successive values, each between 0 and 1.
+         * @param {*} mapNormals the array of the map normal data (optional) : x, y, z successive float values.
          * @param {*} invertSide boolean, to invert the terrain mesh upside down. Default false.
          * @param {*} camera the camera to link the terrain to. Optional, by default the scene active camera
          * @param {*} SPmapData an array of arrays or Float32Arrays (one per particle type) of object data (position, rotation, scaling) on the map. Optional.
@@ -510,6 +510,7 @@ module BABYLON {
             let curZIndex = 0|0;
             let positionsLength = positions.length;
             let uvsLength = uvs.length;
+            let colorsLength = colors.length;
 
             for (let j = 1|0; j <= terrainSub; j++) {
                 axisZLODValue = LODValue;
@@ -667,14 +668,16 @@ module BABYLON {
                             normals[ribbonPosInd3] = normals[ind3];
                         }
                         let back2 = 2 * terrainSub + 2;
+                        let back4 = 2 * back2;
                         if (stepJ == seamZIndex + 1) {
                             let induv = mod(ribbonUVInd - back2, uvsLength);
                             uvs[ribbonUVInd] = uvs[induv];
                             uvs[ribbonUVInd + 1] = uvs[induv + 1];
                             if (colormap) {
-                                colors[ribbonColInd1] = colors[ind1];
-                                colors[ribbonColInd2] = colors[ind2];
-                                colors[ribbonColInd3] = colors[ind3];
+                                let indcol = mod(ribbonColInd - back4, colorsLength);
+                                colors[ribbonColInd1] = colors[indcol];
+                                colors[ribbonColInd2] = colors[indcol + 1];
+                                colors[ribbonColInd3] = colors[indcol + 2];
                             }
                         }
                     }
@@ -694,14 +697,16 @@ module BABYLON {
                             normals[ribbonPosInd3] = normals[ind3];
                         }
                         let back2 = 2;
+                        let back4 = 4;
                         if (stepI == seamXIndex + 1) {
                             let induv = mod(ribbonUVInd - back2, uvsLength);
                             uvs[ribbonUVInd] = uvs[induv];
                             uvs[ribbonUVInd + 1] = uvs[induv + 1];
                             if (colormap) {
-                                colors[ribbonColInd1] = colors[ind1];
-                                colors[ribbonColInd2] = colors[ind2];
-                                colors[ribbonColInd3] = colors[ind3];
+                                let indcol = mod(ribbonColInd - back4, colorsLength);
+                                colors[ribbonColInd1] = colors[indcol];
+                                colors[ribbonColInd2] = colors[indcol + 1];
+                                colors[ribbonColInd3] = colors[indcol + 2];
                             }
                         }
                     }
