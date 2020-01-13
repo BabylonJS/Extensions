@@ -86,8 +86,8 @@ declare module BABYLON {
          * @param {*} mapSubZ the data map number of z subdivisions : integer
          * @param {*} terrainSub the wanted terrain number of subdivisions : integer, multiple of 2.
          * @param {*} mapUVs the array of the map UV data (optional) : u,v successive values, each between 0 and 1.
-         * @param {*} mapColors the array of the map Color data (optional) : x, y, z successive float values.
-         * @param {*} mapNormals the array of the map normal data (optional) : r,g,b successive values, each between 0 and 1.
+         * @param {*} mapColors the array of the map Color data (optional) : r,g,b successive values, each between 0 and 1.
+         * @param {*} mapNormals the array of the map normal data (optional) : x, y, z successive float values.
          * @param {*} invertSide boolean, to invert the terrain mesh upside down. Default false.
          * @param {*} camera the camera to link the terrain to. Optional, by default the scene active camera
          * @param {*} SPmapData an array of arrays or Float32Arrays (one per particle type) of object data (position, rotation, scaling) on the map. Optional.
