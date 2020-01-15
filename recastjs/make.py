@@ -113,7 +113,7 @@ def build():
       
     stage('Link')
 
-    emscripten.Building.link(['glue.bc'] + ['librecastjs.a'], 'recastjs.bc')
+    emscripten.Building.emcc('-DNOTHING_WAKA_WAKA',['glue.bc'] + ['librecastjs.a'], 'recastjs.bc')
     assert os.path.exists('recastjs.bc')
 
     stage('emcc: ' + ' '.join(emcc_args))
