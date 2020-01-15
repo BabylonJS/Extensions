@@ -14,11 +14,17 @@ declare module BABYLON {
         private _SPuvData;
         private _sps;
         private _spsTypeStartIndexes;
-        private _nbAvailablePerType;
+        private _nbAvailableParticlesPerType;
         private _spsNbPerType;
         private _particleDataStride;
         private _particleColorStride;
         private _particleUVStride;
+        private _instanceMapData;
+        private _instanceColorData;
+        private _nbAvailableInstancesPerType;
+        private _sourceMeshes;
+        private _typeSPS;
+        private _typeInstance;
         private _scene;
         private _subToleranceX;
         private _subToleranceZ;
@@ -52,6 +58,8 @@ declare module BABYLON {
         private _mapSPData;
         private _colorSPData;
         private _uvSPData;
+        private _mapInstanceData;
+        private _colorInstanceData;
         private _mapQuads;
         private static _vertex;
         private _averageSubSizeX;
@@ -76,6 +84,10 @@ declare module BABYLON {
         private static _norm;
         private static _bbMin;
         private static _bbMax;
+        private static _pos;
+        private static _scl;
+        private static _quat;
+        private static _mat;
         /**
          * constructor
          * @param name
@@ -92,8 +104,11 @@ declare module BABYLON {
          * @param {*} camera the camera to link the terrain to. Optional, by default the scene active camera
          * @param {*} SPmapData an array of arrays or Float32Arrays (one per particle type) of object data (position, rotation, scaling) on the map. Optional.
          * @param {*} sps the Solid Particle System used to manage the particles. Required when used with SPmapData.
-         * @param {*} SPcolorData an array of arrays or Float32Arrays (one per particle type) of object colors on the map. One series of r, g, b, a floats per object. Optional, requires a SPmapData and a sps to be passed.
-         * @param {*} SPuvData an array of arrays or Float32Arrays (one per particle type) of object uvs on the map. One series of x, y, z, w floats per object. Optional, requires a SPmapData and a sps to be passed.
+         * @param {*} SPcolorData an optional array of arrays or Float32Arrays (one per particle type) of object colors on the map. One series of r, g, b, a floats per object. Optional, requires a SPmapData and a sps to be passed.
+         * @param {*} SPuvData an optional array of arrays or Float32Arrays (one per particle type) of object uvs on the map. One series of x, y, z, w floats per object. Optional, requires a SPmapData and a sps to be passed.
+         * @param {*} instanceMapData an array of arrays or Float32Arrays (one per instance type) of object data (position, rotation, scaling) on the map. Optional.
+         * @param {*} sourceMeshes an array of source meshes. Required when used with InstanceMapdata.
+         * @param {*} instanceColorData an optional array of arrays or Float32Arrays (one per instance type) of object colors on the map. One series of r, g, b, a floats per object. Optional, requires a InstanceMapData and an sourceMeshes array to be passed.
          */
         constructor(name: string, options: {
             terrainSub?: number;
@@ -109,6 +124,9 @@ declare module BABYLON {
             sps?: SolidParticleSystem;
             SPcolorData?: number[][] | Float32Array[];
             SPuvData?: number[][] | Float32Array[];
+            instanceMapData?: number[][] | Float32Array[];
+            sourceMeshes?: Mesh[];
+            instanceColorData?: number[][] | Float32Array[];
         }, scene: Scene);
         /**
          * Updates the terrain position and shape according to the camera position.
@@ -224,6 +242,10 @@ declare module BABYLON {
          * Returns the terrain.
          */
         createUVMap(): DynamicTerrain;
+        /**
+         * Internal reimplementation of Matrix.ComposeToRef() in order to skip the former call to result._markAsUpdated(), so faster.
+         */
+        private static _ComposeToRef;
         /**
          * boolean : if the terrain must be recomputed every frame.
          */
