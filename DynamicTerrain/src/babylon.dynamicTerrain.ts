@@ -600,7 +600,7 @@ module BABYLON {
                 var quat = DynamicTerrain._quat;
                 var mat = DynamicTerrain._mat;
                 posVct.copyFromFloats(0, 0, 0);
-                sclVct.copyFromFloats(1, 1, 1);
+                sclVct.copyFromFloats(0, 0, 0);
                 quat.copyFromFloats(0, 0, 0, 1);
                 for (let t = 0; t < sourceMeshes.length; t++) {
                     let sourceMesh = sourceMeshes[t];
