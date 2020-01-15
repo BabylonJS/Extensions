@@ -147,6 +147,9 @@ interface Crowd {
     [Value] Vec3 getAgentPosition([Const] long idx);
     [Value] Vec3 getAgentVelocity([Const] long idx);
     void agentGoto([Const] long idx, [Const, Ref] Vec3 destination);
+    void agentTeleport([Const] long idx, [Const, Ref] Vec3 destination);
+    [Value] dtCrowdAgentParams getAgentParameters([Const] long idx);
+    void setAgentParameters([Const] long idx, [Const] dtCrowdAgentParams params);
     void setDefaultQueryExtent([Const, Ref] Vec3 extent);
     [Value] Vec3 getDefaultQueryExtent();
 };
