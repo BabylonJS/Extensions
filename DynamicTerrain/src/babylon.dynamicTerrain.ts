@@ -1009,6 +1009,7 @@ module BABYLON {
                                             tmpCol[0] = instance_colorData[idc]
                                             tmpCol[1] = instance_colorData[idc + 1];
                                             tmpCol[2] = instance_colorData[idc + 2];
+                                            tmpCol[3] = instance_colorData[idc + 3];
                                             colorBuffer.updateDirectly(tmpCol, colorBufferIndex);
                                         }                                        
 

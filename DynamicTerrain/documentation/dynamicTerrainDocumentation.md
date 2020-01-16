@@ -774,14 +774,22 @@ We used here the parameters `i`, `j` and the vertex `position` property.
 ## More Advanced Terrain
 Having a map depicting the relief is sometimes not enough.  
 We may want to render repetitive objects referenced in the map into the landscape like buildings, trees, etc.  
-The Dynamic Terrain can manage these objects when used with a dedicated Solid Particle System (SPS).  
-The objects are defined in a specific map, besides the ground map, called the Solid Particle Map or SPMap.  
+The Dynamic Terrain can manage these objects when used with a dedicated Solid Particle System (SPS) or with an instance manager.  
+The objects are defined in a specific map, besides the ground map, called the Solid Particle Map (or SPMap) or the Instance Map depending on the  chosen way.  
 
+### The Object Recycler
 How does it work ?  
 As we know now, the terrain renders only the current visible part of the map what can be much bigger and what can have millions coordinates.  
 The dedicated SPS works the same way : it renders the only visible objects from the SPMap in the current terrain by recycling automatically a set pool of solid particles.  
 
 Both the SPMap and the SPS are then passed to the terrain constructor as parameters.  
+
+The Instance manager works exactly the same. The lone difference is that instances are used instead of solid particles.  
+In this case, the Instance Map and the source meshes of the instances are to be passed to the terrain constructor as parameters.  
+
+We can choose to use the SPS or the instance manager, or both together.  
+
+Let's start with the SPS and the SPMap.  
 
 ### The SPMap
 
@@ -947,6 +955,123 @@ The object map (SPMap) requires a terrain data map to work.
 The object color map or the object UV map both require an object map (SPMap) to work.  
 Both are optional.  
 Each one (color or UV) can work independently from the other.  
+
+### The Instance Map
+Now, let's understand how it works with Instances.  
+
+Actually it's exactly the same principle than the one with the solid particles : we create an array of arrays, one by object type, to depict all the objects positions, rotations and scalings.  
+
+Each object type in the map (example: house, tree) is given an array.  
+```javascript
+var instanceMapData = [];
+instanceMapData[0] = [dataHouse1, dataHouse2, ..., dataHouseN];
+instanceMapData[1] = [dataTree1, dataTree2, ..., dataTreeN];
+...
+instanceMapData[t] = [dataObject1, dataObject2, ..., dataObjectN];
+```
+There can be as many object types as we need, but it's required there is at least one `instanceMapData[0]`.  
+There can be as many objects in each type array as we need too and their number can be different from a type to another. When a type is declared, then there must be at least one object in this type.  
+So when passing a Instance Map, there's at least one type and one object in this type.  
+
+The data defining each object is a set of nine successive floats : the object position (x, y, z), the object rotation (x, y, z) and the object scaling (x, y, z).  
+This means that the type array contains simply a long series of successive floats :  
+```javascript
+instanceMapData[0] = [
+    house1Posx, house1Posy, house1Posz, house1Rotx, house1Roty, house1Rotz, house1Sclx, house1Scly, house1Sclz,
+    house2Posx, house2Posy, house2Posz, house2Rotx, house2Roty, house2Rotz, house2Sclx, house2Scly, house2Sclz,
+    ...
+]
+```
+Then the same thing for every other object type.  
+So at least a Instance Map is an array containing an array of 9 floats.  
+
+The single rule to fullfill is to set every object within the map range (this implies that a data map is required for the SPMap to work).  
+Assuming that _(Xmin, Zmin)_ and _(Xmax, Zmax)_ are respectively the minimum and maximum x and z coordinates of the map, then every object must be set at its (x, z) coordinates this way :  
+                      `Xmin <= x <= Xmax and Zmin <= z <= Zmax`   
+
+Note : the object coordinates can be different from the map vertex coordinates : the objects don't need to be on map vertex locations. They even don't need to be on the ground, they can be in the air (clouds) or inside or through the ground surface (tunnels).  
+
+### The Instances
+We need to create as many different meshes as object types.  
+We also create a pool of instances for each mesh.
+We then store these meshes in an array that we call `sourceMeshes`.  
+The order of the meshes in this array is the same than the object type order in the Instance Map.  
+It is required that the number of meshes and the number of types in the map are equal.  
+```javascript
+// assuming mesh1, mesh2 and mesh3 are created
+// create the wanted pools of instances of each one, say 1000 per type here
+for (var i = 0; i < 1000; i++) {
+    mesh1.createInstance("mesh1" + i);
+    mesh2.createInstance("mesh2" + i);
+    mesh3.createInstance("mesh3" + i);
+}
+var sourceMeshes = [mesh1, mesh2, mesh3]; 
+// mesh1 will be the object type 0, mesh2 the object type1 and mesh3 the object type2
+// don't dispose them !
+```
+
+### The Dynamic Terrain with the Instance Map
+Now we have built the instances and an Instance Map, we can just pass them to the DynamicTerrain constructor besides the usual data map.  
+We use the parameter `instanceMapData` and `sourceMeshes` :
+```javascript
+        var terrainSub = 100;        // terrain subdivisions
+        var terrainOptions = {
+            terrainSub: terrainSub, 
+            mapData: mapData, mapSubX: mapSubX, mapSubZ: mapSubZ, 
+            instanceMapData: instanceMapData,
+            sourceMeshes: meshes
+        };
+        var terrain = new BABYLON.DynamicTerrain("dt", terrainOptions, scene);
+```
+Now the terrain will recycle the instances from each pool and use them to render the objects from the map.
+
+### Instance Colors
+Like with solid particles, we may want to set a different color per object.  
+Exactly the same way we used for the Instance Map, the object colors are stored in an array of arrays : one array per object type.   
+Each array for a given type then holds series of successive floats related to the colors (r, g, b, a) of each object of this type.   
+```javascript
+// Object Colors
+var instanceColorData = [];
+instanceColorData[0] = [colorHouse1, colorHouse2, ..., colorHouseN];
+instanceColorData[1] = [colorTree1, colorTree2, ..., colorTreeN];
+...
+instanceColorData[t] = [colorObject1, colorObject2, ..., colorObjectN];
+```
+The data defining each object color is a set of four successive floats : the object color (r, g, b, a).   
+This means that the type array contains simply a long series of successive floats :  
+```javascript
+// Color example, first object type
+instanceColorData[0] = [
+    house1Col_r, house1Col_g, house1Col_b, house1Col_a,
+    house2Col_r, house2Col_g, house2Col_b, house2Col_a,
+    ...
+]
+```
+We then pass the object colors to the DynamicTerrain constructor besides the Instance Map and the Source Meshes.  
+We use the parameter `instanceColorData`. 
+```javascript
+        var terrainSub = 100;        // terrain subdivisions
+        var terrainOptions = {
+            terrainSub: terrainSub, 
+            mapData: mapData, mapSubX: mapSubX, mapSubZ: mapSubZ, 
+            mapColors: mapColors, 
+            instanceMapData: instanceMapData,
+            instanceColorData: instanceColorData,
+            sourceMeshes: meshes
+        };
+        var terrain = new BABYLON.DynamicTerrain("dt", terrainOptions, scene);
+```
+### Choosing the SPS or the Instances ?
+Why use the instances more than the SPS ? or the contrary ?
+
+The SPS performance depends on the global number of vertices, not on the number of particles.
+Unless we use MultiMaterials, the SPS will render particles from different geometries, colors and textures in a single draw call.
+So if the objects need many different geometries, colors, textures and don’t have such a big number of vertices, the SPS may be the right choice.
+
+The performance of instances depends more on the global instance number. There’ll be one draw call per instance type and each type will share the same geometry (position, rotation, scaling can vary though) and the same texture. They aren’t really sped down by the number of vertices.
+So if the objects are high poly, numerous but with the same geometries and textures, instances should be preferred.
+
+As both have quite the same declarations in the terrain constructor (only parameter names differ), it’s pertinent to test in the actual case to check what fits best with our needs.
 
 
 ## Examples 
