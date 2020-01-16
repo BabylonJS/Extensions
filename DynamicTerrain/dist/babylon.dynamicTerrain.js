@@ -282,6 +282,7 @@ var BABYLON;
             if (this._mapInstanceData) {
                 var x0 = mapData[0];
                 var z0 = mapData[2];
+                this._colorBuffers = [];
                 for (var t = 0; t < instanceMapData.length; t++) {
                     var data = instanceMapData[t];
                     var nb = (data.length / dataStride) | 0;
@@ -314,6 +315,7 @@ var BABYLON;
                 var nbAvailableInstancesPerType = [];
                 this._nbAvailableInstancesPerType = nbAvailableInstancesPerType;
                 var typeNb = this._sourceMeshes.length;
+                var engine = this._scene.getEngine();
                 for (var t = 0; t < typeNb; t++) {
                     var mesh = this._sourceMeshes[t];
                     var nb = mesh.instances.length;
@@ -324,6 +326,15 @@ var BABYLON;
                         instance.freezeWorldMatrix();
                         instance.alwaysSelectAsActiveMesh = true;
                         instance.doNotSyncBoundingInfo = true;
+                    }
+                    if (this._colorInstanceData) {
+                        var colorArray = new Float32Array(4 * (mesh.instances.length + 1));
+                        for (var c = 0; c < colorArray.length; c++) {
+                            colorArray[c] = 1;
+                        }
+                        var colorBuffer = new BABYLON.VertexBuffer(engine, colorArray, BABYLON.VertexBuffer.ColorKind, true, false, 4, true);
+                        mesh.setVerticesBuffer(colorBuffer);
+                        this._colorBuffers.push(colorBuffer);
                     }
                 }
             }
@@ -498,10 +509,8 @@ var BABYLON;
                 var sclVct = DynamicTerrain._scl;
                 var posVct = DynamicTerrain._pos;
                 var quat = DynamicTerrain._quat;
+                var matZero = DynamicTerrain._matZero;
                 var mat = DynamicTerrain._mat;
-                posVct.copyFromFloats(0, 0, 0);
-                sclVct.copyFromFloats(0, 0, 0);
-                quat.copyFromFloats(0, 0, 0, 1);
                 for (var t = 0; t < sourceMeshes.length; t++) {
                     var sourceMesh = sourceMeshes[t];
                     var instancedBuffer = sourceMesh.worldMatrixInstancedBuffer;
@@ -509,8 +518,7 @@ var BABYLON;
                         var instances = sourceMesh.instances;
                         var offset = 0;
                         for (var i = 0; i < instances.length; i++) {
-                            composeToRef(sclVct, quat, posVct, mat);
-                            instancedBuffer.set(mat, offset);
+                            instancedBuffer.set(matZero, offset);
                             offset += 16;
                         }
                     }
@@ -832,6 +840,8 @@ var BABYLON;
                         // are there objects in this quad ?
                         if (quads[index]) {
                             var quad = quads[index][typeInstance];
+                            var colorBuffers = this._colorBuffers;
+                            var tmpCol = DynamicTerrain._col;
                             for (var t = 0; t < quad.length; t++) {
                                 var sourceMesh = this._sourceMeshes[t];
                                 var instances = sourceMesh.instances;
@@ -840,6 +850,7 @@ var BABYLON;
                                 var instanceIndexes = quad[t];
                                 if (instanceColorMap) {
                                     var instance_colorData = instanceColorData[t];
+                                    var colorBuffer = colorBuffers[t];
                                 }
                                 if (instanceIndexes && instancedBuffer) {
                                     var nbQuadInstances = instanceIndexes.length;
@@ -852,7 +863,8 @@ var BABYLON;
                                         var ix = instanceIndexes[iIdx];
                                         var idm = ix * dataStride;
                                         // set successive instance of this type
-                                        var bufferIndex = (iIdx + used) * 16; // the world matrix instanced buffer offset is 16
+                                        var nextFree = iIdx + used;
+                                        var bufferIndex = nextFree * 16; // the world matrix instanced buffer offset is 16
                                         var x = data[idm];
                                         var y = data[idm + 1];
                                         var z = data[idm + 2];
@@ -866,7 +878,14 @@ var BABYLON;
                                         sclVct.copyFromFloats(data[idm + 6], data[idm + 7], data[idm + 8]);
                                         composeToRef(sclVct, quat, posVct, mat);
                                         instancedBuffer.set(mat, bufferIndex);
-                                        // color map treatment to be added here
+                                        if (instanceColorData) {
+                                            var idc = ix * colorStride;
+                                            var colorBufferIndex = nextFree * 4; // the color instanced buffet offset is 4
+                                            tmpCol[0] = instance_colorData[idc];
+                                            tmpCol[1] = instance_colorData[idc + 1];
+                                            tmpCol[2] = instance_colorData[idc + 2];
+                                            colorBuffer.updateDirectly(tmpCol, colorBufferIndex);
+                                        }
                                         available = available - 1;
                                         used = used + 1;
                                         min = (available < nbQuadInstances) ? available : nbQuadInstances;
@@ -1718,9 +1737,11 @@ var BABYLON;
         DynamicTerrain._bbMax = BABYLON.Vector3.Zero();
         DynamicTerrain._pos = BABYLON.Vector3.Zero();
         DynamicTerrain._scl = BABYLON.Vector3.Zero();
-        // tmp quaternion and matrix
+        // tmp quaternion and matrix or arrays
         DynamicTerrain._quat = BABYLON.Quaternion.Identity();
         DynamicTerrain._mat = new Float32Array(16);
+        DynamicTerrain._matZero = new Float32Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]);
+        DynamicTerrain._col = new Float32Array(4);
         return DynamicTerrain;
     }());
     BABYLON.DynamicTerrain = DynamicTerrain;

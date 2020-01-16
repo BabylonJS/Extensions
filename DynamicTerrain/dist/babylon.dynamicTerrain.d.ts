@@ -60,6 +60,7 @@ declare module BABYLON {
         private _uvSPData;
         private _mapInstanceData;
         private _colorInstanceData;
+        private _colorBuffers;
         private _mapQuads;
         private static _vertex;
         private _averageSubSizeX;
@@ -88,6 +89,8 @@ declare module BABYLON {
         private static _scl;
         private static _quat;
         private static _mat;
+        private static _matZero;
+        private static _col;
         /**
          * constructor
          * @param name

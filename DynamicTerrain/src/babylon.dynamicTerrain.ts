@@ -62,6 +62,7 @@ module BABYLON {
         private _uvSPData: boolean = false;                 // boolean : true if a SPuvData array is passed as parameter
         private _mapInstanceData: boolean = false;          // boolean : true if a instanceMapData array is passed as parameter
         private _colorInstanceData: boolean = false;        // boolean : true if a instanceColorData array is passed as parameter
+        private _colorBuffers: VertexBuffer[];              // Reference to the created Color Buffers for the instances
         private _mapQuads: number[][][][];                  // map quads of types of particle/instance index in the SPmapData/instanceMapData array mapQuads[mapIndex]["sps" | "instances"][partType] = [pIndex1, pIndex2, ...] (particle/instance indexes in SPmapData/instanceMapData)
         private static _vertex: any = {                     // current vertex object passed to the user custom function
             position: Vector3.Zero(),                           // vertex position in the terrain space (Vector3)
@@ -97,9 +98,11 @@ module BABYLON {
         private static _bbMax: Vector3 = Vector3.Zero();
         private static _pos: Vector3 = Vector3.Zero();
         private static _scl: Vector3 = Vector3.Zero();
-        // tmp quaternion and matrix
+        // tmp quaternion and matrix or arrays
         private static _quat: Quaternion = Quaternion.Identity();
         private static _mat: Float32Array = new Float32Array(16);
+        private static _matZero: Float32Array = new Float32Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]);
+        private static _col: Float32Array = new Float32Array(4);
 
 
         /**
@@ -365,6 +368,7 @@ module BABYLON {
             if (this._mapInstanceData) {
                 let x0 = mapData[0];
                 let z0 = mapData[2];
+                this._colorBuffers = [];
                     
                 for (let t = 0; t < instanceMapData.length; t++) {
 
@@ -399,6 +403,7 @@ module BABYLON {
                 const nbAvailableInstancesPerType = [];
                 this._nbAvailableInstancesPerType = nbAvailableInstancesPerType;
                 const typeNb = this._sourceMeshes.length;
+                let engine = this._scene.getEngine();
                 for (let t = 0; t < typeNb; t++) {
                     let mesh = this._sourceMeshes[t];
                     let nb = mesh.instances.length;
@@ -409,6 +414,15 @@ module BABYLON {
                         instance.freezeWorldMatrix();
                         instance.alwaysSelectAsActiveMesh = true;
                         instance.doNotSyncBoundingInfo = true;
+                    }
+                    if (this._colorInstanceData) {
+                        let colorArray = new Float32Array(4 * (mesh.instances.length + 1));
+                        for (let c = 0; c < colorArray.length; c++) {
+                            colorArray[c] = 1;
+                        }
+                        let colorBuffer = new BABYLON.VertexBuffer(engine, colorArray, BABYLON.VertexBuffer.ColorKind, true, false, 4, true);
+                        mesh.setVerticesBuffer(colorBuffer);
+                        this._colorBuffers.push(colorBuffer);
                     }
                 }
             }
@@ -598,10 +612,8 @@ module BABYLON {
                 var sclVct = DynamicTerrain._scl;
                 var posVct = DynamicTerrain._pos;
                 var quat = DynamicTerrain._quat;
+                var matZero = DynamicTerrain._matZero;
                 var mat = DynamicTerrain._mat;
-                posVct.copyFromFloats(0, 0, 0);
-                sclVct.copyFromFloats(0, 0, 0);
-                quat.copyFromFloats(0, 0, 0, 1);
                 for (let t = 0; t < sourceMeshes.length; t++) {
                     let sourceMesh = sourceMeshes[t];
                     let instancedBuffer = sourceMesh.worldMatrixInstancedBuffer;
@@ -609,8 +621,7 @@ module BABYLON {
                         let instances = sourceMesh.instances;
                         let offset = 0;
                         for (let i = 0; i < instances.length; i++) {
-                            composeToRef(sclVct, quat, posVct, mat);
-                            instancedBuffer.set(mat, offset);
+                            instancedBuffer.set(matZero, offset);
                             offset += 16;  
                         }
                     }
@@ -954,6 +965,8 @@ module BABYLON {
                         // are there objects in this quad ?
                         if (quads[index]) {
                             let quad = quads[index][typeInstance];
+                            let colorBuffers = this._colorBuffers;
+                            let tmpCol = DynamicTerrain._col;
                             for (let t = 0; t < quad.length; t++) {
                                 let sourceMesh = this._sourceMeshes[t];
                                 let instances = sourceMesh.instances;
@@ -962,6 +975,7 @@ module BABYLON {
                                 let instanceIndexes = quad[t];
                                 if (instanceColorMap) {
                                     var instance_colorData = instanceColorData[t];
+                                    var colorBuffer = colorBuffers[t];
                                 }
                                 if (instanceIndexes && instancedBuffer) {
                                     const nbQuadInstances = instanceIndexes.length;
@@ -974,7 +988,8 @@ module BABYLON {
                                         let  ix = instanceIndexes[iIdx];
                                         let idm = ix * dataStride;
                                         // set successive instance of this type
-                                        let bufferIndex = (iIdx + used) * 16; // the world matrix instanced buffer offset is 16
+                                        let nextFree = iIdx + used;
+                                        let bufferIndex = nextFree * 16; // the world matrix instanced buffer offset is 16
                                         let x = data[idm];
                                         let y = data[idm + 1];
                                         let z = data[idm + 2];
@@ -988,8 +1003,14 @@ module BABYLON {
                                         sclVct.copyFromFloats(data[idm + 6], data[idm + 7], data[idm + 8]);
                                         composeToRef(sclVct, quat, posVct, mat);
                                         instancedBuffer.set(mat, bufferIndex);
-                                        
-                                        // color map treatment to be added here
+                                        if (instanceColorData) {
+                                            let idc = ix * colorStride;
+                                            let colorBufferIndex = nextFree * 4;  // the color instanced buffet offset is 4
+                                            tmpCol[0] = instance_colorData[idc]
+                                            tmpCol[1] = instance_colorData[idc + 1];
+                                            tmpCol[2] = instance_colorData[idc + 2];
+                                            colorBuffer.updateDirectly(tmpCol, colorBufferIndex);
+                                        }                                        
 
                                         available = available - 1;
                                         used = used + 1;
