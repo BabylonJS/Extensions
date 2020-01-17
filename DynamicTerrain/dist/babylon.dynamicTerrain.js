@@ -488,6 +488,15 @@ var BABYLON;
             var instanceMap = (mapInstanceData && quads);
             var instanceColorMap = (instanceMap && this._colorInstanceData);
             var precomputeInstances = this._precomputeInstances;
+            var sourceMeshes = this._sourceMeshes;
+            var nbAvailableInstancesPerType = this._nbAvailableInstancesPerType;
+            var composeToRef = DynamicTerrain._ComposeToRef;
+            var copyArrayValuesFromToRef = DynamicTerrain._CopyArrayValuesFromToRef;
+            var instanceWM = this._instanceWM;
+            var sclVct = DynamicTerrain._scl;
+            var posVct = DynamicTerrain._pos;
+            var quat = DynamicTerrain._quat;
+            var matZero = DynamicTerrain._matZero;
             var l = 0 | 0;
             var index = 0 | 0; // current vertex index in the map data array
             var posIndex1 = 0 | 0; // current position index in the map data array
@@ -531,15 +540,6 @@ var BABYLON;
             }
             // if instance data
             if (instanceMap) {
-                var sourceMeshes = this._sourceMeshes;
-                var nbAvailableInstancesPerType = this._nbAvailableInstancesPerType;
-                var composeToRef = DynamicTerrain._ComposeToRef;
-                var copyArrayValuesFromToRef = DynamicTerrain._CopyArrayValuesFromToRef;
-                var instanceWM = this._instanceWM;
-                var sclVct = DynamicTerrain._scl;
-                var posVct = DynamicTerrain._pos;
-                var quat = DynamicTerrain._quat;
-                var matZero = DynamicTerrain._matZero;
                 var mat = DynamicTerrain._mat;
                 for (var t = 0; t < sourceMeshes.length; t++) {
                     var sourceMesh = sourceMeshes[t];
