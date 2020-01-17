@@ -591,6 +591,15 @@ module BABYLON {
             const instanceMap = (mapInstanceData && quads);
             const instanceColorMap = (instanceMap && this._colorInstanceData);
             const precomputeInstances = this._precomputeInstances;
+            var sourceMeshes = this._sourceMeshes;
+            var nbAvailableInstancesPerType = this._nbAvailableInstancesPerType;
+            var composeToRef = DynamicTerrain._ComposeToRef;
+            var copyArrayValuesFromToRef = DynamicTerrain._CopyArrayValuesFromToRef;
+            var instanceWM = this._instanceWM;
+            var sclVct = DynamicTerrain._scl;
+            var posVct = DynamicTerrain._pos;
+            var quat = DynamicTerrain._quat;
+            var matZero = DynamicTerrain._matZero;
 
             let l = 0|0;
             let index = 0|0;          // current vertex index in the map data array
@@ -638,15 +647,6 @@ module BABYLON {
 
             // if instance data
             if (instanceMap) {
-                var sourceMeshes = this._sourceMeshes;
-                var nbAvailableInstancesPerType = this._nbAvailableInstancesPerType;
-                var composeToRef = DynamicTerrain._ComposeToRef;
-                var copyArrayValuesFromToRef = DynamicTerrain._CopyArrayValuesFromToRef;
-                var instanceWM = this._instanceWM;
-                var sclVct = DynamicTerrain._scl;
-                var posVct = DynamicTerrain._pos;
-                var quat = DynamicTerrain._quat;
-                var matZero = DynamicTerrain._matZero;
                 var mat = DynamicTerrain._mat;
                 for (let t = 0; t < sourceMeshes.length; t++) {
                     let sourceMesh = sourceMeshes[t];

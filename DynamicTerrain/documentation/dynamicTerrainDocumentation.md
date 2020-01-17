@@ -1019,11 +1019,13 @@ We use the parameter `instanceMapData` and `sourceMeshes` :
             terrainSub: terrainSub, 
             mapData: mapData, mapSubX: mapSubX, mapSubZ: mapSubZ, 
             instanceMapData: instanceMapData,
-            sourceMeshes: meshes
+            sourceMeshes: sourceMeshes
         };
         var terrain = new BABYLON.DynamicTerrain("dt", terrainOptions, scene);
 ```
 Now the terrain will recycle the instances from each pool and use them to render the objects from the map.
+Example : 3000 instances from 3 different types used to render dozens thousands objects from the map. A free camera is used.  
+https://www.babylonjs-playground.com/#FJNR5#364  
 
 ### Instance Colors
 Like with solid particles, we may want to set a different color per object.  
@@ -1057,10 +1059,11 @@ We use the parameter `instanceColorData`.
             mapColors: mapColors, 
             instanceMapData: instanceMapData,
             instanceColorData: instanceColorData,
-            sourceMeshes: meshes
+            sourceMeshes: sourceMeshes
         };
         var terrain = new BABYLON.DynamicTerrain("dt", terrainOptions, scene);
 ```
+Example : https://www.babylonjs-playground.com/#FJNR5#370  
 ### Choosing the SPS or the Instances ?
 Why use the instances more than the SPS ? or the contrary ?
 
