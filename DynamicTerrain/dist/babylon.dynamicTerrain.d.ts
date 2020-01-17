@@ -62,6 +62,8 @@ declare module BABYLON {
         private _colorInstanceData;
         private _colorBuffers;
         private _mapQuads;
+        private _instanceWM;
+        private _precomputeInstances;
         private static _vertex;
         private _averageSubSizeX;
         private _averageSubSizeZ;
@@ -112,6 +114,7 @@ declare module BABYLON {
          * @param {*} instanceMapData an array of arrays or Float32Arrays (one per instance type) of object data (position, rotation, scaling) on the map. Optional.
          * @param {*} sourceMeshes an array of source meshes. Required when used with InstanceMapdata.
          * @param {*} instanceColorData an optional array of arrays or Float32Arrays (one per instance type) of object colors on the map. One series of r, g, b, a floats per object. Optional, requires a InstanceMapData and an sourceMeshes array to be passed.
+         * @param {*} precomputeInstances an optional boolean (default true) to precompute all the instance world matrices (faster, but more memory used)
          */
         constructor(name: string, options: {
             terrainSub?: number;
@@ -130,6 +133,7 @@ declare module BABYLON {
             instanceMapData?: number[][] | Float32Array[];
             sourceMeshes?: Mesh[];
             instanceColorData?: number[][] | Float32Array[];
+            precomputeInstances?: boolean;
         }, scene: Scene);
         /**
          * Updates the terrain position and shape according to the camera position.
@@ -249,6 +253,14 @@ declare module BABYLON {
          * Internal reimplementation of Matrix.ComposeToRef() in order to skip the former call to result._markAsUpdated(), so faster.
          */
         private static _ComposeToRef;
+        /**
+         *
+         * @param source Internal : copies a subpart of the source array to the target array
+         * @param start
+         * @param nb
+         * @param target
+         */
+        private static _CopyArrayValuesFromToRef;
         /**
          * boolean : if the terrain must be recomputed every frame.
          */

@@ -64,6 +64,8 @@ module BABYLON {
         private _colorInstanceData: boolean = false;        // boolean : true if a instanceColorData array is passed as parameter
         private _colorBuffers: VertexBuffer[];              // Reference to the created Color Buffers for the instances
         private _mapQuads: number[][][][];                  // map quads of types of particle/instance index in the SPmapData/instanceMapData array mapQuads[mapIndex]["sps" | "instances"][partType] = [pIndex1, pIndex2, ...] (particle/instance indexes in SPmapData/instanceMapData)
+        private _instanceWM: Float32Array[];                // precomputed world matrices of instances per type
+        private _precomputeInstances: boolean = true;       // if the instance WM must be precomputed once before
         private static _vertex: any = {                     // current vertex object passed to the user custom function
             position: Vector3.Zero(),                           // vertex position in the terrain space (Vector3)
             uvs: Vector2.Zero(),                                // vertex uv
@@ -126,6 +128,7 @@ module BABYLON {
          * @param {*} instanceMapData an array of arrays or Float32Arrays (one per instance type) of object data (position, rotation, scaling) on the map. Optional.
          * @param {*} sourceMeshes an array of source meshes. Required when used with InstanceMapdata.
          * @param {*} instanceColorData an optional array of arrays or Float32Arrays (one per instance type) of object colors on the map. One series of r, g, b, a floats per object. Optional, requires a InstanceMapData and an sourceMeshes array to be passed.    
+         * @param {*} precomputeInstances an optional boolean (default true) to precompute all the instance world matrices (faster, but more memory used)
          */
         constructor(name: string, options: {
             terrainSub?: number, 
@@ -143,6 +146,7 @@ module BABYLON {
             instanceMapData?: number[][] | Float32Array[];
             sourceMeshes?: Mesh[];
             instanceColorData?: number[][] | Float32Array[];
+            precomputeInstances?: boolean;
         }, scene: Scene) {
             
             this.name = name;
@@ -163,6 +167,7 @@ module BABYLON {
             this._instanceMapData = options.instanceMapData;
             this._instanceColorData = options.instanceColorData;
             this._sourceMeshes = options.sourceMeshes;
+            this._precomputeInstances = (options.precomputeInstances) ? (options.precomputeInstances) : true;
             
             // initialize the map arrays if not passed as parameters
             this._datamap = (this._mapData) ? true : false;
@@ -369,16 +374,41 @@ module BABYLON {
                 let x0 = mapData[0];
                 let z0 = mapData[2];
                 this._colorBuffers = [];
+                this._instanceWM = [];
+                var posVct = DynamicTerrain._pos;
+                var sclVct = DynamicTerrain._scl;
+                var mat = DynamicTerrain._mat;
+                var quat = DynamicTerrain._quat;
+                var composeToRef = DynamicTerrain._ComposeToRef;
                     
                 for (let t = 0; t < instanceMapData.length; t++) {
 
                     const data = instanceMapData[t];
                     let nb = (data.length / dataStride)|0;
+                    if (this._precomputeInstances) {
+                        this._instanceWM[t] = new Float32Array(nb * 16);   // 16 floats per instance WM
+                        var instanceWM = this._instanceWM[t];
+                    }
                     for (let pIdx = 0;  pIdx < nb; pIdx++) {
                         // instance position x, z in the map
                         let dIdx = pIdx * dataStride;
                         let x = data[dIdx];
+                        let y = data[dIdx + 1];
                         let z = data[dIdx + 2];
+
+                            // precompute all the instance WM and store them
+                        if (this._precomputeInstances) {
+                            posVct.copyFromFloats(x, y, z);
+                            let rx = data[dIdx + 3];
+                            let ry = data[dIdx + 4];
+                            let rz = data[dIdx + 5];
+                            Quaternion.RotationYawPitchRollToRef(ry, rx, rz, quat);
+                            sclVct.copyFromFloats(data[dIdx + 6], data[dIdx + 7], data[dIdx + 8]);
+                            composeToRef(sclVct, quat, posVct, mat);
+                            let wmIndex = 16 * pIdx;
+                            instanceWM.set(mat, wmIndex);
+                        }
+
                         x = x - Math.floor((x - x0) / mapSizeX) * mapSizeX;
                         z = z - Math.floor((z - z0) / mapSizeZ) * mapSizeZ;
                         let col = Math.floor((x - x0) * mapSubX / mapSizeX);
@@ -406,6 +436,7 @@ module BABYLON {
                 let engine = this._scene.getEngine();
                 for (let t = 0; t < typeNb; t++) {
                     let mesh = this._sourceMeshes[t];
+                    mesh.alwaysSelectAsActiveMesh = true;
                     let nb = mesh.instances.length;
                     nbAvailableInstancesPerType[t] = nb;
                     mesh.manualUpdateOfWorldMatrixInstancedBuffer = true;
@@ -559,6 +590,7 @@ module BABYLON {
             const typeInstance = this._typeInstance;
             const instanceMap = (mapInstanceData && quads);
             const instanceColorMap = (instanceMap && this._colorInstanceData);
+            const precomputeInstances = this._precomputeInstances;
 
             let l = 0|0;
             let index = 0|0;          // current vertex index in the map data array
@@ -609,6 +641,8 @@ module BABYLON {
                 var sourceMeshes = this._sourceMeshes;
                 var nbAvailableInstancesPerType = this._nbAvailableInstancesPerType;
                 var composeToRef = DynamicTerrain._ComposeToRef;
+                var copyArrayValuesFromToRef = DynamicTerrain._CopyArrayValuesFromToRef;
+                var instanceWM = this._instanceWM;
                 var sclVct = DynamicTerrain._scl;
                 var posVct = DynamicTerrain._pos;
                 var quat = DynamicTerrain._quat;
@@ -973,6 +1007,7 @@ module BABYLON {
                                 let instancedBuffer = sourceMesh.worldMatrixInstancedBuffer;
                                 let data = instanceMapData[t];
                                 let instanceIndexes = quad[t];
+                                let instWM = instanceWM[t];
                                 if (instanceColorMap) {
                                     var instance_colorData = instanceColorData[t];
                                     var colorBuffer = colorBuffers[t];
@@ -990,18 +1025,24 @@ module BABYLON {
                                         // set successive instance of this type
                                         let nextFree = iIdx + used;
                                         let bufferIndex = nextFree * 16; // the world matrix instanced buffer offset is 16
-                                        let x = data[idm];
-                                        let y = data[idm + 1];
-                                        let z = data[idm + 2];
-                                        x = x + Math.floor((terrainPos.x - x - x0) / mapSizeX) * mapSizeX;
-                                        z = z + Math.floor((terrainPos.z - z - z0) / mapSizeZ) * mapSizeZ;
-                                        posVct.copyFromFloats(x, y, z);
-                                        x = data[idm + 3];
-                                        y = data[idm + 4];
-                                        z = data[idm + 5];
-                                        Quaternion.RotationYawPitchRollToRef(y, x, z, quat);
-                                        sclVct.copyFromFloats(data[idm + 6], data[idm + 7], data[idm + 8]);
-                                        composeToRef(sclVct, quat, posVct, mat);
+                                        
+                                        if (precomputeInstances) {
+                                            copyArrayValuesFromToRef(instWM, ix * 16, 16, mat);
+                                        }
+                                        else {
+                                            let x = data[idm];
+                                            let y = data[idm + 1];
+                                            let z = data[idm + 2];
+                                            x = x + Math.floor((terrainPos.x - x - x0) / mapSizeX) * mapSizeX;
+                                            z = z + Math.floor((terrainPos.z - z - z0) / mapSizeZ) * mapSizeZ;
+                                            posVct.copyFromFloats(x, y, z);
+                                            x = data[idm + 3];
+                                            y = data[idm + 4];
+                                            z = data[idm + 5];
+                                            Quaternion.RotationYawPitchRollToRef(y, x, z, quat);
+                                            sclVct.copyFromFloats(data[idm + 6], data[idm + 7], data[idm + 8]);
+                                            composeToRef(sclVct, quat, posVct, mat);
+                                        }
                                         instancedBuffer.set(mat, bufferIndex);
                                         if (instanceColorData) {
                                             let idc = ix * colorStride;
@@ -1414,6 +1455,18 @@ module BABYLON {
             m[15] = 1;    
         }
 
+        /**
+         * 
+         * @param source Internal : copies a subpart of the source array to the target array
+         * @param start 
+         * @param nb 
+         * @param target 
+         */
+        private static _CopyArrayValuesFromToRef(source: Float32Array|Array<number>, start: number, nb: number, target: Float32Array|Array<number>) {
+            for (let i = 0; i < nb; i++) {
+                target[i] = source[start + i];
+            }
+        }
 
         // Getters / Setters
         /**

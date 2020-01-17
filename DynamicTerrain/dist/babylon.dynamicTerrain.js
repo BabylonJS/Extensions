@@ -22,6 +22,7 @@ var BABYLON;
          * @param {*} instanceMapData an array of arrays or Float32Arrays (one per instance type) of object data (position, rotation, scaling) on the map. Optional.
          * @param {*} sourceMeshes an array of source meshes. Required when used with InstanceMapdata.
          * @param {*} instanceColorData an optional array of arrays or Float32Arrays (one per instance type) of object colors on the map. One series of r, g, b, a floats per object. Optional, requires a InstanceMapData and an sourceMeshes array to be passed.
+         * @param {*} precomputeInstances an optional boolean (default true) to precompute all the instance world matrices (faster, but more memory used)
          */
         function DynamicTerrain(name, options, scene) {
             var _this = this;
@@ -58,6 +59,7 @@ var BABYLON;
             this._uvSPData = false; // boolean : true if a SPuvData array is passed as parameter
             this._mapInstanceData = false; // boolean : true if a instanceMapData array is passed as parameter
             this._colorInstanceData = false; // boolean : true if a instanceColorData array is passed as parameter
+            this._precomputeInstances = true; // if the instance WM must be precomputed once before
             this._averageSubSizeX = 0.0; // map cell average x size
             this._averageSubSizeZ = 0.0; // map cell average z size
             this._terrainSizeX = 0.0; // terrain x size
@@ -88,6 +90,7 @@ var BABYLON;
             this._instanceMapData = options.instanceMapData;
             this._instanceColorData = options.instanceColorData;
             this._sourceMeshes = options.sourceMeshes;
+            this._precomputeInstances = (options.precomputeInstances) ? (options.precomputeInstances) : true;
             // initialize the map arrays if not passed as parameters
             this._datamap = (this._mapData) ? true : false;
             this._uvmap = (this._mapUVs) ? true : false;
@@ -283,14 +286,37 @@ var BABYLON;
                 var x0 = mapData[0];
                 var z0 = mapData[2];
                 this._colorBuffers = [];
+                this._instanceWM = [];
+                var posVct = DynamicTerrain._pos;
+                var sclVct = DynamicTerrain._scl;
+                var mat = DynamicTerrain._mat;
+                var quat = DynamicTerrain._quat;
+                var composeToRef = DynamicTerrain._ComposeToRef;
                 for (var t = 0; t < instanceMapData.length; t++) {
                     var data = instanceMapData[t];
                     var nb = (data.length / dataStride) | 0;
+                    if (this._precomputeInstances) {
+                        this._instanceWM[t] = new Float32Array(nb * 16); // 16 floats per instance WM
+                        var instanceWM = this._instanceWM[t];
+                    }
                     for (var pIdx = 0; pIdx < nb; pIdx++) {
                         // instance position x, z in the map
                         var dIdx = pIdx * dataStride;
                         var x = data[dIdx];
+                        var y_1 = data[dIdx + 1];
                         var z = data[dIdx + 2];
+                        // precompute all the instance WM and store them
+                        if (this._precomputeInstances) {
+                            posVct.copyFromFloats(x, y_1, z);
+                            var rx = data[dIdx + 3];
+                            var ry = data[dIdx + 4];
+                            var rz = data[dIdx + 5];
+                            BABYLON.Quaternion.RotationYawPitchRollToRef(ry, rx, rz, quat);
+                            sclVct.copyFromFloats(data[dIdx + 6], data[dIdx + 7], data[dIdx + 8]);
+                            composeToRef(sclVct, quat, posVct, mat);
+                            var wmIndex = 16 * pIdx;
+                            instanceWM.set(mat, wmIndex);
+                        }
                         x = x - Math.floor((x - x0) / mapSizeX) * mapSizeX;
                         z = z - Math.floor((z - z0) / mapSizeZ) * mapSizeZ;
                         var col = Math.floor((x - x0) * mapSubX / mapSizeX);
@@ -318,6 +344,7 @@ var BABYLON;
                 var engine = this._scene.getEngine();
                 for (var t = 0; t < typeNb; t++) {
                     var mesh = this._sourceMeshes[t];
+                    mesh.alwaysSelectAsActiveMesh = true;
                     var nb = mesh.instances.length;
                     nbAvailableInstancesPerType[t] = nb;
                     mesh.manualUpdateOfWorldMatrixInstancedBuffer = true;
@@ -460,6 +487,7 @@ var BABYLON;
             var typeInstance = this._typeInstance;
             var instanceMap = (mapInstanceData && quads);
             var instanceColorMap = (instanceMap && this._colorInstanceData);
+            var precomputeInstances = this._precomputeInstances;
             var l = 0 | 0;
             var index = 0 | 0; // current vertex index in the map data array
             var posIndex1 = 0 | 0; // current position index in the map data array
@@ -506,6 +534,8 @@ var BABYLON;
                 var sourceMeshes = this._sourceMeshes;
                 var nbAvailableInstancesPerType = this._nbAvailableInstancesPerType;
                 var composeToRef = DynamicTerrain._ComposeToRef;
+                var copyArrayValuesFromToRef = DynamicTerrain._CopyArrayValuesFromToRef;
+                var instanceWM = this._instanceWM;
                 var sclVct = DynamicTerrain._scl;
                 var posVct = DynamicTerrain._pos;
                 var quat = DynamicTerrain._quat;
@@ -848,6 +878,7 @@ var BABYLON;
                                 var instancedBuffer = sourceMesh.worldMatrixInstancedBuffer;
                                 var data = instanceMapData[t];
                                 var instanceIndexes = quad[t];
+                                var instWM = instanceWM[t];
                                 if (instanceColorMap) {
                                     var instance_colorData = instanceColorData[t];
                                     var colorBuffer = colorBuffers[t];
@@ -865,18 +896,23 @@ var BABYLON;
                                         // set successive instance of this type
                                         var nextFree = iIdx + used;
                                         var bufferIndex = nextFree * 16; // the world matrix instanced buffer offset is 16
-                                        var x = data[idm];
-                                        var y = data[idm + 1];
-                                        var z = data[idm + 2];
-                                        x = x + Math.floor((terrainPos.x - x - x0) / mapSizeX) * mapSizeX;
-                                        z = z + Math.floor((terrainPos.z - z - z0) / mapSizeZ) * mapSizeZ;
-                                        posVct.copyFromFloats(x, y, z);
-                                        x = data[idm + 3];
-                                        y = data[idm + 4];
-                                        z = data[idm + 5];
-                                        BABYLON.Quaternion.RotationYawPitchRollToRef(y, x, z, quat);
-                                        sclVct.copyFromFloats(data[idm + 6], data[idm + 7], data[idm + 8]);
-                                        composeToRef(sclVct, quat, posVct, mat);
+                                        if (precomputeInstances) {
+                                            copyArrayValuesFromToRef(instWM, ix * 16, 16, mat);
+                                        }
+                                        else {
+                                            var x = data[idm];
+                                            var y = data[idm + 1];
+                                            var z = data[idm + 2];
+                                            x = x + Math.floor((terrainPos.x - x - x0) / mapSizeX) * mapSizeX;
+                                            z = z + Math.floor((terrainPos.z - z - z0) / mapSizeZ) * mapSizeZ;
+                                            posVct.copyFromFloats(x, y, z);
+                                            x = data[idm + 3];
+                                            y = data[idm + 4];
+                                            z = data[idm + 5];
+                                            BABYLON.Quaternion.RotationYawPitchRollToRef(y, x, z, quat);
+                                            sclVct.copyFromFloats(data[idm + 6], data[idm + 7], data[idm + 8]);
+                                            composeToRef(sclVct, quat, posVct, mat);
+                                        }
                                         instancedBuffer.set(mat, bufferIndex);
                                         if (instanceColorData) {
                                             var idc = ix * colorStride;
@@ -1254,6 +1290,18 @@ var BABYLON;
             m[13] = translation.y;
             m[14] = translation.z;
             m[15] = 1;
+        };
+        /**
+         *
+         * @param source Internal : copies a subpart of the source array to the target array
+         * @param start
+         * @param nb
+         * @param target
+         */
+        DynamicTerrain._CopyArrayValuesFromToRef = function (source, start, nb, target) {
+            for (var i = 0; i < nb; i++) {
+                target[i] = source[start + i];
+            }
         };
         Object.defineProperty(DynamicTerrain.prototype, "refreshEveryFrame", {
             // Getters / Setters
