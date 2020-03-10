@@ -89,6 +89,12 @@ interface dtNavMesh {
 
 };
 
+interface NavmeshData {
+    void NavmeshData();
+    attribute any dataPointer;
+    attribute long size;
+};
+
 interface NavPath
 {
     long getPointCount();
@@ -128,6 +134,10 @@ interface NavMesh {
     void NavMesh();
     void destroy();
     void build([Const] float[] positions, [Const] long positionCount, [Const] long[] indices, [Const] long indexCount, [Const, Ref] rcConfig config);
+    void buildFromNavmeshData(NavmeshData data);
+    [Value] NavmeshData getNavmeshData();
+    void freeNavmeshData(NavmeshData data);
+
     [Value] DebugNavMesh getDebugNavMesh();
     [Value] Vec3 getClosestPoint([Const, Ref] Vec3 position);
     [Value] Vec3 getRandomPointAround([Const, Ref] Vec3 position, float maxRadius);
