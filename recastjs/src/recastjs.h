@@ -76,6 +76,12 @@ struct NavPath
     std::vector<Vec3> mPoints;
 };
 
+struct NavmeshData
+{
+    void* dataPointer;
+    int size;
+};
+
 class NavMesh
 {
 public:
@@ -90,6 +96,9 @@ public:
     }
     void destroy();
     void build(const float* positions, const int positionCount, const int* indices, const int indexCount, const rcConfig& config);
+    void buildFromNavmeshData(NavmeshData* navmeshData);
+    NavmeshData getNavmeshData() const;
+    void freeNavmeshData(NavmeshData* navmeshData);
 
     DebugNavMesh getDebugNavMesh();
     Vec3 getClosestPoint(const Vec3& position);

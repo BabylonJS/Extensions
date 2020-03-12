@@ -397,7 +397,155 @@ void NavMesh::build(const float* positions, const int positionCount, const int* 
     Log("Done");
 }
 
+static const int NAVMESHSET_MAGIC = 'M'<<24 | 'S'<<16 | 'E'<<8 | 'T'; //'MSET';
+static const int NAVMESHSET_VERSION = 1;
 
+struct NavMeshSetHeader
+{
+    int magic;
+    int version;
+    int numTiles;
+    dtNavMeshParams params;
+};
+
+struct NavMeshTileHeader
+{
+    dtTileRef tileRef;
+    int dataSize;
+};
+
+void NavMesh::buildFromNavmeshData(NavmeshData* navmeshData)
+{
+    destroy();
+    unsigned char* bits = (unsigned char*)navmeshData->dataPointer;
+
+    // Read header.
+    NavMeshSetHeader header;
+    size_t readLen = sizeof(NavMeshSetHeader);
+    memcpy(&header, bits, readLen);
+    bits += readLen;
+
+    if (header.magic != NAVMESHSET_MAGIC)
+    {
+        return ;
+    }
+    if (header.version != NAVMESHSET_VERSION)
+    {
+        return ;
+    }
+
+    dtNavMesh* mesh = dtAllocNavMesh();
+    if (!mesh)
+    {
+        return ;
+    }
+    dtStatus status = mesh->init(&header.params);
+    if (dtStatusFailed(status))
+    {
+        return ;
+    }
+
+    // Read tiles.
+    for (int i = 0; i < header.numTiles; ++i)
+    {
+        NavMeshTileHeader tileHeader;
+        readLen = sizeof(tileHeader);
+        memcpy(&tileHeader, bits, readLen);
+        bits += readLen;
+
+        if (!tileHeader.tileRef || !tileHeader.dataSize)
+        {
+            break;
+        }
+
+        unsigned char* data = (unsigned char*)dtAlloc(tileHeader.dataSize, DT_ALLOC_PERM);
+        if (!data)
+        {
+            break;
+        }
+
+        readLen = tileHeader.dataSize;
+        memcpy(data, bits, readLen);
+        bits += readLen;
+
+        mesh->addTile(data, tileHeader.dataSize, DT_TILE_FREE_DATA, tileHeader.tileRef, 0);
+    }
+
+    m_navMesh = mesh;
+
+    m_navQuery = dtAllocNavMeshQuery();
+    if (!m_navQuery)
+    {
+        dtFreeNavMesh(m_navMesh);
+        m_navMesh = nullptr;
+        Log("Load navmesh data: Could not allocate Navmesh query");
+        return ;
+    }
+    status = m_navQuery->init(m_navMesh, 2048);
+    if (dtStatusFailed(status))
+    {
+        dtFreeNavMesh(m_navMesh);
+        m_navMesh = nullptr;
+        Log("Load navmesh data: Could not init Detour navmesh query");
+        return ;
+    }
+}
+
+NavmeshData NavMesh::getNavmeshData() const
+{
+    if (!m_navMesh)
+    {
+        return {0, 0};
+    }
+    unsigned char* bits = nullptr;
+    size_t bitsSize = 0;
+    const dtNavMesh* mesh = m_navMesh;
+
+    // Store header.
+    NavMeshSetHeader header;
+    header.magic = NAVMESHSET_MAGIC;
+    header.version = NAVMESHSET_VERSION;
+    header.numTiles = 0;
+    for (int i = 0; i < mesh->getMaxTiles(); ++i)
+    {
+        const dtMeshTile* tile = mesh->getTile(i);
+        if (!tile || !tile->header || !tile->dataSize) continue;
+        header.numTiles++;
+    }
+    memcpy(&header.params, mesh->getParams(), sizeof(dtNavMeshParams));
+    bits = (unsigned char*)realloc(bits, bitsSize + sizeof(NavMeshSetHeader));
+    memcpy(&bits[bitsSize], &header, sizeof(NavMeshSetHeader));
+    bitsSize += sizeof(NavMeshSetHeader);
+
+    // Store tiles.
+    for (int i = 0; i < mesh->getMaxTiles(); ++i)
+    {
+        const dtMeshTile* tile = mesh->getTile(i);
+        if (!tile || !tile->header || !tile->dataSize) continue;
+
+        NavMeshTileHeader tileHeader;
+        tileHeader.tileRef = mesh->getTileRef(tile);
+        tileHeader.dataSize = tile->dataSize;
+
+        bits = (unsigned char*)realloc(bits, bitsSize + sizeof(tileHeader));
+        memcpy(&bits[bitsSize], &tileHeader, sizeof(tileHeader));
+        bitsSize += sizeof(tileHeader);
+
+        bits = (unsigned char*)realloc(bits, bitsSize + tile->dataSize);
+        memcpy(&bits[bitsSize], tile->data, tile->dataSize);
+        bitsSize += tile->dataSize;
+    }
+
+    NavmeshData navmeshData;
+    navmeshData.dataPointer = bits;
+    navmeshData.size = int(bitsSize);
+    return navmeshData;
+}
+
+void NavMesh::freeNavmeshData(NavmeshData* navmeshData)
+{
+    free(navmeshData->dataPointer);
+}
 
 void NavMesh::navMeshPoly(DebugNavMesh& debugNavMesh, const dtNavMesh& mesh, dtPolyRef ref)
 {
