@@ -10,7 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.15.4",
-    "express-fileupload": "^0.2.0",
+    "express-fileupload": "^1.2.0",
     "serve-static": "^1.12.4"
   }
 }
