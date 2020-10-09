@@ -156,6 +156,7 @@ interface Crowd {
     void update([Const] float dt);
     [Value] Vec3 getAgentPosition([Const] long idx);
     [Value] Vec3 getAgentVelocity([Const] long idx);
+    [Value] Vec3 getAgentNextTargetPath([Const] long idx);
     void agentGoto([Const] long idx, [Const, Ref] Vec3 destination);
     void agentTeleport([Const] long idx, [Const, Ref] Vec3 destination);
     [Value] dtCrowdAgentParams getAgentParameters([Const] long idx);
