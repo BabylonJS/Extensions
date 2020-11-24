@@ -23,6 +23,7 @@ size: number | { width: number, height: number }
 scene: Nullable<Scene>
 onReady?: Function
 options: { generateMipMaps?: boolean, samplingMode?: number }
+name?: string
 ```
 The samplingMode can be one of the following:
 

@@ -184,7 +184,7 @@ export declare class TextureCanvas extends Texture {
     }, scene: Nullable<Scene>, initTexture?: Texture, onReady?: Function, options?: {
         generateMipMaps?: boolean;
         samplingMode?: number;
-    });
+    }, name?: string);
     /**
      * Is the texture ready to be used ? (rendered at least once)
      *

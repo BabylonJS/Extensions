@@ -42,7 +42,7 @@ ctx.drawTexture(myTexture);
 ```
 Playground demo:
 
-[https://www.babylonjs-playground.com/#9S5YZY#10](https://www.babylonjs-playground.com/#9S5YZY#10)
+[https://www.babylonjs-playground.com/#9S5YZY#27](https://www.babylonjs-playground.com/#9S5YZY#27)
 
 ---
 
@@ -71,7 +71,7 @@ scene.registerBeforeRender(() => {
 ```
 Playground demo:
 
-[https://www.babylonjs-playground.com/#9S5YZY#11](https://www.babylonjs-playground.com/#9S5YZY#11)
+[https://www.babylonjs-playground.com/#9S5YZY#28](https://www.babylonjs-playground.com/#9S5YZY#28)
 
 ## Summary documentation
 [DOCUMENTATION.md](./DOCUMENTATION.md)
