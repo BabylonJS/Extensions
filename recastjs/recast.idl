@@ -101,6 +101,10 @@ interface NavPath
     [Const, Ref] Vec3 getPoint(long n);
 };
 
+interface dtObstacleRef {
+
+};
+
 interface dtCrowdAgentParams {
     void dtCrowdAgentParams();
     attribute float radius;                        ///< Agent radius. [Limit: >= 0]
@@ -146,6 +150,11 @@ interface NavMesh {
     [Value] NavPath computePath([Const, Ref] Vec3 start, [Const, Ref] Vec3 end);
     void setDefaultQueryExtent([Const, Ref] Vec3 extent);
     [Value] Vec3 getDefaultQueryExtent();
+
+    [Value] dtObstacleRef addCylinderObstacle([Const, Ref] Vec3 position, float radius, float height);
+    [Value] dtObstacleRef addBoxObstacle([Const, Ref] Vec3 position, [Const, Ref] Vec3 extent, float angle);
+    void removeObstacle([Const, Ref] dtObstacleRef obstacle);
+    void update();
 };
 
 interface Crowd {
@@ -165,5 +174,6 @@ interface Crowd {
     void setAgentParameters([Const] long idx, [Const] dtCrowdAgentParams params);
     void setDefaultQueryExtent([Const, Ref] Vec3 extent);
     [Value] Vec3 getDefaultQueryExtent();
+    [Value] NavPath getCorners([Const] long idx);
 };
 
