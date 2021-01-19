@@ -42,6 +42,8 @@ file(GLOB RECASTDETOUR_FILES
     ${CMAKE_SOURCE_DIR}/recastnavigation/Recast/Source/RecastMeshDetail.cpp
     ${CMAKE_SOURCE_DIR}/recastnavigation/Recast/Source/RecastRasterization.cpp
     ${CMAKE_SOURCE_DIR}/recastnavigation/Recast/Source/RecastRegion.cpp
+    ${CMAKE_SOURCE_DIR}/recastnavigation/RecastDemo/Source/ChunkyTriMesh.cpp
+    ${CMAKE_SOURCE_DIR}/recastnavigation/RecastDemo/Contrib/fastlz/fastlz.c
 )
 
 include_directories(
@@ -50,6 +52,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/recastnavigation/DetourCrowd/Include
   ${CMAKE_CURRENT_SOURCE_DIR}/recastnavigation/DetourTileCache/Include
   ${CMAKE_CURRENT_SOURCE_DIR}/recastnavigation/Recast/Include
+  ${CMAKE_CURRENT_SOURCE_DIR}/recastnavigation/RecastDemo/Include
 )
 
 
