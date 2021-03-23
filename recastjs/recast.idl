@@ -151,9 +151,9 @@ interface NavMesh {
     void setDefaultQueryExtent([Const, Ref] Vec3 extent);
     [Value] Vec3 getDefaultQueryExtent();
 
-    [Value] dtObstacleRef addCylinderObstacle([Const, Ref] Vec3 position, float radius, float height);
-    [Value] dtObstacleRef addBoxObstacle([Const, Ref] Vec3 position, [Const, Ref] Vec3 extent, float angle);
-    void removeObstacle([Const, Ref] dtObstacleRef obstacle);
+    dtObstacleRef addCylinderObstacle([Const, Ref] Vec3 position, float radius, float height);
+    dtObstacleRef addBoxObstacle([Const, Ref] Vec3 position, [Const, Ref] Vec3 extent, float angle);
+    void removeObstacle(dtObstacleRef obstacle);
     void update();
 };
 

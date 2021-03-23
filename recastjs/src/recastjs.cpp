@@ -1215,36 +1215,43 @@ NavPath NavMesh::computePath(const Vec3& start, const Vec3& end) const
     return navpath;
 }
 
-dtObstacleRef NavMesh::addCylinderObstacle(const Vec3& position, float radius, float height)
+dtObstacleRef* NavMesh::addCylinderObstacle(const Vec3& position, float radius, float height)
 {
     dtObstacleRef ref(-1);
     if (!m_tileCache)
     {
-        return ref;
+        return nullptr;
     }
     
     m_tileCache->addObstacle(&position.x, radius, height, &ref);
-    return ref;
+    m_obstacles.push_back(ref);
+    return &m_obstacles.back();
 }
 
-dtObstacleRef NavMesh::addBoxObstacle(const Vec3& position, const Vec3& extent, float angle)
+dtObstacleRef* NavMesh::addBoxObstacle(const Vec3& position, const Vec3& extent, float angle)
 {
     dtObstacleRef ref(-1);
     if (!m_tileCache)
     {
-        return ref;
+        return nullptr;
     }
     m_tileCache->addBoxObstacle(&position.x, &extent.x, angle, &ref);
-    return ref;
+    m_obstacles.push_back(ref);
+    return &m_obstacles.back();
 }
 
-void NavMesh::removeObstacle(dtObstacleRef obstacle)
+void NavMesh::removeObstacle(dtObstacleRef* obstacle)
 {
-    if (!m_tileCache || obstacle == -1)
+    if (!m_tileCache || !obstacle || *obstacle == -1)
     {
         return;
     }
-    m_tileCache->removeObstacle(obstacle);
+    m_tileCache->removeObstacle(*obstacle);
+    auto iter = std::find(m_obstacles.begin(), m_obstacles.end(), *obstacle);
+    if (iter != m_obstacles.end())
+    {
+        m_obstacles.erase(iter);
+    }
 }
 
 void NavMesh::update()
