@@ -21,8 +21,8 @@ Generate letters in BABYLON meshes.
 	textMesh  = text1.getMesh()                                 // Returns a regular BABYLON mesh, which can
 	                                                            // be manipulated using standard methods
 
-&#9679; Helvetica Neue playground example:&nbsp;  https://www.babylonjs-playground.com/#PL752W#53  
-&#9679; Comic playground example:&nbsp;  https://www.babylonjs-playground.com/#PL752W#52
+&#9679; Helvetica Neue playground example:&nbsp;  https://www.babylonjs-playground.com/#PL752W#150   
+&#9679; Comic playground example:&nbsp;  https://www.babylonjs-playground.com/#PL752W#151
 
 ### Superconstructor - BABYLON.MeshWriter()
 
