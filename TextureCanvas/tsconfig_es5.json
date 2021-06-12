@@ -1,0 +1,12 @@
+{
+    "compilerOptions": {
+        "target": "es5",
+        "module": "commonjs",
+        "outDir": "./dist/es5/",
+        "declaration": false
+    },
+    "files": [
+        "./babylon.d.ts",
+        "./src/textureCanvas.ts"
+    ]
+}

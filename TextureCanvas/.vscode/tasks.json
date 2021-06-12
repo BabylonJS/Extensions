@@ -4,18 +4,36 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "typescript",
+            "label": "typescript_dts",
             "type": "typescript",
-            "tsconfig": "tsconfig.json",
+            "tsconfig": "tsconfig_dts.json",
+            "problemMatcher": [
+                "$tsc"
+            ]
+        },
+        {
+            "label": "typescript_es5",
+            "dependsOn": "typescript_dts",
+            "type": "typescript",
+            "tsconfig": "tsconfig_es5.json",
+            "problemMatcher": [
+                "$tsc"
+            ]
+        },
+        {
+            "label": "typescript_es6",
+            "dependsOn": "typescript_es5",
+            "type": "typescript",
+            "tsconfig": "tsconfig_es6.json",
             "problemMatcher": [
                 "$tsc"
             ]
         },
         {
             "label": "demodularize",
-            "dependsOn": "typescript",
+            "dependsOn": "typescript_es6",
             "type": "shell",
-            "command": "java -jar demodularize.jar ./dist/textureCanvas.js ./dist/textureCanvasNoModule.js"
+            "command": "java -jar demodularize.jar ./dist/es5/textureCanvas.js ./dist/textureCanvasNoModule.js"
         },
         {
             "label": "Build",

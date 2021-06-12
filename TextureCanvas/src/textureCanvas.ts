@@ -253,7 +253,7 @@ export class TextureCanvasDrawContext {
      * @param y 3D rotation in radians along the v-axis.
      * @param z 2D rotation in radians.
      */
-    setRotation(x = this._defaultTextureDrawOptions.rotation.x, y = this._defaultTextureDrawOptions.rotation.y, z = this._defaultTextureDrawOptions.rotation.z, ): void {
+    setRotation(x = this._defaultTextureDrawOptions.rotation.x, y = this._defaultTextureDrawOptions.rotation.y, z = this._defaultTextureDrawOptions.rotation.z,): void {
         this.rotation.x = x;
         this.rotation.y = y;
         this.rotation.z = z;
@@ -356,7 +356,7 @@ export class TextureCanvas extends Texture {
 
     private _defaultDrawContext = new TextureCanvasDrawContext(this);
 
-    constructor(size: number | { width: number, height: number }, scene: Nullable<Scene>, initTexture?: Texture, onReady?: Function, options: { generateMipMaps?: boolean, samplingMode?: number } = {}) {
+    constructor(size: number | { width: number, height: number }, scene: Nullable<Scene>, initTexture?: Texture, onReady?: Function, options: { generateMipMaps?: boolean, samplingMode?: number } = {}, name?: string) {
         super(null, scene, !options.generateMipMaps, false, options.samplingMode);
         this._engine = scene.getEngine();
         let shaders = { vertex: 'textureCanvas', fragment: 'textureCanvas' };
@@ -365,6 +365,10 @@ export class TextureCanvas extends Texture {
         this._texture = this._engine.createRenderTargetTexture(size, false);
         this._backBuffer = new Texture(null, scene, !options.generateMipMaps, false, options.samplingMode);
         this._backBuffer._texture = this._engine.createRenderTargetTexture(size, false);
+        if (name) {
+            this.name = name;
+            this._backBuffer.name = name + 'BackBuffer';
+        }
 
         // VBO
         let vertices = [];
@@ -572,6 +576,7 @@ export class TextureCanvas extends Texture {
             this._indexBuffer = null;
         }
 
+        this._backBuffer.dispose();
         super.dispose();
     }
 }
