@@ -1,3 +1,9 @@
+/*!
+ * Babylon MeshWriter
+ * https://github.com/briantbutton/meshwriter
+ * (c) 2018-2021 Brian Todd Button
+ * Released under the MIT license
+ */
 /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {}, Wrapper;                                                                // +-+
@@ -96,12 +102,7 @@
 /* 0 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(global) {var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
- * Babylon MeshWriter
- * https://github.com/BabylonJS/Babylon.js
- * (c) 2018-2019 Brian Todd Button
- * Released under the MIT license
- */
+/* WEBPACK VAR INJECTION */(function(global) {var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;
 
 
 // *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-*
@@ -115,9 +116,11 @@
 !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(2),__webpack_require__(3),__webpack_require__(4),__webpack_require__(5),__webpack_require__(6)], __WEBPACK_AMD_DEFINE_RESULT__ = (function(HPB,HNM,CSN,JUR,WGD){
   // >>>>>  STEP 1 <<<<<
 
-    var scene,FONTS,defaultColor,defaultOpac,naturalLetterHeight,curveSampleSize,Γ=Math.floor,hpb,hnm,csn,jur,wgd,debug;
-    var b128back,b128digits;
-    var earcut = __webpack_require__(7);
+    var   scene,FONTS,defaultColor,defaultOpac,naturalLetterHeight,curveSampleSize,Γ=Math.floor,hpb,hnm,csn,jur,wgd,debug;
+    var   b128back,b128digits;
+    var   earcut                 = __webpack_require__(7);
+    var   B                      = {},
+          methodsList            = ["Vector2","Vector3","Path2","Curve3","Color3","SolidParticleSystem","PolygonMeshBuilder","CSG","StandardMaterial","Mesh"];
     prepArray();
     // >>>>>  STEP 2 <<<<<
     hpb                          = HPB(codeList);
@@ -266,7 +269,7 @@
         material.alpha           = this.alpha()
       };
       proto.getLetterCenter      = function(ix){
-        return new BABYLON.Vector2(0,0)
+        return new B.Vector2(0,0)
       }
       proto.dispose              = function(){
         var mesh                 = this.getMesh(),
@@ -279,7 +282,6 @@
       MeshWriter.decodeList      = decodeList;
 
       return MeshWriter;
-
     };
     if ( typeof window !== "undefined" ) {
       window.TYPE                = Wrapper;
@@ -289,10 +291,10 @@
       global.MeshWriter          = Wrapper
     }
     if ( typeof BABYLON === "object" ) {
+      cacheMethods(BABYLON);
       BABYLON.MeshWriter         = Wrapper;
-      supplementCurveFunctions();
     };
-    if (  true && module.exports ) {
+    if ( typeof module === 'object' && module.exports ) {
       module.exports             = Wrapper;
     }
     return Wrapper;
@@ -304,7 +306,7 @@
       var meshes                 = meshesAndBoxes[0],
           lettersOrigins         = meshesAndBoxes[2],sps,spsMesh;
       if(meshes.length){
-        sps                      = new BABYLON.SolidParticleSystem("sps"+"test",scene, { } );
+        sps                      = new B.SolidParticleSystem("sps"+"test",scene, { } );
         meshes.forEach(function(mesh,ix){
           sps.addShape(mesh, 1, {positionFunction: makePositionParticle(lettersOrigins[ix])});
           mesh.dispose()
@@ -435,7 +437,7 @@
         function makeCmdsToMesh(reverse){
           return function cmdsToMesh(cmdsList){
             var cmd              = getCmd(cmdsList,0),
-                path             = new BABYLON.Path2(adjXfix(cmd[0]), adjZfix(cmd[1])), array, meshBuilder, j, last, first = 0;
+                path             = new B.Path2(adjXfix(cmd[0]), adjZfix(cmd[1])), array, meshBuilder, j, last, first = 0;
 
             // ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~
             // Array length is used to determine curve type in the 'TheLeftover Font Format'  (TLFF)
@@ -481,7 +483,7 @@
             if ( array[first].x===array[last].x && array[first].y===array[last].y ) { array = array.slice(1) }
             if ( reverse ) { array.reverse() }
 
-            meshBuilder          = new BABYLON.PolygonMeshBuilder("MeshWriter-"+letter+index+"-"+weeid(), array, scene, earcut);
+            meshBuilder          = new B.PolygonMeshBuilder("MeshWriter-"+letter+index+"-"+weeid(), array, scene, earcut);
             return meshBuilder.build(true,thickness)
           }
         };
@@ -534,9 +536,9 @@
         return letterMeshes
       };
       function punchHolesInShape(shape,holes,letter,i){
-        var csgShape             = BABYLON.CSG.FromMesh(shape),k;
+        var csgShape             = B.CSG.FromMesh(shape),k;
         for ( k=0; k<holes.length ; k++ ) {
-          csgShape               = csgShape.subtract(BABYLON.CSG.FromMesh(holes[k]))
+          csgShape               = csgShape.subtract(B.CSG.FromMesh(holes[k]))
         }
         holes.forEach(h=>h.dispose());
         shape.dispose();
@@ -545,7 +547,7 @@
     };
 
     function makeMaterial(scene,letters,emissive,ambient,specular,diffuse,opac){
-      var cm0                    = new BABYLON.StandardMaterial("mw-matl-"+letters+"-"+weeid(), scene);
+      var cm0                    = new B.StandardMaterial("mw-matl-"+letters+"-"+weeid(), scene);
       cm0.diffuseColor           = rgb2Bcolor3(diffuse);
       cm0.specularColor          = rgb2Bcolor3(specular);
       cm0.ambientColor           = rgb2Bcolor3(ambient);
@@ -553,46 +555,6 @@
       cm0.alpha                  = opac;
       return cm0
     };
-
-    // ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~
-    // These add two functions to Path2, which are needed for making font curves
-    // 
-    // Thanks Gijs, wherever you are
-    // 
-    function supplementCurveFunctions(){
-
-      if ( !BABYLON.Path2.prototype.addQuadraticCurveTo ) {
-        BABYLON.Path2.prototype.addQuadraticCurveTo = function(redX, redY, blueX, blueY){
-          var points             = this.getPoints();
-          var lastPoint          = points[points.length - 1];
-          var origin             = new BABYLON.Vector3(lastPoint.x, lastPoint.y, 0);
-          var control            = new BABYLON.Vector3(redX, redY, 0);
-          var destination        = new BABYLON.Vector3(blueX, blueY, 0);
-          var nb_of_points       = curveSampleSize;
-          var curve              = BABYLON.Curve3.CreateQuadraticBezier(origin, control, destination, nb_of_points);
-          var curvePoints        = curve.getPoints();
-          for(var i=1; i<curvePoints.length; i++){
-            this.addLineTo(curvePoints[i].x, curvePoints[i].y);
-          }
-        }
-      }
-      if ( !BABYLON.Path2.prototype.addCubicCurveTo ) {
-        BABYLON.Path2.prototype.addCubicCurveTo = function(redX, redY, greenX, greenY, blueX, blueY){
-          var points             = this.getPoints();
-          var lastPoint          = points[points.length - 1];
-          var origin             = new BABYLON.Vector3(lastPoint.x, lastPoint.y, 0);
-          var control1           = new BABYLON.Vector3(redX, redY, 0);
-          var control2           = new BABYLON.Vector3(greenX, greenY, 0);
-          var destination        = new BABYLON.Vector3(blueX, blueY, 0);
-          var nb_of_points       = Math.floor(0.3+curveSampleSize*1.5);
-          var curve              = BABYLON.Curve3.CreateCubicBezier(origin, control1, control2, destination, nb_of_points);
-          var curvePoints        = curve.getPoints();
-          for(var i=1; i<curvePoints.length; i++){
-            this.addLineTo(curvePoints[i].x, curvePoints[i].y);
-          }
-        }
-      }
-    }
 
     // *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-*
     //     FONT COMPRESSING AND DECOMPRESSING     FONT COMPRESSING AND DECOMPRESSING 
@@ -693,18 +655,90 @@
     // 
     // Screening and defaulting functions for incoming parameters
     function makePreferences(args){
-      var prefs = {},p;
+      var prefs                  = {},p;
       if(isObject(p=args[1])){
-        if(p["default-font"]){prefs.defaultFont=p["default-font"]}else{if(p.defaultFont){prefs.defaultFont=p.defaultFont}}
-        if(p["mesh-origin"]){prefs.meshOrigin=p["mesh-origin"]}else{if(p.meshOrigin){prefs.meshOrigin=p.meshOrigin}}
-        if(p.scale){prefs.scale=p.scale}
-        if(isBoolean(p.debug)){prefs.debug=p.debug}
+        if(p["default-font"]){
+          prefs.defaultFont      = p["default-font"]
+        }else{
+          if(p.defaultFont){
+            prefs.defaultFont    = p.defaultFont
+          }
+        }
+        if(p["mesh-origin"]){
+          prefs.meshOrigin       = p["mesh-origin"]
+        }else{
+          if(p.meshOrigin){
+            prefs.meshOrigin     = p.meshOrigin
+          }
+        }
+        if(p.scale){
+          prefs.scale            = p.scale
+        }
+        if(isBoolean(p.debug)){
+          prefs.debug            = p.debug
+        }
+        cacheMethods(p.methods);
         return prefs
       }else{
         return { defaultFont: args[2] , scale: args[1] , debug: false }
       }
-    };
+    }
+    function cacheMethods(src){
+      var incomplete             = false;
+      if(isObject(src)){
+        methodsList.forEach(function(meth){
+          if(isObject(src[meth])){
+            B[meth]              = src[meth]
+          }else{
+            incomplete           = meth
+          }
+        });
+        if(!incomplete){supplementCurveFunctions()}
+      }
+      if(isString(incomplete)){
+        throw new Error("Missing method '"+incomplete+"'")
+      }
+    }
 
+    // ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~
+    // Needed for making font curves
+    // Thanks Gijs, wherever you are
+    // 
+    function supplementCurveFunctions(){
+      if ( isObject ( B.Path2 ) ) {
+        if ( !B.Path2.prototype.addQuadraticCurveTo ) {
+          B.Path2.prototype.addQuadraticCurveTo = function(redX, redY, blueX, blueY){
+            var points           = this.getPoints();
+            var lastPoint        = points[points.length - 1];
+            var origin           = new B.Vector3(lastPoint.x, lastPoint.y, 0);
+            var control          = new B.Vector3(redX, redY, 0);
+            var destination      = new B.Vector3(blueX, blueY, 0);
+            var nb_of_points     = curveSampleSize;
+            var curve            = B.Curve3.CreateQuadraticBezier(origin, control, destination, nb_of_points);
+            var curvePoints      = curve.getPoints();
+            for(var i=1; i<curvePoints.length; i++){
+              this.addLineTo(curvePoints[i].x, curvePoints[i].y);
+            }
+          }
+        }
+        if ( !B.Path2.prototype.addCubicCurveTo ) {
+          B.Path2.prototype.addCubicCurveTo = function(redX, redY, greenX, greenY, blueX, blueY){
+            var points           = this.getPoints();
+            var lastPoint        = points[points.length - 1];
+            var origin           = new B.Vector3(lastPoint.x, lastPoint.y, 0);
+            var control1         = new B.Vector3(redX, redY, 0);
+            var control2         = new B.Vector3(greenX, greenY, 0);
+            var destination      = new B.Vector3(blueX, blueY, 0);
+            var nb_of_points     = Math.floor(0.3+curveSampleSize*1.5);
+            var curve            = B.Curve3.CreateCubicBezier(origin, control1, control2, destination, nb_of_points);
+            var curvePoints      = curve.getPoints();
+            for(var i=1; i<curvePoints.length; i++){
+              this.addLineTo(curvePoints[i].x, curvePoints[i].y);
+            }
+          }
+        }
+      }
+    }
     //  ~  -  =  ~  -  =  ~  -  =  ~  -  =  ~  -  =  
     // Applies a test to potential incoming parameters
     // If the test passes, the parameters are used, otherwise the default is used
@@ -717,14 +751,14 @@
     // Conversion functions
     function rgb2Bcolor3(rgb){
       rgb                        = rgb.replace("#","");
-      return new BABYLON.Color3(convert(rgb.substring(0,2)),convert(rgb.substring(2,4)),convert(rgb.substring(4,6)));
+      return new B.Color3(convert(rgb.substring(0,2)),convert(rgb.substring(2,4)),convert(rgb.substring(4,6)));
       function convert(x){return Γ(1000*Math.max(0,Math.min((isNumber(parseInt(x,16))?parseInt(x,16):0)/255,1)))/1000}
     };
     function point2Vector(point){
-      return new BABYLON.Vector2(round(point.x),round(point.y))
+      return new B.Vector2(round(point.x),round(point.y))
     };
     function merge(arrayOfMeshes){
-      return arrayOfMeshes.length===1 ? arrayOfMeshes[0] : BABYLON.Mesh.MergeMeshes(arrayOfMeshes, true)
+      return arrayOfMeshes.length===1 ? arrayOfMeshes[0] : B.Mesh.MergeMeshes(arrayOfMeshes, true)
     };
 
     // *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-* *-*=*  *=*-*
@@ -1763,7 +1797,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//  HELVETICANEU
         yMax           : 714,
         wdth           : 241
       };
-      font["ı"]        = {
+      font[String.fromCharCode(305)]        = {
         sC             : [
                            'D#AB B@AB B@IL D#IL D#AB'
                          ],
@@ -1773,10 +1807,10 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//  HELVETICANEU
         yMax           : 500,
         wdth           : 241
       };
-      font["í"]        = supplement(font["ı"],"acute",0,0);
-      font["ì"]        = supplement(font["ı"],"grave",0,0);
-      font["ï"]        = supplement(font["ı"],"dieresis",0,0);
-      font["î"]        = supplement(font["ı"],"circumflex",0,0);
+      font["í"]        = supplement(font[String.fromCharCode(305)],"acute",0,0);
+      font["ì"]        = supplement(font[String.fromCharCode(305)],"grave",0,0);
+      font["ï"]        = supplement(font[String.fromCharCode(305)],"dieresis",0,0);
+      font["î"]        = supplement(font[String.fromCharCode(305)],"circumflex",0,0);
       font["j"]        = {
         sC      : [
                            'D#J¡ B@J¡ B@LV D#LV D#J¡',
@@ -2938,7 +2972,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//  COMIC SANS M
         yMax           : 731,
         wdth           : 280
       };
-      font["ı"]        = {
+      font[String.fromCharCode(305)]        = {
         sC             : [
                            'D0D~ D0DBD3CN D7BYD7AÁ D7AtC¿AX C¥A=CWA= C-A=BµAX BxAtBxAÁ BxBYBuCN BqDBBqD~ BqEYB{Fc B§GlB§HG B§HtBÂH± C:I)CeI) C±I)D(H± DCHtDCHG DCGlD9Fc D0EYD0D~'
                          ],
@@ -2948,10 +2982,10 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//  COMIC SANS M
         yMax           : 730,
         wdth           : 280
       };
-      font["í"]        = supplement(font["ı"],"acute",-20,0);
-      font["ì"]        = supplement(font["ı"],"grave",-20,0);
-      font["ï"]        = supplement(font["ı"],"dieresis",-120,0);
-      font["î"]        = supplement(font["ı"],"circumflex",-60,0);
+      font["í"]        = supplement(font[String.fromCharCode(305)],"acute",-20,0);
+      font["ì"]        = supplement(font[String.fromCharCode(305)],"grave",-20,0);
+      font["ï"]        = supplement(font[String.fromCharCode(305)],"dieresis",-120,0);
+      font["î"]        = supplement(font[String.fromCharCode(305)],"circumflex",-60,0);
       font["j"]        = {
         sC             : [
                            'D¥?` D¦@QDbD( D?HB D?HtD[H¼ DxI?E!I? ECI?EeI& E©H±E«Hv F(DB FB?j FB>bEr=t D¼<{C¾<{ BI<{A<?> A0?XA0?n A0?·AO@0 An@LA¸@L BN@LB°?M B¿?,CC>o Cj>=C¾>= DF>=De>~ D}?.D¥?`',

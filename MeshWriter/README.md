@@ -21,19 +21,20 @@ Generate letters in BABYLON meshes.
 	textMesh  = text1.getMesh()                                 // Returns a regular BABYLON mesh, which can
 	                                                            // be manipulated using standard methods
 
-&#9679; Helvetica Neue playground example:&nbsp;  https://www.babylonjs-playground.com/#PL752W#150   
-&#9679; Comic playground example:&nbsp;  https://www.babylonjs-playground.com/#PL752W#151
+&#9679; Helvetica Neue playground example:&nbsp;  https://www.babylonjs-playground.com/#PL752W#384  
+&#9679; Comic playground example:&nbsp;  https://www.babylonjs-playground.com/#PL752W#385  
 
 ### Superconstructor - BABYLON.MeshWriter()
 
 After MeshWriter is loaded (see below), BABYLON.MeshWriter is defined.  It is called with one or two parameters.  
 &#9679; **scene** &nbsp; required  
-&#9679; **preferences** &nbsp; optional &nbsp; The preferences object may specify up to three values
+&#9679; **preferences** &nbsp; optional &nbsp; The preferences object may specify up to four values
 
 	      FIELD                 DEFAULT
 	    default-font           Helvetica
 	    scale                      1
 	    letter-origin         "letter-center"
+	    methods           (See section at bottom)
 
 The call to BABYLON.MeshWriter returns a constructor.  Call it "**Writer**".
 
@@ -191,3 +192,21 @@ It will convert most common font files into MeshWriter compatible font files.&nb
 
 For the second step, refer to the README in this repo in the 'fonts' directory.&nbsp;
 It will help you create a build with your custom fonts (i.e. a new meshwriter.min.js).
+
+## Methods &mdash; optimizing memory
+
+Until August 2021, MeshWriter required &apos;BABYLON&apos; to be in the global address space.&nbsp;
+MeshWriter would reference this object to retrieve methods like &apos;Color3&apos; and &apos;StandardMaterial&apos;.&nbsp;
+
+In 1.3.0, the optional parameter &apos;methods&apos; was added.&nbsp; 
+If present, MeshWriter will refer to it for these methods, and will not look for &apos;BABYLON&apos;.&nbsp; 
+This will be handy for systems that wish to load BABYLON functions modularly.&nbsp;
+All the methods listed below must be present on the &apos;methods&apos; object or MeshWriter will complain vigorously.
+
+	Methods
+	"Vector2", "Vector3", "Path2", "Curve3", "Color3",
+	"SolidParticleSystem", "PolygonMeshBuilder", "CSG",
+	"StandardMaterial", "Mesh"
+
+This playground puts BABYLON in the &apos;methods&apos; parameter to show you the syntax.&nbsp;
+https://www.babylonjs-playground.com/#PL752W#384
