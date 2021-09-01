@@ -1,13 +1,19 @@
-cmake_minimum_required (VERSION 3.6)
+cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
+set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
+
+FIND_PACKAGE(Python3)
+set(PYTHON ${Python3_EXECUTABLE} CACHE STRING "Python path")
+set(EMSCRIPTEN_ROOT $ENV{EMSDK}/upstream/emscripten CACHE STRING "Emscripten path")
+set(CMAKE_TOOLCHAIN_FILE ${EMSCRIPTEN_ROOT}/cmake/Modules/Platform/Emscripten.cmake)
+set(WEBIDL_BINDER_SCRIPT ${EMSCRIPTEN_ROOT}/tools/webidl_binder.py)
+set(RECAST_IDL_FILE ${CMAKE_CURRENT_SOURCE_DIR}/recast.idl)
+set(RECASTAPI_HEADER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/src/recastjs.h)
+set(RECAST_HEADER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/recastnavigation/Recast/Include/Recast.h)
+set(NAVMESHQUERY_HEADER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/recastnavigation/Detour/Include/DetourNavMeshQuery.h)
+set(RECAST_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/)
+set(RECAST_ONLOAD_FILE ${CMAKE_CURRENT_SOURCE_DIR}/onload.js)
+
 project (recastjs)
-# Add project's cmake modules to path
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/.)
-
-SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS ON) 
-
-set(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo" CACHE STRING "Configuration types" FORCE)
-
-SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -55,9 +61,98 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/recastnavigation/RecastDemo/Include
 )
 
-
-SET(LINK_OPTIONS " ")
-SET(EXE_NAME "recastjs")
+SET(EXE_NAME "recast")
 
 ADD_LIBRARY(${EXE_NAME} ${SRC_FILES} ${RECASTDETOUR_FILES})
+
+# Build Release by default
+set(CMAKE_BUILD_TYPE Release CACHE STRING "Build Type")
+
+# Default is 64*1024*1024 = 64MB
+set(TOTAL_MEMORY 67108864 CACHE STRING "Total Memory")
+
+# Enable for resizable heap, with some amount of slowness
+set(ALLOW_MEMORY_GROWTH 0 CACHE STRING "Allow Memory Growth")
+
+set(EMCC_ARGS
+  -flto
+  --post-js glue.js
+  --post-js ${RECAST_ONLOAD_FILE}
+  -O3
+  -s ALLOW_MEMORY_GROWTH=${ALLOW_MEMORY_GROWTH}
+  -s ALLOW_TABLE_GROWTH=1
+  -s EXPORTED_FUNCTIONS=["_malloc","_free"]
+  -s EXPORTED_RUNTIME_METHODS=["UTF8ToString"]
+  -s EXTRA_EXPORTED_RUNTIME_METHODS=["addFunction"]
+  -s EXPORT_NAME="Recast"
+  -s MODULARIZE=1
+  -s NO_EXIT_RUNTIME=1
+  -s NO_FILESYSTEM=1
+  -s TOTAL_MEMORY=${TOTAL_MEMORY})
+
+if(${CLOSURE})
+  # Ignore closure errors about the bullet Node class
+  # (Node is a DOM thing too)
+  LIST(APPEND EMCC_ARGS
+    --closure 1
+    -s IGNORE_CLOSURE_COMPILER_ERRORS=1)
+else()
+  LIST(APPEND EMCC_ARGS
+    -s NO_DYNAMIC_EXECUTION=1)
+endif()
+
+set(EMCC_JS_ARGS ${EMCC_ARGS}
+  -s AGGRESSIVE_VARIABLE_ELIMINATION=1
+  -s ELIMINATE_DUPLICATE_FUNCTIONS=1
+  -s LEGACY_VM_SUPPORT=1
+  -s SINGLE_FILE=1
+  -s WASM=0)
+
+set(EMCC_WASM_ARGS ${EMCC_ARGS}
+  -s BINARYEN_IGNORE_IMPLICIT_TRAPS=1
+  -s WASM=1)
+
+set(EMCC_GLUE_ARGS
+  -c
+  -I${RECAST_SRC_DIR}
+  -I${CMAKE_CURRENT_SOURCE_DIR}/recastnavigation/Detour/Include
+  -I${CMAKE_CURRENT_SOURCE_DIR}/recastnavigation/Recast/Include
+  -include${RECASTAPI_HEADER_FILE}
+  -include${RECAST_HEADER_FILE}
+  -include${NAVMESHQUERY_HEADER_FILE}
+  )
+
+#######################################
+add_custom_command(
+  OUTPUT glue.cpp glue.js
+  BYPRODUCTS parser.out WebIDLGrammar.pkl
+  COMMAND ${PYTHON} ${WEBIDL_BINDER_SCRIPT} ${RECAST_IDL_FILE} glue
+  DEPENDS ${RECAST_IDL_FILE}
+  COMMENT "Generating ${EXE_NAME} bindings"
+  VERBATIM)
+add_custom_command(
+  OUTPUT glue.o
+  COMMAND emcc glue.cpp ${EMCC_GLUE_ARGS} -o glue.o
+  DEPENDS glue.cpp ${RECASTAPI_HEADER_FILE} ${RECAST_HEADER_FILE} ${NAVMESHQUERY_HEADER_FILE}
+  COMMENT "Building ${EXE_NAME} bindings"
+  VERBATIM)
+add_custom_target(${EXE_NAME}-bindings ALL DEPENDS glue.js glue.o)
+
+#######################################
+add_custom_command(
+  OUTPUT ${EXE_NAME}.js
+  COMMAND emcc glue.o lib${EXE_NAME}.a ${EMCC_JS_ARGS} -o ${EXE_NAME}.js
+  DEPENDS ${EXE_NAME}-bindings ${EXE_NAME} ${RECAST_ONLOAD_FILE}
+  COMMENT "Building ${EXE_NAME} javascript"
+  VERBATIM)
+add_custom_target(${EXE_NAME}-javascript ALL DEPENDS ${EXE_NAME}.js)
+
+#######################################
+add_custom_command(
+  OUTPUT ${EXE_NAME}.wasm.js ${EXE_NAME}.wasm.wasm
+  COMMAND emcc glue.o lib${EXE_NAME}.a ${EMCC_WASM_ARGS} -o ${EXE_NAME}.wasm.js
+  DEPENDS ${EXE_NAME}-bindings ${EXE_NAME} ${RECAST_ONLOAD_FILE}
+  COMMENT "Building ${EXE_NAME} webassembly"
+  VERBATIM)
+add_custom_target(${EXE_NAME}-wasm ALL DEPENDS ${EXE_NAME}.wasm.js ${EXE_NAME}.wasm.wasm)
 
