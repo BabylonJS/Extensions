@@ -17,16 +17,16 @@ Some documentation is available here : http://masagroup.github.io/recastdetour/i
 First, update the Git Submodule using `git submodule update --init` in the recastjs folder.
 You'll need emscripten with an active environment and mingw32-make for Windows (make for Linux). 
 
-The build script can generate JS or WASM.
-to generate JS:
+```
+mkdir build
+emcmake cmake -B build
+cmake --build build
+```
 
-`python make.py`
+This will produce .js and wasm version in the `build` directory.
 
-to generate WASM:
-
-`python make.py wasm`
-
-The build output will be in the build directory.
+Latest RecastNavigation commit : https://github.com/recastnavigation/recastnavigation/commit/c5cbd53024c8a9d8d097a4371215e3342d2fdc87
+Built with emsdk 2.0.29
 
 ## How to extend recastjs ?
 
