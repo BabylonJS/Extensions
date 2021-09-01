@@ -12,12 +12,12 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-
-var effect_1 = BABYLON;
-var material_1 = BABYLON;
-var texture_1 = BABYLON;
-var math_1 = BABYLON;
-var buffer_1 = BABYLON;
+Object.defineProperty(exports, "__esModule", { value: true });
+var effect_1 = require("@babylonjs/core/Materials/effect");
+var material_1 = require("@babylonjs/core/Materials/material");
+var texture_1 = require("@babylonjs/core/Materials/Textures/texture");
+var math_1 = require("@babylonjs/core/Maths/math");
+var buffer_1 = require("@babylonjs/core/Meshes/buffer");
 effect_1.Effect.ShadersStore["textureCanvasVertexShader"] = "\n// Attributes\nattribute vec2 position;\n\n// Output\nvarying vec2 vPosition;\nvarying vec2 vLocalUV;\nvarying vec2 vWorldUV;\n\n// Uniforms\nuniform mat4 rotationMatrix;\nuniform vec2 pivotPoint;\nuniform vec2 translation;\nuniform vec2 scaling;\nuniform vec2 skewing;\n\nconst vec2 madd = vec2(0.5, 0.5);\n\nvoid main(void) {\n    vec2 skewed = vec2(position.x + skewing.x * position.y, position.y + skewing.y * position.x);\n    vec2 transformed = (vec4(skewed * scaling + translation - pivotPoint, 0.0, 0.0) * rotationMatrix).xy + pivotPoint;\n\n    gl_Position = vec4(transformed, 0.0, 1.0);\n    \n    vPosition = position;\n\tvLocalUV = position * madd + madd;\n    vWorldUV = gl_Position.xy * madd + madd;\n}\n";
 effect_1.Effect.ShadersStore["textureCanvasFragmentShader"] = "\nprecision highp float;\n\nvarying vec2 vLocalUV;\nvarying vec2 vWorldUV;\n\nuniform sampler2D diffuseSampler;\nuniform sampler2D opacitySampler;\nuniform sampler2D backgroundSampler;\n\nuniform vec4 diffuseSamplingRect;\nuniform vec4 opacitySamplingRect;\nuniform float opacityTextureIntensity;\n\nvoid main(void) {\n    vec4 backgroundPixel = texture2D(backgroundSampler, vWorldUV);\n    vec4 diffusePixel = texture2D(diffuseSampler, vLocalUV * diffuseSamplingRect.zw + diffuseSamplingRect.xy);\n    vec4 opacityPixel = texture2D(opacitySampler, vLocalUV * opacitySamplingRect.zw + opacitySamplingRect.xy);\n    gl_FragColor = mix(backgroundPixel, diffusePixel, opacityPixel.a * opacityTextureIntensity + (1.0 - opacityTextureIntensity) * diffusePixel.a);\n}\n";
 var UVector = /** @class */ (function () {
@@ -33,7 +33,7 @@ var UVector = /** @class */ (function () {
     };
     return UVector;
 }());
-BABYLON.UVector = UVector;
+exports.UVector = UVector;
 var Rectangle = /** @class */ (function () {
     /**
      * A rectangle in uv-space.
@@ -57,7 +57,7 @@ var Rectangle = /** @class */ (function () {
     };
     return Rectangle;
 }());
-BABYLON.Rectangle = Rectangle;
+exports.Rectangle = Rectangle;
 var PivotPoint = /** @class */ (function (_super) {
     __extends(PivotPoint, _super);
     /**
@@ -82,7 +82,7 @@ var PivotPoint = /** @class */ (function (_super) {
     };
     return PivotPoint;
 }(UVector));
-BABYLON.PivotPoint = PivotPoint;
+exports.PivotPoint = PivotPoint;
 var Vector3Matrix = /** @class */ (function (_super) {
     __extends(Vector3Matrix, _super);
     function Vector3Matrix(x, y, z) {
@@ -125,7 +125,7 @@ var Vector3Matrix = /** @class */ (function (_super) {
     };
     return Vector3Matrix;
 }(math_1.Vector3));
-BABYLON.Vector3Matrix = Vector3Matrix;
+exports.Vector3Matrix = Vector3Matrix;
 var TextureCanvasDrawContext = /** @class */ (function () {
     function TextureCanvasDrawContext(textureCanvas) {
         this.textureCanvas = textureCanvas;
@@ -312,7 +312,7 @@ var TextureCanvasDrawContext = /** @class */ (function () {
     TextureCanvasDrawContext.DEFAULT_TEXTURE_DRAW_OPTIONS = new TextureCanvasDrawContext();
     return TextureCanvasDrawContext;
 }());
-BABYLON.TextureCanvasDrawContext = TextureCanvasDrawContext;
+exports.TextureCanvasDrawContext = TextureCanvasDrawContext;
 var TextureCanvas = /** @class */ (function (_super) {
     __extends(TextureCanvas, _super);
     function TextureCanvas(size, scene, initTexture, onReady, options, name) {
@@ -514,4 +514,4 @@ var TextureCanvas = /** @class */ (function (_super) {
     };
     return TextureCanvas;
 }(texture_1.Texture));
-BABYLON.TextureCanvas = TextureCanvas;
+exports.TextureCanvas = TextureCanvas;
