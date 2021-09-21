@@ -19,7 +19,7 @@ You'll need emscripten with an active environment and mingw32-make for Windows (
 
 ```
 mkdir build
-emcmake cmake -B build
+emcmake cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 ```
 
