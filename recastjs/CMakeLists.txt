@@ -69,7 +69,7 @@ ADD_LIBRARY(${EXE_NAME} ${SRC_FILES} ${RECASTDETOUR_FILES})
 set(CMAKE_BUILD_TYPE Release CACHE STRING "Build Type")
 
 # Default is 64*1024*1024 = 64MB
-set(TOTAL_MEMORY 671088640 CACHE STRING "Total Memory")
+set(TOTAL_MEMORY 67108864 CACHE STRING "Total Memory")
 
 # Enable for resizable heap, with some amount of slowness
 set(ALLOW_MEMORY_GROWTH 0 CACHE STRING "Allow Memory Growth")
