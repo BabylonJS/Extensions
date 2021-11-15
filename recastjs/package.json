@@ -1,15 +1,17 @@
 {
-  "name": "recast.js",
-  "version": "0.0.1",
-  "description": "Direct port of the Recast/Detour engine to JavaScript using Emscripten",
-  "main": "builds/recast.js",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/BabylonJS/Extensions/recastjs"
+  "name": "recast-detour",
+  "version": "1.5.0",
+  "description": "recastjs is a port of recastnavigation and a thin abstraction layer using emscripten. https://github.com/emscripten-core/emscripten\r This port allows the use of recastnavigation in your browser using JavaScript or WebAssembly.",
+  "main": "recast.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Cedric Guillemet <cedric.guillemet@microsoft.com>",
-  "bugs": {
-    "url": "https://github.com/BabylonJS"
-  },
-  "homepage": "https://github.com/BabylonJS"
+  "keywords": [
+    "recast",
+    "detour",
+    "navigation",
+    "navmesh"
+  ],
+  "author": "",
+  "license": "ISC"
 }
