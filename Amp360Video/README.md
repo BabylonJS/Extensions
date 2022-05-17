@@ -12,7 +12,7 @@ The plugin natively supports VR headsets (Windows Mixed Reality, etc.).
 
 First, clone the Babylon.js extensions repository:
 
-```
+```shell
 git clone https://github.com/BabylonJS/Extensions.git
 ```
 
@@ -20,7 +20,7 @@ Once the repository has been cloned, open a command prompt in the Amp360Video fo
 
 Then, type the following commands:
 
-```
+```shell
 npm install
 npm start
 ```
@@ -29,7 +29,7 @@ The hosting web page will automatically open (using webpack-dev-server).
 
 ## How it works
 
-The 360 video is a [videojs](https://docs.videojs.com/tutorial-plugins.html) plugin compatible with from AMP version 2.1.7 to the latest (2.2.3 at time of writing).
+The 360 video is a [videojs](https://docs.videojs.com/tutorial-plugins.html) plugin compatible with from AMP version 2.1.7 to the latest (2.3.10 at time of writing).
 
 The plugin depends on Babylon.js in order to enable 3D functionalities in AMP.
 
@@ -45,7 +45,7 @@ After deploying the bundled javascript file [`dist/amp-360video.js`](https://raw
 
 Include the following resources in you html:
 
-```
+```html
 <!-- Link to pep.js to ensure pointer events work consistently in all browsers -->
 <script src="https://code.jquery.com/pep/0.4.1/pep.js"></script>
 
@@ -58,7 +58,7 @@ Include the following resources in you html:
 
 Include the link to your previously downloaded plugin script in your HTML:
 
-```
+```html
 <!-- Link to the plugin file -->
 <script src="amp-360video.js"></script>
 ```
@@ -71,7 +71,7 @@ You can either embed the plugin in your HTML or initialize it by code like speci
 
 Add the **threeSixty plugin** to your video data-setup:
 
-```
+```html
 <video playsinline crossorigin="anonymous" class="azuremediaplayer amp-default-skin amp-big-play-centered" autoplay controls width="100%" height="100%" data-setup='{ "techOrder": ["azureHtml5JS", "html5"], "plugins": { "threeSixty": { } } }'>
     <source src="//willzhanmswest.streaming.mediaservices.windows.net/1f2dd2dd-ee99-40be-aae9-d0c2209982eb/DroneFlightOverLasVegasStripH3Pro7.ism/Manifest" type="application/vnd.ms-sstr+xml" />
     <p class="amp-no-js">
@@ -82,7 +82,7 @@ Add the **threeSixty plugin** to your video data-setup:
 
 The only difference with your default AMP initialization is the presence of the 360 plugin:
 
-```
+```javascript
 "plugins": { "threeSixty": { } }'
 ```
 
@@ -92,7 +92,7 @@ One example can be found in the index.html file located in the [repo](https://gi
 
 The following code will initialize the plugin in your amp player:
 
-```
+```javascript
 var myPlayer = amp('videoPlayer', {
         "nativeControlsForTouch": false,
         autoplay: false,
@@ -136,7 +136,7 @@ In order to specify the type of your source (this can unfortunately not be autom
 
 In the data-setup plugin section:
 
-```
+```javascript
 "plugins": { "threeSixty": { "videoType": "stereoscopicTopBottom" } }
 ```
 
@@ -146,7 +146,7 @@ The available types are: "monoscopicPanoramic", "stereoscopicSideBySide", "stere
 
 This works exactly the same as the previous point. In the options of your plugin:
 
-```
+```javascript
 plugins: {
     "threeSixty": {
         videoType: "stereoscopicTopBottom"
@@ -166,7 +166,7 @@ In order to disable the button, you can specify in your options:
 
 In the data-setup plugin section:
 
-```
+```javascript
 "plugins": { "threeSixty": { "enableVR": false } }
 ```
 
@@ -174,7 +174,7 @@ In the data-setup plugin section:
 
 This works exactly the same as the previous point. In the options of your plugin:
 
-```
+```javascript
 plugins: {
     "threeSixty": {
         enableVR: false
@@ -192,7 +192,7 @@ In order to change it if needed, you can specify a different value in your optio
 
 In the data-setup plugin section:
 
-```
+```javascript
 "plugins": { "threeSixty": { "fov": 1 } }
 ```
 
@@ -200,7 +200,7 @@ In the data-setup plugin section:
 
 This works exactly the same as the previous point. In the options of your plugin:
 
-```
+```javascript
 plugins: {
     "threeSixty": {
         fov: 1
@@ -218,7 +218,7 @@ In order to change them, you can specify a different value in your options:
 
 In the data-setup plugin section:
 
-```
+```javascript
 "plugins": { "threeSixty": { "defaultCameraOrientationX": 1 } }
 ```
 
@@ -226,7 +226,7 @@ In the data-setup plugin section:
 
 This works exactly the same as the previous point. In the options of your plugin:
 
-```
+```javascript
 plugins: {
     "threeSixty": {
         defaultCameraOrientationY: 1
@@ -238,19 +238,19 @@ plugins: {
 
 The default setup enables Webgl2 to enhance the performances of the application. In case of compatibility issues with all platforms, would you wish to disable it, you can rely on the setup below:
 
-#### By HTML configuration
+#### Disable WebGL2 By HTML configuration
 
 In the data-setup plugin section:
 
-```
+```javascript
 "plugins": { "threeSixty": { "disableWebGL2Support": true } }
 ```
 
-#### By code configuration
+#### Disable WebGL2 By code configuration
 
 This works exactly the same as the previous point. In the options of your plugin:
 
-```
+```javascript
 plugins: {
     "threeSixty": {
         disableWebGL2Support: true
@@ -268,7 +268,7 @@ You can use the hardwareScalingLevel settings of the plugin to chose how many ti
 
 In the data-setup plugin section:
 
-```
+```javascript
 "plugins": { "threeSixty": { "hardwareScalingLevel": 0.5 } }
 ```
 
@@ -276,7 +276,7 @@ In the data-setup plugin section:
 
 This works exactly the same as the previous point. In the options of your plugin:
 
-```
+```javascript
 plugins: {
     "threeSixty": {
         hardwareScalingLevel: 0.5

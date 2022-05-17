@@ -1,50 +1,68 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, user-scalable=no"
+    />
+    <meta name="description" content="BabylonJS 360 Stream Video Viewer" />
 
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <meta name="description" content="BabylonJS 360 Stream Video Viewer">
-    
-    <title>BabylonJS 360 Stream Video Viewer </title>
+    <title>BabylonJS 360 Stream Video Viewer</title>
 
     <!-- Link to pep.js to ensure pointer events work consistently in all browsers -->
     <script src="https://code.jquery.com/pep/0.4.1/pep.js"></script>
-    
+
     <!-- Link to the AMP resources -->
-    <link href="//amp.azure.net/libs/amp/2.2.3/skins/amp-default/azuremediaplayer.min.css" rel="stylesheet">
-    <script src="//amp.azure.net/libs/amp/2.2.3/azuremediaplayer.min.js"></script>
-    
+    <link
+      href="//amp.azure.net/libs/amp/2.3.10/skins/amp-default/azuremediaplayer.min.css"
+      rel="stylesheet"
+    />
+    <script src="//amp.azure.net/libs/amp/2.3.10/azuremediaplayer.min.js"></script>
+
     <!-- Plugin resources -->
     <script src="./amp-360video.js"></script>
 
     <style>
-        html,
-        body {
-            width: 100%;
-            height: 100%;
-            padding: 0;
-            margin: 0;
-            overflow: hidden;
-        }
-        
-        .azuremediaplayer {
-            border: 0px;
-        }
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        margin: 0;
+        overflow: hidden;
+      }
+
+      .azuremediaplayer {
+        border: 0px;
+      }
     </style>
-</head>
+  </head>
 
-<body>
-    <video playsinline crossorigin="anonymous" class="azuremediaplayer amp-default-skin amp-big-play-centered" autoplay controls width="100%" height="100%" data-setup='{ "techOrder": ["azureHtml5JS", "html5"], "plugins": { "threeSixty": { } } }'>
-        <source src="//willzhanmswest.streaming.mediaservices.windows.net/1f2dd2dd-ee99-40be-aae9-d0c2209982eb/DroneFlightOverLasVegasStripH3Pro7.ism/Manifest" type="application/vnd.ms-sstr+xml" />
-        <p class="amp-no-js">
-            To view this video please enable JavaScript, and consider upgrading to a web browser that supports HTML5 video
-        </p>
+  <body>
+    <video
+      playsinline
+      crossorigin="anonymous"
+      class="azuremediaplayer amp-default-skin amp-big-play-centered"
+      autoplay
+      controls
+      width="100%"
+      height="100%"
+      data-setup='{ "techOrder": ["azureHtml5JS", "html5"], "plugins": { "threeSixty": { "defaultCameraOrientationY": 0.5 } } }'
+    >
+      <source
+        src="//willzhanmswest.streaming.mediaservices.windows.net/1f2dd2dd-ee99-40be-aae9-d0c2209982eb/DroneFlightOverLasVegasStripH3Pro7.ism/Manifest"
+        type="application/vnd.ms-sstr+xml"
+      />
+      <p class="amp-no-js">
+        To view this video please enable JavaScript, and consider upgrading to a
+        web browser that supports HTML5 video
+      </p>
     </video>
-</body>
+  </body>
 
-<!--
+  <!--
 <body>
 <video playsinline crossorigin="anonymous" class="azuremediaplayer amp-default-skin amp-big-play-centered" autoplay controls width="100%" height="100%" data-setup='{ "techOrder": ["azureHtml5JS", "html5"], "plugins": { "threeSixty": { } } }'>
     <source src="//henri360devmedia-euwe.streaming.media.azure.net/4d746816-7836-40e3-a772-d43ca38ba0ed/7d8dc625-b89d-45cb-85ce-3dc5a331.ism/manifest" type="application/vnd.ms-sstr+xml" />
@@ -55,7 +73,7 @@
 </body> 
 -->
 
-<!-- TOP BOTTOM
+  <!-- TOP BOTTOM
 <body>
     <video playsinline crossorigin="anonymous" class="azuremediaplayer amp-default-skin amp-big-play-centered" autoplay controls width="100%" height="100%" data-setup='{ "techOrder": ["azureHtml5JS", "html5"], "plugins": { "threeSixty": { "videoType": "stereoscopicTopBottom" } } }'>
         <source src="//henri360devmedia-euwe.streaming.media.azure.net/22fef4ec-5395-4786-a455-f5fbe0252262/5f806c7d-d59c-46f8-a472-4ab7916e.ism/manifest" type="application/vnd.ms-sstr+xml" />
@@ -64,5 +82,4 @@
         </p>
     </video>
 </body> -->
-
 </html>
