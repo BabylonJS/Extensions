@@ -148,42 +148,6 @@ import { WebXRExperienceHelper } from "@babylonjs/core/XR/webXRExperienceHelper"
             vrButtonElement.addEventListener("click", toggleWebVR);
           }
         }
-        // Create the custom vr helper if requested
-        // scene
-        //   .createDefaultXRExperienceAsync({
-        //     uiOptions: {
-        //       customButtons: [
-        //         {
-        //           element: document.querySelector(".vjs-webvr-control"),
-        //           referenceSpaceType: "local-floor",
-        //           sessionMode: "immersive-vr",
-        //           update: function (button) {
-        //             console.log(button);
-        //           },
-        //         },
-        //       ],
-        //     },
-        //   })
-        //   .then((defaultXR) => {
-        //     xrHelper = defaultXR;
-        //   });
-
-        // var vrHelper = new VRExperienceHelper(scene, {
-        //     useCustomVRButton: true,
-        //     controllerMeshes: false
-        // });
-
-        // // Prevent pointer lock to let the menu accessible
-        // vrHelper.requestPointerLockOnFullScreen = false;
-
-        // // Records VR state
-        // vrHelper.onEnteringVRObservable.add(() => {
-        //     isInVRMode = true;
-        // });
-        // vrHelper.onExitingVRObservable.add(() => {
-        //     isInVRMode = false;
-        //     player.controls(true);
-        // });
 
         // Adapt the camera to the requested settings.
         scene.activeCamera.fov = settings.fov;
@@ -211,7 +175,7 @@ import { WebXRExperienceHelper } from "@babylonjs/core/XR/webXRExperienceHelper"
 
       if (settings.enableVR) {
         addToggle(player.controlBar, "WebVr", "vjs-webvr-control", function () {
-        //   toggleWebVR && toggleWebVR();
+            // no-op
         });
       }
 
