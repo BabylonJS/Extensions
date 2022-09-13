@@ -167,7 +167,7 @@ module BABYLON {
             this._instanceMapData = options.instanceMapData;
             this._instanceColorData = options.instanceColorData;
             this._sourceMeshes = options.sourceMeshes;
-            this._precomputeInstances = (options.precomputeInstances) ? (options.precomputeInstances) : true;
+            this._precomputeInstances = (typeof options.precomputeInstances === undefined) ? true : options.precomputeInstances;
             
             // initialize the map arrays if not passed as parameters
             this._datamap = (this._mapData) ? true : false;
