@@ -1,64 +1,61 @@
-QuickTreeGenerator = function(sizeBranch, sizeTrunk, radius, trunkMaterial, leafMaterial, scene) {
+const QuickTreeGenerator = function(sizeBranch, sizeTrunk, radius, trunkMaterial, leafMaterial) {
 
-    var tree = new BABYLON.Mesh("tree", scene);
-    tree.isVisible = false;
-    
-    var leaves = new BABYLON.Mesh("leaves", scene);
-    
-    //var vertexData = BABYLON.VertexData.CreateSphere(2,sizeBranch); //this line for BABYLONJS2.2 or earlier
-    var vertexData = BABYLON.VertexData.CreateSphere({segments:2, diameter:sizeBranch}); //this line for BABYLONJS2.3 or later
-    
-    vertexData.applyToMesh(leaves, false);
+    const tree = new BABYLON.Mesh("tree", scene);
 
-    var positions = leaves.getVerticesData(BABYLON.VertexBuffer.PositionKind);
-    var indices = leaves.getIndices();
-    var numberOfPoints = positions.length/3;
+    const leaves = BABYLON.MeshBuilder.CreateSphere("sphere", {segments: 2, diameter: sizeBranch})
+    console.log(leaves.getBoundingInfo().boundingSphere.radius);
 
-    var map = [];
+    const positions = leaves.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+    const indices = leaves.getIndices();
+    const numberOfPoints = positions.length / 3;
+
+    const map = [];
 
     // The higher point in the sphere
-    var v3 = BABYLON.Vector3;
-    var max = [];
+    const v3 = BABYLON.Vector3;
+    const max = [];
 
-    for (var i=0; i<numberOfPoints; i++) {
-        var p = new v3(positions[i*3], positions[i*3+1], positions[i*3+2]);
+    for (let i = 0; i < numberOfPoints; i++) {
+        const p = new v3(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]);
 
         if (p.y >= sizeBranch/2) {
             max.push(p);
         }
 
-        var found = false;
-        for (var index=0; index<map.length&&!found; index++) {
-            var array = map[index];
-            var p0 = array[0];
+        let found = false;
+        for (let index = 0; index <map.length && !found; index++) {
+            const array = map[index];
+            const p0 = array[0];
             if (p0.equals (p) || (p0.subtract(p)).lengthSquared() < 0.01){
-                array.push(i*3);
+                array.push(i * 3);
                 found = true;
             }
         }
         if (!found) {
-            var array = [];
+            let array = [];
             array.push(p, i*3);
             map.push(array);
         }
 
     }
-    var randomNumber = function (min, max) {
+
+    const randomNumber = function (min, max) {
         if (min == max) {
             return (min);
         }
-        var random = Math.random();
+        const random = Math.random();
         return ((random * (max - min)) + min);
     };
 
     map.forEach(function(array) {
-        var index, min = -sizeBranch/10, max = sizeBranch/10;
-        var rx = randomNumber(min,max);
-        var ry = randomNumber(min,max);
-        var rz = randomNumber(min,max);
+        const min = -sizeBranch/10; 
+        const max = sizeBranch/10;
+        const rx = randomNumber(min,max);
+        const ry = randomNumber(min,max);
+        const rz = randomNumber(min,max);
 
-        for (index = 1; index<array.length; index++) {
-            var i = array[index];
+        for (let index = 1; index < array.length; index++) {
+            const i = array[index];
             positions[i] += rx;
             positions[i+1] += ry;
             positions[i+2] += rz;
@@ -66,24 +63,22 @@ QuickTreeGenerator = function(sizeBranch, sizeTrunk, radius, trunkMaterial, leaf
     });
 
     leaves.setVerticesData(BABYLON.VertexBuffer.PositionKind, positions);
-    var normals = [];
+    const normals = [];
     BABYLON.VertexData.ComputeNormals(positions, indices, normals);
     leaves.setVerticesData(BABYLON.VertexBuffer.NormalKind, normals);
     leaves.convertToFlatShadedMesh();
-    
-    leaves.material = leafMaterial;
-    leaves.position.y = sizeTrunk+sizeBranch/2-2;
-    
 
-    var trunk = BABYLON.Mesh.CreateCylinder("trunk", sizeTrunk, radius-2<1?1:radius-2, radius, 10, 2, scene );
-    
-    trunk.position.y = (sizeBranch/2+2)-sizeTrunk/2;
+    leaves.material = leafMaterial;
+
+    const trunk = BABYLON.MeshBuilder.CreateCylinder("trunk", {height: sizeTrunk, diameterTop: radius-2<1?1:radius-2, diameterBottom: radius, tessellation: 10, subdivisions: 2});
 
     trunk.material = trunkMaterial;
     trunk.convertToFlatShadedMesh();
-    
+
     leaves.parent = tree;
     trunk.parent = tree;
-    return tree;
 
-};
+    leaves.position.y = (sizeTrunk + sizeBranch) / 2-2;
+
+    return tree
+}
