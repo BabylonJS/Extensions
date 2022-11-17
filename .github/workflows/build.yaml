@@ -1,0 +1,34 @@
+name: Build Recast
+on: workflow_dispatch
+  
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v2.3.3
+      - name: Update submodule
+        run: |
+             git submodule update --init --recursive
+             git submodule update --remote --merge
+      - name: Clone/install emsdk
+        run: |
+             cd ..
+             git clone https://github.com/emscripten-core/emsdk.git
+             cd emsdk
+             ./emsdk install latest
+      - name: Build
+        run: |
+             cd ../emsdk
+             ./emsdk activate latest
+             source "emsdk_env.sh"
+             cd ../Extensions/recastjs
+             mkdir buildUMD
+             emcmake cmake -B buildUMD -DCMAKE_BUILD_TYPE=Release
+             cmake --build buildUMD
+
+      - name: Upload Recast UMD Folder
+        uses: actions/upload-artifact@v2
+        with:
+          name: 'recast-umd'
+          path: recastjs/buildUMD
