@@ -23,12 +23,18 @@ jobs:
              ./emsdk activate latest
              source "emsdk_env.sh"
              cd ../Extensions/recastjs
-             mkdir buildUMD
-             emcmake cmake -B buildUMD -DCMAKE_BUILD_TYPE=Release
-             cmake --build buildUMD
+             mkdir build
+             emcmake cmake -B build -DCMAKE_BUILD_TYPE=Release
+             cmake --build build
+             mkdir Package
+             cp ./Package.json ./Package
+             cp ./readme.md ./Package
+             cp ./build/recast.js ./Package
+             cp ./build/recast.wasm.js ./Package
+             cp ./build/recast.wasm.wasm ./Package
 
-      - name: Upload Recast UMD Folder
+      - name: Upload Recast Package Folder
         uses: actions/upload-artifact@v2
         with:
-          name: 'recast-umd'
-          path: recastjs/buildUMD
+          name: 'recast package'
+          path: recastjs/Package
