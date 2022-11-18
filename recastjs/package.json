@@ -6,12 +6,21 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "files": [
+    "readme.md",
+    "License.txt",
+    "recast.js",
+    "recast.d.ts",
+    "recast.wasm.js",
+    "recast.wasm.wasm",
+    "recast.es6.js"
+],
   "keywords": [
     "recast",
     "detour",
     "navigation",
     "navmesh"
   ],
-  "author": "",
-  "license": "MIT"
+  "types": "recast.d.ts",
+  "license": "ZLib,Apache2"
 }

@@ -105,7 +105,14 @@ set(EMCC_JS_ARGS ${EMCC_ARGS}
   -s AGGRESSIVE_VARIABLE_ELIMINATION=1
   -s ELIMINATE_DUPLICATE_FUNCTIONS=1
   -s LEGACY_VM_SUPPORT=1
-  -s SINGLE_FILE=1)
+  -s SINGLE_FILE=1
+  -s FILESYSTEM=0)
+
+set(EMCC_JS_ES6ARGS ${EMCC_ARGS}
+  -s EXPORT_ES6=1 
+  -s MODULARIZE=1 
+  -s SINGLE_FILE=1
+  -s FILESYSTEM=0)
 
 set(EMCC_WASM_ARGS ${EMCC_ARGS}
   -s BINARYEN_IGNORE_IMPLICIT_TRAPS=1
@@ -138,6 +145,7 @@ add_custom_command(
 add_custom_target(${EXE_NAME}-bindings ALL DEPENDS glue.js glue.o)
 
 #######################################
+# full UMD
 add_custom_command(
   OUTPUT ${EXE_NAME}.js
   COMMAND emcc glue.o lib${EXE_NAME}.a ${EMCC_JS_ARGS} -o ${EXE_NAME}.js
@@ -155,3 +163,12 @@ add_custom_command(
   VERBATIM)
 add_custom_target(${EXE_NAME}-wasm ALL DEPENDS ${EXE_NAME}.wasm.js ${EXE_NAME}.wasm.wasm)
 
+#######################################
+# ES6
+add_custom_command(
+  OUTPUT ${EXE_NAME}.js
+  COMMAND emcc glue.o lib${EXE_NAME}.a ${EMCC_JS_ES6ARGS} -o ${EXE_NAME}.es6.js
+  DEPENDS ${EXE_NAME}-bindings ${EXE_NAME} ${RECAST_ONLOAD_FILE}
+  COMMENT "Building ${EXE_NAME} ES6 javascript"
+  VERBATIM)
+add_custom_target(${EXE_NAME}-javascript ALL DEPENDS ${EXE_NAME}.es6.js)
