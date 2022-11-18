@@ -166,7 +166,7 @@ add_custom_target(${EXE_NAME}-wasm ALL DEPENDS ${EXE_NAME}.wasm.js ${EXE_NAME}.w
 #######################################
 # ES6
 add_custom_command(
-  OUTPUT ${EXE_NAME}.js
+  OUTPUT ${EXE_NAME}.es6.js
   COMMAND emcc glue.o lib${EXE_NAME}.a ${EMCC_JS_ES6ARGS} -o ${EXE_NAME}.es6.js
   DEPENDS ${EXE_NAME}-bindings ${EXE_NAME} ${RECAST_ONLOAD_FILE}
   COMMENT "Building ${EXE_NAME} ES6 javascript"
