@@ -171,4 +171,4 @@ add_custom_command(
   DEPENDS ${EXE_NAME}-bindings ${EXE_NAME} ${RECAST_ONLOAD_FILE}
   COMMENT "Building ${EXE_NAME} ES6 javascript"
   VERBATIM)
-add_custom_target(${EXE_NAME}-javascript ALL DEPENDS ${EXE_NAME}.es6.js)
+add_custom_target(${EXE_NAME}-es6 ALL DEPENDS ${EXE_NAME}.es6.js)
