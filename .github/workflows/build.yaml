@@ -30,8 +30,8 @@ jobs:
              cp ./Package.json ./Package
              cp ./readme.md ./Package
              cp ./License.txt ./Package
+             cp ./recast.d.ts ./Package
              cp ./build/recast.es6.js ./Package
-             cp ./build/recast.d.ts ./Package
              cp ./build/recast.js ./Package
              cp ./build/recast.wasm.js ./Package
              cp ./build/recast.wasm.wasm ./Package
