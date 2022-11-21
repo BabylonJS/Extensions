@@ -3,6 +3,8 @@
   "version": "1.5.0",
   "description": "recastjs is a port of recastnavigation and a thin abstraction layer using emscripten. https://github.com/emscripten-core/emscripten\r This port allows the use of recastnavigation in your browser using JavaScript or WebAssembly.",
   "main": "recast.js",
+  "module": "recast.es6.js",
+  "browser": "recast.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -22,5 +24,5 @@
     "navmesh"
   ],
   "types": "recast.d.ts",
-  "license": "ZLib,Apache2"
+  "license": "ZLib"
 }

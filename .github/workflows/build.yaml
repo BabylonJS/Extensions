@@ -27,7 +27,7 @@ jobs:
              emcmake cmake -B build -DCMAKE_BUILD_TYPE=Release
              cmake --build build
              mkdir Package
-             cp ./Package.json ./Package
+             cp ./package.json ./package
              cp ./readme.md ./Package
              cp ./License.txt ./Package
              cp ./recast.d.ts ./Package
