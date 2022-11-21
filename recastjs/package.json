@@ -24,5 +24,5 @@
     "navmesh"
   ],
   "types": "recast.d.ts",
-  "license": "ZLib"
+  "license": "Zlib"
 }
