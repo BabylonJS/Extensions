@@ -46,4 +46,4 @@ steps:
   inputs:
     command: 'publish'
     workingDir: 'recastjs/Package'
-    verbose: true
+    publishEndpoint: 'NPMWithAccessToken'
