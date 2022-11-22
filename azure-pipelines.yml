@@ -23,10 +23,10 @@ steps:
 - task: CmdLine@2
   inputs:
     script: |
-      cd ../emsdk
+      pushd ../emsdk
       ./emsdk activate latest
       source "emsdk_env.sh"
-      cd ../Extensions/recastjs
+      popd
       mkdir build
       emcmake cmake -B build -DCMAKE_BUILD_TYPE=Release
       cmake --build build
