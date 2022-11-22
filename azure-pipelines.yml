@@ -40,10 +40,11 @@ steps:
       cp ./build/recast.js ./Package
       cp ./build/recast.wasm.js ./Package
       cp ./build/recast.wasm.wasm ./Package
-  displayName: 'Clone/install emsdk'
+      pwd
+  displayName: 'Build package'
 
 - task: Npm@1
   inputs:
     command: 'publish'
-    workingDir: 'recastjs/Package'
+    workingDir: 'Extensions/recastjs/Package'
     publishEndpoint: 'NPMWithAccessToken'
