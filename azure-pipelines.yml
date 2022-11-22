@@ -1,0 +1,48 @@
+trigger:
+- master
+
+pool:
+  vmImage: ubuntu-latest
+
+- task: CmdLine@2
+  inputs:
+    script: |
+      git submodule update --init --recursive
+      git submodule update --remote --merge
+  displayName: 'Checkout'
+
+- task: CmdLine@2
+  inputs:
+    script: |
+      cd ..
+      git clone https://github.com/emscripten-core/emsdk.git
+      cd emsdk
+      ./emsdk install latest
+  displayName: 'Clone/install emsdk'
+
+- task: CmdLine@2
+  inputs:
+    script: |
+      cd ../emsdk
+      ./emsdk activate latest
+      source "emsdk_env.sh"
+      cd ../Extensions/recastjs
+      mkdir build
+      emcmake cmake -B build -DCMAKE_BUILD_TYPE=Release
+      cmake --build build
+      mkdir Package
+      cp ./package.json ./package
+      cp ./readme.md ./Package
+      cp ./License.txt ./Package
+      cp ./recast.d.ts ./Package
+      cp ./build/recast.es6.js ./Package
+      cp ./build/recast.js ./Package
+      cp ./build/recast.wasm.js ./Package
+      cp ./build/recast.wasm.wasm ./Package
+  displayName: 'Clone/install emsdk'
+
+- task: Npm@1
+  inputs:
+    command: 'publish'
+    workingDir: 'recastjs/Package'
+    verbose: true
