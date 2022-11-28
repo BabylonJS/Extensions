@@ -1,4 +1,6 @@
-declare module "recast-detour" {
+
+import type { EmscriptenModule, EmscriptenModuleFactory } from 'emscripten'
+declare module 'recast-detour' {
   export class rcConfig {
     new();
     width: number;
@@ -111,4 +113,11 @@ declare module "recast-detour" {
     getDefaultQueryExtent(): Vec3;
     getCorners(idx: number): NavPath;
   }
+  export interface RecastDetourModule extends EmscriptenModule {
+  }
+
+  declare const recastdetour_wasm: EmscriptenModuleFactory<RecastDetourModule>
+  export default recastdetour_wasm
 }
+
+export = recastdetour_wasm; // make it a module

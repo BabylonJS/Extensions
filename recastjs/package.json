@@ -16,7 +16,7 @@
     "recast.wasm.js",
     "recast.wasm.wasm",
     "recast.es6.js"
-],
+  ],
   "keywords": [
     "recast",
     "detour",
@@ -24,5 +24,8 @@
     "navmesh"
   ],
   "types": "recast.d.ts",
-  "license": "Zlib"
+  "license": "Zlib",
+  "dependencies": {
+    "@types/emscripten": "^1.39.6"
+  }
 }
