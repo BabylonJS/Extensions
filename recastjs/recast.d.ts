@@ -1,5 +1,6 @@
-declare module "recast-detour" {
-  export class rcConfig {
+export default Recast;
+declare module Recast{
+  class rcConfig {
     new();
     width: number;
     height: number;
@@ -21,34 +22,34 @@ declare module "recast-detour" {
     detailSampleDist: number;
     detailSampleMaxError: number;
   }
-  export class Vec3 {
+  class Vec3 {
     new();
     new(x: number, y: number, z: number);
     x: number;
     y: number;
     z: number;
   }
-  export class Triangle {
+  class Triangle {
     new();
     getPoint(n: number): Vec3;
   }
-  export class DebugNavMesh {
+  class DebugNavMesh {
     new();
     getTriangleCount(): number;
     getTriangle(n: number): Triangle;
   }
-  export class dtNavMesh {}
-  export class dtObstacleRef {}
-  export class NavmeshData {
+  class dtNavMesh {}
+  class dtObstacleRef {}
+  class NavmeshData {
     new();
     dataPointer: any;
     size: number;
   }
-  export class NavPath {
+  class NavPath {
     getPointCount(): number;
     getPoint(n: number): Vec3;
   }
-  export class dtCrowdAgentParams {
+  class dtCrowdAgentParams {
     new();
     radius: number;
     height: number;
@@ -62,7 +63,7 @@ declare module "recast-detour" {
     queryFilterType: number;
     userData: unknown;
   }
-  export class NavMesh {
+  class NavMesh {
     new();
     destroy(): void;
     build(
@@ -92,7 +93,7 @@ declare module "recast-detour" {
     removeObstacle(obstacle: dtObstacleRef): void;
     update(): void;
   }
-  export class Crowd {
+  class Crowd {
     new(maxAgents: number, maxAgentRadius: number, nav: dtNavMesh);
     destroy(): void;
     addAgent(position: Vec3, params: dtCrowdAgentParams): number;
