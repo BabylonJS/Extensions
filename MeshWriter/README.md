@@ -184,14 +184,14 @@ If BABYLON is in the global address space, it will find them there.&nbsp;
 Job done.&nbsp;
 
 	BABYLON    = <get-babylon>
-	import { MeshWriter } from "meshwriter";
+	import MeshWriter from "meshwriter";
 	Writer     = MeshWriter(scene, {scale:scale});
 
 If not, then the programmer must get those methods and hand them to MeshWriter as you see here.&nbsp;
 The required methods are put in a single object ('methodsObj') which is handed to MeshWriter as a parameter.&nbsp; 
 
 	methodsObj = <get methods>
-	import { MeshWriter } from "meshwriter";
+	import MeshWriter from "meshwriter";
 	Writer     = MeshWriter(scene, {scale:scale, methods:methodsObj});
 
 ### Required BABYLON Methods
@@ -225,7 +225,7 @@ If you find an error in this, please let us know, pronto.
 	const methodsObj = {Vector2, Vector3, Path2, Curve3, Color3, SolidParticleSystem, PolygonMeshBuilder, CSG, StandardMaterial, Mesh};
 
 	// Methods assembled, onward! 
-	import { MeshWriter } from "meshwriter";
+	import MeshWriter from "meshwriter";
 	Writer     = MeshWriter(scene, {scale:scale, methods:methodsObj});
 
 This playground puts BABYLON in the &apos;methods&apos; parameter to show you the syntax.&nbsp;
