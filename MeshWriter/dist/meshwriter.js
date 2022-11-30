@@ -542,7 +542,7 @@
         }
         holes.forEach(h=>h.dispose());
         shape.dispose();
-        return csgShape.toMesh("Net-"+letter+i+"-"+weeid())
+        return csgShape.toMesh("Net-"+letter+i+"-"+weeid(), null, scene)
       };
     };
 

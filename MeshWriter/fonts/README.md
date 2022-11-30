@@ -30,7 +30,7 @@ This is used to invoke it.
 ## Build a package
 
 Make sure that you have loaded Earcut in npm &ndash; this is the only dependency.&nbsp;
-On your dev machine (set up as described in meshwriter-font) do to the /meshwriter repo.&nbsp;
+On your dev machine (set up as described in meshwriter-font) go to the /meshwriter repo.&nbsp;
 Type:
 
 	npm run build
