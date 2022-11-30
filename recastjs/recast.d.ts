@@ -1,4 +1,3 @@
-export default Recast;
 declare module Recast{
   class rcConfig {
     new();
@@ -113,3 +112,4 @@ declare module Recast{
     getCorners(idx: number): NavPath;
   }
 }
+export default () => Promise<Recast>;
