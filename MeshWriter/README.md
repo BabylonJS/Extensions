@@ -201,6 +201,7 @@ Collect these methods and put them on a single object and then hand that to Mesh
 &bull; Vector3 &nbsp;  
 &bull; Path2 &nbsp;  
 &bull; Curve3 &nbsp;  
+&bull; Color3 &nbsp;  
 &bull; SolidParticleSystem &nbsp;  
 &bull; PolygonMeshBuilder &nbsp;  
 &bull; CSG &nbsp;  
@@ -215,6 +216,7 @@ If you find an error in this, please let us know, pronto.
 	// Collect the methods
 	import { Vector2, Vector3 } from "@babylonjs/core/Maths/math.vector";
 	import { Path2, Curve3 } from "@babylonjs/core/Maths/math.path";
+	import { Color3 } from "@babylonjs/core/Maths/math.color";
 	import { Mesh } from "@babylonjs/core/Meshes/mesh";
 	import { CSG } from "@babylonjs/core/Meshes/csg";
 	import { PolygonMeshBuilder} from "@babylonjs/core/Meshes/polygonMesh";
