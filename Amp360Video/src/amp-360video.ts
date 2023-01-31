@@ -96,8 +96,10 @@ import { WebXRExperienceHelper } from "@babylonjs/core/XR/webXRExperienceHelper"
         engine.getCaps().vertexArrayObject = false;
         var scene = new Scene(engine);
 
-        const camera = new ArcRotateCamera("camera", 0, Math.PI / 2, 10, new Vector3(0, 0, 0), scene);
+        const camera = new ArcRotateCamera("camera", 0, Math.PI / 2, 0, new Vector3(0, 0, 0), scene);
         camera.attachControl();
+        camera.upperRadiusLimit = 0;
+        camera.lowerRadiusLimit = 0;
 
         // Set the hardware scaling level
         const scaling = Math.max(
