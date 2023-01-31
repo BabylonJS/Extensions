@@ -4,6 +4,7 @@ import { Color4, Vector3 } from "@babylonjs/core/Maths/math";
 import { VideoDome } from "@babylonjs/core/Helpers/videoDome";
 import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
 import "@babylonjs/core/Helpers/sceneHelpers";
+import "@babylonjs/core/Engines/Extensions/engine.externalTexture";
 
 import "./amp-360video.css";
 import { WebXRExperienceHelper } from "@babylonjs/core/XR/webXRExperienceHelper";
