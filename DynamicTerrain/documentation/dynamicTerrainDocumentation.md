@@ -48,7 +48,7 @@ The distance between the points is constant on the width and is different from t
     for (var l = 0; l < mapSubZ; l++) {                 // loop on height points
         for (var w = 0; w < mapSubX; w++) {             // loop on width points
             var x = (w - mapSubX * 0.5) * 5.0;          // distance inter-points = 5 on the width
-            var z = (l - mapSubZ * 0.5) * 2.0;          // distance inter-points = 2 on the width
+            var z = (l - mapSubZ * 0.5) * 2.0;          // distance inter-points = 2 on the height
             var y = noise.simplex2(x, z);               // altitude
                    
             mapData[3 * (l * mapSubX + w)] = x;
