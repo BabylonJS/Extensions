@@ -1,0 +1,15 @@
+{
+    "name": "dynamicterrain",
+    "version": "1.0.0",
+    "main": "./dist/babylon.dynamicTerrain.js",
+    "scripts": {
+        "compile": "tsc src/babylon.dynamicTerrain.ts --outDir dist"
+    },
+    "types": "./dist/babylon.dynamicTerrain.d.ts",
+    "dependencies": {
+        "@babylonjs/core": "^6.16.0"
+    },
+    "devDependencies": {
+        "typescript": "^5.1.6"
+    }
+}
