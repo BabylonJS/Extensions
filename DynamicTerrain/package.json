@@ -1,5 +1,5 @@
 {
-    "name": "dynamicterrain",
+    "name": "@babylonjs/dynamic-terrain",
     "version": "1.0.0",
     "main": "./dist/babylon.dynamicTerrain.js",
     "scripts": {
