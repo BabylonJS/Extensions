@@ -1,0 +1,15 @@
+{
+    "name": "@babylonjs/tree-generators-simple-pine",
+    "version": "1.0.0",
+    "main": "./PineGenerator.js",
+    "scripts": {
+        "compile": "tsc"
+    },
+    "types": "./PineGenerator.d.ts",
+    "dependencies": {
+        "@babylonjs/core": "^6.16.0"
+    },
+    "devDependencies": {
+        "typescript": "^5.1.6"
+    }
+}
