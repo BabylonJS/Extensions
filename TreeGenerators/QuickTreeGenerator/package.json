@@ -1,0 +1,15 @@
+{
+    "name": "@babylonjs/tree-generators-quick-tree",
+    "version": "1.0.0",
+    "main": "./QuickTreeGenerator.js",
+    "scripts": {
+        "compile": "tsc"
+    },
+    "types": "./QuickTreeGenerator.d.ts",
+    "dependencies": {
+        "@babylonjs/core": "^6.16.0"
+    },
+    "devDependencies": {
+        "typescript": "^5.1.6"
+    }
+}
