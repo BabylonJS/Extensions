@@ -1,0 +1,22 @@
+{
+  "name": "htmlmesh",
+  "version": "1.0.0",
+  "description": "A BabylonJS Mesh that can display HTML DOM Content in scene (can occlude other meshes and can be occluded)",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "author": "Eric Wood",
+  "license": "ISC",
+  "devDependencies": {
+    "@babylonjs/core": "^6.30.0",
+    "ts-loader": "^9.5.1",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.2.2",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^4.15.1",
+    "vite": "^5.0.0"
+  }
+}
