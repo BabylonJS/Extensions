@@ -72,12 +72,9 @@ const onPointerMove = (evt: PointerEvent) => {
         if (pickedMesh && 
             (pointerCaptureBehavior = meshToBehaviorMap.get(pickedMesh)) && // Assign and test so we can eliminate the need for a separate line to get the behavior
             pickedMesh.uniqueId !== parseInt(getCapturingId() || '')) {
-            console.log("In PointerCaptureBehavior.onPointerMove - releasing pointer events for", getCapturingId())
             releaseCurrent(); // Request release of current pointer events owner
-            console.log("In PointerCaptureBehavior.onPointerMove - capturing pointer events for", pickedMesh.id)
             pointerCaptureBehavior.capturePointerEvents();
         } else if (pickedMesh) {
-            console.log("In PointerCaptureBehavior.onPointerMove - releasing pointer events for", getCapturingId())
             releaseCurrent(); // Request release of current pointer events owner
         }
 
@@ -124,7 +121,7 @@ export class PointerEventsCaptureBehavior implements Behavior<AbstractMesh> {
         // getBehaviorByName(), which does a linear search of the behaviors array.
         this.attachedMesh = mesh;
         meshToBehaviorMap.set(mesh, this);
-        if (this.captureOnPointerEnter) {
+        if (this._captureOnPointerEnter) {
             startCaptureOnEnter(mesh.getScene()!);
         }
 	}

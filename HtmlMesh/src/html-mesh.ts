@@ -3,6 +3,7 @@ import { CreatePlaneVertexData } from '@babylonjs/core/Meshes/Builders/planeBuil
 import { StandardMaterial } from '@babylonjs/core/Materials/standardMaterial';
 import { Matrix } from '@babylonjs/core/Maths/math';
 import { PointerEventsCaptureBehavior } from './pointer-events-capture-behavior';
+import { Scene } from '@babylonjs/core';
 
 // This class represents HTML content that we want to _render as though it is part of the scene.  The HTML content is actually
 // rendered below the canvas, but a depth mask is created by this class that writes to the depth buffer but does not
@@ -24,7 +25,7 @@ export class HtmlMesh extends Mesh {
 	_captureOnPointerEnter: boolean;
 	_pointerEventCaptureBehavior: PointerEventsCaptureBehavior | null = null;
 
-    constructor(scene, id , { captureOnPointerEnter = true } = {}) {
+    constructor(scene: Scene, id: string , { captureOnPointerEnter = true } = {}) {
         super(id, scene);
 		
         this.createMask();
