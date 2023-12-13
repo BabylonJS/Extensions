@@ -199,6 +199,7 @@ export class HtmlMesh extends Mesh {
         div.style.zIndex = '1';
         div.style.position = 'absolute';
         div.style.pointerEvents = 'auto';
+		div.style.backfaceVisibility = 'hidden';
     
         return div;
     }
