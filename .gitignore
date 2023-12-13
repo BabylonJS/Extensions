@@ -1,3 +1,5 @@
 node_modules
 .tempChromeProfileForDebug
 *.map 
+HtmlMesh/coverage/*
+.DS_Store

@@ -1,0 +1,288 @@
+# HTML Mesh
+
+## Introduction
+
+The HTML Mesh is a [BabylonJS](babylonjs.com) mesh that displays a webpage (or DOM element) 
+in the scene, meaning that it can occlude other meshes and be occluded by other meshs. 
+
+[Online demo - coming soon]()
+
+## How to Run Locally
+
+First, clone the Babylon.js extensions repository:
+
+```shell
+git clone https://github.com/BabylonJS/Extensions.git
+```
+
+Once the repository has been cloned, open a command prompt in the HtmlMesh folder.
+
+Then, type the following commands:
+
+```shell
+npm install
+npm run dev
+```
+
+Then point your browser at localhost:5173 (or whereever Vite says it is hosted).
+
+## How it works
+The HTML Mesh leverages CSS transfroms to make DOM content appear as though it has a location and orientation relative to the camera in the scene.  If the DOM content was rendered on top of the scene, then the DOM content would always occlude anything in the scene behind it.  To allow DOM content to be occluded by meshes in the scene, we instead place the DOM content behaind the canvas and then use a depth mask mesh with a material that writes to the depth buffer, but not the color buffer.  This make effectively becomes a proxy for the DOM content and determines wether the renderer renders another mesh, the scene clear color, or nothing (which allows the DOM content to be seen).
+
+Interaction with the DOM content is complicated by the fact that if the canvas is receiving pointer events, then the DOM content is not and vice versa.  A signal is needed to instruct the canvas to stop and start receiving pointer events.  To provide the best experience, the signal shoud be the entry of the pointer, so that the user can interact with the content immediately upon hovering it (or touching it on mobile).  This is done with a scene pointer observable that listens for pointer in on the mask.  However, a scene pointer observable cannot be used for determining exit, becasue the scene will cease to receive pointer events once the DOM content starts receiving them.  Pointer exit is therefore detected when the pointer is no longer over the DOM content.  Using DOM pointerout events proved to be unreliable, so we continually poll the DOM elements under the pointer to see if they include the DOM element.  To avoid potential conflicts and race conditions between the canvas and one or more HTML meshes in obtaining and releasing pointer lock, a pointer lock manager is introduced that queues and matches pointer requests and releases.
+
+## Rendering Order Impacts
+In order to ensure that the HtmlMeshes render before other meshes (so that the HtmlMesh is properly occluded by meshes that are closer to the camera), the HtmlMeshRenderer will set the rendering order for group 0.  If your application sets a custom opaque, alpha test, or transparent rendering order for group 0, you must set the rendering order via the HtmlMeshRenderer constructor.  If you do not, then your render order will be overwritten if the HtmlMeshRenderer is created after and the HtmlMeshes will not be properly occluded by other meshes if the HtmlMeshRenderer is created before.  I realize this is not ideal, but any solution for trying to force the html meshes to render first is going to impact either rendering order, the allocation of meshes to rendering groups, or the assignment of material ids (and that would be defeated if a custom render order function is used) and setting the render order seemed to be the least bad option.
+
+## Pointer Capture
+An HtmlMesh instance can be configured to automatically capture the pointer on entry.  This allows for "one-click" behavior where the user can interact directly with the content.  For example, the user can click the play button directly on a YouTube video.  Iframes are problematic, however; becuase we cannot detect pointer movement within a cross-origin iframe (an iframe that originates from a different site than the one that is hosting it).  Simply put, we can capture the pointer, but releasing it requires that the pointer leaves the iframe completely.  This requirement means that we cannot detect when the pointer is over a mesh that is in front of the HtmlMesh containing the iframe; only when the pointer has fully left the iframe will the pointer be detected.  In practice, since BabylonJS relies on pointer events on the canvas, this means that no actions, pointer obeservables, or scene picking will work correctly if the pointer entered the iframe first until the pointer has left the iframe.  Therefore, if you have mesh content that needs to be pickable (respond in some way to pointer events) that could potentially be in front of an HtmlMesh containing an iframe (either due to camera orientation of movement of the either mesh), we recommend one of the following:
+1.  If the geometry of the mesh is fairly predictable, you can create a pointer mask using an SVG element that sits over the iframe and aligns with the projection of the occluding mesh to the screen.  By setting pointer events on this mask to `fill` it will cause the pointermove listener on the document to start getting pointer events again when the pointer moves over the mask, which will allow the ray detection to determine that the mesh is in front of the HtmlMesh hosting the iframe and it will release the pointer.
+2.  If creating and maintaining a mask is not practical, then you can disable the auto pointer capture on the HtmlMesh using `disableAutomaticPointerCapture`.  When automatic pointer capture is disabled, the pointer capture must be initiated by calling `capturePointer` and released by calling `releasePointer`.  This can be done in response to whatever gesture seems appropriate such as clicking of double clicking the HtmlMesh.
+
+You may also want to disable automatic pointer capture if allowing a user to edit an HtmlMesh, e.g. using a gizmo or pointer drag behavior.
+
+## How use in your web site
+
+After deploying the bundled javascript file [`dist/amp-360video.js`](https://raw.githubusercontent.com/BabylonJS/Extensions/master/Amp360Video/dist/amp-360video.js) from the dist directory to your WebSite you can follow the steps below.
+
+> Note: if you were using the plugin before, you might have needed to reference Babylon.js in your site. We have now released a bundle ensuring the smallest delivery possible so the reference to Babylon.js is not required anymore.
+
+### External Resources
+
+Include the following resources in you html:
+
+```html
+<!-- Link to pep.js to ensure pointer events work consistently in all browsers -->
+<script src="https://code.jquery.com/pep/0.4.1/pep.js"></script>
+
+```
+
+### Plugin Script
+
+Include the link to your previously downloaded plugin script in your HTML:
+
+```html
+<!-- Link to the plugin file -->
+<script src="amp-360video.js"></script>
+```
+
+### Plugin Setup
+
+You can either embed the plugin in your HTML or initialize it by code like specified in the [AMP documentation](http://amp.azure.net/libs/amp/latest/docs/index.html#plugins).
+
+#### Html Initialization
+
+Add the **threeSixty plugin** to your video data-setup:
+
+```html
+<video playsinline crossorigin="anonymous" class="azuremediaplayer amp-default-skin amp-big-play-centered" autoplay controls width="100%" height="100%" data-setup='{ "techOrder": ["azureHtml5JS", "html5"], "plugins": { "threeSixty": { } } }'>
+    <source src="//willzhanmswest.streaming.mediaservices.windows.net/1f2dd2dd-ee99-40be-aae9-d0c2209982eb/DroneFlightOverLasVegasStripH3Pro7.ism/Manifest" type="application/vnd.ms-sstr+xml" />
+    <p class="amp-no-js">
+        To view this video please enable JavaScript, and consider upgrading to a web browser that supports HTML5 video
+    </p>
+</video>
+```
+
+The only difference with your default AMP initialization is the presence of the 360 plugin:
+
+```javascript
+"plugins": { "threeSixty": { } }'
+```
+
+One example can be found in the index.html file located in the [repo](https://github.com/BabylonJS/Extensions/blob/master/Amp360Video/index.html).
+
+#### Code Initialization
+
+The following code will initialize the plugin in your amp player:
+
+```javascript
+var myPlayer = amp('videoPlayer', {
+        "nativeControlsForTouch": false,
+        autoplay: false,
+        controls: true,
+        width: "640",
+        height: "480",
+        poster: "",
+        techOrder: ["azureHtml5JS", "html5"],
+        plugins: {
+            "threeSixty": {
+                enableVR: true
+            }
+        }
+    }, function() {
+        console.log('Good to go!');
+        // add an event listener
+        this.addEventListener('ended', function() {
+            console.log('Finished!');
+        });
+    });
+
+myPlayer.src([{
+    src: "//willzhanmswest.streaming.mediaservices.windows.net/1f2dd2dd-ee99-40be-aae9-d0c2209982eb/DroneFlightOverLasVegasStripH3Pro7.ism/Manifest",
+    type: "application/vnd.ms-sstr+xml"
+}]);
+```
+
+One example can be found in the indexCode.html file located in the [repo](https://github.com/BabylonJS/Extensions/blob/master/Amp360Video/indexCode.html).
+
+### Define the video 360 format (Monoscopic, Side By Side, Top Bottom)
+
+Several types of 360 video exist today. The most common being Monoscopic Panoramic, Stereoscopic Side by Side panoramic and Top bottom panoramic.
+
+The first one represents a panoramic view which is dedicated to one eye. The second one contains two panoramic views dedicated to each eyes whereas the last one contains both panoramic views respectively on the top and bottom of the video.
+
+The plugin defaults to Monoscopic panoramic mode.
+
+In order to specify the type of your source (this can unfortunately not be automated in the plugin), you can specify a different value in your options:
+
+#### By HTML configuration
+
+In the data-setup plugin section:
+
+```javascript
+"plugins": { "threeSixty": { "videoType": "stereoscopicTopBottom" } }
+```
+
+The available types are: "monoscopicPanoramic", "stereoscopicSideBySide", "stereoscopicTopBottom".
+
+#### By code configuration
+
+This works exactly the same as the previous point. In the options of your plugin:
+
+```javascript
+plugins: {
+    "threeSixty": {
+        videoType: "stereoscopicTopBottom"
+    }
+}
+```
+
+The available types are: "monoscopicPanoramic", "stereoscopicSideBySide", "stereoscopicTopBottom".
+
+### Enable/Disable the VR Button
+
+By default, the plugin is delivered with a VR mode available through a button shaped like a head-mounted display.
+
+In order to disable the button, you can specify in your options:
+
+#### By HTML configuration
+
+In the data-setup plugin section:
+
+```javascript
+"plugins": { "threeSixty": { "enableVR": false } }
+```
+
+#### By code configuration
+
+This works exactly the same as the previous point. In the options of your plugin:
+
+```javascript
+plugins: {
+    "threeSixty": {
+        enableVR: false
+    }
+}
+```
+
+### Update the camera FOV
+
+By default the plugin is delivered with a camera of a 1.18 radians field of view.
+
+In order to change it if needed, you can specify a different value in your options:
+
+#### By HTML configuration
+
+In the data-setup plugin section:
+
+```javascript
+"plugins": { "threeSixty": { "fov": 1 } }
+```
+
+#### By code configuration
+
+This works exactly the same as the previous point. In the options of your plugin:
+
+```javascript
+plugins: {
+    "threeSixty": {
+        fov: 1
+    }
+}
+```
+
+### Update the default camera orientation
+
+In case the camera is not looking at what you expect when the video starts, you can use both options defaultCameraOrientationX and defaultCameraOrientationY to adapt the starting point of the camera to your use case. Those properties are angles respectively around the x and y axis defined in radians.
+
+In order to change them, you can specify a different value in your options:
+
+#### By HTML configuration
+
+In the data-setup plugin section:
+
+```javascript
+"plugins": { "threeSixty": { "defaultCameraOrientationX": 1 } }
+```
+
+#### By code configuration
+
+This works exactly the same as the previous point. In the options of your plugin:
+
+```javascript
+plugins: {
+    "threeSixty": {
+        defaultCameraOrientationY: 1
+    }
+}
+```
+
+### Disable WebGL2
+
+The default setup enables Webgl2 to enhance the performances of the application. In case of compatibility issues with all platforms, would you wish to disable it, you can rely on the setup below:
+
+#### Disable WebGL2 By HTML configuration
+
+In the data-setup plugin section:
+
+```javascript
+"plugins": { "threeSixty": { "disableWebGL2Support": true } }
+```
+
+#### Disable WebGL2 By code configuration
+
+This works exactly the same as the previous point. In the options of your plugin:
+
+```javascript
+plugins: {
+    "threeSixty": {
+        disableWebGL2Support: true
+    }
+}
+```
+
+### Adapt to native resolution
+
+To provide the best performances, by default the plugin does not account for you [devicePixelRatio](https://developer.mozilla.org/en-US/docs/Web/API/Window/devicePixelRatio) setup. It renders 1 to 1 with CSS pixels. In case of HiDPI or Retina display the ratio might be pretty high meaning if you want to get the most of your pixels (using physical pixels), the plugin should for instance render 4 times more pixels than the actual CSS number of pixels.
+
+You can use the hardwareScalingLevel settings of the plugin to chose how many times the Physical Pixels of your device are multiplied to define the number of CSS pixels. For instance a value of 0.5 means there would be twice as much pixels on width and height than the number of CSS pixels enhancing a lot the resolution.
+
+#### By HTML configuration
+
+In the data-setup plugin section:
+
+```javascript
+"plugins": { "threeSixty": { "hardwareScalingLevel": 0.5 } }
+```
+
+#### By code configuration
+
+This works exactly the same as the previous point. In the options of your plugin:
+
+```javascript
+plugins: {
+    "threeSixty": {
+        hardwareScalingLevel: 0.5
+    }
+}
+```
