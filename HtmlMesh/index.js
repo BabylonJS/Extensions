@@ -26,7 +26,7 @@ const createScene = () => {
     scene.clearColor = new Color4(0,0,0,0);
     
     scene.createDefaultCameraOrLight(true, true, true);
-    scene.activeCamera.radius = 30;
+    scene.activeCamera.radius = 20;
 
     // Some random shapes
     var sphere = MeshBuilder.CreateSphere("sphere", {diameter: 2, segments: 32}, scene);

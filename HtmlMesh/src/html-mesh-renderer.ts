@@ -12,12 +12,16 @@ import { RenderingGroup } from '@babylonjs/core/Rendering/renderingGroup';
 
 const fullZoomMinCameraRadius = 1;
 
+// Not sure what this is.  It suspect it is a shortcut for converting world units to screen units
+// and it is okay as long as the scale is the same for all three axes.
+const cssTranslationScaleFactor = 100;
+
 // Returns a function that ensures that HtmlMeshes are rendered before all other meshes.
 // Note this will only be applied to group 0.  
 // If neither mesh is an HtmlMesh, then the default render order is used
 // This prevents HtmlMeshes from appearing in front of other meshes when they are behind them
 type RenderOrderFunction = (subMeshA: SubMesh, subMeshB: SubMesh) => number;
-const renderOrderFunc = (defaultRenderOrder): RenderOrderFunction => {
+const renderOrderFunc = (defaultRenderOrder: RenderOrderFunction): RenderOrderFunction => {
     return (subMeshA: SubMesh, subMeshB: SubMesh) => {
         const meshA = subMeshA.getMesh();
         const meshB = subMeshB.getMesh();
@@ -110,9 +114,9 @@ export class HtmlMeshRenderer {
     }
 
     protected init(scene: Scene, parentContainerId: string | null, 
-                   defaultOpaqueRenderOrder?: RenderOrderFunction, 
-                   defaultAlphaTestRenderOrder?: RenderOrderFunction, 
-                   defaultTransparentRenderOrder?: RenderOrderFunction): void {
+                   defaultOpaqueRenderOrder: RenderOrderFunction, 
+                   defaultAlphaTestRenderOrder: RenderOrderFunction, 
+                   defaultTransparentRenderOrder: RenderOrderFunction): void {
         // Create the DOM containers
         this._container = document.createElement('div');
         this._container.id = this._containerId;
@@ -147,7 +151,9 @@ export class HtmlMeshRenderer {
         // Set the size and resize behavior
         this.setSize(scene.getEngine().getRenderWidth(), scene.getEngine().getRenderHeight());
         window.addEventListener('resize', e => {
-            this.setSize(scene.getEngine().getRenderWidth(), scene.getEngine().getRenderHeight());
+            const engine = scene.getEngine();
+            engine.resize();
+            this.setSize(engine.getRenderWidth(), engine.getRenderHeight());
         });
 
         // Setup the maskRoot, the parent of all the masking meshes
@@ -193,6 +199,7 @@ export class HtmlMeshRenderer {
     }
 
     protected setSize(width: number, height: number): void {
+        console.log("In setSize: ", width, height);
         this._width = width;
         this._height = height;
         this._widthHalf = this._width / 2;
@@ -258,8 +265,7 @@ export class HtmlMeshRenderer {
      * @param {BABYLON.Matrix} maxZoomTransform Screen space transform matrix when the camera is at max zoom
      * @param {BABYLON.Matrix} currentZoomTransform Screen space transform matrix when the camera is at its current zoom
      */
-    protected renderHtmlMesh(htmlMesh: HtmlMesh/*, maxZoomTransform: Matrix, 
-                             currentZoomTransform: Matrix*/) {
+    protected renderHtmlMesh(htmlMesh: HtmlMesh) {
         if (!htmlMesh.element) {
             // nothing to render, so bail
             return;
@@ -274,7 +280,6 @@ export class HtmlMeshRenderer {
         // If the htmlMesh content has changed, update the base scale factor
         if (htmlMesh.requiresUpdate) {   
             this.updateBaseScaleFactor(htmlMesh);
-            // this.altUpdateBaseScaleFactor(htmlMesh);
         }  
 
         // Now transform the element using the scale, the html mesh's world matrix, and the camera's world matrix
@@ -290,14 +295,16 @@ export class HtmlMeshRenderer {
         const scaledAndTranslatedObjectMatrix = this._temp.objectMatrix;
         scaledAndTranslatedObjectMatrix.copyFrom(objectWorldMatrix);
 
-        scaledAndTranslatedObjectMatrix.multiplyAtIndex(0, 0.01 * htmlMeshData.baseScaleFactor);
-        // scaledAndTranslatedObjectMatrix.multiplyAtIndex(0, 0.01);
-        scaledAndTranslatedObjectMatrix.multiplyAtIndex(5, 0.01 * htmlMeshData.baseScaleFactor);
-        // scaledAndTranslatedObjectMatrix.multiplyAtIndex(5, 0.01);
-
-        // Apply the scale
-        // scaledAndTranslatedObjectMatrix.multiplyAtIndex(0, scale);
-        // scaledAndTranslatedObjectMatrix.multiplyAtIndex(5, scale);
+        // I didn't write the code this is based on, so it's not clear to me
+        // why it is neccessary, but basically we are going to scale the entire 
+        // matrix by 100, but we don't want the x and y scales to be affected so we 
+        // multiply them by 1/100.  I think maybe this is just a shortcut for converting
+        // the translation values from world units to screen units and it doesn't matter
+        // what the scale is as long as it is the same for all three axes.
+        scaledAndTranslatedObjectMatrix.multiplyAtIndex(0, 1 / cssTranslationScaleFactor * 
+                htmlMeshData.baseScaleFactor);
+        scaledAndTranslatedObjectMatrix.multiplyAtIndex(5, 1 / cssTranslationScaleFactor * 
+                htmlMeshData.baseScaleFactor);
         
         scaledAndTranslatedObjectMatrix.setRowFromFloats(3, 
                 -this._cameraWorldMatrix.m[12] + htmlMesh.position.x,
@@ -305,9 +312,11 @@ export class HtmlMeshRenderer {
                 this._cameraWorldMatrix.m[14] - htmlMesh.position.z,
                 this._cameraWorldMatrix.m[15] * 0.00001);
 
-        scaledAndTranslatedObjectMatrix.scaleToRef(100, scaledAndTranslatedObjectMatrix);
+        scaledAndTranslatedObjectMatrix.scaleToRef(cssTranslationScaleFactor, 
+                scaledAndTranslatedObjectMatrix);
 
-        const style = `translate(-50%, -50%) ${this.getHtmlContentCSSMatrix(scaledAndTranslatedObjectMatrix)}`;
+        const style = `translate(-50%, -50%) ${this.getHtmlContentCSSMatrix(
+                scaledAndTranslatedObjectMatrix)}`;
 
         if ( htmlMeshData.style !== style ) {
             htmlMesh.element.style.webkitTransform = style;
@@ -344,6 +353,7 @@ export class HtmlMeshRenderer {
         // Check for a dpr change
         if (window.devicePixelRatio !== this._lastDevicePixelRatio) {
             this._lastDevicePixelRatio = window.devicePixelRatio;
+            console.log("In render - dpr changed: ", this._lastDevicePixelRatio);
             needsUpdate = true;
         }
 
@@ -361,7 +371,6 @@ export class HtmlMeshRenderer {
         const fov = projectionMatrix.m[5] * this._heightHalf;
 
         if (this._cache.cameraData.fov !== fov) {
-
 			if (camera.mode == Camera.PERSPECTIVE_CAMERA ) {
 				this._domElement!.style.webkitPerspective = fov + 'px';
 				this._domElement!.style.perspective = fov + 'px';
@@ -372,65 +381,7 @@ export class HtmlMeshRenderer {
 			this._cache.cameraData.fov = fov;
 		}
 
-        // Calculate transformations.  We are going to need to compute the following matrices:
-        // 1. A transform matrix from world space to clip space when the camera is at max zoom
-        // 2. A transform matrix from world space to clip space when the camera is at its current zoom
-        // These will be used to project the bounds of the html mesh into screen space so we can 
-        // compute a scale to apply the the CSS content that
-        // * avoids odd resizing behavior of the CSS content when the browser aspect ratio changes,
-        //   the browser zoom level changes, or the browser dpr changes
-        // * makes the content as clear as possible at 100% camera zoom
-        // const world = Matrix.IdentityReadOnly;
-
-        // const viewportMatrix = this._temp.viewportMatrix;
-        // {
-        //     const viewport = this._temp.vp;
-        //     camera.viewport.toGlobalToRef(scene.getEngine().getRenderWidth(), 
-        //                                   scene.getEngine().getRenderHeight(), viewport);
-
-        //     const cw = viewport.width;
-        //     const ch = viewport.height;
-        //     const cx = viewport.x;
-        //     const cy = viewport.y;
-
-        //     // Compute a transform matrix from normalized device coordinates to screen coordinates
-        //     Matrix.FromValuesToRef(
-        //         cw / 2.0, 0, 0, 0,
-        //         0, -ch / 2.0, 0, 0,
-        //         0, 0, 0.5, 0,
-        //         cx + cw / 2.0, ch / 2.0 + cy, 0.5, 1,
-        //         viewportMatrix
-        //     );
-        // }
-
-        // // Compute a transform matrix from world space to clip space when the camera is at max zoom
-        // // TODO Figure out what this should look like when not using a arc rotate camera
-        // //      For now, just use minZ, but that is likely too close
-        // const maxZoomScreenSpaceTransform = this._temp.maxZoomScreenSpaceTransform;
-        // {
-        //     const maxZoomClipSpaceTransform = this._temp.maxZoomClipSpaceTransform;
-        //     {
-        //         let cameraLowerLimit = camera instanceof ArcRotateCamera && 
-        //                 camera.lowerRadiusLimit ? camera.lowerRadiusLimit : camera.minZ;
-        //         // Clamp to something reasonable if the camera lower limit is too small
-        //         cameraLowerLimit = Math.max(cameraLowerLimit, fullZoomMinCameraRadius);
-        //         const viewMatrix = this._temp.cameraViewMatrix;
-        //         viewMatrix.copyFrom(camera.getViewMatrix());
-        //         viewMatrix.setTranslationFromFloats(0.0, 0.0, cameraLowerLimit);
-
-        //         viewMatrix.multiplyToRef(projectionMatrix, maxZoomClipSpaceTransform);
-        //     }
-
-        //     world.multiplyToRef(maxZoomClipSpaceTransform, maxZoomScreenSpaceTransform);
-        //     maxZoomScreenSpaceTransform.multiplyToRef(viewportMatrix, maxZoomScreenSpaceTransform);
-        // }
-
-        // const screenSpaceTransform = this._temp.screenSpaceTransform;
-        // {
-        //     world.multiplyToRef(scene.getTransformMatrix(), screenSpaceTransform);
-        //     screenSpaceTransform.multiplyToRef(viewportMatrix, screenSpaceTransform);
-        // }
-
+        // Get the CSS matrix for the camera (which will include any camera rotation)
         if ( camera.parent === null ) {
             camera.computeWorldMatrix();
         }
@@ -454,8 +405,6 @@ export class HtmlMeshRenderer {
 
 		const cameraCSSMatrix = 'translateZ(' + fov + 'px)' + this.getCameraCSSMatrix(cameraMatrixWorld);
         const style = cameraCSSMatrix + 'translate(' + this._widthHalf + 'px,' + this._heightHalf + 'px)';
-        console.log("In render - camera matrix = ", cameraCSSMatrix);
-        console.log("In render - camera style, cached camera style = ", style, this._cache.cameraData.style);
 
 		if (this._cache.cameraData.style !== style) {
 			this._cameraElement!.style.webkitTransform = style;
@@ -470,7 +419,7 @@ export class HtmlMeshRenderer {
     }
 
     /**
-     * Computes a a scale factor that is the ration of the screen width in pixels to the projected
+     * Computes a a scale factor that is the ratio of the screen width in pixels to the projected
      * mesh width in pixels at current zoom
      * @param htmlMesh 
      *                 
@@ -494,8 +443,8 @@ export class HtmlMeshRenderer {
         const worldMin = boundingInfo.boundingBox.minimumWorld;
         const worldMax = boundingInfo.boundingBox.maximumWorld;
 
+        // Transfrom to screen coords
         const transform = scene.getTransformMatrix();
-
         const worldMinScreen = this._temp.worldMin;
         const worldMaxScreen = this._temp.worldMax;
 
@@ -532,120 +481,20 @@ export class HtmlMeshRenderer {
         // Calculate scale factor
         let scale = Math.min(htmlMeshWorldWidth / screenWidth, htmlMeshWorldHeight / screenHeight);
 
-        // If the scale factor is very close to 1, set it to 1
-        if (Math.abs(scale - 1) < 0.01) {
-            scale = 1;
+        // Cap scale at 1
+        if (scale > 0.99) {
+            scale = 1.0;
         }
 
-        // we ensured that the html mesh data existed before this function was called
-        let htmlMeshData = this._cache.htmlMeshData.get(htmlMesh);
-        if (htmlMeshData) {
-            htmlMeshData.baseScaleFactor = scale * 3.3;
-        }
-    }
-
-    protected altUpdateBaseScaleFactor(htmlMesh: HtmlMesh) {
-        // Get the scene and camera
-        const scene = htmlMesh.getScene();
-        const camera = scene.activeCamera!;
-
-        const world = Matrix.IdentityReadOnly;
-
-        // Get the viewport
-        const viewport = this._temp.vp;
-        camera.viewport.toGlobalToRef(this._width, this._height, viewport);
-        const viewportMatrix = this._temp.viewportMatrix;
-        
-        const cw = viewport.width;
-		const ch = viewport.height;
-		const cx = viewport.x;
-		const cy = viewport.y;
-
-		Matrix.FromValuesToRef(
-			cw / 2.0, 0, 0, 0,
-			0, -ch / 2.0, 0, 0,
-			0, 0, 0.5, 0,
-			cx + cw / 2.0, ch / 2.0 + cy, 0.5, 1,
-			viewportMatrix
-		);
-
-        const maxZoomScreenSpaceTransform = this._temp.maxZoomScreenSpaceTransform;
-        const maxZoomClipSpaceTransform = this._temp.maxZoomClipSpaceTransform;
-        const screenSpaceTransform = this._temp.screenSpaceTransform;
-        const viewMatrix = this._temp.cameraViewMatrix;
-
-        let cameraLowerLimit = camera instanceof ArcRotateCamera && 
-                               camera.lowerRadiusLimit ? camera.lowerRadiusLimit : camera.minZ;
-        // Clamp to something reasonable if the camera lower limit is too small
-        cameraLowerLimit = Math.max(cameraLowerLimit, fullZoomMinCameraRadius);
-
-        // Get the view matrix
-        viewMatrix.copyFrom(camera.getViewMatrix());
-
-        // Translate view matrix to min camera radius (max zoom)
-        viewMatrix.setTranslationFromFloats(0, 0, cameraLowerLimit)
-
-        // Multiply by projection matrix to get clip space transform at max zoom
-        viewMatrix.multiplyToRef(camera.getProjectionMatrix(), maxZoomClipSpaceTransform);
-
-        // multiply by world to screen space transform at max zoom to NDC
-        world.multiplyToRef(maxZoomClipSpaceTransform, maxZoomScreenSpaceTransform);
-
-        // Multiply by viewport to get world to screen space transform at maximum zoom in pixels
-        maxZoomScreenSpaceTransform.multiplyToRef(viewportMatrix, maxZoomScreenSpaceTransform);
-
-        // Multiply world by current screen space transfrom to get screen space transform to NDC
-        world.multiplyToRef(scene.getTransformMatrix(), screenSpaceTransform);
-
-        // Multiply by viewport to get world to screen space transform in pixels
-        screenSpaceTransform.multiplyToRef(viewportMatrix, screenSpaceTransform);
-
-        // Get the mesh width in pixels at current zoom
-        const boundingInfo = htmlMesh.getBoundingInfo();
-
-        // Get the html mesh's world min and max
-        const worldMin = boundingInfo.boundingBox.minimumWorld;
-        const worldMax = boundingInfo.boundingBox.maximumWorld;
-
-        const transform = scene.getTransformMatrix();
-
-        const worldMinScreenMaxZoom = this._temp.worldMin;
-        const worldMaxScreenMaxZoom = this._temp.worldMax;
-
-        Vector3.TransformCoordinatesToRef(worldMin, maxZoomScreenSpaceTransform, 
-                worldMinScreenMaxZoom);
-        Vector3.TransformCoordinatesToRef(worldMax, maxZoomScreenSpaceTransform, 
-                worldMaxScreenMaxZoom);
-
-        let maxZoomWidth = worldMaxScreenMaxZoom.x - worldMinScreenMaxZoom.x;
-        let maxZoomHeight = worldMaxScreenMaxZoom.y - worldMinScreenMaxZoom.y;
-
-        // Position with even numbers to prevent fuzziness with CSS translate(-50%, -50%)
-        maxZoomWidth = 2 * Math.round(maxZoomWidth / 2) + 2;
-        maxZoomHeight = 2 * Math.round(maxZoomHeight / 2) + 2;
-
-        const worldMinScreen = this._temp.worldMin;
-        const worldMaxScreen = this._temp.worldMax;
-	    Vector3.TransformCoordinatesToRef(worldMin, screenSpaceTransform, worldMinScreen);
-        Vector3.TransformCoordinatesToRef(worldMax, screenSpaceTransform, worldMaxScreen);
-
-        const screenLeft = worldMinScreen.x;
-        const screenTop = worldMaxScreen.y;
-        const screenWidth = worldMaxScreen.x - worldMinScreen.x;
-        const screenHeight = worldMinScreen.y - worldMaxScreen.y;
-
-	    htmlMesh.setContentSizePx(maxZoomWidth, maxZoomHeight);
-
-        let scale = Math.min(screenWidth / maxZoomWidth, screenHeight / maxZoomHeight);
-        let screenCenterX = screenLeft + screenWidth / 2;
-        let screenCenterY = screenTop + screenHeight / 2;
-
-        // If the scale factor is very close to 1, set it to 1
-        if (Math.abs(scale - 1) < 0.01) {
-            scale = 1;
-        }
-        screenCenterX = Math.round(screenCenterX);
-        screenCenterY = Math.round(screenCenterY);
+        // We need to back out the scale due to the distance from the camera
+        const fov = this._cache.cameraData.fov;
+        // Do this instead of radius in case the camera is not an ArcRotateCamera
+        // The z translation value in the html mesh is the camera distance in world units * 100
+        const distance = camera.position.subtract(htmlMesh.position).length() * cssTranslationScaleFactor;
+        const cameraDistanceScale = distance / (fov * 0.5);
+        // I don't know why we have to divide the camera distance scale by 2 here, but it produces the 
+        // correct scale with every initial camera distance, mesh and content aspect ratio I have tried.
+        scale = scale * cameraDistanceScale / 2;
 
         // we ensured that the html mesh data existed before this function was called
         let htmlMeshData = this._cache.htmlMeshData.get(htmlMesh);
