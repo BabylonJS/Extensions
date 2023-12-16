@@ -5,12 +5,8 @@ import { TransformNode } from '@babylonjs/core/Meshes/transformNode';
 
 import { HtmlMesh } from './html-mesh';
 import { Camera } from '@babylonjs/core/Cameras/camera';
-import { ArcRotateCamera } from '@babylonjs/core/Cameras/arcRotateCamera';
 import { SubMesh } from '@babylonjs/core/Meshes/subMesh';
-import { RenderingManager } from '@babylonjs/core/Rendering/renderingManager';
 import { RenderingGroup } from '@babylonjs/core/Rendering/renderingGroup';
-
-const fullZoomMinCameraRadius = 1;
 
 // Not sure what this is.  It suspect it is a shortcut for converting world units to screen units
 // and it is okay as long as the scale is the same for all three axes.
@@ -28,8 +24,8 @@ const renderOrderFunc = (defaultRenderOrder: RenderOrderFunction): RenderOrderFu
 
         // Use property check instead of instanceof since it is less expensive and
         // this will be called many times per frame
-        const meshAIsHtmlMesh = meshA['isHtmlMesh'];
-        const meshBIsHtmlMesh = meshB['isHtmlMesh'];
+        const meshAIsHtmlMesh = (meshA as any)['isHtmlMesh'];
+        const meshBIsHtmlMesh = (meshB as any)['isHtmlMesh'];
         if (meshAIsHtmlMesh) {
             return meshBIsHtmlMesh ?
                 meshA.absolutePosition.z <= meshB.absolutePosition.z ? 1 : -1 :
@@ -110,6 +106,10 @@ export class HtmlMeshRenderer {
         defaultAlphaTestRenderOrder?: RenderOrderFunction,
         defaultTransparentRenderOrder?: RenderOrderFunction,
     } = {}) {
+        // Requires a browser to work.  Only init if we are in a browser
+        if (typeof document === 'undefined') {
+            return;
+        }   
         this.init(scene, parentContainerId, defaultOpaqueRenderOrder, defaultAlphaTestRenderOrder, defaultTransparentRenderOrder);
     }
 
@@ -117,6 +117,11 @@ export class HtmlMeshRenderer {
                    defaultOpaqueRenderOrder: RenderOrderFunction, 
                    defaultAlphaTestRenderOrder: RenderOrderFunction, 
                    defaultTransparentRenderOrder: RenderOrderFunction): void {
+        // Requires a browser to work.  Only init if we are in a browser
+        if (typeof document === 'undefined') {
+            return;
+        }
+
         // Create the DOM containers
         this._container = document.createElement('div');
         this._container.id = this._containerId;
@@ -150,14 +155,30 @@ export class HtmlMeshRenderer {
 
         // Set the size and resize behavior
         this.setSize(scene.getEngine().getRenderWidth(), scene.getEngine().getRenderHeight());
-        window.addEventListener('resize', e => {
-            const engine = scene.getEngine();
-            engine.resize();
-            this.setSize(engine.getRenderWidth(), engine.getRenderHeight());
-        });
 
-        // Setup the maskRoot, the parent of all the masking meshes
-        this._maskRootNode = new TransformNode("html-mesh-mask-root", scene);
+        const engine = scene.getEngine();
+        const onResize = () => {
+            engine.resize();
+            this.setSize(scene.getEngine().getRenderWidth(), scene.getEngine().getRenderHeight());
+        }
+        const boundOnResize = onResize.bind(this);
+        
+        // If the browser is IE11, then we need to use the resize event
+        if ('ResizeObserver' in window) {
+            const canvas = engine.getRenderingCanvas();
+            // Resize if the canvas size changes
+            const resizeObserver = new ResizeObserver(entries => {
+                for (let entry of entries) {
+                    if (entry.target === canvas) {
+                        boundOnResize();
+                    }
+                }
+            });
+
+            resizeObserver.observe(canvas!);
+        } else {
+            (window as Window).addEventListener('resize', boundOnResize);
+        }
 
         const boundCameraMatrixChanged = this.onCameraMatrixChanged.bind(this);
         
@@ -358,7 +379,7 @@ export class HtmlMeshRenderer {
         }
 
         // Check if any meshes need to be updated
-        const meshesNeedingUpdate = scene.meshes.filter(mesh => mesh['isHtmlMesh'] && 
+        const meshesNeedingUpdate = scene.meshes.filter(mesh => (mesh as any)['isHtmlMesh'] && 
                 (needsUpdate || (mesh as HtmlMesh).requiresUpdate));
         needsUpdate = needsUpdate || meshesNeedingUpdate.length > 0;
 

@@ -22,11 +22,17 @@ export class HtmlMesh extends Mesh {
 
     _inverseScaleMatrix: Matrix | null = null;
 
-	_captureOnPointerEnter: boolean;
+	_captureOnPointerEnter: boolean = true;
 	_pointerEventCaptureBehavior: PointerEventsCaptureBehavior | null = null;
 
     constructor(scene: Scene, id: string , { captureOnPointerEnter = true } = {}) {
         super(id, scene);
+
+		// Requires a browser to work.  Bail if we aren't running in a browser
+        if (typeof document === 'undefined') {
+            console.warn(`Creating an instance of an HtmlMesh with id ${id} outside of a browser.  The mesh will not be visible.`);
+			return;
+        }
 		
         this.createMask();
         this._element = this.createElement();
@@ -74,7 +80,10 @@ export class HtmlMesh extends Mesh {
 	// If the the specified content is undefined, then it will make the mesh invisible.  In either case it will clear the
 	// element content first.
 	setContent(element: HTMLElement, width: number, height: number) {
-		this._element!.innerHTML = "";
+		if (!this._element) {
+			return;
+		}
+		this._element.innerHTML = "";
 
 		this._width = width;
 		this._height = height;
@@ -98,7 +107,10 @@ export class HtmlMesh extends Mesh {
 
     // Overides BABYLON.Mesh.setEnabled
     setEnabled(enabled: boolean) {
-        // If enabled, then revert the content element display
+        if (!this._element) {
+			return;
+		}
+		// If enabled, then revert the content element display
         // otherwise hide it
         this._element!.style.display = enabled ? '' : 'none';
 		// Capture the content z index
@@ -112,6 +124,9 @@ export class HtmlMesh extends Mesh {
 	 * @param {number} height
 	 */
 	 setContentSizePx(width: number, height: number) {
+		if (!this._element) {
+			return;
+		}
 		const childElement = this._element!.firstElementChild as HTMLElement;
 		if (childElement) {
 			childElement.style.width = `${width}px`;
@@ -165,7 +180,9 @@ export class HtmlMesh extends Mesh {
     }
 
     protected setElementZIndex(zIndex: number) {
-        this._element!.style.zIndex = `${zIndex}`;
+		if (this._element) {
+			this._element!.style.zIndex = `${zIndex}`;
+		}
     }
 
     capturePointerEvents() {
@@ -194,6 +211,10 @@ export class HtmlMesh extends Mesh {
     }
 	
     createElement() {
+		// Requires a browser to work.  Bail if we aren't running in a browser
+        if (typeof document === 'undefined') {
+            return;
+        }
         const div = document.createElement( 'div' );
         div.id = this.id;
         div.style.backgroundColor = '#000';

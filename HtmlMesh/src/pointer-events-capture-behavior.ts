@@ -1,7 +1,7 @@
 import { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 import { Behavior } from "@babylonjs/core/Behaviors/behavior";
 import { Scene } from "@babylonjs/core/scene";
-import { requestCapture, requestRelease, releaseCurrent, getCapturingId } from "./pointer-events-capture.ts";
+import { requestCapture, requestRelease, releaseCurrent, getCapturingId } from "./pointer-events-capture";
 
 // Module level variable used to track the current picked mesh
 let _currentPickedMeshId: number | null = null;
@@ -22,15 +22,24 @@ let captureOnEnterCount = 0;
 const meshToBehaviorMap = new WeakMap<AbstractMesh, PointerEventsCaptureBehavior>();
 
 const startCaptureOnEnter = (scene: Scene) => {
+    // If we are not in a browser, do nothing
+    if (typeof document === 'undefined') {
+        return;
+    }
     if (captureOnEnterCount === 0) {
         document.addEventListener('pointermove', onPointerMove);
         _scene = _scene ?? scene;
-        _canvasRect = _canvasRect ?? _scene.getEngine().getRenderingCanvasClientRect();
+        let rect = _scene.getEngine().getRenderingCanvasClientRect() as ClientRect;
+        _canvasRect = _canvasRect ?? new DOMRect(rect.left, rect.top, rect.width, rect.height);
     }
     captureOnEnterCount++;
 }
 
 const stopCaptureOnEnter = () => {
+    // If we are not in a browser, do nothing
+    if (typeof document === 'undefined') {
+        return;
+    }
     captureOnEnterCount--;
     if (captureOnEnterCount < 0) {
         captureOnEnterCount = 0;
@@ -97,6 +106,11 @@ export class PointerEventsCaptureBehavior implements Behavior<AbstractMesh> {
                 { captureOnPointerEnter = true } = {}) {
         this.attachedMesh = null;
         this._captureOnPointerEnter = captureOnPointerEnter;
+
+        // Warn if we are not in a browser
+        if (typeof document === 'undefined') {
+            console.warn(`Creating an instance of PointerEventsCaptureBehavior outside of a browser.  The behavior will not work.`);
+        }
 	}
 
     set captureOnPointerEnter(captureOnPointerEnter: boolean) {
