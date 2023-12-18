@@ -92,9 +92,11 @@ const onPointerMove = (evt: PointerEvent) => {
 };
 
 
-// Behavior for any content that can capture pointer events, i.e. bypass the Babylon pointer event handling
-// and receive pointer events directly.  It will register the capture triggers and negotiate the capture and 
-// release of pointer events.  Curerntly this applies only to HtmlMesh
+/**
+ * Behavior for any content that can capture pointer events, i.e. bypass the Babylon pointer event handling
+ * and receive pointer events directly.  It will register the capture triggers and negotiate the capture and 
+ * release of pointer events.  Curerntly this applies only to HtmlMesh
+ */
 export class PointerEventsCaptureBehavior implements Behavior<AbstractMesh> {
     name = "PointerEventsCaptureBehavior";
     

@@ -23,10 +23,24 @@ let unmatchedReleaseRequests: string[] = [];
 
 let currentOwner: string | null = null; // Called on first capture or release request
 
+/**
+ * Get the id of the object currently capturing pointer events
+ * @returns {string | null} The id of the object currently capturing pointer events 
+ * or null if no object is capturing pointer events
+ */
 export const getCapturingId = () => {
     return currentOwner;
 };
 
+/**
+ * Request that the object with the given id capture pointer events.  If there is no current
+ * owner, then the request is granted immediately.  If there is a current owner, then the request
+ * is queued until the current owner releases pointer events.  
+ * @param {string} requestId An id to identify the request.  This id will be used to match the capture
+ * request with the release request.  
+ * @param {CaptureReleaseCallback} captureCallback The callback to call when the request is granted and the object is capturing
+ * @param {CaptureReleaseCallback} releaseCallback The callback to call when the object is no longer capturing pointer events 
+ */
 export const requestCapture = (requestId: string, captureCallback: CaptureReleaseCallback, 
                         releaseCallback: CaptureReleaseCallback) => {
     debugLog(`In pointerEventsCapture.requestCapture - Pointer events capture requested for ${requestId}`);
@@ -48,6 +62,15 @@ export const requestCapture = (requestId: string, captureCallback: CaptureReleas
     // If the request id is the current owner, do nothing
 };
 
+/**
+ * Release pointer events from the object with the given id.  If the object is the current owner
+ * then pointer events are released immediately.  If the object is not the current owner, then the
+ * associated capture request is removed from the queue.  If there is no matching capture request
+ * in the queue, then the release request is added to a list of unmatched release requests and will
+ * negate the next capture request with the same id.  This is to guard against the possibility that 
+ * the release request arrived before the capture request.
+ * @param requestId The id which should match the id of the capture request
+ */
 export const requestRelease = (requestId: string | null) => {
     debugLog(`In pointerEventsCapture.requestRelease - Pointer events release requested for ${requestId}`);
     
@@ -67,6 +90,9 @@ export const requestRelease = (requestId: string | null) => {
     }
 };
 
+/**
+ * Relase pointer events from the current owner
+ */
 export const releaseCurrent = () => {
     requestRelease(currentOwner);
 };
@@ -146,6 +172,7 @@ const nextCaptureRequest = () => {
         captureRequestQueue.shift() : null;
 };
 
+// #region Debugging support
 declare global {
     interface Window {
         "pointer-events-capture-debug": boolean | null;
@@ -161,3 +188,4 @@ const debugLog = (message: string) => {
                     `unmatched: ${unmatchedReleaseRequests}`);
     }
 };
+// #endregion Debugging support

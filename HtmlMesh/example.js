@@ -4,17 +4,12 @@ import { MeshBuilder } from '@babylonjs/core/Meshes/meshBuilder';
 import { ActionManager } from '@babylonjs/core/Actions/actionManager';
 import { ExecuteCodeAction } from '@babylonjs/core/Actions/directActions';
 import { Color4 } from '@babylonjs/core/Maths/math.color';
-import { Matrix } from '@babylonjs/core/Maths/math';
-import { Viewport } from '@babylonjs/core/Maths/math.viewport';
-import { Vector3 } from '@babylonjs/core';
 import '@babylonjs/core/Helpers/sceneHelpers';
-
-// Import debug layer only if debug build
-// import "@babylonjs/core/Debug/debugLayer";
-// import "@babylonjs/inspector";
 
 import { HtmlMeshRenderer } from './src/html-mesh-renderer';
 import { HtmlMesh } from './src/html-mesh';
+
+const debug = true;
 
 let engine;
 let scene;
@@ -148,72 +143,10 @@ const createScene = () => {
     htmlMeshVideo.position.x = 3;
     htmlMeshVideo.position.y = -2;
 
-    // Shows an example of how you can mask pointer events for a mesh, in this example the disc
-    // If you allow rotation, you'd have to use CSS transforms to align the mask with the disc
-    // const mask = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    // mask.style = `z-index: 1000; position: absolute; pointer-events: none;`;
-    // mask.setAttribute('width', 100);
-    // mask.setAttribute('height', 100);
-    // const maskBounds = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    // maskBounds.setAttribute('data-pointer-event-mask', true);
-    // maskBounds.setAttribute('fill', "#FF0000");
-    // maskBounds.setAttribute('fill-opacity', 0.5);
-    // maskBounds.setAttribute('cx', 1);
-    // maskBounds.setAttribute('cy', 1);
-    // maskBounds.setAttribute('r', 1);
-    // maskBounds.setAttribute('pointer-events', 'fill');
-    // mask.appendChild(maskBounds);
-    // document.body.appendChild(mask);
-
-    // const world = Matrix.IdentityReadOnly;
-    // let viewport = new Viewport(0, 0, 0, 0);
-    // let maskCenter = new Vector3(); 
-    // let maskTangent = new Vector3();
-    
-    // scene.onAfterRenderObservable.add(() => {
-    //     // force a transformMatrix update if it is currenty zero
-    //     if (scene.getTransformMatrix().m.every(v => v === 0)) {
-    //         scene.updateTransformMatrix(true);
-    //     }
-
-    //     // Get the current viewport
-    //     scene.activeCamera.viewport.toGlobalToRef(engine.getRenderWidth(), engine.getRenderHeight(), viewport);
-
-    //     // Get disc bounds
-    //     const meshBounds = disc.getBoundingInfo().boundingBox;
-
-    //     // Get the projected center
-    //     Vector3.ProjectToRef(
-    //         meshBounds.centerWorld,
-    //         world,
-    //         scene.getTransformMatrix(),
-    //         viewport,
-    //         maskCenter
-    //     );
-
-    //     // Get a point tangent to the circle at min x
-    //     maskTangent.copyFrom(maskCenter);
-    //     maskTangent.x = meshBounds.minimumWorld.x;
-    //     Vector3.ProjectToRef(
-    //         maskTangent,
-    //         world,
-    //         scene.getTransformMatrix(),
-    //         viewport,
-    //         maskTangent
-    //     );
-
-    //     // Projected radius is just the difference between these two point x coords
-    //     const maskRadius = Math.abs(maskCenter.x - maskTangent.x);
-
-    //     mask.style.top = `${maskCenter.y - maskRadius}px`;
-    //     mask.style.left = `${maskCenter.x - maskRadius}px`;
-    //     maskBounds.setAttribute('cx', maskRadius);
-    //     maskBounds.setAttribute('cy', maskRadius);
-    //     maskBounds.setAttribute('r', maskRadius);
-    // });
-
-    // log out scene for debugging
-    console.log(scene);
+    if (debug) {
+        // Log the scene to the console for debugging
+        console.log("scene", scene);
+    }
 };
 
 const startRenderLoop = () => {

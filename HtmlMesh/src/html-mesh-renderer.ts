@@ -12,11 +12,16 @@ import { RenderingGroup } from '@babylonjs/core/Rendering/renderingGroup';
 // and it is okay as long as the scale is the same for all three axes.
 const cssTranslationScaleFactor = 100;
 
+/**
+ * A function that compares two submeshes and returns a number indicating which 
+ * should be rendered first.
+ */
+type RenderOrderFunction = (subMeshA: SubMesh, subMeshB: SubMesh) => number;
+
 // Returns a function that ensures that HtmlMeshes are rendered before all other meshes.
 // Note this will only be applied to group 0.  
 // If neither mesh is an HtmlMesh, then the default render order is used
 // This prevents HtmlMeshes from appearing in front of other meshes when they are behind them
-type RenderOrderFunction = (subMeshA: SubMesh, subMeshB: SubMesh) => number;
 const renderOrderFunc = (defaultRenderOrder: RenderOrderFunction): RenderOrderFunction => {
     return (subMeshA: SubMesh, subMeshB: SubMesh) => {
         const meshA = subMeshA.getMesh();
@@ -95,6 +100,16 @@ export class HtmlMeshRenderer {
     // DOM element styles when necessary
     _cameraMatrixUpdated = true;
 
+    /**
+     * Contruct an instance of HtmlMeshRenderer
+     * @param {Scene} scene 
+     * @param options object containing the following optional properties:
+     * @param {string} options.containerId an optional id of the parent element for the elements that will be rendered as `HtmlMesh` instances.
+     * @param {RenderOrderFunction} options.defaultOpaqueRenderOrder an optional render order function that conforms to the interface of the `opaqueSortCompareFn` as described in the documentation for [`Scene.setRenderingOrder`](https://doc.babylonjs.com/typedoc/classes/BABYLON.Scene#setRenderingOrder) to be used as the opaque sort compare for meshes that are not an instanceof `HtmlMesh` for group 0.  
+     * @param {RenderOrderFunction} options.defaultAlphaTestRenderOrder an optional render order function that conforms to the interface of the `alphaTestSortCompareFn` as described in the documentation for [`Scene.setRenderingOrder`](https://doc.babylonjs.com/typedoc/classes/BABYLON.Scene#setRenderingOrder) to be used as the alpha test sort compare for meshes that are not an instanceof `HtmlMesh` for group 0.  
+     * @param {RenderOrderFunction} options.defaultTransparentRenderOrder an optional render order function that conforms to the interface of the `transparentCompareFn` as described in the documentation for [`Scene.setRenderingOrder`](https://doc.babylonjs.com/typedoc/classes/BABYLON.Scene#setRenderingOrder) to be used as the transparent sort compare for meshes that are not an instanceof `HtmlMesh` for group 0.  
+     * @returns 
+     */
     constructor(scene: Scene, {
         parentContainerId = null,
         defaultOpaqueRenderOrder = RenderingGroup.PainterSortCompare,
@@ -280,12 +295,6 @@ export class HtmlMeshRenderer {
         return matrix3d;
     }  
     
-    /**
-     *
-     * @param {HtmlMesh} htmlMesh
-     * @param {BABYLON.Matrix} maxZoomTransform Screen space transform matrix when the camera is at max zoom
-     * @param {BABYLON.Matrix} currentZoomTransform Screen space transform matrix when the camera is at its current zoom
-     */
     protected renderHtmlMesh(htmlMesh: HtmlMesh) {
         if (!htmlMesh.element) {
             // nothing to render, so bail
@@ -349,11 +358,6 @@ export class HtmlMeshRenderer {
         }
     }  
 
-    /**
-     *
-     * @param {BABYLON.Scene} scene
-     * @param {BABYLON.Camera} camera
-     */
     protected render = (scene: Scene, camera: Camera) => {
         let needsUpdate = false;
 

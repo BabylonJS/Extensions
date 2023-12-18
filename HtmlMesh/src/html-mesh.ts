@@ -5,12 +5,14 @@ import { Matrix } from '@babylonjs/core/Maths/math';
 import { PointerEventsCaptureBehavior } from './pointer-events-capture-behavior';
 import { Scene } from '@babylonjs/core';
 
-// This class represents HTML content that we want to _render as though it is part of the scene.  The HTML content is actually
-// rendered below the canvas, but a depth mask is created by this class that writes to the depth buffer but does not
-// write to the color buffer, effectively punching a hole in the canvas.  CSS transforms are used to scale, translate, and rotate
-// the HTML content so that it matches the camera and mesh orientation.  The class supports interactions in editable and non-editable mode.
-// In non-editable mode (the default), events are passed to the HTML content when the pointer is over the mask (and not occluded by other meshes
-// in the scene).  
+/**
+ * This class represents HTML content that we want to render as though it is part of the scene.  The HTML content is actually
+ * rendered below the canvas, but a depth mask is created by this class that writes to the depth buffer but does not
+ * write to the color buffer, effectively punching a hole in the canvas.  CSS transforms are used to scale, translate, and rotate
+ * the HTML content so that it matches the camera and mesh orientation.  The class supports interactions in editable and non-editable mode.
+ * In non-editable mode (the default), events are passed to the HTML content when the pointer is over the mask (and not occluded by other meshes
+ * in the scene).
+ */  
 export class HtmlMesh extends Mesh {
     isHtmlMesh = true;
 
@@ -25,7 +27,15 @@ export class HtmlMesh extends Mesh {
 	_captureOnPointerEnter: boolean = true;
 	_pointerEventCaptureBehavior: PointerEventsCaptureBehavior | null = null;
 
-    constructor(scene: Scene, id: string , { captureOnPointerEnter = true } = {}) {
+    /**
+	 * Contruct an instance of HtmlMesh
+	 * @param {Scene} scene 
+	 * @param {string} id The id of the mesh.  Will be used as the id of the HTML element as well.
+	 * @param options object with optional parameters
+	 * @param {boolean} options.captureOnPointerEnter If true, then the mesh will capture pointer events when the pointer enters the mesh.  If false, then the mesh will capture pointer events when the pointer is over the mesh.  Default is true. 
+	 * @returns 
+	 */
+	constructor(scene: Scene, id: string , { captureOnPointerEnter = true } = {}) {
         super(id, scene);
 
 		// Requires a browser to work.  Bail if we aren't running in a browser
@@ -51,10 +61,17 @@ export class HtmlMesh extends Mesh {
 		this.addBehavior(this._pointerEventCaptureBehavior);
     }
 
+	/**
+	 * The HTML element that is being rendered as a mesh
+	 */
     get element () {
         return this._element;
     }
 
+	/**
+	 * True if the mesh has been moved, rotated, or scaled since the last time this 
+	 * property was read.  This property is reset to false after reading.
+	 */
     get requiresUpdate() {
         const response = this._requiresUpdate;
         this._requiresUpdate = false;
@@ -70,15 +87,18 @@ export class HtmlMesh extends Mesh {
 
 	dispose() {
 		super.dispose();
+		document.querySelector(`#${this.id}`)?.remove();
+		this._element = undefined;
 	}
-
-    async ready() {
-        return Promise.resolve();
-    }
 	
-	// Sets the content of the element to the specified content adjusting the mesh scale to match and making it visible.  
-	// If the the specified content is undefined, then it will make the mesh invisible.  In either case it will clear the
-	// element content first.
+	/**
+	 * Sets the content of the element to the specified content adjusting the mesh scale to match and making it visible.  
+	 * If the the specified content is undefined, then it will make the mesh invisible.  In either case it will clear the
+	 * element content first.
+	 * @param {HTMLElement} element The element to render as a mesh
+	 * @param {number} width The width of the mesh in Babylon units
+	 * @param {number} height The height of the mesh in Babylon units
+	 */
 	setContent(element: HTMLElement, width: number, height: number) {
 		if (!this._element) {
 			return;
@@ -185,6 +205,9 @@ export class HtmlMesh extends Mesh {
 		}
     }
 
+	/**
+	 * Callback used by the PointerEventsCaptureBehavior to capture pointer events
+	 */
     capturePointerEvents() {
 		if (!this._element) {
 			return;
@@ -197,6 +220,9 @@ export class HtmlMesh extends Mesh {
         document.getElementsByTagName('body')[0].style.pointerEvents = 'none';
     }
 
+	/**
+	 * Callback used by the PointerEventsCaptureBehavior to release pointer events
+	 */
     releasePointerEvents() {
 		if (!this._element) {
 			return;
@@ -210,7 +236,7 @@ export class HtmlMesh extends Mesh {
 		
     }
 	
-    createElement() {
+    protected createElement() {
 		// Requires a browser to work.  Bail if we aren't running in a browser
         if (typeof document === 'undefined') {
             return;
