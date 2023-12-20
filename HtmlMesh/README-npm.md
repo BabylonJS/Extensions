@@ -21,12 +21,11 @@ have them appear with placeholder content of perhaps even an option to view the 
 
 ## npm
 ```shell
-npm install babylonjs-html --save
+npm install babylon-htmlmesh --save
 ```
 
 ## peer dependencies
-This pacakge depends on BabylonJS, specifically the Core ES6 Supported package `@babylonjs/core`.  This is done to support apps that are taking advantage of dependency optimization to reduce the size of the included BabylonJS dependencies.  See the documentation for [BabylonJS ES6 Support](https://doc.babylonjs.com/setup/frameworkPackages/es6Support) for details.  Note that it will not work if your app is using the legacy `babylonjs` package.  If this is an issue, please create an issue on github and I'll look into creating a legacy compatible version.
-
+This package depends on BabylonJS, specifically the Core ES6 Supported package `@babylonjs/core`.  This is done to support apps that are taking advantage of dependency optimization to reduce the size of the included BabylonJS dependencies.  See the documentation for [BabylonJS ES6 Support](https://doc.babylonjs.com/setup/frameworkPackages/es6Support) for details.  Note that it will not work if your app is using the legacy `babylonjs` package.  If this is an issue, please create an issue on github and I'll look into creating a legacy compatible version.
 
 ## Usage
 The first step is to create an instance of `HtmlMeshRenderer`.  Pass this the scene, and optionally an options object containing:
@@ -46,9 +45,6 @@ import { MeshBuilder } from '@babylonjs/core/Meshes/meshBuilder';
 import { ActionManager } from '@babylonjs/core/Actions/actionManager';
 import { ExecuteCodeAction } from '@babylonjs/core/Actions/directActions';
 import { Color4 } from '@babylonjs/core/Maths/math.color';
-import { Matrix } from '@babylonjs/core/Maths/math';
-import { Viewport } from '@babylonjs/core/Maths/math.viewport';
-import { Vector3 } from '@babylonjs/core';
 import '@babylonjs/core/Helpers/sceneHelpers';
 
 import { HtmlMeshRenderer } from './src/html-mesh-renderer';
@@ -179,7 +175,3 @@ The HtmlMesh takes measures to provide the best possible text quality.  Specific
 
 ## PDF Content
 PDFs can be displayed in scene using HtmlMesh.  Aside from the text quality issue noted above, PDFs with embedded links will navigate the current tab/window when one of the links is selected.  Sandboxing the iframe can prevent sites from navigating the current tab/window, but on Chrome sandboxed iframes cannot load PDFs.  
-
-
-
-
