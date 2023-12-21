@@ -8,6 +8,8 @@ import { Camera } from "@babylonjs/core/Cameras/camera";
 import { SubMesh } from "@babylonjs/core/Meshes/subMesh";
 import { RenderingGroup } from "@babylonjs/core/Rendering/renderingGroup";
 
+import { getCanvasRect } from "./util";
+
 // Not sure what this is.  It suspect it is a shortcut for converting world units to screen units
 // and it is okay as long as the scale is the same for all three axes.
 const cssTranslationScaleFactor = 100;
@@ -103,6 +105,13 @@ export class HtmlMeshRenderer {
     // Keep track of camera matrix changes so we only update the
     // DOM element styles when necessary
     _cameraMatrixUpdated = true;
+
+    // Keep track of position changes so we only update the DOM element
+    // styles when necessary
+    _previousCanvasDocumentPosition = {
+        top: 0,
+        left: 0,
+    };
 
     /**
      * Contruct an instance of HtmlMeshRenderer
@@ -272,7 +281,6 @@ export class HtmlMeshRenderer {
     }
 
     protected setSize(width: number, height: number): void {
-        console.log("In setSize: ", width, height);
         this._width = width;
         this._height = height;
         this._widthHalf = this._width / 2;
@@ -441,6 +449,9 @@ export class HtmlMeshRenderer {
 
     protected render = (scene: Scene, camera: Camera) => {
         let needsUpdate = false;
+
+        // Update the container position and size if necessary
+        this.updateContainerPositionIfNeeded(scene);
 
         // Check for a camera change
         if (this._cameraMatrixUpdated) {
@@ -654,6 +665,53 @@ export class HtmlMeshRenderer {
         }
     }
 
+    protected updateContainerPositionIfNeeded(scene: Scene) {
+        // Determine if the canvas has moved on the screen
+        const canvasRect = getCanvasRect(scene);
+        const scrollTop = window.scrollY;
+        const scrollLeft = window.scrollX;
+        const canvasDocumentTop = canvasRect.top + scrollTop;
+        const canvasDocumentLeft = canvasRect.left + scrollLeft;
+
+        if (
+            this._previousCanvasDocumentPosition.top !== canvasDocumentTop ||
+            this._previousCanvasDocumentPosition.left !== canvasDocumentLeft
+        ) {
+            this._previousCanvasDocumentPosition.top = canvasDocumentTop;
+            this._previousCanvasDocumentPosition.left = canvasDocumentLeft;
+
+            // set the top and left of the css container to match the canvas
+            const containerParent = this._container!
+                .offsetParent as HTMLElement;
+            const parentRect = containerParent.getBoundingClientRect();
+            const parentDocumentTop = parentRect.top + scrollTop;
+            const parentDocumentLeft = parentRect.left + scrollLeft;
+
+            const ancestorMarginsAndPadding =
+                this.getAncestorMarginsAndPadding(containerParent);
+
+            // Add the body margin
+            const bodyStyle = window.getComputedStyle(document.body);
+            const bodyMarginTop = parseInt(bodyStyle.marginTop, 10);
+            const bodyMarginLeft = parseInt(bodyStyle.marginLeft, 10);
+
+            this._container!.style.top = `${
+                canvasDocumentTop -
+                parentDocumentTop -
+                ancestorMarginsAndPadding.marginTop +
+                ancestorMarginsAndPadding.paddingTop +
+                bodyMarginTop
+            }px`;
+            this._container!.style.left = `${
+                canvasDocumentLeft -
+                parentDocumentLeft -
+                ancestorMarginsAndPadding.marginLeft +
+                ancestorMarginsAndPadding.paddingLeft +
+                bodyMarginLeft
+            }px`;
+        }
+    }
+
     protected onCameraMatrixChanged = (camera: Camera) => {
         this._cameraViewMatrix = camera.getViewMatrix();
         this._projectionMatrix = camera.getProjectionMatrix();
@@ -664,5 +722,28 @@ export class HtmlMeshRenderer {
 
     private epsilon(value: number) {
         return Math.abs(value) < 1e-10 ? 0 : value;
+    }
+
+    // Get total margins and padding for an element, excluding the body and document margins
+    private getAncestorMarginsAndPadding(element: HTMLElement) {
+        let marginTop = 0;
+        let marginLeft = 0;
+        let paddingTop = 0;
+        let paddingLeft = 0;
+
+        while (
+            element &&
+            element !== document.body &&
+            element !== document.documentElement
+        ) {
+            const style = window.getComputedStyle(element);
+            marginTop += parseInt(style.marginTop, 10);
+            marginLeft += parseInt(style.marginLeft, 10);
+            paddingTop += parseInt(style.paddingTop, 10);
+            paddingLeft += parseInt(style.paddingLeft, 10);
+            element = element.offsetParent as HTMLElement;
+        }
+
+        return { marginTop, marginLeft, paddingTop, paddingLeft };
     }
 }

@@ -7,12 +7,10 @@ import {
     releaseCurrent,
     getCapturingId,
 } from "./pointer-events-capture";
+import { getCanvasRect } from "./util";
 
 // Module level variable used to track the current picked mesh
 let _currentPickedMeshId: number | null = null;
-
-// Module level variable for holding the canvas location and dimensions on the screen
-let _canvasRect: DOMRect | null = null;
 
 // Module level variable for holding the current scene
 let _scene: Scene | null = null;
@@ -37,12 +35,6 @@ const startCaptureOnEnter = (scene: Scene) => {
     if (captureOnEnterCount === 0) {
         document.addEventListener("pointermove", onPointerMove);
         _scene = _scene ?? scene;
-        let rect = _scene
-            .getEngine()
-            .getRenderingCanvasClientRect() as ClientRect;
-        _canvasRect =
-            _canvasRect ??
-            new DOMRect(rect.left, rect.top, rect.width, rect.height);
     }
     captureOnEnterCount++;
 };
@@ -59,7 +51,6 @@ const stopCaptureOnEnter = () => {
     if (captureOnEnterCount === 0) {
         document.removeEventListener("pointermove", onPointerMove);
         _scene = null;
-        _canvasRect = null;
     }
 };
 
@@ -67,12 +58,17 @@ const stopCaptureOnEnter = () => {
 const onPointerMove = (evt: PointerEvent) => {
     // If the observed event is pointer movement with no buttons held
     if (evt.buttons === 0) {
-        if (!_canvasRect || !_scene) {
+        if (!_scene) {
             return;
         }
 
-        const pointerScreenX = evt.clientX - _canvasRect.left;
-        const pointerScreenY = evt.clientY - _canvasRect.top;
+        const canvasRect = getCanvasRect(_scene);
+        if (!canvasRect) {
+            return;
+        }
+
+        const pointerScreenX = evt.clientX - canvasRect.left;
+        const pointerScreenY = evt.clientY - canvasRect.top;
 
         const pickResult = _scene.pick(pointerScreenX, pointerScreenY);
 
@@ -83,10 +79,11 @@ const onPointerMove = (evt: PointerEvent) => {
             pickedMesh = null;
         }
 
+        let capturingIdAsInt = parseInt(getCapturingId() || "");
         if (
             !pickedMesh ||
             pickedMesh.uniqueId === _currentPickedMeshId ||
-            pickedMesh.uniqueId === parseInt(getCapturingId() || "")
+            pickedMesh.uniqueId === capturingIdAsInt
         ) {
             return;
         }
@@ -95,7 +92,7 @@ const onPointerMove = (evt: PointerEvent) => {
         if (
             pickedMesh &&
             (pointerCaptureBehavior = meshToBehaviorMap.get(pickedMesh)) && // Assign and test so we can eliminate the need for a separate line to get the behavior
-            pickedMesh.uniqueId !== parseInt(getCapturingId() || "")
+            pickedMesh.uniqueId !== capturingIdAsInt
         ) {
             releaseCurrent(); // Request release of current pointer events owner
             pointerCaptureBehavior.capturePointerEvents();
