@@ -7,7 +7,7 @@ import {
     releaseCurrent,
     getCapturingId,
 } from "./pointer-events-capture";
-import { getCanvasRect } from "./util";
+import { getCanvasRectOrNull } from "./util";
 
 // Module level variable used to track the current picked mesh
 let _currentPickedMeshId: number | null = null;
@@ -62,11 +62,12 @@ const onPointerMove = (evt: PointerEvent) => {
             return;
         }
 
-        const canvasRect = getCanvasRect(_scene);
+        const canvasRect = getCanvasRectOrNull(_scene);
         if (!canvasRect) {
             return;
         }
 
+        // get the picked mesh, if any
         const pointerScreenX = evt.clientX - canvasRect.left;
         const pointerScreenY = evt.clientY - canvasRect.top;
 
@@ -80,27 +81,37 @@ const onPointerMove = (evt: PointerEvent) => {
         }
 
         let capturingIdAsInt = parseInt(getCapturingId() || "");
+
+        // if the picked mesh is the current picked mesh, or the current capturing mesh, do nothing
         if (
-            !pickedMesh ||
-            pickedMesh.uniqueId === _currentPickedMeshId ||
-            pickedMesh.uniqueId === capturingIdAsInt
+            pickedMesh &&
+            (pickedMesh.uniqueId === _currentPickedMeshId ||
+            pickedMesh.uniqueId === capturingIdAsInt)
         ) {
             return;
         }
 
-        let pointerCaptureBehavior: PointerEventsCaptureBehavior | undefined;
+        // If there is a capturing mesh and it is not the current picked mesh, or no 
+        // mesh is picked, release the capturing mesh
         if (
-            pickedMesh &&
-            (pointerCaptureBehavior = meshToBehaviorMap.get(pickedMesh)) && // Assign and test so we can eliminate the need for a separate line to get the behavior
-            pickedMesh.uniqueId !== capturingIdAsInt
+            capturingIdAsInt && 
+            (!pickedMesh || pickedMesh.uniqueId !== capturingIdAsInt)
         ) {
-            releaseCurrent(); // Request release of current pointer events owner
-            pointerCaptureBehavior.capturePointerEvents();
-        } else if (pickedMesh) {
-            releaseCurrent(); // Request release of current pointer events owner
+            releaseCurrent();
         }
 
-        _currentPickedMeshId = pickedMesh.uniqueId;
+        // If there is a picked mesh and it has an instance of PointerEventsCaptureBehavior
+        // attached to it, and it is not the current capturing mesh, capture the pointer events
+        // Note that the current capturing mesh has already been released above
+        let pointerCaptureBehavior: PointerEventsCaptureBehavior | undefined;
+        if (
+            pickedMesh && 
+            (pointerCaptureBehavior = meshToBehaviorMap.get(pickedMesh))
+        ) {
+            pointerCaptureBehavior.capturePointerEvents();
+        }
+
+        _currentPickedMeshId = pickedMesh?.uniqueId || null;
     }
 };
 

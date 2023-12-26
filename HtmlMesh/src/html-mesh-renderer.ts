@@ -8,7 +8,9 @@ import { Camera } from "@babylonjs/core/Cameras/camera";
 import { SubMesh } from "@babylonjs/core/Meshes/subMesh";
 import { RenderingGroup } from "@babylonjs/core/Rendering/renderingGroup";
 
-import { getCanvasRect } from "./util";
+import { getCanvasRectAsync } from "./util";
+
+const _positionUpdateFailMessage = "Failed to update html mesh renderer position due to failure to get canvas rect.  HtmlMesh instances may not render correctly";
 
 // Not sure what this is.  It suspect it is a shortcut for converting world units to screen units
 // and it is okay as long as the scale is the same for all three axes.
@@ -163,13 +165,6 @@ export class HtmlMeshRenderer {
         }
 
         // Create the DOM containers
-        this._container = document.createElement("div");
-        this._container.id = this._containerId;
-        this._container.style.position = "absolute";
-        this._container.style.width = "100%";
-        this._container.style.height = "100%";
-        this._container.style.zIndex = "-1";
-
         let parentContainer = parentContainerId
             ? document.getElementById(parentContainerId)
             : document.body;
@@ -177,6 +172,18 @@ export class HtmlMeshRenderer {
         if (!parentContainer) {
             parentContainer = document.body;
         }
+
+        // if the container already exists, then remove it
+        const existingContainer = document.getElementById(this._containerId);
+        if (existingContainer) {
+            parentContainer.removeChild(existingContainer);
+        }
+        this._container = document.createElement("div");
+        this._container.id = this._containerId;
+        this._container.style.position = "absolute";
+        this._container.style.width = "100%";
+        this._container.style.height = "100%";
+        this._container.style.zIndex = "-1";
 
         parentContainer.insertBefore(
             this._container,
@@ -665,9 +672,15 @@ export class HtmlMeshRenderer {
         }
     }
 
-    protected updateContainerPositionIfNeeded(scene: Scene) {
+    protected async updateContainerPositionIfNeeded(scene: Scene) {
         // Determine if the canvas has moved on the screen
-        const canvasRect = getCanvasRect(scene);
+        const canvasRect = await getCanvasRectAsync(scene);
+
+        // canvas rect may be null if layout not complete
+        if (!canvasRect) {
+            console.warn(_positionUpdateFailMessage)
+            return;
+        }
         const scrollTop = window.scrollY;
         const scrollLeft = window.scrollX;
         const canvasDocumentTop = canvasRect.top + scrollTop;
