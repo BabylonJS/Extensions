@@ -1,5 +1,5 @@
 import { Scene } from "@babylonjs/core/scene";
-import { Matrix, Vector3 } from "@babylonjs/core/Maths/math";
+import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math";
 import { Viewport } from "@babylonjs/core/Maths/math.viewport";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 
@@ -9,6 +9,7 @@ import { SubMesh } from "@babylonjs/core/Meshes/subMesh";
 import { RenderingGroup } from "@babylonjs/core/Rendering/renderingGroup";
 
 import { getCanvasRectAsync } from "./util";
+import { Observer } from "@babylonjs/core";
 
 const _positionUpdateFailMessage = "Failed to update html mesh renderer position due to failure to get canvas rect.  HtmlMesh instances may not render correctly";
 
@@ -61,7 +62,7 @@ const renderOrderFunc = (
  */
 export class HtmlMeshRenderer {
     _maskRootNode?: TransformNode;
-    _container?: HTMLElement;
+    _container: HTMLElement | null = null;
     _containerId = "css-container";
     _domElement?: HTMLElement;
     _cameraElement?: HTMLElement;
@@ -89,6 +90,7 @@ export class HtmlMeshRenderer {
         worldMin: new Vector3(),
         worldMax: new Vector3(),
         objectMatrix: Matrix.Identity(),
+        objectRotationMatrix: Matrix.Identity(),
         viewportMatrix: Matrix.Identity(),
         maxZoomScreenSpaceTransform: Matrix.Identity(),
         maxZoomClipSpaceTransform: Matrix.Identity(),
@@ -98,6 +100,7 @@ export class HtmlMeshRenderer {
         cameraRotationMatrix: Matrix.Identity(),
         cameraWorldMatrixAsArray: new Array(16),
         vp: new Viewport(0, 0, 0, 0),
+        objectRotationQuaternion: Quaternion.Identity(),
     };
 
     // Keep track of DPR so we can resize if DPR changes
@@ -114,6 +117,8 @@ export class HtmlMeshRenderer {
         top: 0,
         left: 0,
     };
+
+    private _renderObserver: Observer<Scene> | null = null;
 
     /**
      * Contruct an instance of HtmlMeshRenderer
@@ -150,6 +155,18 @@ export class HtmlMeshRenderer {
             defaultAlphaTestRenderOrder,
             defaultTransparentRenderOrder
         );
+    }
+
+    public dispose() {
+        if (this._renderObserver) {
+            this._renderObserver.unregisterOnNextCall = true;
+            this._renderObserver = null;
+        }
+
+        if (this._container) {
+            this._container.remove();
+            this._container = null;
+        }
     }
 
     protected init(
@@ -275,7 +292,7 @@ export class HtmlMeshRenderer {
             transparentRenderOrder
         );
 
-        scene.onAfterRenderObservable.add(() => {
+        this._renderObserver = scene.onAfterRenderObservable.add(() => {
             this.render(scene, scene.activeCamera as Camera);
         });
     }
@@ -348,7 +365,7 @@ export class HtmlMeshRenderer {
             "," +
             this.epsilon(elements[1]) +
             "," +
-            this.epsilon(elements[2]) +
+            -this.epsilon(elements[2]) +
             "," +
             this.epsilon(elements[3]) +
             "," +
@@ -360,7 +377,7 @@ export class HtmlMeshRenderer {
             "," +
             this.epsilon(-elements[7]) +
             "," +
-            this.epsilon(elements[8]) +
+            -this.epsilon(elements[8]) +
             "," +
             this.epsilon(elements[9]) +
             "," +
@@ -412,33 +429,63 @@ export class HtmlMeshRenderer {
         const scaledAndTranslatedObjectMatrix = this._temp.objectMatrix;
         scaledAndTranslatedObjectMatrix.copyFrom(objectWorldMatrix);
 
-        // I didn't write the code this is based on, so it's not clear to me
-        // why it is neccessary, but basically we are going to scale the entire
-        // matrix by 100, but we don't want the x and y scales to be affected so we
-        // multiply them by 1/100.  I think maybe this is just a shortcut for converting
-        // the translation values from world units to screen units and it doesn't matter
-        // what the scale is as long as it is the same for all three axes.
-        scaledAndTranslatedObjectMatrix.multiplyAtIndex(
-            0,
-            (1 / cssTranslationScaleFactor) * htmlMeshData.baseScaleFactor
-        );
-        scaledAndTranslatedObjectMatrix.multiplyAtIndex(
-            5,
-            (1 / cssTranslationScaleFactor) * htmlMeshData.baseScaleFactor
-        );
+        // Adjust the scale factor for rotation based on the total rotation
+        // Get rotation as quaternion
+        // const objectRotationMatrix = this._temp.objectRotationMatrix;
+        // const objectRotationQuaternion = this._temp.objectRotationQuaternion;
+        // Quaternion.FromRotationMatrixToRef(
+        //     objectWorldMatrix.getRotationMatrixToRef(objectRotationMatrix),
+        //     objectRotationQuaternion
+        // );
 
+        // let rotationScaleFactor = 1;
+        let adjustedScaleFactor = htmlMeshData.baseScaleFactor;
+        // console.log("Adjusted scale factor " + adjustedScaleFactor);
+        // if (objectRotationQuaternion) {
+        //     // Calculate the total rotation angle
+        //     const totalRotationAngle = 2 * Math.acos(objectRotationQuaternion.w);
+
+        //     //rotationScaleFactor *= (1 + Math.abs(totalRotationAngle) / Math.PI)
+        //     //console.log("Rotation scale factor " + rotationScaleFactor)
+        //     rotationScaleFactor = 0.1;
+
+        //     // Adjust the scale factor based on the total rotation angle
+        //     //adjustedScaleFactor *= rotationScaleFactor;
+        // }
+
+        // Apply the scale factor to x and y axes
+        scaledAndTranslatedObjectMatrix.multiplyAtIndex(0, adjustedScaleFactor);
+        scaledAndTranslatedObjectMatrix.multiplyAtIndex(5, adjustedScaleFactor);
+
+        // scaledAndTranslatedObjectMatrix.multiplyAtIndex(2, rotationScaleFactor);
+        // scaledAndTranslatedObjectMatrix.multiplyAtIndex(8, rotationScaleFactor);
+        // scaledAndTranslatedObjectMatrix.multiplyAtIndex(10, rotationScaleFactor);
+        
+        // I didn't write the code this is based on, so it's not clear to me
+        // why it is neccessary, but basically we are going to scale the translation, 
+        // rotation and perspective values by 100.  I think maybe this is just a shortcut 
+        // for converting the translation values from world units to screen units and it 
+        // doesn't matter what the scale is as long as it is the same for all three axes.
         scaledAndTranslatedObjectMatrix.setRowFromFloats(
             3,
-            -this._cameraWorldMatrix.m[12] + htmlMesh.position.x,
-            -this._cameraWorldMatrix.m[13] + htmlMesh.position.y,
-            this._cameraWorldMatrix.m[14] - htmlMesh.position.z,
-            this._cameraWorldMatrix.m[15] * 0.00001
+            (-this._cameraWorldMatrix.m[12] + htmlMesh.position.x) * cssTranslationScaleFactor,
+            (-this._cameraWorldMatrix.m[13] + htmlMesh.position.y) * cssTranslationScaleFactor,
+            (this._cameraWorldMatrix.m[14] - htmlMesh.position.z) * cssTranslationScaleFactor,
+            this._cameraWorldMatrix.m[15] * 0.00001 * cssTranslationScaleFactor
         );
 
-        scaledAndTranslatedObjectMatrix.scaleToRef(
-            cssTranslationScaleFactor,
-            scaledAndTranslatedObjectMatrix
-        );
+        // Scale other values
+        scaledAndTranslatedObjectMatrix.multiplyAtIndex(2, cssTranslationScaleFactor);
+        scaledAndTranslatedObjectMatrix.multiplyAtIndex(3, cssTranslationScaleFactor);
+        scaledAndTranslatedObjectMatrix.multiplyAtIndex(7, cssTranslationScaleFactor);
+        scaledAndTranslatedObjectMatrix.multiplyAtIndex(8, cssTranslationScaleFactor);
+        scaledAndTranslatedObjectMatrix.multiplyAtIndex(10, cssTranslationScaleFactor);
+        scaledAndTranslatedObjectMatrix.multiplyAtIndex(11, cssTranslationScaleFactor);
+
+        // scaledAndTranslatedObjectMatrix.scaleToRef(
+        //     cssTranslationScaleFactor,
+        //     scaledAndTranslatedObjectMatrix
+        // );
 
         const style = `translate(-50%, -50%) ${this.getHtmlContentCSSMatrix(
             scaledAndTranslatedObjectMatrix
