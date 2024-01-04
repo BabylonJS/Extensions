@@ -96,6 +96,10 @@ export class HtmlMesh extends Mesh {
         super.dispose();
         document.querySelector(`#${this.id}`)?.remove();
         this._element = undefined;
+        if (this._pointerEventCaptureBehavior) {
+            this._pointerEventCaptureBehavior.dispose();
+            this._pointerEventCaptureBehavior = null;
+        }
     }
 
     /**

@@ -4,6 +4,7 @@ import { MeshBuilder } from '@babylonjs/core/Meshes/meshBuilder';
 import { ActionManager } from '@babylonjs/core/Actions/actionManager';
 import { ExecuteCodeAction } from '@babylonjs/core/Actions/directActions';
 import { Color4 } from '@babylonjs/core/Maths/math.color';
+import { Vector3 } from '@babylonjs/core/Maths/math.vector';
 import '@babylonjs/core/Helpers/sceneHelpers';
 
 import { HtmlMeshRenderer } from './src/html-mesh-renderer';
@@ -37,7 +38,7 @@ const createScene = () => {
 
     bg.scaling.x = 12;
     bg.scaling.y = 16
-    bg.position.z = 2
+    bg.position.z = 3;
 
     sphere.position.x = 1.5;
     sphere.position.y = -0.5;
@@ -103,6 +104,8 @@ const createScene = () => {
     htmlMeshDiv.setContent(div, 4, 3);
     htmlMeshDiv.position.x = -3;
     htmlMeshDiv.position.y = 2;
+    htmlMeshDiv.rotation = new Vector3(Math.PI / 4, Math.PI / 4, Math.PI / 4);
+
 
     // Shows how this can be used to include a PDF in your scene.  Note this is 
     // conceptual only.  Displaying a PDF like this works, but any links in the
@@ -119,17 +122,30 @@ const createScene = () => {
     htmlMeshPdf.setContent(iframePdf, 4, 3);
     htmlMeshPdf.position.x = 3;
     htmlMeshPdf.position.y = 2;
+    htmlMeshPdf.position.z = 2;
 
     // Shows how this can be used to include a website in your scene
+    // Becuase the rotation on the mesh introduces a significant difference
+    // between the world min and max z values, which result in the 
+    // element being too large, we wrap the iframe in a div with padding and 
+    // make the iframe a percentage of the div size.  This ensures that the 
+    // entire iframe is accessible.
+    const outerDivSite = document.createElement('div');
+    outerDivSite.style.width = '480px';
+    outerDivSite.style.height = '360px';
+    outerDivSite.style.backgroundColor = 'black';
+    outerDivSite.style.padding = '10px';
     const siteUrl = 'https://www.babylonjs.com/';
     const htmlMeshSite = new HtmlMesh(scene, "html-mesh-site");
     const iframeSite = document.createElement('iframe');
     iframeSite.src = siteUrl;
-    iframeSite.width = '480px';
-    iframeSite.height = '360px';
-    htmlMeshSite.setContent(iframeSite, 4, 3);
+    iframeSite.width = '98.5%';
+    iframeSite.height = '99%';
+    outerDivSite.appendChild(iframeSite);
+    htmlMeshSite.setContent(outerDivSite, 4, 3);
     htmlMeshSite.position.x = -3;
     htmlMeshSite.position.y = -2;
+    htmlMeshSite.rotation.y = Math.PI / 4;
     
     // Shows how this can be used to include a YouTube video in your scene
     const videoId = 'zELYw2qEUjI';
@@ -142,6 +158,7 @@ const createScene = () => {
     htmlMeshVideo.setContent(iframeVideo, 4, 3);
     htmlMeshVideo.position.x = 3;
     htmlMeshVideo.position.y = -2;
+    htmlMeshVideo.rotation.x = Math.PI / 4;
 
     if (debug) {
         // Log the scene to the console for debugging

@@ -1,10 +1,10 @@
 import { Scene } from "@babylonjs/core";
 
-
 // #region canvasRect functions
 const _canvasRectUpdateInterval = 500; // Update the canvas rect every 500ms
 let _getCanvasRectGenerator: Generator<DOMRect | null> | null = null;
 const _maxGetCanvasRectAttempts: number = 10;
+let _scene: Scene | null = null;
 
 function* createGetCanvasRectGenerator(
     scene: Scene,
@@ -18,8 +18,9 @@ function* createGetCanvasRectGenerator(
         if (currentTime - lastCallTime >= updateInterval) {
             lastCallTime = currentTime;
             // Return the canvas rect, or the last known value
-            let newCanvasRect =
-                scene?.getEngine().getRenderingCanvasClientRect();
+            let newCanvasRect = scene
+                ?.getEngine()
+                .getRenderingCanvasClientRect();
             if (newCanvasRect) {
                 canvasRect = newCanvasRect;
             } else {
@@ -36,13 +37,7 @@ function* createGetCanvasRectGenerator(
 }
 
 export const getCanvasRectAsync = (scene: Scene): Promise<DOMRect | null> => {
-    if (!_getCanvasRectGenerator) {
-        _getCanvasRectGenerator = createGetCanvasRectGenerator(
-            scene,
-            _canvasRectUpdateInterval
-        );
-    }
-
+    ensureGetCanvasRectGeneratorExists(scene);
     return new Promise<DOMRect | null>((resolve) => {
         let attempts = 0;
         const intervalId = setInterval(() => {
@@ -54,7 +49,9 @@ export const getCanvasRectAsync = (scene: Scene): Promise<DOMRect | null> => {
                 attempts++;
                 if (attempts >= _maxGetCanvasRectAttempts) {
                     clearInterval(intervalId);
-                    console.warn("Exceeded maximum number of attempts trying to get canvas rect");
+                    console.warn(
+                        "Exceeded maximum number of attempts trying to get canvas rect"
+                    );
                     resolve(null);
                 }
             }
@@ -63,13 +60,18 @@ export const getCanvasRectAsync = (scene: Scene): Promise<DOMRect | null> => {
 };
 
 export const getCanvasRectOrNull = (scene: Scene): DOMRect | null => {
-    if (!_getCanvasRectGenerator) {
+    ensureGetCanvasRectGeneratorExists(scene);
+    const result = _getCanvasRectGenerator!.next();
+    return result.value;
+};
+
+const ensureGetCanvasRectGeneratorExists = (scene: Scene) => {
+    if (!_getCanvasRectGenerator || scene !== _scene) {
         _getCanvasRectGenerator = createGetCanvasRectGenerator(
             scene,
             _canvasRectUpdateInterval
         );
+        _scene = scene;
     }
-    const result = _getCanvasRectGenerator.next();
-    return result.value;
 };
 // #endregion canvasRect functions

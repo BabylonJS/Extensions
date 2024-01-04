@@ -1,5 +1,5 @@
 import { Scene } from "@babylonjs/core/scene";
-import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math";
+import { Matrix, Vector3 } from "@babylonjs/core/Maths/math";
 import { Viewport } from "@babylonjs/core/Maths/math.viewport";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 
@@ -11,7 +11,8 @@ import { RenderingGroup } from "@babylonjs/core/Rendering/renderingGroup";
 import { getCanvasRectAsync } from "./util";
 import { Observer } from "@babylonjs/core";
 
-const _positionUpdateFailMessage = "Failed to update html mesh renderer position due to failure to get canvas rect.  HtmlMesh instances may not render correctly";
+const _positionUpdateFailMessage =
+    "Failed to update html mesh renderer position due to failure to get canvas rect.  HtmlMesh instances may not render correctly";
 
 // Not sure what this is.  It suspect it is a shortcut for converting world units to screen units
 // and it is okay as long as the scale is the same for all three axes.
@@ -85,22 +86,15 @@ export class HtmlMeshRenderer {
 
     // Create some refs to avoid creating new objects every frame
     _temp = {
-        v0: new Vector3(),
-        v1: new Vector3(),
-        worldMin: new Vector3(),
-        worldMax: new Vector3(),
+        meshMinWorld: new Vector3(),
+        meshMaxWorld: new Vector3(),
+        meshMinScreen: new Vector3(),
+        meshMaxScreen: new Vector3(),
         objectMatrix: Matrix.Identity(),
-        objectRotationMatrix: Matrix.Identity(),
-        viewportMatrix: Matrix.Identity(),
-        maxZoomScreenSpaceTransform: Matrix.Identity(),
-        maxZoomClipSpaceTransform: Matrix.Identity(),
-        screenSpaceTransform: Matrix.Identity(),
-        cameraViewMatrix: Matrix.Identity(),
         cameraWorldMatrix: Matrix.Identity(),
         cameraRotationMatrix: Matrix.Identity(),
         cameraWorldMatrixAsArray: new Array(16),
         vp: new Viewport(0, 0, 0, 0),
-        objectRotationQuaternion: Quaternion.Identity(),
     };
 
     // Keep track of DPR so we can resize if DPR changes
@@ -159,7 +153,7 @@ export class HtmlMeshRenderer {
 
     public dispose() {
         if (this._renderObserver) {
-            this._renderObserver.unregisterOnNextCall = true;
+            this._renderObserver.remove();
             this._renderObserver = null;
         }
 
@@ -317,83 +311,83 @@ export class HtmlMeshRenderer {
         (this._cameraElement as HTMLElement).style.height = height + "px";
     }
 
+    // prettier-ignore
     protected getCameraCSSMatrix(matrix: Matrix): string {
         const elements = matrix.m;
-
-        return (
-            "matrix3d(" +
-            this.epsilon(elements[0]) +
-            "," +
-            this.epsilon(-elements[1]) +
-            "," +
-            this.epsilon(elements[2]) +
-            "," +
-            this.epsilon(elements[3]) +
-            "," +
-            this.epsilon(elements[4]) +
-            "," +
-            this.epsilon(-elements[5]) +
-            "," +
-            this.epsilon(elements[6]) +
-            "," +
-            this.epsilon(elements[7]) +
-            "," +
-            this.epsilon(elements[8]) +
-            "," +
-            this.epsilon(-elements[9]) +
-            "," +
-            this.epsilon(elements[10]) +
-            "," +
-            this.epsilon(elements[11]) +
-            "," +
-            this.epsilon(elements[12]) +
-            "," +
-            this.epsilon(-elements[13]) +
-            "," +
-            this.epsilon(elements[14]) +
-            "," +
-            this.epsilon(elements[15]) +
-            ")"
-        );
+        return `matrix3d(${
+            this.epsilon( elements[0] )
+        },${
+            this.epsilon( - elements[1] )
+        },${
+            this.epsilon( elements[2] )
+        },${
+            this.epsilon( elements[3] )
+        },${
+            this.epsilon( elements[4] )
+        },${
+            this.epsilon( - elements[5] )
+        },${
+            this.epsilon( elements[6] )
+        },${
+            this.epsilon( elements[7] )
+        },${
+            this.epsilon( elements[8] )
+        },${
+            this.epsilon( - elements[9] )
+        },${
+            this.epsilon( elements[10] )
+        },${
+            this.epsilon( elements[11] )
+        },${
+            this.epsilon( elements[12] )
+        },${
+            this.epsilon( - elements[13] )
+        },${
+            this.epsilon( elements[14] )
+        },${
+            this.epsilon( elements[15] )
+        })`;
     }
 
+    // Convert a Babylon world matrix to a CSS matrix
+    // This also handles conversion from BJS left handed coords
+    // to CSS right handed coords
+    // prettier-ignore
     protected getHtmlContentCSSMatrix(matrix: Matrix): string {
         const elements = matrix.m;
-        const matrix3d =
-            "matrix3d(" +
-            this.epsilon(elements[0]) +
-            "," +
-            this.epsilon(elements[1]) +
-            "," +
-            -this.epsilon(elements[2]) +
-            "," +
-            this.epsilon(elements[3]) +
-            "," +
-            this.epsilon(-elements[4]) +
-            "," +
-            this.epsilon(-elements[5]) +
-            "," +
-            this.epsilon(-elements[6]) +
-            "," +
-            this.epsilon(-elements[7]) +
-            "," +
-            -this.epsilon(elements[8]) +
-            "," +
-            this.epsilon(elements[9]) +
-            "," +
-            this.epsilon(elements[10]) +
-            "," +
-            this.epsilon(elements[11]) +
-            "," +
-            this.epsilon(elements[12]) +
-            "," +
-            this.epsilon(elements[13]) +
-            "," +
-            this.epsilon(elements[14]) +
-            "," +
-            this.epsilon(elements[15]) +
-            ")";
-
+        const matrix3d = `matrix3d(${
+            this.epsilon( elements[0] )
+        },${
+            this.epsilon( elements[1] )
+        },${
+            this.epsilon( - elements[2] )
+        },${
+            this.epsilon( elements[3] )
+        },${
+            this.epsilon( - elements[4] )
+        },${
+            this.epsilon( - elements[5] )
+        },${
+            this.epsilon( elements[6] )
+        },${
+            this.epsilon( - elements[7] )
+        },${
+            this.epsilon( - elements[8] )
+        },${
+            this.epsilon( - elements[9] )
+        },${
+            this.epsilon( elements[10] )
+        },${
+            this.epsilon( elements[11] )
+        },${
+            this.epsilon( elements[12] )
+        },${
+            this.epsilon( elements[13] )
+        },${
+            this.epsilon( elements[14] )
+        },${
+            this.epsilon( elements[15] )
+        })`;
         return matrix3d;
     }
 
@@ -429,67 +423,41 @@ export class HtmlMeshRenderer {
         const scaledAndTranslatedObjectMatrix = this._temp.objectMatrix;
         scaledAndTranslatedObjectMatrix.copyFrom(objectWorldMatrix);
 
-        // Adjust the scale factor for rotation based on the total rotation
-        // Get rotation as quaternion
-        // const objectRotationMatrix = this._temp.objectRotationMatrix;
-        // const objectRotationQuaternion = this._temp.objectRotationQuaternion;
-        // Quaternion.FromRotationMatrixToRef(
-        //     objectWorldMatrix.getRotationMatrixToRef(objectRotationMatrix),
-        //     objectRotationQuaternion
-        // );
-
-        // let rotationScaleFactor = 1;
-        let adjustedScaleFactor = htmlMeshData.baseScaleFactor;
-        // console.log("Adjusted scale factor " + adjustedScaleFactor);
-        // if (objectRotationQuaternion) {
-        //     // Calculate the total rotation angle
-        //     const totalRotationAngle = 2 * Math.acos(objectRotationQuaternion.w);
-
-        //     //rotationScaleFactor *= (1 + Math.abs(totalRotationAngle) / Math.PI)
-        //     //console.log("Rotation scale factor " + rotationScaleFactor)
-        //     rotationScaleFactor = 0.1;
-
-        //     // Adjust the scale factor based on the total rotation angle
-        //     //adjustedScaleFactor *= rotationScaleFactor;
-        // }
-
-        // Apply the scale factor to x and y axes
-        scaledAndTranslatedObjectMatrix.multiplyAtIndex(0, adjustedScaleFactor);
-        scaledAndTranslatedObjectMatrix.multiplyAtIndex(5, adjustedScaleFactor);
-
-        // scaledAndTranslatedObjectMatrix.multiplyAtIndex(2, rotationScaleFactor);
-        // scaledAndTranslatedObjectMatrix.multiplyAtIndex(8, rotationScaleFactor);
-        // scaledAndTranslatedObjectMatrix.multiplyAtIndex(10, rotationScaleFactor);
-        
         // I didn't write the code this is based on, so it's not clear to me
-        // why it is neccessary, but basically we are going to scale the translation, 
-        // rotation and perspective values by 100.  I think maybe this is just a shortcut 
-        // for converting the translation values from world units to screen units and it 
+        // why it is neccessary, but basically we are going to scale the translation,
+        // rotation and perspective values by 100.  I think maybe this is just a shortcut
+        // for converting the translation values from world units to screen units and it
         // doesn't matter what the scale is as long as it is the same for all three axes.
         scaledAndTranslatedObjectMatrix.setRowFromFloats(
             3,
-            (-this._cameraWorldMatrix.m[12] + htmlMesh.position.x) * cssTranslationScaleFactor,
-            (-this._cameraWorldMatrix.m[13] + htmlMesh.position.y) * cssTranslationScaleFactor,
-            (this._cameraWorldMatrix.m[14] - htmlMesh.position.z) * cssTranslationScaleFactor,
+            (-this._cameraWorldMatrix.m[12] + htmlMesh.position.x) *
+                cssTranslationScaleFactor,
+            (-this._cameraWorldMatrix.m[13] + htmlMesh.position.y) *
+                cssTranslationScaleFactor,
+            (this._cameraWorldMatrix.m[14] - htmlMesh.position.z) *
+                cssTranslationScaleFactor,
             this._cameraWorldMatrix.m[15] * 0.00001 * cssTranslationScaleFactor
         );
 
         // Scale other values
-        scaledAndTranslatedObjectMatrix.multiplyAtIndex(2, cssTranslationScaleFactor);
-        scaledAndTranslatedObjectMatrix.multiplyAtIndex(3, cssTranslationScaleFactor);
-        scaledAndTranslatedObjectMatrix.multiplyAtIndex(7, cssTranslationScaleFactor);
-        scaledAndTranslatedObjectMatrix.multiplyAtIndex(8, cssTranslationScaleFactor);
-        scaledAndTranslatedObjectMatrix.multiplyAtIndex(10, cssTranslationScaleFactor);
-        scaledAndTranslatedObjectMatrix.multiplyAtIndex(11, cssTranslationScaleFactor);
-
-        // scaledAndTranslatedObjectMatrix.scaleToRef(
-        //     cssTranslationScaleFactor,
-        //     scaledAndTranslatedObjectMatrix
-        // );
+        scaledAndTranslatedObjectMatrix.multiplyAtIndex(
+            3,
+            cssTranslationScaleFactor
+        );
+        scaledAndTranslatedObjectMatrix.multiplyAtIndex(
+            7,
+            cssTranslationScaleFactor
+        );
+        scaledAndTranslatedObjectMatrix.multiplyAtIndex(
+            11,
+            cssTranslationScaleFactor
+        );
 
         const style = `translate(-50%, -50%) ${this.getHtmlContentCSSMatrix(
             scaledAndTranslatedObjectMatrix
-        )}`;
+        )} scale3d(${htmlMeshData.baseScaleFactor}, ${
+            htmlMeshData.baseScaleFactor
+        }, 1)`;
 
         if (htmlMeshData.style !== style) {
             htmlMesh.element.style.webkitTransform = style;
@@ -635,39 +603,46 @@ export class HtmlMeshRenderer {
         const boundingInfo = htmlMesh.getBoundingInfo();
 
         // Get the html mesh's world min and max
-        const worldMin = boundingInfo.boundingBox.minimumWorld;
-        const worldMax = boundingInfo.boundingBox.maximumWorld;
+        const meshMin = this._temp.meshMinWorld;
+        const meshMax = this._temp.meshMaxWorld;
+        // const meshMin = boundingInfo.boundingBox.minimumWorld;
+        // const meshMax = boundingInfo.boundingBox.maximumWorld;
+        meshMin.copyFrom(boundingInfo.minimum);
+        meshMax.copyFrom(boundingInfo.maximum);
 
-        // Transfrom to screen coords
+        // Use the world z to ensure we get the correct distance from the camera
+        // (taking into account any z translation)
+        // const averageZ = (boundingInfo.boundingBox.minimumWorld.z +
+        //                   boundingInfo.boundingBox.maximumWorld.z) / 2;
+        meshMin.z = boundingInfo.boundingBox.minimumWorld.z;
+        meshMax.z = boundingInfo.boundingBox.maximumWorld.z;
+
+        // Transform to screen coords
         const transform = scene.getTransformMatrix();
-        const worldMinScreen = this._temp.worldMin;
-        const worldMaxScreen = this._temp.worldMax;
+        const meshMinScreen = this._temp.meshMinScreen;
+        const meshMaxScreen = this._temp.meshMaxScreen;
 
         const world = Matrix.IdentityReadOnly;
 
         // project the world min and max to screen coords
         Vector3.ProjectToRef(
-            worldMin,
+            meshMin,
             world,
             transform,
             viewport,
-            worldMinScreen
+            meshMinScreen
         );
         Vector3.ProjectToRef(
-            worldMax,
+            meshMax,
             world,
             transform,
             viewport,
-            worldMaxScreen
+            meshMaxScreen
         );
 
         // Get htmlMesh world width and height in pixels
-        const htmlMeshWorldWidth = Math.abs(
-            worldMaxScreen.x - worldMinScreen.x
-        );
-        const htmlMeshWorldHeight = Math.abs(
-            worldMaxScreen.y - worldMinScreen.y
-        );
+        const htmlMeshWorldWidth = Math.abs(meshMaxScreen.x - meshMinScreen.x);
+        const htmlMeshWorldHeight = Math.abs(meshMaxScreen.y - meshMinScreen.y);
 
         // Get screen width and height
         let screenWidth = this._width;
@@ -705,7 +680,7 @@ export class HtmlMeshRenderer {
         // Do this instead of radius in case the camera is not an ArcRotateCamera
         // The z translation value in the html mesh is the camera distance in world units * 100
         const distance =
-            camera.position.subtract(htmlMesh.position).length() *
+            camera.position.subtract(htmlMesh.absolutePosition).length() *
             cssTranslationScaleFactor;
         const cameraDistanceScale = distance / (fov * 0.5);
         // I don't know why we have to divide the camera distance scale by 2 here, but it produces the
@@ -725,7 +700,7 @@ export class HtmlMeshRenderer {
 
         // canvas rect may be null if layout not complete
         if (!canvasRect) {
-            console.warn(_positionUpdateFailMessage)
+            console.warn(_positionUpdateFailMessage);
             return;
         }
         const scrollTop = window.scrollY;

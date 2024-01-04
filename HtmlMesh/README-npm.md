@@ -6,7 +6,8 @@ in the scene, meaning that it can occlude other meshes and be occluded by other 
 
 [Online Demo](https://codesandbox.io/p/sandbox/babylon-html-mesh-demo-862gh5)
 
-[BabylonJS Playground](https://www.babylonjs-playground.com/full.html#Y2LIXI#14).  Note the currently only works in fullscreen.  There is an issue with getting the wrong canvas size initially.
+[BabylonJS Playground](https://www.babylonjs-playground.com/#Y2LIXI#15).
+[BabylonJS HtmlBox Playground](https://playground.babylonjs.com/#B17TC7#44).  
 
 The following uses cases are supported by the HtmlMesh
 * Add instructional content/video to a 3D scene.
@@ -18,6 +19,8 @@ Note that the use of HtmlMesh requires that the experience be accessed through a
 current form, this will not work in native apps or in XR.  If constructed outside of a browser context, the
 HtmlMesh instances will not have any geometry and will be disabled.  In the future, it might make sense to 
 have them appear with placeholder content of perhaps even an option to view the raw HTML in a popup UI.
+
+By default the HtmlMesh will capture pointer events as soon as the pointer enters.  This is to facilitate the user's ability to interact with the site content without requiring an extra click or some other gesture.  Note that pointer capture won't occur when a camera zoom causes the pointer to be over the mesh.  This is to allow zooming in and out of the scene without the mesh capturing the pointer and preventing zoom as soon as the pointer enters.  This behavior can be disabled as described in the [pointer capture](#pointer-capture) section below, in which case you will need to provide a mechanism to trigger poiitner capture and release in your code.
 
 ## npm
 ```shell
@@ -35,6 +38,8 @@ The first step is to create an instance of `HtmlMeshRenderer`.  Pass this the sc
 * `defaultTransparentRenderOrder` - an optional render order function that conforms to the interface of the `transparentCompareFn` as described in the documentation for [`Scene.setRenderingOrder`](https://doc.babylonjs.com/typedoc/classes/BABYLON.Scene#setRenderingOrder) to be used as the transparent sort compare for meshes that are not an instanceof `HtmlMesh` for group 0.  See [Rendering Order Impacts](#rendering-order-impacts) for more details.
 
 Next, create the DOM element for your content.  This can be any HTML element though most of the time, it should either be a `div` for DOM content in the same app, or an `iframe` for external dom content.  You should not add this element to your document; `HtmlMesh` will do this for you.  Set any attribute and style values that you want; however, be advised that the width and height styles will be replaced by the `HtmlMesh`.  
+
+One thing to be aware of is that the way the scale is determined can sometimes result in the elment being larger than the mesh if the mesh has a substantal difference in the world min and max z values.  If this is the case, you may want to wrap your element in an outer div that is a bit larger with a background color.  This will ensure that any gaps between the mesh and the element are filled with the background color and the user can access the entire portion of the element that needs to be accessible.  A future update may add suport for this to `setContent`. 
 
 Finally, call `setContent` passing in the element and the mesh width and height in BabylonJS units.  Be advised that any scaling done after `setContent` will not be preserved on the next call to `setContent`.  You should grab any scaling you want preserved and pass the scale values through `setContent`.  See [Scaling `HtmlMesh` Instances](#scaling-htmlmesh-instances) for an expalantion on why this is the case.  You can set attributes and styles after calling `setContent` using a query selector on the id.  The `HtmlMesh` can be positioned, oriented, parented, shown or hidden like any other mesh.  You can even use pointer drag behavior and gizmos to allow users to position and move the mesh, subject to the caveats of scaling below.
 
