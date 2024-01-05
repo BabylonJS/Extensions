@@ -1,4 +1,5 @@
 import { Scene } from "@babylonjs/core";
+import { Logger } from "@babylonjs/core/Misc/logger";
 
 // #region canvasRect functions
 const _canvasRectUpdateInterval = 500; // Update the canvas rect every 500ms
@@ -25,11 +26,11 @@ function* createGetCanvasRectGenerator(
                 canvasRect = newCanvasRect;
             } else {
                 if (canvasRect) {
-                    console.warn(
+                    Logger.Warn(
                         "Canvas rect became null.  Returning last known value"
                     );
                 }
-                console.warn("Failed to get canvas rect.");
+                Logger.Warn("Failed to get canvas rect.");
             }
         }
         yield canvasRect;
@@ -49,7 +50,7 @@ export const getCanvasRectAsync = (scene: Scene): Promise<DOMRect | null> => {
                 attempts++;
                 if (attempts >= _maxGetCanvasRectAttempts) {
                     clearInterval(intervalId);
-                    console.warn(
+                    Logger.Warn(
                         "Exceeded maximum number of attempts trying to get canvas rect"
                     );
                     resolve(null);

@@ -1,6 +1,7 @@
 import { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 import { Behavior } from "@babylonjs/core/Behaviors/behavior";
 import { Scene } from "@babylonjs/core/scene";
+import { Logger } from "@babylonjs/core/Misc/logger";
 import {
     requestCapture,
     requestRelease,
@@ -32,7 +33,7 @@ const startCaptureOnEnter = (scene: Scene) => {
     if (captureOnEnterCount === 0) {
         document.addEventListener("pointermove", onPointerMove);
         _scene = _scene ?? scene;
-        console.log(
+        Logger.Log(
             "PointerEventsCaptureBehavior: Starting observation of pointer move events."
         );
         _scene.onDisposeObservable.add(doStopCaptureOnEnter);
@@ -43,7 +44,7 @@ const startCaptureOnEnter = (scene: Scene) => {
 const doStopCaptureOnEnter = () => {
     document.removeEventListener("pointermove", onPointerMove);
     _scene = null;
-    console.log(
+    Logger.Log(
         "PointerEventsCaptureBehavior: Stopping observation of pointer move events."
     );
     captureOnEnterCount = 0;
@@ -142,7 +143,7 @@ export class PointerEventsCaptureBehavior implements Behavior<AbstractMesh> {
 
         // Warn if we are not in a browser
         if (typeof document === "undefined") {
-            console.warn(
+            Logger.Warn(
                 `Creating an instance of PointerEventsCaptureBehavior outside of a browser.  The behavior will not work.`
             );
         }

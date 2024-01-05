@@ -7,6 +7,7 @@ in the scene, meaning that it can occlude other meshes and be occluded by other 
 [Online Demo](https://codesandbox.io/p/sandbox/babylon-html-mesh-demo-862gh5)
 
 [BabylonJS Playground](https://www.babylonjs-playground.com/#Y2LIXI#15).
+
 [BabylonJS HtmlBox Playground](https://playground.babylonjs.com/#B17TC7#44).  
 
 The following uses cases are supported by the HtmlMesh

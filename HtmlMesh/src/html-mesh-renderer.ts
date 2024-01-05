@@ -9,7 +9,7 @@ import { SubMesh } from "@babylonjs/core/Meshes/subMesh";
 import { RenderingGroup } from "@babylonjs/core/Rendering/renderingGroup";
 
 import { getCanvasRectAsync } from "./util";
-import { Observer } from "@babylonjs/core";
+import { Logger, Observer } from "@babylonjs/core";
 
 const _positionUpdateFailMessage =
     "Failed to update html mesh renderer position due to failure to get canvas rect.  HtmlMesh instances may not render correctly";
@@ -494,7 +494,7 @@ export class HtmlMeshRenderer {
         // Check for a dpr change
         if (window.devicePixelRatio !== this._lastDevicePixelRatio) {
             this._lastDevicePixelRatio = window.devicePixelRatio;
-            console.log(
+            Logger.Log(
                 "In render - dpr changed: ",
                 this._lastDevicePixelRatio
             );
@@ -700,7 +700,7 @@ export class HtmlMeshRenderer {
 
         // canvas rect may be null if layout not complete
         if (!canvasRect) {
-            console.warn(_positionUpdateFailMessage);
+            Logger.Warn(_positionUpdateFailMessage);
             return;
         }
         const scrollTop = window.scrollY;
