@@ -4,6 +4,7 @@ import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Matrix } from "@babylonjs/core/Maths/math";
 import { PointerEventsCaptureBehavior } from "./pointer-events-capture-behavior";
 import { Scene } from "@babylonjs/core";
+import { Logger } from "@babylonjs/core/Misc/logger";
 
 /**
  * This class represents HTML content that we want to render as though it is part of the scene.  The HTML content is actually
@@ -44,7 +45,7 @@ export class HtmlMesh extends Mesh {
 
         // Requires a browser to work.  Bail if we aren't running in a browser
         if (typeof document === "undefined") {
-            console.warn(
+            Logger.Warn(
                 `Creating an instance of an HtmlMesh with id ${id} outside of a browser.  The mesh will not be visible.`
             );
             return;
@@ -96,6 +97,10 @@ export class HtmlMesh extends Mesh {
         super.dispose();
         document.querySelector(`#${this.id}`)?.remove();
         this._element = undefined;
+        if (this._pointerEventCaptureBehavior) {
+            this._pointerEventCaptureBehavior.dispose();
+            this._pointerEventCaptureBehavior = null;
+        }
     }
 
     /**

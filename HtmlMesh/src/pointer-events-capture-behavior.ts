@@ -1,18 +1,14 @@
 import { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 import { Behavior } from "@babylonjs/core/Behaviors/behavior";
 import { Scene } from "@babylonjs/core/scene";
+import { Logger } from "@babylonjs/core/Misc/logger";
 import {
     requestCapture,
     requestRelease,
     releaseCurrent,
     getCapturingId,
 } from "./pointer-events-capture";
-
-// Module level variable used to track the current picked mesh
-let _currentPickedMeshId: number | null = null;
-
-// Module level variable for holding the canvas location and dimensions on the screen
-let _canvasRect: DOMRect | null = null;
+import { getCanvasRectOrNull } from "./util";
 
 // Module level variable for holding the current scene
 let _scene: Scene | null = null;
@@ -37,14 +33,21 @@ const startCaptureOnEnter = (scene: Scene) => {
     if (captureOnEnterCount === 0) {
         document.addEventListener("pointermove", onPointerMove);
         _scene = _scene ?? scene;
-        let rect = _scene
-            .getEngine()
-            .getRenderingCanvasClientRect() as ClientRect;
-        _canvasRect =
-            _canvasRect ??
-            new DOMRect(rect.left, rect.top, rect.width, rect.height);
+        Logger.Log(
+            "PointerEventsCaptureBehavior: Starting observation of pointer move events."
+        );
+        _scene.onDisposeObservable.add(doStopCaptureOnEnter);
     }
     captureOnEnterCount++;
+};
+
+const doStopCaptureOnEnter = () => {
+    document.removeEventListener("pointermove", onPointerMove);
+    _scene = null;
+    Logger.Log(
+        "PointerEventsCaptureBehavior: Stopping observation of pointer move events."
+    );
+    captureOnEnterCount = 0;
 };
 
 const stopCaptureOnEnter = () => {
@@ -52,58 +55,70 @@ const stopCaptureOnEnter = () => {
     if (typeof document === "undefined") {
         return;
     }
-    captureOnEnterCount--;
-    if (captureOnEnterCount < 0) {
-        captureOnEnterCount = 0;
+
+    // If we are not observing pointer movement, do nothing
+    if (!_scene) {
+        return;
     }
-    if (captureOnEnterCount === 0) {
-        document.removeEventListener("pointermove", onPointerMove);
-        _scene = null;
-        _canvasRect = null;
+
+    captureOnEnterCount--;
+    if (captureOnEnterCount <= 0) {
+        doStopCaptureOnEnter();
     }
 };
 
 // Module level function used to determine if an entered mesh should capture pointer events
 const onPointerMove = (evt: PointerEvent) => {
-    // If the observed event is pointer movement with no buttons held
-    if (evt.buttons === 0) {
-        if (!_canvasRect || !_scene) {
-            return;
-        }
+    if (!_scene) {
+        return;
+    }
 
-        const pointerScreenX = evt.clientX - _canvasRect.left;
-        const pointerScreenY = evt.clientY - _canvasRect.top;
+    const canvasRect = getCanvasRectOrNull(_scene);
+    if (!canvasRect) {
+        return;
+    }
 
-        const pickResult = _scene.pick(pointerScreenX, pointerScreenY);
+    // get the picked mesh, if any
+    const pointerScreenX = evt.clientX - canvasRect.left;
+    const pointerScreenY = evt.clientY - canvasRect.top;
 
-        let pickedMesh: AbstractMesh | null;
-        if (pickResult.hit) {
-            pickedMesh = pickResult.pickedMesh;
-        } else {
-            pickedMesh = null;
-        }
+    let pointerCaptureBehavior: PointerEventsCaptureBehavior | undefined;
+    const pickResult = _scene.pick(pointerScreenX, pointerScreenY, (mesh) => {
+        // If the mesh has an instance of PointerEventsCaptureBehavior attached to it,
+        // then we want to pick it
+        return (
+            (pointerCaptureBehavior = meshToBehaviorMap.get(mesh)) !== undefined
+        );
+    });
 
-        if (
-            !pickedMesh ||
-            pickedMesh.uniqueId === _currentPickedMeshId ||
-            pickedMesh.uniqueId === parseInt(getCapturingId() || "")
-        ) {
-            return;
-        }
+    let pickedMesh: AbstractMesh | null;
+    if (pickResult.hit) {
+        pickedMesh = pickResult.pickedMesh;
+    } else {
+        pickedMesh = null;
+    }
 
-        let pointerCaptureBehavior: PointerEventsCaptureBehavior | undefined;
-        if (
-            pickedMesh &&
-            (pointerCaptureBehavior = meshToBehaviorMap.get(pickedMesh)) && // Assign and test so we can eliminate the need for a separate line to get the behavior
-            pickedMesh.uniqueId !== parseInt(getCapturingId() || "")
-        ) {
-            releaseCurrent(); // Request release of current pointer events owner
-            pointerCaptureBehavior.capturePointerEvents();
-        } else if (pickedMesh) {
-            releaseCurrent(); // Request release of current pointer events owner
-        }
+    let capturingIdAsInt = parseInt(getCapturingId() || "");
 
-        _currentPickedMeshId = pickedMesh.uniqueId;
+    // if the picked mesh is the current capturing mesh, do nothing
+    if (pickedMesh && pickedMesh.uniqueId === capturingIdAsInt) {
+        return;
+    }
+
+    // If there is a capturing mesh and it is not the current picked mesh, or no
+    // mesh is picked, release the capturing mesh
+    if (
+        capturingIdAsInt &&
+        (!pickedMesh || pickedMesh.uniqueId !== capturingIdAsInt)
+    ) {
+        releaseCurrent();
+    }
+
+    // If there is a picked mesh and it is not the current capturing mesh, capture 
+    // the pointer events.  Note that the current capturing mesh has already been 
+    // released above
+    if (pickedMesh) {
+        pointerCaptureBehavior!.capturePointerEvents();
     }
 };
 
@@ -128,7 +143,7 @@ export class PointerEventsCaptureBehavior implements Behavior<AbstractMesh> {
 
         // Warn if we are not in a browser
         if (typeof document === "undefined") {
-            console.warn(
+            Logger.Warn(
                 `Creating an instance of PointerEventsCaptureBehavior outside of a browser.  The behavior will not work.`
             );
         }
@@ -171,6 +186,10 @@ export class PointerEventsCaptureBehavior implements Behavior<AbstractMesh> {
             stopCaptureOnEnter();
         }
         this.attachedMesh = null;
+    }
+
+    dispose() {
+        this.detach();
     }
 
     // Release pointer events
