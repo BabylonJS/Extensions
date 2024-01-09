@@ -18,11 +18,11 @@ let scene;
 const createScene = () => {
     const canvas = document.querySelector('canvas');
     engine = new Engine(canvas, true);
-    
+
     // This creates a basic Babylon Scene object (non-mesh)
     scene = new Scene(engine);
     scene.clearColor = new Color4(0,0,0,0);
-    
+
     scene.createDefaultCameraOrLight(true, true, true);
     scene.activeCamera.radius = 20;
 
@@ -54,14 +54,14 @@ const createScene = () => {
     box.actionManager = new ActionManager(scene);
     box.actionManager.registerAction(new ExecuteCodeAction(
             ActionManager.OnPointerOverTrigger, (ev) => {
-                console.log("pointer over box");    
+                console.log("pointer over box");
             }));
-    
+
     // Add action manager to disc so it can receive pointer events
     disc.actionManager = new ActionManager(scene);
     disc.actionManager.registerAction(new ExecuteCodeAction(
             ActionManager.OnPointerOverTrigger, (ev) => {
-                console.log("pointer over disc");    
+                console.log("pointer over disc");
             }));
 
     // Create the HtmlMeshRenderer
@@ -75,7 +75,7 @@ const createScene = () => {
     const htmlMeshDiv = new HtmlMesh(scene, "html-mesh-div");
     const div = document.createElement('div');
     div.innerHTML = `
-        <form style="padding: 10px; transform: scale(4); transform-origin: 0 0;">
+        <form style="padding: 10px; transform-origin: 0 0;">
             <label for="name">Name:</label>
             <input type="text" id="name" name="name" required><br><br>
             
@@ -100,14 +100,33 @@ const createScene = () => {
     div.style.width = '480px';
     div.style.height = '360px';
     // Style the form
-    
+
     htmlMeshDiv.setContent(div, 4, 3);
     htmlMeshDiv.position.x = -3;
     htmlMeshDiv.position.y = 2;
     htmlMeshDiv.rotation = new Vector3(Math.PI / 4, Math.PI / 4, Math.PI / 4);
 
 
-    // Shows how this can be used to include a PDF in your scene.  Note this is 
+    // Shows how to create a simi transparent html on the canvas
+
+    const topTransparentMesh = new HtmlMesh(scene, "top-transparent-html-mesh-div", { top: true });
+    topTransparentMesh.billboardMode = 7
+    const topTransparentMeshDiv = document.createElement('div');
+    topTransparentMeshDiv.innerHTML = `Top Transparent`;
+    topTransparentMeshDiv.style.backgroundColor = 'rgba(0,255,0,0.49)';
+    topTransparentMeshDiv.style.width = '120px';
+    topTransparentMeshDiv.style.height = '90px';
+    topTransparentMeshDiv.style.display = 'flex';
+    topTransparentMeshDiv.style.alignItems = 'center';
+    topTransparentMeshDiv.style.justifyContent = 'center';
+    // Style the form
+
+    topTransparentMesh.setContent(topTransparentMeshDiv, 4, 3);
+    topTransparentMesh.position.x = 0;
+    topTransparentMesh.position.y = 2;
+
+
+    // Shows how this can be used to include a PDF in your scene.  Note this is
     // conceptual only.  Displaying a PDF like this works, but any links in the
     // PDF will navigate the current tab, which is probably not what you want.
     // There are other solutions out there such as PDF.js that may give you more
@@ -126,9 +145,9 @@ const createScene = () => {
 
     // Shows how this can be used to include a website in your scene
     // Becuase the rotation on the mesh introduces a significant difference
-    // between the world min and max z values, which result in the 
-    // element being too large, we wrap the iframe in a div with padding and 
-    // make the iframe a percentage of the div size.  This ensures that the 
+    // between the world min and max z values, which result in the
+    // element being too large, we wrap the iframe in a div with padding and
+    // make the iframe a percentage of the div size.  This ensures that the
     // entire iframe is accessible.
     const outerDivSite = document.createElement('div');
     outerDivSite.style.width = '480px';
@@ -146,7 +165,7 @@ const createScene = () => {
     htmlMeshSite.position.x = -3;
     htmlMeshSite.position.y = -2;
     htmlMeshSite.rotation.y = Math.PI / 4;
-    
+
     // Shows how this can be used to include a YouTube video in your scene
     const videoId = 'zELYw2qEUjI';
     const videoUrl = [ 'https://www.youtube.com/embed/', videoId, '?rel=0&enablejsapi=1&disablekb=1&controls=0&fs=0&modestbranding=1' ].join( '' );
