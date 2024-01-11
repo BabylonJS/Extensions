@@ -148,6 +148,7 @@ interface NavMesh {
     [Value] Vec3 moveAlong([Const, Ref] Vec3 position, [Const, Ref] Vec3 destination);
     dtNavMesh getNavMesh();
     [Value] NavPath computePath([Const, Ref] Vec3 start, [Const, Ref] Vec3 end);
+    [Value] NavPath computePathSmooth([Const, Ref] Vec3 start, [Const, Ref] Vec3 end);
     void setDefaultQueryExtent([Const, Ref] Vec3 extent);
     [Value] Vec3 getDefaultQueryExtent();
 

@@ -81,7 +81,7 @@ set(EMCC_ARGS
   -O3
   -s ALLOW_MEMORY_GROWTH=${ALLOW_MEMORY_GROWTH}
   -s ALLOW_TABLE_GROWTH=1
-  -s EXPORTED_FUNCTIONS=["_malloc","_free"]
+  -s EXPORTED_FUNCTIONS=["_malloc","_free","_getRandomSeed","_setRandomSeed"]
   -s EXPORTED_RUNTIME_METHODS=["UTF8ToString"]
   -s EXTRA_EXPORTED_RUNTIME_METHODS=["addFunction"]
   -s EXPORT_NAME="Recast"
