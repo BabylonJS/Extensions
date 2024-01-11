@@ -17,11 +17,16 @@ import { Logger } from "@babylonjs/core/Misc/logger";
 export class HtmlMesh extends Mesh {
     isHtmlMesh = true;
 
+    isCanvasOverlay = false;
+
     _requiresUpdate = true;
+
 
     _element?: HTMLElement;
     _width?: number;
     _height?: number;
+
+    _sizingElement?: HTMLElement;
 
     _inverseScaleMatrix: Matrix | null = null;
 
@@ -34,12 +39,13 @@ export class HtmlMesh extends Mesh {
      * @param {string} id The id of the mesh.  Will be used as the id of the HTML element as well.
      * @param options object with optional parameters
      * @param {boolean} options.captureOnPointerEnter If true, then the mesh will capture pointer events when the pointer enters the mesh.  If false, then the mesh will capture pointer events when the pointer is over the mesh.  Default is true.
+     * @param {boolean} options.isCanvasOverlay If true, the mesh would always appear on top of everything, Can achieve semi transparent effects, etc
      * @returns
      */
     constructor(
-        scene: Scene,
-        id: string,
-        { captureOnPointerEnter = true } = {}
+      scene: Scene,
+      id: string,
+      { captureOnPointerEnter = true, isCanvasOverlay = false } = {}
     ) {
         super(id, scene);
 
@@ -51,8 +57,11 @@ export class HtmlMesh extends Mesh {
             return;
         }
 
+        this.isCanvasOverlay = isCanvasOverlay;
         this.createMask();
         this._element = this.createElement();
+        this._sizingElement = this.createSizingElement();
+        this._element?.appendChild(this._sizingElement!);
 
         // Set disabled by default, so this doesn't show up or get picked until there is some content to show
         this.setEnabled(false);
@@ -112,10 +121,10 @@ export class HtmlMesh extends Mesh {
      * @param {number} height The height of the mesh in Babylon units
      */
     setContent(element: HTMLElement, width: number, height: number) {
-        if (!this._element) {
+        if (!this._element || !this._sizingElement) {
             return;
         }
-        this._element.innerHTML = "";
+        this._sizingElement.innerHTML = "";
 
         this._width = width;
         this._height = height;
@@ -126,7 +135,7 @@ export class HtmlMesh extends Mesh {
         if (!element) {
             this.setEnabled(false);
         } else {
-            this._element!.appendChild(element);
+            this._sizingElement!.appendChild(element);
 
             this.updateScaleIfNecessary();
 
@@ -156,13 +165,20 @@ export class HtmlMesh extends Mesh {
      * @param {number} height
      */
     setContentSizePx(width: number, height: number) {
-        if (!this._element) {
+        if (!this._element || !this._sizingElement) {
             return;
         }
-        const childElement = this._element!.firstElementChild as HTMLElement;
-        if (childElement) {
-            childElement.style.width = `${width}px`;
-            childElement.style.height = `${height}px`;
+        const contentElement = this._sizingElement.firstElementChild! as HTMLElement;
+        contentElement.style.transform = "none";
+        // const childElement = contentElement;
+        const [childWidth, childHeight] = [contentElement.offsetWidth, contentElement.offsetHeight];
+        if (contentElement) {
+            this._sizingElement.style.width = `${width}px`;
+            this._sizingElement.style.height = `${height}px`;
+            const transform = `scale(${Math.min(width / childWidth, height / childHeight)})`;
+            // const transform = `scale(${width / childWidth}, ${height / childHeight})`
+            console.log(transform);
+            contentElement.style.transform = transform;
         }
     }
 
@@ -204,6 +220,12 @@ export class HtmlMesh extends Mesh {
         depthMask.backFaceCulling = false;
         depthMask.disableColorWrite = true;
         depthMask.disableLighting = true;
+        if (this.isCanvasOverlay) {
+            /*
+            * if top, need to hide mask mesh
+            * */
+            depthMask.alpha = 0;
+        }
 
         this.material = depthMask;
 
@@ -254,12 +276,27 @@ export class HtmlMesh extends Mesh {
         }
         const div = document.createElement("div");
         div.id = this.id;
-        div.style.backgroundColor = "#000";
+        div.style.backgroundColor = this.isCanvasOverlay ? "transparent" : "#000";
         div.style.zIndex = "1";
         div.style.position = "absolute";
         div.style.pointerEvents = "auto";
         div.style.backfaceVisibility = "hidden";
 
         return div;
+    }
+
+    protected createSizingElement () {
+        // Requires a browser to work.  Bail if we aren't running in a browser
+        if (typeof document === "undefined") {
+            return;
+        }
+        const sizeElement = document.createElement("div");
+        sizeElement.style.display = "flex";
+        sizeElement.style.flexDirection = "column";
+        sizeElement.style.alignItems = "center";
+        sizeElement.style.justifyContent = "center";
+        const contentElement = document.createElement("div");
+        sizeElement.appendChild(contentElement);
+        return sizeElement;
     }
 }
