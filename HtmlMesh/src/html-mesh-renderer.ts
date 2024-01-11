@@ -24,7 +24,7 @@ const cssTranslationScaleFactor = 100;
  */
 type RenderOrderFunction = (subMeshA: SubMesh, subMeshB: SubMesh) => number;
 
-type RenderDomElements = {
+type RenderLayerElements = {
     container: HTMLElement
     domElement: HTMLElement
     cameraElement: HTMLElement
@@ -70,8 +70,8 @@ const renderOrderFunc = (
 export class HtmlMeshRenderer {
     _maskRootNode?: TransformNode;
     _containerId?: string;
-    _insetDomElements?: RenderDomElements | null;
-    _topDomElements?: RenderDomElements | null;
+    _inSceneElements?: RenderLayerElements | null;
+    _overlayElements?: RenderLayerElements | null;
 
     _cache = {
         cameraData: { fov: 0, position: new Vector3(), style: "" },
@@ -125,7 +125,6 @@ export class HtmlMeshRenderer {
      * @param {Scene} scene
      * @param options object containing the following optional properties:
      * @param {string} options.containerId an optional id of the parent element for the elements that will be rendered as `HtmlMesh` instances.
-     * @param {string} options.topContainerZIndex an optional z-index of the parent element for the elements that will be overlaid rendered as `HtmlMesh` instances .
      * @param {RenderOrderFunction} options.defaultOpaqueRenderOrder an optional render order function that conforms to the interface of the `opaqueSortCompareFn` as described in the documentation for [`Scene.setRenderingOrder`](https://doc.babylonjs.com/typedoc/classes/BABYLON.Scene#setRenderingOrder) to be used as the opaque sort compare for meshes that are not an instanceof `HtmlMesh` for group 0.
      * @param {RenderOrderFunction} options.defaultAlphaTestRenderOrder an optional render order function that conforms to the interface of the `alphaTestSortCompareFn` as described in the documentation for [`Scene.setRenderingOrder`](https://doc.babylonjs.com/typedoc/classes/BABYLON.Scene#setRenderingOrder) to be used as the alpha test sort compare for meshes that are not an instanceof `HtmlMesh` for group 0.
      * @param {RenderOrderFunction} options.defaultTransparentRenderOrder an optional render order function that conforms to the interface of the `transparentCompareFn` as described in the documentation for [`Scene.setRenderingOrder`](https://doc.babylonjs.com/typedoc/classes/BABYLON.Scene#setRenderingOrder) to be used as the transparent sort compare for meshes that are not an instanceof `HtmlMesh` for group 0.
@@ -136,14 +135,12 @@ export class HtmlMeshRenderer {
         {
             parentContainerId = null,
             _containerId = "css-container",
-            topContainerZIndex = "10000",
             enableTopRender = true,
             defaultOpaqueRenderOrder = RenderingGroup.PainterSortCompare,
             defaultAlphaTestRenderOrder = RenderingGroup.PainterSortCompare,
             defaultTransparentRenderOrder = RenderingGroup.defaultTransparentSortCompare,
         }: {
             parentContainerId?: string | null;
-            topContainerZIndex?: string;
             _containerId?: string ;
             defaultOpaqueRenderOrder?: RenderOrderFunction;
             defaultAlphaTestRenderOrder?: RenderOrderFunction;
@@ -160,7 +157,6 @@ export class HtmlMeshRenderer {
             scene,
             parentContainerId,
             enableTopRender,
-            topContainerZIndex,
             defaultOpaqueRenderOrder,
             defaultAlphaTestRenderOrder,
             defaultTransparentRenderOrder
@@ -173,18 +169,17 @@ export class HtmlMeshRenderer {
             this._renderObserver = null;
         }
 
-        this._topDomElements?.container.remove();
-        this._topDomElements = null;
+        this._overlayElements?.container.remove();
+        this._overlayElements = null;
 
-        this._insetDomElements?.container.remove();
-        this._insetDomElements = null;
+        this._inSceneElements?.container.remove();
+        this._inSceneElements = null;
     }
 
     protected init(
         scene: Scene,
         parentContainerId: string | null,
         enableTopRender: boolean,
-        topContainerZIndex: string,
         defaultOpaqueRenderOrder: RenderOrderFunction,
         defaultAlphaTestRenderOrder: RenderOrderFunction,
         defaultTransparentRenderOrder: RenderOrderFunction
@@ -204,21 +199,22 @@ export class HtmlMeshRenderer {
         }
 
         // if the container already exists, then remove it
-        const insetContainerId = `${this._containerId}_inset`;
-        this._insetDomElements = this.createDomElements(insetContainerId);
+        const inSceneContainerId = `${this._containerId}_in_scene`;
+        this._inSceneElements = this.createRenderLayerElements(inSceneContainerId);
 
         parentContainer.insertBefore(
-          this._insetDomElements.container,
+          this._inSceneElements.container,
           parentContainer.firstChild
         );
 
         if (enableTopRender) {
-            const topContainerId = `${this._containerId}_top`;
-            this._topDomElements = this.createDomElements(topContainerId);
-            this._topDomElements.container.style.zIndex = topContainerZIndex;
-            this._topDomElements.container.style.pointerEvents = "none";
+            const overlayContainerId = `${this._containerId}_overlay`;
+            this._overlayElements = this.createRenderLayerElements(overlayContainerId);
+            const zIndex = +(scene.getEngine().getRenderingCanvas()!.style.zIndex ?? "0") + 1;
+            this._overlayElements.container.style.zIndex = `${zIndex}`;
+            this._overlayElements.container.style.pointerEvents = "none";
             parentContainer.insertBefore(
-              this._topDomElements.container,
+              this._overlayElements.container,
               parentContainer.firstChild
             );
         }
@@ -300,7 +296,7 @@ export class HtmlMeshRenderer {
         });
     }
 
-    private createDomElements (containerId: string): RenderDomElements {
+    private createRenderLayerElements (containerId: string): RenderLayerElements {
         const existingContainer = document.getElementById(containerId);
         if (existingContainer) {
             existingContainer.remove();
@@ -345,8 +341,8 @@ export class HtmlMeshRenderer {
         this._heightHalf = this._height / 2;
 
         const domElements = [
-            this._insetDomElements!.domElement, this._topDomElements!.domElement,
-            this._insetDomElements!.cameraElement, this._topDomElements!.cameraElement,
+            this._inSceneElements!.domElement, this._overlayElements!.domElement,
+            this._inSceneElements!.cameraElement, this._overlayElements!.cameraElement,
         ];
         domElements.forEach(dom => {
             if (dom) {
@@ -460,7 +456,7 @@ export class HtmlMeshRenderer {
             return;
         }
 
-        const cameraElement = htmlMesh.top ? this._topDomElements?.cameraElement : this._insetDomElements?.cameraElement;
+        const cameraElement = htmlMesh.isCanvasOverlay ? this._overlayElements?.cameraElement : this._inSceneElements?.cameraElement;
 
         // move up to updateBaseScaleFactor, because updateBaseScaleFactor need to cal element size
         if (htmlMesh.element.parentNode !== cameraElement) {
@@ -572,14 +568,14 @@ export class HtmlMeshRenderer {
 
         if (this._cache.cameraData.fov !== fov) {
             if (camera.mode == Camera.PERSPECTIVE_CAMERA) {
-                [this._topDomElements?.domElement, this._insetDomElements?.domElement].forEach(el => {
+                [this._overlayElements?.domElement, this._inSceneElements?.domElement].forEach(el => {
                     if (el) {
                         el.style.webkitPerspective = fov + "px";
                         el.style.perspective = fov + "px";
                     }
                 });
             } else {
-                [this._topDomElements?.domElement, this._insetDomElements?.domElement].forEach(el => {
+                [this._overlayElements?.domElement, this._inSceneElements?.domElement].forEach(el => {
                     if (el) {
                         el.style.webkitPerspective = "";
                         el.style.perspective = "";
@@ -627,7 +623,7 @@ export class HtmlMeshRenderer {
             "px)";
 
         if (this._cache.cameraData.style !== style) {
-            [this._insetDomElements?.cameraElement, this._topDomElements?.cameraElement].forEach(el => {
+            [this._inSceneElements?.cameraElement, this._overlayElements?.cameraElement].forEach(el => {
                 if (el) {
                     el.style.webkitTransform = style;
                     el.style.transform = style;
@@ -780,7 +776,7 @@ export class HtmlMeshRenderer {
             this._previousCanvasDocumentPosition.top = canvasDocumentTop;
             this._previousCanvasDocumentPosition.left = canvasDocumentLeft;
 
-            [this._insetDomElements?.container, this._topDomElements?.container].forEach(container => {
+            [this._inSceneElements?.container, this._overlayElements?.container].forEach(container => {
                 if (!container) {
                     return;
                 }

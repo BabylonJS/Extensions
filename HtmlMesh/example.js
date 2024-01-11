@@ -1,14 +1,14 @@
-import { Scene } from '@babylonjs/core/scene';
-import { Engine } from '@babylonjs/core/Engines/engine';
-import { MeshBuilder } from '@babylonjs/core/Meshes/meshBuilder';
-import { ActionManager } from '@babylonjs/core/Actions/actionManager';
-import { ExecuteCodeAction } from '@babylonjs/core/Actions/directActions';
-import { Color4 } from '@babylonjs/core/Maths/math.color';
-import { Vector3 } from '@babylonjs/core/Maths/math.vector';
-import '@babylonjs/core/Helpers/sceneHelpers';
+import { Scene } from "@babylonjs/core/scene";
+import { Engine } from "@babylonjs/core/Engines/engine";
+import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
+import { ActionManager } from "@babylonjs/core/Actions/actionManager";
+import { ExecuteCodeAction } from "@babylonjs/core/Actions/directActions";
+import { Color4 } from "@babylonjs/core/Maths/math.color";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import "@babylonjs/core/Helpers/sceneHelpers";
 
-import { HtmlMeshRenderer } from './src/html-mesh-renderer';
-import { HtmlMesh } from './src/html-mesh';
+import { HtmlMeshRenderer } from "./src/html-mesh-renderer";
+import { HtmlMesh } from "./src/html-mesh";
 
 const debug = true;
 
@@ -16,7 +16,7 @@ let engine;
 let scene;
 
 const createScene = () => {
-    const canvas = document.querySelector('canvas');
+    const canvas = document.querySelector("canvas");
     engine = new Engine(canvas, true);
 
     // This creates a basic Babylon Scene object (non-mesh)
@@ -34,10 +34,10 @@ const createScene = () => {
     // A disc we will use to test masking pointer events.  Note this disc
     // will only be pickable if the pointer enters it without passing
     // over the html mesh, or if it is masked.
-    var disc = MeshBuilder.CreateDisc("disc", {radius: 0.5})
+    var disc = MeshBuilder.CreateDisc("disc", {radius: 0.5});
 
     bg.scaling.x = 12;
-    bg.scaling.y = 16
+    bg.scaling.y = 16;
     bg.position.z = 3;
 
     sphere.position.x = 1.5;
@@ -73,7 +73,7 @@ const createScene = () => {
     // UI control, albeit with the restriction that such UIs would
     // not display in native mobile apps or XR applications.
     const htmlMeshDiv = new HtmlMesh(scene, "html-mesh-div");
-    const div = document.createElement('div');
+    const div = document.createElement("div");
     div.innerHTML = `
         <form style="padding: 10px; transform-origin: 0 0;">
             <label for="name">Name:</label>
@@ -96,9 +96,9 @@ const createScene = () => {
             <label for="hobby3">Sports</label><br><br>
         </form>
     `;
-    div.style.backgroundColor = 'white';
-    div.style.width = '480px';
-    div.style.height = '360px';
+    div.style.backgroundColor = "white";
+    div.style.width = "480px";
+    div.style.height = "360px";
     // Style the form
 
     htmlMeshDiv.setContent(div, 4, 3);
@@ -109,16 +109,16 @@ const createScene = () => {
 
     // Shows how to create a simi transparent html on the canvas
 
-    const topTransparentMesh = new HtmlMesh(scene, "top-transparent-html-mesh-div", { top: true });
-    topTransparentMesh.billboardMode = 7
-    const topTransparentMeshDiv = document.createElement('div');
-    topTransparentMeshDiv.innerHTML = `Top Transparent`;
-    topTransparentMeshDiv.style.backgroundColor = 'rgba(0,255,0,0.49)';
-    topTransparentMeshDiv.style.width = '120px';
-    topTransparentMeshDiv.style.height = '90px';
-    topTransparentMeshDiv.style.display = 'flex';
-    topTransparentMeshDiv.style.alignItems = 'center';
-    topTransparentMeshDiv.style.justifyContent = 'center';
+    const topTransparentMesh = new HtmlMesh(scene, "top-transparent-html-mesh-div", { isCanvasOverlay: true });
+    topTransparentMesh.billboardMode = 7;
+    const topTransparentMeshDiv = document.createElement("div");
+    topTransparentMeshDiv.innerHTML = "Top Transparent";
+    topTransparentMeshDiv.style.backgroundColor = "rgba(0,255,0,0.49)";
+    topTransparentMeshDiv.style.width = "120px";
+    topTransparentMeshDiv.style.height = "90px";
+    topTransparentMeshDiv.style.display = "flex";
+    topTransparentMeshDiv.style.alignItems = "center";
+    topTransparentMeshDiv.style.justifyContent = "center";
     // Style the form
 
     topTransparentMesh.setContent(topTransparentMeshDiv, 4, 3);
@@ -132,12 +132,12 @@ const createScene = () => {
     // There are other solutions out there such as PDF.js that may give you more
     // control, but ultimately proper display of PDFs is not within the scope of
     // this project.
-    const pdfUrl = 'https://cdn.glitch.com/3da1885b-3463-4252-8ded-723332b5de34%2FNew_Horizons.pdf#zoom=200?v=1599831745689'
+    const pdfUrl = "https://cdn.glitch.com/3da1885b-3463-4252-8ded-723332b5de34%2FNew_Horizons.pdf#zoom=200?v=1599831745689";
     const htmlMeshPdf = new HtmlMesh(scene, "html-mesh-pdf");
-    const iframePdf = document.createElement('iframe');
+    const iframePdf = document.createElement("iframe");
     iframePdf.src = pdfUrl;
-    iframePdf.width = '480px';
-    iframePdf.height = '360px';
+    iframePdf.width = "480px";
+    iframePdf.height = "360px";
     htmlMeshPdf.setContent(iframePdf, 4, 3);
     htmlMeshPdf.position.x = 3;
     htmlMeshPdf.position.y = 2;
@@ -149,17 +149,17 @@ const createScene = () => {
     // element being too large, we wrap the iframe in a div with padding and
     // make the iframe a percentage of the div size.  This ensures that the
     // entire iframe is accessible.
-    const outerDivSite = document.createElement('div');
-    outerDivSite.style.width = '480px';
-    outerDivSite.style.height = '360px';
-    outerDivSite.style.backgroundColor = 'black';
-    outerDivSite.style.padding = '10px';
-    const siteUrl = 'https://www.babylonjs.com/';
+    const outerDivSite = document.createElement("div");
+    outerDivSite.style.width = "480px";
+    outerDivSite.style.height = "360px";
+    outerDivSite.style.backgroundColor = "black";
+    outerDivSite.style.padding = "10px";
+    const siteUrl = "https://www.babylonjs.com/";
     const htmlMeshSite = new HtmlMesh(scene, "html-mesh-site");
-    const iframeSite = document.createElement('iframe');
+    const iframeSite = document.createElement("iframe");
     iframeSite.src = siteUrl;
-    iframeSite.width = '98.5%';
-    iframeSite.height = '99%';
+    iframeSite.width = "98.5%";
+    iframeSite.height = "99%";
     outerDivSite.appendChild(iframeSite);
     htmlMeshSite.setContent(outerDivSite, 4, 3);
     htmlMeshSite.position.x = -3;
@@ -167,13 +167,13 @@ const createScene = () => {
     htmlMeshSite.rotation.y = Math.PI / 4;
 
     // Shows how this can be used to include a YouTube video in your scene
-    const videoId = 'zELYw2qEUjI';
-    const videoUrl = [ 'https://www.youtube.com/embed/', videoId, '?rel=0&enablejsapi=1&disablekb=1&controls=0&fs=0&modestbranding=1' ].join( '' );
+    const videoId = "zELYw2qEUjI";
+    const videoUrl = [ "https://www.youtube.com/embed/", videoId, "?rel=0&enablejsapi=1&disablekb=1&controls=0&fs=0&modestbranding=1" ].join( "" );
     const htmlMeshVideo = new HtmlMesh(scene, "html-mesh-video");
-    const iframeVideo = document.createElement('iframe');
+    const iframeVideo = document.createElement("iframe");
     iframeVideo.src = videoUrl;
-    iframeVideo.width = '480px';
-    iframeVideo.height = '360px';
+    iframeVideo.width = "480px";
+    iframeVideo.height = "360px";
     htmlMeshVideo.setContent(iframeVideo, 4, 3);
     htmlMeshVideo.position.x = 3;
     htmlMeshVideo.position.y = -2;

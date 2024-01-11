@@ -118,12 +118,7 @@ const onPointerMove = (evt: PointerEvent) => {
     // the pointer events.  Note that the current capturing mesh has already been
     // released above
     if (pickedMesh) {
-        /*
-        * pointerCaptureBehavior in my project is always undefined, then I modify it like bellow:
-        * (pointerCaptureBehavior ?? meshToBehaviorMap.get(pickedMesh))?.capturePointerEvents()
-        * then it works well
-        * */
-        (pointerCaptureBehavior ?? meshToBehaviorMap.get(pickedMesh))?.capturePointerEvents();
+        pointerCaptureBehavior!.capturePointerEvents();
     }
 };
 
