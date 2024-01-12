@@ -106,26 +106,6 @@ const createScene = () => {
     htmlMeshDiv.position.y = 2;
     htmlMeshDiv.rotation = new Vector3(Math.PI / 4, Math.PI / 4, Math.PI / 4);
 
-
-    // Shows how to create a simi transparent html on the canvas
-
-    const topTransparentMesh = new HtmlMesh(scene, "top-transparent-html-mesh-div", { isCanvasOverlay: true });
-    topTransparentMesh.billboardMode = 7;
-    const topTransparentMeshDiv = document.createElement("div");
-    topTransparentMeshDiv.innerHTML = "Top Transparent";
-    topTransparentMeshDiv.style.backgroundColor = "rgba(0,255,0,0.49)";
-    topTransparentMeshDiv.style.width = "120px";
-    topTransparentMeshDiv.style.height = "90px";
-    topTransparentMeshDiv.style.display = "flex";
-    topTransparentMeshDiv.style.alignItems = "center";
-    topTransparentMeshDiv.style.justifyContent = "center";
-    // Style the form
-
-    topTransparentMesh.setContent(topTransparentMeshDiv, 4, 3);
-    topTransparentMesh.position.x = 0;
-    topTransparentMesh.position.y = 2;
-
-
     // Shows how this can be used to include a PDF in your scene.  Note this is
     // conceptual only.  Displaying a PDF like this works, but any links in the
     // PDF will navigate the current tab, which is probably not what you want.
@@ -178,6 +158,25 @@ const createScene = () => {
     htmlMeshVideo.position.x = 3;
     htmlMeshVideo.position.y = -2;
     htmlMeshVideo.rotation.x = Math.PI / 4;
+
+    // Shows how to create an HTML Overlay
+    const overlayMesh = new HtmlMesh(scene, "html-overlay-mesh", { isCanvasOverlay: true });
+    const overlayMeshDiv = document.createElement('div');
+    overlayMeshDiv.innerHTML = `<p>This is an overlay. It is positioned in front of the canvas This allows it to have transparency and to be non-rectangular, but it will always show over any other content in the scene</p>`;
+    overlayMeshDiv.style.backgroundColor = 'rgba(0,255,0,0.49)';
+    overlayMeshDiv.style.width = '120px';
+    overlayMeshDiv.style.height = '90px';
+    overlayMeshDiv.style.display = 'flex';
+    overlayMeshDiv.style.alignItems = 'center';
+    overlayMeshDiv.style.justifyContent = 'center';
+    overlayMeshDiv.style.borderRadius = '20px';
+    overlayMeshDiv.style.fontSize = 'xx-small';
+    overlayMeshDiv.style.padding = '10px';
+    // Style the form
+
+    overlayMesh.setContent(overlayMeshDiv, 4, 3);
+    overlayMesh.position.x = 0;
+    overlayMesh.position.y = 0;
 
     if (debug) {
         // Log the scene to the console for debugging

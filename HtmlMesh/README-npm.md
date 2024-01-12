@@ -6,7 +6,7 @@ in the scene, meaning that it can occlude other meshes and be occluded by other 
 
 [Online Demo](https://codesandbox.io/p/sandbox/babylon-html-mesh-demo-862gh5)
 
-[BabylonJS Playground](https://www.babylonjs-playground.com/#Y2LIXI#15).
+[BabylonJS Playground](https://www.babylonjs-playground.com/#Y2LIXI#38).
 
 [BabylonJS HtmlBox Playground](https://playground.babylonjs.com/#B17TC7#44).  
 
@@ -20,6 +20,8 @@ Note that the use of HtmlMesh requires that the experience be accessed through a
 current form, this will not work in native apps or in XR.  If constructed outside of a browser context, the
 HtmlMesh instances will not have any geometry and will be disabled.  In the future, it might make sense to 
 have them appear with placeholder content of perhaps even an option to view the raw HTML in a popup UI.
+
+HtmlMesh instances by default are "in scene" meaning that they can be occluded by objects in scene and may occlude objects in scene when they are between the camera and the object.  In scene HtmlMesh instances require that the scene clear color is transparent, and they must be rectangular.  HttmlMesh instances can also be created as "overlays".  In this case, they render above the scene, can be semi-transparent, and can be non-rectangular.  However, overlays will render above all scene content, even content that is between the mesh and the camera.  Overlays are a good choice when you want an HTML overlay to be attached to an object in the scene, as it eliminates the need to handle the projection and transforming of the HTML element yourself.
 
 By default the HtmlMesh will capture pointer events as soon as the pointer enters.  This is to facilitate the user's ability to interact with the site content without requiring an extra click or some other gesture.  Note that pointer capture won't occur when a camera zoom causes the pointer to be over the mesh.  This is to allow zooming in and out of the scene without the mesh capturing the pointer and preventing zoom as soon as the pointer enters.  This behavior can be disabled as described in the [pointer capture](#pointer-capture) section below, in which case you will need to provide a mechanism to trigger poiitner capture and release in your code.
 
@@ -41,6 +43,21 @@ The first step is to create an instance of `HtmlMeshRenderer`.  Pass this the sc
 Next, create the DOM element for your content.  This can be any HTML element though most of the time, it should either be a `div` for DOM content in the same app, or an `iframe` for external dom content.  You should not add this element to your document; `HtmlMesh` will do this for you.  Set any attribute and style values that you want; however, be advised that the width and height styles will be replaced by the `HtmlMesh`.  
 
 One thing to be aware of is that the way the scale is determined can sometimes result in the elment being larger than the mesh if the mesh has a substantal difference in the world min and max z values.  If this is the case, you may want to wrap your element in an outer div that is a bit larger with a background color.  This will ensure that any gaps between the mesh and the element are filled with the background color and the user can access the entire portion of the element that needs to be accessible.  A future update may add suport for this to `setContent`. 
+
+Create your HtmlMesh instance specifying the id, and an and optionally an options object containing:
+* `captureOnPointerEnter` - Specifies if the HtmlMesh should capture pointer events whenever the pointer is over the mesh.  Defauts to true.  if false, you wil need to manually capture and release pointer events for the 
+HtmlMesh using the `capturePointerEvents` and `releasePointerEvents` methods.
+* `isCanvasOverlay` - Specifies if the mesh is in scene or is an overlay.  In scene meshes:
+    * can occlude and be occluded by other scene content
+    * require that the scene clear color is transparent
+    * must be opaque 
+    * must be rectangular
+
+    In contrast, overlay meshes:
+    * always render in front of other scene content
+    * can be semi-transparent 
+    * can be non-rectangular
+    * are most commonly used to attach HTML content to a mesh in the scene without having to handle projection and transformations yourself
 
 Finally, call `setContent` passing in the element and the mesh width and height in BabylonJS units.  Be advised that any scaling done after `setContent` will not be preserved on the next call to `setContent`.  You should grab any scaling you want preserved and pass the scale values through `setContent`.  See [Scaling `HtmlMesh` Instances](#scaling-htmlmesh-instances) for an expalantion on why this is the case.  You can set attributes and styles after calling `setContent` using a query selector on the id.  The `HtmlMesh` can be positioned, oriented, parented, shown or hidden like any other mesh.  You can even use pointer drag behavior and gizmos to allow users to position and move the mesh, subject to the caveats of scaling below.
 
@@ -151,6 +168,25 @@ const createScene = () => {
     htmlMeshVideo.setContent(iframeVideo, 4, 3);
     htmlMeshVideo.position.x = 3;
     htmlMeshVideo.position.y = -2;
+
+    // Shows how to create an HTML Overlay
+    const overlayMesh = new HtmlMesh(scene, "html-overlay-mesh", { isCanvasOverlay: true });
+    const overlayMeshDiv = document.createElement('div');
+    overlayMeshDiv.innerHTML = `<p>This is an overlay. It is positioned in front of the canvas This allows it to have transparency and to be non-rectangular, but it will always show over any other content in the scene</p>`;
+    overlayMeshDiv.style.backgroundColor = 'rgba(0,255,0,0.49)';
+    overlayMeshDiv.style.width = '120px';
+    overlayMeshDiv.style.height = '90px';
+    overlayMeshDiv.style.display = 'flex';
+    overlayMeshDiv.style.alignItems = 'center';
+    overlayMeshDiv.style.justifyContent = 'center';
+    overlayMeshDiv.style.borderRadius = '20px';
+    overlayMeshDiv.style.fontSize = 'xx-small';
+    overlayMeshDiv.style.padding = '10px';
+    // Style the form
+
+    overlayMesh.setContent(overlayMeshDiv, 4, 3);
+    overlayMesh.position.x = 0;
+    overlayMesh.position.y = 0;
 };
 
 const startRenderLoop = () => {

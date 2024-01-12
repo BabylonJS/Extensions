@@ -17,10 +17,9 @@ import { Logger } from "@babylonjs/core/Misc/logger";
 export class HtmlMesh extends Mesh {
     isHtmlMesh = true;
 
-    isCanvasOverlay = false;
+    _isCanvasOverlay = false;
 
     _requiresUpdate = true;
-
 
     _element?: HTMLElement;
     _width?: number;
@@ -43,9 +42,9 @@ export class HtmlMesh extends Mesh {
      * @returns
      */
     constructor(
-      scene: Scene,
-      id: string,
-      { captureOnPointerEnter = true, isCanvasOverlay = false } = {}
+        scene: Scene,
+        id: string,
+        { captureOnPointerEnter = true, isCanvasOverlay = false } = {}
     ) {
         super(id, scene);
 
@@ -57,7 +56,7 @@ export class HtmlMesh extends Mesh {
             return;
         }
 
-        this.isCanvasOverlay = isCanvasOverlay;
+        this._isCanvasOverlay = isCanvasOverlay;
         this.createMask();
         this._element = this.createElement();
         this._sizingElement = this.createSizingElement();
@@ -168,14 +167,21 @@ export class HtmlMesh extends Mesh {
         if (!this._element || !this._sizingElement) {
             return;
         }
-        const contentElement = this._sizingElement.firstElementChild! as HTMLElement;
+        const contentElement = this._sizingElement
+            .firstElementChild! as HTMLElement;
         contentElement.style.transform = "none";
         // const childElement = contentElement;
-        const [childWidth, childHeight] = [contentElement.offsetWidth, contentElement.offsetHeight];
+        const [childWidth, childHeight] = [
+            contentElement.offsetWidth,
+            contentElement.offsetHeight,
+        ];
         if (contentElement) {
             this._sizingElement.style.width = `${width}px`;
             this._sizingElement.style.height = `${height}px`;
-            const transform = `scale(${Math.min(width / childWidth, height / childHeight)})`;
+            const transform = `scale(${Math.min(
+                width / childWidth,
+                height / childHeight
+            )})`;
             // const transform = `scale(${width / childWidth}, ${height / childHeight})`
             console.log(transform);
             contentElement.style.transform = transform;
@@ -220,10 +226,10 @@ export class HtmlMesh extends Mesh {
         depthMask.backFaceCulling = false;
         depthMask.disableColorWrite = true;
         depthMask.disableLighting = true;
-        if (this.isCanvasOverlay) {
+        if (this._isCanvasOverlay) {
             /*
-            * if top, need to hide mask mesh
-            * */
+             * if top, need to hide mask mesh
+             * */
             depthMask.alpha = 0;
         }
 
@@ -276,7 +282,9 @@ export class HtmlMesh extends Mesh {
         }
         const div = document.createElement("div");
         div.id = this.id;
-        div.style.backgroundColor = this.isCanvasOverlay ? "transparent" : "#000";
+        div.style.backgroundColor = this._isCanvasOverlay
+            ? "transparent"
+            : "#000";
         div.style.zIndex = "1";
         div.style.position = "absolute";
         div.style.pointerEvents = "none";
@@ -285,7 +293,7 @@ export class HtmlMesh extends Mesh {
         return div;
     }
 
-    protected createSizingElement () {
+    protected createSizingElement() {
         // Requires a browser to work.  Bail if we aren't running in a browser
         if (typeof document === "undefined") {
             return;
