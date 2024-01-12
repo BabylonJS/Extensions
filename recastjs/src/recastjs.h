@@ -216,6 +216,7 @@ public:
         return m_navMesh; 
     }
     NavPath computePath(const Vec3& start, const Vec3& end) const;
+    NavPath computePathSmooth(const Vec3& start, const Vec3& end) const;
     void setDefaultQueryExtent(const Vec3& extent)
     {
         m_defaultQueryExtent = extent;

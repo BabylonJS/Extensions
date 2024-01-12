@@ -24,6 +24,12 @@ const cssTranslationScaleFactor = 100;
  */
 type RenderOrderFunction = (subMeshA: SubMesh, subMeshB: SubMesh) => number;
 
+type RenderLayerElements = {
+    container: HTMLElement
+    domElement: HTMLElement
+    cameraElement: HTMLElement
+}
+
 // Returns a function that ensures that HtmlMeshes are rendered before all other meshes.
 // Note this will only be applied to group 0.
 // If neither mesh is an HtmlMesh, then the default render order is used
@@ -63,10 +69,10 @@ const renderOrderFunc = (
  */
 export class HtmlMeshRenderer {
     _maskRootNode?: TransformNode;
-    _container: HTMLElement | null = null;
-    _containerId = "css-container";
-    _domElement?: HTMLElement;
-    _cameraElement?: HTMLElement;
+    _containerId?: string;
+    _inSceneElements?: RenderLayerElements | null;
+    _overlayElements?: RenderLayerElements | null;
+
     _cache = {
         cameraData: { fov: 0, position: new Vector3(), style: "" },
         htmlMeshData: new WeakMap<
@@ -128,23 +134,29 @@ export class HtmlMeshRenderer {
         scene: Scene,
         {
             parentContainerId = null,
+            _containerId = "css-container",
+            enableTopRender = true,
             defaultOpaqueRenderOrder = RenderingGroup.PainterSortCompare,
             defaultAlphaTestRenderOrder = RenderingGroup.PainterSortCompare,
             defaultTransparentRenderOrder = RenderingGroup.defaultTransparentSortCompare,
         }: {
             parentContainerId?: string | null;
+            _containerId?: string ;
             defaultOpaqueRenderOrder?: RenderOrderFunction;
             defaultAlphaTestRenderOrder?: RenderOrderFunction;
             defaultTransparentRenderOrder?: RenderOrderFunction;
+            enableTopRender?: boolean
         } = {}
     ) {
         // Requires a browser to work.  Only init if we are in a browser
         if (typeof document === "undefined") {
             return;
         }
+        this._containerId = _containerId;
         this.init(
             scene,
             parentContainerId,
+            enableTopRender,
             defaultOpaqueRenderOrder,
             defaultAlphaTestRenderOrder,
             defaultTransparentRenderOrder
@@ -157,15 +169,17 @@ export class HtmlMeshRenderer {
             this._renderObserver = null;
         }
 
-        if (this._container) {
-            this._container.remove();
-            this._container = null;
-        }
+        this._overlayElements?.container.remove();
+        this._overlayElements = null;
+
+        this._inSceneElements?.container.remove();
+        this._inSceneElements = null;
     }
 
     protected init(
         scene: Scene,
         parentContainerId: string | null,
+        enableTopRender: boolean,
         defaultOpaqueRenderOrder: RenderOrderFunction,
         defaultAlphaTestRenderOrder: RenderOrderFunction,
         defaultTransparentRenderOrder: RenderOrderFunction
@@ -185,34 +199,25 @@ export class HtmlMeshRenderer {
         }
 
         // if the container already exists, then remove it
-        const existingContainer = document.getElementById(this._containerId);
-        if (existingContainer) {
-            parentContainer.removeChild(existingContainer);
-        }
-        this._container = document.createElement("div");
-        this._container.id = this._containerId;
-        this._container.style.position = "absolute";
-        this._container.style.width = "100%";
-        this._container.style.height = "100%";
-        this._container.style.zIndex = "-1";
+        const inSceneContainerId = `${this._containerId}_in_scene`;
+        this._inSceneElements = this.createRenderLayerElements(inSceneContainerId);
 
         parentContainer.insertBefore(
-            this._container,
-            parentContainer.firstChild
+          this._inSceneElements.container,
+          parentContainer.firstChild
         );
 
-        this._domElement = document.createElement("div");
-        this._domElement.style.overflow = "hidden";
-
-        this._cameraElement = document.createElement("div");
-
-        this._cameraElement.style.webkitTransformStyle = "preserve-3d";
-        this._cameraElement.style.transformStyle = "preserve-3d";
-
-        this._cameraElement.style.pointerEvents = "none";
-
-        this._domElement.appendChild(this._cameraElement);
-        this._container.appendChild(this._domElement);
+        if (enableTopRender) {
+            const overlayContainerId = `${this._containerId}_overlay`;
+            this._overlayElements = this.createRenderLayerElements(overlayContainerId);
+            const zIndex = +(scene.getEngine().getRenderingCanvas()!.style.zIndex ?? "0") + 1;
+            this._overlayElements.container.style.zIndex = `${zIndex}`;
+            this._overlayElements.container.style.pointerEvents = "none";
+            parentContainer.insertBefore(
+              this._overlayElements.container,
+              parentContainer.firstChild
+            );
+        }
 
         // Set the size and resize behavior
         this.setSize(
@@ -235,7 +240,7 @@ export class HtmlMeshRenderer {
             const canvas = engine.getRenderingCanvas();
             // Resize if the canvas size changes
             const resizeObserver = new ResizeObserver((entries) => {
-                for (let entry of entries) {
+                for (const entry of entries) {
                     if (entry.target === canvas) {
                         boundOnResize();
                     }
@@ -291,7 +296,38 @@ export class HtmlMeshRenderer {
         });
     }
 
-    protected getSize(): { width: number; height: number } {
+    private createRenderLayerElements (containerId: string): RenderLayerElements {
+        const existingContainer = document.getElementById(containerId);
+        if (existingContainer) {
+            existingContainer.remove();
+        }
+        const container = document.createElement("div");
+        container.id = containerId;
+        container.style.position = "absolute";
+        container.style.width = "100%";
+        container.style.height = "100%";
+        container.style.zIndex = "-1";
+
+        const domElement = document.createElement("div");
+        domElement.style.overflow = "hidden";
+
+        const cameraElement = document.createElement("div");
+
+        cameraElement.style.webkitTransformStyle = "preserve-3d";
+        cameraElement.style.transformStyle = "preserve-3d";
+
+        cameraElement.style.pointerEvents = "none";
+
+        domElement.appendChild(cameraElement);
+        container.appendChild(domElement);
+        return {
+            container,
+            domElement,
+            cameraElement
+        };
+    }
+
+    protected getSize (): { width: number; height: number } {
         return {
             width: this._width,
             height: this._height,
@@ -304,11 +340,17 @@ export class HtmlMeshRenderer {
         this._widthHalf = this._width / 2;
         this._heightHalf = this._height / 2;
 
-        (this._domElement as HTMLElement).style.width = width + "px";
-        (this._domElement as HTMLElement).style.height = height + "px";
+        const domElements = [
+            this._inSceneElements!.domElement, this._overlayElements!.domElement,
+            this._inSceneElements!.cameraElement, this._overlayElements!.cameraElement,
+        ];
+        domElements.forEach(dom => {
+            if (dom) {
+                dom.style.width = `${width}px`;
+                dom.style.height = `${height}px`;
+            }
+        });
 
-        (this._cameraElement as HTMLElement).style.width = width + "px";
-        (this._cameraElement as HTMLElement).style.height = height + "px";
     }
 
     // prettier-ignore
@@ -403,11 +445,6 @@ export class HtmlMeshRenderer {
             this._cache.htmlMeshData.set(htmlMesh, htmlMeshData);
         }
 
-        // If the htmlMesh content has changed, update the base scale factor
-        if (htmlMesh.requiresUpdate) {
-            this.updateBaseScaleFactor(htmlMesh);
-        }
-
         // Now transform the element using the scale, the html mesh's world matrix, and the camera's world matrix
         // Make sure the camera world matrix is up to date
         if (!this._cameraWorldMatrix) {
@@ -419,6 +456,19 @@ export class HtmlMeshRenderer {
             return;
         }
 
+        const cameraElement = htmlMesh.isCanvasOverlay ? this._overlayElements?.cameraElement : this._inSceneElements?.cameraElement;
+
+        // move up to updateBaseScaleFactor, because updateBaseScaleFactor need to cal element size
+        if (htmlMesh.element.parentNode !== cameraElement) {
+            cameraElement!.appendChild(htmlMesh.element);
+        }
+
+        // If the htmlMesh content has changed, update the base scale factor
+        if (htmlMesh.requiresUpdate) {
+            this.updateBaseScaleFactor(htmlMesh);
+        }
+
+
         const objectWorldMatrix = htmlMesh.getWorldMatrix();
         const scaledAndTranslatedObjectMatrix = this._temp.objectMatrix;
         scaledAndTranslatedObjectMatrix.copyFrom(objectWorldMatrix);
@@ -428,13 +478,15 @@ export class HtmlMeshRenderer {
         // rotation and perspective values by 100.  I think maybe this is just a shortcut
         // for converting the translation values from world units to screen units and it
         // doesn't matter what the scale is as long as it is the same for all three axes.
+        // fixed when htmlMesh is not in root node
+        const position = htmlMesh.getAbsolutePosition();
         scaledAndTranslatedObjectMatrix.setRowFromFloats(
             3,
-            (-this._cameraWorldMatrix.m[12] + htmlMesh.position.x) *
+            (-this._cameraWorldMatrix.m[12] + position.x) *
                 cssTranslationScaleFactor,
-            (-this._cameraWorldMatrix.m[13] + htmlMesh.position.y) *
+            (-this._cameraWorldMatrix.m[13] + position.y) *
                 cssTranslationScaleFactor,
-            (this._cameraWorldMatrix.m[14] - htmlMesh.position.z) *
+            (this._cameraWorldMatrix.m[14] - position.z) *
                 cssTranslationScaleFactor,
             this._cameraWorldMatrix.m[15] * 0.00001 * cssTranslationScaleFactor
         );
@@ -464,9 +516,6 @@ export class HtmlMeshRenderer {
             htmlMesh.element.style.transform = style;
         }
 
-        if (htmlMesh.element.parentNode !== this._cameraElement) {
-            this._cameraElement!.appendChild(htmlMesh.element);
-        }
     }
 
     protected render = (scene: Scene, camera: Camera) => {
@@ -519,11 +568,19 @@ export class HtmlMeshRenderer {
 
         if (this._cache.cameraData.fov !== fov) {
             if (camera.mode == Camera.PERSPECTIVE_CAMERA) {
-                this._domElement!.style.webkitPerspective = fov + "px";
-                this._domElement!.style.perspective = fov + "px";
+                [this._overlayElements?.domElement, this._inSceneElements?.domElement].forEach(el => {
+                    if (el) {
+                        el.style.webkitPerspective = fov + "px";
+                        el.style.perspective = fov + "px";
+                    }
+                });
             } else {
-                this._domElement!.style.webkitPerspective = "";
-                this._domElement!.style.perspective = "";
+                [this._overlayElements?.domElement, this._inSceneElements?.domElement].forEach(el => {
+                    if (el) {
+                        el.style.webkitPerspective = "";
+                        el.style.perspective = "";
+                    }
+                });
             }
             this._cache.cameraData.fov = fov;
         }
@@ -566,8 +623,12 @@ export class HtmlMeshRenderer {
             "px)";
 
         if (this._cache.cameraData.style !== style) {
-            this._cameraElement!.style.webkitTransform = style;
-            this._cameraElement!.style.transform = style;
+            [this._inSceneElements?.cameraElement, this._overlayElements?.cameraElement].forEach(el => {
+                if (el) {
+                    el.style.webkitTransform = style;
+                    el.style.transform = style;
+                }
+            });
             this._cache.cameraData.style = style;
         }
 
@@ -588,7 +649,7 @@ export class HtmlMeshRenderer {
      * @param currentZoomTransform
      */
     protected updateBaseScaleFactor(
-        htmlMesh: HtmlMesh /*, maxZoomTransform: Matrix, 
+        htmlMesh: HtmlMesh /*, maxZoomTransform: Matrix,
                                     currentZoomTransform: Matrix*/
     ) {
         // Get the scene and camera
@@ -715,35 +776,40 @@ export class HtmlMeshRenderer {
             this._previousCanvasDocumentPosition.top = canvasDocumentTop;
             this._previousCanvasDocumentPosition.left = canvasDocumentLeft;
 
-            // set the top and left of the css container to match the canvas
-            const containerParent = this._container!
-                .offsetParent as HTMLElement;
-            const parentRect = containerParent.getBoundingClientRect();
-            const parentDocumentTop = parentRect.top + scrollTop;
-            const parentDocumentLeft = parentRect.left + scrollLeft;
+            [this._inSceneElements?.container, this._overlayElements?.container].forEach(container => {
+                if (!container) {
+                    return;
+                }
+                // set the top and left of the css container to match the canvas
+                const containerParent = container
+                  .offsetParent as HTMLElement;
+                const parentRect = containerParent.getBoundingClientRect();
+                const parentDocumentTop = parentRect.top + scrollTop;
+                const parentDocumentLeft = parentRect.left + scrollLeft;
 
-            const ancestorMarginsAndPadding =
-                this.getAncestorMarginsAndPadding(containerParent);
+                const ancestorMarginsAndPadding =
+                  this.getAncestorMarginsAndPadding(containerParent);
 
-            // Add the body margin
-            const bodyStyle = window.getComputedStyle(document.body);
-            const bodyMarginTop = parseInt(bodyStyle.marginTop, 10);
-            const bodyMarginLeft = parseInt(bodyStyle.marginLeft, 10);
+                // Add the body margin
+                const bodyStyle = window.getComputedStyle(document.body);
+                const bodyMarginTop = parseInt(bodyStyle.marginTop, 10);
+                const bodyMarginLeft = parseInt(bodyStyle.marginLeft, 10);
 
-            this._container!.style.top = `${
-                canvasDocumentTop -
-                parentDocumentTop -
-                ancestorMarginsAndPadding.marginTop +
-                ancestorMarginsAndPadding.paddingTop +
-                bodyMarginTop
-            }px`;
-            this._container!.style.left = `${
-                canvasDocumentLeft -
-                parentDocumentLeft -
-                ancestorMarginsAndPadding.marginLeft +
-                ancestorMarginsAndPadding.paddingLeft +
-                bodyMarginLeft
-            }px`;
+                container.style.top = `${
+                  canvasDocumentTop -
+                  parentDocumentTop -
+                  ancestorMarginsAndPadding.marginTop +
+                  ancestorMarginsAndPadding.paddingTop +
+                  bodyMarginTop
+                }px`;
+                container.style.left = `${
+                  canvasDocumentLeft -
+                  parentDocumentLeft -
+                  ancestorMarginsAndPadding.marginLeft +
+                  ancestorMarginsAndPadding.paddingLeft +
+                  bodyMarginLeft
+                }px`;
+            });
         }
     }
 

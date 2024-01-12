@@ -96,7 +96,7 @@ const onPointerMove = (evt: PointerEvent) => {
         pickedMesh = null;
     }
 
-    let capturingIdAsInt = parseInt(getCapturingId() || "");
+    const capturingIdAsInt = parseInt(getCapturingId() || "");
 
     // if the picked mesh is the current capturing mesh, do nothing
     if (pickedMesh && pickedMesh.uniqueId === capturingIdAsInt) {
@@ -112,8 +112,8 @@ const onPointerMove = (evt: PointerEvent) => {
         releaseCurrent();
     }
 
-    // If there is a picked mesh and it is not the current capturing mesh, capture 
-    // the pointer events.  Note that the current capturing mesh has already been 
+    // If there is a picked mesh and it is not the current capturing mesh, capture
+    // the pointer events.  Note that the current capturing mesh has already been
     // released above
     if (pickedMesh) {
         pointerCaptureBehavior = meshToBehaviorMap.get(pickedMesh);
