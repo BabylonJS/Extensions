@@ -257,7 +257,7 @@ export class HtmlMesh extends Mesh {
         div.style.backgroundColor = "#000";
         div.style.zIndex = "1";
         div.style.position = "absolute";
-        div.style.pointerEvents = "auto";
+        div.style.pointerEvents = "none";
         div.style.backfaceVisibility = "hidden";
 
         return div;
