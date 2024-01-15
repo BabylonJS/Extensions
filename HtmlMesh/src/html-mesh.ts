@@ -1,7 +1,7 @@
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { CreatePlaneVertexData } from "@babylonjs/core/Meshes/Builders/planeBuilder";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
-import { Matrix } from "@babylonjs/core/Maths/math";
+import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math";
 import { PointerEventsCaptureBehavior } from "./pointer-events-capture-behavior";
 import { Scene } from "@babylonjs/core";
 import { Logger } from "@babylonjs/core/Misc/logger";
@@ -17,6 +17,14 @@ import { Logger } from "@babylonjs/core/Misc/logger";
 export class HtmlMesh extends Mesh {
     isHtmlMesh = true;
 
+    // Override the super class's _isEnabled property so we can control when the mesh
+    // is enabled.  I.e., we don't want to render the mesh until there is content to show.
+    _enabled = false;
+
+    // The mesh is ready when content has been set and the content size has been set
+    // The former is done by the user, the latter is done by the renderer.
+    _ready = false;
+
     _isCanvasOverlay = false;
 
     _requiresUpdate = true;
@@ -25,12 +33,24 @@ export class HtmlMesh extends Mesh {
     _width?: number;
     _height?: number;
 
-    _sizingElement?: HTMLElement;
+    _fillerElement?: HTMLElement;
 
     _inverseScaleMatrix: Matrix | null = null;
 
     _captureOnPointerEnter: boolean = true;
     _pointerEventCaptureBehavior: PointerEventsCaptureBehavior | null = null;
+    sourceWidth: number | null = null;
+    sourceHeight: number | null = null;
+
+    // Variables to store previous scaling, position, and rotation values
+    // so we can detect changes and set requiresUpdate so the element transform
+    // can be updated.
+    _previousScaling = new Vector3();
+    _previousRotation = new Vector3();
+    _previousRotationQuaternion: Quaternion | null = null;
+    _previousPosition = new Vector3();
+
+    sceneBeforeRenderObserver: any;
 
     /**
      * Contruct an instance of HtmlMesh
@@ -59,11 +79,9 @@ export class HtmlMesh extends Mesh {
         this._isCanvasOverlay = isCanvasOverlay;
         this.createMask();
         this._element = this.createElement();
-        this._sizingElement = this.createSizingElement();
-        this._element?.appendChild(this._sizingElement!);
 
-        // Set disabled by default, so this doesn't show up or get picked until there is some content to show
-        this.setEnabled(false);
+        // Set enabled by default, so this will show as soon as it's ready
+        this.setEnabled(true);
 
         this._captureOnPointerEnter = captureOnPointerEnter;
 
@@ -74,6 +92,14 @@ export class HtmlMesh extends Mesh {
             { captureOnPointerEnter: this._captureOnPointerEnter }
         );
         this.addBehavior(this._pointerEventCaptureBehavior);
+    }
+
+    get width() {
+        return this._width;
+    }
+
+    get height() {
+        return this._height;
     }
 
     /**
@@ -120,10 +146,16 @@ export class HtmlMesh extends Mesh {
      * @param {number} height The height of the mesh in Babylon units
      */
     setContent(element: HTMLElement, width: number, height: number) {
-        if (!this._element || !this._sizingElement) {
+        // If content is changed, we are no longer ready
+        this.setReady(false);
+
+        // Also invalidate the source width and height
+        this.sourceWidth = null;
+        this.sourceHeight = null;
+
+        if (!this._element) {
             return;
         }
-        this._sizingElement.innerHTML = "";
 
         this._width = width;
         this._height = height;
@@ -131,61 +163,115 @@ export class HtmlMesh extends Mesh {
 
         this.scaling.setAll(1);
 
-        if (!element) {
-            this.setEnabled(false);
-        } else {
-            this._sizingElement!.appendChild(element);
+        if (element) {
+            this._element!.appendChild(element);
 
             this.updateScaleIfNecessary();
-
-            this.setEnabled(true);
         }
 
-        // Capture the content z index
-        this.setElementZIndex(this.position.z * -10000);
+        if (this.sourceWidth && this.sourceHeight) {
+            this.setReady(true);
+        }
     }
 
     // Overides BABYLON.Mesh.setEnabled
     setEnabled(enabled: boolean) {
+        // Capture requested enabled state
+        this._enabled = enabled;
+
+        // If disabling or enabling and we are ready
+        if (!enabled || this._ready) {
+            this.doSetEnabled(enabled);
+        }
+    }
+
+    setContentSizePx(width: number, height: number) {
+        this.sourceWidth = width;
+        this.sourceHeight = height;
+
         if (!this._element) {
             return;
         }
+
+        const childElement = this._element!.firstElementChild as HTMLElement;
+        if (childElement) {
+            childElement.style.width = `${width}px`;
+            childElement.style.height = `${height}px`;
+        }
+
+        //this.updateBaseScale();
+        this.updateScaleIfNecessary();
+
+        if (this.width && this.height) {
+            this.setReady(true);
+        }
+    }
+
+    protected checkRequiresUpdate() {
+        if (!this._element) {
+            return;
+        }
+
+        // Check if the scaling has changed
+        const epsilon = 0.0001;
+        if (
+            !this.scaling.equalsWithEpsilon(this._previousScaling, epsilon) ||
+            !this.rotation.equalsWithEpsilon(this._previousRotation, epsilon) ||
+            !this.position.equalsWithEpsilon(this._previousPosition, epsilon) ||
+            (this.rotationQuaternion == null &&
+                this._previousRotationQuaternion != null) ||
+            (this.rotationQuaternion != null &&
+                !this.rotationQuaternion.equalsWithEpsilon(
+                    this._previousRotationQuaternion as Quaternion,
+                    epsilon
+                ))
+        ) {
+            this._requiresUpdate = true;
+            this._previousScaling.copyFrom(this.scaling);
+            this._previousRotation.copyFrom(this.rotation);
+            if (this.rotationQuaternion != null) {
+                this._previousRotationQuaternion =
+                    this._previousRotationQuaternion || new Quaternion();
+                this._previousRotationQuaternion!.copyFrom(
+                    this.rotationQuaternion!
+                );
+            }
+            this._previousPosition.copyFrom(this.position);
+        }
+    }
+
+    protected setReady(ready: boolean) {
+        this._ready = ready;
+        if (ready) {
+            this.doSetEnabled(this._enabled);
+        } else {
+            this.doSetEnabled(false);
+        }
+    }
+
+    protected doSetEnabled(enabled: boolean) {
+        if (!this._element) {
+            return;
+        }
+
+        // if enabled, then start listening for changes to the
+        // scaling, rotation, and position.  otherwise stop listening
+        if (enabled && !this.sceneBeforeRenderObserver) {
+            this.sceneBeforeRenderObserver =
+                this.getScene().onBeforeRenderObservable.add(() => {
+                    this.checkRequiresUpdate();
+                });
+        } else {
+            this.sceneBeforeRenderObserver?.remove();
+            this.sceneBeforeRenderObserver = null;
+        }
+
         // If enabled, then revert the content element display
         // otherwise hide it
         this._element!.style.display = enabled ? "" : "none";
         // Capture the content z index
         this.setElementZIndex(this.position.z * -10000);
         super.setEnabled(enabled);
-    }
-
-    /**
-     * Sets the size of the content in CSS pixels (element width and height at 100% zoom).
-     * @param {number} width
-     * @param {number} height
-     */
-    setContentSizePx(width: number, height: number) {
-        if (!this._element || !this._sizingElement) {
-            return;
-        }
-        const contentElement = this._sizingElement
-            .firstElementChild! as HTMLElement;
-        contentElement.style.transform = "none";
-        // const childElement = contentElement;
-        const [childWidth, childHeight] = [
-            contentElement.offsetWidth,
-            contentElement.offsetHeight,
-        ];
-        if (contentElement) {
-            this._sizingElement.style.width = `${width}px`;
-            this._sizingElement.style.height = `${height}px`;
-            const transform = `scale(${Math.min(
-                width / childWidth,
-                height / childHeight
-            )})`;
-            // const transform = `scale(${width / childWidth}, ${height / childHeight})`
-            console.log(transform);
-            contentElement.style.transform = transform;
-        }
     }
 
     protected updateScaleIfNecessary() {
@@ -291,20 +377,5 @@ export class HtmlMesh extends Mesh {
         div.style.backfaceVisibility = "hidden";
 
         return div;
-    }
-
-    protected createSizingElement() {
-        // Requires a browser to work.  Bail if we aren't running in a browser
-        if (typeof document === "undefined") {
-            return;
-        }
-        const sizeElement = document.createElement("div");
-        sizeElement.style.display = "flex";
-        sizeElement.style.flexDirection = "column";
-        sizeElement.style.alignItems = "center";
-        sizeElement.style.justifyContent = "center";
-        const contentElement = document.createElement("div");
-        sizeElement.appendChild(contentElement);
-        return sizeElement;
     }
 }

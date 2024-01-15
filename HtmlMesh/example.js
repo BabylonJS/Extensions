@@ -10,6 +10,9 @@ import "@babylonjs/core/Helpers/sceneHelpers";
 import { HtmlMeshRenderer } from "./src/html-mesh-renderer";
 import { HtmlMesh } from "./src/html-mesh";
 
+import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
+import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
+
 const debug = true;
 
 let engine;
@@ -25,6 +28,11 @@ const createScene = () => {
 
     scene.createDefaultCameraOrLight(true, true, true);
     scene.activeCamera.radius = 20;
+
+    // Uncomment these lines to test issue #261
+    // const camera = new ArcRotateCamera('', -Math.PI / 3, Math.PI / 2.5, 20, Vector3.Zero(), scene)
+    // camera.attachControl(true)
+    // new HemisphericLight('', new Vector3(100, 100, 100), scene)
 
     // Some random shapes
     var sphere = MeshBuilder.CreateSphere("sphere", {diameter: 2, segments: 32}, scene);
@@ -75,7 +83,7 @@ const createScene = () => {
     const htmlMeshDiv = new HtmlMesh(scene, "html-mesh-div");
     const div = document.createElement("div");
     div.innerHTML = `
-        <form style="padding: 10px; transform-origin: 0 0;">
+        <form style="padding: 10px; transform-origin: 0 0; scale: 5">
             <label for="name">Name:</label>
             <input type="text" id="name" name="name" required><br><br>
             
@@ -98,8 +106,7 @@ const createScene = () => {
     `;
     div.style.backgroundColor = "white";
     div.style.width = "480px";
-    div.style.height = "360px";
-    // Style the form
+    div.style.height = "360px";    
 
     htmlMeshDiv.setContent(div, 4, 3);
     htmlMeshDiv.position.x = -3;
@@ -162,7 +169,7 @@ const createScene = () => {
     // Shows how to create an HTML Overlay
     const overlayMesh = new HtmlMesh(scene, "html-overlay-mesh", { isCanvasOverlay: true });
     const overlayMeshDiv = document.createElement('div');
-    overlayMeshDiv.innerHTML = `<p>This is an overlay. It is positioned in front of the canvas This allows it to have transparency and to be non-rectangular, but it will always show over any other content in the scene</p>`;
+    overlayMeshDiv.innerHTML = `<p style="padding: 60px; font-size: 120px;">This is an overlay. It is positioned in front of the canvas This allows it to have transparency and to be non-rectangular, but it will always show over any other content in the scene</p>`;
     overlayMeshDiv.style.backgroundColor = 'rgba(0,255,0,0.49)';
     overlayMeshDiv.style.width = '120px';
     overlayMeshDiv.style.height = '90px';
@@ -170,13 +177,15 @@ const createScene = () => {
     overlayMeshDiv.style.alignItems = 'center';
     overlayMeshDiv.style.justifyContent = 'center';
     overlayMeshDiv.style.borderRadius = '20px';
-    overlayMeshDiv.style.fontSize = 'xx-small';
     overlayMeshDiv.style.padding = '10px';
     // Style the form
 
     overlayMesh.setContent(overlayMeshDiv, 4, 3);
     overlayMesh.position.x = 0;
     overlayMesh.position.y = 0;
+
+    // Uncomment this line to test issue #264
+    //MeshBuilder.CreateBox("box2", {size: 1}, scene);
 
     if (debug) {
         // Log the scene to the console for debugging
