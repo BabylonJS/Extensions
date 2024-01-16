@@ -166,6 +166,8 @@ const createScene = () => {
     htmlMeshVideo.position.y = -2;
     htmlMeshVideo.rotation.x = Math.PI / 4;
 
+    // Uncomment this line to test issue #268 (Delayed creation issue)
+    //setTimeout(() => {
     // Shows how to create an HTML Overlay
     const overlayMesh = new HtmlMesh(scene, "html-overlay-mesh", { isCanvasOverlay: true });
     const overlayMeshDiv = document.createElement('div');
@@ -178,11 +180,12 @@ const createScene = () => {
     overlayMeshDiv.style.justifyContent = 'center';
     overlayMeshDiv.style.borderRadius = '20px';
     overlayMeshDiv.style.padding = '10px';
-    // Style the form
 
     overlayMesh.setContent(overlayMeshDiv, 4, 3);
     overlayMesh.position.x = 0;
     overlayMesh.position.y = 0;
+    // Uncomment this line to test issue #268 (Delayed creation issue)
+    //}, 3000);
 
     // Uncomment this line to test issue #264
     //MeshBuilder.CreateBox("box2", {size: 1}, scene);
