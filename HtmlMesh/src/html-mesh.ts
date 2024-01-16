@@ -114,9 +114,7 @@ export class HtmlMesh extends Mesh {
      * property was read.  This property is reset to false after reading.
      */
     get requiresUpdate() {
-        const response = this._requiresUpdate;
-        this._requiresUpdate = false;
-        return response;
+        return this._requiresUpdate;
     }
 
     set captureOnPointerEnter(captureOnPointerEnter: boolean) {
@@ -135,6 +133,10 @@ export class HtmlMesh extends Mesh {
             this._pointerEventCaptureBehavior.dispose();
             this._pointerEventCaptureBehavior = null;
         }
+    }
+
+    markAsUpdated() {
+        this._requiresUpdate = false;
     }
 
     /**
@@ -261,7 +263,7 @@ export class HtmlMesh extends Mesh {
                 this.getScene().onBeforeRenderObservable.add(() => {
                     this.checkRequiresUpdate();
                 });
-        } else {
+        } else if (!enabled) {
             this.sceneBeforeRenderObserver?.remove();
             this.sceneBeforeRenderObserver = null;
         }

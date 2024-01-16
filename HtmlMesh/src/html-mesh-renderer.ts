@@ -550,6 +550,8 @@ export class HtmlMeshRenderer {
             htmlMesh.element.style.webkitTransform = style;
             htmlMesh.element.style.transform = style;
         }
+
+        htmlMesh.markAsUpdated();
     }
 
     protected render = (scene: Scene, camera: Camera) => {
@@ -673,7 +675,6 @@ export class HtmlMeshRenderer {
 
         // _Render objects if necessary
         meshesNeedingUpdate.forEach((mesh) => {
-            //this.renderHtmlMesh(
             this.renderHtmlMesh(mesh as HtmlMesh);
         });
     };
