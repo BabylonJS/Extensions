@@ -7,6 +7,8 @@ let _getCanvasRectGenerator: Generator<DOMRect | null> | null = null;
 const _maxGetCanvasRectAttempts: number = 10;
 let _scene: Scene | null = null;
 
+export const babylonUnitsToPixels = 100;
+
 function* createGetCanvasRectGenerator(
     scene: Scene,
     updateInterval: number
