@@ -8,7 +8,7 @@ import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import "@babylonjs/core/Helpers/sceneHelpers";
 
 import { HtmlMeshRenderer } from "./src/html-mesh-renderer";
-import { HtmlMesh } from "./src/html-mesh";
+import {HtmlMesh, SizeFit} from "./src/html-mesh";
 
 import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
 import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
@@ -27,7 +27,7 @@ const createScene = () => {
     scene.clearColor = new Color4(0,0,0,0);
 
     scene.createDefaultCameraOrLight(true, true, true);
-    scene.activeCamera.radius = 20;
+    scene.activeCamera.radius = 23;
 
     // Uncomment these lines to test issue #261
     // const camera = new ArcRotateCamera('', -Math.PI / 3, Math.PI / 2.5, 20, Vector3.Zero(), scene)
@@ -44,8 +44,8 @@ const createScene = () => {
     // over the html mesh, or if it is masked.
     var disc = MeshBuilder.CreateDisc("disc", {radius: 0.5});
 
-    bg.scaling.x = 12;
-    bg.scaling.y = 16;
+    bg.scaling.x = 16;
+    bg.scaling.y = 20;
     bg.position.z = 3;
 
     sphere.position.x = 1.5;
@@ -106,7 +106,7 @@ const createScene = () => {
     `;
     div.style.backgroundColor = "white";
     div.style.width = "480px";
-    div.style.height = "360px";    
+    div.style.height = "360px";
 
     htmlMeshDiv.setContent(div, 4, 3);
     htmlMeshDiv.position.x = -3;
@@ -186,6 +186,55 @@ const createScene = () => {
     overlayMesh.position.y = 0;
     // Uncomment this line to test issue #268 (Delayed creation issue)
     //}, 3000);
+
+    // overlayMesh fit contain
+    const overlayContainMesh = new HtmlMesh(scene, "html-overlay-mesh-contain", { isCanvasOverlay: true, sizeFit: SizeFit.contain });
+    const overlayContainMeshDiv = document.createElement('div');
+    overlayContainMeshDiv.innerHTML = `Contain: This is an overlay. It is positioned in front of the canvas This allows it to have transparency and to be non-rectangular, but it will always show over any other content in the scene`;
+    overlayContainMeshDiv.style.backgroundColor = 'rgba(25,0,255,0.49)';
+    overlayContainMeshDiv.style.width = '200px';
+    overlayContainMeshDiv.style.display = 'flex';
+    overlayContainMeshDiv.style.alignItems = 'center';
+    overlayContainMeshDiv.style.justifyContent = 'center';
+    overlayContainMeshDiv.style.padding = '10px';
+
+    overlayContainMesh.setContent(overlayContainMeshDiv, 4, 3);
+    overlayContainMesh.position.x = 0;
+    overlayContainMesh.position.y = 3.5;
+    overlayContainMesh.billboardMode = 7;
+
+    // overlayMesh fit cover
+    const overlayCoverMesh = new HtmlMesh(scene, "html-overlay-mesh-cover", { isCanvasOverlay: true, sizeFit: SizeFit.cover });
+    const overlayCoverMeshDiv = document.createElement('div');
+    overlayCoverMeshDiv.innerHTML = `Cover: This is an overlay. It is positioned in front of the canvas This allows it to have transparency and to be non-rectangular, but it will always show over any other content in the scene`;
+    overlayCoverMeshDiv.style.backgroundColor = 'rgba(25,0,255,0.49)';
+    overlayCoverMeshDiv.style.width = '150px';
+    overlayCoverMeshDiv.style.display = 'flex';
+    overlayCoverMeshDiv.style.alignItems = 'center';
+    overlayCoverMeshDiv.style.justifyContent = 'center';
+    overlayCoverMeshDiv.style.padding = '10px';
+    overlayCoverMeshDiv.style.overflow = 'hidden';
+
+    overlayCoverMesh.setContent(overlayCoverMeshDiv, 4, 3);
+    overlayCoverMesh.position.x = -2.5;
+    overlayCoverMesh.position.y = 7;
+    overlayCoverMesh.billboardMode = 7;
+
+    // overlayMesh fit stretch
+    const overlayStretchMesh = new HtmlMesh(scene, "html-overlay-mesh-stretch", { isCanvasOverlay: true, sizeFit: SizeFit.stretch });
+    const overlayStretchMeshDiv = document.createElement('div');
+    overlayStretchMeshDiv.innerHTML = `Stretch: This is an overlay. It is positioned in front of the canvas This allows it to have transparency and to be non-rectangular, but it will always show over any other content in the scene`;
+    overlayStretchMeshDiv.style.backgroundColor = 'rgba(25,0,255,0.49)';
+    overlayStretchMeshDiv.style.width = '400px';
+    overlayStretchMeshDiv.style.display = 'flex';
+    overlayStretchMeshDiv.style.alignItems = 'center';
+    overlayStretchMeshDiv.style.justifyContent = 'center';
+    overlayStretchMeshDiv.style.padding = '10px';
+
+    overlayStretchMesh.setContent(overlayStretchMeshDiv, 4, 3);
+    overlayStretchMesh.position.x = 2;
+    overlayStretchMesh.position.y = 7;
+    overlayStretchMesh.billboardMode = 7;
 
     // Uncomment this line to test issue #264
     //MeshBuilder.CreateBox("box2", {size: 1}, scene);
