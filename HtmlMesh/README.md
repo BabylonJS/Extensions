@@ -52,6 +52,11 @@ HtmlMesh using the `capturePointerEvents` and `releasePointerEvents` methods.
     * require that the scene clear color is transparent
     * must be opaque 
     * must be rectangular
+* `fitStrategy` - Specifies the HtmlElement how to fit the HtmlMesh's size. Fit behavior is like css background-size
+    * FitStrategy.NONE Default. Display HtmlElement at its original size in HtmlMesh without any scaling
+    * FitStrategy.CONTAIN Scales the HtmlElement as large as possible within its container without cropping or stretching, HtmlElement should define an appropriate width
+    * FitStrategy.COVER Scales the HtmlElement (while preserving its ratio) to the smallest possible size to fill the HtmlMesh (that is: both its height and width completely cover the HtmlMesh), leaving no empty space. If the proportions of the HtmlElement differ from the HtmlMesh, the HtmlElement is cropped either vertically or horizontally.
+    * FitStrategy.STRETCH Stretches the HtmlElement in the corresponding dimension to the 100% length
 
     In contrast, overlay meshes:
     * always render in front of other scene content
@@ -169,7 +174,7 @@ const createScene = () => {
     htmlMeshVideo.position.x = 3;
     htmlMeshVideo.position.y = -2;
 
-    // Shows how to create an HTML Overlay
+    // Shows how to create an HTML Overlay by the fit strategy: FitStrategy.NONE
     const overlayMesh = new HtmlMesh(scene, "html-overlay-mesh", { isCanvasOverlay: true });
     const overlayMeshDiv = document.createElement('div');
     overlayMeshDiv.innerHTML = `<p>This is an overlay. It is positioned in front of the canvas This allows it to have transparency and to be non-rectangular, but it will always show over any other content in the scene</p>`;
@@ -187,6 +192,56 @@ const createScene = () => {
     overlayMesh.setContent(overlayMeshDiv, 4, 3);
     overlayMesh.position.x = 0;
     overlayMesh.position.y = 0;
+
+    // Shows how to create an HTML Overlay by the fit strategy: FitStrategy.CONTAIN
+    const overlayContainMesh = new HtmlMesh(scene, "html-overlay-mesh-contain",{ isCanvasOverlay: true, fitStrategy: FitStrategy.CONTAIN });
+    const overlayContainMeshDiv = document.createElement('div');
+    overlayContainMeshDiv.innerHTML = `Contain: This is an overlay. It is positioned in front of the canvas This allows it to have transparency and to be non-rectangular, but it will always show over any other content in the scene`;
+    overlayContainMeshDiv.style.width = '200px';
+    overlayContainMeshDiv.style.display = 'flex';
+    overlayContainMeshDiv.style.alignItems = 'center';
+    overlayContainMeshDiv.style.justifyContent = 'center';
+    overlayContainMeshDiv.style.padding = '10px';
+    overlayContainMeshDiv.style.backgroundColor = 'rgba(25,0,255,0.49)';
+  
+    overlayContainMesh.setContent(overlayContainMeshDiv, 4, 3);
+    overlayContainMesh.position.x = 0;
+    overlayContainMesh.position.y = 3.5;
+    overlayContainMesh.billboardMode = 7;
+  
+    // Shows how to create an HTML Overlay by the fit strategy: FitStrategy.COVER
+    const overlayCoverMesh = new HtmlMesh(scene, "html-overlay-mesh-cover", { isCanvasOverlay: true, fitStrategy: FitStrategy.COVER });
+    const overlayCoverMeshDiv = document.createElement('div');
+    overlayCoverMeshDiv.innerHTML = `Cover: This is an overlay. It is positioned in front of the canvas This allows it to have transparency and to be non-rectangular, but it will always show over any other content in the scene`;
+    overlayCoverMeshDiv.style.backgroundColor = 'rgba(25,0,255,0.49)';
+    overlayCoverMeshDiv.style.width = '150px';
+    overlayCoverMeshDiv.style.display = 'flex';
+    overlayCoverMeshDiv.style.alignItems = 'center';
+    overlayCoverMeshDiv.style.justifyContent = 'center';
+    overlayCoverMeshDiv.style.padding = '10px';
+    overlayCoverMeshDiv.style.overflow = 'hidden';
+  
+    overlayCoverMesh.setContent(overlayCoverMeshDiv, 4, 3);
+    overlayCoverMesh.position.x = -2.5;
+    overlayCoverMesh.position.y = 7;
+    overlayCoverMesh.billboardMode = 7;
+  
+    // Shows how to create an HTML Overlay by the fit strategy: FitStrategy.STRETCH
+    const overlayStretchMesh = new HtmlMesh(scene, "html-overlay-mesh-stretch", { isCanvasOverlay: true, fitStrategy: FitStrategy.STRETCH });
+    const overlayStretchMeshDiv = document.createElement('div');
+    overlayStretchMeshDiv.innerHTML = `Stretch: This is an overlay. It is positioned in front of the canvas This allows it to have transparency and to be non-rectangular, but it will always show over any other content in the scene`;
+    overlayStretchMeshDiv.style.backgroundColor = 'rgba(25,0,255,0.49)';
+    overlayStretchMeshDiv.style.width = '400px';
+    overlayStretchMeshDiv.style.display = 'flex';
+    overlayStretchMeshDiv.style.alignItems = 'center';
+    overlayStretchMeshDiv.style.justifyContent = 'center';
+    overlayStretchMeshDiv.style.padding = '10px';
+  
+    overlayStretchMesh.setContent(overlayStretchMeshDiv, 4, 3);
+    overlayStretchMesh.position.x = 2;
+    overlayStretchMesh.position.y = 7;
+    overlayStretchMesh.billboardMode = 7;
+
 };
 
 const startRenderLoop = () => {
