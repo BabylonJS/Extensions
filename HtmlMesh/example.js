@@ -8,10 +8,11 @@ import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import "@babylonjs/core/Helpers/sceneHelpers";
 
 import { HtmlMeshRenderer } from "./src/html-mesh-renderer";
-import {HtmlMesh, SizeFit} from "./src/html-mesh";
+import { HtmlMesh } from "./src/html-mesh";
 
 import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
 import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
+import { FitStrategy } from "./src/fit-strategy";
 
 const debug = true;
 
@@ -188,15 +189,15 @@ const createScene = () => {
     //}, 3000);
 
     // overlayMesh fit contain
-    const overlayContainMesh = new HtmlMesh(scene, "html-overlay-mesh-contain", { isCanvasOverlay: true, sizeFit: SizeFit.contain });
+    const overlayContainMesh = new HtmlMesh(scene, "html-overlay-mesh-contain",{ isCanvasOverlay: true, fitStrategy: FitStrategy.CONTAIN });
     const overlayContainMeshDiv = document.createElement('div');
     overlayContainMeshDiv.innerHTML = `Contain: This is an overlay. It is positioned in front of the canvas This allows it to have transparency and to be non-rectangular, but it will always show over any other content in the scene`;
-    overlayContainMeshDiv.style.backgroundColor = 'rgba(25,0,255,0.49)';
     overlayContainMeshDiv.style.width = '200px';
     overlayContainMeshDiv.style.display = 'flex';
     overlayContainMeshDiv.style.alignItems = 'center';
     overlayContainMeshDiv.style.justifyContent = 'center';
     overlayContainMeshDiv.style.padding = '10px';
+    overlayContainMeshDiv.style.backgroundColor = 'rgba(25,0,255,0.49)';
 
     overlayContainMesh.setContent(overlayContainMeshDiv, 4, 3);
     overlayContainMesh.position.x = 0;
@@ -204,7 +205,7 @@ const createScene = () => {
     overlayContainMesh.billboardMode = 7;
 
     // overlayMesh fit cover
-    const overlayCoverMesh = new HtmlMesh(scene, "html-overlay-mesh-cover", { isCanvasOverlay: true, sizeFit: SizeFit.cover });
+    const overlayCoverMesh = new HtmlMesh(scene, "html-overlay-mesh-cover", { isCanvasOverlay: true, fitStrategy: FitStrategy.COVER });
     const overlayCoverMeshDiv = document.createElement('div');
     overlayCoverMeshDiv.innerHTML = `Cover: This is an overlay. It is positioned in front of the canvas This allows it to have transparency and to be non-rectangular, but it will always show over any other content in the scene`;
     overlayCoverMeshDiv.style.backgroundColor = 'rgba(25,0,255,0.49)';
@@ -220,8 +221,10 @@ const createScene = () => {
     overlayCoverMesh.position.y = 7;
     overlayCoverMesh.billboardMode = 7;
 
+    // https://github.com/BabylonJS/Extensions/pull/270
+
     // overlayMesh fit stretch
-    const overlayStretchMesh = new HtmlMesh(scene, "html-overlay-mesh-stretch", { isCanvasOverlay: true, sizeFit: SizeFit.stretch });
+    const overlayStretchMesh = new HtmlMesh(scene, "html-overlay-mesh-stretch", { isCanvasOverlay: true, fitStrategy: FitStrategy.STRETCH });
     const overlayStretchMeshDiv = document.createElement('div');
     overlayStretchMeshDiv.innerHTML = `Stretch: This is an overlay. It is positioned in front of the canvas This allows it to have transparency and to be non-rectangular, but it will always show over any other content in the scene`;
     overlayStretchMeshDiv.style.backgroundColor = 'rgba(25,0,255,0.49)';

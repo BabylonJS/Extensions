@@ -5,114 +5,7 @@ import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math";
 import { PointerEventsCaptureBehavior } from "./pointer-events-capture-behavior";
 import { Scene } from "@babylonjs/core";
 import { Logger } from "@babylonjs/core/Misc/logger";
-
-export enum SizeFit {
-    none = 1,
-    contain = 2,
-    cover = 3,
-    stretch = 4
-}
-
-export type SizeFitHandler = {
-    handleElement(element: HTMLElement): HTMLElement
-    handleSizeFit(parent: HTMLElement, width: number, height: number): void
-}
-
-const SizeFitContainHandler: SizeFitHandler = {
-    handleElement(element: HTMLElement): HTMLElement {
-        const sizingElement = document.createElement('div')
-        sizingElement.style.display = 'flex'
-        sizingElement.style.justifyContent = 'center'
-        sizingElement.style.alignItems = 'center'
-        const scalingElement = document.createElement('div')
-        scalingElement.style.visibility = 'hidden'
-        scalingElement.appendChild(element)
-        sizingElement.appendChild(scalingElement)
-        return sizingElement
-    },
-    handleSizeFit(parent: HTMLElement, width: number, height: number) {
-        const sizingElement = parent.firstElementChild! as HTMLElement
-        const scalingElement = sizingElement.firstElementChild! as HTMLElement
-        sizingElement.style.width = `${width}px`
-        sizingElement.style.height = `${height}px`
-
-        const [childWidth, childHeight] = [scalingElement!.offsetWidth, scalingElement!.offsetHeight]
-        const scale = Math.min(width / childWidth, height / childHeight)
-        scalingElement.style.transform = `scale(${scale})`
-        scalingElement.style.visibility = 'visible'
-    }
-}
-
-const SizeFitCoverHandler: SizeFitHandler = {
-    handleElement(element: HTMLElement): HTMLElement {
-        const sizingElement = document.createElement('div')
-        sizingElement.style.display = 'flex'
-        sizingElement.style.justifyContent = 'center'
-        sizingElement.style.alignItems = 'center'
-        sizingElement.style.overflow = 'hidden'
-        const scalingElement = document.createElement('div')
-        scalingElement.style.visibility = 'hidden'
-        scalingElement.appendChild(element)
-        sizingElement.appendChild(scalingElement)
-        return sizingElement
-    },
-    handleSizeFit(parent: HTMLElement, width: number, height: number) {
-        const sizingElement = parent.firstElementChild! as HTMLElement
-        const scalingElement = sizingElement.firstElementChild! as HTMLElement
-        sizingElement.style.width = `${width}px`
-        sizingElement.style.height = `${height}px`
-
-        const [childWidth, childHeight] = [scalingElement!.offsetWidth, scalingElement!.offsetHeight]
-        const scale = Math.max(width / childWidth, height / childHeight)
-        scalingElement.style.transform = `scale(${scale})`
-        scalingElement.style.visibility = 'visible'
-    }
-}
-
-
-const SizeFitStretchHandler: SizeFitHandler = {
-    handleElement(element: HTMLElement): HTMLElement {
-        const sizingElement = document.createElement('div')
-        sizingElement.style.display = 'flex'
-        sizingElement.style.justifyContent = 'center'
-        sizingElement.style.alignItems = 'center'
-        const scalingElement = document.createElement('div')
-        scalingElement.style.visibility = 'hidden'
-        scalingElement.appendChild(element)
-        sizingElement.appendChild(scalingElement)
-        return sizingElement
-    },
-    handleSizeFit(parent: HTMLElement, width: number, height: number) {
-        const sizingElement = parent.firstElementChild! as HTMLElement
-        const scalingElement = sizingElement.firstElementChild! as HTMLElement
-        sizingElement.style.width = `${width}px`
-        sizingElement.style.height = `${height}px`
-
-        const [childWidth, childHeight] = [scalingElement!.offsetWidth, scalingElement!.offsetHeight]
-        scalingElement.style.transform = `scale(${width / childWidth}, ${height / childHeight})`
-        scalingElement.style.visibility = 'visible'
-    }
-}
-
-const SizeFitNoneHandler: SizeFitHandler = {
-    handleElement(element: HTMLElement): HTMLElement {
-        return element
-    },
-    handleSizeFit(parent: HTMLElement, width: number, height: number) {
-        const childElement = parent.firstElementChild as HTMLElement;
-        if (childElement) {
-            childElement.style.width = `${width}px`;
-            childElement.style.height = `${height}px`;
-        }
-    }
-}
-
-const SizeFitHandlerMap = {
-    [SizeFit.contain]: SizeFitContainHandler,
-    [SizeFit.cover]: SizeFitCoverHandler,
-    [SizeFit.none]: SizeFitNoneHandler,
-    [SizeFit.stretch]: SizeFitStretchHandler
-}
+import { FitStrategy, FitStrategyType } from "./fit-strategy.ts";
 
 /**
  * This class represents HTML content that we want to render as though it is part of the scene.  The HTML content is actually
@@ -160,7 +53,7 @@ export class HtmlMesh extends Mesh {
 
     sceneBeforeRenderObserver: any;
 
-    _sizeFit: SizeFit = SizeFit.none;
+    _fitStrategy: FitStrategyType = FitStrategy.NONE;
 
     /**
      * Contruct an instance of HtmlMesh
@@ -174,7 +67,7 @@ export class HtmlMesh extends Mesh {
     constructor(
         scene: Scene,
         id: string,
-        { captureOnPointerEnter = true, isCanvasOverlay = false, sizeFit = SizeFit.none } = {}
+        { captureOnPointerEnter = true, isCanvasOverlay = false, fitStrategy = FitStrategy.NONE } = {}
     ) {
         super(id, scene);
 
@@ -186,7 +79,7 @@ export class HtmlMesh extends Mesh {
             return;
         }
 
-        this._sizeFit = sizeFit
+        this._fitStrategy = fitStrategy
         this._isCanvasOverlay = isCanvasOverlay;
         this.createMask();
         this._element = this.createElement();
@@ -257,7 +150,6 @@ export class HtmlMesh extends Mesh {
      * @param {HTMLElement} element The element to render as a mesh
      * @param {number} width The width of the mesh in Babylon units
      * @param {number} height The height of the mesh in Babylon units
-     * @param {SizeFit} sizeFit The mode of the element fit to mesh size
      */
     setContent(element: HTMLElement, width: number, height: number) {
         // If content is changed, we are no longer ready
@@ -278,8 +170,7 @@ export class HtmlMesh extends Mesh {
         this.scaling.setAll(1);
 
         if (element) {
-            const sizeFitHandler = SizeFitHandlerMap[this._sizeFit]
-            this._element!.appendChild(sizeFitHandler.handleElement(element));
+            this._element!.appendChild(this._fitStrategy.wrapElement(element));
 
             this.updateScaleIfNecessary();
         }
@@ -308,9 +199,7 @@ export class HtmlMesh extends Mesh {
             return;
         }
 
-        const sizeFitHandler = SizeFitHandlerMap[this._sizeFit]
-
-        sizeFitHandler.handleSizeFit(this._element, width, height)
+        this._fitStrategy.updateSize(this._element.firstElementChild! as HTMLElement, width, height)
 
         //this.updateBaseScale();
         this.updateScaleIfNecessary();
