@@ -5,6 +5,7 @@ import { Matrix } from "@babylonjs/core/Maths/math";
 import { PointerEventsCaptureBehavior } from "./pointer-events-capture-behavior";
 import { Scene } from "@babylonjs/core";
 import { Logger } from "@babylonjs/core/Misc/logger";
+import { FitStrategy, FitStrategyType } from "./fit-strategy.ts";
 
 /**
  * This class represents HTML content that we want to render as though it is part of the scene.  The HTML content is actually
@@ -44,6 +45,8 @@ export class HtmlMesh extends Mesh {
 
     worldMatrixUpdateObserver: any;
 
+    _fitStrategy: FitStrategyType = FitStrategy.NONE;
+
     /**
      * Contruct an instance of HtmlMesh
      * @param {Scene} scene
@@ -56,7 +59,7 @@ export class HtmlMesh extends Mesh {
     constructor(
         scene: Scene,
         id: string,
-        { captureOnPointerEnter = true, isCanvasOverlay = false } = {}
+        { captureOnPointerEnter = true, isCanvasOverlay = false, fitStrategy = FitStrategy.NONE } = {}
     ) {
         super(id, scene);
 
@@ -68,6 +71,7 @@ export class HtmlMesh extends Mesh {
             return;
         }
 
+        this._fitStrategy = fitStrategy
         this._isCanvasOverlay = isCanvasOverlay;
         this.createMask();
         this._element = this.createElement();
@@ -158,7 +162,7 @@ export class HtmlMesh extends Mesh {
         this.scaling.setAll(1);
 
         if (element) {
-            this._element!.appendChild(element);
+            this._element!.appendChild(this._fitStrategy.wrapElement(element));
 
             this.updateScaleIfNecessary();
         }
@@ -187,11 +191,7 @@ export class HtmlMesh extends Mesh {
             return;
         }
 
-        const childElement = this._element!.firstElementChild as HTMLElement;
-        if (childElement) {
-            childElement.style.width = `${width}px`;
-            childElement.style.height = `${height}px`;
-        }
+        this._fitStrategy.updateSize(this._element.firstElementChild! as HTMLElement, width, height)
 
         this.updateScaleIfNecessary();
 
