@@ -21,7 +21,7 @@ current form, this will not work in native apps or in XR.  If constructed outsid
 HtmlMesh instances will not have any geometry and will be disabled.  In the future, it might make sense to 
 have them appear with placeholder content of perhaps even an option to view the raw HTML in a popup UI.
 
-HtmlMesh instances by default are "in scene" meaning that they can be occluded by objects in scene and may occlude objects in scene when they are between the camera and the object.  In scene HtmlMesh instances require that the scene clear color is transparent, and they must be rectangular.  HttmlMesh instances can also be created as "overlays".  In this case, they render above the scene, can be semi-transparent, and can be non-rectangular.  However, overlays will render above all scene content, even content that is between the mesh and the camera.  Overlays are a good choice when you want an HTML overlay to be attached to an object in the scene, as it eliminates the need to handle the projection and transforming of the HTML element yourself.
+HtmlMesh instances by default are "in scene" meaning that they can be occluded by objects in scene and may occlude objects in scene when they are between the camera and the object.  In scene HtmlMesh instances require that the scene clear color is transparent, and they must be rectangular.  HttmlMesh instances can also be created as "overlays".  In this case, they render in front of the scene, can be semi-transparent, and can be non-rectangular.  However, overlays will render in front of all scene content, even content that is between the mesh and the camera.  Overlays are a good choice when you want an HTML overlay to be attached to an object in the scene, as it eliminates the need to handle the projection and transforming of the HTML element yourself.
 
 By default the HtmlMesh will capture pointer events as soon as the pointer enters.  This is to facilitate the user's ability to interact with the site content without requiring an extra click or some other gesture.  Note that pointer capture won't occur when a camera zoom causes the pointer to be over the mesh.  This is to allow zooming in and out of the scene without the mesh capturing the pointer and preventing zoom as soon as the pointer enters.  This behavior can be disabled as described in the [pointer capture](#pointer-capture) section below, in which case you will need to provide a mechanism to trigger poiitner capture and release in your code.
 
@@ -52,17 +52,17 @@ HtmlMesh using the `capturePointerEvents` and `releasePointerEvents` methods.
     * require that the scene clear color is transparent
     * must be opaque 
     * must be rectangular
-* `fitStrategy` - Specifies the HtmlElement how to fit the HtmlMesh's size. Fit behavior is like css background-size
-    * FitStrategy.NONE Default. Display HtmlElement at its original size in HtmlMesh without any scaling
-    * FitStrategy.CONTAIN Scales the HtmlElement as large as possible within its container without cropping or stretching, HtmlElement should define an appropriate width
-    * FitStrategy.COVER Scales the HtmlElement (while preserving its ratio) to the smallest possible size to fill the HtmlMesh (that is: both its height and width completely cover the HtmlMesh), leaving no empty space. If the proportions of the HtmlElement differ from the HtmlMesh, the HtmlElement is cropped either vertically or horizontally.
-    * FitStrategy.STRETCH Stretches the HtmlElement in the corresponding dimension to the 100% length
-    
-  In contrast, overlay meshes:
+
+    In contrast, overlay meshes:
     * always render in front of other scene content
     * can be semi-transparent 
     * can be non-rectangular
     * are most commonly used to attach HTML content to a mesh in the scene without having to handle projection and transformations yourself
+* `fitStrategy` - Specifies how the HTML element should scale to fit the HtmlMesh's size. Fit behavior is like css background-size
+    * FitStrategy.NONE Default. By default the HTML element will have a width and height that fill the viewport while respecting the aspect ratio of the element and then will be scaled down to fit the HtmlMesh size specified in `setContent`.  This provides the best possible text quality when using iframes and is the reccommended strategy for iframes.
+    * FitStrategy.CONTAIN Scales the HTML element as large as possible within its container without cropping or stretching (i.e. changing the element aspect ratio).  The main difference between this and none is that this strategy (and all strategies other than none) will wrap the element with a sizing and scaling container that will fill the mesh.  This allows the element to be sized and aligned independent of the mesh.  The downside to this and all strategies other than none is that it can result in upscaling at some zooms which can impact text quality for iframes.  For non-iframes, this should not be an issue as the font size can be asjusted to maximize text clarity.
+    * FitStrategy.COVER Scales the HTML element (while preserving its ratio) to the smallest possible size to fill the HtmlMesh (that is: both its height and width completely cover the HtmlMesh), leaving no empty space. If the proportions of the HtmlElement differ from the HtmlMesh, the HtmlElement is cropped either vertically or horizontally.
+    * FitStrategy.STRETCH Stretches the HtmlElement to fill the entire mesh which can result in aspect ratio changes
 
 Finally, call `setContent` passing in the element and the mesh width and height in BabylonJS units.  Be advised that any scaling done after `setContent` will not be preserved on the next call to `setContent`.  You should grab any scaling you want preserved and pass the scale values through `setContent`.  See [Scaling `HtmlMesh` Instances](#scaling-htmlmesh-instances) for an expalantion on why this is the case.  You can set attributes and styles after calling `setContent` using a query selector on the id.  The `HtmlMesh` can be positioned, oriented, parented, shown or hidden like any other mesh.  You can even use pointer drag behavior and gizmos to allow users to position and move the mesh, subject to the caveats of scaling below.
 

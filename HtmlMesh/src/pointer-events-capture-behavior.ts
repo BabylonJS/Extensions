@@ -85,8 +85,10 @@ const onPointerMove = (evt: PointerEvent) => {
     let pointerCaptureBehavior: PointerEventsCaptureBehavior | undefined;
     const pickResult = _scene.pick(pointerScreenX, pointerScreenY, (mesh) => {
         // If the mesh has an instance of PointerEventsCaptureBehavior attached to it,
-        // then we want to pick it
-        return mesh.isEnabled() && meshToBehaviorMap.has(mesh);
+        // and capture on pointer enter is true, then we want to pick it
+        const pointerCaptureBehavior = meshToBehaviorMap.get(mesh);
+        return mesh.isEnabled() && typeof pointerCaptureBehavior !== 'undefined' && 
+               pointerCaptureBehavior._captureOnPointerEnter;
     });
 
     let pickedMesh: AbstractMesh | null;
