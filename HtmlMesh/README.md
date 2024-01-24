@@ -25,15 +25,33 @@ HtmlMesh instances by default are "in scene" meaning that they can be occluded b
 
 By default the HtmlMesh will capture pointer events as soon as the pointer enters.  This is to facilitate the user's ability to interact with the site content without requiring an extra click or some other gesture.  Note that pointer capture won't occur when a camera zoom causes the pointer to be over the mesh.  This is to allow zooming in and out of the scene without the mesh capturing the pointer and preventing zoom as soon as the pointer enters.  This behavior can be disabled as described in the [pointer capture](#pointer-capture) section below, in which case you will need to provide a mechanism to trigger poiitner capture and release in your code.
 
-## npm
+## How to Run Locally
+
+First, clone the Babylon.js extensions repository:
+
 ```shell
-npm install babylon-htmlmesh --save
+git clone https://github.com/BabylonJS/Extensions.git
 ```
 
-## peer dependencies
-This package depends on BabylonJS, specifically the Core ES6 Supported package `@babylonjs/core`.  This is done to support apps that are taking advantage of dependency optimization to reduce the size of the included BabylonJS dependencies.  See the documentation for [BabylonJS ES6 Support](https://doc.babylonjs.com/setup/frameworkPackages/es6Support) for details.  Note that it will not work if your app is using the legacy `babylonjs` package.  If this is an issue, please create an issue on github and I'll look into creating a legacy compatible version.
+Once the repository has been cloned, open a command prompt in the HtmlMesh folder.
 
-## Usage
+Then, type the following commands:
+
+```shell
+npm install
+npm run dev
+```
+
+Then point your browser at localhost:5173 (or whereever Vite says it is hosted).
+
+## How it works
+The HTML Mesh leverages CSS transforms to make DOM content appear as though it has a location and orientation relative to the camera in the scene.  If the DOM content was rendered on top of the scene, then the DOM content would always occlude anything in the scene behind it.  To allow DOM content to be occluded by meshes in the scene, we instead place the DOM content behind the canvas and then use a depth mask mesh with a material that writes to the depth buffer, but not the color buffer.  This make effectively becomes a proxy for the DOM content and determines whether the renderer renders another mesh, the scene clear color, or nothing (which allows the DOM content to be seen).
+
+Interaction with the DOM content is complicated by the fact that if the canvas is receiving pointer events, then the DOM content is not and vice versa.  A signal is needed to instruct the canvas to stop and start receiving pointer events.  To provide the best experience, the signal shoud be the entry of the pointer, so that the user can interact with the content immediately upon hovering it (or touching it on mobile).  To do this, we attach an onpointermove listener to the document.  It continually monitors the poiner location and picks the scene to determine which mesh is being picked.  If the mesh has the pointer capture behavior attached, then we instruct the behavior for that mesh to capture pointer events.  When the pointer is captured by an iframe, the pointer move event won't be triggered, but as soon as the pointer exits the iframe, the behavior will detect the pointer and transfer pointer event ownership to the canvas, or to another HtmlMesh.  To avoid potential conflicts and race conditions between the canvas and one or more HTML meshes in obtaining and releasing pointer lock, a pointer lock manager is introduced that queues and matches pointer requests and releases.  Note that pointer capture won't occur when a camera zoom causes the pointer to be over the mesh.  This is to allow zooming in and out of the scene without the mesh capturing the pointer and preventing zoom as soon as the pointer enters.  
+
+## How to Use in your App
+The `example.js` file shows an example of using this in your app for dom content, a PDF file (via iframe), an HTML site (via iframe), and a YouTube video (via iframe).
+
 The first step is to create an instance of `HtmlMeshRenderer`.  Pass this the scene, and optionally an options object containing:
 * `containerId` - An optional id of the parent element for the elements that will be rendered as `HtmlMesh` instances.
 * `defaultOpaqueRenderOrder` - an optional render order function that conforms to the interface of the `opaqueSortCompareFn` as described in the documentation for [`Scene.setRenderingOrder`](https://doc.babylonjs.com/typedoc/classes/BABYLON.Scene#setRenderingOrder) to be used as the opaque sort compare for meshes that are not an instanceof `HtmlMesh` for group 0.  See [Rendering Order Impacts](#rendering-order-impacts) for more details.
@@ -41,8 +59,6 @@ The first step is to create an instance of `HtmlMeshRenderer`.  Pass this the sc
 * `defaultTransparentRenderOrder` - an optional render order function that conforms to the interface of the `transparentCompareFn` as described in the documentation for [`Scene.setRenderingOrder`](https://doc.babylonjs.com/typedoc/classes/BABYLON.Scene#setRenderingOrder) to be used as the transparent sort compare for meshes that are not an instanceof `HtmlMesh` for group 0.  See [Rendering Order Impacts](#rendering-order-impacts) for more details.
 
 Next, create the DOM element for your content.  This can be any HTML element though most of the time, it should either be a `div` for DOM content in the same app, or an `iframe` for external dom content.  You should not add this element to your document; `HtmlMesh` will do this for you.  Set any attribute and style values that you want; however, be advised that the width and height styles will be replaced by the `HtmlMesh`.  
-
-One thing to be aware of is that the way the scale is determined can sometimes result in the elment being larger than the mesh if the mesh has a substantal difference in the world min and max z values.  If this is the case, you may want to wrap your element in an outer div that is a bit larger with a background color.  This will ensure that any gaps between the mesh and the element are filled with the background color and the user can access the entire portion of the element that needs to be accessible.  A future update may add suport for this to `setContent`. 
 
 Create your HtmlMesh instance specifying the id, and an and optionally an options object containing:
 * `captureOnPointerEnter` - Specifies if the HtmlMesh should capture pointer events whenever the pointer is over the mesh.  Defauts to true.  if false, you wil need to manually capture and release pointer events for the 
@@ -52,17 +68,17 @@ HtmlMesh using the `capturePointerEvents` and `releasePointerEvents` methods.
     * require that the scene clear color is transparent
     * must be opaque 
     * must be rectangular
-* `fitStrategy` - Specifies the HtmlElement how to fit the HtmlMesh's size. Fit behavior is like css background-size
-    * FitStrategy.NONE Default. Display HtmlElement at its original size in HtmlMesh without any scaling
-    * FitStrategy.CONTAIN Scales the HtmlElement as large as possible within its container without cropping or stretching, HtmlElement should define an appropriate width
-    * FitStrategy.COVER Scales the HtmlElement (while preserving its ratio) to the smallest possible size to fill the HtmlMesh (that is: both its height and width completely cover the HtmlMesh), leaving no empty space. If the proportions of the HtmlElement differ from the HtmlMesh, the HtmlElement is cropped either vertically or horizontally.
-    * FitStrategy.STRETCH Stretches the HtmlElement in the corresponding dimension to the 100% length
 
     In contrast, overlay meshes:
     * always render in front of other scene content
     * can be semi-transparent 
     * can be non-rectangular
     * are most commonly used to attach HTML content to a mesh in the scene without having to handle projection and transformations yourself
+* `fitStrategy` - Specifies how the HTML element should scale to fit the HtmlMesh's size. Fit behavior is like css background-size
+    * FitStrategy.NONE Default. By default the HTML element will have a width and height that fill the viewport while respecting the aspect ratio of the element and then will be scaled down to fit the HtmlMesh size specified in `setContent`.  This provides the best possible text quality when using iframes and is the reccommended strategy for iframes.
+    * FitStrategy.CONTAIN Scales the HTML element as large as possible within its container without cropping or stretching (i.e. changing the element aspect ratio).  The main difference between this and none is that this strategy (and all strategies other than none) will wrap the element with a sizing and scaling container that will fill the mesh.  This allows the element to be sized and aligned independent of the mesh.  The downside to this and all strategies other than none is that it can result in upscaling at some zooms which can impact text quality for iframes.  For non-iframes, this should not be an issue as the font size can be asjusted to maximize text clarity.
+    * FitStrategy.COVER Scales the HTML element (while preserving its ratio) to the smallest possible size to fill the HtmlMesh (that is: both its height and width completely cover the HtmlMesh), leaving no empty space. If the proportions of the HtmlElement differ from the HtmlMesh, the HtmlElement is cropped either vertically or horizontally.
+    * FitStrategy.STRETCH Stretches the HtmlElement to fill the entire mesh which can result in aspect ratio changes
 
 Finally, call `setContent` passing in the element and the mesh width and height in BabylonJS units.  Be advised that any scaling done after `setContent` will not be preserved on the next call to `setContent`.  You should grab any scaling you want preserved and pass the scale values through `setContent`.  See [Scaling `HtmlMesh` Instances](#scaling-htmlmesh-instances) for an expalantion on why this is the case.  You can set attributes and styles after calling `setContent` using a query selector on the id.  The `HtmlMesh` can be positioned, oriented, parented, shown or hidden like any other mesh.  You can even use pointer drag behavior and gizmos to allow users to position and move the mesh, subject to the caveats of scaling below.
 
