@@ -1,7 +1,7 @@
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { CreatePlaneVertexData } from "@babylonjs/core/Meshes/Builders/planeBuilder";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
-import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math";
+import { Matrix } from "@babylonjs/core/Maths/math";
 import { PointerEventsCaptureBehavior } from "./pointer-events-capture-behavior";
 import { Scene } from "@babylonjs/core";
 import { Logger } from "@babylonjs/core/Misc/logger";
@@ -42,15 +42,7 @@ export class HtmlMesh extends Mesh {
     sourceWidth: number | null = null;
     sourceHeight: number | null = null;
 
-    // Variables to store previous scaling, position, and rotation values
-    // so we can detect changes and set requiresUpdate so the element transform
-    // can be updated.
-    _previousScaling = new Vector3();
-    _previousRotation = new Vector3();
-    _previousRotationQuaternion: Quaternion | null = null;
-    _previousPosition = new Vector3();
-
-    sceneBeforeRenderObserver: any;
+    worldMatrixUpdateObserver: any;
 
     /**
      * Contruct an instance of HtmlMesh
@@ -201,44 +193,10 @@ export class HtmlMesh extends Mesh {
             childElement.style.height = `${height}px`;
         }
 
-        //this.updateBaseScale();
         this.updateScaleIfNecessary();
 
         if (this.width && this.height) {
             this.setReady(true);
-        }
-    }
-
-    protected checkRequiresUpdate() {
-        if (!this._element) {
-            return;
-        }
-
-        // Check if the scaling has changed
-        const epsilon = 0.0001;
-        if (
-            !this.scaling.equalsWithEpsilon(this._previousScaling, epsilon) ||
-            !this.rotation.equalsWithEpsilon(this._previousRotation, epsilon) ||
-            !this.position.equalsWithEpsilon(this._previousPosition, epsilon) ||
-            (this.rotationQuaternion == null &&
-                this._previousRotationQuaternion != null) ||
-            (this.rotationQuaternion != null &&
-                !this.rotationQuaternion.equalsWithEpsilon(
-                    this._previousRotationQuaternion as Quaternion,
-                    epsilon
-                ))
-        ) {
-            this._requiresUpdate = true;
-            this._previousScaling.copyFrom(this.scaling);
-            this._previousRotation.copyFrom(this.rotation);
-            if (this.rotationQuaternion != null) {
-                this._previousRotationQuaternion =
-                    this._previousRotationQuaternion || new Quaternion();
-                this._previousRotationQuaternion!.copyFrom(
-                    this.rotationQuaternion!
-                );
-            }
-            this._previousPosition.copyFrom(this.position);
         }
     }
 
@@ -256,16 +214,16 @@ export class HtmlMesh extends Mesh {
             return;
         }
 
-        // if enabled, then start listening for changes to the
+        //if enabled, then start listening for changes to the
         // scaling, rotation, and position.  otherwise stop listening
-        if (enabled && !this.sceneBeforeRenderObserver) {
-            this.sceneBeforeRenderObserver =
-                this.getScene().onBeforeRenderObservable.add(() => {
-                    this.checkRequiresUpdate();
+        if (enabled && !this.worldMatrixUpdateObserver) {
+            this.worldMatrixUpdateObserver =
+                this.onAfterWorldMatrixUpdateObservable.add(() => {
+                    this._requiresUpdate = true;
                 });
         } else if (!enabled) {
-            this.sceneBeforeRenderObserver?.remove();
-            this.sceneBeforeRenderObserver = null;
+            this.worldMatrixUpdateObserver?.remove();
+            this.worldMatrixUpdateObserver = null;
         }
 
         // If enabled, then revert the content element display
@@ -311,14 +269,10 @@ export class HtmlMesh extends Mesh {
         this.checkCollisions = true;
 
         const depthMask = new StandardMaterial(`${this.id}-mat`, scene);
-        depthMask.backFaceCulling = false;
-        depthMask.disableColorWrite = true;
-        depthMask.disableLighting = true;
-        if (this._isCanvasOverlay) {
-            /*
-             * if top, need to hide mask mesh
-             * */
-            depthMask.alpha = 0;
+        if (!this._isCanvasOverlay) {
+            depthMask.backFaceCulling = false;
+            depthMask.disableColorWrite = true;
+            depthMask.disableLighting = true;
         }
 
         this.material = depthMask;
