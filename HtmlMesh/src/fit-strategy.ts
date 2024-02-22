@@ -89,10 +89,10 @@ const FitStrategyNone: FitStrategyType = {
 }
 
 export enum FitStrategy {
-    CONTAIN = 'CONTAIN',
-    COVER = 'COVER',
-    STRETCH = 'STRETCH',
-    NONE = 'NONE'
+    CONTAIN = 3,
+    COVER = 2,
+    STRETCH = 1,
+    NONE = 0
 }
 
 export const FitStrategyMap = {
