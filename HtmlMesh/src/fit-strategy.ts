@@ -88,9 +88,16 @@ const FitStrategyNone: FitStrategyType = {
   }
 }
 
-export const FitStrategy = {
-  CONTAIN: FitStrategyContain,
-  COVER: FitStrategyCover,
-  STRETCH: FitStrategyStretch,
-  NONE: FitStrategyNone
+export enum FitStrategy {
+    CONTAIN = 'CONTAIN',
+    COVER = 'COVER',
+    STRETCH = 'STRETCH',
+    NONE = 'NONE'
+}
+
+export const FitStrategyMap = {
+  [FitStrategy.CONTAIN]: FitStrategyContain,
+  [FitStrategy.COVER]: FitStrategyCover,
+  [FitStrategy.STRETCH]: FitStrategyStretch,
+  [FitStrategy.NONE]: FitStrategyNone
 }
