@@ -8,7 +8,7 @@ import { Camera } from "@babylonjs/core/Cameras/camera";
 import { SubMesh } from "@babylonjs/core/Meshes/subMesh";
 import { RenderingGroup } from "@babylonjs/core/Rendering/renderingGroup";
 
-import { babylonUnitsToPixels, getCanvasRectAsync } from "./util";
+import { babylonUnitsToPixels, getCanvasRectAsync, getCanvasRectOrNull } from "./util";
 import { Logger, Observer } from "@babylonjs/core";
 
 const _positionUpdateFailMessage =
@@ -216,7 +216,7 @@ export class HtmlMeshRenderer {
             );
         }
 
-        const { width, height } = scene.getEngine().getRenderingCanvasClientRect() ?? _defaultRenderingSize;
+        const { width, height } = getCanvasRectOrNull(scene) ?? _defaultRenderingSize;
         // Set the size and resize behavior
         this.setSize(
             width,
