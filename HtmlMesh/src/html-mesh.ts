@@ -5,7 +5,7 @@ import { Matrix } from "@babylonjs/core/Maths/math";
 import { PointerEventsCaptureBehavior } from "./pointer-events-capture-behavior";
 import { Scene } from "@babylonjs/core";
 import { Logger } from "@babylonjs/core/Misc/logger";
-import { FitStrategy, FitStrategyMap, FitStrategyType } from "./fit-strategy.ts";
+import { FitStrategy, FitStrategyType } from "./fit-strategy.ts";
 
 /**
  * This class represents HTML content that we want to render as though it is part of the scene.  The HTML content is actually
@@ -45,7 +45,7 @@ export class HtmlMesh extends Mesh {
 
     worldMatrixUpdateObserver: any;
 
-    _fitStrategy: FitStrategyType = FitStrategyMap[FitStrategy.NONE];
+    _fitStrategy: FitStrategyType = FitStrategy.NONE;
 
     /**
      * Contruct an instance of HtmlMesh
@@ -71,7 +71,7 @@ export class HtmlMesh extends Mesh {
             return;
         }
 
-        this._fitStrategy = FitStrategyMap[fitStrategy]
+        this._fitStrategy = fitStrategy;
         this._isCanvasOverlay = isCanvasOverlay;
         this.createMask();
         this._element = this.createElement();
