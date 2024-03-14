@@ -227,7 +227,7 @@ export class HtmlMeshRenderer {
         const onResize = () => {
             engine.resize();
 
-            const { width, height } = scene.getEngine().getRenderingCanvasClientRect() ?? _defaultRenderingSize;
+            const { width, height } = getCanvasRectOrNull(scene) ?? _defaultRenderingSize;
             this.setSize(
                 width,
                 height
