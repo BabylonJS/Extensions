@@ -183,7 +183,7 @@ export class PointerEventsCaptureBehavior implements Behavior<AbstractMesh> {
         }
         // Remove the reference to this behavior from the mesh
         meshToBehaviorMap.delete(this.attachedMesh);
-        if (this.captureOnPointerEnter) {
+        if (this._captureOnPointerEnter) {
             stopCaptureOnEnter();
         }
         this.attachedMesh = null;
