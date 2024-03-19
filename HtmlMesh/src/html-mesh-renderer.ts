@@ -8,11 +8,13 @@ import { Camera } from "@babylonjs/core/Cameras/camera";
 import { SubMesh } from "@babylonjs/core/Meshes/subMesh";
 import { RenderingGroup } from "@babylonjs/core/Rendering/renderingGroup";
 
-import { babylonUnitsToPixels, getCanvasRectAsync } from "./util";
+import { babylonUnitsToPixels, getCanvasRectAsync, getCanvasRectOrNull } from "./util";
 import { Logger, Observer } from "@babylonjs/core";
 
 const _positionUpdateFailMessage =
     "Failed to update html mesh renderer position due to failure to get canvas rect.  HtmlMesh instances may not render correctly";
+
+const _defaultRenderingSize = { width: 0, height: 0 };
 
 /**
  * A function that compares two submeshes and returns a number indicating which
@@ -214,18 +216,21 @@ export class HtmlMeshRenderer {
             );
         }
 
+        const { width, height } = getCanvasRectOrNull(scene) ?? _defaultRenderingSize;
         // Set the size and resize behavior
         this.setSize(
-            scene.getEngine().getRenderWidth(),
-            scene.getEngine().getRenderHeight()
+            width,
+            height
         );
 
         const engine = scene.getEngine();
         const onResize = () => {
             engine.resize();
+
+            const { width, height } = getCanvasRectOrNull(scene) ?? _defaultRenderingSize;
             this.setSize(
-                scene.getEngine().getRenderWidth(),
-                scene.getEngine().getRenderHeight()
+                width,
+                height
             );
         };
         const boundOnResize = onResize.bind(this);

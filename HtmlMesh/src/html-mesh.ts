@@ -71,7 +71,7 @@ export class HtmlMesh extends Mesh {
             return;
         }
 
-        this._fitStrategy = fitStrategy
+        this._fitStrategy = fitStrategy;
         this._isCanvasOverlay = isCanvasOverlay;
         this.createMask();
         this._element = this.createElement();
