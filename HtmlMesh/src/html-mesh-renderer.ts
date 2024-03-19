@@ -253,24 +253,34 @@ export class HtmlMeshRenderer {
         }
 
         const boundCameraMatrixChanged = this.onCameraMatrixChanged.bind(this);
-
+       
+        let projectionObs, matrixObs;
+        
         const observeCamera = () => {
             const camera = scene.activeCamera;
             if (camera) {
-                camera.onProjectionMatrixChangedObservable.add(
-                    boundCameraMatrixChanged
+                projectionObs = camera.onProjectionMatrixChangedObservable.add(
+                    boundCameraMatrixChanged,
                 );
-                camera.onViewMatrixChangedObservable.add(
-                    boundCameraMatrixChanged
+                matrixObs = camera.onViewMatrixChangedObservable.add(
+                    boundCameraMatrixChanged,
                 );
-            }
+              }
         };
 
-        if (scene.activeCamera) {
+        observeCamera();
+
+        scene.onActiveCameraChanged.add(() => {
+            if (projectionObs) {
+                scene.activeCamera?.onProjectionMatrixChangedObservable.remove(
+                    projectionObs,
+                );
+            }
+            if (matrixObs) {
+                scene.activeCamera?.onViewMatrixChangedObservable.remove(matrixObs);
+            }
             observeCamera();
-        } else {
-            scene.onActiveCameraChanged.add(observeCamera);
-        }
+        });
 
         // We need to make sure that HtmlMeshes are rendered before all other meshes
         // so that they don't appear in front of meshes that are actually in front of them
