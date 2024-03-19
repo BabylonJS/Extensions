@@ -123,7 +123,7 @@ export class HtmlMesh extends Mesh {
 
     dispose() {
         super.dispose();
-        document.querySelector(`#${this.id}`)?.remove();
+        this._element?.remove();
         this._element = undefined;
         if (this._pointerEventCaptureBehavior) {
             this._pointerEventCaptureBehavior.dispose();

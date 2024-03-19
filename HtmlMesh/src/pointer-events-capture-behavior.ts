@@ -32,6 +32,7 @@ const startCaptureOnEnter = (scene: Scene) => {
     }
     if (captureOnEnterCount === 0) {
         document.addEventListener("pointermove", onPointerMove);
+        document.addEventListener("touchstart", onPointerMove);
         _scene = _scene ?? scene;
         Logger.Log(
             "PointerEventsCaptureBehavior: Starting observation of pointer move events."
@@ -43,6 +44,7 @@ const startCaptureOnEnter = (scene: Scene) => {
 
 const doStopCaptureOnEnter = () => {
     document.removeEventListener("pointermove", onPointerMove);
+    document.removeEventListener("touchstart", onPointerMove);
     _scene = null;
     Logger.Log(
         "PointerEventsCaptureBehavior: Stopping observation of pointer move events."
@@ -68,7 +70,7 @@ const stopCaptureOnEnter = () => {
 };
 
 // Module level function used to determine if an entered mesh should capture pointer events
-const onPointerMove = (evt: PointerEvent) => {
+const onPointerMove = (evt: PointerEvent | TouchEvent) => {
     if (!_scene) {
         return;
     }
@@ -78,9 +80,13 @@ const onPointerMove = (evt: PointerEvent) => {
         return;
     }
 
+    // Get the object that contains the client X and Y from either the pointer event or from the
+    // TouchEvent touch
+    const { clientX, clientY } = 'touches' in evt ? evt.touches[0] : evt;
+
     // get the picked mesh, if any
-    const pointerScreenX = evt.clientX - canvasRect.left;
-    const pointerScreenY = evt.clientY - canvasRect.top;
+    const pointerScreenX = clientX - canvasRect.left;
+    const pointerScreenY = clientY - canvasRect.top;
 
     let pointerCaptureBehavior: PointerEventsCaptureBehavior | undefined;
     const pickResult = _scene.pick(pointerScreenX, pointerScreenY, (mesh) => {
