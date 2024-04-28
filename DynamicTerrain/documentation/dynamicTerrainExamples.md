@@ -20,7 +20,7 @@ Let's create a simple data map with a sinus/cosinus function :
         }
 
 ```
-The hills have a different height depending on their positions on the map.  
+The hills have a different elevations depending on their positions on the map.  
 
 Let's create then a dynamic terrain from this map :
 ```javascript
@@ -34,7 +34,7 @@ Let's create then a dynamic terrain from this map :
         };
         terrain = new BABYLON.DynamicTerrain("terrain", params, scene);
 ```
-Now we can set the camera altitude on each frame at a fixed elevation above the terrain.  For this, we use the method `getHeightFromMap(x, z)` what returns the height (y coordinate) of the terrain at the passed location _(x, z)_.  
+Now we can set the camera altitude on each frame at a fixed elevation above the terrain.  For this, we use the method `getHeightFromMap(x, z)` what returns the elevations (y coordinate) of the terrain at the passed location _(x, z)_.  
 
 ```javascript
     var camElevation = 2.0;
