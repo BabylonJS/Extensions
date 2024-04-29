@@ -18,17 +18,17 @@ According to the current camera position in the World, the dynamic terrain morph
 ### The data map
 The first thing we need to create a dynamic terrain is a data map.  
 The data map is a simple flat array of successive 3D coordinates _(x, y, z)_ in the World.  
-It's defined by the number of points on the map width, called`mapSubX` by the dynamic terrain, and the number of points on the map height, called `mapSubZ`.   
+It's defined by the number of points on the map width, called`mapSubX` by the dynamic terrain, and the number of points on the map depth, called `mapSubZ`.   
 
 The dynamic terrain imposes some constraints to the map :  
 
-* the distances between two successive points on the map width must be quite constant
-* the distances between two successive points on the map height must be quite constant
-* the points must be sorted in ascending order regarding to their coordinates, first on the width, then on the height.  
+* the distances between two successive points on the map width must be constant
+* the distances between two successive points on the map depth must be constant
+* the points must be sorted in ascending order regarding to their coordinates, first on the width, then on the depth.  
 
 What does this mean ?  
 
-If we call `P[i, j]` the point P at the row `j` on the map height and at the column `i` on the map width, this means that :  
+If we call `P[i, j]` the point P at the row `j` on the map depth and at the column `i` on the map width, this means that :  
 - for any row `j` in the map, `P[0, j].x` is lower than `P[1, j].x`, what is lower than `P[2, j].x`, etc
 - for any column `i` in the map, `P[i, 0].z` is lower than `P[i, 1].z`, what is lower than `P[i, 2].z`, etc
 - the distance between each column is quite constant
@@ -36,20 +36,20 @@ If we call `P[i, j]` the point P at the row `j` on the map height and at the col
 
 Example :  
 Here, we populate a big `Float32Array` with successive 3D float coordinates.  
-We use a _simplex_ function from a third party library to set each point altitude.  
-This array is the data map. It's defined by 1000 points on its width and 800 points on its height.   
-The distance between the points is constant on the width and is different from the constant distance between the points on the height.   
+We use a _simplex_ function from a third party library to set each point's y dimension (elevation).  
+This array is the data map. It's defined by 1000 points on its width and 800 points on its depth.   
+The distance between the points is constant on the width and is different from the constant distance between the points on the depth.   
 ```javascript
     var mapSubX = 1000;             // map number of points on the width
-    var mapSubZ = 800;              // map number of points on the height
+    var mapSubZ = 800;              // map number of points on the depth
     var seed = 0.3;                 // set the noise seed
     noise.seed(seed);               // generate the simplex noise, don't care about this
     var mapData = new Float32Array(mapSubX * mapSubZ * 3);  // x3 because 3 values per point : x, y, z
-    for (var l = 0; l < mapSubZ; l++) {                 // loop on height points
+    for (var l = 0; l < mapSubZ; l++) {                 // loop on depth points
         for (var w = 0; w < mapSubX; w++) {             // loop on width points
             var x = (w - mapSubX * 0.5) * 5.0;          // distance inter-points = 5 on the width
             var z = (l - mapSubZ * 0.5) * 2.0;          // distance inter-points = 2 on the length
-            var y = noise.simplex2(x, z);               // altitude
+            var y = noise.simplex2(x, z);               // elevation
                    
             mapData[3 * (l * mapSubX + w)] = x;
             mapData[3 * (l * mapSubX + w) + 1] = y;
@@ -59,7 +59,7 @@ The distance between the points is constant on the width and is different from t
 ```
 
 PG example : https://www.babylonjs-playground.com/#FJNR5#162  
-In this example, the data map is generated in a Float32Array. The very useful library [perlin.js](https://github.com/josephg/noisejs) is used to compute the altitude of each point with a _simplex2_ noise function.  
+In this example, the data map is generated in a Float32Array. The very useful library [perlin.js](https://github.com/josephg/noisejs) is used to compute the elevation of each point with a _simplex2_ noise function.  
 In order to better understand how this map is generated, we use it as a ribbon mesh geometry here. The ribbon is displayed in wireframe mode. In this example, the ribbon is thus a really big mesh (1000 x 800 = 800K vertices !). So you shouldn't try to render so big meshes in your scene if you want to keep a decent framerate. Moreover, remember that the logical map could also be bigger than 800K points.  
 
 ### The Dynamic Terrain
@@ -325,7 +325,7 @@ This will be called on next terrain updates, not necesseraly each frame.
         vertex.color.g = 1.0;
         vertex.color.r = 1.0;
         vertex.color.b = 1.0;
-        // change it above a given altitude
+        // change it above a given elevation
         if (vertex.position.y > 2.0) {
             vertex.color.b = vertex.position.y / 30.0;
             vertex.color.r = vertex.color.b;
@@ -388,7 +388,7 @@ if (terrain.contains(x, z)) {
 }
 ```
 
-If we need to know what is the altitude on the map of any point located at the coordinatets _(x, z)_ in the World, even if this point is not one of the point defining the map (not one of the points in the map array), we can use the method `getHeightFromMap(x ,z)`.  
+If we need to know what is the elevation on the map of any point located at the coordinates _(x, z)_ in the World, even if this point is not one of the point defining the map (not one of the points in the map array), we can use the method `getHeightFromMap(x ,z)`.  
 ```javascript
 var y = terrain.getHeightFromMap(x, z); // returns y at (x, z) in the World
 ```
@@ -398,7 +398,7 @@ This method can also return the value of the terrain normal vector at the coordi
 var normal = BABYLON.Vector.Zero();
 y = terrain.getHeightFromMap(x, z, normal); // update also normal with the terrain normal at (x, z)
 ```
-Note : When the terrain is inverted, the returned height is negative.  
+Note : When the terrain is inverted, the returned elevation is negative.  
 
 ## Other Properties
 
@@ -420,7 +420,7 @@ var terrainCenter = terrain.centerLocal;        // Vector3 position of the terra
 var terrainWorldCenter = terrain.centerWorld;   // Vector3 position of the terrain center in the World space
 
 var mapPointsX = terrain.mapSubX;   // the passed map number of points on width at terrain construction time
-var mapPointsZ = terrain.mapSubZ;   // the passed map number of points on height at terrain construction time
+var mapPointsZ = terrain.mapSubZ;   // the passed map number of points on depth at terrain construction time
 
 var camera = terrain.camera;        // the camera the terrain is linked to. By default, the scene active camera
 ```
@@ -446,16 +446,16 @@ This array must have the same size than the data array.
 Let's get back the very first example of the data array generation and let's populate a color array `mapColors`
 ```javascript
     var mapSubX = 1000;             // map number of points on the width
-    var mapSubZ = 800;              // map number of points on the height
+    var mapSubZ = 800;              // map number of points on the depth
     var seed = 0.3;                 // set the noise seed
     noise.seed(seed);               // generate the simplex noise, don't care about this
     var mapData = new Float32Array(mapSubX * mapSubZ * 3);  // x3 because 3 values per point : x, y, z
     var mapColors = new Float32Array(mapSubX * mapSubZ * 3); // x3 because 3 values per point : r, g, b
-    for (var l = 0; l < mapSubZ; l++) {                 // loop on height points
+    for (var l = 0; l < mapSubZ; l++) {                 // loop on depth points
         for (var w = 0; w < mapSubX; w++) {             // loop on width points
             var x = (w - mapSubX * 0.5) * 5.0;          // distance inter-points = 5 on the width
             var z = (l - mapSubZ * 0.5) * 2.0;          // distance inter-points = 2 on the width
-            var y = noise.simplex2(x, z);               // altitude
+            var y = noise.simplex2(x, z);               // elevation
                    
             mapData[3 * (l * mapSubX + w)] = x;
             mapData[3 * (l * mapSubX + w) + 1] = y;
@@ -502,7 +502,7 @@ var params = {
 var terrain = new BABYLON.DynamicTerrain("t", params, scene);
 ```
 Example :  
-Here we populate a data map with no altitude (y = 0) and, in the same time, a UV map as a flat array by simply setting the u and v values in the 2D texture relatively to the _(x, z)_ coordinates of each map point.  
+Here we populate a data map with no elevation (y = 0) and, in the same time, a UV map as a flat array by simply setting the u and v values in the 2D texture relatively to the _(x, z)_ coordinates of each map point.  
 ```javascript
     var mapData = new Float32Array(mapSubX * mapSubZ * 3); // x3 float values per point : x, y and z
     var mapUVs = new Float32Array(mapSubX * mapSubZ * 2); // x2 because 2 values per point : u, v
@@ -620,7 +620,7 @@ Like the BJS `MeshBuilder` class provides a method to create a mesh from a heigh
 Here's the way to use it :  
 ```javascript
 // Declare a callback function that will be executed once the heightmap file is downloaded
-// This function is passed the generated data and the number of points on the map height and width
+// This function is passed the generated data and the number of points on the map depth and width
 var terrain;
 var createTerrain = function(mapData, mapSubX, mapSubZ) {
     var options = {
@@ -638,8 +638,8 @@ var createTerrain = function(mapData, mapSubX, mapSubZ) {
 // Create the map from the height map and call the callback function when done
 var hmURL = "http://www.babylonjs.com/assets/heightMap.png";  // heightmap file URL
 var hmOptions = {
-        width: 5000, height: 4000,          // map size in the World 
-        subX: 1000, subZ: 800,              // number of points on map width and height
+        width: 5000, height: 4000,          // map size in the World (x, z)
+        subX: 1000, subZ: 800,              // number of points on map width and depth
         onReady: createTerrain              // callback function declaration
 };
 var mapData = new Float32Array(1000 * 800 * 3); // the array that will store the generated data
@@ -649,7 +649,7 @@ BABYLON.DynamicTerrain.CreateMapFromHeightMapToRef(hmURL, hmOptions, mapData, sc
 * `hmURL` is a string, it's the URL or the DataURL string of the height map image,
 * `width` and `height` are optional floats (default 300), the dimensions the map in the World,  
 * `subX` and `subZ` are optional integers (default 100), the number of points on each map dimension,
-* `minHeight` and `maxHeight` are the optional minimal and maximal heights (floats, default 0 and 10),  
+* `minHeight` and `maxHeight` are the optional minimal and maximal elevations (floats, default 0 and 10),  
 * `offsetX` and `offsetZ` are optional floats (default 0) to shift the map, that is centered around the World origin by default, along the X or Z World axes,  
 * `onReady` is an optional callback function to be called when the data are generated. It's passed the data array and the number of points per map dimension,  
 * `mapData` is a float array, sized subX x subZ x 3,  
