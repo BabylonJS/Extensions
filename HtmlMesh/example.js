@@ -25,6 +25,7 @@ const createScene = () => {
 
     // This creates a basic Babylon Scene object (non-mesh)
     scene = new Scene(engine);
+    scene.useRightHandedSystem = true;
     scene.clearColor = new Color4(0,0,0,0);
 
     scene.createDefaultCameraOrLight(true, true, true);
