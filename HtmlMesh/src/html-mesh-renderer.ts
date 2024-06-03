@@ -420,7 +420,7 @@ export class HtmlMeshRenderer {
         },${
             this.epsilon( elements[1] )
         },${
-            this.epsilon( elements[2] )
+            this.epsilon( elements[2] * -direction )
         },${
             this.epsilon( elements[3] )
         },${
@@ -428,13 +428,13 @@ export class HtmlMeshRenderer {
         },${
             this.epsilon( - elements[5] )
         },${
-            this.epsilon( - elements[6] )
+            this.epsilon( elements[6]  * direction )
         },${
             this.epsilon( - elements[7] )
         },${
-            this.epsilon( elements[8] )
+            this.epsilon( elements[8] * -direction )
         },${
-            this.epsilon( elements[9] )
+            this.epsilon( elements[9] * -direction )
         },${
             this.epsilon( elements[10] )
         },${
