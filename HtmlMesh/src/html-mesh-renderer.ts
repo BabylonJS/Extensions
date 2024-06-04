@@ -414,7 +414,7 @@ export class HtmlMeshRenderer {
     // prettier-ignore
     protected getHtmlContentCSSMatrix(matrix: Matrix, useRightHandedSystem: boolean): string {
         const elements = matrix.m;
-        // In a right handed coordinate system, the elements 11 to 14 have to be inverted
+        // In a right handed coordinate system, the elements 11 to 14 have to change their direction
         const direction = useRightHandedSystem ? -1 : 1;
         const matrix3d = `matrix3d(${
             this.epsilon( elements[0] )
@@ -452,9 +452,11 @@ export class HtmlMeshRenderer {
         return matrix3d;
     }
 
-    protected getTransformationMatrix(htmlMesh: HtmlMesh, useRightHandedSystem: boolean): Matrix {
-
-        // Depending on the billboard mode, we have to rotate the mesh by 180 degrees
+    protected getTransformationMatrix(
+        htmlMesh: HtmlMesh,
+        useRightHandedSystem: boolean
+    ): Matrix {
+        // In a right handed coordinate system a mesh may have to be rotated by 180 degrees depending on the billboard mode
         if (useRightHandedSystem) {
             if (htmlMesh.billboardMode === 2 || htmlMesh.billboardMode === 7) {
                 htmlMesh.rotation.y = Math.PI;
@@ -502,7 +504,6 @@ export class HtmlMeshRenderer {
         scaleTransform.x *= widthScaleFactor;
         scaleTransform.y *= heightScaleFactor;
 
-
         Matrix.ComposeToRef(
             scaleTransform,
             rotationTransform,
@@ -510,17 +511,19 @@ export class HtmlMeshRenderer {
             scaledAndTranslatedObjectMatrix
         );
 
+        // Adjust direction of 12 and 13 of the transformation matrix based on the handedness of the system        
         const direction = useRightHandedSystem ? -1 : 1;
-
         // Adjust translation values to be from camera vs world origin
         // Note that we are also adjusting these values to be pixels vs Babylon units
         const position = htmlMesh.getAbsolutePosition();
         scaledAndTranslatedObjectMatrix.setRowFromFloats(
             3,
             (-this._cameraWorldMatrix.m[12] + position.x) *
-                babylonUnitsToPixels * direction,
+                babylonUnitsToPixels *
+                direction,
             (-this._cameraWorldMatrix.m[13] + position.y) *
-                babylonUnitsToPixels * direction,
+                babylonUnitsToPixels *
+                direction,
             (this._cameraWorldMatrix.m[14] - position.z) * babylonUnitsToPixels,
             this._cameraWorldMatrix.m[15] * 0.00001 * babylonUnitsToPixels
         );
@@ -542,7 +545,10 @@ export class HtmlMeshRenderer {
         return scaledAndTranslatedObjectMatrix;
     }
 
-    protected renderHtmlMesh(htmlMesh: HtmlMesh, useRightHandedSystem: boolean) {
+    protected renderHtmlMesh(
+        htmlMesh: HtmlMesh,
+        useRightHandedSystem: boolean
+    ) {
         if (!htmlMesh.element) {
             // nothing to render, so bail
             return;
@@ -570,8 +576,10 @@ export class HtmlMeshRenderer {
         }
 
         // Get the transformation matrix for the html mesh
-        const scaledAndTranslatedObjectMatrix =
-            this.getTransformationMatrix(htmlMesh, useRightHandedSystem);
+        const scaledAndTranslatedObjectMatrix = this.getTransformationMatrix(
+            htmlMesh,
+            useRightHandedSystem
+        );
 
         const style = `translate(-50%, -50%) ${this.getHtmlContentCSSMatrix(
             scaledAndTranslatedObjectMatrix,
@@ -673,7 +681,7 @@ export class HtmlMeshRenderer {
         const cameraMatrixWorldAsArray = this._temp.cameraWorldMatrixAsArray;
         cameraMatrixWorld.copyToArray(cameraMatrixWorldAsArray);
 
-        // For a few values, we have to adjust the multiplier based on the handedness of the system
+        // For a few values, we have to adjust the direction based on the handedness of the system
         const direction = useRightHandedSystem ? 1 : -1;
 
         cameraMatrixWorldAsArray[1] = cameraRotationMatrix.m[1];
