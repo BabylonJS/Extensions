@@ -4,7 +4,7 @@ import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
 import { ActionManager } from "@babylonjs/core/Actions/actionManager";
 import { ExecuteCodeAction } from "@babylonjs/core/Actions/directActions";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
-import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import "@babylonjs/core/Helpers/sceneHelpers";
 
 import { HtmlMeshRenderer } from "./src/html-mesh-renderer";
@@ -25,11 +25,15 @@ const createScene = () => {
 
     // This creates a basic Babylon Scene object (non-mesh)
     scene = new Scene(engine);
-    // scene.useRightHandedSystem = true;
+    scene.useRightHandedSystem = true;
     scene.clearColor = new Color4(0,0,0,0);
 
     scene.createDefaultCameraOrLight(true, true, true);
     scene.activeCamera.radius = 23;
+    if (scene.useRightHandedSystem) {
+        scene.activeCamera.position = new Vector3(0, 0, 25);
+        scene.activeCamera.rotationQuaternion = Quaternion.FromEulerAngles(0, Math.PI, 0);;
+    }
 
     // Uncomment these lines to test issue #261
     // const camera = new ArcRotateCamera('', -Math.PI / 3, Math.PI / 2.5, 20, Vector3.Zero(), scene)
@@ -48,7 +52,10 @@ const createScene = () => {
 
     bg.scaling.x = 16;
     bg.scaling.y = 20;
-    bg.position.z = 3;
+    bg.position.z = scene.useRightHandedSystem ? -3 : 3;
+    if (scene.useRightHandedSystem) {
+        bg.rotationQuaternion = Quaternion.FromEulerAngles(0, Math.PI, 0);
+    }
 
     sphere.position.x = 1.5;
     sphere.position.y = -0.5;

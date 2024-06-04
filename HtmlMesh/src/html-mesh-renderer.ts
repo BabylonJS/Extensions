@@ -14,6 +14,7 @@ import {
     getCanvasRectOrNull,
 } from "./util";
 import { Logger, Observer } from "@babylonjs/core";
+import { sceneUboDeclaration } from "@babylonjs/core/Shaders/ShadersInclude/sceneUboDeclaration";
 
 const _positionUpdateFailMessage =
     "Failed to update html mesh renderer position due to failure to get canvas rect.  HtmlMesh instances may not render correctly";
@@ -452,6 +453,10 @@ export class HtmlMeshRenderer {
     }
 
     protected getTransformationMatrix(htmlMesh: HtmlMesh, useRightHandedSystem: boolean): Matrix {
+
+        if (useRightHandedSystem && htmlMesh.billboardMode !== 0) {
+            htmlMesh.rotation.y = Math.PI;
+        }
         // Get the camera world matrix
         // Make sure the camera world matrix is up to date
         if (!this._cameraWorldMatrix) {
@@ -493,6 +498,7 @@ export class HtmlMeshRenderer {
         );
         scaleTransform.x *= widthScaleFactor;
         scaleTransform.y *= heightScaleFactor;
+
 
         Matrix.ComposeToRef(
             scaleTransform,
