@@ -13,11 +13,29 @@ import { HtmlMesh } from "./src/html-mesh";
 import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
 import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
 import { FitStrategy } from "./src/fit-strategy";
+import { CreateScreenshot } from "@babylonjs/core";
 
 const debug = true;
 
 let engine;
 let scene;
+
+
+const createBillboardScreen = (name, content, billboardMode, position) => {
+    const billboard7 = new HtmlMesh(scene, name, { isCanvasOverlay: true, fitStrategy: FitStrategy.COVER });
+    const billboard7Div = document.createElement('div');
+    billboard7Div.innerHTML = content;
+    billboard7Div.style.backgroundColor = 'rgba(25,0,255,0.49)';
+    billboard7Div.style.width = '400px';
+    billboard7Div.style.display = 'flex';
+    billboard7Div.style.alignItems = 'center';
+    billboard7Div.style.justifyContent = 'center';
+    billboard7Div.style.padding = '10px';
+
+    billboard7.setContent(billboard7Div, 2, 2);
+    billboard7.position = position;
+    billboard7.billboardMode = billboardMode;
+}
 
 const createScene = () => {
     const canvas = document.querySelector("canvas");
@@ -32,7 +50,7 @@ const createScene = () => {
     scene.activeCamera.radius = 23;
     if (scene.useRightHandedSystem) {
         scene.activeCamera.position = new Vector3(0, 0, 25);
-        scene.activeCamera.rotationQuaternion = Quaternion.FromEulerAngles(0, Math.PI, 0);;
+        scene.activeCamera.rotationQuaternion = Quaternion.FromEulerAngles(0, Math.PI, 0);
     }
 
     // Uncomment these lines to test issue #261
@@ -246,6 +264,13 @@ const createScene = () => {
     overlayStretchMesh.position.x = 2;
     overlayStretchMesh.position.y = 7;
     overlayStretchMesh.billboardMode = 7;
+
+    // Billboard tests
+    createBillboardScreen("html-billboard-0", "0", 0, new Vector3(6, 7, 0));
+    createBillboardScreen("html-billboard-1", "1", 1, new Vector3(9, 7, 0));
+    createBillboardScreen("html-billboard-2", "2", 2, new Vector3(6, 5, 0));
+    createBillboardScreen("html-billboard-4", "4", 4, new Vector3(9, 5, 0));
+    createBillboardScreen("html-billboard-7", "7", 7, new Vector3(6, 3, 0));
 
     // Uncomment this line to test issue #264
     //MeshBuilder.CreateBox("box2", {size: 1}, scene);

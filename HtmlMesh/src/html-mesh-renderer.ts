@@ -454,8 +454,11 @@ export class HtmlMeshRenderer {
 
     protected getTransformationMatrix(htmlMesh: HtmlMesh, useRightHandedSystem: boolean): Matrix {
 
-        if (useRightHandedSystem && htmlMesh.billboardMode !== 0) {
-            htmlMesh.rotation.y = Math.PI;
+        // Depending on the billboard mode, we have to rotate the mesh by 180 degrees
+        if (useRightHandedSystem) {
+            if (htmlMesh.billboardMode === 2 || htmlMesh.billboardMode === 7) {
+                htmlMesh.rotation.y = Math.PI;
+            }
         }
         // Get the camera world matrix
         // Make sure the camera world matrix is up to date
