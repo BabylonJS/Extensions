@@ -16,17 +16,17 @@ Then in your code, declare this script in a html tag **after** the script tag de
 The dynamic terrain is a mesh that morphs on a logical data map.  
 This map is a simple flat array of successive 3D coordinates (x, y, z) as floats.  
 It can be as huge as you need, as long as you've enough memory. This won't be rendered anyway.  
-The map must be passed to the dynamic terrain constructor as well as the number of subdivisions on the map width and height.  
+The map must be passed to the dynamic terrain constructor as well as the number of subdivisions on the map width and depth.  
 
 ```javascript
 var mapCoords = [some_big_flat_array_of_coordinates];
 var mapWidthPointNb = 2000;     // 2000 points in the map width
-var mapHeightPointNb = 1000;    // 1000 points in the map height
+var mapDepthPointNb = 1000;    // 1000 points in the map depth
 var terrainSub = 100;           // the terrain wil be 100x100 vertices only
 var mapParams = {
     mapData: mapCoords,
     mapSubX: mapWidthPointNb,
-    mapSubZ: mapHeightPointNb,
+    mapSubZ: mapDepthPointNb,
     terrainSub: terrainSub
 };
 
