@@ -20,20 +20,38 @@ let engine;
 let scene;
 
 
-const createBillboardScreen = (name, content, billboardMode, position) => {
-    const billboard7 = new HtmlMesh(scene, name, { isCanvasOverlay: true, fitStrategy: FitStrategy.COVER });
-    const billboard7Div = document.createElement('div');
-    billboard7Div.innerHTML = content;
-    billboard7Div.style.backgroundColor = 'rgba(25,0,255,0.49)';
-    billboard7Div.style.width = '400px';
-    billboard7Div.style.display = 'flex';
-    billboard7Div.style.alignItems = 'center';
-    billboard7Div.style.justifyContent = 'center';
-    billboard7Div.style.padding = '10px';
+const createRotatedScreen = (name, content, rotation, position) => {
+    const screen = new HtmlMesh(scene, name, { isCanvasOverlay: true, fitStrategy: FitStrategy.COVER });
+    const screenDiv = document.createElement('div');
+    screenDiv.innerHTML = content;
+    screenDiv.style.backgroundColor = 'rgba(25,0,255,0.49)';
+    screenDiv.style.width = '400px';
+    screenDiv.style.display = 'flex';
+    screenDiv.style.alignItems = 'center';
+    screenDiv.style.justifyContent = 'center';
+    screenDiv.style.padding = '10px';
+    screenDiv.style.fontSize = '300px';
 
-    billboard7.setContent(billboard7Div, 2, 2);
-    billboard7.position = position;
-    billboard7.billboardMode = billboardMode;
+    screen.setContent(screenDiv, 2, 2);
+    screen.position = position;
+    screen.rotation = rotation;
+}
+
+const createBillboardScreen = (name, content, billboardMode, position) => {
+    const screen = new HtmlMesh(scene, name, { isCanvasOverlay: true, fitStrategy: FitStrategy.COVER });
+    const screenDiv = document.createElement('div');
+    screenDiv.innerHTML = content;
+    screenDiv.style.backgroundColor = 'rgba(25,0,255,0.49)';
+    screenDiv.style.width = '400px';
+    screenDiv.style.display = 'flex';
+    screenDiv.style.alignItems = 'center';
+    screenDiv.style.justifyContent = 'center';
+    screenDiv.style.padding = '10px';
+    screenDiv.style.fontSize = '300px';
+
+    screen.setContent(screenDiv, 2, 2);
+    screen.position = position;
+    screen.billboardMode = billboardMode;
 }
 
 const createScene = () => {
@@ -42,7 +60,8 @@ const createScene = () => {
 
     // This creates a basic Babylon Scene object (non-mesh)
     scene = new Scene(engine);
-    scene.useRightHandedSystem = true;
+    // Uncomment to test #293
+    // scene.useRightHandedSystem = true;
     scene.clearColor = new Color4(0,0,0,0);
 
     scene.createDefaultCameraOrLight(true, true, true);
@@ -263,6 +282,13 @@ const createScene = () => {
     createBillboardScreen("html-billboard-2", "2", 2, new Vector3(6, 5, 0));
     createBillboardScreen("html-billboard-4", "4", 4, new Vector3(9, 5, 0));
     createBillboardScreen("html-billboard-7", "7", 7, new Vector3(6, 3, 0));
+
+    createRotatedScreen("html-rotate-x", "x", new Vector3(Math.PI, 0, 0), new Vector3(-6, 7, 0));
+    createRotatedScreen("html-rotate-y", "y", new Vector3(0, Math.PI, 0), new Vector3(-9, 7, 0));
+    createRotatedScreen("html-rotate-z", "z", new Vector3(0, 0, Math.PI), new Vector3(-6, 5, 0));
+    createRotatedScreen("html-rotate-xy", "xy", new Vector3(Math.PI, Math.PI, 0), new Vector3(-9, 5, 0));
+    createRotatedScreen("html-rotate-xz", "xz", new Vector3(Math.PI, 0, Math.PI), new Vector3(-6, 3, 0));
+    createRotatedScreen("html-rotate-yz", "yz", new Vector3(0, Math.PI, Math.PI), new Vector3(-9, 5, 0));
 
     // Uncomment this line to test issue #264
     //MeshBuilder.CreateBox("box2", {size: 1}, scene);
