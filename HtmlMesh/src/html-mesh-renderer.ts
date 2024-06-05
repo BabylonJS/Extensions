@@ -530,7 +530,7 @@ export class HtmlMeshRenderer {
     }
 
     protected renderHtmlMesh(htmlMesh: HtmlMesh) {
-        if (!htmlMesh.element) {
+        if (!htmlMesh.element || !htmlMesh.element.firstElementChild) {
             // nothing to render, so bail
             return;
         }

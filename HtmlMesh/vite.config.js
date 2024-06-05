@@ -1,7 +1,12 @@
+import dts from "vite-plugin-dts";
+
 export default {
+    plugins: [
+        dts({ rollupTypes: true }), 
+    ],
     build: {
         lib: {
-            entry: 'index.js',
+            entry: 'index.ts',
             name: 'babylon-htmlmesh',
             fileName: (format) => `${format}/babylon-htmlmesh.js`
         },
