@@ -4,7 +4,7 @@ import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
 import { ActionManager } from "@babylonjs/core/Actions/actionManager";
 import { ExecuteCodeAction } from "@babylonjs/core/Actions/directActions";
 import { Color4 } from "@babylonjs/core/Maths/math.color";
-import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import "@babylonjs/core/Helpers/sceneHelpers";
 
 import { HtmlMeshRenderer } from "./src/html-mesh-renderer";

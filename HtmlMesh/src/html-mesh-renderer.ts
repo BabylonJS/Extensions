@@ -14,7 +14,6 @@ import {
     getCanvasRectOrNull,
 } from "./util";
 import { Logger, Observer } from "@babylonjs/core";
-import { sceneUboDeclaration } from "@babylonjs/core/Shaders/ShadersInclude/sceneUboDeclaration";
 
 const _positionUpdateFailMessage =
     "Failed to update html mesh renderer position due to failure to get canvas rect.  HtmlMesh instances may not render correctly";
