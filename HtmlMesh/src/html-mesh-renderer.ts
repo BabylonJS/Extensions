@@ -456,11 +456,9 @@ export class HtmlMeshRenderer {
         htmlMesh: HtmlMesh,
         useRightHandedSystem: boolean
     ): Matrix {
-        // In a right handed coordinate system a mesh may have to be rotated by 180 degrees depending on the billboard mode
+        // In a right handed coordinate system a mesh always has to be rotated by 180 degrees
         if (useRightHandedSystem) {
-            if (htmlMesh.billboardMode === 2 || htmlMesh.billboardMode === 7) {
                 htmlMesh.rotation.y = Math.PI;
-            }
         }
         // Get the camera world matrix
         // Make sure the camera world matrix is up to date
