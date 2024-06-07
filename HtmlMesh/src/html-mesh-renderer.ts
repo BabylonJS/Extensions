@@ -455,10 +455,6 @@ export class HtmlMeshRenderer {
         htmlMesh: HtmlMesh,
         useRightHandedSystem: boolean
     ): Matrix {
-        // In a right handed coordinate system a mesh always has to be rotated by 180 degrees
-        if (useRightHandedSystem) {
-                htmlMesh.rotation.y = Math.PI;
-        }
         // Get the camera world matrix
         // Make sure the camera world matrix is up to date
         if (!this._cameraWorldMatrix) {
@@ -578,10 +574,12 @@ export class HtmlMeshRenderer {
             useRightHandedSystem
         );
 
-        const style = `translate(-50%, -50%) ${this.getHtmlContentCSSMatrix(
+        let style = `translate(-50%, -50%) ${this.getHtmlContentCSSMatrix(
             scaledAndTranslatedObjectMatrix,
             useRightHandedSystem
         )}`;
+        // In a right handed system, screens are on the wrong side of the mesh, so we have to rotate by Math.PI which results in the matrix3d seen below
+        style += `${useRightHandedSystem ? 'matrix3d(-1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1)' : ''}`
 
         if (htmlMeshData.style !== style) {
             htmlMesh.element.style.webkitTransform = style;

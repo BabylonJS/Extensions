@@ -31,7 +31,7 @@ const createRotatedScreen = (name, content, rotation, position) => {
     screenDiv.style.justifyContent = 'center';
     screenDiv.style.padding = '10px';
     screenDiv.style.fontSize = '300px';
-
+    
     screen.setContent(screenDiv, 2, 2);
     screen.position = position;
     screen.rotation = rotation;
@@ -48,20 +48,22 @@ const createBillboardScreen = (name, content, billboardMode, position) => {
     screenDiv.style.justifyContent = 'center';
     screenDiv.style.padding = '10px';
     screenDiv.style.fontSize = '300px';
-
+    
     screen.setContent(screenDiv, 2, 2);
     screen.position = position;
     screen.billboardMode = billboardMode;
 }
 
+// Creating a scene to verify right handed system works well. See #293 for more information
 const createScene = () => {
     const canvas = document.querySelector("canvas");
     engine = new Engine(canvas, true);
-
+    
     // This creates a basic Babylon Scene object (non-mesh)
     scene = new Scene(engine);
+    scene.useRightHandedSystem = true;
     scene.clearColor = new Color4(0,0,0,0);
-
+    
     scene.createDefaultCameraOrLight(true, true, true);
     scene.activeCamera.radius = 23;
 
@@ -84,13 +86,13 @@ const createScene = () => {
     bg.scaling.y = 20;
     bg.position.z = 3;
 
-    sphere.position.x = 1.5;
+    sphere.position.x = -1.5;
     sphere.position.y = -0.5;
     sphere.position.z = 1.1;
-    box.position.x = -3;
+    box.position.x = 3;
     box.position.y = 1;
     box.position.z = -2;
-    disc.position.x = 1.7;
+    disc.position.x = -1.7;
     disc.position.y = -2.6;
     disc.position.z = -1.1;
 
@@ -145,7 +147,7 @@ const createScene = () => {
     div.style.height = "360px";
 
     htmlMeshDiv.setContent(div, 4, 3);
-    htmlMeshDiv.position.x = -3;
+    htmlMeshDiv.position.x = 3;
     htmlMeshDiv.position.y = 2;
     htmlMeshDiv.rotation = new Vector3(Math.PI / 4, Math.PI / 4, Math.PI / 4);
 
@@ -162,7 +164,7 @@ const createScene = () => {
     iframePdf.width = "480px";
     iframePdf.height = "360px";
     htmlMeshPdf.setContent(iframePdf, 4, 3);
-    htmlMeshPdf.position.x = 3;
+    htmlMeshPdf.position.x = -3;
     htmlMeshPdf.position.y = 2;
     htmlMeshPdf.position.z = 2;
 
@@ -185,9 +187,10 @@ const createScene = () => {
     iframeSite.height = "99%";
     outerDivSite.appendChild(iframeSite);
     htmlMeshSite.setContent(outerDivSite, 4, 3);
-    htmlMeshSite.position.x = -3;
+    htmlMeshSite.position.x = 3;
     htmlMeshSite.position.y = -2;
-    htmlMeshSite.rotation.y = Math.PI / 4;
+    // TODO not working since rotation is hard set in html mesh renderer
+    htmlMeshSite.rotation.y = -Math.PI / 4;
 
     // Shows how this can be used to include a YouTube video in your scene
     const videoId = "zELYw2qEUjI";
@@ -198,7 +201,7 @@ const createScene = () => {
     iframeVideo.width = "480px";
     iframeVideo.height = "360px";
     htmlMeshVideo.setContent(iframeVideo, 4, 3);
-    htmlMeshVideo.position.x = 3;
+    htmlMeshVideo.position.x = -3;
     htmlMeshVideo.position.y = -2;
     htmlMeshVideo.rotation.x = Math.PI / 4;
 
@@ -252,7 +255,7 @@ const createScene = () => {
     overlayCoverMeshDiv.style.overflow = 'hidden';
 
     overlayCoverMesh.setContent(overlayCoverMeshDiv, 4, 3);
-    overlayCoverMesh.position.x = -2.5;
+    overlayCoverMesh.position.x = 2;
     overlayCoverMesh.position.y = 7;
     overlayCoverMesh.billboardMode = 7;
 
@@ -270,23 +273,23 @@ const createScene = () => {
     overlayStretchMeshDiv.style.padding = '10px';
 
     overlayStretchMesh.setContent(overlayStretchMeshDiv, 4, 3);
-    overlayStretchMesh.position.x = 2;
+    overlayStretchMesh.position.x = -2.5;
     overlayStretchMesh.position.y = 7;
     overlayStretchMesh.billboardMode = 7;
 
     // Billboard tests
-    createBillboardScreen("html-billboard-0", "0", 0, new Vector3(6, 7, 0));
-    createBillboardScreen("html-billboard-1", "1", 1, new Vector3(9, 7, 0));
-    createBillboardScreen("html-billboard-2", "2", 2, new Vector3(6, 5, 0));
-    createBillboardScreen("html-billboard-4", "4", 4, new Vector3(9, 5, 0));
-    createBillboardScreen("html-billboard-7", "7", 7, new Vector3(6, 3, 0));
+    createBillboardScreen("html-billboard-0", "0", 0, new Vector3(-6, 7, 0));
+    createBillboardScreen("html-billboard-1", "1", 1, new Vector3(-9, 7, 0));
+    createBillboardScreen("html-billboard-2", "2", 2, new Vector3(-6, 5, 0));
+    createBillboardScreen("html-billboard-4", "4", 4, new Vector3(-9, 5, 0));
+    createBillboardScreen("html-billboard-7", "7", 7, new Vector3(-6, 3, 0));
 
-    createRotatedScreen("html-rotate-x", "x", new Vector3(Math.PI, 0, 0), new Vector3(-6, 7, 0));
-    createRotatedScreen("html-rotate-y", "y", new Vector3(0, Math.PI, 0), new Vector3(-9, 7, 0));
-    createRotatedScreen("html-rotate-z", "z", new Vector3(0, 0, Math.PI), new Vector3(-6, 5, 0));
-    createRotatedScreen("html-rotate-xy", "xy", new Vector3(Math.PI, Math.PI, 0), new Vector3(-9, 5, 0));
-    createRotatedScreen("html-rotate-xz", "xz", new Vector3(Math.PI, 0, Math.PI), new Vector3(-6, 3, 0));
-    createRotatedScreen("html-rotate-yz", "yz", new Vector3(0, Math.PI, Math.PI), new Vector3(-9, 5, 0));
+    createRotatedScreen("html-rotate-x", "x", new Vector3(Math.PI, 0, 0), new Vector3(6, 7, 0));
+    createRotatedScreen("html-rotate-y", "y", new Vector3(0, Math.PI, 0), new Vector3(9, 7, 0));
+    createRotatedScreen("html-rotate-z", "z", new Vector3(0, 0, Math.PI), new Vector3(6, 5, 0));
+    createRotatedScreen("html-rotate-xy", "xy", new Vector3(Math.PI, Math.PI, 0), new Vector3(9, 5, 0));
+    createRotatedScreen("html-rotate-xz", "xz", new Vector3(Math.PI, 0, Math.PI), new Vector3(6, 3, 0));
+    createRotatedScreen("html-rotate-yz", "yz", new Vector3(0, Math.PI, Math.PI), new Vector3(9, 5, 0));
 
     // Uncomment this line to test issue #264
     //MeshBuilder.CreateBox("box2", {size: 1}, scene);
