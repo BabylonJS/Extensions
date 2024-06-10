@@ -149,7 +149,7 @@ const createScene = () => {
     htmlMeshDiv.setContent(div, 4, 3);
     htmlMeshDiv.position.x = 3;
     htmlMeshDiv.position.y = 2;
-    htmlMeshDiv.rotation = new Vector3(Math.PI / 4, Math.PI / 4, Math.PI / 4);
+    htmlMeshDiv.rotation = new Vector3(Math.PI / 4, -Math.PI / 4, -Math.PI / 4);
 
     // Shows how this can be used to include a PDF in your scene.  Note this is
     // conceptual only.  Displaying a PDF like this works, but any links in the
