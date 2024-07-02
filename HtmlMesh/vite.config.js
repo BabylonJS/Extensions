@@ -15,9 +15,7 @@ export default {
         },
     },
     plugins: [
-        externalizeDeps({
-            devDeps: true,
-        }),
+        externalizeDeps(),
     ],
     optimizeDeps: {
         exclude: [
