@@ -13,7 +13,8 @@ import {
     getCanvasRectAsync,
     getCanvasRectOrNull,
 } from "./util";
-import { Logger, Observer } from "@babylonjs/core";
+import { Observer } from "@babylonjs/core/Misc/observable";
+import { Logger } from "@babylonjs/core/Misc/logger";
 
 const _positionUpdateFailMessage =
     "Failed to update html mesh renderer position due to failure to get canvas rect.  HtmlMesh instances may not render correctly";
@@ -504,7 +505,7 @@ export class HtmlMeshRenderer {
             scaledAndTranslatedObjectMatrix
         );
 
-        // Adjust direction of 12 and 13 of the transformation matrix based on the handedness of the system        
+        // Adjust direction of 12 and 13 of the transformation matrix based on the handedness of the system
         const direction = useRightHandedSystem ? -1 : 1;
         // Adjust translation values to be from camera vs world origin
         // Note that we are also adjusting these values to be pixels vs Babylon units
@@ -579,7 +580,11 @@ export class HtmlMeshRenderer {
             useRightHandedSystem
         )}`;
         // In a right handed system, screens are on the wrong side of the mesh, so we have to rotate by Math.PI which results in the matrix3d seen below
-        style += `${useRightHandedSystem ? 'matrix3d(-1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1)' : ''}`
+        style += `${
+            useRightHandedSystem
+                ? "matrix3d(-1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1)"
+                : ""
+        }`;
 
         if (htmlMeshData.style !== style) {
             htmlMesh.element.style.webkitTransform = style;
