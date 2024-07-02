@@ -3,7 +3,7 @@ import { CreatePlaneVertexData } from "@babylonjs/core/Meshes/Builders/planeBuil
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Matrix } from "@babylonjs/core/Maths/math";
 import { PointerEventsCaptureBehavior } from "./pointer-events-capture-behavior";
-import { Scene } from "@babylonjs/core";
+import { Scene } from "@babylonjs/core/scene";
 import { Logger } from "@babylonjs/core/Misc/logger";
 import { FitStrategy, FitStrategyType } from "./fit-strategy.ts";
 
