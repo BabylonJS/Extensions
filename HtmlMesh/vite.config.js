@@ -1,35 +1,27 @@
 import dts from "vite-plugin-dts";
+import { externalizeDeps } from "vite-plugin-externalize-deps";
 
 export default {
     plugins: [
         dts({ rollupTypes: true }), 
+        externalizeDeps(),
     ],
     build: {
         lib: {
-            entry: 'index.ts',
-            name: 'babylon-htmlmesh',
-            fileName: (format) => `${format}/babylon-htmlmesh.js`
+            entry: "./src/index.ts",
+            name: "babylon-htmlmesh",
+            fileName: (format) => `${format}/babylon-htmlmesh.js`,
         },
         rollupOptions: {
-            external: [
-                '@babylonjs/core', 
-                '@babylonjs/inspector', 
-                '@babylonjs/loaders'
-            ],
             output: {
-                globals: {
-                    '@babylonjs/core': 'BABYLON',
-                    '@babylonjs/inspector': 'BABYLON',
-                    '@babylonjs/loaders': 'BABYLON'
-                }
-            }
-        }
+                globals: (moduleId) =>
+                    moduleId.startsWith("@babylonjs") ? "BABYLON" : undefined,
+            },
+        },
     },
     optimizeDeps: {
         exclude: [
-            "@babylonjs/core",
-            "@babylonjs/inspector",
-            "@babylonjs/loaders"        
-        ]
-    }
-}
+            "@babylonjs/core"
+        ],
+    },
+};

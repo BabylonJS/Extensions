@@ -13,7 +13,8 @@ import {
     getCanvasRectAsync,
     getCanvasRectOrNull,
 } from "./util";
-import { Logger, Observer } from "@babylonjs/core";
+import { Observer } from "@babylonjs/core/Misc/observable";
+import { Logger } from "@babylonjs/core/Misc/logger";
 
 const _positionUpdateFailMessage =
     "Failed to update html mesh renderer position due to failure to get canvas rect.  HtmlMesh instances may not render correctly";
@@ -411,14 +412,16 @@ export class HtmlMeshRenderer {
     // This also handles conversion from BJS left handed coords
     // to CSS right handed coords
     // prettier-ignore
-    protected getHtmlContentCSSMatrix(matrix: Matrix): string {
+    protected getHtmlContentCSSMatrix(matrix: Matrix, useRightHandedSystem: boolean): string {
         const elements = matrix.m;
+        // In a right handed coordinate system, the elements 11 to 14 have to change their direction
+        const direction = useRightHandedSystem ? -1 : 1;
         const matrix3d = `matrix3d(${
             this.epsilon( elements[0] )
         },${
             this.epsilon( elements[1] )
         },${
-            this.epsilon( - elements[2] )
+            this.epsilon( elements[2] * -direction )
         },${
             this.epsilon( elements[3] )
         },${
@@ -426,30 +429,33 @@ export class HtmlMeshRenderer {
         },${
             this.epsilon( - elements[5] )
         },${
-            this.epsilon( elements[6] )
+            this.epsilon( elements[6]  * direction )
         },${
             this.epsilon( - elements[7] )
         },${
-            this.epsilon( - elements[8] )
+            this.epsilon( elements[8] * -direction )
         },${
-            this.epsilon( - elements[9] )
+            this.epsilon( elements[9] * -direction )
         },${
             this.epsilon( elements[10] )
         },${
-            this.epsilon( elements[11] )
+            this.epsilon( elements[11] * direction )
         },${
-            this.epsilon( elements[12] )
+            this.epsilon( elements[12] * direction )
         },${
-            this.epsilon( elements[13] )
+            this.epsilon( elements[13] * direction )
         },${
-            this.epsilon( elements[14] )
+            this.epsilon( elements[14] * direction )
         },${
             this.epsilon( elements[15] )
         })`;
         return matrix3d;
     }
 
-    protected getTransformationMatrix(htmlMesh: HtmlMesh): Matrix {
+    protected getTransformationMatrix(
+        htmlMesh: HtmlMesh,
+        useRightHandedSystem: boolean
+    ): Matrix {
         // Get the camera world matrix
         // Make sure the camera world matrix is up to date
         if (!this._cameraWorldMatrix) {
@@ -499,15 +505,19 @@ export class HtmlMeshRenderer {
             scaledAndTranslatedObjectMatrix
         );
 
+        // Adjust direction of 12 and 13 of the transformation matrix based on the handedness of the system
+        const direction = useRightHandedSystem ? -1 : 1;
         // Adjust translation values to be from camera vs world origin
         // Note that we are also adjusting these values to be pixels vs Babylon units
         const position = htmlMesh.getAbsolutePosition();
         scaledAndTranslatedObjectMatrix.setRowFromFloats(
             3,
             (-this._cameraWorldMatrix.m[12] + position.x) *
-                babylonUnitsToPixels,
+                babylonUnitsToPixels *
+                direction,
             (-this._cameraWorldMatrix.m[13] + position.y) *
-                babylonUnitsToPixels,
+                babylonUnitsToPixels *
+                direction,
             (this._cameraWorldMatrix.m[14] - position.z) * babylonUnitsToPixels,
             this._cameraWorldMatrix.m[15] * 0.00001 * babylonUnitsToPixels
         );
@@ -529,7 +539,10 @@ export class HtmlMeshRenderer {
         return scaledAndTranslatedObjectMatrix;
     }
 
-    protected renderHtmlMesh(htmlMesh: HtmlMesh) {
+    protected renderHtmlMesh(
+        htmlMesh: HtmlMesh,
+        useRightHandedSystem: boolean
+    ) {
         if (!htmlMesh.element || !htmlMesh.element.firstElementChild) {
             // nothing to render, so bail
             return;
@@ -557,12 +570,21 @@ export class HtmlMeshRenderer {
         }
 
         // Get the transformation matrix for the html mesh
-        const scaledAndTranslatedObjectMatrix =
-            this.getTransformationMatrix(htmlMesh);
+        const scaledAndTranslatedObjectMatrix = this.getTransformationMatrix(
+            htmlMesh,
+            useRightHandedSystem
+        );
 
-        const style = `translate(-50%, -50%) ${this.getHtmlContentCSSMatrix(
-            scaledAndTranslatedObjectMatrix
+        let style = `translate(-50%, -50%) ${this.getHtmlContentCSSMatrix(
+            scaledAndTranslatedObjectMatrix,
+            useRightHandedSystem
         )}`;
+        // In a right handed system, screens are on the wrong side of the mesh, so we have to rotate by Math.PI which results in the matrix3d seen below
+        style += `${
+            useRightHandedSystem
+                ? "matrix3d(-1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1)"
+                : ""
+        }`;
 
         if (htmlMeshData.style !== style) {
             htmlMesh.element.style.webkitTransform = style;
@@ -574,6 +596,8 @@ export class HtmlMeshRenderer {
 
     protected render = (scene: Scene, camera: Camera) => {
         let needsUpdate = false;
+
+        const useRightHandedSystem = scene.useRightHandedSystem;
 
         // Update the container position and size if necessary
         this.updateContainerPositionIfNeeded(scene);
@@ -657,12 +681,15 @@ export class HtmlMeshRenderer {
         const cameraMatrixWorldAsArray = this._temp.cameraWorldMatrixAsArray;
         cameraMatrixWorld.copyToArray(cameraMatrixWorldAsArray);
 
+        // For a few values, we have to adjust the direction based on the handedness of the system
+        const direction = useRightHandedSystem ? 1 : -1;
+
         cameraMatrixWorldAsArray[1] = cameraRotationMatrix.m[1];
-        cameraMatrixWorldAsArray[2] = -cameraRotationMatrix.m[2];
-        cameraMatrixWorldAsArray[4] = -cameraRotationMatrix.m[4];
-        cameraMatrixWorldAsArray[6] = -cameraRotationMatrix.m[6];
-        cameraMatrixWorldAsArray[8] = -cameraRotationMatrix.m[8];
-        cameraMatrixWorldAsArray[9] = -cameraRotationMatrix.m[9];
+        cameraMatrixWorldAsArray[2] = cameraRotationMatrix.m[2] * direction;
+        cameraMatrixWorldAsArray[4] = cameraRotationMatrix.m[4] * direction;
+        cameraMatrixWorldAsArray[6] = cameraRotationMatrix.m[6] * direction;
+        cameraMatrixWorldAsArray[8] = cameraRotationMatrix.m[8] * direction;
+        cameraMatrixWorldAsArray[9] = cameraRotationMatrix.m[9] * direction;
 
         Matrix.FromArrayToRef(cameraMatrixWorldAsArray, 0, cameraMatrixWorld);
 
@@ -693,7 +720,7 @@ export class HtmlMeshRenderer {
 
         // _Render objects if necessary
         meshesNeedingUpdate.forEach((mesh) => {
-            this.renderHtmlMesh(mesh as HtmlMesh);
+            this.renderHtmlMesh(mesh as HtmlMesh, useRightHandedSystem);
         });
     };
 

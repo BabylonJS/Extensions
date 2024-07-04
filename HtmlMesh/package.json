@@ -1,6 +1,6 @@
 {
   "name": "babylon-htmlmesh",
-  "version": "1.1.4",
+  "version": "2.0.0",
   "description": "A BabylonJS Mesh that can display HTML DOM Content in scene (can occlude other meshes and can be occluded)",
   "type": "module",
   "main": "dist/umd/babylon-htmlmesh.js",
@@ -19,7 +19,7 @@
   "types": "dist/babylon-htmlmesh.d.ts",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vite build",
     "preview": "vite preview",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "prepublishOnly": "mv README.md README-github.md && mv README-npm.md README.md",
@@ -32,12 +32,10 @@
     "url": "https://github.com/BabylonJS/Extensions"
   },
   "peerDependencies": {
-    "@babylonjs/core": "^7.0.0"
+    "@babylonjs/core": "^6.30.0"
   },
   "devDependencies": {
     "@babylonjs/core": "^7.0.0",
-    "@babylonjs/inspector": "^7.0.0",
-    "@babylonjs/loaders": "^7.0.0",
     "@types/jest": "^29.5.11",
     "jest": "^29.7.0",
     "ts-jest": "^29.1.1",
@@ -45,6 +43,7 @@
     "ts-node": "^10.9.1",
     "typescript": "^5.2.2",
     "vite": "^5.0.0",
+    "vite-plugin-externalize-deps": "^0.8.0",
     "vite-plugin-dts": "^3.8.2"
   }
 }

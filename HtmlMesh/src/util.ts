@@ -1,4 +1,4 @@
-import { Scene } from "@babylonjs/core";
+import { Scene } from "@babylonjs/core/scene";
 import { Logger } from "@babylonjs/core/Misc/logger";
 
 // #region canvasRect functions

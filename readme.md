@@ -3,6 +3,8 @@ Babylon.js Extensions
 
 Extensions are side projects that work with Babylon.js. They are not necessary maintained by Babylon.js' authors.
 
+Projects that haven't been updated in the last 2 years will be removed from the repository (but will stay in the repository's history). As a developer adding projects to this repository please be aware that you must update your project's dependencies and deal with bugs, otherwise it will be removed from the master branch.
+
 ## Apache License 2.0 (Apache)
 
 Apache License
