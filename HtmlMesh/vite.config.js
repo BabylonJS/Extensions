@@ -1,6 +1,11 @@
+import dts from "vite-plugin-dts";
 import { externalizeDeps } from "vite-plugin-externalize-deps";
 
 export default {
+    plugins: [
+        dts({ rollupTypes: true }), 
+        externalizeDeps(),
+    ],
     build: {
         lib: {
             entry: "./src/index.ts",
@@ -14,14 +19,9 @@ export default {
             },
         },
     },
-    plugins: [
-        externalizeDeps(),
-    ],
     optimizeDeps: {
         exclude: [
-            "@babylonjs/core",
-            "@babylonjs/inspector",
-            "@babylonjs/loaders",
+            "@babylonjs/core"
         ],
     },
 };

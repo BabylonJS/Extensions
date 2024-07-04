@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "baseUrl": "./src",
     "target": "ES2020",
     "useDefineForClassFields": true,
     "module": "ESNext",
@@ -11,13 +12,16 @@
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true,
+    "noEmit": false,
+    "emitDeclarationOnly": true,
+    "outDir": "./dist",
 
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
-  },
-  "include": ["./src"]
+    "noFallthroughCasesInSwitch": true,
+
+    "declaration": true
+  }
 }

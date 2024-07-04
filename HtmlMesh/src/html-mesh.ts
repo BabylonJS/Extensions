@@ -187,7 +187,7 @@ export class HtmlMesh extends Mesh {
         this.sourceWidth = width;
         this.sourceHeight = height;
 
-        if (!this._element) {
+        if (!this._element || !this._element.firstElementChild) {
             return;
         }
 

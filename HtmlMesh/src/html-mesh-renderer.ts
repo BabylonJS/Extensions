@@ -543,7 +543,7 @@ export class HtmlMeshRenderer {
         htmlMesh: HtmlMesh,
         useRightHandedSystem: boolean
     ) {
-        if (!htmlMesh.element) {
+        if (!htmlMesh.element || !htmlMesh.element.firstElementChild) {
             // nothing to render, so bail
             return;
         }
