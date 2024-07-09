@@ -1,6 +1,6 @@
 {
   "name": "babylon-htmlmesh",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "A BabylonJS Mesh that can display HTML DOM Content in scene (can occlude other meshes and can be occluded)",
   "type": "module",
   "main": "dist/umd/babylon-htmlmesh.js",
@@ -32,7 +32,7 @@
     "url": "https://github.com/BabylonJS/Extensions"
   },
   "peerDependencies": {
-    "@babylonjs/core": "^6.30.0"
+    "@babylonjs/core": "5.x || 6.x || 7.x"
   },
   "devDependencies": {
     "@babylonjs/core": "^7.0.0",
