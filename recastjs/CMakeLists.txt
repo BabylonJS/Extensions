@@ -69,10 +69,10 @@ ADD_LIBRARY(${EXE_NAME} ${SRC_FILES} ${RECASTDETOUR_FILES})
 set(CMAKE_BUILD_TYPE Release CACHE STRING "Build Type")
 
 # Default is 64*1024*1024 = 64MB
-set(TOTAL_MEMORY 67108864 CACHE STRING "Total Memory")
+#set(TOTAL_MEMORY 67108864 CACHE STRING "Total Memory")
 
 # Enable for resizable heap, with some amount of slowness
-set(ALLOW_MEMORY_GROWTH 0 CACHE STRING "Allow Memory Growth")
+set(ALLOW_MEMORY_GROWTH 1 CACHE STRING "Allow Memory Growth")
 
 set(EMCC_ARGS
   -flto
@@ -88,7 +88,8 @@ set(EMCC_ARGS
   -s MODULARIZE=1
   -s NO_EXIT_RUNTIME=1
   -s NO_FILESYSTEM=1
-  -s TOTAL_MEMORY=${TOTAL_MEMORY})
+#  -s TOTAL_MEMORY=${TOTAL_MEMORY}
+)
 
 if(${CLOSURE})
   # Ignore closure errors about the bullet Node class

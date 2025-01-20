@@ -17,14 +17,14 @@ steps:
       cd ..
       git clone https://github.com/emscripten-core/emsdk.git
       cd emsdk
-      ./emsdk install latest
+      ./emsdk install 3.1.51
   displayName: 'Clone/install emsdk'
 
 - task: CmdLine@2
   inputs:
     script: |
       pushd ../emsdk
-      ./emsdk activate latest
+      ./emsdk activate 3.1.51
       source "emsdk_env.sh"
       popd
       cd recastjs
